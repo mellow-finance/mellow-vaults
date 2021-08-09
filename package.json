@@ -2,5 +2,13 @@
   "name": "mellow-contracts-v2",
   "version": "1.0.0",
   "repository": "https://github.com/mellow-finance/mellow-contracts-v2",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.0",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.0.0",
+    "ethers": "^5.0.0",
+    "hardhat": "^2.6.0"
+  }
 }
