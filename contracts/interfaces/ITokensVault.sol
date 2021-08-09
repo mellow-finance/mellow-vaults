@@ -8,5 +8,7 @@ interface ITokensVault {
 
     function tokens() external view returns (IERC20[] memory);
 
+    function hasToken(IERC20 token) external view returns (bool);
+
     function ownTokenAmounts() external view returns (uint256[] memory);
 }
