@@ -1,5 +1,20 @@
+build
+node_modules
+tmp
 node_modules
 
 #Hardhat files
 cache
 artifacts
+
+.env
+yarn-error.log
+yarn.lock
+
+registry
+coverage
+coverage.json
+
+    © 2021 GitHub, Inc.
+    Terms
+    Privacy
