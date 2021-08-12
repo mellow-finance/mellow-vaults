@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity 0.8.7;
 
-import "./interfaces/ITokensVault.sol";
+import "./interfaces/ITokensEntity.sol";
 import "./libraries/Array.sol";
 
-contract TokensVault is ITokensVault {
+contract TokensEntity is ITokensEntity {
     IERC20[] private _tokens;
     mapping(IERC20 => bool) _tokenIndex;
 

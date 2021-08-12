@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./ITokensVault.sol";
+import "./ITokensEntity.sol";
 
-interface INFTVault is ITokensVault, IERC721 {
+interface INFTVault is ITokensEntity, IERC721 {
     function tokenAmounts(uint256 nft) external view returns (uint256[] memory);
 
     function owedTokenAmounts() external view returns (uint256[] memory);

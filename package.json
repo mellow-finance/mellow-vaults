@@ -6,7 +6,9 @@
   "scripts": {
     "c": "hardhat compile",
     "compile": "rm -rf artifacts && hardhat compile",
-    "test": "hardhat test",
+    "test": "yarn test:unit && yarn test:prop",
+    "test:unit": "cd test && brownie test tests/unit && cd ..",
+    "test:prop": "cd test && brownie test tests/prop && cd ..",
     "coverage": "hardhat coverage",
     "size": "rm -rf artifacts && hardhat compile && hardhat size-contracts"
   },
