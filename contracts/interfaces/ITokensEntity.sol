@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.6;
+pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-interface ITokensVault {
+interface ITokensEntity {
     function tokensCount() external view returns (uint256);
 
     function tokens() external view returns (IERC20[] memory);
