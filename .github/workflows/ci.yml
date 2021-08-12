@@ -42,7 +42,7 @@ jobs:
       - name: Install python dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
-          pip install test/requirements.txt
+          pip install -r test/requirements.txt
 
       - name: Install yarn dependencies
         run: yarn
