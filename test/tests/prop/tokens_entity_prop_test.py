@@ -30,4 +30,4 @@ def test_own_token_amounts(num_tokens, a, TokensEntity, ERC20Mock):
     tokens_vault = TokensEntity.deploy(tokens, {"from": a[0]})
     for i in range(num_tokens):
         tokens[i].mint(tokens_vault, i * 1000)
-    tokens_vault.ownTokenAmounts() == [i * 1000 for i in range(num_tokens)]
+    tokens_vault.tokenAmountsBalance() == [i * 1000 for i in range(num_tokens)]

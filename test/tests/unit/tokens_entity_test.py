@@ -47,7 +47,7 @@ def test_own_token_amounts(a, tokens, TokensEntity):
     tks = sorted(tokens, key=lambda t: str(t).lower())
     for i in range(len(tks)):
         tks[i].mint(tokens_vault, i * 1000)
-    assert tokens_vault.ownTokenAmounts() == [i * 1000 for i in range(len(tokens))]
+    assert tokens_vault.tokenAmountsBalance() == [i * 1000 for i in range(len(tokens))]
 
 
 def test_has_token(a, tokens, TokensEntity):

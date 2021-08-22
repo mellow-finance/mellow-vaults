@@ -31,7 +31,7 @@ contract TokensEntity is ITokensEntity {
         return _tokenIndex[token];
     }
 
-    function ownTokenAmounts() external view override returns (uint256[] memory) {
+    function tokenAmountsBalance() external view override returns (uint256[] memory) {
         uint256[] memory tokenAmounts = new uint256[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
             tokenAmounts[i] = _tokens[i].balanceOf(address(this));

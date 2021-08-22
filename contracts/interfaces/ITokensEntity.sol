@@ -10,5 +10,5 @@ interface ITokensEntity {
 
     function hasToken(IERC20 token) external view returns (bool);
 
-    function ownTokenAmounts() external view returns (uint256[] memory);
+    function tokenAmountsBalance() external view returns (uint256[] memory);
 }
