@@ -4,8 +4,6 @@ pragma solidity 0.8.7;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface ICells is IERC721 {
-    function createCell(address[] memory tokens) external returns (uint256);
-
     function managedTokens(uint256 nft) external view returns (address[] memory);
 
     function delegatedTokenAmounts(uint256 nft, address[] calldata tokens) external view returns (uint256[] memory);
@@ -14,12 +12,12 @@ interface ICells is IERC721 {
         uint256 nft,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) external view returns (uint256[] memory actualTokenAmounts);
+    ) external returns (uint256[] memory actualTokenAmounts);
 
     function withdraw(
         uint256 nft,
         address to,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) external view returns (uint256[] memory actualTokenAmounts);
+    ) external returns (uint256[] memory actualTokenAmounts);
 }

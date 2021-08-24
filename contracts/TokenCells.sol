@@ -16,8 +16,8 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
 
     mapping(uint256 => mapping(address => uint256)) public tokenCellsBalances;
     mapping(address => uint256) public tokenBalances;
-    mapping(uint256 => address[]) public managedTokens;
-    mapping(uint256 => mapping(address => bool)) public tokensIndex;
+    mapping(uint256 => address[]) private _managedTokens;
+    mapping(uint256 => mapping(address => bool)) public managedTokensIndex;
 
     uint256 private _topCellNft;
 
@@ -25,8 +25,21 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         maxTokensPerCell = 10;
     }
 
-    function delegatedTokenAmounts(uint256 nft, address[] memory tokens) external view returns (uint256[] memory) {
+    function managedTokens(uint256 nft) external view override returns (address[] memory) {
+        return _managedTokens[nft];
+    }
+
+    function delegatedTokenAmounts(uint256 nft, address[] memory tokens)
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
         uint256[] memory amounts = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            amounts[i] = tokenCellsBalances[nft][tokens[i]];
+        }
+        return amounts;
     }
 
     // @dev Can claim only free tokens
@@ -43,7 +56,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         uint256 nft,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) external view override returns (uint256[] memory actualTokenAmounts) {
+    ) external override returns (uint256[] memory actualTokenAmounts) {
         require(tokens.length == tokenAmounts.length, "L");
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -58,7 +71,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         address to,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) external view override returns (uint256[] memory actualTokenAmounts) {
+    ) external override returns (uint256[] memory actualTokenAmounts) {
         require(tokens.length == tokenAmounts.length, "L");
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -67,15 +80,15 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function createCell(address[] memory cellTokens) external override returns (uint256) {
+    function createCell(address[] memory cellTokens) external returns (uint256) {
         require(isPublicCreateCell || hasRole(OWNER_ROLE, _msgSender()), "FB");
         require(cellTokens.length <= maxTokensPerCell, "MT");
         uint256 nft = _topCellNft;
         _topCellNft += 1;
         Array.bubbleSort(cellTokens);
-        managedTokens[nft] = cellTokens;
+        _managedTokens[nft] = cellTokens;
         for (uint256 i = 0; i < cellTokens.length; i++) {
-            tokensIndex[nft][cellTokens[i]] = true;
+            managedTokensIndex[nft][cellTokens[i]] = true;
         }
         _safeMint(_msgSender(), nft);
         return nft;
@@ -107,7 +120,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         address token,
         uint256 tokenAmount
     ) private {
-        require(tokensIndex[nft][token], "NMT"); // check that token is managed by the cell
+        require(managedTokensIndex[nft][token], "NMT"); // check that token is managed by the cell
         uint256 freeTokenAmount = _freeBalance(token);
         require(tokenAmount <= freeTokenAmount, "FTA");
         tokenCellsBalances[nft][token] += tokenAmount;
@@ -121,7 +134,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         address token,
         uint256 tokenAmount
     ) private {
-        require(tokensIndex[nft][token], "NMT"); // check that token is managed by the cell
+        require(managedTokensIndex[nft][token], "NMT"); // check that token is managed by the cell
         if (tokenAmount == 0) return;
         tokenCellsBalances[nft][token] -= tokenAmount;
         tokenBalances[token] -= tokenAmount;
