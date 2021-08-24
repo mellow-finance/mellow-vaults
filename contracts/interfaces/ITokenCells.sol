@@ -1,21 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./ICells.sol";
 
-interface ITokenCells is IERC721 {
+interface ITokenCells is ICells {
     function claimTokensToCell(
-        uint256 cellNft,
-        address[] memory tokensToClaim,
-        uint256[] memory tokenAmounts
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
     ) external;
-
-    function disburseTokensFromCell(
-        uint256 cellNft,
-        address to,
-        address[] memory tokensToDisburse,
-        uint256[] memory tokenAmounts
-    ) external;
-
-    function createCell(address[] memory cellTokens) external returns (uint256);
 }

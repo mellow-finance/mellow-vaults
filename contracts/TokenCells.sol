@@ -6,63 +6,79 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./access/OwnerAccessControl.sol";
 import "./interfaces/ITokenCells.sol";
+import "./libraries/Array.sol";
 
 contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
     using SafeERC20 for IERC20;
 
-    struct MutableTokenCellsGovernanceParams {
-        bool isPublicCreateCell;
-        uint256 maxTokensPerCell;
-    }
-    MutableTokenCellsGovernanceParams public mutableTokenCellsGovernanceParams;
+    bool public isPublicCreateCell;
+    uint256 public maxTokensPerCell;
+
     mapping(uint256 => mapping(address => uint256)) public tokenCellsBalances;
     mapping(address => uint256) public tokenBalances;
-    mapping(uint256 => address[]) public tokens;
+    mapping(uint256 => address[]) public managedTokens;
     mapping(uint256 => mapping(address => bool)) public tokensIndex;
 
     uint256 private _topCellNft;
 
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {
-        mutableTokenCellsGovernanceParams = MutableTokenCellsGovernanceParams({
-            isPublicCreateCell: false,
-            maxTokensPerCell: 10
-        });
+        maxTokensPerCell = 10;
+    }
+
+    function delegatedTokenAmounts(uint256 nft, address[] memory tokens) external view returns (uint256[] memory) {
+        uint256[] memory amounts = new uint256[](tokens.length);
     }
 
     // @dev Can claim only free tokens
     function claimTokensToCell(
-        uint256 cellNft,
-        address[] memory tokensToClaim,
-        uint256[] memory tokenAmounts
-    ) public override {
-        require(_isApprovedOrOwner(_msgSender(), cellNft), "IO"); // Also checks that the token exists
-        for (uint256 i = 0; i < tokensToClaim.length; i++) {
-            _claimTokenToCell(cellNft, tokensToClaim[i], tokenAmounts[i]);
-        }
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external override {
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        _claimTokensToCell(nft, tokens, tokenAmounts);
     }
 
-    function disburseTokensFromCell(
-        uint256 cellNft,
-        address to,
-        address[] memory tokensToDisburse,
-        uint256[] memory tokenAmounts
-    ) public override {
-        require(_isApprovedOrOwner(_msgSender(), cellNft), "IO"); // Also checks that the token exists
-        for (uint256 i = 0; i < tokensToDisburse.length; i++) {
-            _disburseTokenFromCell(cellNft, to, tokensToDisburse[i], tokenAmounts[i]);
+    function deposit(
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external view override returns (uint256[] memory actualTokenAmounts) {
+        require(tokens.length == tokenAmounts.length, "L");
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        for (uint256 i = 0; i < tokens.length; i++) {
+            IERC20(tokens[i]).safeTransferFrom(tokens[i], address(this), tokenAmounts[i]);
         }
+        _claimTokensToCell(nft, tokens, tokenAmounts);
+        actualTokenAmounts = tokenAmounts;
+    }
+
+    function withdraw(
+        uint256 nft,
+        address to,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external view override returns (uint256[] memory actualTokenAmounts) {
+        require(tokens.length == tokenAmounts.length, "L");
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        for (uint256 i = 0; i < tokens.length; i++) {
+            _withdrawTokenFromCell(nft, to, tokens[i], tokenAmounts[i]);
+        }
+        actualTokenAmounts = tokenAmounts;
     }
 
     function createCell(address[] memory cellTokens) external override returns (uint256) {
-        require(cellTokens.length <= mutableTokenCellsGovernanceParams.maxTokensPerCell, "MT");
-        uint256 cellNft = _topCellNft;
+        require(isPublicCreateCell || hasRole(OWNER_ROLE, _msgSender()), "FB");
+        require(cellTokens.length <= maxTokensPerCell, "MT");
+        uint256 nft = _topCellNft;
         _topCellNft += 1;
-        tokens[cellNft] = cellTokens;
+        Array.bubbleSort(cellTokens);
+        managedTokens[nft] = cellTokens;
         for (uint256 i = 0; i < cellTokens.length; i++) {
-            tokensIndex[cellNft][cellTokens[i]] = true;
+            tokensIndex[nft][cellTokens[i]] = true;
         }
-        _safeMint(_msgSender(), cellNft);
-        return cellNft;
+        _safeMint(_msgSender(), nft);
+        return nft;
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -75,31 +91,42 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         return interfaceId == type(ITokenCells).interfaceId || super.supportsInterface(interfaceId);
     }
 
+    function _claimTokensToCell(
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) private {
+        require(tokens.length == tokenAmounts.length, "L");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            _claimTokenToCell(nft, tokens[i], tokenAmounts[i]);
+        }
+    }
+
     function _claimTokenToCell(
-        uint256 cellNft,
+        uint256 nft,
         address token,
         uint256 tokenAmount
     ) private {
-        require(tokensIndex[cellNft][token], "NMT"); // check that token is managed by the cell
+        require(tokensIndex[nft][token], "NMT"); // check that token is managed by the cell
         uint256 freeTokenAmount = _freeBalance(token);
         require(tokenAmount <= freeTokenAmount, "FTA");
-        tokenCellsBalances[cellNft][token] += tokenAmount;
+        tokenCellsBalances[nft][token] += tokenAmount;
         tokenBalances[token] += tokenAmount;
-        emit TokenClaimedToCell({cellNft: cellNft, token: token, tokenAmount: tokenAmount});
+        emit TokenClaimedToCell({nft: nft, token: token, tokenAmount: tokenAmount});
     }
 
-    function _disburseTokenFromCell(
-        uint256 cellNft,
+    function _withdrawTokenFromCell(
+        uint256 nft,
         address to,
         address token,
         uint256 tokenAmount
-    ) internal {
-        require(tokensIndex[cellNft][token], "NMT"); // check that token is managed by the cell
+    ) private {
+        require(tokensIndex[nft][token], "NMT"); // check that token is managed by the cell
         if (tokenAmount == 0) return;
-        tokenCellsBalances[cellNft][token] -= tokenAmount;
+        tokenCellsBalances[nft][token] -= tokenAmount;
         tokenBalances[token] -= tokenAmount;
         IERC20(token).safeTransfer(to, tokenAmount);
-        emit TokenDisbursedFromCell({cellNft: cellNft, to: to, token: token, tokenAmount: tokenAmount});
+        emit TokenDisbursedFromCell({nft: nft, to: to, token: token, tokenAmount: tokenAmount});
     }
 
     function _freeBalance(address token) internal view returns (uint256) {
@@ -108,6 +135,6 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         return actualBalance - bookBalance;
     }
 
-    event TokenClaimedToCell(uint256 cellNft, address token, uint256 tokenAmount);
-    event TokenDisbursedFromCell(uint256 cellNft, address to, address token, uint256 tokenAmount);
+    event TokenClaimedToCell(uint256 nft, address token, uint256 tokenAmount);
+    event TokenDisbursedFromCell(uint256 nft, address to, address token, uint256 tokenAmount);
 }
