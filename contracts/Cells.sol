@@ -26,7 +26,7 @@ contract Cells is ICells, OwnerAccessControl, ERC721 {
         return _managedTokensIndex[nft][token];
     }
 
-    function createCell(address[] memory cellTokens, bytes memory params) external virtual override returns (uint256) {
+    function createCell(address[] memory cellTokens, bytes memory) external virtual override returns (uint256) {
         require(isPublicCreateCell || hasRole(OWNER_ROLE, _msgSender()), "FB");
         require(cellTokens.length <= maxTokensPerCell, "MT");
         uint256 nft = _topCellNft;

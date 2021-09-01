@@ -109,7 +109,7 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
 
     function onERC721Received(
         address operator,
-        address from,
+        address,
         uint256 tokenId,
         bytes calldata data
     ) external override returns (bytes4) {
