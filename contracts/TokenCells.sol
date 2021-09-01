@@ -7,27 +7,15 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./access/OwnerAccessControl.sol";
 import "./interfaces/ITokenCells.sol";
 import "./libraries/Array.sol";
+import "./Cells.sol";
 
-contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
+contract TokenCells is ITokenCells, Cells {
     using SafeERC20 for IERC20;
-
-    bool public isPublicCreateCell;
-    uint256 public maxTokensPerCell;
 
     mapping(uint256 => mapping(address => uint256)) public tokenCellsBalances;
     mapping(address => uint256) public tokenBalances;
-    mapping(uint256 => address[]) private _managedTokens;
-    mapping(uint256 => mapping(address => bool)) public managedTokensIndex;
 
-    uint256 private _topCellNft;
-
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {
-        maxTokensPerCell = 10;
-    }
-
-    function managedTokens(uint256 nft) external view override returns (address[] memory) {
-        return _managedTokens[nft];
-    }
+    constructor(string memory name, string memory symbol) Cells(name, symbol) {}
 
     function delegated(uint256 nft)
         external
@@ -35,7 +23,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         override
         returns (address[] memory tokens, uint256[] memory tokenAmounts)
     {
-        tokens = _managedTokens[nft];
+        tokens = managedTokens(nft);
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = tokenCellsBalances[nft][tokens[i]];
@@ -80,27 +68,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function createCell(address[] memory cellTokens) external returns (uint256) {
-        require(isPublicCreateCell || hasRole(OWNER_ROLE, _msgSender()), "FB");
-        require(cellTokens.length <= maxTokensPerCell, "MT");
-        uint256 nft = _topCellNft;
-        _topCellNft += 1;
-        Array.bubbleSort(cellTokens);
-        _managedTokens[nft] = cellTokens;
-        for (uint256 i = 0; i < cellTokens.length; i++) {
-            managedTokensIndex[nft][cellTokens[i]] = true;
-        }
-        _safeMint(_msgSender(), nft);
-        return nft;
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(ERC721, IERC165, AccessControlEnumerable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(Cells, IERC165) returns (bool) {
         return interfaceId == type(ITokenCells).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -120,7 +88,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         address token,
         uint256 tokenAmount
     ) private {
-        require(managedTokensIndex[nft][token], "NMT"); // check that token is managed by the cell
+        require(isManagedToken(nft, token), "NMT"); // check that token is managed by the cell
         uint256 freeTokenAmount = _freeBalance(token);
         require(tokenAmount <= freeTokenAmount, "FTA");
         tokenCellsBalances[nft][token] += tokenAmount;
@@ -134,7 +102,7 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         address token,
         uint256 tokenAmount
     ) private {
-        require(managedTokensIndex[nft][token], "NMT"); // check that token is managed by the cell
+        require(isManagedToken(nft, token), "NMT"); // check that token is managed by the cell
         if (tokenAmount == 0) return;
         tokenCellsBalances[nft][token] -= tokenAmount;
         tokenBalances[token] -= tokenAmount;
