@@ -29,17 +29,17 @@ contract TokenCells is ITokenCells, OwnerAccessControl, ERC721 {
         return _managedTokens[nft];
     }
 
-    function delegatedTokenAmounts(uint256 nft, address[] memory tokens)
+    function delegated(uint256 nft)
         external
         view
         override
-        returns (uint256[] memory)
+        returns (address[] memory tokens, uint256[] memory tokenAmounts)
     {
-        uint256[] memory amounts = new uint256[](tokens.length);
+        tokens = _managedTokens[nft];
+        tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            amounts[i] = tokenCellsBalances[nft][tokens[i]];
+            tokenAmounts[i] = tokenCellsBalances[nft][tokens[i]];
         }
-        return amounts;
     }
 
     // @dev Can claim only free tokens

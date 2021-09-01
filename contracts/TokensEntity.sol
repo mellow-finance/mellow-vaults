@@ -5,14 +5,14 @@ import "./interfaces/ITokensEntity.sol";
 import "./libraries/Array.sol";
 
 contract TokensEntity is ITokensEntity {
-    IERC20[] private _tokens;
-    mapping(IERC20 => bool) _tokenIndex;
+    address[] private _tokens;
+    mapping(address => bool) _tokenIndex;
 
-    constructor(IERC20[] memory tokenList) {
+    constructor(address[] memory tokenList) {
         require(tokenList.length != 0, "ETL");
-        Array.bubble_sort_ercs(tokenList);
+        Array.bubbleSort(tokenList);
         for (uint256 i = 0; i < tokenList.length; i++) {
-            IERC20 token = tokenList[i];
+            address token = tokenList[i];
             require(!_tokenIndex[token], "TE");
             _tokenIndex[token] = true;
         }
@@ -23,18 +23,18 @@ contract TokensEntity is ITokensEntity {
         return _tokens.length;
     }
 
-    function tokens() external view override returns (IERC20[] memory) {
+    function tokens() external view override returns (address[] memory) {
         return _tokens;
     }
 
-    function hasToken(IERC20 token) external view override returns (bool) {
+    function hasToken(address token) external view override returns (bool) {
         return _tokenIndex[token];
     }
 
     function tokenAmountsBalance() external view override returns (uint256[] memory) {
         uint256[] memory tokenAmounts = new uint256[](_tokens.length);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            tokenAmounts[i] = _tokens[i].balanceOf(address(this));
+            tokenAmounts[i] = IERC20(_tokens[i]).balanceOf(address(this));
         }
         return tokenAmounts;
     }

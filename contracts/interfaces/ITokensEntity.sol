@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface ITokensEntity {
     function tokensCount() external view returns (uint256);
 
-    function tokens() external view returns (IERC20[] memory);
+    function tokens() external view returns (address[] memory);
 
-    function hasToken(IERC20 token) external view returns (bool);
+    function hasToken(address token) external view returns (bool);
 
     function tokenAmountsBalance() external view returns (uint256[] memory);
 }

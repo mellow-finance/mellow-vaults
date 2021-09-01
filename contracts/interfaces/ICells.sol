@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 interface ICells is IERC721 {
     function managedTokens(uint256 nft) external view returns (address[] memory);
 
-    function delegatedTokenAmounts(uint256 nft, address[] calldata tokens) external view returns (uint256[] memory);
+    function delegated(uint256 nft) external view returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
     function deposit(
         uint256 nft,
