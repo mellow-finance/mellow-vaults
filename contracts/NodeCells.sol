@@ -69,9 +69,13 @@ contract NodeCells is ICells, IERC721Receiver, OwnerAccessControl, ERC721 {
         ExternalCell[] storage cellOwnedCells = ownedCells[nft];
         uint256[][] memory delegatedTokenAmounts = _delegatedByCell(nft);
         uint256[][] memory amountsToDeposit = Array.splitAmounts(cellTokenAmounts, delegatedTokenAmounts);
+        actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < cellOwnedCells.length; i++) {
             ExternalCell storage cell = cellOwnedCells[i];
-            ICells(cell.addr).deposit(cell.nft, cellTokens, amountsToDeposit[i]);
+            uint256[] memory actualCellAmounts = ICells(cell.addr).deposit(cell.nft, cellTokens, amountsToDeposit[i]);
+            for (uint256 j = 0; j < tokens.length; j++) {
+                actualTokenAmounts[j] += actualCellAmounts[j];
+            }
         }
     }
 
@@ -89,9 +93,18 @@ contract NodeCells is ICells, IERC721Receiver, OwnerAccessControl, ERC721 {
         ExternalCell[] storage cellOwnedCells = ownedCells[nft];
         uint256[][] memory delegatedTokenAmounts = _delegatedByCell(nft);
         uint256[][] memory amountsToDeposit = Array.splitAmounts(cellTokenAmounts, delegatedTokenAmounts);
+        actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < cellOwnedCells.length; i++) {
             ExternalCell storage cell = cellOwnedCells[i];
-            ICells(cell.addr).withdraw(cell.nft, to, cellTokens, amountsToDeposit[i]);
+            uint256[] memory actualCellAmounts = ICells(cell.addr).withdraw(
+                cell.nft,
+                to,
+                cellTokens,
+                amountsToDeposit[i]
+            );
+            for (uint256 j = 0; j < tokens.length; j++) {
+                actualTokenAmounts[j] += actualCellAmounts[j];
+            }
         }
     }
 
