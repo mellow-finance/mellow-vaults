@@ -26,17 +26,15 @@ contract Cells is ICells, OwnerAccessControl, ERC721 {
         return _managedTokensIndex[nft][token];
     }
 
-    function createCell(address[] memory cellTokens, bytes memory) external virtual override returns (uint256) {
+    function createCell(address[] memory cellTokens, bytes memory params) external override returns (uint256) {
         require(isPublicCreateCell || hasRole(OWNER_ROLE, _msgSender()), "FB");
         require(cellTokens.length <= maxTokensPerCell, "MT");
-        uint256 nft = _topCellNft;
-        _topCellNft += 1;
         Array.bubbleSort(cellTokens);
+        uint256 nft = _mintCellNft(cellTokens, params);
         _managedTokens[nft] = cellTokens;
         for (uint256 i = 0; i < cellTokens.length; i++) {
             _managedTokensIndex[nft][cellTokens[i]] = true;
         }
-        _safeMint(_msgSender(), nft);
         return nft;
     }
 
@@ -48,5 +46,12 @@ contract Cells is ICells, OwnerAccessControl, ERC721 {
         returns (bool)
     {
         return interfaceId == type(ICells).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function _mintCellNft(address[] memory, bytes memory) internal virtual returns (uint256) {
+        uint256 nft = _topCellNft;
+        _topCellNft += 1;
+        _safeMint(_msgSender(), nft);
+        return nft;
     }
 }

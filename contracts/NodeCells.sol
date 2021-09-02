@@ -19,9 +19,7 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
 
     mapping(uint256 => DelegatedCell[]) public ownedCells;
 
-    constructor(string memory name, string memory symbol) Cells(name, symbol) {
-        maxTokensPerCell = 10;
-    }
+    constructor(string memory name, string memory symbol) Cells(name, symbol) {}
 
     /// @dev
     /// the contract is to return sorted tokens
