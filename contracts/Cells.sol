@@ -12,7 +12,7 @@ contract Cells is ICells, OwnerAccessControl, ERC721 {
     uint256 public maxTokensPerCell;
     mapping(uint256 => address[]) private _managedTokens;
     mapping(uint256 => mapping(address => bool)) private _managedTokensIndex;
-    uint256 private _topCellNft;
+    uint256 private _topCellNft = 1;
 
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {
         maxTokensPerCell = 10;

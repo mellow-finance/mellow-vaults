@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+// TODO: Check the license
 pragma solidity 0.8.7;
 pragma abicoder v2;
+
+import "./IPeripheryImmutableState.sol";
 
 /// @title Non-fungible token for positions
 /// @notice Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 /// and authorized.
-interface INonfungiblePositionManager {
+interface INonfungiblePositionManager is IPeripheryImmutableState {
     /// @notice Emitted when liquidity is increased for a position NFT
     /// @dev Also emitted when a token is minted
     /// @param tokenId The ID of the token for which liquidity was increased
