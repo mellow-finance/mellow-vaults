@@ -23,7 +23,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
     }
 
     function delegated(uint256 nft)
-        external
+        public
         view
         override
         returns (address[] memory tokens, uint256[] memory tokenAmounts)
@@ -44,8 +44,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
             ,
 
         ) = positionManager.positions(uniNft);
-        IUniswapV3Factory factory = IUniswapV3Factory(positionManager.factory());
-        IUniswapV3PoolState pool = IUniswapV3PoolState(factory.getPool(token0, token1, fee));
+        IUniswapV3PoolState pool = IUniswapV3PoolState(IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee));
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -71,7 +70,29 @@ contract UniV3Cells is IDelegatedCells, Cells {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO");
         uint256 uniNft = uniNfts[nft];
         require(uniNft > 0, "UNFT0");
-        (, , address token0, address token1, uint24 fee, , , , , , , ) = positionManager.positions(uniNft);
+        (, , address token0, address token1, , , , , , , , ) = positionManager.positions(uniNft);
+        address[] memory pTokens = new address[](2);
+        pTokens[0] = token0;
+        pTokens[1] = token1;
+        uint256[] memory pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
+        (
+            ,
+            uint256 amount0,
+            uint256 amount1
+        ) = positionManager.increaseLiquidity(
+            INonfungiblePositionManager.IncreaseLiquidityParams({
+                tokenId: uniNft,
+                amount0Desired: pTokenAmounts[0],
+                amount1Desired: pTokenAmounts[1],
+                // TODO: allow for variable params
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp + 600
+            })
+        );
+        actualTokenAmounts = new uint256[](2);
+        actualTokenAmounts[0] = amount0;
+        actualTokenAmounts[1] = amount1;
     }
 
     function withdraw(
@@ -79,7 +100,38 @@ contract UniV3Cells is IDelegatedCells, Cells {
         address to,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) external override returns (uint256[] memory actualTokenAmounts);
+    ) external override returns (uint256[] memory actualTokenAmounts) {
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO");
+        uint256 uniNft = uniNfts[nft];
+        require(uniNft > 0, "UNFT0");
+        uint256 liquidity = _getWithdrawLiquidity(nft, uniNft, tokens, tokenAmounts);
+        (
+            uint256 amount0,
+            uint256 amount1
+        ) = positionManager.decreaseLiquidity(
+            INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: uniNft,
+                liquidity: uint128(liquidity),
+                // TODO: allow for variable params
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp + 600
+            })
+        );
+        (
+            uint256 actualAmount0,
+            uint256 actualAmount1
+        ) = positionManager.collect(INonfungiblePositionManager.CollectParams({
+                tokenId: uniNft,
+                recipient: to,
+                amount0Max: uint128(amount0),
+                amount1Max: uint128(amount1)
+            })
+        );
+        actualTokenAmounts = new uint256[](2);
+        actualTokenAmounts[0] = actualAmount0;
+        actualTokenAmounts[1] = actualAmount1;
+    }
 
     function _mintCellNft(address[] memory tokens, bytes memory params) internal virtual override returns (uint256) {
         require(params.length == 8 * 32, "IP");
@@ -121,5 +173,63 @@ contract UniV3Cells is IDelegatedCells, Cells {
         uint256 cellNft = super._mintCellNft(tokens, params);
         uniNfts[cellNft] = uniNft;
         return cellNft;
+    }
+
+    function _isValidTokens(
+        address token0,
+        address token1,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) internal returns (bool) {
+        require(tokens.length == tokenAmounts.length, "IL");
+        uint256 j = 0;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (tokenAmounts[i] == 0) {
+                continue;
+            }
+            if (j == 0) {
+                if (tokens[i] != token0) {
+                    return false;
+                }
+                j++;
+                continue;
+            }
+            if (j == 1) {
+                if (tokens[i] != token1) {
+                    return false;
+                }
+                j++;
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    function _getWithdrawLiquidity(
+        uint256 nft,
+        uint256 uniNft, 
+        address[] calldata tokens, 
+        uint256[] calldata tokenAmounts
+    ) internal view returns (uint256) {
+        (address[] memory pTokens, uint256[] memory totalAmounts) = delegated(nft);
+        uint256[] memory pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            ,
+            uint128 totalLiquidity,
+            ,
+            ,
+            ,
+
+        ) = positionManager.positions(uniNft);
+        uint256 liquidity0 = totalLiquidity * pTokenAmounts[0] / totalAmounts[0];
+        uint256 liquidity1 = totalLiquidity * pTokenAmounts[1] / totalAmounts[1];
+        return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 }
