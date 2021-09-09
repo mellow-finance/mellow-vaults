@@ -6,9 +6,9 @@ import "./libraries/Array.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./libraries/external/TickMath.sol";
 import "./Cells.sol";
-import "./interfaces/external/IUniswapV3PoolState.sol";
-import "./interfaces/external/IUniswapV3Factory.sol";
-import "./interfaces/external/INonfungiblePositionManager.sol";
+import "./interfaces/external/univ3/IUniswapV3PoolState.sol";
+import "./interfaces/external/univ3/IUniswapV3Factory.sol";
+import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 
 contract UniV3Cells is IDelegatedCells, Cells {
     INonfungiblePositionManager public positionManager;
