@@ -180,7 +180,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
         address token1,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) internal returns (bool) {
+    ) internal pure returns (bool) {
         require(tokens.length == tokenAmounts.length, "IL");
         uint256 j = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
