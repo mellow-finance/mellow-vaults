@@ -46,6 +46,7 @@ contract TokenCells is ITokenCells, Cells {
         uint256[] calldata tokenAmounts
     ) external override returns (uint256[] memory actualTokenAmounts) {
         require(tokens.length == tokenAmounts.length, "L");
+        // TODO: verify managed tokens
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20(tokens[i]).safeTransferFrom(tokens[i], address(this), tokenAmounts[i]);

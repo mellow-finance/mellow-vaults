@@ -18,4 +18,6 @@ interface IDelegatedCells is ICells {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts);
+
+    // TODO: add methods for collecting liquidity mining rewards
 }
