@@ -9,7 +9,7 @@ import "./libraries/external/FixedPoint96.sol";
 import "./Cells.sol";
 import "./interfaces/external/aave/ILendingPool.sol";
 
-contract UniV3Cells is IDelegatedCells, Cells {
+contract AaveCells is IDelegatedCells, Cells {
     using SafeERC20 for IERC20;
     ILendingPool public lendingPool;
 
