@@ -5,8 +5,16 @@ import "./access/GovernanceAccessControl.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract PermissionedERC721Receiver is IERC721Receiver, GovernanceAccessControl {
-    address[] public nftAllowList;
+    address[] private _nftAllowList;
     mapping(address => bool) public nftAllowListIndex;
+
+    /// -------------------  PUBLIC, VIEW  -------------------
+
+    function nftAllowList() public view returns (address[] memory) {
+        return _nftAllowList;
+    }
+
+    /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
 
     function addNftAllowedTokens(address[] calldata tokens) external {
         require(_isGovernanceOrDelegate(), "GD");
@@ -14,7 +22,7 @@ contract PermissionedERC721Receiver is IERC721Receiver, GovernanceAccessControl 
             if (nftAllowListIndex[tokens[i]]) {
                 continue;
             }
-            nftAllowList.push(tokens[i]);
+            _nftAllowList.push(tokens[i]);
             nftAllowListIndex[tokens[i]] = true;
         }
     }
@@ -23,6 +31,8 @@ contract PermissionedERC721Receiver is IERC721Receiver, GovernanceAccessControl 
         require(_isGovernanceOrDelegate(), "GD");
         nftAllowListIndex[token] = false;
     }
+
+    /// -------------------  PUBLIC, MUTATING, NFT_ALLOW_LIST  -------------------
 
     function onERC721Received(
         address operator,
@@ -37,6 +47,8 @@ contract PermissionedERC721Receiver is IERC721Receiver, GovernanceAccessControl 
         require(nftAllowListIndex[_msgSender()], "IMS");
         return _onPermissionedERC721Received(operator, from, tokenId, data);
     }
+
+    /// -------------------  PRIVATE, MUTATING  -------------------
 
     function _onPermissionedERC721Received(
         address,
