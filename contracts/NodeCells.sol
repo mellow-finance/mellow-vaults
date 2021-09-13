@@ -21,6 +21,19 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
 
     constructor(string memory name, string memory symbol) Cells(name, symbol) {}
 
+    function addNftAllowedTokens(address[] calldata tokens) external {
+        require(hasRole(OWNER_ROLE, _msgSender()), "FB");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            nftAllowList.push(tokens[i]);
+            nftAllowListIndex[tokens[i]] = true;
+        }
+    }
+
+    function removeNftAllowedToken(address token) external {
+        require(hasRole(OWNER_ROLE, _msgSender()), "FB");
+        nftAllowListIndex[token] = false;
+    }
+
     /// @dev
     /// the contract is to return sorted tokens
     function delegated(uint256 nft)
