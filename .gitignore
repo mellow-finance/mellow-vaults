@@ -14,3 +14,4 @@ yarn.lock
 registry
 coverage
 coverage.json
+deployments/kovan

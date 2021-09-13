@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     },
     weth: {
       "mainnet": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-      "kovan": "0xd0a1e359811322d97991e03f863a0c30c2cf029c ",
+      "kovan": "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
     },
     aaveLendingPool: {
       "mainnet": "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9",
@@ -92,7 +92,7 @@ const config: HardhatUserConfig = {
     ],
   },
   etherscan: {
-    apiKey: process.env["ETHERSCAN_TOKEN"],
+    apiKey: process.env["ETHERSCAN_API_KEY"],
   },
 };
 
