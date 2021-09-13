@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import "./access/OwnerAccessControl.sol";
+import "./access/GovernanceAccessControl.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-contract PermissionedERC721Receiver is IERC721Receiver, OwnerAccessControl {
+contract PermissionedERC721Receiver is IERC721Receiver, GovernanceAccessControl {
     address[] public nftAllowList;
     mapping(address => bool) public nftAllowListIndex;
 
     function addNftAllowedTokens(address[] calldata tokens) external {
-        require(hasRole(OWNER_ROLE, _msgSender()), "FB");
+        require(_isGovernanceOrDelegate(), "GD");
         for (uint256 i = 0; i < tokens.length; i++) {
             if (nftAllowListIndex[tokens[i]]) {
                 continue;
@@ -20,7 +20,7 @@ contract PermissionedERC721Receiver is IERC721Receiver, OwnerAccessControl {
     }
 
     function removeNftAllowedToken(address token) external {
-        require(hasRole(OWNER_ROLE, _msgSender()), "FB");
+        require(_isGovernanceOrDelegate(), "GD");
         nftAllowListIndex[token] = false;
     }
 

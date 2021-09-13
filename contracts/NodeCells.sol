@@ -3,7 +3,7 @@ pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./access/OwnerAccessControl.sol";
+import "./access/GovernanceAccessControl.sol";
 import "./interfaces/IDelegatedCells.sol";
 import "./libraries/Array.sol";
 import "./Cells.sol";
