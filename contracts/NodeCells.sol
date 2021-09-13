@@ -7,11 +7,9 @@ import "./access/OwnerAccessControl.sol";
 import "./interfaces/IDelegatedCells.sol";
 import "./libraries/Array.sol";
 import "./Cells.sol";
+import "./PermissionedERC721Receiver.sol";
 
-contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
-    address[] public nftAllowList;
-    mapping(address => bool) public nftAllowListIndex;
-
+contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
     struct DelegatedCell {
         uint256 nft;
         address addr;
@@ -20,22 +18,6 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
     mapping(uint256 => DelegatedCell[]) public ownedCells;
 
     constructor(string memory name, string memory symbol) Cells(name, symbol) {}
-
-    function addNftAllowedTokens(address[] calldata tokens) external {
-        require(hasRole(OWNER_ROLE, _msgSender()), "FB");
-        for (uint256 i = 0; i < tokens.length; i++) {
-            if (nftAllowListIndex[tokens[i]]) {
-                continue;
-            }
-            nftAllowList.push(tokens[i]);
-            nftAllowListIndex[tokens[i]] = true;
-        }
-    }
-
-    function removeNftAllowedToken(address token) external {
-        require(hasRole(OWNER_ROLE, _msgSender()), "FB");
-        nftAllowListIndex[token] = false;
-    }
 
     /// @dev
     /// the contract is to return sorted tokens
@@ -121,17 +103,12 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
 
     function releaseNft(address to) external {}
 
-    function onERC721Received(
+    function _onPermissionedERC721Received(
         address operator,
         address,
         uint256 tokenId,
         bytes calldata data
-    ) external override returns (bytes4) {
-        // Only a handful of contracts can send nfts here
-        // You have to carefully verify that contract sending callback correctly satisfies the ERC721 protocol
-        // Most critically so that operator could not be forged
-        // Otherwise cells could be flooded with unnecessary nfts
-        require(nftAllowListIndex[_msgSender()], "IMS");
+    ) internal override returns (bytes4) {
         require(data.length == 32, "IB");
         uint256 cellNft;
         assembly {
@@ -146,7 +123,13 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
         return IERC721Receiver.onERC721Received.selector;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(Cells, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(Cells, IERC165, AccessControlEnumerable)
+        returns (bool)
+    {
         return interfaceId == type(ICells).interfaceId || super.supportsInterface(interfaceId);
     }
 
