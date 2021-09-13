@@ -24,6 +24,9 @@ contract NodeCells is IDelegatedCells, IERC721Receiver, Cells {
     function addNftAllowedTokens(address[] calldata tokens) external {
         require(hasRole(OWNER_ROLE, _msgSender()), "FB");
         for (uint256 i = 0; i < tokens.length; i++) {
+            if (nftAllowListIndex[tokens[i]]) {
+                continue;
+            }
             nftAllowList.push(tokens[i]);
             nftAllowListIndex[tokens[i]] = true;
         }
