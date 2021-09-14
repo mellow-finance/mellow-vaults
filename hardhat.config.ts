@@ -7,6 +7,7 @@ import "solidity-coverage";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import { config as dotenv } from "dotenv";
+import "./tasks/setup-basic-strategy";
 
 dotenv();
 

@@ -21,4 +21,4 @@ const func: DeployFunction = async function ({deployments, getNamedAccounts}: Ha
   
 };
 export default func;
-func.tags = ['UniV3Cells'];
+func.tags = ['NodeCells'];
