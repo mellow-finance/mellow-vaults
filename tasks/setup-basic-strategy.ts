@@ -13,15 +13,6 @@ task("setup-basic-strategy", "Mints nfts for basic strategy")
       utils.hexZeroPad(utils.hexlify(x >= 0 ? x : 2 ** 24 + x), 32).substr(2);
     const { deployer, usdc, weth } = await hre.getNamedAccounts();
     const tokens = [usdc, weth].sort();
-    // uint24 fee;
-    // int24 tickLower;
-    // int24 tickUpper;
-    // uint256 amount0Desired;
-    // uint256 amount1Desired;
-    // uint256 amount0Min;
-    // uint256 amount1Min;
-    // uint256 deadline;
-
     const params = `0x${toBytes32(3000)}${int24ToBytes32(
       parseInt(lowerTick)
     )}${int24ToBytes32(parseInt(upperTick))}${toBytes32(100)}${toBytes32(100)}${toBytes32(

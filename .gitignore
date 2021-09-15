@@ -15,3 +15,4 @@ registry
 coverage
 coverage.json
 deployments/kovan
+deployments/localhost
