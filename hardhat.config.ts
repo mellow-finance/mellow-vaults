@@ -6,6 +6,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
+import "./plugins/contracts";
 import { config as dotenv } from "dotenv";
 import "./tasks/setup-basic-strategy";
 

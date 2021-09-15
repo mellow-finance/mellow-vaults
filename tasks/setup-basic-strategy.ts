@@ -15,11 +15,13 @@ task("setup-basic-strategy", "Mints nfts for basic strategy")
     const tokens = [usdc, weth].sort();
     const params = `0x${toBytes32(3000)}${int24ToBytes32(
       parseInt(lowerTick)
-    )}${int24ToBytes32(parseInt(upperTick))}${toBytes32(100)}${toBytes32(100)}${toBytes32(
-      0
-    )}${toBytes32(0)}${Math.floor(new Date().getTime() / 1000) + 600}`;
+    )}${int24ToBytes32(parseInt(upperTick))}${toBytes32(100)}${toBytes32(
+      100
+    )}${toBytes32(0)}${toBytes32(0)}${
+      Math.floor(new Date().getTime() / 1000) + 600
+    }`;
     console.log(`Calling UniV3Cells#createCell with args ${[tokens, params]}`);
-      
+
     const receipt = await hre.deployments.execute(
       "UniV3Cells",
       { from: deployer },
@@ -28,5 +30,4 @@ task("setup-basic-strategy", "Mints nfts for basic strategy")
       params
     );
     console.log(receipt);
-    
   });
