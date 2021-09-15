@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ITokenCells.sol";
 import "./libraries/Array.sol";
 import "./libraries/external/LiquidityAmounts.sol";
@@ -193,7 +194,8 @@ contract UniV3Cells is IDelegatedCells, Cells {
             amount1Min := mload(add(params, 224))
             deadline := mload(add(params, 256))
         }
-
+        _allowTokenIfNecessary(tokens[0]);
+        _allowTokenIfNecessary(tokens[1]);
         (uint256 uniNft, , , ) = positionManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: tokens[0],
@@ -212,5 +214,12 @@ contract UniV3Cells is IDelegatedCells, Cells {
         uint256 cellNft = super._mintCellNft(tokens, params);
         uniNfts[cellNft] = uniNft;
         return cellNft;
+    }
+
+    function _allowTokenIfNecessary(address token) internal {
+        // Since tokens are not stored at contract address after any tx - it's safe to give unlimited approval
+        if (IERC20(token).allowance(address(positionManager), address(this)) < type(uint256).max / 2) {
+            IERC20(token).approve(address(positionManager), type(uint256).max);
+        }
     }
 }

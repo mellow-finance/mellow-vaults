@@ -5,7 +5,9 @@ export type ExternalContractName = typeof CONTRACTS[number];
 
 declare module "hardhat/types/runtime" {
   interface HardhatRuntimeEnvironment {
-    getExternalContract: (name: ExternalContractName) => Promise<Contract>;
+    getExternalContract: (
+      nameOrAddress: ExternalContractName | string
+    ) => Promise<Contract>;
     externalContracts: typeof CONTRACTS;
   }
 }
