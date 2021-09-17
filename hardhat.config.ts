@@ -8,7 +8,7 @@ import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "./plugins/contracts";
 import { config as dotenv } from "dotenv";
-import "./tasks/setup-basic-strategy";
+import "./tasks/uniV3Cells";
 
 dotenv();
 
@@ -18,7 +18,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: process.env["MAINNET_RPC"] || "",
-        blockNumber: 13228916,
+        blockNumber: 13242385,
       },
       accounts: [
         {

@@ -2,6 +2,7 @@
 pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/ITokenCells.sol";
 import "./libraries/Array.sol";
 import "./libraries/external/LiquidityAmounts.sol";
@@ -12,6 +13,7 @@ import "./interfaces/external/univ3/IUniswapV3Factory.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 
 contract UniV3Cells is IDelegatedCells, Cells {
+    using SafeERC20 for IERC20;
     INonfungiblePositionManager public immutable positionManager;
     mapping(uint256 => uint256) public uniNfts;
 
@@ -194,8 +196,13 @@ contract UniV3Cells is IDelegatedCells, Cells {
             amount1Min := mload(add(params, 224))
             deadline := mload(add(params, 256))
         }
+        
+        // !!! Call to untrusted contracts
+        IERC20(tokens[0]).safeTransferFrom(_msgSender(), address(this), amount0Desired);
+        IERC20(tokens[1]).safeTransferFrom(_msgSender(), address(this), amount1Desired);
         _allowTokenIfNecessary(tokens[0]);
         _allowTokenIfNecessary(tokens[1]);
+        // !!! End call
         (uint256 uniNft, , , ) = positionManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: tokens[0],
@@ -210,7 +217,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
                 recipient: address(this),
                 deadline: deadline
             })
-        );
+        );        
         uint256 cellNft = super._mintCellNft(tokens, params);
         uniNfts[cellNft] = uniNft;
         return cellNft;

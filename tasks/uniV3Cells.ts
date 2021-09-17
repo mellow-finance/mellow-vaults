@@ -5,7 +5,7 @@ import { int24ToBytes32, sendTx, uintToBytes32 } from "./base";
 import { approve, getTokenContract } from "./erc20";
 import { map, prop, propEq, sortBy } from "ramda";
 
-task("mint", "Mints nfts for basic strategy")
+task("create-uni-v3-cell", "Mints nft for UniV3Cells")
   .addParam("token0", "The name of the token0", undefined, types.string)
   .addParam("token1", "The name of the token1", undefined, types.string)
   .addParam("fee", "The name of the token1", 3000, types.int)
@@ -41,8 +41,8 @@ task("mint", "Mints nfts for basic strategy")
         fee,
         parseInt(lowerTick),
         parseInt(upperTick),
-        amount0,
-        amount1,
+        BigNumber.from(amount0),
+        BigNumber.from(amount1),
         BigNumber.from(0),
         BigNumber.from(0),
         deadline
@@ -78,9 +78,15 @@ export const createUniV3Cell = async (
   const tokens = sortBy(prop("address"), [t0, t1]);
   const params = `0x${feeBytes}${lowerTickBytes}${upperTickBytes}${token0AmountBytes}${token1AmountBytes}${amount0MinBytes}${amount1MinBytes}${deadlineBytes}`;
   const uniV3Cells = await hre.ethers.getContract("UniV3Cells");
+  console.log(`Signer: ${await uniV3Cells.signer.getAddress()}`);
   await approve(hre, t0, uniV3Cells.address, amount0);
   await approve(hre, t1, uniV3Cells.address, amount1);
-  console.log(`Calling UniV3Cells#createCell with args ${[tokens, params]}`);
+  console.log(
+    `Calling UniV3Cells#createCell with args ${[
+      map(prop("address"), tokens),
+      params,
+    ]}`
+  );
   await sendTx(
     hre,
     await uniV3Cells.populateTransaction.createCell(

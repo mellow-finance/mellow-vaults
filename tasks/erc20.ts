@@ -9,12 +9,21 @@ export const approve = async (
   to: string,
   value: BigNumber
 ) => {
+  const { deployer } = await hre.getNamedAccounts();
   const token = await getTokenContract(hre, tokenNameOrAddressOrContract);
-  if ((await token.allowance(to)).gte(value)) {
+  if ((await token.allowance(deployer, to)).lt(value)) {
     console.log(
-      `Approving token ${token.address} to ${to} with value ${value.toString()}`
+      `Approving token \`${
+        token.address
+      }\` to \`${to}\` with value \`${value.toString()}\``
     );
-    sendTx(hre, await token.populateTransaction.approve(to, value));
+    await sendTx(hre, await token.populateTransaction.approve(to, value));
+  } else {
+    console.log(
+      `Skipping approve token \`${
+        token.address
+      }\` to \`${to}\` with value \`${value.toString()}\``
+    );
   }
 };
 
