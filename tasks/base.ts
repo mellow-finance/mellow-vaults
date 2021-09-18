@@ -1,11 +1,12 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { utils, BigNumber } from "ethers";
+import { utils, BigNumber, Contract } from "ethers";
+import { TransactionReceipt } from "@ethersproject/abstract-provider";
 
 export async function sendTx(
   hre: HardhatRuntimeEnvironment,
   tx: PopulatedTransaction
-) {
+): Promise<TransactionReceipt> {
   console.log("Sending transaction to the pool...");
 
   const [operator] = await hre.ethers.getSigners();
@@ -13,9 +14,31 @@ export async function sendTx(
   console.log(
     `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
   );
-  await txResp.wait();
+  const receipt = await txResp.wait();
   console.log("Transaction confirmed");
+  return receipt;
 }
+
+export const getContract = async (
+  hre: HardhatRuntimeEnvironment,
+  contractOrNameOrAddress: Contract | string
+): Promise<Contract> => {
+  if (contractOrNameOrAddress instanceof Contract) {
+    return contractOrNameOrAddress;
+  }
+  const deployments = await hre.deployments.all();
+  for (const name in deployments) {
+    const deployment = deployments[name];
+    if (
+      name === contractOrNameOrAddress ||
+      deployment.address === contractOrNameOrAddress
+    ) {
+      return await hre.ethers.getContractAt(name, deployment.address);
+    }
+  }
+  throw `Contract \`${contractOrNameOrAddress}\` is not found`;
+};
+
 export const impersonate = async (
   hre: HardhatRuntimeEnvironment,
   accountName: string

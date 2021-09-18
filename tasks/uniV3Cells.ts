@@ -87,11 +87,14 @@ export const createUniV3Cell = async (
       params,
     ]}`
   );
-  await sendTx(
+  const receipt = await sendTx(
     hre,
     await uniV3Cells.populateTransaction.createCell(
       map(prop("address"), tokens),
       params
     )
   );
+  console.log(receipt.logs);
+
+  //   return BigNumber.from(receipt.logs[0].data);
 };
