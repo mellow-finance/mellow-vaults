@@ -1,0 +1,2 @@
+export const CREATE_CELL_EVENT_HASH =
+  "0xa4187c4af7809789d59f24caeeab8e96f5364e620437ebaee0a88c89fbb6c9f4";

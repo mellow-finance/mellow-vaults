@@ -3,6 +3,7 @@ import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { map, pipe, prop, sortBy, zip } from "ramda";
 import { getContract, sendTx } from "./base";
+import { CREATE_CELL_EVENT_HASH } from "./contants";
 import { getTokenContract } from "./erc20";
 
 task("deposit", "Deposits tokens into cell")
@@ -31,6 +32,19 @@ task("withdraw", "Withdraw tokens from cell")
     );
   });
 
+task("create-cell", "Mints nft for Cells contract")
+  .addParam(
+    "cells",
+    "The name or address of the cells contract",
+    undefined,
+    types.string
+  )
+  .addParam("tokens", "The name of the token0", undefined, types.json)
+  .addOptionalParam("params", "Optional params", undefined, types.string)
+  .setAction(async ({ cells, tokens, params }, hre) => {
+    await createCell(hre, cells, tokens, params);
+  });
+
 export const deposit = async (
   hre: HardhatRuntimeEnvironment,
   cellsNameOrAddressOrContract: Contract | string,
@@ -44,6 +58,7 @@ export const deposit = async (
     tokenAmounts
   );
   const contract = await getContract(hre, cellsNameOrAddressOrContract);
+
   await sendTx(
     hre,
     await contract.populateTransaction.deposit(nft, addresses, amounts)
@@ -70,6 +85,32 @@ export const withdraw = async (
   );
 };
 
+export const createCell = async (
+  hre: HardhatRuntimeEnvironment,
+  cellsNameOrAddressOrContract: Contract | string,
+  tokenNameOrAddressOrContracts: string[],
+  params?: string
+) => {
+  const { addresses } = await extractSortedTokenAddressesAndAmounts(
+    hre,
+    tokenNameOrAddressOrContracts,
+    Array(tokenNameOrAddressOrContracts.length)
+  );
+
+  const cells = await getContract(hre, cellsNameOrAddressOrContract);
+  const receipt = await sendTx(
+    hre,
+    await cells.populateTransaction.createCell(addresses, params || [])
+  );
+  for (const log of receipt.logs) {
+    if (log.topics[0] === CREATE_CELL_EVENT_HASH) {
+      console.log(
+        `Minted cell nft: ${BigNumber.from(log.topics[2]).toString()}`
+      );
+    }
+  }
+};
+
 const extractSortedTokenAddressesAndAmounts = async (
   hre: HardhatRuntimeEnvironment,
   tokenNameOrAddressOrContracts: string[],
@@ -81,7 +122,7 @@ const extractSortedTokenAddressesAndAmounts = async (
   const tokenData = pipe(
     map(prop("address")),
     zip(tokenAmounts),
-    map(([address, amount]) => ({ address, amount })),
+    map(([amount, address]) => ({ address, amount })),
     sortBy(prop("address"))
   )(tokenContracts);
   const sortedAddresses = map(prop("address"), tokenData);

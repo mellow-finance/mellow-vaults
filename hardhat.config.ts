@@ -8,6 +8,7 @@ import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "./plugins/contracts";
 import { config as dotenv } from "dotenv";
+import "./tasks/cells";
 import "./tasks/uniV3Cells";
 
 dotenv();

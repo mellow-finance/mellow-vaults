@@ -4,6 +4,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { int24ToBytes32, sendTx, uintToBytes32 } from "./base";
 import { approve, getTokenContract } from "./erc20";
 import { map, prop, propEq, sortBy } from "ramda";
+import { CREATE_CELL_EVENT_HASH } from "./contants";
 
 task("create-uni-v3-cell", "Mints nft for UniV3Cells")
   .addParam("token0", "The name of the token0", undefined, types.string)
@@ -95,10 +96,7 @@ export const createUniV3Cell = async (
     )
   );
   for (const log of receipt.logs) {
-    if (
-      log.topics[0] ===
-      "0xa4187c4af7809789d59f24caeeab8e96f5364e620437ebaee0a88c89fbb6c9f4"
-    ) {
+    if (log.topics[0] === CREATE_CELL_EVENT_HASH) {
       console.log(
         `Minted cell nft: ${BigNumber.from(log.topics[2]).toString()}`
       );
