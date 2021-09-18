@@ -94,7 +94,14 @@ export const createUniV3Cell = async (
       params
     )
   );
-  console.log(receipt.logs);
-
-  //   return BigNumber.from(receipt.logs[0].data);
+  for (const log of receipt.logs) {
+    if (
+      log.topics[0] ===
+      "0xa4187c4af7809789d59f24caeeab8e96f5364e620437ebaee0a88c89fbb6c9f4"
+    ) {
+      console.log(
+        `Minted cell nft: ${BigNumber.from(log.topics[2]).toString()}`
+      );
+    }
+  }
 };
