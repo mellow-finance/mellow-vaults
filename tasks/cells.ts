@@ -87,9 +87,11 @@ export const withdraw = async (
 export const createCell = async (
   hre: HardhatRuntimeEnvironment,
   cellsNameOrAddressOrContract: Contract | string,
-  tokenNameOrAddressOrContracts: string[],
+  tokenNameOrAddressOrContracts: (Contract | string)[],
   params?: string
-) => {
+): Promise<BigNumber> => {
+  console.log(`Creating cell for ${cellsNameOrAddressOrContract}`);
+
   const { addresses } = await extractSortedTokenAddressesAndAmounts(
     hre,
     tokenNameOrAddressOrContracts,
@@ -103,16 +105,17 @@ export const createCell = async (
   );
   for (const log of receipt.logs) {
     if (log.topics[0] === CREATE_CELL_EVENT_HASH) {
-      console.log(
-        `Minted cell nft: ${BigNumber.from(log.topics[2]).toString()}`
-      );
+      const nft = BigNumber.from(log.topics[2]);
+      console.log(`Minted cell nft: ${nft.toString()}`);
+      return nft;
     }
   }
+  throw `Could not find nft number in tx logs`;
 };
 
 const extractSortedTokenAddressesAndAmounts = async (
   hre: HardhatRuntimeEnvironment,
-  tokenNameOrAddressOrContracts: string[],
+  tokenNameOrAddressOrContracts: (Contract | string)[],
   tokenAmounts: BigNumber[]
 ): Promise<{ addresses: string[]; amounts: BigNumber[] }> => {
   const tokenContracts = await Promise.all(

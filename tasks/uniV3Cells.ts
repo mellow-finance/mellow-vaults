@@ -68,7 +68,7 @@ export const createUniV3Cell = async (
   amount0Min: BigNumber,
   amount1Min: BigNumber,
   deadline: number
-) => {
+): Promise<BigNumber> => {
   const feeBytes = int24ToBytes32(BigNumber.from(fee));
   const lowerTickBytes = int24ToBytes32(BigNumber.from(lowerTick));
   const upperTickBytes = int24ToBytes32(BigNumber.from(upperTick));
@@ -102,9 +102,10 @@ export const createUniV3Cell = async (
   );
   for (const log of receipt.logs) {
     if (log.topics[0] === CREATE_CELL_EVENT_HASH) {
-      console.log(
-        `Minted cell nft: ${BigNumber.from(log.topics[2]).toString()}`
-      );
+      const nft = BigNumber.from(log.topics[2]);
+      console.log(`Minted cell nft: ${nft.toString()}`);
+      return nft;
     }
   }
+  throw `Could not find nft number in tx logs`;
 };
