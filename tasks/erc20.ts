@@ -1,7 +1,6 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { Contract, BigNumber } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { sendTx } from "./base";
+import { getContractWithAbi, sendTx } from "./base";
 
 export const approve = async (
   hre: HardhatRuntimeEnvironment,
@@ -10,7 +9,11 @@ export const approve = async (
   value: BigNumber
 ) => {
   const { deployer } = await hre.getNamedAccounts();
-  const token = await getTokenContract(hre, tokenNameOrAddressOrContract);
+  const token = await getContractWithAbi(
+    hre,
+    tokenNameOrAddressOrContract,
+    "erc20"
+  );
   if ((await token.allowance(deployer, to)).lt(value)) {
     console.log(
       `Approving token \`${
@@ -27,30 +30,34 @@ export const approve = async (
   }
 };
 
-const getTokenContractByNameOrAddress = async (
+export const transfer = async (
   hre: HardhatRuntimeEnvironment,
-  tokenNameOrAddress: string
-): Promise<Contract> => {
-  try {
-    return await hre.getExternalContract(tokenNameOrAddress);
-  } catch {
-    if (!hre.ethers.utils.isAddress(tokenNameOrAddress)) {
-      throw `Token contract ${tokenNameOrAddress} not found`;
-    }
-    const abi = require("./abi/erc20.abi.json");
-    return await hre.ethers.getContractAt(abi, tokenNameOrAddress);
-  }
+  tokenNameOrAddressOrContract: string | Contract,
+  to: string,
+  value: BigNumber
+) => {
+  const token = await getContractWithAbi(
+    hre,
+    tokenNameOrAddressOrContract,
+    "erc20"
+  );
+  await sendTx(hre, await token.populateTransaction.transfer(to, value));
 };
 
-export const getTokenContract = async (
+export const transferFrom = async (
   hre: HardhatRuntimeEnvironment,
-  tokenNameOrAddressOrContract: string | Contract
-): Promise<Contract> => {
-  if (tokenNameOrAddressOrContract instanceof Contract) {
-    return tokenNameOrAddressOrContract;
-  }
-  return await getTokenContractByNameOrAddress(
+  tokenNameOrAddressOrContract: string | Contract,
+  from: string,
+  to: string,
+  value: BigNumber
+) => {
+  const token = await getContractWithAbi(
     hre,
-    tokenNameOrAddressOrContract
+    tokenNameOrAddressOrContract,
+    "erc20"
+  );
+  await sendTx(
+    hre,
+    await token.populateTransaction.transferFrom(from, to, value)
   );
 };

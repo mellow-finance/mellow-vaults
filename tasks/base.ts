@@ -1,7 +1,9 @@
 import { PopulatedTransaction } from "@ethersproject/contracts";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { utils, BigNumber, Contract } from "ethers";
+import { utils, BigNumber, Contract, ethers } from "ethers";
 import { TransactionReceipt } from "@ethersproject/abstract-provider";
+
+export type ABI = "erc20" | "erc721";
 
 export async function sendTx(
   hre: HardhatRuntimeEnvironment,
@@ -26,6 +28,10 @@ export const getContract = async (
   if (contractOrNameOrAddress instanceof Contract) {
     return contractOrNameOrAddress;
   }
+  try {
+    return await hre.getExternalContract(contractOrNameOrAddress);
+  } catch {}
+
   const deployments = await hre.deployments.all();
   for (const name in deployments) {
     const deployment = deployments[name];
@@ -37,6 +43,29 @@ export const getContract = async (
     }
   }
   throw `Contract \`${contractOrNameOrAddress}\` is not found`;
+};
+
+export const resolveAddress = async (
+  hre: HardhatRuntimeEnvironment,
+  contractOrNameOrAddress: Contract | string
+): Promise<string> => {
+  if (
+    typeof contractOrNameOrAddress === "string" &&
+    hre.ethers.utils.isAddress(contractOrNameOrAddress)
+  ) {
+    return contractOrNameOrAddress;
+  }
+  return (await getContract(hre, contractOrNameOrAddress)).address;
+};
+
+export const getContractWithAbi = async (
+  hre: HardhatRuntimeEnvironment,
+  contractOrNameOrAddress: string | Contract,
+  abi: ABI
+): Promise<Contract> => {
+  const address = await resolveAddress(hre, contractOrNameOrAddress);
+  const abiData = require(`./abi/${abi}.abi.json`);
+  return await hre.ethers.getContractAt(abiData, address);
 };
 
 export const impersonate = async (

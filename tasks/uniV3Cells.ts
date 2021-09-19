@@ -1,8 +1,13 @@
 import { task, types } from "hardhat/config";
 import { Contract, BigNumber } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { int24ToBytes32, sendTx, uintToBytes32 } from "./base";
-import { approve, getTokenContract } from "./erc20";
+import {
+  getContractWithAbi,
+  int24ToBytes32,
+  sendTx,
+  uintToBytes32,
+} from "./base";
+import { approve } from "./erc20";
 import { map, prop, propEq, sortBy } from "ramda";
 import { CREATE_CELL_EVENT_HASH } from "./contants";
 
@@ -74,8 +79,8 @@ export const createUniV3Cell = async (
   const deadlineBytes = uintToBytes32(
     BigNumber.from(Math.floor(new Date().getTime() / 1000) + deadline)
   );
-  const t0 = await getTokenContract(hre, token0);
-  const t1 = await getTokenContract(hre, token1);
+  const t0 = await getContractWithAbi(hre, token0, "erc20");
+  const t1 = await getContractWithAbi(hre, token1, "erc20");
   const tokens = sortBy(prop("address"), [t0, t1]);
   const params = `0x${feeBytes}${lowerTickBytes}${upperTickBytes}${token0AmountBytes}${token1AmountBytes}${amount0MinBytes}${amount1MinBytes}${deadlineBytes}`;
   const uniV3Cells = await hre.ethers.getContract("UniV3Cells");

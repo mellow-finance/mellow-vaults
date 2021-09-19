@@ -2,9 +2,8 @@ import { BigNumber, Contract } from "ethers";
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { map, pipe, prop, sortBy, zip } from "ramda";
-import { getContract, sendTx } from "./base";
+import { getContract, getContractWithAbi, sendTx } from "./base";
 import { CREATE_CELL_EVENT_HASH } from "./contants";
-import { getTokenContract } from "./erc20";
 
 task("deposit", "Deposits tokens into cell")
   .addParam("name", "Name of the cells contracts", undefined, types.string)
@@ -117,7 +116,10 @@ const extractSortedTokenAddressesAndAmounts = async (
   tokenAmounts: BigNumber[]
 ): Promise<{ addresses: string[]; amounts: BigNumber[] }> => {
   const tokenContracts = await Promise.all(
-    map((name) => getTokenContract(hre, name), tokenNameOrAddressOrContracts)
+    map(
+      (name) => getContractWithAbi(hre, name, "erc20"),
+      tokenNameOrAddressOrContracts
+    )
   );
   const tokenData = pipe(
     map(prop("address")),
