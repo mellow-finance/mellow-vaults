@@ -5,7 +5,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { createUniV3Cell } from "./uniV3Cells";
 import { createCell } from "./cells";
 import { approve, safeTransferFrom } from "./erc721";
-import { resolveAddress } from "./base";
+import { resolveAddress, uintToBytes32 } from "./base";
 
 task("create-vault-1", "Mints nft for vault-1 strategy")
   .addParam("token0", "The name of the token0", undefined, types.string)
@@ -69,24 +69,26 @@ export const createVault1 = async (
     upperTick,
     amount0,
     amount1,
-    amount0.div(2),
-    amount1.div(2),
+    BigNumber.from(0),
+    BigNumber.from(0),
     1800
   );
   const aaveNft0 = await createCell(hre, "AaveCells", [token0]);
   const aaveNft1 = await createCell(hre, "AaveCells", [token1]);
   const tokenNft = await createCell(hre, "TokenCells", [token0, token1]);
-  await moveNftToNodeCells(hre, "UniV3Cells", uniNft, strategist);
-  await moveNftToNodeCells(hre, "AaveCells", aaveNft0, strategist);
-  await moveNftToNodeCells(hre, "AaveCells", aaveNft1, strategist);
-  await moveNftToNodeCells(hre, "TokenCells", tokenNft, strategist);
+  const nodeNft = await createCell(hre, "NodeCells", [token0, token1]);
+  await moveNftToNodeCells(hre, "UniV3Cells", uniNft, strategist, nodeNft);
+  await moveNftToNodeCells(hre, "AaveCells", aaveNft0, strategist, nodeNft);
+  await moveNftToNodeCells(hre, "AaveCells", aaveNft1, strategist, nodeNft);
+  await moveNftToNodeCells(hre, "TokenCells", tokenNft, strategist, nodeNft);
 };
 
 export const moveNftToNodeCells = async (
   hre: HardhatRuntimeEnvironment,
   tokenNameOrAddressOrContract: string | Contract,
   nft: BigNumber,
-  to: string
+  to: string,
+  toCell: BigNumber
 ) => {
   console.log(
     `Moving nft \`${nft.toString()}\` in contract \`${tokenNameOrAddressOrContract}\` to NodeCells`
@@ -99,6 +101,7 @@ export const moveNftToNodeCells = async (
     tokenNameOrAddressOrContract,
     nft,
     deployer,
-    nodeCellsAddress
+    nodeCellsAddress,
+    `0x${uintToBytes32(toCell)}`
   );
 };

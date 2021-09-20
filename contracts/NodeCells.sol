@@ -154,18 +154,20 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
 
     /// -------------------  PRIVATE, MUTATING  -------------------
     function _onPermissionedERC721Received(
-        address operator,
         address,
+        address from,
         uint256 tokenId,
         bytes calldata data
     ) internal override returns (bytes4) {
         require(data.length == 32, "IB");
         uint256 cellNft;
+        // TODO: Figure out why calldataload don't need a 32 bytes offset for the bytes length like mload
+        // probably due to how .offset works
         assembly {
-            cellNft := mload(add(data.offset, 32))
+            cellNft := calldataload(data.offset)
         }
         // Accept only from cell owner / operator
-        require(_isApprovedOrOwner(operator, cellNft), "IO"); // Also checks that the token exists
+        require(_isApprovedOrOwner(from, cellNft), "IO"); // Also checks that the token exists
         DelegatedCell memory externalCell = DelegatedCell({nft: tokenId, addr: _msgSender()});
         if (!_delegatedCellIsOwned(cellNft, externalCell)) {
             ownedCells[cellNft].push(externalCell);

@@ -13,15 +13,15 @@ export const approve = async (
     tokenNameOrAddressOrContract,
     "erc721"
   );
-  if (!(await token.getApproved(nft)).toLowerCase().eq(to.toLowerCase())) {
+  if ((await token.getApproved(nft)).toLowerCase() === to.toLowerCase()) {
+    console.log(
+      `Skipping approve nft \`${nft}\` at token \`${token.address}\` to \`${to}\``
+    );
+  } else {
     console.log(
       `Approving nft \`${nft}\` at token \`${token.address}\` to \`${to}\``
     );
     await sendTx(hre, await token.populateTransaction.approve(to, nft));
-  } else {
-    console.log(
-      `Skipping approve nft \`${nft}\` at token \`${token.address}\` to \`${to}\``
-    );
   }
 };
 
@@ -30,7 +30,8 @@ export const safeTransferFrom = async (
   tokenNameOrAddressOrContract: string | Contract,
   nft: BigNumber,
   from: string,
-  to: string
+  to: string,
+  params?: string
 ) => {
   const token = await getContractWithAbi(
     hre,
@@ -39,6 +40,8 @@ export const safeTransferFrom = async (
   );
   await sendTx(
     hre,
-    await token.populateTransaction.safeTransfer(from, to, nft)
+    await token.populateTransaction[
+      "safeTransferFrom(address,address,uint256,bytes)"
+    ](from, to, nft, params || [])
   );
 };

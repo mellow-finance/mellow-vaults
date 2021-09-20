@@ -13,3 +13,9 @@ npx hardhat --network localhost create-uni-v3-cell --token0 usdc --token1 weth -
 ```
 npx hardhat --network localhost create-cell --cells 'TokenCells' --tokens '["usdc", "weth"]'
 ```
+
+#### Create strategy-1 vault
+
+```
+npx hardhat --network localhost create-vault-1 --lower-tick 195780 --upper-tick 195900 --token0 usdc --token1 weth --strategist 0x638F16FB633747d140e1Ed6219dB783e52a2207B
+```
