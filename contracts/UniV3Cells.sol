@@ -185,14 +185,22 @@ contract UniV3Cells is IDelegatedCells, Cells {
             ,
 
         ) = positionManager.positions(uniNft);
-        uint256 liquidity0 = 0;
-        uint256 liquidity1 = 0;
-        if (totalAmounts[0] != 0) {
-            liquidity0 = totalLiquidity * pTokenAmounts[0] / totalAmounts[0];
+        if (totalAmounts[0] == 0) {
+            if (pTokenAmounts[0] == 0) {
+                return totalLiquidity * pTokenAmounts[1] / totalAmounts[1]; // liquidity1
+            } else {
+                return 0;
+            }
         }
-        if (totalAmounts[1] != 0) {
-            liquidity1 = totalLiquidity * pTokenAmounts[1] / totalAmounts[1];
+        if (totalAmounts[1] == 0) {
+            if (pTokenAmounts[1] == 0) {
+                return totalLiquidity * pTokenAmounts[0] / totalAmounts[0]; // liquidity0
+            } else {
+                return 0;
+            }
         }
+        uint256 liquidity0 = totalLiquidity * pTokenAmounts[0] / totalAmounts[0];
+        uint256 liquidity1 = totalLiquidity * pTokenAmounts[1] / totalAmounts[1];
         return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 
