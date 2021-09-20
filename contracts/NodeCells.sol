@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./access/GovernanceAccessControl.sol";
 import "./interfaces/IDelegatedCells.sol";
 import "./libraries/Array.sol";
@@ -10,6 +12,8 @@ import "./Cells.sol";
 import "./PermissionedERC721Receiver.sol";
 
 contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
+    using SafeERC20 for IERC20;
+
     struct DelegatedCell {
         uint256 nft;
         address addr;
@@ -73,8 +77,15 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         uint256[][] memory delegatedTokenAmounts = _delegatedByCell(nft);
         uint256[][] memory amountsToDeposit = Array.splitAmounts(cellTokenAmounts, delegatedTokenAmounts);
         actualTokenAmounts = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            IERC20(tokens[i]).safeTransferFrom(_msgSender(), address(this), tokenAmounts[i]);
+        }
         for (uint256 i = 0; i < cellOwnedCells.length; i++) {
             DelegatedCell storage cell = cellOwnedCells[i];
+            for (uint256 j = 0; j < tokens.length; j++) {
+                /// TODO: not secure, see method _allowTokenIfNecessary
+                _allowTokenIfNecessary(cellTokens[j], cell.addr);
+            }
             uint256[] memory actualCellAmounts = IDelegatedCells(cell.addr).deposit(
                 cell.nft,
                 cellTokens,
@@ -83,6 +94,11 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
             for (uint256 j = 0; j < tokens.length; j++) {
                 actualTokenAmounts[j] += actualCellAmounts[j];
             }
+        }
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (actualTokenAmounts[i] < tokenAmounts[i]) {
+                IERC20(tokens[i]).safeTransfer(_msgSender(), tokenAmounts[i] - actualTokenAmounts[i]);
+            } 
         }
     }
 
@@ -173,5 +189,12 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
             ownedCells[cellNft].push(externalCell);
         }
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    function _allowTokenIfNecessary(address token, address cells) internal {
+        // !!! TODO: this is not secure, add whitelist here - WhiteListAllowance contract
+        if (IERC20(token).allowance(address(cells), address(this)) < type(uint256).max / 2) {
+            IERC20(token).approve(address(cells), type(uint256).max);
+        }
     }
 }

@@ -3,7 +3,7 @@ import { task, types } from "hardhat/config";
 import { Contract } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { createUniV3Cell } from "./uniV3Cells";
-import { createCell, deposit } from "./cells";
+import { createCell, deposit, withdraw } from "./cells";
 import { safeTransferFrom, approve as approve721 } from "./erc721";
 import { approve } from "./erc20";
 import { resolveAddress, uintToBytes32 } from "./base";
@@ -83,12 +83,16 @@ export const createVault1 = async (
     BigNumber.from(0),
     1800
   );
-  const aaveNft0 = await createCell(hre, "AaveCells", [token0]);
-  const aaveNft1 = await createCell(hre, "AaveCells", [token1]);
+  const aaveNft = await createCell(hre, "AaveCells", [token0, token1]);
   const tokenNft = await createCell(hre, "TokenCells", [token0, token1]);
   const nodeNft = await createCell(hre, "NodeCells", [token0, token1]);
-  await deposit(hre, "AaveCells", aaveNft0, [token0], [amount0]);
-  await deposit(hre, "AaveCells", aaveNft1, [token1], [amount1]);
+  await deposit(
+    hre,
+    "AaveCells",
+    aaveNft,
+    [token0, token1],
+    [amount0, amount1]
+  );
   await deposit(
     hre,
     "TokenCells",
@@ -98,13 +102,22 @@ export const createVault1 = async (
   );
 
   await moveNftToNodeCells(hre, "UniV3Cells", uniNft, strategist, nodeNft);
-  await moveNftToNodeCells(hre, "AaveCells", aaveNft0, strategist, nodeNft);
-  await moveNftToNodeCells(hre, "AaveCells", aaveNft1, strategist, nodeNft);
+  await moveNftToNodeCells(hre, "AaveCells", aaveNft, strategist, nodeNft);
   await moveNftToNodeCells(hre, "TokenCells", tokenNft, strategist, nodeNft);
   await deposit(
     hre,
     "NodeCells",
     nodeNft,
+    [token0, token1],
+    [amount0, amount1]
+  );
+  await withdraw(
+    hre,
+    "NodeCells",
+    nodeNft,
+    (
+      await hre.getNamedAccounts()
+    ).deployer,
     [token0, token1],
     [amount0, amount1]
   );

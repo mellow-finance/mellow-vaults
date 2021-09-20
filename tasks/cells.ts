@@ -51,6 +51,10 @@ export const deposit = async (
   tokenNameOrAddressOrContracts: (Contract | string)[],
   tokenAmounts: BigNumber[]
 ) => {
+  console.log(
+    `Depositing to \`${cellsNameOrAddressOrContract}\`, nft \`${nft.toString()}\`...`
+  );
+
   const { addresses, amounts } = await extractSortedTokenAddressesAndAmounts(
     hre,
     tokenNameOrAddressOrContracts,
@@ -72,6 +76,9 @@ export const withdraw = async (
   tokenNameOrAddressOrContracts: (Contract | string)[],
   tokenAmounts: BigNumber[]
 ) => {
+  console.log(
+    `Withdrawing from \`${cellsNameOrAddressOrContract}\`, nft \`${nft.toString()}\` to \`${to}\`...`
+  );
   const { addresses, amounts } = await extractSortedTokenAddressesAndAmounts(
     hre,
     tokenNameOrAddressOrContracts,

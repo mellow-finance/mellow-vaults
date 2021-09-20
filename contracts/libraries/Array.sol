@@ -68,7 +68,7 @@ library Array {
     /// norm is a vector 1 x k
     /// the error is up to k tokens due to rounding
     /// @param amounts Amounts to split, vector n x 1
-    /// @param weights Weights of the split, matrix k x n, weights[i] is vector n x 1.
+    /// @param weights Weights of the split, matrix n x k, weights[i] is vector n x 1.
     /// Weights do not need to sum to 1 in each column, but they will be normalized on split.
     function splitAmounts(uint256[] memory amounts, uint256[][] memory weights)
         internal
@@ -94,7 +94,7 @@ library Array {
         for (uint256 i = 0; i < k; i++) {
             res[i] = new uint256[](n);
             for (uint256 j = 0; j < n; j++) {
-                res[i][j] = (weights[i][j] * amounts[j]) / weightsNorm[i];
+                res[i][j] = (weights[i][j] * amounts[j]) / weightsNorm[j];
             }
         }
         return res;

@@ -84,6 +84,11 @@ contract UniV3Cells is IDelegatedCells, Cells {
         pTokens[0] = token0;
         pTokens[1] = token1;
         uint256[] memory pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
+        for (uint256 i = 0; i < pTokenAmounts.length; i++) {
+            IERC20(pTokens[i]).safeTransferFrom(_msgSender(), address(this), pTokenAmounts[i]);
+            _allowTokenIfNecessary(pTokens[i]);
+        }
+
         (
             ,
             uint256 amount0,
@@ -102,6 +107,12 @@ contract UniV3Cells is IDelegatedCells, Cells {
         actualTokenAmounts = new uint256[](2);
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
+        for (uint256 i = 0; i < pTokens.length; i++) {
+            if (actualTokenAmounts[i] < pTokenAmounts[i]) {
+                IERC20(pTokens[i]).safeTransfer(_msgSender(), pTokenAmounts[i] - actualTokenAmounts[i]);
+            } 
+        }
+
     }
 
     function withdraw(
