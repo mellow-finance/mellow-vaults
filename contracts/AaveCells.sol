@@ -83,10 +83,12 @@ contract AaveCells is IDelegatedCells, Cells {
         for (uint256 i = 0; i < pTokens.length; i++) {
             address aToken = _getAToken(pTokens[i]);
             uint256 tokensToBurn = (pTokenAmounts[i] * tokenBalances[pTokens[i]]) / IERC20(aToken).balanceOf(address(this));
+            if (tokensToBurn == 0) {
+                continue;
+            }
             tokenBalances[pTokens[i]] -= tokensToBurn;
             tokenCellsBalances[nft][pTokens[i]] -= tokensToBurn;
             lendingPool.withdraw(pTokens[i], pTokenAmounts[i], to);
-            IERC20(pTokens[i]).safeTransfer(to, pTokenAmounts[i]);
         }
         actualTokenAmounts = tokenAmounts;
     }

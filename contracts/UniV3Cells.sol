@@ -127,6 +127,12 @@ contract UniV3Cells is IDelegatedCells, Cells {
         uint256 uniNft = uniNfts[nft];
         require(uniNft > 0, "UNFT0");
         uint256 liquidity = _getWithdrawLiquidity(nft, uniNft, tokens, tokenAmounts);
+        if (liquidity == 0) {
+            actualTokenAmounts = new uint256[](2);
+            actualTokenAmounts[0] = 0;
+            actualTokenAmounts[1] = 0;
+            return actualTokenAmounts;
+        }
         (
             uint256 amount0,
             uint256 amount1
@@ -179,8 +185,14 @@ contract UniV3Cells is IDelegatedCells, Cells {
             ,
 
         ) = positionManager.positions(uniNft);
-        uint256 liquidity0 = totalLiquidity * pTokenAmounts[0] / totalAmounts[0];
-        uint256 liquidity1 = totalLiquidity * pTokenAmounts[1] / totalAmounts[1];
+        uint256 liquidity0 = 0;
+        uint256 liquidity1 = 0;
+        if (totalAmounts[0] != 0) {
+            liquidity0 = totalLiquidity * pTokenAmounts[0] / totalAmounts[0];
+        }
+        if (totalAmounts[1] != 0) {
+            liquidity1 = totalLiquidity * pTokenAmounts[1] / totalAmounts[1];
+        }
         return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 
