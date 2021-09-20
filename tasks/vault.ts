@@ -111,34 +111,16 @@ export const createVault1 = async (
     [token0, token1],
     [amount0, amount1]
   );
-  try {
-    await withdraw(
-      hre,
-      "NodeCells",
-      nodeNft,
-      (
-        await hre.getNamedAccounts()
-      ).deployer,
-      [token0, token1],
-      [amount0, BigNumber.from(0)]
-    );
-  } catch {
-    console.log(`Couldn't withdraw token0`);
-  }
-  try {
-    await withdraw(
-      hre,
-      "NodeCells",
-      nodeNft,
-      (
-        await hre.getNamedAccounts()
-      ).deployer,
-      [token0, token1],
-      [BigNumber.from(0), amount1]
-    );
-  } catch {
-    console.log(`Couldn't withdraw token1`);
-  }
+  await withdraw(
+    hre,
+    "NodeCells",
+    nodeNft,
+    (
+      await hre.getNamedAccounts()
+    ).deployer,
+    [token0, token1],
+    [amount0, amount1]
+  );
 };
 
 export const moveNftToNodeCells = async (
