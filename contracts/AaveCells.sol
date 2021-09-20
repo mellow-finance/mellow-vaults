@@ -58,7 +58,7 @@ contract AaveCells is IDelegatedCells, Cells {
         } else {
             tokensToMint = (tokenAmounts[0] * tokenBalances[tokens[0]]) / IERC20(aToken).balanceOf(address(this));
         }
-
+        _allowTokenIfNecessary(tokens[0]);
         IERC20(tokens[0]).safeTransferFrom(_msgSender(), address(this), tokenAmounts[0]);
         // TODO: Check what is 0
         lendingPool.deposit(tokens[0], tokenAmounts[0], address(this), 0);
@@ -89,4 +89,12 @@ contract AaveCells is IDelegatedCells, Cells {
         DataTypes.ReserveData memory data = lendingPool.getReserveData(token);
         return data.aTokenAddress;
     }
+
+    function _allowTokenIfNecessary(address token) internal {
+        // Since tokens are not stored at contract address after any tx - it's safe to give unlimited approval
+        if (IERC20(token).allowance(address(lendingPool), address(this)) < type(uint256).max / 2) {
+            IERC20(token).approve(address(lendingPool), type(uint256).max);
+        }
+    }
+
 }

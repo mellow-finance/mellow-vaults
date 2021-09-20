@@ -3,8 +3,9 @@ import { task, types } from "hardhat/config";
 import { Contract } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { createUniV3Cell } from "./uniV3Cells";
-import { createCell } from "./cells";
-import { approve, safeTransferFrom } from "./erc721";
+import { createCell, deposit } from "./cells";
+import { safeTransferFrom, approve as approve721 } from "./erc721";
+import { approve } from "./erc20";
 import { resolveAddress, uintToBytes32 } from "./base";
 
 task("create-vault-1", "Mints nft for vault-1 strategy")
@@ -60,6 +61,15 @@ export const createVault1 = async (
   amount1: BigNumber,
   strategist: string
 ) => {
+  const aaveAddress = await resolveAddress(hre, "AaveCells");
+  const tokenAddress = await resolveAddress(hre, "TokenCells");
+  const nodeAddress = await resolveAddress(hre, "NodeCells");
+  await approve(hre, token0, aaveAddress, amount0);
+  await approve(hre, token1, aaveAddress, amount1);
+  await approve(hre, token0, tokenAddress, amount0);
+  await approve(hre, token1, tokenAddress, amount1);
+  await approve(hre, token0, nodeAddress, amount0);
+  await approve(hre, token1, nodeAddress, amount1);
   const uniNft = await createUniV3Cell(
     hre,
     token0,
@@ -77,10 +87,27 @@ export const createVault1 = async (
   const aaveNft1 = await createCell(hre, "AaveCells", [token1]);
   const tokenNft = await createCell(hre, "TokenCells", [token0, token1]);
   const nodeNft = await createCell(hre, "NodeCells", [token0, token1]);
+  await deposit(hre, "AaveCells", aaveNft0, [token0], [amount0]);
+  await deposit(hre, "AaveCells", aaveNft1, [token1], [amount1]);
+  await deposit(
+    hre,
+    "TokenCells",
+    tokenNft,
+    [token0, token1],
+    [amount0, amount1]
+  );
+
   await moveNftToNodeCells(hre, "UniV3Cells", uniNft, strategist, nodeNft);
   await moveNftToNodeCells(hre, "AaveCells", aaveNft0, strategist, nodeNft);
   await moveNftToNodeCells(hre, "AaveCells", aaveNft1, strategist, nodeNft);
   await moveNftToNodeCells(hre, "TokenCells", tokenNft, strategist, nodeNft);
+  await deposit(
+    hre,
+    "NodeCells",
+    nodeNft,
+    [token0, token1],
+    [amount0, amount1]
+  );
 };
 
 export const moveNftToNodeCells = async (
@@ -95,7 +122,7 @@ export const moveNftToNodeCells = async (
   );
   const { deployer } = await hre.getNamedAccounts();
   const nodeCellsAddress = await resolveAddress(hre, "NodeCells");
-  await approve(hre, tokenNameOrAddressOrContract, nft, to);
+  await approve721(hre, tokenNameOrAddressOrContract, nft, to);
   await safeTransferFrom(
     hre,
     tokenNameOrAddressOrContract,

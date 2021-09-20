@@ -48,7 +48,7 @@ export const deposit = async (
   hre: HardhatRuntimeEnvironment,
   cellsNameOrAddressOrContract: Contract | string,
   nft: BigNumber,
-  tokenNameOrAddressOrContracts: string[],
+  tokenNameOrAddressOrContracts: (Contract | string)[],
   tokenAmounts: BigNumber[]
 ) => {
   const { addresses, amounts } = await extractSortedTokenAddressesAndAmounts(
@@ -69,7 +69,7 @@ export const withdraw = async (
   cellsNameOrAddressOrContract: Contract | string,
   nft: BigNumber,
   to: string,
-  tokenNameOrAddressOrContracts: string[],
+  tokenNameOrAddressOrContracts: (Contract | string)[],
   tokenAmounts: BigNumber[]
 ) => {
   const { addresses, amounts } = await extractSortedTokenAddressesAndAmounts(
