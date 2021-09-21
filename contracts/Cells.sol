@@ -72,7 +72,7 @@ contract Cells is ICells, GovernanceAccessControl, ERC721 {
         for (uint256 i = 0; i < cellTokens.length; i++) {
             _managedTokensIndex[nft][cellTokens[i]] = true;
         }
-        emit CreateCell(_msgSender(), nft);
+        emit ICells.CreateCell(_msgSender(), nft, params);
         return nft;
     }
 
@@ -84,6 +84,4 @@ contract Cells is ICells, GovernanceAccessControl, ERC721 {
         _safeMint(_msgSender(), nft);
         return nft;
     }
-
-    event CreateCell(address indexed to, uint256 indexed nft);
 }

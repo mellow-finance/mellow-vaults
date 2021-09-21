@@ -112,7 +112,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
                 IERC20(pTokens[i]).safeTransfer(_msgSender(), pTokenAmounts[i] - actualTokenAmounts[i]);
             } 
         }
-
+        emit Deposit(nft, tokens, actualTokenAmounts);
     }
 
     function withdraw(
@@ -159,6 +159,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
         actualTokenAmounts = new uint256[](2);
         actualTokenAmounts[0] = actualAmount0;
         actualTokenAmounts[1] = actualAmount1;
+        emit Withdraw(nft, to, tokens, actualTokenAmounts);
     }
 
     /// -------------------  PRIVATE, VIEW  -------------------

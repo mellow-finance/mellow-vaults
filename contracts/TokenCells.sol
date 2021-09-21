@@ -67,6 +67,7 @@ contract TokenCells is ITokenCells, Cells {
         }
         _claimTokensToCell(nft, tokens, tokenAmounts);
         actualTokenAmounts = tokenAmounts;
+        emit Deposit(nft, tokens, actualTokenAmounts);
     }
 
     function withdraw(
@@ -82,6 +83,7 @@ contract TokenCells is ITokenCells, Cells {
             _withdrawTokenFromCell(nft, to, tokens[i], tokenAmounts[i]);
         }
         actualTokenAmounts = tokenAmounts;
+        emit Withdraw(nft, to, tokens, actualTokenAmounts);
     }
 
     /// -------------------  PRIVATE, VIEW  -------------------

@@ -69,6 +69,7 @@ contract AaveCells is IDelegatedCells, Cells {
 
         }
         actualTokenAmounts = tokenAmounts;
+        emit Deposit(nft, tokens, actualTokenAmounts);
     }
 
     function withdraw(
@@ -91,6 +92,7 @@ contract AaveCells is IDelegatedCells, Cells {
             lendingPool.withdraw(pTokens[i], pTokenAmounts[i], to);
         }
         actualTokenAmounts = tokenAmounts;
+        emit Withdraw(nft, to, tokens, actualTokenAmounts);
     }
 
     function _getAToken(address token) internal view returns (address) {

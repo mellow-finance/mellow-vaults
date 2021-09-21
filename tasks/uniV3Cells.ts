@@ -107,5 +107,7 @@ export const createUniV3Cell = async (
       return nft;
     }
   }
+  console.log(receipt.logs);
+  
   throw `Could not find nft number in tx logs`;
 };

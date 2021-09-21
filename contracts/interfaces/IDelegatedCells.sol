@@ -19,5 +19,18 @@ interface IDelegatedCells is ICells {
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts);
 
+
+    event Deposit(
+        uint256 nft,
+        address[] tokens,
+        uint256[] actualTokenAmounts
+    );
+
+    event Withdraw(
+        uint256 nft,
+        address to,
+        address[] tokens,
+        uint256[] actualTokenAmounts
+    );
     // TODO: add methods for collecting liquidity mining rewards
 }

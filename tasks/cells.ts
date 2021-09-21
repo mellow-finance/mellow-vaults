@@ -117,6 +117,7 @@ export const createCell = async (
       return nft;
     }
   }
+  console.log(receipt.logs);
   throw `Could not find nft number in tx logs`;
 };
 

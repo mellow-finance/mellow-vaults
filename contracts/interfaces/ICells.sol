@@ -9,4 +9,6 @@ interface ICells is IERC721 {
     function isManagedToken(uint256 nft, address token) external view returns (bool);
 
     function createCell(address[] memory cellTokens, bytes memory params) external returns (uint256);
+
+    event CreateCell(address indexed to, uint256 indexed nft, bytes params);
 }

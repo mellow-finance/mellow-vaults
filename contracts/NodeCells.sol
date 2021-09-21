@@ -100,6 +100,7 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
                 IERC20(tokens[i]).safeTransfer(_msgSender(), tokenAmounts[i] - actualTokenAmounts[i]);
             } 
         }
+        emit Deposit(nft, tokens, actualTokenAmounts);
     }
 
     function withdraw(
@@ -129,6 +130,7 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
                 actualTokenAmounts[j] += actualCellAmounts[j];
             }
         }
+        emit Withdraw(nft, to, tokens, actualTokenAmounts);
     }
 
     function transferOwnedNft(
