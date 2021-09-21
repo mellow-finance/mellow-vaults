@@ -14,8 +14,8 @@ task("create-vault-1", "Mints nft for vault-1 strategy")
   .addParam("fee", "The name of the token1", 3000, types.int)
   .addParam("lowerTick", "Initial lower tick", undefined, types.string)
   .addParam("upperTick", "Initial upper tick", undefined, types.string)
-  .addParam("amount0", "Initial token0 amount for UniV3", "100", types.string)
-  .addParam("amount1", "Initial token1 amount for UniV3", "100", types.string)
+  .addParam("amount0", "Initial token0 amount for UniV3", "10000", types.string)
+  .addParam("amount1", "Initial token1 amount for UniV3", "10000", types.string)
   .addParam(
     "strategist",
     "Address of vault strategist",
@@ -61,16 +61,15 @@ export const createVault1 = async (
   amount1: BigNumber,
   strategist: string
 ) => {
-  const aaveAddress = await resolveAddress(hre, "AaveCells");
-  const tokenAddress = await resolveAddress(hre, "TokenCells");
-  const nodeAddress = await resolveAddress(hre, "NodeCells");
+  // const aaveAddress = await resolveAddress(hre, "AaveCells");
+  // const tokenAddress = await resolveAddress(hre, "TokenCells");
+  // const nodeAddress = await resolveAddress(hre, "NodeCells");
+  // const uniAddress = await resolveAddress(hre, "UniV3Cells");
 
-  await approve(hre, token0, aaveAddress, amount0);
-  await approve(hre, token1, aaveAddress, amount1);
-  await approve(hre, token0, tokenAddress, amount0);
-  await approve(hre, token1, tokenAddress, amount1);
-  await approve(hre, token0, nodeAddress, amount0);
-  await approve(hre, token1, nodeAddress, amount1);
+  // await approve(hre, token0, uniAddress, amount0);
+  // await approve(hre, token1, uniAddress, amount1);
+  // await approve(hre, token0, nodeAddress, amount0);
+  // await approve(hre, token1, nodeAddress, amount1);
   const uniNft = await createUniV3Cell(
     hre,
     token0,
@@ -87,31 +86,31 @@ export const createVault1 = async (
   const aaveNft = await createCell(hre, "AaveCells", [token0, token1]);
   const tokenNft = await createCell(hre, "TokenCells", [token0, token1]);
   const nodeNft = await createCell(hre, "NodeCells", [token0, token1]);
-  await deposit(
-    hre,
-    "AaveCells",
-    aaveNft,
-    [token0, token1],
-    [amount0, amount1]
-  );
-  await deposit(
-    hre,
-    "TokenCells",
-    tokenNft,
-    [token0, token1],
-    [amount0, amount1]
-  );
+  // await deposit(
+  //   hre,
+  //   "AaveCells",
+  //   aaveNft,
+  //   [token0, token1],
+  //   [amount0, amount1]
+  // );
+  // await deposit(
+  //   hre,
+  //   "TokenCells",
+  //   tokenNft,
+  //   [token0, token1],
+  //   [amount0, amount1]
+  // );
 
   await moveNftToNodeCells(hre, "UniV3Cells", uniNft, strategist, nodeNft);
   await moveNftToNodeCells(hre, "AaveCells", aaveNft, strategist, nodeNft);
   await moveNftToNodeCells(hre, "TokenCells", tokenNft, strategist, nodeNft);
-  await deposit(
-    hre,
-    "NodeCells",
-    nodeNft,
-    [token0, token1],
-    [amount0, amount1]
-  );
+  // await deposit(
+  //   hre,
+  //   "NodeCells",
+  //   nodeNft,
+  //   [token0, token1],
+  //   [amount0, amount1]
+  // );
   // await withdraw(
   //   hre,
   //   "NodeCells",

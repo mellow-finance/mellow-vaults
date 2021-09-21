@@ -84,7 +84,6 @@ export const createUniV3Cell = async (
   const tokens = sortBy(prop("address"), [t0, t1]);
   const params = `0x${feeBytes}${lowerTickBytes}${upperTickBytes}${token0AmountBytes}${token1AmountBytes}${amount0MinBytes}${amount1MinBytes}${deadlineBytes}`;
   const uniV3Cells = await hre.ethers.getContract("UniV3Cells");
-  console.log(`Signer: ${await uniV3Cells.signer.getAddress()}`);
   await approve(hre, t0, uniV3Cells.address, amount0);
   await approve(hre, t1, uniV3Cells.address, amount1);
   console.log(
@@ -108,6 +107,6 @@ export const createUniV3Cell = async (
     }
   }
   console.log(receipt.logs);
-  
+
   throw `Could not find nft number in tx logs`;
 };

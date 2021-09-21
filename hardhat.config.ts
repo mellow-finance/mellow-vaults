@@ -20,7 +20,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: process.env["MAINNET_RPC"] || "",
-        blockNumber: 13242385,
+        blockNumber: 13268999,
       },
       accounts: [
         {

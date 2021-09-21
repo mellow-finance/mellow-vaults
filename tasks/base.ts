@@ -16,7 +16,11 @@ export async function sendTx(
   console.log(
     `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
   );
-  const receipt = await txResp.wait();
+  const wait =
+    hre.network.name == "hardhat" || hre.network.name == "localhost"
+      ? undefined
+      : 2;
+  const receipt = await txResp.wait(wait);
   console.log("Transaction confirmed");
   return receipt;
 }
