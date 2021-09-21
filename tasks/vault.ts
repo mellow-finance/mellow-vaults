@@ -64,6 +64,7 @@ export const createVault1 = async (
   const aaveAddress = await resolveAddress(hre, "AaveCells");
   const tokenAddress = await resolveAddress(hre, "TokenCells");
   const nodeAddress = await resolveAddress(hre, "NodeCells");
+
   await approve(hre, token0, aaveAddress, amount0);
   await approve(hre, token1, aaveAddress, amount1);
   await approve(hre, token0, tokenAddress, amount0);
@@ -111,16 +112,16 @@ export const createVault1 = async (
     [token0, token1],
     [amount0, amount1]
   );
-  await withdraw(
-    hre,
-    "NodeCells",
-    nodeNft,
-    (
-      await hre.getNamedAccounts()
-    ).deployer,
-    [token0, token1],
-    [amount0, amount1]
-  );
+  // await withdraw(
+  //   hre,
+  //   "NodeCells",
+  //   nodeNft,
+  //   (
+  //     await hre.getNamedAccounts()
+  //   ).deployer,
+  //   [token0, token1],
+  //   [amount0, amount1]
+  // );
 };
 
 export const moveNftToNodeCells = async (
