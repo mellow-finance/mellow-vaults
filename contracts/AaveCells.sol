@@ -34,10 +34,13 @@ contract AaveCells is IDelegatedCells, Cells {
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             address aToken = _getAToken(tokens[i]);
-            /// TODO: fix for zero
-            tokenAmounts[i] =
-                (IERC20(aToken).balanceOf(address(this)) * tokenCellsBalances[nft][tokens[i]]) /
-                tokenBalances[tokens[i]];
+            if (tokenBalances[tokens[i]] == 0) {
+                tokenAmounts[i] = 0;
+            } else {
+                tokenAmounts[i] =
+                    (IERC20(aToken).balanceOf(address(this)) * tokenCellsBalances[nft][tokens[i]]) /
+                    tokenBalances[tokens[i]];
+            }
         }
     }
 
