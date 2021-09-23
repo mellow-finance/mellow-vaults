@@ -27,6 +27,8 @@ contract UniV3Cells is IDelegatedCells, Cells {
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
+    // TODO: add extract nft - to extract uninft from reqular nft for reuse in other strategies
+
     function delegated(uint256 nft)
         public
         view

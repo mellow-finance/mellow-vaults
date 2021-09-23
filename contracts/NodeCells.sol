@@ -186,6 +186,8 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         }
         // Accept only from cell owner / operator
         require(_isApprovedOrOwner(from, cellNft), "IO"); // Also checks that the token exists
+        // Approve sender to manage token
+        IERC721(_msgSender()).approve(from, tokenId);
         DelegatedCell memory externalCell = DelegatedCell({nft: tokenId, addr: _msgSender()});
         if (!_delegatedCellIsOwned(cellNft, externalCell)) {
             ownedCells[cellNft].push(externalCell);
