@@ -135,7 +135,6 @@ export const moveNftToNodeCells = async (
   );
   const { deployer } = await hre.getNamedAccounts();
   const nodeCellsAddress = await resolveAddress(hre, "NodeCells");
-  await approve721(hre, tokenNameOrAddressOrContract, nft, to);
   await safeTransferFrom(
     hre,
     tokenNameOrAddressOrContract,
