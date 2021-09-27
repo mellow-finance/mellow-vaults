@@ -2,16 +2,16 @@
 
 ### Task examples
 
-#### Mint UniV3Cells token
+#### Mint UniV3Vaults token
 
 ```
 npx hardhat --network localhost create-uni-v3-cell --token0 usdc --token1 weth --lower-tick -120 --upper-tick 120 --amount0 100 --amount1 100
 ```
 
-#### Mint TokenCells (or other cells contract) token
+#### Mint TokenVaults (or other cells contract) token
 
 ```
-npx hardhat --network localhost create-cell --cells 'TokenCells' --tokens '["usdc", "weth"]'
+npx hardhat --network localhost create-cell --cells 'TokenVaults' --tokens '["usdc", "weth"]'
 ```
 
 #### Create strategy-1 vault

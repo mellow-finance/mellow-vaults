@@ -11,24 +11,24 @@ const func: DeployFunction = async function ({
 
   const { deployer } = await getNamedAccounts();
 
-  await deploy("NodeCells", {
+  await deploy("NodeVaults", {
     from: deployer,
-    args: ["Mellow Node Cells V1", "MNCV1"],
+    args: ["Mellow Node Vaults V1", "MNCV1"],
     log: true,
   });
-  const nodeCells = await ethers.getContract("NodeCells");
+  const nodeVaults = await ethers.getContract("NodeVaults");
 
-  const aaveCells = await get("AaveCells");
-  const uniV3Cells = await get("UniV3Cells");
-  const tokenCells = await get("TokenCells");
+  const aaveVaults = await get("AaveVaults");
+  const uniV3Vaults = await get("UniV3Vaults");
+  const tokenVaults = await get("TokenVaults");
   console.log("Executing addNftAllowedTokens...");
 
-  const receipt = await nodeCells.addNftAllowedTokens([
-    aaveCells.address,
-    uniV3Cells.address,
-    tokenCells.address,
+  const receipt = await nodeVaults.addNftAllowedTokens([
+    aaveVaults.address,
+    uniV3Vaults.address,
+    tokenVaults.address,
   ]);
   console.log(`Done with tx: ${receipt.transactionHash}`);
 };
 export default func;
-func.tags = ["NodeCells"];
+func.tags = ["NodeVaults"];

@@ -3,24 +3,24 @@ pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./interfaces/ITokenCells.sol";
+import "./interfaces/ITokenVaults.sol";
 import "./libraries/Array.sol";
 import "./libraries/external/FixedPoint96.sol";
-import "./Cells.sol";
+import "./Vaults.sol";
 import "./interfaces/external/aave/ILendingPool.sol";
 
-contract AaveCells is IDelegatedCells, Cells {
+contract AaveVaults is IDelegatedVaults, Vaults {
     using SafeERC20 for IERC20;
     ILendingPool public lendingPool;
 
-    mapping(uint256 => mapping(address => uint256)) public tokenCellsBalances;
+    mapping(uint256 => mapping(address => uint256)) public tokenVaultsBalances;
     mapping(address => uint256) public tokenBalances;
 
     constructor(
         ILendingPool _lendingPool,
         string memory name,
         string memory symbol
-    ) Cells(name, symbol) {
+    ) Vaults(name, symbol) {
         lendingPool = _lendingPool;
     }
 
@@ -38,7 +38,7 @@ contract AaveCells is IDelegatedCells, Cells {
                 tokenAmounts[i] = 0;
             } else {
                 tokenAmounts[i] =
-                    (IERC20(aToken).balanceOf(address(this)) * tokenCellsBalances[nft][tokens[i]]) /
+                    (IERC20(aToken).balanceOf(address(this)) * tokenVaultsBalances[nft][tokens[i]]) /
                     tokenBalances[tokens[i]];
             }
         }
@@ -69,7 +69,7 @@ contract AaveCells is IDelegatedCells, Cells {
             // TODO: Check what is 0
             lendingPool.deposit(pTokens[i], pTokenAmounts[i], address(this), 0);
             tokenBalances[pTokens[i]] += tokensToMint;
-            tokenCellsBalances[nft][pTokens[i]] += tokensToMint;
+            tokenVaultsBalances[nft][pTokens[i]] += tokensToMint;
 
         }
         actualTokenAmounts = tokenAmounts;
@@ -92,7 +92,7 @@ contract AaveCells is IDelegatedCells, Cells {
                 continue;
             }
             tokenBalances[pTokens[i]] -= tokensToBurn;
-            tokenCellsBalances[nft][pTokens[i]] -= tokensToBurn;
+            tokenVaultsBalances[nft][pTokens[i]] -= tokensToBurn;
             lendingPool.withdraw(pTokens[i], pTokenAmounts[i], to);
         }
         actualTokenAmounts = tokenAmounts;

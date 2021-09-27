@@ -12,7 +12,7 @@ contract WithdrawWhitelist {
         return _withdrawWhitelist;
     }
 
-    function _doWithdraw(uint256 cell, address to, uint256 toCell) internal {
+    function _doWithdraw(uint256 cell, address to, uint256 toVault) internal {
 
     }
 }

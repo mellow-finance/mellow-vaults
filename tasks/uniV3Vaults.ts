@@ -11,7 +11,7 @@ import { approve } from "./erc20";
 import { map, prop, propEq, sortBy } from "ramda";
 import { CREATE_CELL_EVENT_HASH } from "./contants";
 
-task("create-uni-v3-cell", "Mints nft for UniV3Cells")
+task("create-uni-v3-cell", "Mints nft for UniV3Vaults")
   .addParam("token0", "The name of the token0", undefined, types.string)
   .addParam("token1", "The name of the token1", undefined, types.string)
   .addParam("fee", "The name of the token1", 3000, types.int)
@@ -40,7 +40,7 @@ task("create-uni-v3-cell", "Mints nft for UniV3Cells")
       { token0, token1, fee, lowerTick, upperTick, amount0, amount1, deadline },
       hre
     ) => {
-      await createUniV3Cell(
+      await createUniV3Vault(
         hre,
         token0,
         token1,
@@ -56,7 +56,7 @@ task("create-uni-v3-cell", "Mints nft for UniV3Cells")
     }
   );
 
-export const createUniV3Cell = async (
+export const createUniV3Vault = async (
   hre: HardhatRuntimeEnvironment,
   token0: string | Contract,
   token1: string | Contract,
@@ -83,18 +83,18 @@ export const createUniV3Cell = async (
   const t1 = await getContractWithAbi(hre, token1, "erc20");
   const tokens = sortBy(prop("address"), [t0, t1]);
   const params = `0x${feeBytes}${lowerTickBytes}${upperTickBytes}${token0AmountBytes}${token1AmountBytes}${amount0MinBytes}${amount1MinBytes}${deadlineBytes}`;
-  const uniV3Cells = await hre.ethers.getContract("UniV3Cells");
-  await approve(hre, t0, uniV3Cells.address, amount0);
-  await approve(hre, t1, uniV3Cells.address, amount1);
+  const uniV3Vaults = await hre.ethers.getContract("UniV3Vaults");
+  await approve(hre, t0, uniV3Vaults.address, amount0);
+  await approve(hre, t1, uniV3Vaults.address, amount1);
   console.log(
-    `Calling UniV3Cells#createCell with args ${[
+    `Calling UniV3Vaults#createVault with args ${[
       map(prop("address"), tokens),
       params,
     ]}`
   );
   const receipt = await sendTx(
     hre,
-    await uniV3Cells.populateTransaction.createCell(
+    await uniV3Vaults.populateTransaction.createVault(
       map(prop("address"), tokens),
       params
     )

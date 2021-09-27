@@ -6,22 +6,22 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./access/GovernanceAccessControl.sol";
-import "./interfaces/IDelegatedCells.sol";
+import "./interfaces/IDelegatedVaults.sol";
 import "./libraries/Array.sol";
-import "./Cells.sol";
+import "./Vaults.sol";
 import "./PermissionedERC721Receiver.sol";
 
-contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
+contract NodeVaults is IDelegatedVaults, PermissionedERC721Receiver, Vaults {
     using SafeERC20 for IERC20;
 
-    struct DelegatedCell {
+    struct DelegatedVault {
         uint256 nft;
         address addr;
     }
 
-    mapping(uint256 => DelegatedCell[]) public ownedCells;
+    mapping(uint256 => DelegatedVault[]) public ownedVaults;
 
-    constructor(string memory name, string memory symbol) Cells(name, symbol) {}
+    constructor(string memory name, string memory symbol) Vaults(name, symbol) {}
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
@@ -34,11 +34,11 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         returns (address[] memory tokenAddresses, uint256[] memory tokenAmounts)
     {
         address[] memory cellTokens = managedTokens(nft);
-        DelegatedCell[] storage cellOwnedCells = ownedCells[nft];
+        DelegatedVault[] storage cellOwnedVaults = ownedVaults[nft];
         uint256[] memory res = new uint256[](cellTokens.length);
-        for (uint256 i = 0; i < cellOwnedCells.length; i++) {
-            DelegatedCell storage cell = cellOwnedCells[i];
-            (address[] memory ownedTokens, uint256[] memory ownedAmounts) = IDelegatedCells(cell.addr).delegated(
+        for (uint256 i = 0; i < cellOwnedVaults.length; i++) {
+            DelegatedVault storage cell = cellOwnedVaults[i];
+            (address[] memory ownedTokens, uint256[] memory ownedAmounts) = IDelegatedVaults(cell.addr).delegated(
                 cell.nft
             );
             uint256[] memory projectedOwnedAmounts = Array.projectTokenAmounts(cellTokens, ownedTokens, ownedAmounts);
@@ -54,10 +54,10 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         public
         view
         virtual
-        override(Cells, IERC165, AccessControlEnumerable)
+        override(Vaults, IERC165, AccessControlEnumerable)
         returns (bool)
     {
-        return interfaceId == type(ICells).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IVaults).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// -------------------  PUBLIC, MUTATING, NFT_OWNER  -------------------
@@ -73,26 +73,26 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         address[] memory cellTokens = managedTokens(nft);
         require(cellTokens.length >= tokens.length, "TL");
         uint256[] memory cellTokenAmounts = Array.projectTokenAmounts(cellTokens, tokens, tokenAmounts);
-        DelegatedCell[] storage cellOwnedCells = ownedCells[nft];
-        uint256[][] memory delegatedTokenAmounts = _delegatedByCell(nft);
+        DelegatedVault[] storage cellOwnedVaults = ownedVaults[nft];
+        uint256[][] memory delegatedTokenAmounts = _delegatedByVault(nft);
         uint256[][] memory amountsToDeposit = Array.splitAmounts(cellTokenAmounts, delegatedTokenAmounts);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20(tokens[i]).safeTransferFrom(_msgSender(), address(this), tokenAmounts[i]);
         }
-        for (uint256 i = 0; i < cellOwnedCells.length; i++) {
-            DelegatedCell storage cell = cellOwnedCells[i];
+        for (uint256 i = 0; i < cellOwnedVaults.length; i++) {
+            DelegatedVault storage cell = cellOwnedVaults[i];
             for (uint256 j = 0; j < tokens.length; j++) {
                 /// TODO: not secure, see method _allowTokenIfNecessary
                 _allowTokenIfNecessary(cellTokens[j], cell.addr);
             }
-            uint256[] memory actualCellAmounts = IDelegatedCells(cell.addr).deposit(
+            uint256[] memory actualVaultAmounts = IDelegatedVaults(cell.addr).deposit(
                 cell.nft,
                 cellTokens,
                 amountsToDeposit[i]
             );
             for (uint256 j = 0; j < tokens.length; j++) {
-                actualTokenAmounts[j] += actualCellAmounts[j];
+                actualTokenAmounts[j] += actualVaultAmounts[j];
             }
         }
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -115,19 +115,19 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         address[] memory cellTokens = managedTokens(nft);
         require(cellTokens.length >= tokens.length, "TL");
         uint256[] memory cellTokenAmounts = Array.projectTokenAmounts(cellTokens, tokens, tokenAmounts);
-        DelegatedCell[] storage cellOwnedCells = ownedCells[nft];
-        uint256[][] memory delegatedTokenAmounts = _delegatedByCell(nft);
+        DelegatedVault[] storage cellOwnedVaults = ownedVaults[nft];
+        uint256[][] memory delegatedTokenAmounts = _delegatedByVault(nft);
         uint256[][] memory amountsToDeposit = Array.splitAmounts(cellTokenAmounts, delegatedTokenAmounts);
         actualTokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < cellOwnedCells.length; i++) {
-            uint256[] memory actualCellAmounts = IDelegatedCells(cellOwnedCells[i].addr).withdraw(
-                cellOwnedCells[i].nft,
+        for (uint256 i = 0; i < cellOwnedVaults.length; i++) {
+            uint256[] memory actualVaultAmounts = IDelegatedVaults(cellOwnedVaults[i].addr).withdraw(
+                cellOwnedVaults[i].nft,
                 to,
                 cellTokens,
                 amountsToDeposit[i]
             );
             for (uint256 j = 0; j < tokens.length; j++) {
-                actualTokenAmounts[j] += actualCellAmounts[j];
+                actualTokenAmounts[j] += actualVaultAmounts[j];
             }
         }
         emit Withdraw(nft, to, tokens, actualTokenAmounts);
@@ -140,33 +140,33 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         address to
     ) external {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO");
-        DelegatedCell memory delegatedCell = DelegatedCell({addr: ownedNftAddress, nft: ownedNft});
-        require(_delegatedCellIsOwned(nft, delegatedCell), "DCO");
+        DelegatedVault memory delegatedVault = DelegatedVault({addr: ownedNftAddress, nft: ownedNft});
+        require(_delegatedVaultIsOwned(nft, delegatedVault), "DCO");
         IERC721(ownedNftAddress).safeTransferFrom(address(this), to, ownedNft);
     }
 
     /// -------------------  PRIVATE, VIEW  -------------------
 
-    function _delegatedCellIsOwned(uint256 nft, DelegatedCell memory externalCell) internal view returns (bool) {
-        DelegatedCell[] storage cells = ownedCells[nft];
+    function _delegatedVaultIsOwned(uint256 nft, DelegatedVault memory externalVault) internal view returns (bool) {
+        DelegatedVault[] storage cells = ownedVaults[nft];
         for (uint256 i = 0; i < cells.length; i++) {
-            if ((externalCell.addr == cells[i].addr) && (externalCell.nft == cells[i].nft)) {
+            if ((externalVault.addr == cells[i].addr) && (externalVault.nft == cells[i].nft)) {
                 return true;
             }
         }
         return false;
     }
 
-    /// @dev returns in accordance to cellOwnedCells order. Check if it could be mutated at reentrancy. Actually force it to be immutable.
-    function _delegatedByCell(uint256 nft) internal view returns (uint256[][] memory tokenAmounts) {
+    /// @dev returns in accordance to cellOwnedVaults order. Check if it could be mutated at reentrancy. Actually force it to be immutable.
+    function _delegatedByVault(uint256 nft) internal view returns (uint256[][] memory tokenAmounts) {
         address[] memory cellTokens = managedTokens(nft);
-        DelegatedCell[] storage cellOwnedCells = ownedCells[nft];
-        tokenAmounts = new uint256[][](cellOwnedCells.length);
-        for (uint256 i = 0; i < cellOwnedCells.length; i++) {
-            DelegatedCell storage cell = cellOwnedCells[i];
-            (address[] memory externalCellTokens, uint256[] memory externalCellAmounts) = IDelegatedCells(cell.addr)
+        DelegatedVault[] storage cellOwnedVaults = ownedVaults[nft];
+        tokenAmounts = new uint256[][](cellOwnedVaults.length);
+        for (uint256 i = 0; i < cellOwnedVaults.length; i++) {
+            DelegatedVault storage cell = cellOwnedVaults[i];
+            (address[] memory externalVaultTokens, uint256[] memory externalVaultAmounts) = IDelegatedVaults(cell.addr)
                 .delegated(cell.nft);
-            tokenAmounts[i] = Array.projectTokenAmounts(cellTokens, externalCellTokens, externalCellAmounts);
+            tokenAmounts[i] = Array.projectTokenAmounts(cellTokens, externalVaultTokens, externalVaultAmounts);
         }
     }
 
@@ -188,9 +188,9 @@ contract NodeCells is IDelegatedCells, PermissionedERC721Receiver, Cells {
         require(_isApprovedOrOwner(from, cellNft), "IO"); // Also checks that the token exists
         // Approve sender to manage token
         IERC721(_msgSender()).approve(from, tokenId);
-        DelegatedCell memory externalCell = DelegatedCell({nft: tokenId, addr: _msgSender()});
-        if (!_delegatedCellIsOwned(cellNft, externalCell)) {
-            ownedCells[cellNft].push(externalCell);
+        DelegatedVault memory externalVault = DelegatedVault({nft: tokenId, addr: _msgSender()});
+        if (!_delegatedVaultIsOwned(cellNft, externalVault)) {
+            ownedVaults[cellNft].push(externalVault);
         }
         return IERC721Receiver.onERC721Received.selector;
     }

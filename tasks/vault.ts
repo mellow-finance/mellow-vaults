@@ -2,8 +2,8 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
 import { Contract } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { createUniV3Cell } from "./uniV3Cells";
-import { createCell, deposit, withdraw } from "./cells";
+import { createUniV3Vault } from "./uniV3Vaults";
+import { createVault, deposit, withdraw } from "./vaults";
 import { safeTransferFrom, approve as approve721 } from "./erc721";
 import { approve } from "./erc20";
 import { resolveAddress, uintToBytes32 } from "./base";
@@ -61,16 +61,16 @@ export const createVault1 = async (
   amount1: BigNumber,
   strategist: string
 ) => {
-  // const aaveAddress = await resolveAddress(hre, "AaveCells");
-  // const tokenAddress = await resolveAddress(hre, "TokenCells");
-  // const nodeAddress = await resolveAddress(hre, "NodeCells");
-  // const uniAddress = await resolveAddress(hre, "UniV3Cells");
+  // const aaveAddress = await resolveAddress(hre, "AaveVaults");
+  // const tokenAddress = await resolveAddress(hre, "TokenVaults");
+  // const nodeAddress = await resolveAddress(hre, "NodeVaults");
+  // const uniAddress = await resolveAddress(hre, "UniV3Vaults");
 
   // await approve(hre, token0, uniAddress, amount0);
   // await approve(hre, token1, uniAddress, amount1);
   // await approve(hre, token0, nodeAddress, amount0);
   // await approve(hre, token1, nodeAddress, amount1);
-  const uniNft = await createUniV3Cell(
+  const uniNft = await createUniV3Vault(
     hre,
     token0,
     token1,
@@ -83,37 +83,37 @@ export const createVault1 = async (
     BigNumber.from(0),
     1800
   );
-  const aaveNft = await createCell(hre, "AaveCells", [token0, token1]);
-  const tokenNft = await createCell(hre, "TokenCells", [token0, token1]);
-  const nodeNft = await createCell(hre, "NodeCells", [token0, token1]);
+  const aaveNft = await createVault(hre, "AaveVaults", [token0, token1]);
+  const tokenNft = await createVault(hre, "TokenVaults", [token0, token1]);
+  const nodeNft = await createVault(hre, "NodeVaults", [token0, token1]);
   // await deposit(
   //   hre,
-  //   "AaveCells",
+  //   "AaveVaults",
   //   aaveNft,
   //   [token0, token1],
   //   [amount0, amount1]
   // );
   // await deposit(
   //   hre,
-  //   "TokenCells",
+  //   "TokenVaults",
   //   tokenNft,
   //   [token0, token1],
   //   [amount0, amount1]
   // );
 
-  await moveNftToNodeCells(hre, "UniV3Cells", uniNft, strategist, nodeNft);
-  await moveNftToNodeCells(hre, "AaveCells", aaveNft, strategist, nodeNft);
-  await moveNftToNodeCells(hre, "TokenCells", tokenNft, strategist, nodeNft);
+  await moveNftToNodeVaults(hre, "UniV3Vaults", uniNft, strategist, nodeNft);
+  await moveNftToNodeVaults(hre, "AaveVaults", aaveNft, strategist, nodeNft);
+  await moveNftToNodeVaults(hre, "TokenVaults", tokenNft, strategist, nodeNft);
   // await deposit(
   //   hre,
-  //   "NodeCells",
+  //   "NodeVaults",
   //   nodeNft,
   //   [token0, token1],
   //   [amount0, amount1]
   // );
   // await withdraw(
   //   hre,
-  //   "NodeCells",
+  //   "NodeVaults",
   //   nodeNft,
   //   (
   //     await hre.getNamedAccounts()
@@ -123,24 +123,24 @@ export const createVault1 = async (
   // );
 };
 
-export const moveNftToNodeCells = async (
+export const moveNftToNodeVaults = async (
   hre: HardhatRuntimeEnvironment,
   tokenNameOrAddressOrContract: string | Contract,
   nft: BigNumber,
   to: string,
-  toCell: BigNumber
+  toVault: BigNumber
 ) => {
   console.log(
-    `Moving nft \`${nft.toString()}\` in contract \`${tokenNameOrAddressOrContract}\` to NodeCells`
+    `Moving nft \`${nft.toString()}\` in contract \`${tokenNameOrAddressOrContract}\` to NodeVaults`
   );
   const { deployer } = await hre.getNamedAccounts();
-  const nodeCellsAddress = await resolveAddress(hre, "NodeCells");
+  const nodeVaultsAddress = await resolveAddress(hre, "NodeVaults");
   await safeTransferFrom(
     hre,
     tokenNameOrAddressOrContract,
     nft,
     deployer,
-    nodeCellsAddress,
-    `0x${uintToBytes32(toCell)}`
+    nodeVaultsAddress,
+    `0x${uintToBytes32(toVault)}`
   );
 };

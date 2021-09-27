@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import "./ICells.sol";
+import "./IVaults.sol";
 
-interface IDelegatedCells is ICells {
+interface IDelegatedVaults is IVaults {
     function delegated(uint256 nft) external view returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
     function deposit(

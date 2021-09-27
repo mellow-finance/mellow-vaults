@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.7;
 
-import "./IDelegatedCells.sol";
+import "./IDelegatedVaults.sol";
 
-interface ITokenCells is IDelegatedCells {
-    function claimTokensToCell(
+interface ITokenVaults is IDelegatedVaults {
+    function claimTokensToVault(
         uint256 nft,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts

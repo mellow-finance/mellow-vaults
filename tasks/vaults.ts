@@ -31,7 +31,7 @@ task("withdraw", "Withdraw tokens from cell")
     );
   });
 
-task("create-cell", "Mints nft for Cells contract")
+task("create-cell", "Mints nft for Vaults contract")
   .addParam(
     "cells",
     "The name or address of the cells contract",
@@ -41,7 +41,7 @@ task("create-cell", "Mints nft for Cells contract")
   .addParam("tokens", "The name of the token0", undefined, types.json)
   .addOptionalParam("params", "Optional params", undefined, types.string)
   .setAction(async ({ cells, tokens, params }, hre) => {
-    await createCell(hre, cells, tokens, params);
+    await createVault(hre, cells, tokens, params);
   });
 
 export const deposit = async (
@@ -91,7 +91,7 @@ export const withdraw = async (
   );
 };
 
-export const createCell = async (
+export const createVault = async (
   hre: HardhatRuntimeEnvironment,
   cellsNameOrAddressOrContract: Contract | string,
   tokenNameOrAddressOrContracts: (Contract | string)[],
@@ -108,7 +108,7 @@ export const createCell = async (
   const cells = await getContract(hre, cellsNameOrAddressOrContract);
   const receipt = await sendTx(
     hre,
-    await cells.populateTransaction.createCell(addresses, params || [])
+    await cells.populateTransaction.createVault(addresses, params || [])
   );
   for (const log of receipt.logs) {
     if (log.topics[0] === CREATE_CELL_EVENT_HASH) {

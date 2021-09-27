@@ -3,16 +3,16 @@ pragma solidity 0.8.7;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./interfaces/ITokenCells.sol";
+import "./interfaces/ITokenVaults.sol";
 import "./libraries/Array.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./libraries/external/TickMath.sol";
-import "./Cells.sol";
+import "./Vaults.sol";
 import "./interfaces/external/univ3/IUniswapV3PoolState.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 
-contract UniV3Cells is IDelegatedCells, Cells {
+contract UniV3Vaults is IDelegatedVaults, Vaults {
     using SafeERC20 for IERC20;
     INonfungiblePositionManager public immutable positionManager;
     mapping(uint256 => uint256) public uniNfts;
@@ -21,7 +21,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
         INonfungiblePositionManager _positionManager,
         string memory name,
         string memory symbol
-    ) Cells(name, symbol) {
+    ) Vaults(name, symbol) {
         positionManager = _positionManager;
     }
 
@@ -209,7 +209,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
 
     /// -------------------  PRIVATE, MUTATING  -------------------
 
-    function _mintCellNft(address[] memory tokens, bytes memory params) internal virtual override returns (uint256) {
+    function _mintVaultNft(address[] memory tokens, bytes memory params) internal virtual override returns (uint256) {
         require(params.length == 8 * 32, "IP");
         require(tokens.length == 2, "TL");
         uint24 fee;
@@ -252,7 +252,7 @@ contract UniV3Cells is IDelegatedCells, Cells {
                 deadline: deadline
             })
         );        
-        uint256 cellNft = super._mintCellNft(tokens, params);
+        uint256 cellNft = super._mintVaultNft(tokens, params);
         uniNfts[cellNft] = uniNft;
         return cellNft;
     }
