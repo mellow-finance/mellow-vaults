@@ -8,11 +8,9 @@ interface IVaults is IERC721 {
 
     function isManagedToken(uint256 nft, address token) external view returns (bool);
 
-    function vaultTVL(
-        uint256 nft,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts
-    ) external returns (uint256[] memory actualTokenAmounts);
+    function vaultTVL(uint256 nft) external returns (uint256[] memory);
+
+    function topVaultNft() external returns (uint256);
 
     function createVault(address[] memory cellTokens, bytes memory params) external returns (uint256);
 

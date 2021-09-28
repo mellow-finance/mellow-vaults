@@ -8,14 +8,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./access/GovernanceAccessControl.sol";
 import "./interfaces/IVaults.sol";
 import "./libraries/Array.sol";
-import "./VaultsParams.sol";
+import "./VaultsGovernance.sol";
 
-contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
+abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGovernance {
     using SafeERC20 for IERC20;
 
     mapping(uint256 => address[]) private _managedTokens;
     mapping(uint256 => mapping(address => bool)) private _managedTokensIndex;
-    uint256 private _topVaultNft = 1;
+    uint256 public topVaultNft = 1;
 
     constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
 
@@ -39,10 +39,12 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
         return interfaceId == type(IVaults).interfaceId || super.supportsInterface(interfaceId);
     }
 
+    function vaultTVL(uint256 nft) external virtual returns (uint256[] memory);
+
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE OR PERMISSIONLESS  -------------------
     function createVault(address[] memory cellTokens, bytes memory params) external override returns (uint256) {
         require(permissionless || _isGovernanceOrDelegate(), "PGD");
-        require(cellTokens.length <= maxTokensPerVault, "MT");
+        require(cellTokens.length <= protocolGovernance.maxTokensPerVault(), "MT");
         require(Array.isSortedAndUnique(cellTokens), "SAU");
         uint256 nft = _mintVaultNft(cellTokens, params);
         _managedTokens[nft] = cellTokens;
@@ -112,8 +114,8 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
     /// -------------------  PRIVATE, MUTATING  -------------------
 
     function _mintVaultNft(address[] memory, bytes memory) internal virtual returns (uint256) {
-        uint256 nft = _topVaultNft;
-        _topVaultNft += 1;
+        uint256 nft = topVaultNft;
+        topVaultNft += 1;
         _safeMint(_msgSender(), nft);
         return nft;
     }
@@ -123,7 +125,7 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
         uint256 nft,
         address[] memory tokens,
         uint256[] memory tokenAmounts
-    ) internal virtual returns (uint256[] memory actualTokenAmounts) {}
+    ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
     /// Guaranteed to have exact signature matching managed tokens
     function _pull(
@@ -131,5 +133,5 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
         address to,
         address[] memory tokens,
         uint256[] memory tokenAmounts
-    ) internal virtual returns (uint256[] memory actualTokenAmounts) {}
+    ) internal virtual returns (uint256[] memory actualTokenAmounts);
 }

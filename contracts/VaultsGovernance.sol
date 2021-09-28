@@ -6,7 +6,7 @@ import "./interfaces/IProtocolGovernance.sol";
 
 contract VaultsGovernance is GovernanceAccessControl {
     bool public permissionless = true;
-    address public protocolGovernance;
+    IProtocolGovernance public protocolGovernance;
 
     bool public pendingPermissionless;
     address public pendingProtocolGovernance;
@@ -15,7 +15,7 @@ contract VaultsGovernance is GovernanceAccessControl {
     uint256 public pendingProtocolGovernanceTimestamp;
 
     constructor(address _protocolGovernance) {
-        protocolGovernance = _protocolGovernance;
+        protocolGovernance = IProtocolGovernance(_protocolGovernance);
     }
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
@@ -23,7 +23,7 @@ contract VaultsGovernance is GovernanceAccessControl {
     function setPendingPermissionless(bool _pendingPermissionless) external {
         require(_isGovernanceOrDelegate(), "PGD");
         pendingPermissionless = _pendingPermissionless;
-        pendingPermissionlessTimestamp = block.timestamp + IProtocolGovernance(protocolGovernance).governanceDelay();
+        pendingPermissionlessTimestamp = block.timestamp + protocolGovernance.governanceDelay();
     }
 
     function commitPermissionless() external {

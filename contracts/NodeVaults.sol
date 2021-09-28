@@ -12,6 +12,7 @@ import "./Vaults.sol";
 import "./PermissionedERC721Receiver.sol";
 
 contract NodeVaults is IDelegatedVaults, PermissionedERC721Receiver, Vaults {
+    /// TODO: add public vaults list
     using SafeERC20 for IERC20;
 
     struct DelegatedVault {
