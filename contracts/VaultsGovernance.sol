@@ -9,7 +9,7 @@ contract VaultsGovernance is GovernanceAccessControl {
     IProtocolGovernance public protocolGovernance;
 
     bool public pendingPermissionless;
-    address public pendingProtocolGovernance;
+    IProtocolGovernance public pendingProtocolGovernance;
 
     uint256 public pendingPermissionlessTimestamp;
     uint256 public pendingProtocolGovernanceTimestamp;
@@ -18,7 +18,7 @@ contract VaultsGovernance is GovernanceAccessControl {
         protocolGovernance = IProtocolGovernance(_protocolGovernance);
     }
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
+    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingPermissionless(bool _pendingPermissionless) external {
         require(_isGovernanceOrDelegate(), "PGD");
@@ -26,10 +26,29 @@ contract VaultsGovernance is GovernanceAccessControl {
         pendingPermissionlessTimestamp = block.timestamp + protocolGovernance.governanceDelay();
     }
 
+    function setPendingGovernance(address _pendingProtocolGovernance) external {
+        require(_isGovernanceOrDelegate(), "PGD");
+        pendingProtocolGovernance = IProtocolGovernance(_pendingProtocolGovernance);
+        pendingProtocolGovernanceTimestamp = block.timestamp + protocolGovernance.governanceDelay();
+    }
+
+    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
     function commitPermissionless() external {
         require(_isGovernanceOrDelegate(), "PGD");
         require((block.timestamp > pendingPermissionlessTimestamp) && (pendingPermissionlessTimestamp > 0), "TS");
         permissionless = pendingPermissionless;
         delete pendingPermissionless;
+        delete pendingPermissionlessTimestamp;
+    }
+
+    function commitProtocolGovernance() external {
+        require(_isGovernanceOrDelegate(), "PGD");
+        require(
+            (block.timestamp > pendingProtocolGovernanceTimestamp) && (pendingProtocolGovernanceTimestamp > 0),
+            "TS"
+        );
+        protocolGovernance = pendingProtocolGovernance;
+        delete pendingProtocolGovernance;
+        delete pendingProtocolGovernanceTimestamp;
     }
 }

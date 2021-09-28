@@ -17,7 +17,11 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
     mapping(uint256 => mapping(address => bool)) private _managedTokensIndex;
     uint256 public topVaultNft = 1;
 
-    constructor(string memory name, string memory symbol) ERC721(name, symbol) {}
+    constructor(
+        string memory name,
+        string memory symbol,
+        address _protocolGovernance
+    ) ERC721(name, symbol) VaultsGovernance(_protocolGovernance) {}
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
@@ -39,7 +43,11 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         return interfaceId == type(IVaults).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function vaultTVL(uint256 nft) external virtual returns (uint256[] memory);
+    function vaultTVL(uint256 nft)
+        external
+        view
+        virtual
+        returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE OR PERMISSIONLESS  -------------------
     function createVault(address[] memory cellTokens, bytes memory params) external override returns (uint256) {

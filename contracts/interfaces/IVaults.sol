@@ -8,7 +8,7 @@ interface IVaults is IERC721 {
 
     function isManagedToken(uint256 nft, address token) external view returns (bool);
 
-    function vaultTVL(uint256 nft) external returns (uint256[] memory);
+    function vaultTVL(uint256 nft) external view returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
     function topVaultNft() external returns (uint256);
 
@@ -22,6 +22,7 @@ interface IVaults is IERC721 {
 
     function transferAndPush(
         uint256 nft,
+        address from,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts);

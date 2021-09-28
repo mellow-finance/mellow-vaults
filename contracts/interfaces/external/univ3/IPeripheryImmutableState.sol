@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // TODO: Check the license
-pragma solidity =0.8.7;
+pragma solidity =0.8.8;
 
 /// @title Immutable state
 /// @notice Functions that return immutable state of the router
