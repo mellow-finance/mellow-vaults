@@ -9,7 +9,7 @@ import "./libraries/external/FixedPoint96.sol";
 import "./Vaults.sol";
 import "./interfaces/external/aave/ILendingPool.sol";
 
-contract AaveVaults is IDelegatedVaults, Vaults {
+contract AaveVaults is Vaults {
     using SafeERC20 for IERC20;
     ILendingPool public lendingPool;
 
@@ -19,12 +19,13 @@ contract AaveVaults is IDelegatedVaults, Vaults {
     constructor(
         ILendingPool _lendingPool,
         string memory name,
-        string memory symbol
-    ) Vaults(name, symbol) {
+        string memory symbol,
+        address _protocolGovernance
+    ) Vaults(name, symbol, _protocolGovernance) {
         lendingPool = _lendingPool;
     }
 
-    function delegated(uint256 nft)
+    function vaultTVL(uint256 nft)
         public
         view
         override
@@ -44,61 +45,6 @@ contract AaveVaults is IDelegatedVaults, Vaults {
         }
     }
 
-    function deposit(
-        uint256 nft,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts
-    ) external override returns (uint256[] memory actualTokenAmounts) {
-        require(_isApprovedOrOwner(_msgSender(), nft), "IO");
-        address[] memory pTokens = managedTokens(nft);
-        uint256[] memory pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
-        for (uint256 i = 0; i < pTokens.length; i++) {
-            if (pTokenAmounts[i] == 0) {
-                continue;
-            }
-            address aToken = _getAToken(pTokens[i]);
-            _allowTokenIfNecessary(pTokens[i]);
-            uint256 tokensToMint;
-            if (tokenBalances[pTokens[i]] == 0) {
-                tokensToMint = pTokenAmounts[i];
-            } else {
-                tokensToMint = (pTokenAmounts[i] * tokenBalances[pTokens[i]]) / IERC20(aToken).balanceOf(address(this));
-            }
-            
-            IERC20(pTokens[i]).safeTransferFrom(_msgSender(), address(this), pTokenAmounts[i]);
-            // TODO: Check what is 0
-            lendingPool.deposit(pTokens[i], pTokenAmounts[i], address(this), 0);
-            tokenBalances[pTokens[i]] += tokensToMint;
-            tokenVaultsBalances[nft][pTokens[i]] += tokensToMint;
-
-        }
-        actualTokenAmounts = tokenAmounts;
-        emit Deposit(nft, tokens, actualTokenAmounts);
-    }
-
-    function withdraw(
-        uint256 nft,
-        address to,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts
-    ) external override returns (uint256[] memory actualTokenAmounts) {
-        require(_isApprovedOrOwner(_msgSender(), nft), "IO");
-        address[] memory pTokens = managedTokens(nft);
-        uint256[] memory pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
-        for (uint256 i = 0; i < pTokens.length; i++) {
-            address aToken = _getAToken(pTokens[i]);
-            uint256 tokensToBurn = (pTokenAmounts[i] * tokenBalances[pTokens[i]]) / IERC20(aToken).balanceOf(address(this));
-            if (tokensToBurn == 0) {
-                continue;
-            }
-            tokenBalances[pTokens[i]] -= tokensToBurn;
-            tokenVaultsBalances[nft][pTokens[i]] -= tokensToBurn;
-            lendingPool.withdraw(pTokens[i], pTokenAmounts[i], to);
-        }
-        actualTokenAmounts = tokenAmounts;
-        emit Withdraw(nft, to, tokens, actualTokenAmounts);
-    }
-
     function _getAToken(address token) internal view returns (address) {
         DataTypes.ReserveData memory data = lendingPool.getReserveData(token);
         return data.aTokenAddress;
@@ -111,4 +57,52 @@ contract AaveVaults is IDelegatedVaults, Vaults {
         }
     }
 
+    /// -------------------  PRIVATE, MUTATING  -------------------
+
+    function _push(
+        uint256 nft,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (tokenAmounts[i] == 0) {
+                continue;
+            }
+            address aToken = _getAToken(tokens[i]);
+            _allowTokenIfNecessary(tokens[i]);
+            uint256 tokensToMint;
+            if (tokenBalances[tokens[i]] == 0) {
+                tokensToMint = tokenAmounts[i];
+            } else {
+                tokensToMint = (tokenAmounts[i] * tokenBalances[tokens[i]]) / IERC20(aToken).balanceOf(address(this));
+            }
+
+            IERC20(tokens[i]).safeTransferFrom(_msgSender(), address(this), tokenAmounts[i]);
+            // TODO: Check what is 0
+            lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), 0);
+            tokenBalances[tokens[i]] += tokensToMint;
+            tokenVaultsBalances[nft][tokens[i]] += tokensToMint;
+        }
+        actualTokenAmounts = tokenAmounts;
+    }
+
+    function _pull(
+        uint256 nft,
+        address to,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            address aToken = _getAToken(tokens[i]);
+            uint256 tokensToBurn = (tokenAmounts[i] * tokenBalances[tokens[i]]) /
+                IERC20(aToken).balanceOf(address(this));
+            if (tokensToBurn == 0) {
+                continue;
+            }
+            tokenBalances[tokens[i]] -= tokensToBurn;
+            tokenVaultsBalances[nft][tokens[i]] -= tokensToBurn;
+            lendingPool.withdraw(tokens[i], tokenAmounts[i], to);
+        }
+        actualTokenAmounts = tokenAmounts;
+    }
 }
