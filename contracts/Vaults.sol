@@ -53,19 +53,21 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
         return nft;
     }
 
+    /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
     /// tokens are used from contract balance
     function push(
         uint256 nft,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) public returns (uint256[] memory actualTokenAmounts) {
+    ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         (address[] memory pTokens, uint256[] memory pTokenAmounts) = _validateAndProjectTokens(
             nft,
             tokens,
             tokenAmounts
         );
-        actualTokenAmounts = _push(nft, pTokens, pTokenAmounts);
+        uint256[] memory pActualTokenAmounts = _push(nft, pTokens, pTokenAmounts);
+        actualTokenAmounts = Array.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
     }
 
     function pull(
@@ -80,7 +82,9 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
             tokens,
             tokenAmounts
         );
-        actualTokenAmounts = _pull(nft, to, pTokens, pTokenAmounts);
+        uint256[] memory pActualTokenAmounts = _pull(nft, to, pTokens, pTokenAmounts);
+        actualTokenAmounts = Array.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
+        emit Pull(nft, to, tokens, actualTokenAmounts);
     }
 
     function reclaimTokens(address to, address[] calldata tokens) external {

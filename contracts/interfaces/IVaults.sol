@@ -10,5 +10,22 @@ interface IVaults is IERC721 {
 
     function createVault(address[] memory cellTokens, bytes memory params) external returns (uint256);
 
+    function push(
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external returns (uint256[] memory actualTokenAmounts);
+
+    function pull(
+        uint256 nft,
+        address to,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external returns (uint256[] memory actualTokenAmounts);
+
+    function reclaimTokens(address to, address[] calldata tokens) external;
+
     event CreateVault(address indexed to, uint256 indexed nft, bytes params);
+    event Push(uint256 indexed nft, address[] tokens, uint256[] actualTokenAmounts);
+    event Pull(uint256 indexed nft, address indexed to, address[] tokens, uint256[] actualTokenAmounts);
 }
