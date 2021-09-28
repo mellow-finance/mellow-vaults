@@ -20,6 +20,12 @@ interface IVaults is IERC721 {
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts);
 
+    function transferAndPush(
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external returns (uint256[] memory actualTokenAmounts);
+
     function pull(
         uint256 nft,
         address to,

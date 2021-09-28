@@ -61,7 +61,7 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         uint256 nft,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
-    ) external returns (uint256[] memory actualTokenAmounts) {
+    ) public returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         (address[] memory pTokens, uint256[] memory pTokenAmounts) = _validateAndProjectTokens(
             nft,
@@ -70,6 +70,26 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         );
         uint256[] memory pActualTokenAmounts = _push(nft, pTokens, pTokenAmounts);
         actualTokenAmounts = Array.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
+    }
+
+    function transferAndPush(
+        uint256 nft,
+        address from,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external returns (uint256[] memory actualTokenAmounts) {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (tokenAmounts[i] > 0) {
+                IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
+            }
+        }
+        actualTokenAmounts = push(nft, tokens, tokenAmounts);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 leftover = actualTokenAmounts[i] < tokenAmounts[i] ? tokenAmounts[i] - actualTokenAmounts[i] : 0;
+            if (leftover > 0) {
+                IERC20(tokens[i]).safeTransfer(from, leftover);
+            }
+        }
     }
 
     function pull(
