@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.8;
 
-interface IGovernance {
+interface IProtocolGovernance {
     /// -------------------  PUBLIC, VIEW  -------------------
 
     function pullAllowlist() external view returns (address[] memory);
@@ -9,6 +9,10 @@ interface IGovernance {
     function pendingPullAllowlistAdd() external view returns (address[] memory);
 
     function isAllowedToPull(address addr) external view returns (bool);
+
+    function maxTokensPerVault() external view returns (uint256);
+
+    function governanceDelay() external view returns (uint256);
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 

@@ -2,10 +2,10 @@
 pragma solidity 0.8.8;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./interfaces/IGovernance.sol";
+import "./interfaces/IProtocolGovernance.sol";
 import "./access/GovernanceAccessControl.sol";
 
-contract Governance is IGovernance, GovernanceAccessControl {
+contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _pullAllowlist;
     uint256 public maxTokensPerVault = 10;

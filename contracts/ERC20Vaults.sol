@@ -9,7 +9,7 @@ import "./interfaces/ITokenVaults.sol";
 import "./libraries/Array.sol";
 import "./Vaults.sol";
 
-contract TokenVaults is ITokenVaults, Vaults {
+contract ERC20Vaults is Vaults {
     using SafeERC20 for IERC20;
 
     mapping(uint256 => mapping(address => uint256)) public tokenVaultsBalances;
