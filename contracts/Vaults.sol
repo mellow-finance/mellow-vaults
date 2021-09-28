@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.7;
+pragma solidity 0.8.8;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./access/GovernanceAccessControl.sol";
 import "./interfaces/IVaults.sol";
 import "./libraries/Array.sol";
+import "./VaultsParams.sol";
 
-contract Vaults is IVaults, GovernanceAccessControl, ERC721 {
-    bool public permissionless = false;
-    bool public pendingPermissionless;
-    uint256 public maxTokensPerVault = 10;
-    uint256 public pendingMaxTokensPerVault;
+contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsParams {
+    using SafeERC20 for IERC20;
+
     mapping(uint256 => address[]) private _managedTokens;
     mapping(uint256 => mapping(address => bool)) private _managedTokensIndex;
     uint256 private _topVaultNft = 1;
@@ -38,30 +39,6 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721 {
         return interfaceId == type(IVaults).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
-
-    function setPendingPermissionless(bool _pendingPermissionless) external {
-        require(_isGovernanceOrDelegate(), "PGD");
-        pendingPermissionless = _pendingPermissionless;
-    }
-
-    function commitPendingPermissionless() external {
-        require(_isGovernanceOrDelegate(), "PGD");
-        permissionless = pendingPermissionless;
-        pendingPermissionless = false;
-    }
-
-    function setPendingMaxTokensPerVault(uint256 _pendingMaxTokensPerVault) external {
-        require(_isGovernanceOrDelegate(), "PGD");
-        pendingMaxTokensPerVault = _pendingMaxTokensPerVault;
-    }
-
-    function commitPendingMaxTokensPerVault() external {
-        require(_isGovernanceOrDelegate(), "PGD");
-        maxTokensPerVault = pendingMaxTokensPerVault;
-        pendingMaxTokensPerVault = 0;
-    }
-
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE OR PERMISSIONLESS  -------------------
     function createVault(address[] memory cellTokens, bytes memory params) external override returns (uint256) {
         require(permissionless || _isGovernanceOrDelegate(), "PGD");
@@ -76,6 +53,58 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721 {
         return nft;
     }
 
+    /// tokens are used from contract balance
+    function push(
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) public returns (uint256[] memory actualTokenAmounts) {
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        (address[] memory pTokens, uint256[] memory pTokenAmounts) = _validateAndProjectTokens(
+            nft,
+            tokens,
+            tokenAmounts
+        );
+        actualTokenAmounts = _push(nft, pTokens, pTokenAmounts);
+    }
+
+    function pull(
+        uint256 nft,
+        address to,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) external returns (uint256[] memory actualTokenAmounts) {
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        (address[] memory pTokens, uint256[] memory pTokenAmounts) = _validateAndProjectTokens(
+            nft,
+            tokens,
+            tokenAmounts
+        );
+        actualTokenAmounts = _pull(nft, to, pTokens, pTokenAmounts);
+    }
+
+    function reclaimTokens(address to, address[] calldata tokens) external {
+        require(_isGovernanceOrDelegate(), "GD");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            IERC20 token = IERC20(tokens[i]);
+            token.safeTransfer(to, token.balanceOf(address(this)));
+        }
+    }
+
+    /// -------------------  PRIVATE, VIEW  -------------------
+
+    function _validateAndProjectTokens(
+        uint256 nft,
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts
+    ) internal view returns (address[] memory pTokens, uint256[] memory pTokenAmounts) {
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        require(Array.isSortedAndUnique(tokens), "SAU");
+        require(tokens.length == tokenAmounts.length, "L");
+        pTokens = managedTokens(nft);
+        pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
+    }
+
     /// -------------------  PRIVATE, MUTATING  -------------------
 
     function _mintVaultNft(address[] memory, bytes memory) internal virtual returns (uint256) {
@@ -84,4 +113,19 @@ contract Vaults is IVaults, GovernanceAccessControl, ERC721 {
         _safeMint(_msgSender(), nft);
         return nft;
     }
+
+    /// Guaranteed to have exact signature matching managed tokens
+    function _push(
+        uint256 nft,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts
+    ) internal virtual returns (uint256[] memory actualTokenAmounts) {}
+
+    /// Guaranteed to have exact signature matching managed tokens
+    function _pull(
+        uint256 nft,
+        address to,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts
+    ) internal virtual returns (uint256[] memory actualTokenAmounts) {}
 }
