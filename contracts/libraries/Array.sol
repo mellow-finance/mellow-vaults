@@ -62,7 +62,7 @@ library Array {
         return res;
     }
 
-    /// @notice Splits each amount from `amounts` into k amounts according to `weights`.
+    /// @notice Splits each amount of n tokens from `amounts` into k vaults according to `weights`.
     /// @dev Requires tokens and tokenAmounts to be vector of size n and delegatedTokenAmounts to be k x n matrix
     /// so that delegatedTokenAmounts[i] is a vector of size n
     /// norm is a vector 1 x k
