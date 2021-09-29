@@ -52,7 +52,7 @@ contract AaveVaults is Vaults {
 
     function _allowTokenIfNecessary(address token) internal {
         // Since tokens are not stored at contract address after any tx - it's safe to give unlimited approval
-        if (IERC20(token).allowance(address(lendingPool), address(this)) < type(uint256).max / 2) {
+        if (IERC20(token).allowance(address(this), address(lendingPool)) < type(uint256).max / 2) {
             IERC20(token).approve(address(lendingPool), type(uint256).max);
         }
     }
