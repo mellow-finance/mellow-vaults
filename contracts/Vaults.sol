@@ -15,6 +15,7 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
 
     mapping(uint256 => address[]) private _managedTokens;
     mapping(uint256 => mapping(address => bool)) private _managedTokensIndex;
+    mapping(uint256 => uint256[]) private _tokenLimits;
     uint256 public topVaultNft = 1;
 
     constructor(
@@ -43,23 +44,25 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         return interfaceId == type(IVaults).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function vaultTVL(uint256 nft)
-        external
-        view
-        virtual
-        returns (address[] memory tokens, uint256[] memory tokenAmounts);
+    function vaultTVL(uint256 nft) public view virtual returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE OR PERMISSIONLESS  -------------------
-    function createVault(address[] memory cellTokens, bytes memory params) external override returns (uint256) {
+    function createVault(
+        address[] memory tokens,
+        uint256[] memory limits,
+        bytes memory params
+    ) external override returns (uint256) {
         require(permissionless || _isGovernanceOrDelegate(), "PGD");
-        require(cellTokens.length <= protocolGovernance.maxTokensPerVault(), "MT");
-        require(Array.isSortedAndUnique(cellTokens), "SAU");
-        uint256 nft = _mintVaultNft(cellTokens, params);
-        _managedTokens[nft] = cellTokens;
-        for (uint256 i = 0; i < cellTokens.length; i++) {
-            _managedTokensIndex[nft][cellTokens[i]] = true;
+        require(tokens.length <= protocolGovernance.maxTokensPerVault(), "MT");
+        require(Array.isSortedAndUnique(tokens), "SAU");
+        require(tokens.length == limits.length, "TPL");
+        uint256 nft = _mintVaultNft(tokens, params);
+        _managedTokens[nft] = tokens;
+        _tokenLimits[nft] = limits;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            _managedTokensIndex[nft][tokens[i]] = true;
         }
-        emit IVaults.CreateVault(_msgSender(), nft, params);
+        emit IVaults.CreateVault(_msgSender(), nft, limits, params);
         return nft;
     }
 
@@ -76,6 +79,11 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
             tokens,
             tokenAmounts
         );
+        uint256[] storage limits = _tokenLimits[nft];
+        (, uint256[] memory tvls) = vaultTVL(nft);
+        for (uint256 i = 0; i < pTokens.length; i++) {
+            require(pTokenAmounts[i] + tvls[i] < limits[i], "OOB");
+        }
         uint256[] memory pActualTokenAmounts = _push(nft, pTokens, pTokenAmounts);
         actualTokenAmounts = Array.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
     }
