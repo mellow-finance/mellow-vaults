@@ -24,7 +24,7 @@ contract ERC20Vaults is Vaults {
     /// -------------------  PUBLIC, VIEW  -------------------
 
     function vaultTVL(uint256 nft)
-        external
+        public
         view
         override
         returns (address[] memory tokens, uint256[] memory tokenAmounts)

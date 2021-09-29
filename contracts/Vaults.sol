@@ -116,6 +116,8 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        address owner = ownerOf(nft);
+        require(owner == _msgSender() || protocolGovernance.isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
         (address[] memory pTokens, uint256[] memory pTokenAmounts) = _validateAndProjectTokens(
             nft,
             tokens,
