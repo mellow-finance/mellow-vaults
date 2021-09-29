@@ -67,6 +67,7 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
     }
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
+
     /// tokens are used from contract balance
     function push(
         uint256 nft,
@@ -125,6 +126,14 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         emit Pull(nft, to, tokens, actualTokenAmounts);
     }
 
+    function updateLimits(uint256 nft, uint256[] memory newLimits) external {
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        require(_tokenLimits[nft].length == newLimits.length, "LL");
+        _tokenLimits[nft] = newLimits;
+        emit IVaults.LimitsUpdated(nft, newLimits);
+    }
+
+    /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
     function reclaimTokens(address to, address[] calldata tokens) external {
         require(_isGovernanceOrDelegate(), "GD");
         for (uint256 i = 0; i < tokens.length; i++) {
