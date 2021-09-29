@@ -34,6 +34,10 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         return _managedTokensIndex[nft][token];
     }
 
+    function tokenLimits(uint256 nft) external view returns (uint256[] memory) {
+        return _tokenLimits[nft];
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         view
