@@ -66,7 +66,7 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         for (uint256 i = 0; i < tokens.length; i++) {
             _managedTokensIndex[nft][tokens[i]] = true;
         }
-        emit IVaults.CreateVault(_msgSender(), nft, limits, params);
+        emit IVaults.CreateVault(nft, _msgSender(), limits, params);
         return nft;
     }
 
@@ -132,20 +132,37 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         emit Pull(nft, to, tokens, actualTokenAmounts);
     }
 
+    function collectEarnings(uint256 nft, address to)
+        external
+        returns (address[] memory tokens, uint256[] memory collectedEarnings)
+    {
+        tokens = managedTokens(nft);
+        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
+        require(protocolGovernance.isAllowedToPull(to), "INTRA");
+        collectedEarnings = _collectEarnings(nft, to, tokens);
+        emit IVaults.CollectEarnings(nft, to, tokens, collectedEarnings);
+    }
+
     function updateLimits(uint256 nft, uint256[] memory newLimits) external {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         require(_tokenLimits[nft].length == newLimits.length, "LL");
         _tokenLimits[nft] = newLimits;
-        emit IVaults.LimitsUpdated(nft, newLimits);
+        emit IVaults.LimitsUpdate(nft, newLimits);
     }
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
     function reclaimTokens(address to, address[] calldata tokens) external {
         require(_isGovernanceOrDelegate(), "GD");
+        uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20 token = IERC20(tokens[i]);
-            token.safeTransfer(to, token.balanceOf(address(this)));
+            tokenAmounts[i] = token.balanceOf(address(this));
+            if (tokenAmounts[i] == 0) {
+                continue;
+            }
+            token.safeTransfer(to, tokenAmounts[i]);
         }
+        emit IVaults.ReclaimTokens(to, tokens, tokenAmounts);
     }
 
     /// -------------------  PRIVATE, VIEW  -------------------
@@ -185,4 +202,10 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         address[] memory tokens,
         uint256[] memory tokenAmounts
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
+
+    function _collectEarnings(
+        uint256 nft,
+        address to,
+        address[] memory tokens
+    ) internal virtual returns (uint256[] memory collectedEarnings);
 }
