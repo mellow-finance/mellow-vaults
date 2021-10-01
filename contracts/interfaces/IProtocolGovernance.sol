@@ -4,6 +4,13 @@ pragma solidity 0.8.9;
 interface IProtocolGovernance {
     /// -------------------  PUBLIC, VIEW  -------------------
 
+    struct Params {
+        uint256 maxTokensPerVault;
+        uint256 governanceDelay;
+        uint256 protocolFee;
+        address protocolTreasury;
+    }
+
     function pullAllowlist() external view returns (address[] memory);
 
     function pendingPullAllowlistAdd() external view returns (address[] memory);
@@ -14,21 +21,21 @@ interface IProtocolGovernance {
 
     function governanceDelay() external view returns (uint256);
 
+    function protocolFee() external view returns (uint256);
+
+    function protocolTreasury() external view returns (address);
+
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingPullAllowlistAdd(address[] calldata addresses) external;
 
-    function setPendingMaxTokensPerVault(uint256 maxTokens) external;
-
-    function setPendingGovernanceDelay(uint256 newDelay) external;
-
-    function removeFromPullAllowlist(address addr) external;
+    function setPendingParams(Params memory newParams) external;
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     function commitPullAllowlistAdd() external;
 
-    function commitMaxTokensPerVault() external;
+    function commitParams() external;
 
-    function commitGovernanceDelay() external;
+    function removeFromPullAllowlist(address addr) external;
 }
