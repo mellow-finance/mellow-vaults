@@ -8,16 +8,18 @@ import "./access/GovernanceAccessControl.sol";
 contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _pullAllowlist;
-    uint256 public maxTokensPerVault = 10;
-    uint256 public governanceDelay = 86400;
-
+    Params public params;
+    struct Params {
+        uint256 maxTokensPerVault;
+        uint256 governanceDelay;
+        uint256 protocolFee;
+        address protocolTreasury;
+    }
     address[] private _pendingPullAllowlistAdd;
-    uint256 public pendingGovernanceDelay;
-    uint256 public pendingMaxTokensPerVault;
+    Params public pendingParams;
 
     uint256 public pendingPullAllowlistAddTimestamp;
-    uint256 public pendingMaxTokensPerVaultTimestamp;
-    uint256 public pendingGovernanceDelayTimestamp;
+    uint256 public pendingParamsTimestamp;
 
     /// -------------------  PUBLIC, VIEW  -------------------
     function pullAllowlist() external view returns (address[] memory) {
@@ -45,24 +47,18 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
         pendingPullAllowlistAddTimestamp = block.timestamp + governanceDelay;
     }
 
-    function setPendingMaxTokensPerVault(uint256 maxTokens) external {
-        require(_isGovernanceOrDelegate(), "GD");
-        pendingMaxTokensPerVault = maxTokens;
-        pendingMaxTokensPerVaultTimestamp = block.timestamp + governanceDelay;
-    }
-
-    function setPendingGovernanceDelay(uint256 newDelay) external {
-        require(_isGovernanceOrDelegate(), "GD");
-        pendingGovernanceDelay = newDelay;
-        pendingGovernanceDelayTimestamp = block.timestamp + governanceDelay;
-    }
-
     function removeFromPullAllowlist(address addr) external {
         require(_isGovernanceOrDelegate(), "GD");
         if (!_pullAllowlist.contains(addr)) {
             return;
         }
         _pullAllowlist.remove(addr);
+    }
+
+    function setPendingParams(Params memory newParams) external {
+        require(_isGovernanceOrDelegate(), "GD");
+        pendingParams = newParams;
+        pendingParamsTimstamp = block.timestamp + governanceDelay;
     }
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
@@ -77,19 +73,12 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
         delete pendingPullAllowlistAddTimestamp;
     }
 
-    function commitMaxTokensPerVault() external {
+    function commitParams() external {
         require(_isGovernanceOrDelegate(), "GD");
-        require((block.timestamp > pendingMaxTokensPerVaultTimestamp) && (pendingMaxTokensPerVaultTimestamp > 0), "TS");
-        maxTokensPerVault = pendingMaxTokensPerVault;
-        delete pendingMaxTokensPerVault;
-        delete pendingMaxTokensPerVaultTimestamp;
-    }
-
-    function commitGovernanceDelay() external {
-        require(_isGovernanceOrDelegate(), "GD");
-        require((block.timestamp > pendingGovernanceDelayTimestamp) && (pendingGovernanceDelayTimestamp > 0), "TS");
-        maxTokensPerVault = pendingGovernanceDelay;
-        delete pendingGovernanceDelay;
-        delete pendingGovernanceDelayTimestamp;
+        require(block.timestamp > pendingParamsTimestamp, "TS");
+        require(pendingParams.maxTokensPerVault > 0 || governanceDelay > 0, "P0"); // sanity check
+        params = pendingParams;
+        delete pendingParams;
+        delete pendingParamsTimestamp;
     }
 }

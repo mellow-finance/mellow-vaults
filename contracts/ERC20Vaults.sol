@@ -86,4 +86,12 @@ contract ERC20Vaults is Vaults {
             actualTokenAmounts[i] = tokenAmount;
         }
     }
+
+    function _collectEarnings(
+        uint256 nft,
+        address to,
+        address[] memory tokens
+    ) internal override returns (uint256[] memory collectedEarnings) {
+        //no-op, no earnings for plain erc20 vaults
+    }
 }
