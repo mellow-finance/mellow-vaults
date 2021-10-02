@@ -33,10 +33,6 @@ abstract contract Vaults is IVaults, VaultsGovernance {
         return _managedTokensIndex[nft][token];
     }
 
-    function tokenLimits(uint256 nft) external view returns (uint256[] memory) {
-        return _tokenLimits[nft];
-    }
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -56,7 +52,7 @@ abstract contract Vaults is IVaults, VaultsGovernance {
         IVaults.VaultParams memory vaultParams,
         bytes memory params
     ) external override returns (uint256) {
-        require(permissionless || _isGovernanceOrDelegate(), "PGD");
+        require(vaultsParams().permissionless || _isGovernanceOrDelegate(), "PGD");
         require(tokens.length <= protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == limits.length, "TPL");

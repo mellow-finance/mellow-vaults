@@ -21,11 +21,19 @@ interface IVaultsGovernance is IERC721 {
 
     function vaultParams(uint256 nft) external view returns (VaultParams memory);
 
+    function setPendingVaultParams(uint256 nft, VaultParams memory newParams) external;
+
+    function commitVaultParams(uint256 nft) external;
+
     function pendingVaultsParamsTimestamp() external view returns (uint256);
 
-    function pendingVaultsParams() external view returns (VaultParams memory);
+    function pendingVaultsParams() external view returns (VaultsParams memory);
 
-    function vaultsParams() external view returns (VaultParams memory);
+    function vaultsParams() external view returns (VaultsParams memory);
+
+    function setPendingVaultsParams(uint256 nft, VaultParams memory newParams) external;
+
+    function commitVaultsParams(uint256 nft) external;
 
     function pendingVaultLimitsTimestamp(uint256 nft) external view returns (uint256);
 
@@ -33,20 +41,12 @@ interface IVaultsGovernance is IERC721 {
 
     function vaultLimits(uint256 nft) external view returns (uint256[] memory);
 
-    function setPendingVaultParams(uint256 nft, VaultParams memory newParams) external;
-
-    function commitVaultParams(uint256 nft) external;
-
-    function setPendingVaultsParams(uint256 nft, VaultParams memory newParams) external;
-
-    function commitVaultsParams(uint256 nft) external;
-
     function setPendingVaultLimits(uint256 nft, uint256[] memory newVaultLimits) external;
 
     function commitVaultLimits(uint256 nft) external;
 
-    event SetPendingTokenLimits(uint256 indexed nft, uint256 timestamp, uint256[] newVaultLimits);
-    event CommitTokenLimits(uint256 indexed nft, uint256[] newVaultLimits);
+    event SetPendingVaultLimits(uint256 indexed nft, uint256 timestamp, uint256[] newVaultLimits);
+    event CommitVaultLimits(uint256 indexed nft, uint256[] newVaultLimits);
     event SetPendingVaultParams(uint256 indexed nft, uint256 timestamp, VaultParams newVaultParams);
     event CommitVaultParams(uint256 indexed nft, VaultParams newVaultParams);
     event SetPendingVaultsParams(uint256 timestamp, VaultsParams newVaultsParams);
