@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-library Array {
+library Common {
+    uint256 constant DENOMINATOR = 10**9;
+
     function bubbleSort(address[] memory arr) internal pure {
         uint256 l = arr.length;
         for (uint256 i = 0; i < l; i++) {

@@ -5,8 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./access/GovernanceAccessControl.sol";
-import "./interfaces/ITokenVaults.sol";
-import "./libraries/Array.sol";
+import "./libraries/Common.sol";
 import "./Vaults.sol";
 
 contract ERC20Vaults is Vaults {

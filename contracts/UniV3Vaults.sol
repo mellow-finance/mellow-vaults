@@ -3,8 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./interfaces/ITokenVaults.sol";
-import "./libraries/Array.sol";
+import "./libraries/Common.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./libraries/external/TickMath.sol";
 import "./Vaults.sol";
@@ -51,7 +50,9 @@ contract UniV3Vaults is Vaults {
             ,
 
         ) = positionManager.positions(uniNft);
-        IUniswapV3PoolState pool = IUniswapV3PoolState(IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee));
+        IUniswapV3PoolState pool = IUniswapV3PoolState(
+            IUniswapV3Factory(positionManager.factory()).getPool(token0, token1, fee)
+        );
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -73,47 +74,34 @@ contract UniV3Vaults is Vaults {
 
     function _getWithdrawLiquidity(
         uint256 nft,
-        uint256 uniNft, 
-        address[] memory tokens, 
+        uint256 uniNft,
+        address[] memory tokens,
         uint256[] memory tokenAmounts
     ) internal view returns (uint256) {
         (address[] memory pTokens, uint256[] memory totalAmounts) = vaultTVL(nft);
-        uint256[] memory pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
-        (
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
-            uint128 totalLiquidity,
-            ,
-            ,
-            ,
-
-        ) = positionManager.positions(uniNft);
+        uint256[] memory pTokenAmounts = Common.projectTokenAmounts(pTokens, tokens, tokenAmounts);
+        (, , , , , , , uint128 totalLiquidity, , , , ) = positionManager.positions(uniNft);
         if (totalAmounts[0] == 0) {
             if (pTokenAmounts[0] == 0) {
-                return totalLiquidity * pTokenAmounts[1] / totalAmounts[1]; // liquidity1
+                return (totalLiquidity * pTokenAmounts[1]) / totalAmounts[1]; // liquidity1
             } else {
                 return 0;
             }
         }
         if (totalAmounts[1] == 0) {
             if (pTokenAmounts[1] == 0) {
-                return totalLiquidity * pTokenAmounts[0] / totalAmounts[0]; // liquidity0
+                return (totalLiquidity * pTokenAmounts[0]) / totalAmounts[0]; // liquidity0
             } else {
                 return 0;
             }
         }
-        uint256 liquidity0 = totalLiquidity * pTokenAmounts[0] / totalAmounts[0];
-        uint256 liquidity1 = totalLiquidity * pTokenAmounts[1] / totalAmounts[1];
+        uint256 liquidity0 = (totalLiquidity * pTokenAmounts[0]) / totalAmounts[0];
+        uint256 liquidity1 = (totalLiquidity * pTokenAmounts[1]) / totalAmounts[1];
         return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 
     /// -------------------  PRIVATE, MUTATING  -------------------
-
+    // TODO: allow for variable params
     function _push(
         uint256 nft,
         address[] memory tokens,
@@ -123,16 +111,11 @@ contract UniV3Vaults is Vaults {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
         }
-        (
-            ,
-            uint256 amount0,
-            uint256 amount1
-        ) = positionManager.increaseLiquidity(
+        (, uint256 amount0, uint256 amount1) = positionManager.increaseLiquidity(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: uniNft,
                 amount0Desired: tokenAmounts[0],
                 amount1Desired: tokenAmounts[1],
-                // TODO: allow for variable params
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp + 600
@@ -157,23 +140,17 @@ contract UniV3Vaults is Vaults {
             actualTokenAmounts[1] = 0;
             return actualTokenAmounts;
         }
-        (
-            uint256 amount0,
-            uint256 amount1
-        ) = positionManager.decreaseLiquidity(
+        (uint256 amount0, uint256 amount1) = positionManager.decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: uniNft,
                 liquidity: uint128(liquidity),
-                // TODO: allow for variable params
                 amount0Min: 0,
                 amount1Min: 0,
                 deadline: block.timestamp + 600
             })
         );
-        (
-            uint256 actualAmount0,
-            uint256 actualAmount1
-        ) = positionManager.collect(INonfungiblePositionManager.CollectParams({
+        (uint256 actualAmount0, uint256 actualAmount1) = positionManager.collect(
+            INonfungiblePositionManager.CollectParams({
                 tokenId: uniNft,
                 recipient: to,
                 amount0Max: uint128(amount0),
@@ -184,7 +161,6 @@ contract UniV3Vaults is Vaults {
         actualTokenAmounts[0] = actualAmount0;
         actualTokenAmounts[1] = actualAmount1;
     }
-
 
     function _mintVaultNft(address[] memory tokens, bytes memory params) internal virtual override returns (uint256) {
         require(params.length == 8 * 32, "IP");
@@ -208,7 +184,7 @@ contract UniV3Vaults is Vaults {
             amount1Min := mload(add(params, 224))
             deadline := mload(add(params, 256))
         }
-        
+
         // !!! Call to untrusted contracts
         IERC20(tokens[0]).safeTransferFrom(_msgSender(), address(this), amount0Desired);
         IERC20(tokens[1]).safeTransferFrom(_msgSender(), address(this), amount1Desired);
@@ -229,7 +205,7 @@ contract UniV3Vaults is Vaults {
                 recipient: address(this),
                 deadline: deadline
             })
-        );        
+        );
         uint256 cellNft = super._mintVaultNft(tokens, params);
         uniNfts[cellNft] = uniNft;
         return cellNft;
@@ -239,6 +215,28 @@ contract UniV3Vaults is Vaults {
         // Since tokens are not stored at contract address after any tx - it's safe to give unlimited approval
         if (IERC20(token).allowance(address(positionManager), address(this)) < type(uint256).max / 2) {
             IERC20(token).approve(address(positionManager), type(uint256).max);
+        }
+    }
+
+    function _collectEarnings(
+        uint256 nft,
+        address to,
+        address[] memory tokens
+    ) internal override returns (uint256[] memory collectedEarnings) {
+        uint256 uniNft = uniNfts[nft];
+        (uint256 actualAmount0, uint256 actualAmount1) = positionManager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: uniNft,
+                recipient: to,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+        collectedEarnings = new uint256[](2);
+        collectedEarnings[0] = actualAmount0;
+        collectedEarnings[1] = actualAmount1;
+        for (uint256 i = 0; i < 2; i++) {
+            uint256 protocolFee = collectedEarnings[i];
         }
     }
 }

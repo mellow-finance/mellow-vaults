@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./IVaultsGovernance.sol";
 
-interface IVaults is IERC721 {
+interface IVaults is IVaultsGovernance {
     function managedTokens(uint256 nft) external view returns (address[] memory);
 
     function isManagedToken(uint256 nft, address token) external view returns (bool);
@@ -17,6 +17,7 @@ interface IVaults is IERC721 {
     function createVault(
         address[] memory cellTokens,
         uint256[] memory limits,
+        IVaultsGovernance.VaultParams memory vaultParams,
         bytes memory params
     ) external returns (uint256);
 
@@ -49,7 +50,6 @@ interface IVaults is IERC721 {
     event CreateVault(uint256 indexed nft, address indexed owner, uint256[] limits, bytes params);
     event CollectEarnings(uint256 indexed nft, address indexed to, address[] tokens, uint256[] tokenAmounts);
     event ReclaimTokens(address indexed to, address[] tokens, uint256[] tokenAmounts);
-    event LimitsUpdate(uint256 indexed nft, uint256[] newLimits);
     event Push(uint256 indexed nft, address[] tokens, uint256[] actualTokenAmounts);
     event Pull(uint256 indexed nft, address indexed to, address[] tokens, uint256[] actualTokenAmounts);
 }

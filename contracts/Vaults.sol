@@ -7,15 +7,14 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./access/GovernanceAccessControl.sol";
 import "./interfaces/IVaults.sol";
-import "./libraries/Array.sol";
+import "./libraries/Common.sol";
 import "./VaultsGovernance.sol";
 
-abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGovernance {
+abstract contract Vaults is IVaults, VaultsGovernance {
     using SafeERC20 for IERC20;
 
     mapping(uint256 => address[]) private _managedTokens;
     mapping(uint256 => mapping(address => bool)) private _managedTokensIndex;
-    mapping(uint256 => uint256[]) private _tokenLimits;
     uint256 public topVaultNft = 1;
 
     constructor(
@@ -50,19 +49,21 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
 
     function vaultTVL(uint256 nft) public view virtual returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE OR PERMISSIONLESS  -------------------
+    /// -------------------  PUBLIC, MUTATING, GOVERNANCE OR PERMISSIONLESS  ------------------
     function createVault(
         address[] memory tokens,
         uint256[] memory limits,
+        IVaults.VaultParams memory vaultParams,
         bytes memory params
     ) external override returns (uint256) {
         require(permissionless || _isGovernanceOrDelegate(), "PGD");
         require(tokens.length <= protocolGovernance.maxTokensPerVault(), "MT");
-        require(Array.isSortedAndUnique(tokens), "SAU");
+        require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == limits.length, "TPL");
         uint256 nft = _mintVaultNft(tokens, params);
         _managedTokens[nft] = tokens;
         _tokenLimits[nft] = limits;
+        _vaultParams[nft] = vaultParams;
         for (uint256 i = 0; i < tokens.length; i++) {
             _managedTokensIndex[nft][tokens[i]] = true;
         }
@@ -90,7 +91,7 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
             require(pTokenAmounts[i] + tvls[i] < limits[i], "OOB");
         }
         uint256[] memory pActualTokenAmounts = _push(nft, pTokens, pTokenAmounts);
-        actualTokenAmounts = Array.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
+        actualTokenAmounts = Common.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
     }
 
     function transferAndPush(
@@ -128,7 +129,7 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
             tokenAmounts
         );
         uint256[] memory pActualTokenAmounts = _pull(nft, to, pTokens, pTokenAmounts);
-        actualTokenAmounts = Array.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
+        actualTokenAmounts = Common.projectTokenAmounts(tokens, pTokens, pActualTokenAmounts);
         emit Pull(nft, to, tokens, actualTokenAmounts);
     }
 
@@ -141,13 +142,6 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         require(protocolGovernance.isAllowedToPull(to), "INTRA");
         collectedEarnings = _collectEarnings(nft, to, tokens);
         emit IVaults.CollectEarnings(nft, to, tokens, collectedEarnings);
-    }
-
-    function updateLimits(uint256 nft, uint256[] memory newLimits) external {
-        require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
-        require(_tokenLimits[nft].length == newLimits.length, "LL");
-        _tokenLimits[nft] = newLimits;
-        emit IVaults.LimitsUpdate(nft, newLimits);
     }
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE  -------------------
@@ -173,10 +167,10 @@ abstract contract Vaults is IVaults, GovernanceAccessControl, ERC721, VaultsGove
         uint256[] calldata tokenAmounts
     ) internal view returns (address[] memory pTokens, uint256[] memory pTokenAmounts) {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
-        require(Array.isSortedAndUnique(tokens), "SAU");
+        require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == tokenAmounts.length, "L");
         pTokens = managedTokens(nft);
-        pTokenAmounts = Array.projectTokenAmounts(pTokens, tokens, tokenAmounts);
+        pTokenAmounts = Common.projectTokenAmounts(pTokens, tokens, tokenAmounts);
     }
 
     /// -------------------  PRIVATE, MUTATING  -------------------

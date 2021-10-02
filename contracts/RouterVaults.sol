@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./access/GovernanceAccessControl.sol";
-import "./libraries/Array.sol";
+import "./libraries/Common.sol";
 import "./Vaults.sol";
 
 contract RouterVaults is IERC721Receiver, Vaults {
@@ -44,7 +44,7 @@ contract RouterVaults is IERC721Receiver, Vaults {
             (address[] memory subVaultTokens, uint256[] memory subVaultAmounts) = IVaults(subVault.addr).vaultTVL(
                 subVault.nft
             );
-            uint256[] memory projectedSubVaultAmounts = Array.projectTokenAmounts(
+            uint256[] memory projectedSubVaultAmounts = Common.projectTokenAmounts(
                 tokens,
                 subVaultTokens,
                 subVaultAmounts
@@ -88,7 +88,7 @@ contract RouterVaults is IERC721Receiver, Vaults {
             SubVault storage vault = subVaults[i];
             (address[] memory externalVaultTokens, uint256[] memory externalVaultAmounts) = IVaults(vault.addr)
                 .vaultTVL(vault.nft);
-            tokenAmounts[i] = Array.projectTokenAmounts(tokens, externalVaultTokens, externalVaultAmounts);
+            tokenAmounts[i] = Common.projectTokenAmounts(tokens, externalVaultTokens, externalVaultAmounts);
         }
     }
 
@@ -101,7 +101,7 @@ contract RouterVaults is IERC721Receiver, Vaults {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         SubVault[] storage subVaults = subVaultsIndex[nft];
         uint256[][] memory subVaultTokenAmounts = _subvaultsTVL(nft);
-        uint256[][] memory amountsToPush = Array.splitAmounts(tokenAmounts, subVaultTokenAmounts);
+        uint256[][] memory amountsToPush = Common.splitAmounts(tokenAmounts, subVaultTokenAmounts);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < subVaults.length; i++) {
             SubVault storage subVault = subVaults[i];
@@ -131,7 +131,7 @@ contract RouterVaults is IERC721Receiver, Vaults {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         SubVault[] storage subVaults = subVaultsIndex[nft];
         uint256[][] memory delegatedTokenAmounts = _subvaultsTVL(nft);
-        uint256[][] memory amountsToPull = Array.splitAmounts(tokenAmounts, delegatedTokenAmounts);
+        uint256[][] memory amountsToPull = Common.splitAmounts(tokenAmounts, delegatedTokenAmounts);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < subVaults.length; i++) {
             uint256[] memory actualVaultAmounts = IVaults(subVaults[i].addr).pull(
