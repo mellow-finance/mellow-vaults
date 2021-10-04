@@ -23,8 +23,9 @@ contract RouterVaults is IERC721Receiver, Vaults {
     constructor(
         string memory name,
         string memory symbol,
-        address _protocolGovernance
-    ) Vaults(name, symbol, _protocolGovernance) {}
+        address _protocolGovernance,
+        bool _permissionless
+    ) Vaults(name, symbol, _protocolGovernance, _permissionless) {}
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
@@ -161,7 +162,7 @@ contract RouterVaults is IERC721Receiver, Vaults {
         }
         // Accept only from vault owner / operator
         require(_isApprovedOrOwner(from, vaultNft), "IO"); // Also checks that the token exists
-        require(protocolGovernance.isAllowedToPull(operator), "AP");
+        require(vaultsParams().protocolGovernance.isAllowedToPull(operator), "AP");
         // Approve sender to manage token
         IERC721(_msgSender()).approve(from, tokenId);
         SubVault memory externalVault = SubVault({nft: tokenId, addr: _msgSender()});
@@ -174,7 +175,7 @@ contract RouterVaults is IERC721Receiver, Vaults {
     function _allowTokenIfNecessary(address token, address vaults) internal {
         // !!! TODO: this is not secure, add whitelist here - WhiteListAllowance contract
         if (
-            protocolGovernance.isAllowedToPull(token) &&
+            vaultsParams().protocolGovernance.isAllowedToPull(token) &&
             IERC20(token).allowance(address(this), address(vaults)) < type(uint256).max / 2
         ) {
             IERC20(token).approve(address(vaults), type(uint256).max);

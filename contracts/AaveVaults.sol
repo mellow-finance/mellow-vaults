@@ -19,8 +19,9 @@ contract AaveVaults is Vaults {
         ILendingPool _lendingPool,
         string memory name,
         string memory symbol,
-        address _protocolGovernance
-    ) Vaults(name, symbol, _protocolGovernance) {
+        address _protocolGovernance,
+        bool _permissionless
+    ) Vaults(name, symbol, _protocolGovernance, _permissionless) {
         lendingPool = _lendingPool;
     }
 

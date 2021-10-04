@@ -13,13 +13,17 @@ contract VaultsGovernance is IVaultsGovernance, ERC721, GovernanceAccessControl 
 
     mapping(uint256 => VaultParams) private _vaultParams;
     mapping(uint256 => VaultParams) private _pendingVaultParams;
-    mapping(uint256 => uint256) public pendingVaultParamsTimestamps;
+    mapping(uint256 => uint256) private _pendingVaultParamsTimestamps;
 
     mapping(uint256 => uint256[]) private _vaultLimits;
     mapping(uint256 => uint256[]) private _pendingVaultLimits;
-    mapping(uint256 => uint256) public pendingVaultLimitsTimestamps;
+    mapping(uint256 => uint256) private _pendingVaultLimitsTimestamps;
 
-    constructor(VaultsParams memory params) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        VaultsParams memory params
+    ) ERC721(name, symbol) {
         _vaultsParams = params;
     }
 
@@ -35,12 +39,16 @@ contract VaultsGovernance is IVaultsGovernance, ERC721, GovernanceAccessControl 
         return interfaceId == type(IVaultsGovernance).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function vaultLimits(uint256 nft) external view override returns (uint256[] memory) {
+    function vaultLimits(uint256 nft) public view override returns (uint256[] memory) {
         return _vaultLimits[nft];
     }
 
     function pendingVaultLimits(uint256 nft) external view override returns (uint256[] memory) {
         return _pendingVaultLimits[nft];
+    }
+
+    function pendingVaultLimitsTimestamp(uint256 nft) external view override returns (uint256) {
+        return _pendingVaultLimitsTimestamps[nft];
     }
 
     function vaultParams(uint256 nft) external view override returns (VaultParams memory) {
@@ -51,7 +59,11 @@ contract VaultsGovernance is IVaultsGovernance, ERC721, GovernanceAccessControl 
         return _pendingVaultParams[nft];
     }
 
-    function vaultsParams() external view override returns (VaultsParams memory) {
+    function pendingVaultParamsTimestamp(uint256 nft) external view override returns (uint256) {
+        return _pendingVaultParamsTimestamps[nft];
+    }
+
+    function vaultsParams() public view override returns (VaultsParams memory) {
         return _vaultsParams;
     }
 
@@ -80,16 +92,19 @@ contract VaultsGovernance is IVaultsGovernance, ERC721, GovernanceAccessControl 
     function setPendingVaultParams(uint256 nft, VaultParams memory newVaultParams) external {
         require(_isApprovedOrOwner(_msgSender(), nft) || _isGovernanceOrDelegate(), "IO"); // Also checks that the token exists
         _pendingVaultParams[nft] = newVaultParams;
-        pendingVaultParamsTimestamps[nft] = block.timestamp + _vaultsParams.protocolGovernance.governanceDelay();
-        emit SetPendingVaultParams(nft, pendingVaultParamsTimestamps[nft], newVaultParams);
+        _pendingVaultParamsTimestamps[nft] = block.timestamp + _vaultsParams.protocolGovernance.governanceDelay();
+        emit SetPendingVaultParams(nft, _pendingVaultParamsTimestamps[nft], newVaultParams);
     }
 
     function commitVaultParams(uint256 nft) external {
         require(_isApprovedOrOwner(_msgSender(), nft) || _isGovernanceOrDelegate(), "IO"); // Also checks that the token exists
-        require((block.timestamp > pendingVaultParamsTimestamps[nft]) && (pendingVaultParamsTimestamps[nft] > 0), "TS");
+        require(
+            (block.timestamp > _pendingVaultParamsTimestamps[nft]) && (_pendingVaultParamsTimestamps[nft] > 0),
+            "TS"
+        );
         _vaultParams[nft] = _pendingVaultParams[nft];
         delete _pendingVaultParams[nft];
-        delete pendingVaultParamsTimestamps[nft];
+        delete _pendingVaultParamsTimestamps[nft];
         emit CommitVaultParams(nft, _vaultParams[nft]);
     }
 
@@ -97,16 +112,29 @@ contract VaultsGovernance is IVaultsGovernance, ERC721, GovernanceAccessControl 
         require(_isApprovedOrOwner(_msgSender(), nft) || _isGovernanceOrDelegate(), "IO"); // Also checks that the token exists
         require(_vaultLimits[nft].length == newLimits.length, "LL");
         _vaultLimits[nft] = newLimits;
-        pendingVaultLimitsTimestamps[nft] = block.timestamp + _vaultsParams.protocolGovernance.governanceDelay();
-        emit SetPendingVaultLimits(nft, pendingVaultLimitsTimestamps[nft], newLimits);
+        _pendingVaultLimitsTimestamps[nft] = block.timestamp + _vaultsParams.protocolGovernance.governanceDelay();
+        emit SetPendingVaultLimits(nft, _pendingVaultLimitsTimestamps[nft], newLimits);
     }
 
     function commitVaultLimits(uint256 nft) external {
         require(_isApprovedOrOwner(_msgSender(), nft) || _isGovernanceOrDelegate(), "IO"); // Also checks that the token exists
-        require((block.timestamp > pendingVaultLimitsTimestamps[nft]) && (pendingVaultLimitsTimestamps[nft] > 0), "TS");
+        require(
+            (block.timestamp > _pendingVaultLimitsTimestamps[nft]) && (_pendingVaultLimitsTimestamps[nft] > 0),
+            "TS"
+        );
         _vaultLimits[nft] = _pendingVaultLimits[nft];
         delete _pendingVaultLimits[nft];
-        delete pendingVaultLimitsTimestamps[nft];
+        delete _pendingVaultLimitsTimestamps[nft];
         emit CommitVaultLimits(nft, _vaultLimits[nft]);
+    }
+
+    /// -------------------  INTERNAL, MUTATING  -------------------
+
+    function _setVaultLimits(uint256 nft, uint256[] memory limits) internal {
+        _vaultLimits[nft] = limits;
+    }
+
+    function _setVaultParams(uint256 nft, VaultParams memory params) internal {
+        _vaultParams[nft] = params;
     }
 }

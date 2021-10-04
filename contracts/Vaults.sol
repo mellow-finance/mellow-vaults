@@ -20,8 +20,18 @@ abstract contract Vaults is IVaults, VaultsGovernance {
     constructor(
         string memory name,
         string memory symbol,
-        address _protocolGovernance
-    ) ERC721(name, symbol) VaultsGovernance(_protocolGovernance) {}
+        address _protocolGovernance,
+        bool _permissionless
+    )
+        VaultsGovernance(
+            name,
+            symbol,
+            VaultsParams({
+                protocolGovernance: IProtocolGovernance(_protocolGovernance),
+                permissionless: _permissionless
+            })
+        )
+    {}
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
@@ -37,7 +47,7 @@ abstract contract Vaults is IVaults, VaultsGovernance {
         public
         view
         virtual
-        override(ERC721, IERC165, AccessControlEnumerable)
+        override(IERC165, VaultsGovernance)
         returns (bool)
     {
         return interfaceId == type(IVaults).interfaceId || super.supportsInterface(interfaceId);
@@ -49,21 +59,21 @@ abstract contract Vaults is IVaults, VaultsGovernance {
     function createVault(
         address[] memory tokens,
         uint256[] memory limits,
-        IVaults.VaultParams memory vaultParams,
-        bytes memory params
+        VaultParams memory params,
+        bytes memory options
     ) external override returns (uint256) {
         require(vaultsParams().permissionless || _isGovernanceOrDelegate(), "PGD");
-        require(tokens.length <= protocolGovernance.maxTokensPerVault(), "MT");
+        require(tokens.length <= vaultsParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == limits.length, "TPL");
-        uint256 nft = _mintVaultNft(tokens, params);
+        uint256 nft = _mintVaultNft(tokens, options);
         _managedTokens[nft] = tokens;
-        _tokenLimits[nft] = limits;
-        _vaultParams[nft] = vaultParams;
         for (uint256 i = 0; i < tokens.length; i++) {
             _managedTokensIndex[nft][tokens[i]] = true;
         }
-        emit IVaults.CreateVault(nft, _msgSender(), limits, params);
+        _setVaultLimits(nft, limits);
+        _setVaultParams(nft, params);
+        emit IVaults.CreateVault(nft, _msgSender(), limits, params, options);
         return nft;
     }
 
@@ -81,7 +91,7 @@ abstract contract Vaults is IVaults, VaultsGovernance {
             tokens,
             tokenAmounts
         );
-        uint256[] storage limits = _tokenLimits[nft];
+        uint256[] memory limits = vaultLimits(nft);
         (, uint256[] memory tvls) = vaultTVL(nft);
         for (uint256 i = 0; i < pTokens.length; i++) {
             require(pTokenAmounts[i] + tvls[i] < limits[i], "OOB");
@@ -118,7 +128,7 @@ abstract contract Vaults is IVaults, VaultsGovernance {
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
         address owner = ownerOf(nft);
-        require(owner == _msgSender() || protocolGovernance.isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
+        require(owner == _msgSender() || vaultsParams().protocolGovernance.isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
         (address[] memory pTokens, uint256[] memory pTokenAmounts) = _validateAndProjectTokens(
             nft,
             tokens,
@@ -135,7 +145,7 @@ abstract contract Vaults is IVaults, VaultsGovernance {
     {
         tokens = managedTokens(nft);
         require(_isApprovedOrOwner(_msgSender(), nft), "IO"); // Also checks that the token exists
-        require(protocolGovernance.isAllowedToPull(to), "INTRA");
+        require(vaultsParams().protocolGovernance.isAllowedToPull(to), "INTRA");
         collectedEarnings = _collectEarnings(nft, to, tokens);
         emit IVaults.CollectEarnings(nft, to, tokens, collectedEarnings);
     }

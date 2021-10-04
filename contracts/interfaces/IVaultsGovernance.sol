@@ -31,9 +31,9 @@ interface IVaultsGovernance is IERC721 {
 
     function vaultsParams() external view returns (VaultsParams memory);
 
-    function setPendingVaultsParams(uint256 nft, VaultParams memory newParams) external;
+    function setPendingVaultsParams(VaultsParams memory newParams) external;
 
-    function commitVaultsParams(uint256 nft) external;
+    function commitVaultsParams() external;
 
     function pendingVaultLimitsTimestamp(uint256 nft) external view returns (uint256);
 

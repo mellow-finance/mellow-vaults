@@ -20,8 +20,9 @@ contract UniV3Vaults is Vaults {
         INonfungiblePositionManager _positionManager,
         string memory name,
         string memory symbol,
-        address _protocolGovernance
-    ) Vaults(name, symbol, _protocolGovernance) {
+        address _protocolGovernance,
+        bool _permissionless
+    ) Vaults(name, symbol, _protocolGovernance, _permissionless) {
         positionManager = _positionManager;
     }
 

@@ -17,8 +17,9 @@ contract ERC20Vaults is Vaults {
     constructor(
         string memory name,
         string memory symbol,
-        address _protocolGovernance
-    ) Vaults(name, symbol, _protocolGovernance) {}
+        address _protocolGovernance,
+        bool _permissionless
+    ) Vaults(name, symbol, _protocolGovernance, _permissionless) {}
 
     /// -------------------  PUBLIC, VIEW  -------------------
 

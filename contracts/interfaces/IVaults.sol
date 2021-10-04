@@ -47,7 +47,7 @@ interface IVaults is IVaultsGovernance {
 
     function reclaimTokens(address to, address[] calldata tokens) external;
 
-    event CreateVault(uint256 indexed nft, address indexed owner, uint256[] limits, bytes params);
+    event CreateVault(uint256 indexed nft, address indexed owner, uint256[] limits, VaultParams params, bytes options);
     event CollectEarnings(uint256 indexed nft, address indexed to, address[] tokens, uint256[] tokenAmounts);
     event ReclaimTokens(address indexed to, address[] tokens, uint256[] tokenAmounts);
     event Push(uint256 indexed nft, address[] tokens, uint256[] actualTokenAmounts);
