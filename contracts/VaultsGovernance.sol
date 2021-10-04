@@ -51,7 +51,7 @@ contract VaultsGovernance is IVaultsGovernance, ERC721, GovernanceAccessControl 
         return _pendingVaultLimitsTimestamps[nft];
     }
 
-    function vaultParams(uint256 nft) external view override returns (VaultParams memory) {
+    function vaultParams(uint256 nft) public view override returns (VaultParams memory) {
         return _vaultParams[nft];
     }
 

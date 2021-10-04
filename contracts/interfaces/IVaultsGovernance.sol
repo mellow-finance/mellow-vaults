@@ -7,7 +7,7 @@ import "./IProtocolGovernance.sol";
 interface IVaultsGovernance is IERC721 {
     struct VaultParams {
         uint256 fee;
-        uint256 feeReceiver;
+        address feeReceiver;
     }
 
     struct VaultsParams {

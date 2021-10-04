@@ -12,8 +12,10 @@ contract AaveVaults is Vaults {
     using SafeERC20 for IERC20;
     ILendingPool public lendingPool;
 
-    mapping(uint256 => mapping(address => uint256)) public tokenVaultsBalances;
     mapping(address => uint256) public tokenBalances;
+    mapping(uint256 => mapping(address => uint256)) public tokenVaultsBalances;
+    mapping(address => mapping(uint256 => uint256)) private _realizedEarnings;
+    mapping(address => mapping(uint256 => uint256)) private _unrealizedEarnings;
 
     constructor(
         ILendingPool _lendingPool,
@@ -104,5 +106,23 @@ contract AaveVaults is Vaults {
             lendingPool.withdraw(tokens[i], tokenAmounts[i], to);
         }
         actualTokenAmounts = tokenAmounts;
+    }
+
+    function _collectEarnings(
+        uint256 nft,
+        address to,
+        address[] memory tokens
+    ) internal override returns (uint256[] memory collectedEarnings) {
+        IProtocolGovernance governance = vaultsParams().protocolGovernance;
+        uint256 procotolFee = governance.protocolFee();
+        address procotolTreasury = governance.protocolTreasury();
+        VaultParams memory params = vaultParams(nft);
+        uint256 vaultFee = params.fee;
+        address vaultFeeReceiver = params.feeReceiver;
+        collectedEarnings = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            IERC20 aToken = _getAToken(IERC20(tokens[i]));
+            uint256 aBalance = aToken.balanceOf(address(this));
+        }
     }
 }

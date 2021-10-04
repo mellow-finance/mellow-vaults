@@ -8,8 +8,6 @@ interface IVaults is IVaultsGovernance {
 
     function isManagedToken(uint256 nft, address token) external view returns (bool);
 
-    function tokenLimits(uint256 nft) external view returns (uint256[] memory);
-
     function vaultTVL(uint256 nft) external view returns (address[] memory tokens, uint256[] memory tokenAmounts);
 
     function topVaultNft() external returns (uint256);
