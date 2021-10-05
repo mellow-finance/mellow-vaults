@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IVault {
+import "./IVaultGovernance.sol";
+
+interface IVault is IVaultGovernance {
     function vaultTokens() external view returns (address[] memory);
 
     function isVaultToken(address token) external view returns (bool);
