@@ -42,10 +42,6 @@ contract ERC20Vault is Vault {
     {
         // no-op, no earnings here
         collectedEarnings = new uint256[](tokens.length);
-        for (uint256 i = 0; i < collectedEarnings.length; i++) {
-            collectedEarnings[i] = 0;
-        }
-        return collectedEarnings;
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {

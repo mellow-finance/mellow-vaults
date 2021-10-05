@@ -97,7 +97,10 @@ abstract contract Vault is IVault, VaultGovernance {
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         address owner = vaultManager().ownerOf(nft);
-        require(owner == msg.sender || vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
+        require(
+            owner == msg.sender || vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to),
+            "INTRA"
+        ); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
@@ -109,7 +112,7 @@ abstract contract Vault is IVault, VaultGovernance {
         returns (uint256[] memory collectedEarnings)
     {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
-        require(vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA");
+        require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
         collectedEarnings = _collectEarnings(to, tokens);
         emit IVault.CollectEarnings(to, tokens, collectedEarnings);
     }
@@ -118,7 +121,7 @@ abstract contract Vault is IVault, VaultGovernance {
     function reclaimTokens(address to, address[] calldata tokens) external {
         require(_isGovernanceOrDelegate() || _isApprovedOrOwner(msg.sender), "GD");
         if (!_isGovernanceOrDelegate()) {
-            require(vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA");
+            require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {

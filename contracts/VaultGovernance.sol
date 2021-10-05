@@ -34,7 +34,7 @@ contract VaultGovernance is IVaultGovernance, GovernanceAccessControl {
         require(_isGovernanceOrDelegate(), "GD");
         require(address(manager) != address(0), "ZMG");
         _pendingVaultManager = manager;
-        _pendingVaultManagerTimestamp = _vaultManager.protocolGovernance().governanceDelay();
+        _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
         emit SetPendingVaultManager(manager);
     }
 
