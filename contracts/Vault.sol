@@ -4,28 +4,27 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./GovernanceAccessControl.sol";
+import "./VaultGovernance.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVault.sol";
 
-abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
+abstract contract Vault is IVault, VaultGovernance {
     using SafeERC20 for IERC20;
 
     address[] private _managedTokens;
     uint256[] private _vaultLimits;
     mapping(address => bool) private _managedTokensIndex;
-    IVaultManager public _vaultManager;
 
     constructor(
         address[] memory tokens,
         uint256[] memory limits,
         IVaultManager vaultManager
-    ) {
+    ) VaultGovernance(vaultManager) {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
         require(tokens.length == limits.length, "LL");
-        _vaultManager = vaultManager;
         _managedTokens = tokens;
         _vaultLimits = limits;
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -39,7 +38,7 @@ abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
         return _managedTokens;
     }
 
-    function isManagedToken(address token) public view returns (bool) {
+    function isManagedToken(address token) external view returns (bool) {
         return _managedTokensIndex[token];
     }
 
@@ -47,13 +46,7 @@ abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
         return _vaultLimits;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(AccessControlEnumerable, IERC165)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IVault).interfaceId || super.supportsInterface(interfaceId);
     }
 
@@ -103,8 +96,8 @@ abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
-        address owner = _vaultManager.ownerOf(nft);
-        require(owner == msg.sender || _vaultManager.protocolGovernance().isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
+        address owner = vaultManager().ownerOf(nft);
+        require(owner == msg.sender || vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _managedTokens, pActualTokenAmounts);
@@ -116,7 +109,7 @@ abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
         returns (uint256[] memory collectedEarnings)
     {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
-        require(_vaultManager.protocolGovernance().isAllowedToPull(to), "INTRA");
+        require(vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA");
         collectedEarnings = _collectEarnings(to, tokens);
         emit IVault.CollectEarnings(to, tokens, collectedEarnings);
     }
@@ -125,7 +118,7 @@ abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
     function reclaimTokens(address to, address[] calldata tokens) external {
         require(_isGovernanceOrDelegate() || _isApprovedOrOwner(msg.sender), "GD");
         if (!_isGovernanceOrDelegate()) {
-            require(_vaultManager.protocolGovernance().isAllowedToPull(to), "INTRA");
+            require(vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -168,10 +161,10 @@ abstract contract Vault is IVault, IERC165, GovernanceAccessControl {
         returns (uint256[] memory collectedEarnings);
 
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
-        uint256 nft = _vaultManager.nftForVault(address(this));
+        uint256 nft = vaultManager().nftForVault(address(this));
         if (nft == 0) {
             return false;
         }
-        return _vaultManager.getApproved(nft) == sender || _vaultManager.ownerOf(nft) == sender;
+        return vaultManager().getApproved(nft) == sender || vaultManager().ownerOf(nft) == sender;
     }
 }
