@@ -13,9 +13,9 @@ import "./interfaces/IVault.sol";
 abstract contract Vault is IVault, VaultGovernance {
     using SafeERC20 for IERC20;
 
-    address[] private _managedTokens;
+    address[] private _vaultTokens;
     uint256[] private _vaultLimits;
-    mapping(address => bool) private _managedTokensIndex;
+    mapping(address => bool) private _vaultTokensIndex;
 
     constructor(
         address[] memory tokens,
@@ -25,21 +25,21 @@ abstract contract Vault is IVault, VaultGovernance {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
         require(tokens.length == limits.length, "LL");
-        _managedTokens = tokens;
+        _vaultTokens = tokens;
         _vaultLimits = limits;
         for (uint256 i = 0; i < tokens.length; i++) {
-            _managedTokensIndex[tokens[i]] = true;
+            _vaultTokensIndex[tokens[i]] = true;
         }
     }
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
-    function managedTokens() public view returns (address[] memory) {
-        return _managedTokens;
+    function vaultTokens() public view returns (address[] memory) {
+        return _vaultTokens;
     }
 
-    function isManagedToken(address token) external view returns (bool) {
-        return _managedTokensIndex[token];
+    function isVaultToken(address token) public view returns (bool) {
+        return _vaultTokensIndex[token];
     }
 
     function vaultLimits() public view returns (uint256[] memory) {
@@ -62,11 +62,11 @@ abstract contract Vault is IVault, VaultGovernance {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         (, uint256[] memory tvls) = tvl();
-        for (uint256 i = 0; i < _managedTokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             require(pTokenAmounts[i] + tvls[i] < _vaultLimits[i], "OOB");
         }
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts);
-        actualTokenAmounts = Common.projectTokenAmounts(tokens, _managedTokens, pActualTokenAmounts);
+        actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }
 
@@ -100,7 +100,7 @@ abstract contract Vault is IVault, VaultGovernance {
         require(owner == msg.sender || vaultManager().protocolGovernance().isAllowedToPull(to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts);
-        actualTokenAmounts = Common.projectTokenAmounts(tokens, _managedTokens, pActualTokenAmounts);
+        actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
     }
 
@@ -129,6 +129,7 @@ abstract contract Vault is IVault, VaultGovernance {
             }
             token.safeTransfer(to, tokenAmounts[i]);
         }
+        _postReclaimTokens(to, tokens);
         emit IVault.ReclaimTokens(to, tokens, tokenAmounts);
     }
 
@@ -141,15 +142,15 @@ abstract contract Vault is IVault, VaultGovernance {
     {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == tokenAmounts.length, "L");
-        pTokenAmounts = Common.projectTokenAmounts(_managedTokens, tokens, tokenAmounts);
+        pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
     /// -------------------  PRIVATE, MUTATING  -------------------
 
-    /// Guaranteed to have exact signature matching managed tokens
+    /// Guaranteed to have exact signature matchinn vault tokens
     function _push(uint256[] memory tokenAmounts) internal virtual returns (uint256[] memory actualTokenAmounts);
 
-    /// Guaranteed to have exact signature matching managed tokens
+    /// Guaranteed to have exact signature matchinn vault tokens
     function _pull(address to, uint256[] memory tokenAmounts)
         internal
         virtual
@@ -159,6 +160,8 @@ abstract contract Vault is IVault, VaultGovernance {
         internal
         virtual
         returns (uint256[] memory collectedEarnings);
+
+    function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
         uint256 nft = vaultManager().nftForVault(address(this));

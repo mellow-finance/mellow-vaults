@@ -2,9 +2,9 @@
 pragma solidity 0.8.9;
 
 interface IVault {
-    function managedTokens() external view returns (address[] memory);
+    function vaultTokens() external view returns (address[] memory);
 
-    function isManagedToken(address token) external view returns (bool);
+    function isVaultToken(address token) external view returns (bool);
 
     function vaultLimits() external view returns (uint256[] memory);
 
