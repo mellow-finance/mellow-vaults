@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./GovernanceAccessControl.sol";
+import "./access/GovernanceAccessControl.sol";
 
 contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
