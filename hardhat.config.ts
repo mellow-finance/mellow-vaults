@@ -18,28 +18,36 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      forking: {
-        url: process.env["MAINNET_RPC"] || "",
-        blockNumber: 13268999,
-      },
-      accounts: [
-        {
-          privateKey: process.env["MAINNET_TEST_PK"] || "",
-          balance: (10 ** 20).toString(),
-        },
-      ],
+      forking: process.env["MAINNET_RPC"]
+        ? {
+            url: process.env["MAINNET_RPC"],
+            blockNumber: 13268999,
+          }
+        : undefined,
+
+      accounts: process.env["MAINNET_TEST_PK"]
+        ? [
+            {
+              privateKey: process.env["MAINNET_TEST_PK"],
+              balance: (10 ** 20).toString(),
+            },
+          ]
+        : undefined,
     },
     localhost: {
       url: "http://localhost:8545",
     },
     kovan: {
-      url: process.env["KOVAN_RPC"] || "",
-      accounts: [process.env["KOVAN_DEPLOYER_PK"] || ""],
-      // gasPrice: 20000000000,
+      url: process.env["KOVAN_RPC"],
+      accounts: process.env["KOVAN_DEPLOYER_PK"]
+        ? [process.env["KOVAN_DEPLOYER_PK"]]
+        : undefined,
     },
     mainnet: {
-      url: process.env["MAINNET_RPC"] || "",
-      accounts: [process.env["MAINNET_DEPLOYER_PK"] || ""],
+      url: process.env["MAINNET_RPC"],
+      accounts: process.env["MAINNET_DEPLOYER_PK"]
+        ? [process.env["MAINNET_DEPLOYER_PK"]]
+        : undefined,
     },
   },
   namedAccounts: {
