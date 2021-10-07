@@ -7,7 +7,7 @@ import "./Vault.sol";
 
 contract AaveVault is Vault {
     address[] private _aTokens;
-    mapping(address => uint256) private _baseBalances;
+    uint256[] private _baseBalances;
 
     constructor(
         address[] memory tokens,
@@ -19,12 +19,22 @@ contract AaveVault is Vault {
         }
     }
 
-    function tvl() public view override returns (address[] memory tokens, uint256[] memory tokenAmounts) {
-        tokens = vaultTokens();
+    function tvl() public view override returns (uint256[] memory tokenAmounts) {
+        address[] memory tokens = vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
             tokenAmounts[i] = IERC20(aToken).balanceOf(address(this));
+        }
+    }
+
+    function earnings() public view override returns (uint256[] memory tokenAmounts) {
+        address[] memory tokens = vaultTokens();
+        tokenAmounts = new uint256[](tokens.length);
+        for (uint256 i = 0; i < _aTokens.length; i++) {
+            address aToken = _aTokens[i];
+            uint256 balance = IERC20(aToken).balanceOf(address(this));
+            tokenAmounts[i] = balance - _baseBalances[i];
         }
     }
 
@@ -38,15 +48,15 @@ contract AaveVault is Vault {
             address token = tokens[i];
             _allowTokenIfNecessary(token);
             uint256 baseTokensToMint;
-            if (_baseBalances[tokens[i]] == 0) {
+            if (_baseBalances[i] == 0) {
                 baseTokensToMint = tokenAmounts[i];
             } else {
-                baseTokensToMint = (tokenAmounts[i] * _baseBalances[token]) / IERC20(aToken).balanceOf(address(this));
+                baseTokensToMint = (tokenAmounts[i] * _baseBalances[i]) / IERC20(aToken).balanceOf(address(this));
             }
 
             // TODO: Check what is 0
             _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), 0);
-            _baseBalances[tokens[i]] += baseTokensToMint;
+            _baseBalances[i] += baseTokensToMint;
         }
         actualTokenAmounts = tokenAmounts;
     }
@@ -59,39 +69,26 @@ contract AaveVault is Vault {
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
-            address token = tokens[i];
             uint256 balance = IERC20(aToken).balanceOf(address(this));
             if (balance == 0) {
                 continue;
             }
-            uint256 tokensToBurn = (tokenAmounts[i] * _baseBalances[token]) / balance;
+            uint256 tokensToBurn = (tokenAmounts[i] * _baseBalances[i]) / balance;
             if (tokensToBurn == 0) {
                 continue;
             }
-            _baseBalances[token] -= tokensToBurn;
+            _baseBalances[i] -= tokensToBurn;
             _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
         }
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address, address[] memory tokens)
-        internal
-        pure
-        override
-        returns (uint256[] memory collectedEarnings)
-    {
-        // no-op, no earnings here
-        // IProtocolGovernance governance = vaultManager().protocolGovernance;
-        // uint256 procotolFee = governance.protocolFee();
-        // address procotolTreasury = governance.protocolTreasury();
-        // VaultParams memory params = vaultParams(nft);
-        // uint256 vaultFee = params.fee;
-        // address vaultFeeReceiver = params.feeReceiver;
-        // collectedEarnings = new uint256[](tokens.length);
-        // for (uint256 i = 0; i < tokens.length; i++) {
-        //     IERC20 aToken = _getAToken(IERC20(tokens[i]));
-        //     uint256 aBalance = aToken.balanceOf(address(this));
-        // }
+    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
+        collectedEarnings = earnings();
+        address[] memory tokens = vaultTokens();
+        for (uint256 i = 0; i < _aTokens.length; i++) {
+            _lendingPool().withdraw(tokens[i], collectedEarnings[i], to);
+        }
     }
 
     function _getAToken(address token) internal view returns (address) {
