@@ -10,7 +10,11 @@ interface IVaultManager is IERC721, IVaultManagerGovernance {
 
     function vaultForNft(uint256 nft) external view returns (address);
 
-    function createVault(address[] memory tokens, uint256[] memory limits) external;
+    function createVault(
+        address[] calldata tokens,
+        uint256[] calldata limits,
+        bytes calldata options
+    ) external;
 
     event CreateVault(address vault, uint256 nft, address[] tokens, uint256[] limits);
 }

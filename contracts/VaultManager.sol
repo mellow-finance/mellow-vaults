@@ -30,13 +30,17 @@ abstract contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 
         return _vaultIndex[nft];
     }
 
-    function createVault(address[] memory tokens, uint256[] memory limits) external {
+    function createVault(
+        address[] calldata tokens,
+        uint256[] calldata limits,
+        bytes calldata options
+    ) external {
         require(governanceParams().permissionless || _isGovernanceOrDelegate(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == limits.length, "TPL");
         uint256 nft = _mintVaultNft();
-        address vault = _deployVault(tokens, limits);
+        address vault = _deployVault(tokens, limits, options);
         emit CreateVault(vault, nft, tokens, limits);
     }
 
@@ -50,7 +54,11 @@ abstract contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 
         return interfaceId == type(IVaultManager).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function _deployVault(address[] memory tokens, uint256[] memory limits) internal virtual returns (address);
+    function _deployVault(
+        address[] calldata tokens,
+        uint256[] calldata limits,
+        bytes calldata options
+    ) internal virtual returns (address);
 
     function _mintVaultNft() internal returns (uint256) {
         uint256 nft = _topVaultNft;

@@ -22,8 +22,19 @@ contract UniV3VaultManager is VaultManager {
         return _positionManager;
     }
 
-    function _deployVault(address[] memory tokens, uint256[] memory limits) internal override returns (address) {
-        ERC20Vault vault = new UniV3Vault(tokens, limits, this, _positionManager);
+    function _deployVault(
+        address[] calldata tokens,
+        uint256[] calldata limits,
+        bytes calldata options
+    ) internal override returns (address) {
+        uint256 fee;
+        // TODO: Figure out why calldataload don't need a 32 bytes offset for the bytes length like mload
+        // probably due to how .offset works
+        assembly {
+            fee := calldataload(options.offset)
+        }
+        UniV3Vault vault = new UniV3Vault(tokens, limits, this, uint24(fee));
+
         return address(vault);
     }
 }
