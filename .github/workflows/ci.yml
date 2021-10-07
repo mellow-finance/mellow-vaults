@@ -6,6 +6,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      MAINNET_RPC: ${{secrets.mainnet_rpc}}
+      KOVAN_RPC: ${{secrets.kovan_rpc}}
     steps:
       - uses: actions/checkout@v1
 
