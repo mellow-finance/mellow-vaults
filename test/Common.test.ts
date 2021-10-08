@@ -70,7 +70,37 @@ describe("Common", () => {
     });
 
     describe("isSortedAndUnique", () => {
-        // todo
+        it("Should return true for sorted and unique array", async () => {
+            const array: Array<string> = [
+                addresses[1], 
+                addresses[2], 
+                addresses[3]
+            ];
+            expect(await commonMock.isSortedAndUnique(array)).to.equal(true);
+        });
+
+        it("Should return false for unsorted array", async () => {
+            const array: Array<string> = [
+                addresses[3], 
+                addresses[1], 
+                addresses[2]
+            ];
+            expect(await commonMock.isSortedAndUnique(array)).to.equal(false);
+        });
+
+        it("Should return false for unsorted array with duplicates", async () => {
+            const array: Array<string> = [
+                addresses[3], 
+                addresses[1], 
+                addresses[2], 
+                addresses[3]
+            ];
+            expect(await commonMock.isSortedAndUnique(array)).to.equal(false);
+        });
+
+        it("Should return true for empty array", async () => {
+            expect(await commonMock.isSortedAndUnique([])).to.equal(true);
+        });
     });
 
     describe("projectTokenAmounts", () => {
