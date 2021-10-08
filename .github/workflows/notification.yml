@@ -4,12 +4,12 @@ name: Notification
 
 jobs:
   notify:
+    runs-on: ubuntu-latest
     steps:
       - name: Notify chat 1
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_API_KEY }}
-          token: ${{ secrets.TELEGRAM_CHAT_1 }}
+          to: ${{ secrets.TELEGRAM_TO_1 }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            Commit ${{ commit.sha }} to ${{ repo }} ${{repo.namespace}}
-            ${{github.event.name}} ${{github.event.path}} ${{github.workspace}} ${{github.action}}
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
