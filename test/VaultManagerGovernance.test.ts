@@ -1,25 +1,21 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Address } from "hardhat-deploy/dist/types";
+import type * as ethersT from "ethers";
 
 
+describe("VaultManagerGovernance", function() {
+    let ProtocolGovernance: ethersT.ContractFactory;
+    let vaultManagerGovernance: ethersT.Contract;
+    let protocolGovernance: ethersT.Contract;
+    let deployer: ethersT.Signer;
+    let stranger: ethersT.Signer;
 
-describe("VaultManagerGovernance test", () => {
-    let common: any
-    let vaultManagerGovernance: any;
-    let protocolGovernance: any;
-    let deployer, stranger: any;
-    let Common: any;
-    let VaultManagerGovernance: any;
-    let ProtocolGovernance: any;
-
-    beforeEach(async () => {
-       [deployer, stranger] = await ethers.getSigners();
-
-        Common = await ethers.getContractFactory("Common");
-        common = await Common.deploy();
-        VaultManagerGovernance = await ethers.getContractFactory("VaultManagerGovernance");
+    beforeEach(async function() {
+        const Common = await ethers.getContractFactory("Common");
+        await Common.deploy();
+        const VaultManagerGovernance = await ethers.getContractFactory("VaultManagerGovernance");
         ProtocolGovernance = await ethers.getContractFactory("ProtocolGovernance");
+        [deployer, stranger] = await ethers.getSigners();
 
         protocolGovernance = await ProtocolGovernance.deploy();
         vaultManagerGovernance = await VaultManagerGovernance.deploy(true, protocolGovernance.address);
@@ -32,7 +28,7 @@ describe("VaultManagerGovernance test", () => {
     });
 
     describe("Set pending governance params test", () => {
-        let newProtocolGovernance: any;
+        let newProtocolGovernance: ethersT.Contract;
     
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
@@ -51,8 +47,6 @@ describe("VaultManagerGovernance test", () => {
             ).to.be.revertedWith("ZMG");
         });
 
-        it("Pending governance timestamp should be set");
-
         it("Should emit new event SetPendingGovernanceParams", async () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, newProtocolGovernance.address])
@@ -68,7 +62,7 @@ describe("VaultManagerGovernance test", () => {
     });
 
     describe("Commit governance params test", function() {
-        let newProtocolGovernance: any;
+        let newProtocolGovernance: ethersT.Contract;
 
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
