@@ -50,7 +50,9 @@ abstract contract Vault is IVault, VaultGovernance {
         return interfaceId == type(IVault).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function tvl() public view virtual returns (address[] memory tokens, uint256[] memory tokenAmounts);
+    function tvl() public view virtual returns (uint256[] memory tokenAmounts);
+
+    function earnings() public view virtual returns (uint256[] memory tokenAmounts);
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
@@ -61,7 +63,7 @@ abstract contract Vault is IVault, VaultGovernance {
     {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        (, uint256[] memory tvls) = tvl();
+        uint256[] memory tvls = tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             require(pTokenAmounts[i] + tvls[i] < _vaultLimits[i], "OOB");
         }
@@ -107,14 +109,11 @@ abstract contract Vault is IVault, VaultGovernance {
         emit Pull(to, actualTokenAmounts);
     }
 
-    function collectEarnings(address to, address[] calldata tokens)
-        external
-        returns (uint256[] memory collectedEarnings)
-    {
+    function collectEarnings(address to) external returns (uint256[] memory collectedEarnings) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
-        collectedEarnings = _collectEarnings(to, tokens);
-        emit IVault.CollectEarnings(to, tokens, collectedEarnings);
+        collectedEarnings = _collectEarnings(to);
+        emit IVault.CollectEarnings(to, collectedEarnings);
     }
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
@@ -159,10 +158,7 @@ abstract contract Vault is IVault, VaultGovernance {
         virtual
         returns (uint256[] memory actualTokenAmounts);
 
-    function _collectEarnings(address to, address[] memory tokens)
-        internal
-        virtual
-        returns (uint256[] memory collectedEarnings);
+    function _collectEarnings(address to) internal virtual returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 

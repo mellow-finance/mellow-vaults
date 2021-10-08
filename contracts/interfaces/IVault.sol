@@ -10,7 +10,9 @@ interface IVault is IVaultGovernance {
 
     function vaultLimits() external view returns (uint256[] memory);
 
-    function tvl() external view returns (address[] memory tokens, uint256[] memory tokenAmounts);
+    function tvl() external view returns (uint256[] memory tokenAmounts);
+
+    function earnings() external view returns (uint256[] memory tokenAmounts);
 
     function push(address[] calldata tokens, uint256[] calldata tokenAmounts)
         external
@@ -29,14 +31,12 @@ interface IVault is IVaultGovernance {
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts);
 
-    function collectEarnings(address to, address[] calldata tokens)
-        external
-        returns (uint256[] memory collectedEarnings);
+    function collectEarnings(address to) external returns (uint256[] memory collectedEarnings);
 
     function reclaimTokens(address to, address[] calldata tokens) external;
 
     event Push(uint256[] tokenAmounts);
     event Pull(address to, uint256[] tokenAmounts);
-    event CollectEarnings(address to, address[] tokens, uint256[] tokenAmounts);
+    event CollectEarnings(address to, uint256[] tokenAmounts);
     event ReclaimTokens(address to, address[] tokens, uint256[] tokenAmounts);
 }
