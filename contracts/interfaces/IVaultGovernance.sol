@@ -14,6 +14,18 @@ interface IVaultGovernance {
 
     function commitVaultManager() external;
 
+    function strategyTreasury() external view returns (address);
+
+    function pendingStrategyTreasury() external view returns (address);
+
+    function pendingStrategyTreasuryTimestamp() external view returns (uint256);
+
+    function setPendingStrategyTreasury(address newTreasury) external;
+
+    function commitStrategyTreasury() external;
+
     event SetPendingVaultManager(IVaultManager);
     event CommitVaultManager(IVaultManager);
+    event SetPendingStrategyTreasury(address);
+    event CommitStrategyTreasury(address);
 }
