@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import "../../libraries/Common.sol";
 
-contract CommonMock {
+contract CommonTest {
     constructor() {
 
     }

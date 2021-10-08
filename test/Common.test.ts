@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import type * as ethersT from "ethers";
 
 describe("Common", () => {
-    let commonMock: ethersT.Contract;
+    let commonTest: ethersT.Contract;
 
     const addresses = [
         "0x0000000000000000000000000000000000000001",
@@ -26,8 +26,8 @@ describe("Common", () => {
     beforeEach(async () => {
         const Common: ethersT.ContractFactory = await ethers.getContractFactory("Common");
         await Common.deploy();
-        const CommonMock: ethersT.ContractFactory = await ethers.getContractFactory("CommonMock");
-        commonMock = await CommonMock.deploy();
+        const CommonTest: ethersT.ContractFactory = await ethers.getContractFactory("CommonTest");
+        commonTest = await CommonTest.deploy();
     });
 
     describe("bubbleSort", () => {
@@ -37,7 +37,7 @@ describe("Common", () => {
                 addresses[2], 
                 addresses[1]
             ];
-            const sorted: Array<string> = await commonMock.bubbleSort(array);
+            const sorted: Array<string> = await commonTest.bubbleSort(array);
             expect(sorted).to.deep.equal([
                 addresses[1], 
                 addresses[2], 
@@ -53,7 +53,7 @@ describe("Common", () => {
                 addresses[2],
                 addresses[3]
             ];
-            const sorted: Array<string> = await commonMock.bubbleSort(array);
+            const sorted: Array<string> = await commonTest.bubbleSort(array);
             expect(sorted).to.deep.equal([
                 addresses[1], 
                 addresses[2], 
@@ -64,7 +64,7 @@ describe("Common", () => {
         });
 
         it("Should sort not fail on empty array", async () => {
-            expect(await commonMock.bubbleSort([])).to.deep.equal([]);
+            expect(await commonTest.bubbleSort([])).to.deep.equal([]);
         });
         
     });
@@ -76,7 +76,7 @@ describe("Common", () => {
                 addresses[2], 
                 addresses[3]
             ];
-            expect(await commonMock.isSortedAndUnique(array)).to.equal(true);
+            expect(await commonTest.isSortedAndUnique(array)).to.equal(true);
         });
 
         it("Should return false for unsorted array", async () => {
@@ -85,7 +85,7 @@ describe("Common", () => {
                 addresses[1], 
                 addresses[2]
             ];
-            expect(await commonMock.isSortedAndUnique(array)).to.equal(false);
+            expect(await commonTest.isSortedAndUnique(array)).to.equal(false);
         });
 
         it("Should return false for unsorted array with duplicates", async () => {
@@ -95,11 +95,11 @@ describe("Common", () => {
                 addresses[2], 
                 addresses[3]
             ];
-            expect(await commonMock.isSortedAndUnique(array)).to.equal(false);
+            expect(await commonTest.isSortedAndUnique(array)).to.equal(false);
         });
 
         it("Should return true for empty array", async () => {
-            expect(await commonMock.isSortedAndUnique([])).to.equal(true);
+            expect(await commonTest.isSortedAndUnique([])).to.equal(true);
         });
     });
 
