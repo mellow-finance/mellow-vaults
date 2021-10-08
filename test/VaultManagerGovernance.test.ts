@@ -1,18 +1,21 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import type * as ethersT from "ethers";
 
 
 describe("VaultManagerGovernance tests", function() {
-    let common: any
-    let vaultManagerGovernance: any;
-    let protocolGovernance: any;
+    let vaultManagerGovernance: ethersT.Contract;
+    let protocolGovernance: ethersT.Contract;
+    let deployer: ethersT.Signer;
+    let stranger: ethersT.Signer;
 
 
     beforeEach(async function() {
         const Common = await ethers.getContractFactory("Common");
-        common = await Common.deploy();
+        await Common.deploy();
         const VaultManagerGovernance = await ethers.getContractFactory("VaultManagerGovernance");
         const ProtocolGovernance = await ethers.getContractFactory("ProtocolGovernance");
+        [deployer, stranger] = await ethers.getSigners();
 
         protocolGovernance = await ProtocolGovernance.deploy();
         vaultManagerGovernance = await VaultManagerGovernance.deploy(true, protocolGovernance.address);
