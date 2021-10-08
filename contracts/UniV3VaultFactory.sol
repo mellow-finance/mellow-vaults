@@ -13,8 +13,6 @@ contract UniV3VaultFactory is IVaultFactory {
         bytes calldata options
     ) external override returns (address) {
         uint256 fee;
-        // TODO: Figure out why calldataload don't need a 32 bytes offset for the bytes length like mload
-        // probably due to how .offset works
         assembly {
             fee := calldataload(options.offset)
         }
