@@ -7,8 +7,9 @@ contract ERC20Vault is Vault {
     constructor(
         address[] memory tokens,
         uint256[] memory limits,
-        IVaultManager vaultManager
-    ) Vault(tokens, limits, vaultManager) {}
+        IVaultManager vaultManager,
+        address strategyTreasury
+    ) Vault(tokens, limits, vaultManager, strategyTreasury) {}
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();
@@ -38,7 +39,7 @@ contract ERC20Vault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address) internal view override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings() internal view override returns (uint256[] memory collectedEarnings) {
         // no-op, no earnings here
         collectedEarnings = new uint256[](vaultTokens().length);
     }

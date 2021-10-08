@@ -13,9 +13,13 @@ contract VaultGovernance is IVaultGovernance, GovernanceAccessControl {
     IVaultManager private _vaultManager;
     IVaultManager private _pendingVaultManager;
     uint256 private _pendingVaultManagerTimestamp;
+    address private _strategyTreasury;
+    address private _pendingStrategyTreasury;
+    uint256 private _pendingStrategyTreasuryTimestamp;
 
-    constructor(IVaultManager manager) {
+    constructor(IVaultManager manager, address treasury) {
         _vaultManager = manager;
+        _strategyTreasury = treasury;
     }
 
     function vaultManager() public view returns (IVaultManager) {
@@ -44,5 +48,38 @@ contract VaultGovernance is IVaultGovernance, GovernanceAccessControl {
         require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
         _vaultManager = _pendingVaultManager;
         emit CommitVaultManager(_vaultManager);
+    }
+
+    function strategyTreasury() public view returns (address) {
+        return _strategyTreasury;
+    }
+
+    function pendingStrategyTreasury() external view returns (address) {
+        return _pendingStrategyTreasury;
+    }
+
+    function pendingStrategyTreasuryTimestamp() external view returns (uint256) {
+        return _pendingStrategyTreasuryTimestamp;
+    }
+
+    function setPendingStrategyTreasury(address treasury) external {
+        require(_isGovernanceOrDelegate() || _strategist() == msg.sender, "GDS");
+        require(address(treasury) != address(0), "ZMG");
+        _pendingStrategyTreasury = treasury;
+        _pendingStrategyTreasuryTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
+        emit SetPendingStrategyTreasury(treasury);
+    }
+
+    function commitStrategyTreasury() external {
+        require(_isGovernanceOrDelegate() || _strategist() == msg.sender, "GDS");
+        require(_pendingStrategyTreasuryTimestamp > 0, "NULL");
+        require(block.timestamp > _pendingStrategyTreasuryTimestamp, "TV");
+        _strategyTreasury = _pendingStrategyTreasury;
+        emit CommitStrategyTreasury(_strategyTreasury);
+    }
+
+    function _strategist() internal view returns (address) {
+        uint256 nft = _vaultManager.nftForVault(address(this));
+        return _vaultManager.getApproved(nft);
     }
 }

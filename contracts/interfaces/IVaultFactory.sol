@@ -9,6 +9,7 @@ interface IVaultFactory {
     function deployVault(
         address[] calldata tokens,
         uint256[] calldata limits,
+        address strategyTreasury,
         bytes calldata options
     ) external returns (address vault);
 }

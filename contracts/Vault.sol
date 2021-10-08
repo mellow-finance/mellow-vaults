@@ -20,8 +20,9 @@ abstract contract Vault is IVault, VaultGovernance {
     constructor(
         address[] memory tokens,
         uint256[] memory limits,
-        IVaultManager vaultManager
-    ) VaultGovernance(vaultManager) {
+        IVaultManager vaultManager,
+        address strategyTreasury
+    ) VaultGovernance(vaultManager, strategyTreasury) {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
         require(tokens.length == limits.length, "LL");
@@ -110,9 +111,24 @@ abstract contract Vault is IVault, VaultGovernance {
     }
 
     function collectEarnings(address to) external returns (uint256[] memory collectedEarnings) {
+        /// TODO: is allowed to pull
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
-        collectedEarnings = _collectEarnings(to);
+        collectedEarnings = _collectEarnings();
+        IProtocolGovernance governance = vaultManager().governanceParams().protocolGovernance;
+        address protocolTres = governance.protocolTreasury();
+        uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
+        uint256 strategyPerformanceFee = governance.strategyPerformanceFee();
+        address strategyTres = strategyTreasury();
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            IERC20 token = IERC20(_vaultTokens[i]);
+            uint256 protocolFee = (collectedEarnings[i] * protocolPerformanceFee) / Common.DENOMINATOR;
+            uint256 strategyFee = (collectedEarnings[i] * strategyPerformanceFee) / Common.DENOMINATOR;
+            uint256 strategyEarnings = collectedEarnings[i] - protocolFee - strategyFee;
+            token.safeTransfer(strategyTres, strategyFee);
+            token.safeTransfer(protocolTres, protocolFee);
+            token.safeTransfer(to, strategyEarnings);
+        }
         emit IVault.CollectEarnings(to, collectedEarnings);
     }
 
@@ -158,7 +174,7 @@ abstract contract Vault is IVault, VaultGovernance {
         virtual
         returns (uint256[] memory actualTokenAmounts);
 
-    function _collectEarnings(address to) internal virtual returns (uint256[] memory collectedEarnings);
+    function _collectEarnings() internal virtual returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 
