@@ -64,4 +64,36 @@ describe("VaultManagerGovernance", function() {
             ).to.deep.equal([false, newProtocolGovernance.address]);
         });
     });
+
+    describe("Commit governance params test", function() {
+        let newProtocolGovernance: any;
+
+        beforeEach(async () => {
+            newProtocolGovernance = await ProtocolGovernance.deploy();
+            await vaultManagerGovernance.setPendingGovernanceParams([true, newProtocolGovernance.address]);
+        });
+    
+        it("Role should be governance or delegate", async () => {
+            await expect(
+                vaultManagerGovernance.connect(stranger).commitGovernanceParams()
+            ).to.be.revertedWith("GD");
+        });
+        
+        it("Pending governance timestamp should be graeter than 0");
+        
+        it("Pending governance timestamp should be less than current block timestamp");
+
+        it("Should emit new event CommitGovernanceParams", async () => {
+             await expect(
+                vaultManagerGovernance.commitGovernanceParams()
+            ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([true, newProtocolGovernance.address]);
+        });
+
+        it("Should commit new governance params", async () => {
+            await vaultManagerGovernance.commitGovernanceParams();
+            expect(
+                await vaultManagerGovernance.governanceParams()
+            ).to.deep.equal([true, newProtocolGovernance.address]);
+        });
+    });
 });
