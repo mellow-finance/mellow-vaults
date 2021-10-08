@@ -1,6 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+<<<<<<< Updated upstream
 import type * as ethersT from "ethers";
+=======
+import { Address } from "hardhat-deploy/dist/types";
+import { BigNumber } from "ethers";
+>>>>>>> Stashed changes
 
 
 describe("VaultManagerGovernance", function() {
@@ -45,6 +50,17 @@ describe("VaultManagerGovernance", function() {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, zeroAddress])
             ).to.be.revertedWith("ZMG");
+        });
+
+        it("Pending governance timestamp should be set", async () => {
+            let zeroAddress = ethers.constants.AddressZero;
+            await newProtocolGovernance.setPendingParams([0, 100500, 0, zeroAddress]);
+            var time = Math.floor(new Date().getTime() / 1000) + 3600;
+            await ethers.provider.send("evm_setNextBlockTimestamp", [time]);
+            await vaultManagerGovernance.setPendingGovernanceParams([false, newProtocolGovernance.address]);
+            expect(
+                await vaultManagerGovernance.pendingGovernanceParamsTimestamp()
+            ).to.be.equal(time);
         });
 
         it("Should emit new event SetPendingGovernanceParams", async () => {
