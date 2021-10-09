@@ -56,5 +56,5 @@ jobs:
       - name: Check size
         run: yarn size
 
-      - name: Run tests
-        run: yarn test
+      - name: Run coverage
+        run: yarn coverage
