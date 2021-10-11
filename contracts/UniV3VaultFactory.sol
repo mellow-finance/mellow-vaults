@@ -10,13 +10,14 @@ contract UniV3VaultFactory is IVaultFactory {
     function deployVault(
         address[] calldata tokens,
         uint256[] calldata limits,
+        address strategyTreasury,
         bytes calldata options
     ) external override returns (address) {
         uint256 fee;
         assembly {
             fee := calldataload(options.offset)
         }
-        UniV3Vault vault = new UniV3Vault(tokens, limits, IVaultManager(msg.sender), uint24(fee));
+        UniV3Vault vault = new UniV3Vault(tokens, limits, IVaultManager(msg.sender), strategyTreasury, uint24(fee));
         return address(vault);
     }
 }

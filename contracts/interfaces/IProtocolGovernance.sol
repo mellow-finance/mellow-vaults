@@ -7,7 +7,9 @@ interface IProtocolGovernance {
     struct Params {
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
-        uint256 protocolFee;
+        uint256 strategyPerformanceFee;
+        uint256 protocolPerformanceFee;
+        uint256 protocolExitFee;
         address protocolTreasury;
     }
 
@@ -21,7 +23,11 @@ interface IProtocolGovernance {
 
     function governanceDelay() external view returns (uint256);
 
-    function protocolFee() external view returns (uint256);
+    function strategyPerformanceFee() external view returns (uint256);
+
+    function protocolPerformanceFee() external view returns (uint256);
+
+    function protocolExitFee() external view returns (uint256);
 
     function protocolTreasury() external view returns (address);
 

@@ -1,10 +1,10 @@
 on: ["push", "pull_request"]
 
-name: Test
+name: Run CI Tests
 
 jobs:
-  build:
-    name: Build
+  test:
+    name: Build and Test
     runs-on: ubuntu-latest
     env:
       MAINNET_RPC: ${{secrets.mainnet_rpc}}
@@ -56,5 +56,5 @@ jobs:
       - name: Check size
         run: yarn size
 
-      - name: Run tests
-        run: yarn test
+      - name: Run coverage
+        run: yarn coverage

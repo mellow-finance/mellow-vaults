@@ -41,8 +41,16 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
         return params.governanceDelay;
     }
 
-    function protocolFee() external view returns (uint256) {
-        return params.protocolFee;
+    function strategyPerformanceFee() external view returns (uint256) {
+        return params.strategyPerformanceFee;
+    }
+
+    function protocolPerformanceFee() external view returns (uint256) {
+        return params.protocolPerformanceFee;
+    }
+
+    function protocolExitFee() external view returns (uint256) {
+        return params.protocolExitFee;
     }
 
     function protocolTreasury() external view returns (address) {

@@ -20,8 +20,9 @@ abstract contract Vault is IVault, VaultGovernance {
     constructor(
         address[] memory tokens,
         uint256[] memory limits,
-        IVaultManager vaultManager
-    ) VaultGovernance(vaultManager) {
+        IVaultManager vaultManager,
+        address strategyTreasury
+    ) VaultGovernance(vaultManager, strategyTreasury) {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
         require(tokens.length == limits.length, "LL");
@@ -50,7 +51,9 @@ abstract contract Vault is IVault, VaultGovernance {
         return interfaceId == type(IVault).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function tvl() public view virtual returns (address[] memory tokens, uint256[] memory tokenAmounts);
+    function tvl() public view virtual returns (uint256[] memory tokenAmounts);
+
+    function earnings() public view virtual returns (uint256[] memory tokenAmounts);
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
@@ -61,7 +64,7 @@ abstract contract Vault is IVault, VaultGovernance {
     {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        (, uint256[] memory tvls) = tvl();
+        uint256[] memory tvls = tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             require(pTokenAmounts[i] + tvls[i] < _vaultLimits[i], "OOB");
         }
@@ -90,12 +93,12 @@ abstract contract Vault is IVault, VaultGovernance {
     }
 
     function pull(
-        uint256 nft,
         address to,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
+        uint256 nft = vaultManager().nftForVault(address(this));
         address owner = vaultManager().ownerOf(nft);
         require(
             owner == msg.sender || vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to),
@@ -107,14 +110,27 @@ abstract contract Vault is IVault, VaultGovernance {
         emit Pull(to, actualTokenAmounts);
     }
 
-    function collectEarnings(address to, address[] calldata tokens)
-        external
-        returns (uint256[] memory collectedEarnings)
-    {
+    function collectEarnings(address to) external returns (uint256[] memory collectedEarnings) {
+        /// TODO: is allowed to pull
+        /// TODO: verify that only RouterVault can call this (for fees reasons)
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
-        collectedEarnings = _collectEarnings(to, tokens);
-        emit IVault.CollectEarnings(to, tokens, collectedEarnings);
+        collectedEarnings = _collectEarnings(to);
+        IProtocolGovernance governance = vaultManager().governanceParams().protocolGovernance;
+        address protocolTres = governance.protocolTreasury();
+        uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
+        uint256 strategyPerformanceFee = governance.strategyPerformanceFee();
+        address strategyTres = strategyTreasury();
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            IERC20 token = IERC20(_vaultTokens[i]);
+            uint256 protocolFee = (collectedEarnings[i] * protocolPerformanceFee) / Common.DENOMINATOR;
+            uint256 strategyFee = (collectedEarnings[i] * strategyPerformanceFee) / Common.DENOMINATOR;
+            uint256 strategyEarnings = collectedEarnings[i] - protocolFee - strategyFee;
+            token.safeTransfer(strategyTres, strategyFee);
+            token.safeTransfer(protocolTres, protocolFee);
+            token.safeTransfer(to, strategyEarnings);
+        }
+        emit IVault.CollectEarnings(to, collectedEarnings);
     }
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
@@ -159,10 +175,7 @@ abstract contract Vault is IVault, VaultGovernance {
         virtual
         returns (uint256[] memory actualTokenAmounts);
 
-    function _collectEarnings(address to, address[] memory tokens)
-        internal
-        virtual
-        returns (uint256[] memory collectedEarnings);
+    function _collectEarnings(address to) internal virtual returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 
