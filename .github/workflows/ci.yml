@@ -25,6 +25,9 @@ jobs:
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
+      
+      - name: Install Ganache
+        run: npm install -g ganache-cli@6.10.2
 
       - name: Yarn cache
         uses: actions/cache@v2
@@ -58,3 +61,6 @@ jobs:
 
       - name: Run coverage
         run: yarn coverage
+
+      - name: Run brownie tests 
+        run: cd test_brownie && brownie test
