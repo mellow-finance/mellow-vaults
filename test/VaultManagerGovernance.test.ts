@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { 
     ethers, 
-    deployments 
+    deployments
 } from "hardhat";
 import { 
     ContractFactory, 
@@ -12,14 +12,14 @@ import Exceptions from "./utils/Exceptions";
 import { setupLibraries, setupProtocolGovernance } from "./utils/Fixtures";
 
 
-describe("VaultManagerGovernance", function() {
+describe("VaultManagerGovernance", () => {
     let ProtocolGovernance: ContractFactory;
     let vaultManagerGovernance: Contract;
     let protocolGovernance: Contract;
     let deployer: Signer;
     let stranger: Signer;
 
-    beforeEach(async function() {
+    beforeEach(async () => {
         const Common = await ethers.getContractFactory("Common");
         await Common.deploy();
         const VaultManagerGovernance = await ethers.getContractFactory("VaultManagerGovernance");
@@ -36,7 +36,7 @@ describe("VaultManagerGovernance", function() {
         );
     });
 
-    describe("Set pending governance params test", () => {
+    describe("Set pending params", () => {
         let newProtocolGovernance: Contract;
     
         beforeEach(async () => {
@@ -77,7 +77,7 @@ describe("VaultManagerGovernance", function() {
         });
     });
 
-    describe("Commit governance params test", function() {
+    describe("Commit governance params", () => {
         let newProtocolGovernance: Contract;
 
         beforeEach(async () => {
