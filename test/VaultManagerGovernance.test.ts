@@ -30,20 +30,20 @@ describe("VaultManagerGovernance", () => {
         vaultManagerGovernance = await VaultManagerGovernance.deploy(true, protocolGovernance.address);
     });
 
-    it("Governance params should be set", async () => {
+    it("governance params should be set", async () => {
         expect(await vaultManagerGovernance.governanceParams()).to.deep.equal(
             [true, protocolGovernance.address]
         );
     });
 
-    describe("Set pending params", () => {
+    describe("set pending params", () => {
         let newProtocolGovernance: Contract;
     
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
         });
     
-        it("Role should be governance or delegate", async () => {
+        it("role should be governance or delegate", async () => {
             await expect(
                 vaultManagerGovernance.connect(stranger).setPendingGovernanceParams([
                     false, newProtocolGovernance.address
@@ -51,14 +51,14 @@ describe("VaultManagerGovernance", () => {
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE);
         });
 
-        it("Pending governance params address should not be equal to 0x0", async () => {
+        it("pending governance params address should not be equal to 0x0", async () => {
             let zeroAddress = ethers.constants.AddressZero;
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, zeroAddress])
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
         });
 
-        it("Should emit new event SetPendingGovernanceParams", async () => {
+        it("should emit new event SetPendingGovernanceParams", async () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, newProtocolGovernance.address])
             ).to.emit(vaultManagerGovernance, "SetPendingGovernanceParams").withArgs([
@@ -67,7 +67,7 @@ describe("VaultManagerGovernance", () => {
             ]);
         })
 
-        it("Pending governance params should be set", async () => {
+        it("pending governance params should be set", async () => {
             await vaultManagerGovernance.setPendingGovernanceParams([
                 false, newProtocolGovernance.address
             ]);
@@ -77,7 +77,7 @@ describe("VaultManagerGovernance", () => {
         });
     });
 
-    describe("Commit governance params", () => {
+    describe("commit governance params", () => {
         let newProtocolGovernance: Contract;
 
         beforeEach(async () => {
@@ -88,13 +88,13 @@ describe("VaultManagerGovernance", () => {
             ]);
         });
     
-        it("Role should be governance or delegate", async () => {
+        it("role should be governance or delegate", async () => {
             await expect(
                 vaultManagerGovernance.connect(stranger).commitGovernanceParams()
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE);
         });
         
-        it("Should emit new event CommitGovernanceParams", async () => {
+        it("should emit new event CommitGovernanceParams", async () => {
              await expect(
                 vaultManagerGovernance.commitGovernanceParams()
             ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([
@@ -103,7 +103,7 @@ describe("VaultManagerGovernance", () => {
             ]);
         });
 
-        it("Should commit new governance params", async () => {
+        it("should commit new governance params", async () => {
             await vaultManagerGovernance.commitGovernanceParams();
             expect(
                 await vaultManagerGovernance.governanceParams()
