@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import type * as ethersT from "ethers";
+import { ContractFactory, Contract } from "ethers";
 
 describe("Common", () => {
-    let commonTest: ethersT.Contract;
+    let commonTest: Contract;
 
     const addresses = [
         "0x0000000000000000000000000000000000000001",
@@ -13,9 +13,9 @@ describe("Common", () => {
     ];
     
     beforeEach(async () => {
-        const Common: ethersT.ContractFactory = await ethers.getContractFactory("Common");
+        const Common: ContractFactory = await ethers.getContractFactory("Common");
         await Common.deploy();
-        const CommonTest: ethersT.ContractFactory = await ethers.getContractFactory("CommonTest");
+        const CommonTest: ContractFactory = await ethers.getContractFactory("CommonTest");
         commonTest = await CommonTest.deploy();
     });
 
