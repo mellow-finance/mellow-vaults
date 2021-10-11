@@ -25,7 +25,6 @@ interface IVault is IVaultGovernance {
     ) external returns (uint256[] memory actualTokenAmounts);
 
     function pull(
-        uint256 nft,
         address to,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
