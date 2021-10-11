@@ -5,16 +5,16 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IVault.sol";
 import "./Vault.sol";
 
-contract RouterVault is Vault {
+contract GatewayVault is Vault {
     using SafeERC20 for IERC20;
     address[] private _vaults;
+    uint256[] private _limits;
 
     constructor(
         address[] memory tokens,
-        uint256[] memory limits,
         IVaultManager vaultManager,
         address strategyTreasury
-    ) Vault(tokens, limits, vaultManager, strategyTreasury) {}
+    ) Vault(tokens, vaultManager, strategyTreasury) {}
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();
@@ -42,6 +42,10 @@ contract RouterVault is Vault {
                 tokenAmounts[j] += pTokenAmounts[j];
             }
         }
+    }
+
+    function limits() external view returns (uint256[] memory) {
+        return _limits;
     }
 
     function vaultTvl(uint256 vaultNum) public view returns (uint256[] memory) {
@@ -73,9 +77,17 @@ contract RouterVault is Vault {
         return Common.projectTokenAmounts(vaultTokens(), pTokens, vTokenAmounts);
     }
 
+    function setLimits(uint256[] calldata newLimits) external {
+        require(_isApprovedOrOwner(msg.sender) || _isGovernanceOrDelegate(), "IOG");
+        require(newLimits.length == vaultTokens().length, "TL");
+        _limits = newLimits;
+        emit SetLimits(newLimits);
+    }
+
     function _push(uint256[] memory tokenAmounts) internal override returns (uint256[] memory actualTokenAmounts) {
         uint256[][] memory tvls = vaultsTvl();
         address[] memory tokens = vaultTokens();
+        uint256[] memory totalTvl = new uint256[](tokens.length);
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
@@ -83,7 +95,11 @@ contract RouterVault is Vault {
             uint256[] memory actualVaultTokenAmounts = vault.push(tokens, amountsByVault[i]);
             for (uint256 j = 0; j < tokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
+                totalTvl[j] += tvls[i][j];
             }
+        }
+        for (uint256 i = 0; i < tokens.length; i++) {
+            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "L");
         }
     }
 
@@ -148,4 +164,5 @@ contract RouterVault is Vault {
 
     event CollectProtocolFees(address protocolTreasury, address[] tokens, uint256[] amounts);
     event CollectStrategyFees(address strategyTreasury, address[] tokens, uint256[] amounts);
+    event SetLimits(uint256[] limits);
 }
