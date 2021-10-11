@@ -33,6 +33,8 @@ const config: HardhatUserConfig = {
             },
           ]
         : undefined,
+
+      initialBaseFeePerGas: 0
     },
     localhost: {
       url: "http://localhost:8545",
