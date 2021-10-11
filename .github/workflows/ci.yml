@@ -9,6 +9,9 @@ jobs:
     env:
       MAINNET_RPC: ${{secrets.mainnet_rpc}}
       KOVAN_RPC: ${{secrets.kovan_rpc}}
+      # increasing available memory for node reduces issues with ganache crashing
+      # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
+      NODE_OPTIONS: --max_old_space_size=4096
     steps:
       - uses: actions/checkout@v1
 
@@ -17,17 +20,14 @@ jobs:
         with:
           node-version: 14.x
 
-      - name: Use python 3.9
+      - name: Use python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9"
+          python-version: "3.8"
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
-      
-      - name: Install Ganache
-        run: npm install -g ganache & npm install -g ganache-cli@6.10.2
 
       - name: Yarn cache
         uses: actions/cache@v2
@@ -50,6 +50,14 @@ jobs:
         run: |
           pip install -r test_brownie/requirements.txt
 
+      - name: Cache Compiler Installations
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.solcx
+            ~/.vvm
+          key: compiler-cache
+
       - name: Install yarn dependencies
         run: yarn
 
@@ -61,6 +69,9 @@ jobs:
 
       - name: Run coverage
         run: yarn coverage
+
+      - name: Install Ganache
+        run: npm install -g ganache-cli@6.10.2
 
       - name: Run brownie tests 
         run: cd test_brownie && brownie test
