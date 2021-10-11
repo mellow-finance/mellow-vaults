@@ -1,22 +1,22 @@
-# on: ["push"]
+on: ["push"]
 
-# name: Notification
+name: Notification
 
-# jobs:
-#   notify:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Notify chat 1
-#         uses: appleboy/telegram-action@master
-#         with:
-#           to: ${{ secrets.TELEGRAM_TO_1 }}
-#           token: ${{ secrets.TELEGRAM_TOKEN }}
-#           message: |
-#             ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
-#       - name: Notify chat 2
-#         uses: appleboy/telegram-action@master
-#         with:
-#           to: ${{ secrets.TELEGRAM_TO_2 }}
-#           token: ${{ secrets.TELEGRAM_TOKEN }}
-#           message: |
-#             ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify chat 1
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO_1 }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
+      - name: Notify chat 2
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO_2 }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
