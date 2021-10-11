@@ -58,3 +58,6 @@ jobs:
 
       - name: Run coverage
         run: yarn coverage
+
+      - name: Count LOC
+        run: wc -l contracts/**/*.sol
