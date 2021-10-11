@@ -1,11 +1,15 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { 
+    ethers, 
+    deployments 
+} from "hardhat";
 import { 
     ContractFactory, 
     Contract, 
     Signer 
 } from "ethers";
 import Exceptions from "./utils/Exceptions";
+import { setupLibraries, setupProtocolGovernance } from "./utils/Fixtures";
 
 
 describe("VaultManagerGovernance", function() {
