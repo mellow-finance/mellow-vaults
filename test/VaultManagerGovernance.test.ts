@@ -1,14 +1,19 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import type * as ethersT from "ethers";
+import { 
+    ContractFactory, 
+    Contract, 
+    Signer 
+} from "ethers";
+import Exceptions from "./utils/Exceptions";
 
 
 describe("VaultManagerGovernance", function() {
-    let ProtocolGovernance: ethersT.ContractFactory;
-    let vaultManagerGovernance: ethersT.Contract;
-    let protocolGovernance: ethersT.Contract;
-    let deployer: ethersT.Signer;
-    let stranger: ethersT.Signer;
+    let ProtocolGovernance: ContractFactory;
+    let vaultManagerGovernance: Contract;
+    let protocolGovernance: Contract;
+    let deployer: Signer;
+    let stranger: Signer;
 
     beforeEach(async function() {
         const Common = await ethers.getContractFactory("Common");
@@ -28,7 +33,7 @@ describe("VaultManagerGovernance", function() {
     });
 
     describe("Set pending governance params test", () => {
-        let newProtocolGovernance: ethersT.Contract;
+        let newProtocolGovernance: Contract;
     
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
@@ -36,25 +41,32 @@ describe("VaultManagerGovernance", function() {
     
         it("Role should be governance or delegate", async () => {
             await expect(
-                vaultManagerGovernance.connect(stranger).setPendingGovernanceParams([false, newProtocolGovernance.address])
-            ).to.be.revertedWith("GD");
+                vaultManagerGovernance.connect(stranger).setPendingGovernanceParams([
+                    false, newProtocolGovernance.address
+                ])
+            ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE);
         });
 
         it("Pending governance params address should not be equal to 0x0", async () => {
             let zeroAddress = ethers.constants.AddressZero;
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, zeroAddress])
-            ).to.be.revertedWith("ZMG");
+            ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
         });
 
         it("Should emit new event SetPendingGovernanceParams", async () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, newProtocolGovernance.address])
-            ).to.emit(vaultManagerGovernance, "SetPendingGovernanceParams").withArgs([false, newProtocolGovernance.address]);
+            ).to.emit(vaultManagerGovernance, "SetPendingGovernanceParams").withArgs([
+                false, 
+                newProtocolGovernance.address
+            ]);
         })
 
         it("Pending governance params should be set", async () => {
-            await vaultManagerGovernance.setPendingGovernanceParams([false, newProtocolGovernance.address]);
+            await vaultManagerGovernance.setPendingGovernanceParams([
+                false, newProtocolGovernance.address
+            ]);
             expect(
                 await vaultManagerGovernance.pendingGovernanceParams()
             ).to.deep.equal([false, newProtocolGovernance.address]);
@@ -62,23 +74,29 @@ describe("VaultManagerGovernance", function() {
     });
 
     describe("Commit governance params test", function() {
-        let newProtocolGovernance: ethersT.Contract;
+        let newProtocolGovernance: Contract;
 
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
-            await vaultManagerGovernance.setPendingGovernanceParams([true, newProtocolGovernance.address]);
+            await vaultManagerGovernance.setPendingGovernanceParams([
+                true, 
+                newProtocolGovernance.address
+            ]);
         });
     
         it("Role should be governance or delegate", async () => {
             await expect(
                 vaultManagerGovernance.connect(stranger).commitGovernanceParams()
-            ).to.be.revertedWith("GD");
+            ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE);
         });
         
         it("Should emit new event CommitGovernanceParams", async () => {
              await expect(
                 vaultManagerGovernance.commitGovernanceParams()
-            ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([true, newProtocolGovernance.address]);
+            ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([
+                true, 
+                newProtocolGovernance.address
+            ]);
         });
 
         it("Should commit new governance params", async () => {
