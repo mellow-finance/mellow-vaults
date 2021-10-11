@@ -93,12 +93,12 @@ abstract contract Vault is IVault, VaultGovernance {
     }
 
     function pull(
-        uint256 nft,
         address to,
         address[] calldata tokens,
         uint256[] calldata tokenAmounts
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
+        uint256 nft = vaultManager().nftForVault(address(this));
         address owner = vaultManager().ownerOf(nft);
         require(
             owner == msg.sender || vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to),
@@ -112,9 +112,10 @@ abstract contract Vault is IVault, VaultGovernance {
 
     function collectEarnings(address to) external returns (uint256[] memory collectedEarnings) {
         /// TODO: is allowed to pull
+        /// TODO: verify that only RouterVault can call this (for fees reasons)
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
-        collectedEarnings = _collectEarnings();
+        collectedEarnings = _collectEarnings(to);
         IProtocolGovernance governance = vaultManager().governanceParams().protocolGovernance;
         address protocolTres = governance.protocolTreasury();
         uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
@@ -174,7 +175,7 @@ abstract contract Vault is IVault, VaultGovernance {
         virtual
         returns (uint256[] memory actualTokenAmounts);
 
-    function _collectEarnings() internal virtual returns (uint256[] memory collectedEarnings);
+    function _collectEarnings(address to) internal virtual returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 

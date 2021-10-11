@@ -39,7 +39,7 @@ contract ERC20Vault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings() internal view override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address) internal view override returns (uint256[] memory collectedEarnings) {
         // no-op, no earnings here
         collectedEarnings = new uint256[](vaultTokens().length);
     }

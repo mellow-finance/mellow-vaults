@@ -147,7 +147,7 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _collectEarnings() internal override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
         address[] memory tokens = vaultTokens();
         collectedEarnings = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
@@ -155,7 +155,7 @@ contract UniV3Vault is Vault {
             (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
                 INonfungiblePositionManager.CollectParams({
                     tokenId: nft,
-                    recipient: address(this),
+                    recipient: to,
                     amount0Max: type(uint128).max,
                     amount1Max: type(uint128).max
                 })

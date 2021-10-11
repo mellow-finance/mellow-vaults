@@ -84,11 +84,11 @@ contract AaveVault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings() internal override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
         collectedEarnings = earnings();
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
-            _lendingPool().withdraw(tokens[i], collectedEarnings[i], address(this));
+            _lendingPool().withdraw(tokens[i], collectedEarnings[i], to);
         }
     }
 
