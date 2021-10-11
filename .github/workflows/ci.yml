@@ -16,7 +16,7 @@ jobs:
       ganache:
         image: trufflesuite/ganache-cli:v6.12.2
         ports:
-          - "8545:8545"
+          - 8545:8545
     steps:
       - uses: actions/checkout@v1
 
@@ -50,6 +50,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
       - name: Install python dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
@@ -79,7 +80,7 @@ jobs:
         run: npm install -g ganache-cli@6.10.2
 
       - name: Add Ganache network for brownie
-        run: brownie networks add Development dev cmd=ganache-cli host=http://ganache:8545
+        run: brownie networks add Development dev cmd="" host=http://ganache:8545
 
       - name: Run brownie tests 
-        run: cd test_brownie && brownie test --network=dev
+        run: cd test_brownie && brownie test --network=dev & cd ..
