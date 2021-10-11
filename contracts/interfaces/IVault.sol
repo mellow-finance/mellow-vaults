@@ -8,8 +8,6 @@ interface IVault is IVaultGovernance {
 
     function isVaultToken(address token) external view returns (bool);
 
-    function vaultLimits() external view returns (uint256[] memory);
-
     function tvl() external view returns (uint256[] memory tokenAmounts);
 
     function earnings() external view returns (uint256[] memory tokenAmounts);
