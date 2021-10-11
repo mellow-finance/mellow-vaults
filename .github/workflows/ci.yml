@@ -7,11 +7,16 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
     env:
-      MAINNET_RPC: ${{secrets.mainnet_rpc}}
-      KOVAN_RPC: ${{secrets.kovan_rpc}}
+      MAINNET_RPC: ${{ secrets.mainnet_rpc }}
+      KOVAN_RPC: ${{ secrets.kovan_rpc }}
       # increasing available memory for node reduces issues with ganache crashing
       # https://nodejs.org/api/cli.html#cli_max_old_space_size_size_in_megabytes
       NODE_OPTIONS: --max_old_space_size=4096
+    services:
+      ganache:
+        image: trufflesuite/ganache-cli:v6.12.2
+        ports:
+          - "8545:8545"
     steps:
       - uses: actions/checkout@v1
 
@@ -73,5 +78,8 @@ jobs:
       - name: Install Ganache
         run: npm install -g ganache-cli@6.10.2
 
+      - name: Add Ganache network for brownie
+        run: brownie networks add Development dev cmd=ganache-cli host=http://ganache:8545
+
       - name: Run brownie tests 
-        run: cd test_brownie && brownie test
+        run: cd test_brownie && brownie test --network=dev
