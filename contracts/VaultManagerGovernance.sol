@@ -40,7 +40,7 @@ contract VaultManagerGovernance is GovernanceAccessControl, IVaultManagerGoverna
     function commitGovernanceParams() external {
         require(_isGovernanceOrDelegate(), "GD");
         require(_pendingGovernanceParamsTimestamp > 0, "NULL");
-        require(block.timestamp > _pendingGovernanceParamsTimestamp, "TV");
+        require(block.timestamp > _pendingGovernanceParamsTimestamp, "TS");
         _governanceParams = _pendingGovernanceParams;
         emit CommitGovernanceParams(_governanceParams);
     }
