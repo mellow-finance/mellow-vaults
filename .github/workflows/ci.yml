@@ -17,7 +17,7 @@ jobs:
         id: badge
         with:
           debug: true
-          directory: ./contracts/**
+          directory: ./contracts
           badge: ./output/badge.svg
           patterns: "*.sol" # Patterns in the format of a '.gitignore' file, separated by pipes.
           ignore: "external"
