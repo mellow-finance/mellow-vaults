@@ -18,11 +18,10 @@ contract UniV3Vault is Vault {
 
     constructor(
         address[] memory tokens,
-        uint256[] memory limits,
         IVaultManager vaultManager,
         address strategyTreasury,
         uint24 fee
-    ) Vault(tokens, limits, vaultManager, strategyTreasury) {
+    ) Vault(tokens, vaultManager, strategyTreasury) {
         require(tokens.length == 2, "TL");
         pool = IUniswapV3PoolState(IUniswapV3Factory(_positionManager().factory()).getPool(tokens[0], tokens[1], fee));
     }

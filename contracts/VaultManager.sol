@@ -37,17 +37,15 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
 
     function createVault(
         address[] calldata tokens,
-        uint256[] calldata limits,
         address strategyTreasury,
         bytes calldata options
     ) external override returns (address vault, uint256 nft) {
         require(governanceParams().permissionless || _isGovernanceOrDelegate(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
-        require(tokens.length == limits.length, "TPL");
         nft = _mintVaultNft();
-        vault = _factory.deployVault(tokens, limits, strategyTreasury, options);
-        emit CreateVault(vault, nft, tokens, limits, options);
+        vault = _factory.deployVault(tokens, strategyTreasury, options);
+        emit CreateVault(vault, nft, tokens, options);
     }
 
     function supportsInterface(bytes4 interfaceId)
