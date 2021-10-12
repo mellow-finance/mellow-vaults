@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { 
-    ethers, 
-    deployments,
+    ethers,
     network
 } from "hardhat";
 import { 
@@ -10,7 +9,6 @@ import {
     Signer 
 } from "ethers";
 import Exceptions from "./utils/Exceptions";
-import { setupLibraries, setupProtocolGovernance } from "./utils/Fixtures";
 import { Address } from "hardhat-deploy/dist/types";
 
 

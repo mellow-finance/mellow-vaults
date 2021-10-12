@@ -8,8 +8,6 @@ import "./libraries/Common.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultManagerGovernance.sol";
 
-import "hardhat/console.sol";
-
 contract VaultManagerGovernance is GovernanceAccessControl, IVaultManagerGovernance {
     GovernanceParams private _governanceParams;
     GovernanceParams private _pendingGovernanceParams;
