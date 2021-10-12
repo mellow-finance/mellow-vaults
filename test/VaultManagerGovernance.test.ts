@@ -1,7 +1,8 @@
 import { expect } from "chai";
 import { 
     ethers, 
-    deployments
+    deployments,
+    network
 } from "hardhat";
 import { 
     ContractFactory, 
@@ -10,6 +11,7 @@ import {
 } from "ethers";
 import Exceptions from "./utils/Exceptions";
 import { setupLibraries, setupProtocolGovernance } from "./utils/Fixtures";
+import { Address } from "hardhat-deploy/dist/types";
 
 
 describe("VaultManagerGovernance", () => {
@@ -18,6 +20,7 @@ describe("VaultManagerGovernance", () => {
     let protocolGovernance: Contract;
     let deployer: Signer;
     let stranger: Signer;
+    let timestamp: number;
 
     beforeEach(async () => {
         const Common = await ethers.getContractFactory("Common");
@@ -30,7 +33,7 @@ describe("VaultManagerGovernance", () => {
         vaultManagerGovernance = await VaultManagerGovernance.deploy(true, protocolGovernance.address);
     });
 
-    it("governance params should be set", async () => {
+    it("sets governance params", async () => {
         expect(await vaultManagerGovernance.governanceParams()).to.deep.equal(
             [true, protocolGovernance.address]
         );
@@ -51,14 +54,30 @@ describe("VaultManagerGovernance", () => {
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE);
         });
 
-        it("pending governance params address should not be equal to 0x0", async () => {
+        it("address should not be 0x00", async () => {
             let zeroAddress = ethers.constants.AddressZero;
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, zeroAddress])
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
         });
 
-        it("should emit new event SetPendingGovernanceParams", async () => {
+        it("sets correct pending timestamp", async () => {
+            let customProtocol = await ProtocolGovernance.deploy();
+            let  zeroAddress = ethers.constants.AddressZero;
+            await customProtocol.setPendingParams([1, 0, 1, 1, 1, zeroAddress]);
+            await customProtocol.commitParams();
+
+            timestamp = Math.ceil(new Date().getTime() / 1000) + 10**6;
+            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+            await network.provider.send('evm_mine');
+
+            await vaultManagerGovernance.setPendingGovernanceParams([false, customProtocol.address]);
+            expect(
+                Math.abs(await vaultManagerGovernance.pendingGovernanceParamsTimestamp() - timestamp)
+            ).to.be.lessThanOrEqual(10);
+        });
+
+        it("emits event SetPendingGovernanceParams", async () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([false, newProtocolGovernance.address])
             ).to.emit(vaultManagerGovernance, "SetPendingGovernanceParams").withArgs([
@@ -67,7 +86,7 @@ describe("VaultManagerGovernance", () => {
             ]);
         })
 
-        it("pending governance params should be set", async () => {
+        it("sets pending params", async () => {
             await vaultManagerGovernance.setPendingGovernanceParams([
                 false, newProtocolGovernance.address
             ]);
@@ -79,6 +98,8 @@ describe("VaultManagerGovernance", () => {
 
     describe("commit governance params", () => {
         let newProtocolGovernance: Contract;
+        let customProtocol: Contract;
+        let zeroAddress: Address;
 
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
@@ -86,6 +107,8 @@ describe("VaultManagerGovernance", () => {
                 true, 
                 newProtocolGovernance.address
             ]);
+            customProtocol = await ProtocolGovernance.deploy();
+            zeroAddress = ethers.constants.AddressZero;
         });
     
         it("role should be governance or delegate", async () => {
@@ -94,16 +117,35 @@ describe("VaultManagerGovernance", () => {
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE);
         });
         
-        it("should emit new event CommitGovernanceParams", async () => {
+        it("waits governance delay", async () => {
+            const timeout = 10**4;
+            await customProtocol.setPendingParams([1, timeout, 1, 1, 1, zeroAddress]);
+            await customProtocol.commitParams();
+
+            timestamp += 10 ** 3;
+            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+            await network.provider.send("evm_mine");
+
+            await vaultManagerGovernance.setPendingGovernanceParams([false, customProtocol.address]);
+            await vaultManagerGovernance.commitGovernanceParams();
+
+            let additionalProtocol = await ProtocolGovernance.deploy();
+            await vaultManagerGovernance.setPendingGovernanceParams([false, additionalProtocol.address]);
+            await expect(
+                vaultManagerGovernance.commitGovernanceParams()
+            ).to.be.revertedWith(Exceptions.TIMESTAMP);
+        });
+        
+        it("emits event CommitGovernanceParams", async () => {
              await expect(
                 vaultManagerGovernance.commitGovernanceParams()
             ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([
-                true, 
+                true,
                 newProtocolGovernance.address
             ]);
         });
 
-        it("should commit new governance params", async () => {
+        it("commits new governance params", async () => {
             await vaultManagerGovernance.commitGovernanceParams();
             expect(
                 await vaultManagerGovernance.governanceParams()
