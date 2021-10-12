@@ -19,3 +19,27 @@ npx hardhat --network localhost create-cell --cells 'TokenVaults' --tokens '["us
 ```
 npx hardhat --network localhost create-vault-1 --lower-tick 195780 --upper-tick 195900 --token0 usdc --token1 weth --strategist 0x638F16FB633747d140e1Ed6219dB783e52a2207B
 ```
+
+
+### Brownie tests
+
+#### Pre-requisites
+
+Install ganache-cli
+```bash
+npm i -g ganache-cli
+```
+
+Create virtualenv & install requirements
+```bash
+cd test_brownie
+python3 -m virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### Run tests
+
+```bash
+brownie test
+```
