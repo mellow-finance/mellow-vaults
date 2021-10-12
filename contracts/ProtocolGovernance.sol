@@ -14,8 +14,9 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
 
     uint256 public pendingPullAllowlistAddTimestamp;
     uint256 public pendingParamsTimestamp;
-    
+
     /// -------------------  PUBLIC, VIEW  -------------------
+
     function pullAllowlist() external view returns (address[] memory) {
         uint256 l = _pullAllowlist.length();
         address[] memory res = new address[](l);

@@ -21,7 +21,7 @@ def _is_unique(seq: list) -> bool:
 def test_sorted_and_unique(addresses, a, CommonTest):
     common_test = CommonTest.deploy({"from": a[0]})
     int_addresses = _addresses_to_int(addresses)
-    int_addresses_sorted = [_ for _ in sorted(int_addresses)]
+    int_addresses_sorted = sorted(int_addresses)
     assert common_test.isSortedAndUnique(addresses) == (
         int_addresses == int_addresses_sorted and
         _is_unique(int_addresses)
@@ -32,5 +32,4 @@ def test_sorted_and_unique(addresses, a, CommonTest):
 def test_bubble_sort(addresses, a, CommonTest):
     common_test = CommonTest.deploy({"from": a[0]})
     addresses_sorted = list(sorted(addresses, key=lambda address: _address_to_int(address)))
-    print(common_test.bubbleSort(addresses))
     assert common_test.bubbleSort(addresses) == addresses_sorted

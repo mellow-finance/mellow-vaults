@@ -31,13 +31,15 @@ describe("VaultManagerGovernance", () => {
         vaultManagerGovernance = await VaultManagerGovernance.deploy(true, protocolGovernance.address);
     });
 
-    it("sets governance params", async () => {
-        expect(await vaultManagerGovernance.governanceParams()).to.deep.equal(
-            [true, protocolGovernance.address]
-        );
+    describe("governanceParams", () => {
+        it("governance params", async () => {
+            expect(await vaultManagerGovernance.governanceParams()).to.deep.equal(
+                [true, protocolGovernance.address]
+            );
+        });
     });
 
-    describe("set pending params", () => {
+    describe("setPendingGovernanceParams", () => {
         let newProtocolGovernance: Contract;
     
         beforeEach(async () => {
@@ -94,7 +96,7 @@ describe("VaultManagerGovernance", () => {
         });
     });
 
-    describe("commit governance params", () => {
+    describe("commitGovernanceParams", () => {
         let newProtocolGovernance: Contract;
         let customProtocol: Contract;
         let zeroAddress: Address;
@@ -134,7 +136,7 @@ describe("VaultManagerGovernance", () => {
             ).to.be.revertedWith(Exceptions.TIMESTAMP);
         });
         
-        it("emits event CommitGovernanceParams", async () => {
+        it("emits CommitGovernanceParams", async () => {
              await expect(
                 vaultManagerGovernance.commitGovernanceParams()
             ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([
