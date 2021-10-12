@@ -6,10 +6,9 @@ import "./Vault.sol";
 contract ERC20Vault is Vault {
     constructor(
         address[] memory tokens,
-        uint256[] memory limits,
         IVaultManager vaultManager,
         address strategyTreasury
-    ) Vault(tokens, limits, vaultManager, strategyTreasury) {}
+    ) Vault(tokens, vaultManager, strategyTreasury) {}
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();

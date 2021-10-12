@@ -33,22 +33,12 @@ const config: HardhatUserConfig = {
             },
           ]
         : undefined,
+
+      initialBaseFeePerGas: 0
     },
     localhost: {
       url: "http://localhost:8545",
-    },
-    kovan: {
-      url: process.env["KOVAN_RPC"],
-      accounts: process.env["KOVAN_DEPLOYER_PK"]
-        ? [process.env["KOVAN_DEPLOYER_PK"]]
-        : undefined,
-    },
-    mainnet: {
-      url: process.env["MAINNET_RPC"],
-      accounts: process.env["MAINNET_DEPLOYER_PK"]
-        ? [process.env["MAINNET_DEPLOYER_PK"]]
-        : undefined,
-    },
+    }
   },
   namedAccounts: {
     deployer: {

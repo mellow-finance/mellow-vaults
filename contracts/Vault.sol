@@ -14,20 +14,16 @@ abstract contract Vault is IVault, VaultGovernance {
     using SafeERC20 for IERC20;
 
     address[] private _vaultTokens;
-    uint256[] private _vaultLimits;
     mapping(address => bool) private _vaultTokensIndex;
 
     constructor(
         address[] memory tokens,
-        uint256[] memory limits,
         IVaultManager vaultManager,
         address strategyTreasury
     ) VaultGovernance(vaultManager, strategyTreasury) {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
-        require(tokens.length == limits.length, "LL");
         _vaultTokens = tokens;
-        _vaultLimits = limits;
         for (uint256 i = 0; i < tokens.length; i++) {
             _vaultTokensIndex[tokens[i]] = true;
         }
@@ -41,10 +37,6 @@ abstract contract Vault is IVault, VaultGovernance {
 
     function isVaultToken(address token) public view returns (bool) {
         return _vaultTokensIndex[token];
-    }
-
-    function vaultLimits() public view returns (uint256[] memory) {
-        return _vaultLimits;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
@@ -64,10 +56,6 @@ abstract contract Vault is IVault, VaultGovernance {
     {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        uint256[] memory tvls = tvl();
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            require(pTokenAmounts[i] + tvls[i] < _vaultLimits[i], "OOB");
-        }
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Push(pActualTokenAmounts);

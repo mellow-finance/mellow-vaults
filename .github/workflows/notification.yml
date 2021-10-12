@@ -9,14 +9,35 @@ jobs:
       - name: Notify chat 1
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_TO_1 }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_1 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
             ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
       - name: Notify chat 2
         uses: appleboy/telegram-action@master
         with:
-          to: ${{ secrets.TELEGRAM_TO_2 }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_2 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
+      - name: Notify chat 3
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_3 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
+      - name: Notify chat 4
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_4 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
+      - name: Notify chat 5
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_5 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
             ⚡️ ${{ github.actor }} pushed `${{ github.event.head_commit.message }}` (https://github.com/${{ github.repository }}/commit/${{ github.sha }}) to branch ${{ github.ref }}
