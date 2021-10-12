@@ -84,3 +84,6 @@ jobs:
 
       - name: Run brownie tests 
         run: cd test_brownie && brownie test --network=dev & cd ..
+
+      - name: Count LOC
+        run: wc -l contracts/**/*.sol
