@@ -50,13 +50,14 @@ abstract contract Vault is IVault, VaultGovernance {
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
     /// tokens are used from contract balance
-    function push(address[] calldata tokens, uint256[] calldata tokenAmounts)
-        public
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function push(
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts,
+        bool optimized
+    ) public returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        uint256[] memory pActualTokenAmounts = _push(pTokenAmounts);
+        uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, optimized);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }
@@ -64,14 +65,15 @@ abstract contract Vault is IVault, VaultGovernance {
     function transferAndPush(
         address from,
         address[] calldata tokens,
-        uint256[] calldata tokenAmounts
+        uint256[] calldata tokenAmounts,
+        bool optimized
     ) external returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokenAmounts[i] > 0) {
                 IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
             }
         }
-        actualTokenAmounts = push(tokens, tokenAmounts);
+        actualTokenAmounts = push(tokens, tokenAmounts, optimized);
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 leftover = actualTokenAmounts[i] < tokenAmounts[i] ? tokenAmounts[i] - actualTokenAmounts[i] : 0;
             if (leftover > 0) {
@@ -83,7 +85,8 @@ abstract contract Vault is IVault, VaultGovernance {
     function pull(
         address to,
         address[] calldata tokens,
-        uint256[] calldata tokenAmounts
+        uint256[] calldata tokenAmounts,
+        bool optimized
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256 nft = vaultManager().nftForVault(address(this));
@@ -93,7 +96,7 @@ abstract contract Vault is IVault, VaultGovernance {
             "INTRA"
         ); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts);
+        uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, optimized);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
     }
@@ -170,13 +173,17 @@ abstract contract Vault is IVault, VaultGovernance {
     /// -------------------  PRIVATE, MUTATING  -------------------
 
     /// Guaranteed to have exact signature matchinn vault tokens
-    function _push(uint256[] memory tokenAmounts) internal virtual returns (uint256[] memory actualTokenAmounts);
-
-    /// Guaranteed to have exact signature matchinn vault tokens
-    function _pull(address to, uint256[] memory tokenAmounts)
+    function _push(uint256[] memory tokenAmounts, bool optimized)
         internal
         virtual
         returns (uint256[] memory actualTokenAmounts);
+
+    /// Guaranteed to have exact signature matchinn vault tokens
+    function _pull(
+        address to,
+        uint256[] memory tokenAmounts,
+        bool optimized
+    ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
     function _collectEarnings(address to) internal virtual returns (uint256[] memory collectedEarnings);
 

@@ -77,7 +77,11 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _push(uint256[] memory tokenAmounts) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bool)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
@@ -110,11 +114,11 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _pull(address to, uint256[] memory tokenAmounts)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _pull(
+        address to,
+        uint256[] memory tokenAmounts,
+        bool
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
 
         for (uint256 i = 0; i < _nfts.length(); i++) {
