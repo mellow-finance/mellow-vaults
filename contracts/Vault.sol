@@ -140,6 +140,27 @@ abstract contract Vault is IVault, VaultGovernance {
         emit IVault.ReclaimTokens(to, tokens, tokenAmounts);
     }
 
+    function claimRewards(
+        address to,
+        address from,
+        bytes calldata data
+    ) external {
+        require(_isGovernanceOrDelegate() || _isApprovedOrOwner(msg.sender), "GD");
+        IProtocolGovernance protocolGovernance = vaultManager().governanceParams().protocolGovernance;
+        if (!_isGovernanceOrDelegate()) {
+            require(protocolGovernance.isAllowedToPull(to), "INTRA");
+        }
+        require(protocolGovernance.isAllowedToClaim(from), "AC");
+        (bool res, bytes memory returndata) = from.call(data);
+        if (!res) {
+            assembly {
+                let returndata_size := mload(returndata)
+                // Bubble up revert reason
+                revert(add(32, returndata), returndata_size)
+            }
+        }
+    }
+
     /// -------------------  PRIVATE, VIEW  -------------------
 
     function _validateAndProjectTokens(address[] calldata tokens, uint256[] calldata tokenAmounts)

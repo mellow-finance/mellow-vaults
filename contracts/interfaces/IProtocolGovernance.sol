@@ -19,6 +19,12 @@ interface IProtocolGovernance {
 
     function isAllowedToPull(address addr) external view returns (bool);
 
+    function claimAllowlist() external view returns (address[] memory);
+
+    function pendingClaimAllowlistAdd() external view returns (address[] memory);
+
+    function isAllowedToClaim(address addr) external view returns (bool);
+
     function maxTokensPerVault() external view returns (uint256);
 
     function governanceDelay() external view returns (uint256);
