@@ -122,6 +122,9 @@ contract GatewayVault is Vault {
         }
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
+            if (optimized && (_redirects[i] != address(0))) {
+                continue;
+            }
             IVault vault = IVault(_vaults[i]);
             uint256[] memory actualVaultTokenAmounts = vault.push(tokens, amountsByVault[i], optimized);
             for (uint256 j = 0; j < tokens.length; j++) {
