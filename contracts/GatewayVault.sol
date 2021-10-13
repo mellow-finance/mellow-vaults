@@ -16,8 +16,9 @@ contract GatewayVault is Vault {
         address[] memory tokens,
         IVaultManager vaultManager,
         address strategyTreasury,
-        address[] memory vaults
-    ) Vault(tokens, vaultManager, strategyTreasury) {
+        address[] memory vaults,
+        address admin
+    ) Vault(tokens, vaultManager, strategyTreasury, admin) {
         _vaults = vaults;
         for (uint256 i = 0; i < _vaults.length; i++) {
             _vaultsIndex[_vaults[i]] = i;
