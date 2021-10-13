@@ -7,14 +7,20 @@ import "./GovernanceAccessControl.sol";
 
 contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
+
     EnumerableSet.AddressSet private _pullAllowlist;
-    IProtocolGovernance.Params public params;
     address[] private _pendingPullAllowlistAdd;
+    uint256 public pendingPullAllowlistAddTimestamp;
+
+    EnumerableSet.AddressSet private _claimAllowlist;
+    address[] private _pendingClaimAllowlistAdd;
+    uint256 public pendingClaimAllowlistAddTimestamp;
+
+    IProtocolGovernance.Params public params;
     Params public pendingParams;
 
-    uint256 public pendingPullAllowlistAddTimestamp;
     uint256 public pendingParamsTimestamp;
-    
+
     /// -------------------  PUBLIC, VIEW  -------------------
     function pullAllowlist() external view returns (address[] memory) {
         uint256 l = _pullAllowlist.length();
@@ -31,6 +37,23 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
 
     function isAllowedToPull(address addr) external view returns (bool) {
         return _pullAllowlist.contains(addr);
+    }
+
+    function claimAllowlist() external view returns (address[] memory) {
+        uint256 l = _claimAllowlist.length();
+        address[] memory res = new address[](l);
+        for (uint256 i = 0; i < l; i++) {
+            res[i] = _claimAllowlist.at(i);
+        }
+        return res;
+    }
+
+    function pendingClaimAllowlistAdd() external view returns (address[] memory) {
+        return _pendingClaimAllowlistAdd;
+    }
+
+    function isAllowedToClaim(address addr) external view returns (bool) {
+        return _claimAllowlist.contains(addr);
     }
 
     function maxTokensPerVault() external view returns (uint256) {
@@ -73,6 +96,20 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
         _pullAllowlist.remove(addr);
     }
 
+    function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
+        require(_isGovernanceOrDelegate(), "GD");
+        _pendingClaimAllowlistAdd = addresses;
+        pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
+    }
+
+    function removeFromClaimAllowlist(address addr) external {
+        require(_isGovernanceOrDelegate(), "GD");
+        if (!_pullAllowlist.contains(addr)) {
+            return;
+        }
+        _pullAllowlist.remove(addr);
+    }
+
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
         require(_isGovernanceOrDelegate(), "GD");
         pendingParams = newParams;
@@ -80,6 +117,16 @@ contract ProtocolGovernance is IProtocolGovernance, GovernanceAccessControl {
     }
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
+    function commitClaimAllowlistAdd() external {
+        require(_isGovernanceOrDelegate(), "GD");
+        require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
+        for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
+            _pullAllowlist.add(_pendingClaimAllowlistAdd[i]);
+        }
+        delete _pendingClaimAllowlistAdd;
+        delete pendingClaimAllowlistAddTimestamp;
+    }
 
     function commitPullAllowlistAdd() external {
         require(_isGovernanceOrDelegate(), "GD");
