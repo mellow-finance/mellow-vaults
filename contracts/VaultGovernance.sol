@@ -20,12 +20,13 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     constructor(
         IVaultManager manager,
         address treasury,
-        address superAdmin,
         address admin
-    ) DefaultAccessControl(superAdmin, admin) {
+    ) DefaultAccessControl(admin) {
         _vaultManager = manager;
         _strategyTreasury = treasury;
     }
+
+    /// -------------------  PUBLIC, VIEW  -------------------
 
     function vaultManager() public view returns (IVaultManager) {
         return _vaultManager;
@@ -37,22 +38,6 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
 
     function pendingVaultManagerTimestamp() external view returns (uint256) {
         return _pendingVaultManagerTimestamp;
-    }
-
-    function setPendingVaultManager(IVaultManager manager) external {
-        require(isAdmin(), "ADM");
-        require(address(manager) != address(0), "ZMG");
-        _pendingVaultManager = manager;
-        _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
-        emit SetPendingVaultManager(manager);
-    }
-
-    function commitVaultManager() external {
-        require(isAdmin(), "ADM");
-        require(_pendingVaultManagerTimestamp > 0, "NULL");
-        require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
-        _vaultManager = _pendingVaultManager;
-        emit CommitVaultManager(_vaultManager);
     }
 
     function strategyTreasury() public view returns (address) {
@@ -67,8 +52,28 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         return _pendingStrategyTreasuryTimestamp;
     }
 
+    /// -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
+
+    function setPendingVaultManager(IVaultManager manager) external {
+        require(_isProtocolAdmin(), "PADM");
+        require(address(manager) != address(0), "ZMG");
+        _pendingVaultManager = manager;
+        _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
+        emit SetPendingVaultManager(manager);
+    }
+
+    function commitVaultManager() external {
+        require(_isProtocolAdmin(), "PADM");
+        require(_pendingVaultManagerTimestamp > 0, "NULL");
+        require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
+        _vaultManager = _pendingVaultManager;
+        emit CommitVaultManager(_vaultManager);
+    }
+
+    /// -------------------  PUBLIC, MUTATING, ADMIN  -------------------
+
     function setPendingStrategyTreasury(address treasury) external {
-        require(_isAdmin(), "AG");
+        require(isAdmin(), "AG");
         require(address(treasury) != address(0), "ZMG");
         _pendingStrategyTreasury = treasury;
         _pendingStrategyTreasuryTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -76,10 +81,16 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     }
 
     function commitStrategyTreasury() external {
-        require(_isAdmin(), "AG");
+        require(isAdmin(), "AG");
         require(_pendingStrategyTreasuryTimestamp > 0, "NULL");
         require(block.timestamp > _pendingStrategyTreasuryTimestamp, "TV");
         _strategyTreasury = _pendingStrategyTreasury;
         emit CommitStrategyTreasury(_strategyTreasury);
+    }
+
+    /// -------------------  PRIVATE, VIEW  -------------------
+
+    function _isProtocolAdmin() internal view returns (bool) {
+        return _vaultManager.governanceParams().protocolGovernance.isAdmin();
     }
 }

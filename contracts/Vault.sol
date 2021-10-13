@@ -20,9 +20,8 @@ abstract contract Vault is IVault, VaultGovernance {
         address[] memory tokens,
         IVaultManager vaultManager,
         address strategyTreasury,
-        address governance,
-        address vaultAdmin
-    ) VaultGovernance(vaultManager, strategyTreasury, governance, vaultAdmin) {
+        address admin
+    ) VaultGovernance(vaultManager, strategyTreasury, admin) {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
         require(tokens.length <= vaultManager.governanceParams().protocolGovernance.maxTokensPerVault(), "MTL");
@@ -127,10 +126,10 @@ abstract contract Vault is IVault, VaultGovernance {
         emit IVault.CollectEarnings(to, collectedEarnings);
     }
 
-    /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
+    /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     function reclaimTokens(address to, address[] calldata tokens) external {
-        require(isAdmin() || _isApprovedOrOwner(msg.sender), "ADM");
-        if (!isAdmin()) {
+        require(_isProtocolAdmin() || _isApprovedOrOwner(msg.sender), "ADM");
+        if (!_isProtocolAdmin()) {
             require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
@@ -173,6 +172,16 @@ abstract contract Vault is IVault, VaultGovernance {
         pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
+    /// -------------------  PRIVATE, VIEW  -------------------
+
+    function _isApprovedOrOwner(address sender) internal view returns (bool) {
+        uint256 nft = vaultManager().nftForVault(address(this));
+        if (nft == 0) {
+            return false;
+        }
+        return vaultManager().getApproved(nft) == sender || vaultManager().ownerOf(nft) == sender;
+    }
+
     /// -------------------  PRIVATE, MUTATING  -------------------
 
     /// Guaranteed to have exact signature matchinn vault tokens
@@ -191,12 +200,4 @@ abstract contract Vault is IVault, VaultGovernance {
     function _collectEarnings(address to) internal virtual returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
-
-    function _isApprovedOrOwner(address sender) internal view returns (bool) {
-        uint256 nft = vaultManager().nftForVault(address(this));
-        if (nft == 0) {
-            return false;
-        }
-        return vaultManager().getApproved(nft) == sender || vaultManager().ownerOf(nft) == sender;
-    }
 }

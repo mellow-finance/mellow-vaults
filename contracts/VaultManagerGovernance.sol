@@ -8,18 +8,16 @@ import "./libraries/Common.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultManagerGovernance.sol";
 
-contract VaultManagerGovernance is DefaultAccessControl, IVaultManagerGovernance {
+contract VaultManagerGovernance is IVaultManagerGovernance {
     GovernanceParams private _governanceParams;
     GovernanceParams private _pendingGovernanceParams;
     uint256 private _pendingGovernanceParamsTimestamp;
 
-    constructor(
-        bool permissionless,
-        IProtocolGovernance protocolGovernance,
-        address governance
-    ) {
+    constructor(bool permissionless, IProtocolGovernance protocolGovernance) {
         _governanceParams = GovernanceParams({permissionless: permissionless, protocolGovernance: protocolGovernance});
     }
+
+    /// -------------------  PUBLIC, VIEW  -------------------
 
     function governanceParams() public view returns (GovernanceParams memory) {
         return _governanceParams;
@@ -33,8 +31,10 @@ contract VaultManagerGovernance is DefaultAccessControl, IVaultManagerGovernance
         return _pendingGovernanceParamsTimestamp;
     }
 
+    /// -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
-        require(isAdmin(), "ADM");
+        require(_isProtocolAdmin(), "ADM");
         require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
         _pendingGovernanceParams = newGovernanceParams;
         _pendingGovernanceParamsTimestamp = block.timestamp + _governanceParams.protocolGovernance.governanceDelay();
@@ -42,10 +42,16 @@ contract VaultManagerGovernance is DefaultAccessControl, IVaultManagerGovernance
     }
 
     function commitGovernanceParams() external {
-        require(isAdmin(), "ADM");
+        require(_isProtocolAdmin(), "ADM");
         require(_pendingGovernanceParamsTimestamp > 0, "NULL");
         require(block.timestamp > _pendingGovernanceParamsTimestamp, "TS");
         _governanceParams = _pendingGovernanceParams;
         emit CommitGovernanceParams(_governanceParams);
+    }
+
+    /// -------------------  PRIVATE, VIEW  -------------------
+
+    function _isProtocolAdmin() internal view returns (bool) {
+        return _governanceParams.protocolGovernance.isAdmin();
     }
 }

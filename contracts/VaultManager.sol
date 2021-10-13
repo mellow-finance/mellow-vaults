@@ -23,7 +23,6 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         IVaultFactory factory,
         bool permissionless,
         IProtocolGovernance protocolGovernance,
-        address governance
     ) ERC721(name, symbol) VaultManagerGovernance(permissionless, protocolGovernance) {
         _factory = factory;
     }

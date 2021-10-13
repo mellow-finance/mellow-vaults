@@ -2,8 +2,9 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
+import "./interfaces/IDefaultAccessControl.sol";
 
-contract DefaultAccessControl is AccessControlEnumerable {
+contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable {
     bytes32 internal constant ADMIN_ROLE = keccak256("admin");
     bytes32 internal constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
 
