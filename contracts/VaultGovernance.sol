@@ -2,14 +2,14 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./GovernanceAccessControl.sol";
+import "./VaultAccessControl.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IVaultGovernance.sol";
 
-contract VaultGovernance is IVaultGovernance, GovernanceAccessControl {
+contract VaultGovernance is IVaultGovernance, VaultAccessControl {
     IVaultManager private _vaultManager;
     IVaultManager private _pendingVaultManager;
     uint256 private _pendingVaultManagerTimestamp;

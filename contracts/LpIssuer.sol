@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./GovernanceAccessControl.sol";
+import "./VaultAccessControl.sol";
 
-contract LpIssuer is ERC20, GovernanceAccessControl {
+contract LpIssuer is ERC20, VaultAccessControl {
     using SafeERC20 for IERC20;
 
     IVault private _gatewayVault;

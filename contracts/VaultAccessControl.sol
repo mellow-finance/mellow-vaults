@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
-contract GovernanceAccessControl is AccessControlEnumerable {
+contract VaultAccessControl is AccessControlEnumerable {
     bytes32 internal constant GOVERNANCE_ROLE = keccak256("governance");
     bytes32 internal constant GOVERNANCE_DELEGATE_ROLE = keccak256("governance_delegate");
 
