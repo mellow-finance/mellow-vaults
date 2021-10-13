@@ -7,8 +7,9 @@ contract ERC20Vault is Vault {
     constructor(
         address[] memory tokens,
         IVaultManager vaultManager,
-        address strategyTreasury
-    ) Vault(tokens, vaultManager, strategyTreasury) {}
+        address strategyTreasury,
+        address admin
+    ) Vault(tokens, vaultManager, strategyTreasury, admin) {}
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();

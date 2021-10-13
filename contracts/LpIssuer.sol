@@ -6,41 +6,43 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./GovernanceAccessControl.sol";
+import "./DefaultAccessControl.sol";
+import "./LpIssuerGovernance.sol";
 
-contract LpIssuer is ERC20, GovernanceAccessControl {
+contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
     using SafeERC20 for IERC20;
 
-    IVault private _gatewayVault;
+    GovernanceParams private _governanceParams;
     uint256 private _limitPerAddress;
-    IProtocolGovernance private _protocolGovernance;
 
     constructor(
         string memory name_,
         string memory symbol_,
         IVault gatewayVault,
+        IProtocolGovernance protocolGovernance,
         uint256 limitPerAddress,
-        address vaultManager,
-        IProtocolGovernance protocolGovernance
-    ) ERC20(name_, symbol_) {
-        _gatewayVault = gatewayVault;
+        address admin
+    )
+        ERC20(name_, symbol_)
+        DefaultAccessControl(admin)
+        LpIssuerGovernance(GovernanceParams({protocolGovernance: protocolGovernance, gatewayVault: gatewayVault}))
+    {
+        _governanceParams = GovernanceParams({gatewayVault: gatewayVault, protocolGovernance: protocolGovernance});
         _limitPerAddress = limitPerAddress;
-        _protocolGovernance = protocolGovernance;
-        _setupRole(GOVERNANCE_DELEGATE_ROLE, vaultManager);
     }
 
     function setLimit(uint256 newLimitPerAddress) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(isAdmin(), "ADM");
         _limitPerAddress = newLimitPerAddress;
     }
 
     function deposit(uint256[] calldata tokenAmounts, bool optimized) external {
-        address[] memory tokens = _gatewayVault.vaultTokens();
+        address[] memory tokens = governanceParams().gatewayVault.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
-            IERC20(tokens[i]).safeTransferFrom(msg.sender, address(_gatewayVault), tokenAmounts[i]);
+            IERC20(tokens[i]).safeTransferFrom(msg.sender, address(governanceParams().gatewayVault), tokenAmounts[i]);
         }
-        uint256[] memory tvl = _gatewayVault.tvl();
-        uint256[] memory actualTokenAmounts = _gatewayVault.push(tokens, tokenAmounts, optimized);
+        uint256[] memory tvl = governanceParams().gatewayVault.tvl();
+        uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.push(tokens, tokenAmounts, optimized);
         uint256 amountToMint;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < tokens.length; i++) {
@@ -77,15 +79,20 @@ contract LpIssuer is ERC20, GovernanceAccessControl {
         bool optimized
     ) external {
         require(totalSupply() > 0, "TS");
-        address[] memory tokens = _gatewayVault.vaultTokens();
+        address[] memory tokens = governanceParams().gatewayVault.vaultTokens();
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
-        uint256[] memory tvl = _gatewayVault.tvl();
+        uint256[] memory tvl = governanceParams().gatewayVault.tvl();
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
-        uint256[] memory actualTokenAmounts = _gatewayVault.pull(address(this), tokens, tokenAmounts, optimized);
-        uint256 protocolExitFee = _protocolGovernance.protocolExitFee();
-        address protocolTreasury = _protocolGovernance.protocolTreasury();
+        uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.pull(
+            address(this),
+            tokens,
+            tokenAmounts,
+            optimized
+        );
+        uint256 protocolExitFee = governanceParams().protocolGovernance.protocolExitFee();
+        address protocolTreasury = governanceParams().protocolGovernance.protocolTreasury();
         uint256[] memory exitFees = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             if (actualTokenAmounts[i] == 0) {

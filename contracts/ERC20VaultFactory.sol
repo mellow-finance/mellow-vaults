@@ -10,9 +10,10 @@ contract ERC20VaultFactory is IVaultFactory {
     function deployVault(
         address[] calldata tokens,
         address strategyTreasury,
+        address admin,
         bytes calldata
     ) external override returns (address) {
-        ERC20Vault vault = new ERC20Vault(tokens, IVaultManager(msg.sender), strategyTreasury);
+        ERC20Vault vault = new ERC20Vault(tokens, IVaultManager(msg.sender), strategyTreasury, admin);
         return address(vault);
     }
 }

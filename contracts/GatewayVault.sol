@@ -16,8 +16,9 @@ contract GatewayVault is Vault {
         address[] memory tokens,
         IVaultManager vaultManager,
         address strategyTreasury,
-        address[] memory vaults
-    ) Vault(tokens, vaultManager, strategyTreasury) {
+        address[] memory vaults,
+        address admin
+    ) Vault(tokens, vaultManager, strategyTreasury, admin) {
         _vaults = vaults;
         for (uint256 i = 0; i < _vaults.length; i++) {
             _vaultsIndex[_vaults[i]] = i;
@@ -86,14 +87,14 @@ contract GatewayVault is Vault {
     }
 
     function setLimits(uint256[] calldata newLimits) external {
-        require(_isApprovedOrOwner(msg.sender) || _isGovernanceOrDelegate(), "IOG");
+        require(_isApprovedOrOwner(msg.sender) || isAdmin(), "IOG");
         require(newLimits.length == vaultTokens().length, "TL");
         _limits = newLimits;
         emit SetLimits(newLimits);
     }
 
     function setRedirects(address[] calldata newRedirects) external {
-        require(_isApprovedOrOwner(msg.sender) || _isGovernanceOrDelegate(), "IOG");
+        require(_isApprovedOrOwner(msg.sender) || isAdmin(), "IOG");
         require(newRedirects.length == vaultTokens().length, "TL");
         _redirects = newRedirects;
         emit SetRedirects(newRedirects);
@@ -122,6 +123,9 @@ contract GatewayVault is Vault {
         }
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
+            if (optimized && (_redirects[i] != address(0))) {
+                continue;
+            }
             IVault vault = IVault(_vaults[i]);
             uint256[] memory actualVaultTokenAmounts = vault.push(tokens, amountsByVault[i], optimized);
             for (uint256 j = 0; j < tokens.length; j++) {

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IProtocolGovernance {
+import "./IDefaultAccessControl.sol";
+
+interface IProtocolGovernance is IDefaultAccessControl {
     /// -------------------  PUBLIC, VIEW  -------------------
 
     struct Params {
