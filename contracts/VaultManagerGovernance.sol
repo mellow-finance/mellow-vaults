@@ -34,7 +34,7 @@ contract VaultManagerGovernance is DefaultAccessControl, IVaultManagerGovernance
     }
 
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
         _pendingGovernanceParams = newGovernanceParams;
         _pendingGovernanceParamsTimestamp = block.timestamp + _governanceParams.protocolGovernance.governanceDelay();
@@ -42,7 +42,7 @@ contract VaultManagerGovernance is DefaultAccessControl, IVaultManagerGovernance
     }
 
     function commitGovernanceParams() external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require(_pendingGovernanceParamsTimestamp > 0, "NULL");
         require(block.timestamp > _pendingGovernanceParamsTimestamp, "TS");
         _governanceParams = _pendingGovernanceParams;

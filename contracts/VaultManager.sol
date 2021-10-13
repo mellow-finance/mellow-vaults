@@ -41,7 +41,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         address strategyTreasury,
         bytes calldata options
     ) external override returns (address vault, uint256 nft) {
-        require(governanceParams().permissionless || _isSuperAdmin(), "PGD");
+        require(governanceParams().permissionless || isAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         nft = _mintVaultNft();

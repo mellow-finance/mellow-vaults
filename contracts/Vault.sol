@@ -129,8 +129,8 @@ abstract contract Vault is IVault, VaultGovernance {
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
     function reclaimTokens(address to, address[] calldata tokens) external {
-        require(_isSuperAdmin() || _isApprovedOrOwner(msg.sender), "GD");
-        if (!_isSuperAdmin()) {
+        require(isAdmin() || _isApprovedOrOwner(msg.sender), "ADM");
+        if (!isAdmin()) {
             require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
@@ -148,7 +148,7 @@ abstract contract Vault is IVault, VaultGovernance {
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     function claimRewards(address from, bytes calldata data) external {
-        require(_isSuperAdmin() || _isApprovedOrOwner(msg.sender), "GD");
+        require(isAdmin() || _isApprovedOrOwner(msg.sender), "ADM");
         IProtocolGovernance protocolGovernance = vaultManager().governanceParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), "AC");
         (bool res, bytes memory returndata) = from.call(data);

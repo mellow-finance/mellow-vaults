@@ -21,6 +21,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     uint256 public pendingParamsTimestamp;
 
+    constructor(address admin) DefaultAccessControl(admin) {}
+
     /// -------------------  PUBLIC, VIEW  -------------------
     function pullAllowlist() external view returns (address[] memory) {
         uint256 l = _pullAllowlist.length();
@@ -83,13 +85,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingPullAllowlistAdd(address[] calldata addresses) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         _pendingPullAllowlistAdd = addresses;
         pendingPullAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     function removeFromPullAllowlist(address addr) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         if (!_pullAllowlist.contains(addr)) {
             return;
         }
@@ -97,13 +99,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         _pendingClaimAllowlistAdd = addresses;
         pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     function removeFromClaimAllowlist(address addr) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         if (!_pullAllowlist.contains(addr)) {
             return;
         }
@@ -111,7 +113,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
@@ -119,7 +121,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     function commitClaimAllowlistAdd() external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
             _pullAllowlist.add(_pendingClaimAllowlistAdd[i]);
@@ -129,7 +131,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     function commitPullAllowlistAdd() external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require((block.timestamp > pendingPullAllowlistAddTimestamp) && (pendingPullAllowlistAddTimestamp > 0), "TS");
         for (uint256 i = 0; i < _pendingPullAllowlistAdd.length; i++) {
             _pullAllowlist.add(_pendingPullAllowlistAdd[i]);
@@ -139,7 +141,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     function commitParams() external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require(block.timestamp > pendingParamsTimestamp, "TS");
         require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, "P0"); // sanity check for empty params
         params = pendingParams;

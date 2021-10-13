@@ -40,7 +40,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     }
 
     function setPendingVaultManager(IVaultManager manager) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require(address(manager) != address(0), "ZMG");
         _pendingVaultManager = manager;
         _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -48,7 +48,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     }
 
     function commitVaultManager() external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         require(_pendingVaultManagerTimestamp > 0, "NULL");
         require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
         _vaultManager = _pendingVaultManager;

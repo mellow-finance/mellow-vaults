@@ -30,7 +30,7 @@ contract LpIssuer is ERC20, DefaultAccessControl {
     }
 
     function setLimit(uint256 newLimitPerAddress) external {
-        require(_isSuperAdmin(), "GD");
+        require(isAdmin(), "ADM");
         _limitPerAddress = newLimitPerAddress;
     }
 
