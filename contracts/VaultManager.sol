@@ -8,11 +8,7 @@ import "./interfaces/IVaultFactory.sol";
 import "./VaultManagerGovernance.sol";
 
 contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
-    IProtocolGovernance private _protocolGovernance;
-    IProtocolGovernance private _pendingProtocolGovernance;
-    uint256 private _pendingProtocolGovernanceTimestamp;
     uint256 private _topVaultNft = 1;
-    IVaultFactory private _factory;
 
     mapping(address => uint256) private _nftIndex;
     mapping(uint256 => address) private _vaultIndex;
@@ -40,7 +36,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         address strategyTreasury,
         bytes calldata options
     ) external override returns (address vault, uint256 nft) {
-        require(governanceParams().permissionless || isAdmin(), "PGD");
+        require(governanceParams().permissionless || _isProtocolAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         nft = _mintVaultNft();
