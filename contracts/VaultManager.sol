@@ -22,8 +22,9 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         string memory symbol,
         IVaultFactory factory,
         bool permissionless,
-        IProtocolGovernance governance
-    ) ERC721(name, symbol) VaultManagerGovernance(permissionless, governance) {
+        IProtocolGovernance protocolGovernance,
+        address governance
+    ) ERC721(name, symbol) VaultManagerGovernance(permissionless, protocolGovernance) {
         _factory = factory;
     }
 
@@ -40,7 +41,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         address strategyTreasury,
         bytes calldata options
     ) external override returns (address vault, uint256 nft) {
-        require(governanceParams().permissionless || _isGovernanceOrDelegate(), "PGD");
+        require(governanceParams().permissionless || _isSuperAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         nft = _mintVaultNft();

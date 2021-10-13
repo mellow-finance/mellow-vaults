@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./VaultAccessControl.sol";
+import "./DefaultAccessControl.sol";
 import "./VaultGovernance.sol";
 import "./libraries/Common.sol";
 
@@ -19,10 +19,13 @@ abstract contract Vault is IVault, VaultGovernance {
     constructor(
         address[] memory tokens,
         IVaultManager vaultManager,
-        address strategyTreasury
-    ) VaultGovernance(vaultManager, strategyTreasury) {
+        address strategyTreasury,
+        address governance,
+        address vaultAdmin
+    ) VaultGovernance(vaultManager, strategyTreasury, governance, vaultAdmin) {
         require(Common.isSortedAndUnique(tokens), "SAU");
         require(tokens.length > 0, "TL");
+        require(tokens.length <= vaultManager.governanceParams().protocolGovernance.maxTokensPerVault(), "MTL");
         _vaultTokens = tokens;
         for (uint256 i = 0; i < tokens.length; i++) {
             _vaultTokensIndex[tokens[i]] = true;
@@ -126,8 +129,8 @@ abstract contract Vault is IVault, VaultGovernance {
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
     function reclaimTokens(address to, address[] calldata tokens) external {
-        require(_isGovernanceOrDelegate() || _isApprovedOrOwner(msg.sender), "GD");
-        if (!_isGovernanceOrDelegate()) {
+        require(_isSuperAdmin() || _isApprovedOrOwner(msg.sender), "GD");
+        if (!_isSuperAdmin()) {
             require(vaultManager().governanceParams().protocolGovernance.isAllowedToPull(to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
@@ -145,7 +148,7 @@ abstract contract Vault is IVault, VaultGovernance {
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     function claimRewards(address from, bytes calldata data) external {
-        require(_isGovernanceOrDelegate() || _isApprovedOrOwner(msg.sender), "GD");
+        require(_isSuperAdmin() || _isApprovedOrOwner(msg.sender), "GD");
         IProtocolGovernance protocolGovernance = vaultManager().governanceParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), "AC");
         (bool res, bytes memory returndata) = from.call(data);

@@ -86,14 +86,14 @@ contract GatewayVault is Vault {
     }
 
     function setLimits(uint256[] calldata newLimits) external {
-        require(_isApprovedOrOwner(msg.sender) || _isGovernanceOrDelegate(), "IOG");
+        require(_isApprovedOrOwner(msg.sender) || _isSuperAdmin(), "IOG");
         require(newLimits.length == vaultTokens().length, "TL");
         _limits = newLimits;
         emit SetLimits(newLimits);
     }
 
     function setRedirects(address[] calldata newRedirects) external {
-        require(_isApprovedOrOwner(msg.sender) || _isGovernanceOrDelegate(), "IOG");
+        require(_isApprovedOrOwner(msg.sender) || _isSuperAdmin(), "IOG");
         require(newRedirects.length == vaultTokens().length, "TL");
         _redirects = newRedirects;
         emit SetRedirects(newRedirects);

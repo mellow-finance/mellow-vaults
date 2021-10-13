@@ -2,18 +2,22 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./VaultAccessControl.sol";
+import "./DefaultAccessControl.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultManagerGovernance.sol";
 
-contract VaultManagerGovernance is VaultAccessControl, IVaultManagerGovernance {
+contract VaultManagerGovernance is DefaultAccessControl, IVaultManagerGovernance {
     GovernanceParams private _governanceParams;
     GovernanceParams private _pendingGovernanceParams;
     uint256 private _pendingGovernanceParamsTimestamp;
 
-    constructor(bool permissionless, IProtocolGovernance protocolGovernance) {
+    constructor(
+        bool permissionless,
+        IProtocolGovernance protocolGovernance,
+        address governance
+    ) {
         _governanceParams = GovernanceParams({permissionless: permissionless, protocolGovernance: protocolGovernance});
     }
 
@@ -30,7 +34,7 @@ contract VaultManagerGovernance is VaultAccessControl, IVaultManagerGovernance {
     }
 
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
         _pendingGovernanceParams = newGovernanceParams;
         _pendingGovernanceParamsTimestamp = block.timestamp + _governanceParams.protocolGovernance.governanceDelay();
@@ -38,7 +42,7 @@ contract VaultManagerGovernance is VaultAccessControl, IVaultManagerGovernance {
     }
 
     function commitGovernanceParams() external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require(_pendingGovernanceParamsTimestamp > 0, "NULL");
         require(block.timestamp > _pendingGovernanceParamsTimestamp, "TS");
         _governanceParams = _pendingGovernanceParams;

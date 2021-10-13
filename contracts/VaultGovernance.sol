@@ -2,14 +2,14 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./VaultAccessControl.sol";
+import "./DefaultAccessControl.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IVaultGovernance.sol";
 
-contract VaultGovernance is IVaultGovernance, VaultAccessControl {
+contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     IVaultManager private _vaultManager;
     IVaultManager private _pendingVaultManager;
     uint256 private _pendingVaultManagerTimestamp;
@@ -17,7 +17,12 @@ contract VaultGovernance is IVaultGovernance, VaultAccessControl {
     address private _pendingStrategyTreasury;
     uint256 private _pendingStrategyTreasuryTimestamp;
 
-    constructor(IVaultManager manager, address treasury) {
+    constructor(
+        IVaultManager manager,
+        address treasury,
+        address superAdmin,
+        address admin
+    ) DefaultAccessControl(superAdmin, admin) {
         _vaultManager = manager;
         _strategyTreasury = treasury;
     }
@@ -35,7 +40,7 @@ contract VaultGovernance is IVaultGovernance, VaultAccessControl {
     }
 
     function setPendingVaultManager(IVaultManager manager) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require(address(manager) != address(0), "ZMG");
         _pendingVaultManager = manager;
         _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -43,7 +48,7 @@ contract VaultGovernance is IVaultGovernance, VaultAccessControl {
     }
 
     function commitVaultManager() external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require(_pendingVaultManagerTimestamp > 0, "NULL");
         require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
         _vaultManager = _pendingVaultManager;
@@ -63,7 +68,7 @@ contract VaultGovernance is IVaultGovernance, VaultAccessControl {
     }
 
     function setPendingStrategyTreasury(address treasury) external {
-        require(_isGovernanceOrDelegate() || _strategist() == msg.sender, "GDS");
+        require(_isAdmin(), "AG");
         require(address(treasury) != address(0), "ZMG");
         _pendingStrategyTreasury = treasury;
         _pendingStrategyTreasuryTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -71,15 +76,10 @@ contract VaultGovernance is IVaultGovernance, VaultAccessControl {
     }
 
     function commitStrategyTreasury() external {
-        require(_isGovernanceOrDelegate() || _strategist() == msg.sender, "GDS");
+        require(_isAdmin(), "AG");
         require(_pendingStrategyTreasuryTimestamp > 0, "NULL");
         require(block.timestamp > _pendingStrategyTreasuryTimestamp, "TV");
         _strategyTreasury = _pendingStrategyTreasury;
         emit CommitStrategyTreasury(_strategyTreasury);
-    }
-
-    function _strategist() internal view returns (address) {
-        uint256 nft = _vaultManager.nftForVault(address(this));
-        return _vaultManager.getApproved(nft);
     }
 }

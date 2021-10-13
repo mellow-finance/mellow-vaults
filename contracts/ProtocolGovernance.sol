@@ -3,9 +3,9 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./VaultAccessControl.sol";
+import "./DefaultAccessControl.sol";
 
-contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
+contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     EnumerableSet.AddressSet private _pullAllowlist;
@@ -83,13 +83,13 @@ contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingPullAllowlistAdd(address[] calldata addresses) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         _pendingPullAllowlistAdd = addresses;
         pendingPullAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     function removeFromPullAllowlist(address addr) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         if (!_pullAllowlist.contains(addr)) {
             return;
         }
@@ -97,13 +97,13 @@ contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
     }
 
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         _pendingClaimAllowlistAdd = addresses;
         pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     function removeFromClaimAllowlist(address addr) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         if (!_pullAllowlist.contains(addr)) {
             return;
         }
@@ -111,7 +111,7 @@ contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
     }
 
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
@@ -119,7 +119,7 @@ contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     function commitClaimAllowlistAdd() external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
             _pullAllowlist.add(_pendingClaimAllowlistAdd[i]);
@@ -129,7 +129,7 @@ contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
     }
 
     function commitPullAllowlistAdd() external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require((block.timestamp > pendingPullAllowlistAddTimestamp) && (pendingPullAllowlistAddTimestamp > 0), "TS");
         for (uint256 i = 0; i < _pendingPullAllowlistAdd.length; i++) {
             _pullAllowlist.add(_pendingPullAllowlistAdd[i]);
@@ -139,7 +139,7 @@ contract ProtocolGovernance is IProtocolGovernance, VaultAccessControl {
     }
 
     function commitParams() external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         require(block.timestamp > pendingParamsTimestamp, "TS");
         require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, "P0"); // sanity check for empty params
         params = pendingParams;

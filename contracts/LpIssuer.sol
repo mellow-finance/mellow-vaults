@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./VaultAccessControl.sol";
+import "./DefaultAccessControl.sol";
 
-contract LpIssuer is ERC20, VaultAccessControl {
+contract LpIssuer is ERC20, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     IVault private _gatewayVault;
@@ -30,7 +30,7 @@ contract LpIssuer is ERC20, VaultAccessControl {
     }
 
     function setLimit(uint256 newLimitPerAddress) external {
-        require(_isGovernanceOrDelegate(), "GD");
+        require(_isSuperAdmin(), "GD");
         _limitPerAddress = newLimitPerAddress;
     }
 
