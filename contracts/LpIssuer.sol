@@ -34,13 +34,13 @@ contract LpIssuer is ERC20, GovernanceAccessControl {
         _limitPerAddress = newLimitPerAddress;
     }
 
-    function deposit(uint256[] calldata tokenAmounts) external {
+    function deposit(uint256[] calldata tokenAmounts, bool optimized) external {
         address[] memory tokens = _gatewayVault.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(_gatewayVault), tokenAmounts[i]);
         }
         uint256[] memory tvl = _gatewayVault.tvl();
-        uint256[] memory actualTokenAmounts = _gatewayVault.push(tokens, tokenAmounts);
+        uint256[] memory actualTokenAmounts = _gatewayVault.push(tokens, tokenAmounts, optimized);
         uint256 amountToMint;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < tokens.length; i++) {
@@ -71,7 +71,11 @@ contract LpIssuer is ERC20, GovernanceAccessControl {
         emit Deposit(msg.sender, tokens, actualTokenAmounts, amountToMint);
     }
 
-    function withdraw(address to, uint256 lpTokenAmount) external {
+    function withdraw(
+        address to,
+        uint256 lpTokenAmount,
+        bool optimized
+    ) external {
         require(totalSupply() > 0, "TS");
         address[] memory tokens = _gatewayVault.vaultTokens();
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
@@ -79,7 +83,7 @@ contract LpIssuer is ERC20, GovernanceAccessControl {
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
-        uint256[] memory actualTokenAmounts = _gatewayVault.pull(address(this), tokens, tokenAmounts);
+        uint256[] memory actualTokenAmounts = _gatewayVault.pull(address(this), tokens, tokenAmounts, optimized);
         uint256 protocolExitFee = _protocolGovernance.protocolExitFee();
         address protocolTreasury = _protocolGovernance.protocolTreasury();
         uint256[] memory exitFees = new uint256[](tokens.length);
