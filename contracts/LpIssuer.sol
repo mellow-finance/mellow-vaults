@@ -4,17 +4,29 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IVault.sol";
+import "./GovernanceAccessControl.sol";
 
-contract LpIssuer is ERC20 {
-    IVault private _gatewayVault;
+contract LpIssuer is ERC20, GovernanceAccessControl {
     using SafeERC20 for IERC20;
+
+    IVault private _gatewayVault;
+    uint256 private _limitPerAddress;
 
     constructor(
         string memory name_,
         string memory symbol_,
-        IVault gatewayVault
+        IVault gatewayVault,
+        uint256 limitPerAddress,
+        address governance
     ) ERC20(name_, symbol_) {
         _gatewayVault = gatewayVault;
+        _limitPerAddress = limitPerAddress;
+        _setupRole(GOVERNANCE_DELEGATE_ROLE, governance);
+    }
+
+    function setLimit(uint256 newLimitPerAddress) external {
+        require(_isGovernanceOrDelegate(), "GD");
+        _limitPerAddress = newLimitPerAddress;
     }
 
     function deposit(uint256[] calldata tokenAmounts) external {
@@ -46,6 +58,7 @@ contract LpIssuer is ERC20 {
                 IERC20(tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
             }
         }
+        require(amountToMint + balanceOf(msg.sender) <= _limitPerAddress, "LPA");
         if (amountToMint > 0) {
             _mint(msg.sender, amountToMint);
         }
