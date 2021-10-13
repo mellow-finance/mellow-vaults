@@ -3,7 +3,9 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
+import "./interfaces/IProtocolGovernance.sol";
 import "./GovernanceAccessControl.sol";
 
 contract LpIssuer is ERC20, GovernanceAccessControl {
@@ -11,17 +13,20 @@ contract LpIssuer is ERC20, GovernanceAccessControl {
 
     IVault private _gatewayVault;
     uint256 private _limitPerAddress;
+    IProtocolGovernance private _protocolGovernance;
 
     constructor(
         string memory name_,
         string memory symbol_,
         IVault gatewayVault,
         uint256 limitPerAddress,
-        address governance
+        address vaultManager,
+        IProtocolGovernance protocolGovernance
     ) ERC20(name_, symbol_) {
         _gatewayVault = gatewayVault;
         _limitPerAddress = limitPerAddress;
-        _setupRole(GOVERNANCE_DELEGATE_ROLE, governance);
+        _protocolGovernance = protocolGovernance;
+        _setupRole(GOVERNANCE_DELEGATE_ROLE, vaultManager);
     }
 
     function setLimit(uint256 newLimitPerAddress) external {
@@ -74,11 +79,25 @@ contract LpIssuer is ERC20, GovernanceAccessControl {
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
-        uint256[] memory actualTokenAmounts = _gatewayVault.pull(to, tokens, tokenAmounts);
+        uint256[] memory actualTokenAmounts = _gatewayVault.pull(address(this), tokens, tokenAmounts);
+        uint256 protocolExitFee = _protocolGovernance.protocolExitFee();
+        address protocolTreasury = _protocolGovernance.protocolTreasury();
+        uint256[] memory exitFees = new uint256[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            if (actualTokenAmounts[i] == 0) {
+                continue;
+            }
+            exitFees[i] = (actualTokenAmounts[i] * protocolExitFee) / Common.DENOMINATOR;
+            actualTokenAmounts[i] -= exitFees[i];
+            IERC20(tokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
+            IERC20(tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
+        }
         _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, tokens, actualTokenAmounts, lpTokenAmount);
+        emit ExitFeeCollected(msg.sender, protocolTreasury, tokens, exitFees);
     }
 
-    event Deposit(address from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);
-    event Withdraw(address from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+    event Deposit(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);
+    event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+    event ExitFeeCollected(address indexed from, address to, address[] tokens, uint256[] amounts);
 }
