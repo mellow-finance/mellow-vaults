@@ -18,10 +18,8 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         string memory symbol,
         IVaultFactory factory,
         bool permissionless,
-        IProtocolGovernance protocolGovernance,
-    ) ERC721(name, symbol) VaultManagerGovernance(permissionless, protocolGovernance) {
-        _factory = factory;
-    }
+        IProtocolGovernance protocolGovernance
+    ) ERC721(name, symbol) VaultManagerGovernance(permissionless, protocolGovernance, factory) {}
 
     function nftForVault(address vault) external view override returns (uint256) {
         return _nftIndex[vault];
@@ -34,23 +32,18 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
     function createVault(
         address[] calldata tokens,
         address strategyTreasury,
+        address admin,
         bytes calldata options
     ) external override returns (address vault, uint256 nft) {
         require(governanceParams().permissionless || _isProtocolAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         nft = _mintVaultNft();
-        vault = _factory.deployVault(tokens, strategyTreasury, options);
+        vault = governanceParams().factory.deployVault(tokens, strategyTreasury, admin, options);
         emit CreateVault(vault, nft, tokens, options);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(AccessControlEnumerable, ERC721, IERC165)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, IERC165) returns (bool) {
         return interfaceId == type(IVaultManager).interfaceId || super.supportsInterface(interfaceId);
     }
 

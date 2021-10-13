@@ -13,8 +13,16 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
     GovernanceParams private _pendingGovernanceParams;
     uint256 private _pendingGovernanceParamsTimestamp;
 
-    constructor(bool permissionless, IProtocolGovernance protocolGovernance) {
-        _governanceParams = GovernanceParams({permissionless: permissionless, protocolGovernance: protocolGovernance});
+    constructor(
+        bool permissionless,
+        IProtocolGovernance protocolGovernance,
+        IVaultFactory factory
+    ) {
+        _governanceParams = GovernanceParams({
+            permissionless: permissionless,
+            protocolGovernance: protocolGovernance,
+            factory: factory
+        });
     }
 
     /// -------------------  PUBLIC, VIEW  -------------------
