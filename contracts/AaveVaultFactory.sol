@@ -6,13 +6,8 @@ import "./VaultManager.sol";
 import "./AaveVault.sol";
 
 contract AaveVaultFactory is IVaultFactory {
-    function deployVault(
-        address[] calldata tokens,
-        address strategyTreasury,
-        address admin,
-        bytes calldata
-    ) external override returns (address) {
-        AaveVault vault = new AaveVault(tokens, IVaultManager(msg.sender), strategyTreasury, admin);
-        return address(vault);
+    function deployVault(IVaultGovernance vaultGovernance, bytes calldata) external override returns (IVault) {
+        AaveVault vault = new AaveVault(vaultGovernance);
+        return IVault(vault);
     }
 }

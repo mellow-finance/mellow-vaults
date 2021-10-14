@@ -13,13 +13,7 @@ contract GatewayVault is IGatewayVault, Vault {
     address[] private _redirects;
     uint256[] private _limits;
 
-    constructor(
-        address[] memory tokens,
-        IVaultManager vaultManager,
-        address strategyTreasury,
-        address[] memory vaults,
-        address admin
-    ) Vault(tokens, vaultManager, strategyTreasury, admin) {
+    constructor(IVaultGovernance vaultGovernance, address[] memory vaults) Vault(vaultGovernance) {
         _vaults = vaults;
         for (uint256 i = 0; i < _vaults.length; i++) {
             _vaultsIndex[_vaults[i]] = i;
@@ -27,11 +21,11 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     function tvl() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < tokens.length; j++) {
@@ -41,11 +35,11 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     function earnings() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.earnings();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < tokens.length; j++) {
@@ -54,23 +48,19 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
-    function limits() external view returns (uint256[] memory) {
-        return _limits;
-    }
-
     function vaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVault vault = IVault(_vaults[vaultNum]);
-        address[] memory pTokens = vault.vaultTokens();
+        address[] memory pTokens = vault.vaultGovernance().vaultTokens();
         uint256[] memory vTokenAmounts = vault.tvl();
-        return Common.projectTokenAmounts(vaultTokens(), pTokens, vTokenAmounts);
+        return Common.projectTokenAmounts(_vaultGovernance.vaultTokens(), pTokens, vTokenAmounts);
     }
 
     function vaultsTvl() public view override returns (uint256[][] memory tokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[][](_vaults.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             tokenAmounts[i] = new uint256[](tokens.length);
@@ -82,36 +72,22 @@ contract GatewayVault is IGatewayVault, Vault {
 
     function vaultEarnings(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVault vault = IVault(_vaults[vaultNum]);
-        address[] memory pTokens = vault.vaultTokens();
+        address[] memory pTokens = vault.vaultGovernance().vaultTokens();
         uint256[] memory vTokenAmounts = vault.earnings();
-        return Common.projectTokenAmounts(vaultTokens(), pTokens, vTokenAmounts);
+        return Common.projectTokenAmounts(_vaultGovernance.vaultTokens(), pTokens, vTokenAmounts);
     }
 
     function hasVault(address vault) external view override returns (bool) {
         return (_vaultsIndex[vault] > 0 || _vaults[0] == vault);
     }
 
-    function setLimits(uint256[] calldata newLimits) external override {
-        require(_isApprovedOrOwner(msg.sender) || isAdmin(), "IOG");
-        require(newLimits.length == vaultTokens().length, "TL");
-        _limits = newLimits;
-        emit SetLimits(newLimits);
-    }
-
-    function setRedirects(address[] calldata newRedirects) external override {
-        require(_isApprovedOrOwner(msg.sender) || isAdmin(), "IOG");
-        require(newRedirects.length == vaultTokens().length, "TL");
-        _redirects = newRedirects;
-        emit SetRedirects(newRedirects);
-    }
-
-    function _push(uint256[] memory tokenAmounts, bool optimized)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bool optimized,
+        bytes memory options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         uint256[][] memory tvls = vaultsTvl();
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         uint256[] memory totalTvl = new uint256[](tokens.length);
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         if (optimized) {
@@ -126,13 +102,19 @@ contract GatewayVault is IGatewayVault, Vault {
                 }
             }
         }
+        bytes[] memory vaultsOptions = _parseOptions(options);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             if (optimized && (_redirects[i] != address(0))) {
                 continue;
             }
             IVault vault = IVault(_vaults[i]);
-            uint256[] memory actualVaultTokenAmounts = vault.push(tokens, amountsByVault[i], optimized);
+            uint256[] memory actualVaultTokenAmounts = vault.push(
+                tokens,
+                amountsByVault[i],
+                optimized,
+                vaultsOptions[i]
+            );
             for (uint256 j = 0; j < tokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
                 totalTvl[j] += tvls[i][j];
@@ -146,10 +128,11 @@ contract GatewayVault is IGatewayVault, Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool optimized
+        bool optimized,
+        bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         uint256[][] memory tvls = vaultsTvl();
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         if (optimized) {
             for (uint256 i = 0; i < _vaults.length; i++) {
@@ -163,23 +146,35 @@ contract GatewayVault is IGatewayVault, Vault {
                 }
             }
         }
+        bytes[] memory vaultsOptions = _parseOptions(options);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            uint256[] memory actualVaultTokenAmounts = vault.pull(to, tokens, amountsByVault[i], optimized);
+            uint256[] memory actualVaultTokenAmounts = vault.pull(
+                to,
+                tokens,
+                amountsByVault[i],
+                optimized,
+                vaultsOptions[i]
+            );
             for (uint256 j = 0; j < tokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
             }
         }
     }
 
-    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
-        address[] memory tokens = vaultTokens();
+    function _collectEarnings(address to, bytes memory options)
+        internal
+        override
+        returns (uint256[] memory collectedEarnings)
+    {
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         collectedEarnings = new uint256[](tokens.length);
+        bytes[] memory vaultsOptions = _parseOptions(options);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
-            uint256[] memory vTokenAmounts = vault.collectEarnings(address(this));
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
+            uint256[] memory vTokenAmounts = vault.collectEarnings(address(this), vaultsOptions[i]);
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < tokens.length; j++) {
                 collectedEarnings[j] += pTokenAmounts[j];
@@ -193,13 +188,13 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     function _collectFees(uint256[] memory collectedEarnings) internal returns (uint256[] memory collectedFees) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         collectedFees = new uint256[](tokens.length);
-        IProtocolGovernance governance = vaultManager().governanceParams().protocolGovernance;
+        IProtocolGovernance governance = _vaultGovernance.vaultManager().governanceParams().protocolGovernance;
         address protocolTres = governance.protocolTreasury();
         uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
         uint256 strategyPerformanceFee = governance.strategyPerformanceFee();
-        address strategyTres = strategyTreasury();
+        address strategyTres = _vaultGovernance.strategyTreasury();
         uint256[] memory strategyFees = new uint256[](tokens.length);
         uint256[] memory protocolFees = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -214,8 +209,13 @@ contract GatewayVault is IGatewayVault, Vault {
         emit CollectProtocolFees(protocolTres, tokens, protocolFees);
     }
 
+    function _parseOptions(bytes memory options) internal view returns (bytes[] memory vaultOptions) {
+        if (options.length == 0) {
+            return new bytes[](_vaults.length);
+        }
+        return abi.decode(options, (bytes[]));
+    }
+
     event CollectProtocolFees(address protocolTreasury, address[] tokens, uint256[] amounts);
     event CollectStrategyFees(address strategyTreasury, address[] tokens, uint256[] amounts);
-    event SetLimits(uint256[] limits);
-    event SetRedirects(address[] redirects);
 }

@@ -1,15 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./IProtocolGovernance.sol";
-import "./IVaultManagerGovernance.sol";
+import "./IVaultGovernance.sol";
+import "./IVault.sol";
 
 interface IVaultFactory {
-    function deployVault(
-        address[] calldata tokens,
-        address strategyTreasury,
-        address admin,
-        bytes calldata options
-    ) external returns (address vault);
+    function deployVault(IVaultGovernance vaultGovernance, bytes calldata options) external returns (IVault vault);
 }

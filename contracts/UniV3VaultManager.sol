@@ -14,10 +14,11 @@ contract UniV3VaultManager is IUniV3VaultManager, VaultManager {
         string memory name,
         string memory symbol,
         IVaultFactory factory,
+        IVaultGovernanceFactory goveranceFactory,
         bool permissionless,
         IProtocolGovernance governance,
         INonfungiblePositionManager uniV3PositionManager
-    ) VaultManager(name, symbol, factory, permissionless, governance) {
+    ) VaultManager(name, symbol, factory, goveranceFactory, permissionless, governance) {
         _positionManager = uniV3PositionManager;
     }
 
