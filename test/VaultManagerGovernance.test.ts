@@ -42,7 +42,7 @@ describe("VaultManagerGovernance", () => {
         let newProtocolGovernance: Contract;
     
         beforeEach(async () => {
-            newProtocolGovernance = await ProtocolGovernance.deploy();
+            newProtocolGovernance = await ProtocolGovernance.deploy(deployer.getAddress());
         });
     
         it("role should be governance or delegate", async () => {
@@ -60,7 +60,7 @@ describe("VaultManagerGovernance", () => {
         });
 
         it("sets correct pending timestamp", async () => {
-            let customProtocol = await ProtocolGovernance.deploy();
+            let customProtocol = await ProtocolGovernance.deploy(deployer.getAddress());
             await customProtocol.setPendingParams([1, 0, 1, 1, 1, ethers.constants.AddressZero]);
             await customProtocol.commitParams();
 
@@ -98,12 +98,12 @@ describe("VaultManagerGovernance", () => {
         let customProtocol: Contract;
 
         beforeEach(async () => {
-            newProtocolGovernance = await ProtocolGovernance.deploy();
+            newProtocolGovernance = await ProtocolGovernance.deploy(deployer.getAddress());
             await vaultManagerGovernance.setPendingGovernanceParams([
                 true, 
                 newProtocolGovernance.address
             ]);
-            customProtocol = await ProtocolGovernance.deploy();
+            customProtocol = await ProtocolGovernance.deploy(deployer.getAddress());
         });
     
         it("role should be governance or delegate", async () => {
@@ -124,7 +124,7 @@ describe("VaultManagerGovernance", () => {
             await vaultManagerGovernance.setPendingGovernanceParams([false, customProtocol.address]);
             await vaultManagerGovernance.commitGovernanceParams();
 
-            let additionalProtocol = await ProtocolGovernance.deploy();
+            let additionalProtocol = await ProtocolGovernance.deploy(deployer.getAddress());
             await vaultManagerGovernance.setPendingGovernanceParams([false, additionalProtocol.address]);
             await expect(
                 vaultManagerGovernance.commitGovernanceParams()
