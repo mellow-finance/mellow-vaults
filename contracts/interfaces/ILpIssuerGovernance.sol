@@ -2,15 +2,12 @@
 pragma solidity 0.8.9;
 
 import "./IProtocolGovernance.sol";
-import "./IVaultFactory.sol";
-import "./IVaultGovernanceFactory.sol";
+import "./IVault.sol";
 
-interface IVaultManagerGovernance {
+interface ILpIssuerGovernance {
     struct GovernanceParams {
-        bool permissionless;
+        IVault gatewayVault;
         IProtocolGovernance protocolGovernance;
-        IVaultFactory factory;
-        IVaultGovernanceFactory governanceFactory;
     }
 
     function governanceParams() external view returns (GovernanceParams memory);

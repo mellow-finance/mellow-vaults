@@ -7,12 +7,8 @@ import "./VaultManager.sol";
 import "./ERC20Vault.sol";
 
 contract ERC20VaultFactory is IVaultFactory {
-    function deployVault(
-        address[] calldata tokens,
-        address strategyTreasury,
-        bytes calldata
-    ) external override returns (address) {
-        ERC20Vault vault = new ERC20Vault(tokens, IVaultManager(msg.sender), strategyTreasury);
-        return address(vault);
+    function deployVault(IVaultGovernance vaultGovernance, bytes calldata) external override returns (IVault) {
+        ERC20Vault vault = new ERC20Vault(vaultGovernance);
+        return IVault(vault);
     }
 }

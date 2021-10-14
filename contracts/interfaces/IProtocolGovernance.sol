@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IProtocolGovernance {
+import "./IDefaultAccessControl.sol";
+import "./IGatewayVaultManager.sol";
+
+interface IProtocolGovernance is IDefaultAccessControl {
     /// -------------------  PUBLIC, VIEW  -------------------
 
     struct Params {
@@ -11,13 +14,8 @@ interface IProtocolGovernance {
         uint256 protocolPerformanceFee;
         uint256 protocolExitFee;
         address protocolTreasury;
+        IGatewayVaultManager gatewayVaultManager;
     }
-
-    function pullAllowlist() external view returns (address[] memory);
-
-    function pendingPullAllowlistAdd() external view returns (address[] memory);
-
-    function isAllowedToPull(address addr) external view returns (bool);
 
     function claimAllowlist() external view returns (address[] memory);
 
@@ -37,17 +35,13 @@ interface IProtocolGovernance {
 
     function protocolTreasury() external view returns (address);
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    function gatewayVaultManager() external view returns (IGatewayVaultManager);
 
-    function setPendingPullAllowlistAdd(address[] calldata addresses) external;
+    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingParams(Params memory newParams) external;
 
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
-    function commitPullAllowlistAdd() external;
-
     function commitParams() external;
-
-    function removeFromPullAllowlist(address addr) external;
 }

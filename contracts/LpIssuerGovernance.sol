@@ -6,26 +6,15 @@ import "./DefaultAccessControl.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/IVaultManagerGovernance.sol";
-import "./interfaces/IVaultGovernanceFactory.sol";
+import "./interfaces/ILpIssuerGovernance.sol";
 
-contract VaultManagerGovernance is IVaultManagerGovernance {
+contract LpIssuerGovernance is ILpIssuerGovernance {
     GovernanceParams private _governanceParams;
     GovernanceParams private _pendingGovernanceParams;
     uint256 private _pendingGovernanceParamsTimestamp;
 
-    constructor(
-        bool permissionless,
-        IProtocolGovernance protocolGovernance,
-        IVaultFactory factory,
-        IVaultGovernanceFactory governanceFactory
-    ) {
-        _governanceParams = GovernanceParams({
-            permissionless: permissionless,
-            protocolGovernance: protocolGovernance,
-            factory: factory,
-            governanceFactory: governanceFactory
-        });
+    constructor(GovernanceParams memory params) {
+        _governanceParams = params;
     }
 
     /// -------------------  PUBLIC, VIEW  -------------------

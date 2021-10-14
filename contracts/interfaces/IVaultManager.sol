@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IProtocolGovernance.sol";
 import "./IVaultManagerGovernance.sol";
+import "./IVaultGovernance.sol";
 
 interface IVaultManager is IERC721, IVaultManagerGovernance {
     function nftForVault(address vault) external view returns (uint256);
@@ -13,8 +14,15 @@ interface IVaultManager is IERC721, IVaultManagerGovernance {
     function createVault(
         address[] calldata tokens,
         address strategyTreasury,
-        bytes calldata options
-    ) external returns (address vault, uint256 nft);
+        address admin,
+        bytes memory options
+    )
+        external
+        returns (
+            IVaultGovernance vaultGovernance,
+            IVault vault,
+            uint256 nft
+        );
 
-    event CreateVault(address vault, uint256 nft, address[] tokens, bytes options);
+    event CreateVault(address vaultGovernance, address vault, uint256 nft, address[] tokens, bytes options);
 }
