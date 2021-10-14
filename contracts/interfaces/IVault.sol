@@ -16,7 +16,7 @@ interface IVault is IVaultGovernance {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
     function transferAndPush(
@@ -24,7 +24,7 @@ interface IVault is IVaultGovernance {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
     function pull(
@@ -32,10 +32,10 @@ interface IVault is IVaultGovernance {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
-    function collectEarnings(address to, bytes calldata options) external returns (uint256[] memory collectedEarnings);
+    function collectEarnings(address to, bytes memory options) external returns (uint256[] memory collectedEarnings);
 
     function reclaimTokens(address to, address[] calldata tokens) external;
 

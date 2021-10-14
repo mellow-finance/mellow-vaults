@@ -14,7 +14,7 @@ interface IVaultManager is IERC721, IVaultManagerGovernance {
         address[] calldata tokens,
         address strategyTreasury,
         address admin,
-        bytes calldata options
+        bytes memory options
     ) external returns (address vault, uint256 nft);
 
     event CreateVault(address vault, uint256 nft, address[] tokens, bytes options);

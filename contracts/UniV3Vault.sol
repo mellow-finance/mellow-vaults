@@ -12,6 +12,13 @@ import "./Vault.sol";
 
 contract UniV3Vault is Vault {
     using EnumerableSet for EnumerableSet.UintSet;
+
+    struct Options {
+        uint256 amount0Min;
+        uint256 amount1Min;
+        uint256 deadline;
+    }
+
     EnumerableSet.UintSet private _nfts;
     EnumerableSet.UintSet private _cachedNfts;
     IUniswapV3PoolState public pool;
@@ -81,7 +88,7 @@ contract UniV3Vault is Vault {
     function _push(
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata options
+        bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -95,13 +102,13 @@ contract UniV3Vault is Vault {
             }
         }
         actualTokenAmounts = new uint256[](2);
-        (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
+        Options memory opts = _parseOptions(options);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
             uint256 a0 = (tokenAmounts[0] * tvls[i][0]) / totalTVL[0];
             uint256 a1 = (tokenAmounts[1] * tvls[i][1]) / totalTVL[1];
-            uint256 a0Min = (amount0Min * tvls[i][0]) / totalTVL[0];
-            uint256 a1Min = (amount1Min * tvls[i][0]) / totalTVL[0];
+            uint256 a0Min = (opts.amount0Min * tvls[i][0]) / totalTVL[0];
+            uint256 a1Min = (opts.amount1Min * tvls[i][0]) / totalTVL[0];
             // TODO: add options like minAmount
             (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
                 INonfungiblePositionManager.IncreaseLiquidityParams({
@@ -110,7 +117,7 @@ contract UniV3Vault is Vault {
                     amount1Desired: a1,
                     amount0Min: a0Min,
                     amount1Min: a1Min,
-                    deadline: deadline
+                    deadline: opts.deadline
                 })
             );
             actualTokenAmounts[0] += amount0;
@@ -122,7 +129,7 @@ contract UniV3Vault is Vault {
         address to,
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata options
+        bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         uint256[][] memory tvls = nftTvls();
@@ -133,13 +140,13 @@ contract UniV3Vault is Vault {
                 totalTVL[j] += tvls[i][j];
             }
         }
-        (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
+        Options memory opts = _parseOptions(options);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
             uint256 a0 = (tokenAmounts[0] * tvls[i][0]) / totalTVL[0];
             uint256 a1 = (tokenAmounts[1] * tvls[i][1]) / totalTVL[1];
-            uint256 a0Min = (amount0Min * tvls[i][0]) / totalTVL[0];
-            uint256 a1Min = (amount1Min * tvls[i][0]) / totalTVL[0];
+            uint256 a0Min = (opts.amount0Min * tvls[i][0]) / totalTVL[0];
+            uint256 a1Min = (opts.amount1Min * tvls[i][0]) / totalTVL[0];
 
             uint256 liquidity = _getWithdrawLiquidity(nft, a0, a1, totalTVL);
             if (liquidity == 0) {
@@ -152,7 +159,7 @@ contract UniV3Vault is Vault {
                     liquidity: uint128(liquidity),
                     amount0Min: a0Min,
                     amount1Min: a1Min,
-                    deadline: deadline
+                    deadline: opts.deadline
                 })
             );
             (uint256 actualAmount0, uint256 actualAmount1) = _positionManager().collect(
@@ -233,25 +240,11 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _parseOptions(bytes calldata options)
-        internal
-        returns (
-            uint256 amount0Min,
-            uint256 amount1Min,
-            uint256 deadline
-        )
-    {
-        amount0Min = 0;
-        amount1Min = 0;
-        deadline = block.timestamp + 600;
+    function _parseOptions(bytes memory options) internal returns (Options memory) {
         if (options.length == 0) {
-            return (amount0Min, amount1Min, deadline);
+            return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
         }
         require(options.length == 32 * 3, "IOL");
-        assembly {
-            amount0Min := mload(options.offset)
-            amount1Min := mload(add(options.offset, 32))
-            deadline := mload(add(options.offset, 64))
-        }
+        return abi.decode(options, (Options));
     }
 }

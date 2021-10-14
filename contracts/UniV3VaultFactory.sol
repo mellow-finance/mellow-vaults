@@ -13,10 +13,7 @@ contract UniV3VaultFactory is IVaultFactory {
         address admin,
         bytes calldata options
     ) external override returns (address) {
-        uint256 fee;
-        assembly {
-            fee := calldataload(options.offset)
-        }
+        uint256 fee = abi.decode(options, (uint256));
         UniV3Vault vault = new UniV3Vault(tokens, IVaultManager(msg.sender), strategyTreasury, uint24(fee), admin);
         return address(vault);
     }

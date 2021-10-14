@@ -36,13 +36,22 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         _limitPerAddress = newLimitPerAddress;
     }
 
-    function deposit(uint256[] calldata tokenAmounts, bool optimized) external {
+    function deposit(
+        uint256[] calldata tokenAmounts,
+        bool optimized,
+        bytes memory options
+    ) external {
         address[] memory tokens = governanceParams().gatewayVault.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(governanceParams().gatewayVault), tokenAmounts[i]);
         }
         uint256[] memory tvl = governanceParams().gatewayVault.tvl();
-        uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.push(tokens, tokenAmounts, optimized);
+        uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.push(
+            tokens,
+            tokenAmounts,
+            optimized,
+            options
+        );
         uint256 amountToMint;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < tokens.length; i++) {
@@ -76,7 +85,8 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        bool optimized
+        bool optimized,
+        bytes memory options
     ) external {
         require(totalSupply() > 0, "TS");
         address[] memory tokens = governanceParams().gatewayVault.vaultTokens();
@@ -89,7 +99,8 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
             address(this),
             tokens,
             tokenAmounts,
-            optimized
+            optimized,
+            options
         );
         uint256 protocolExitFee = governanceParams().protocolGovernance.protocolExitFee();
         address protocolTreasury = governanceParams().protocolGovernance.protocolTreasury();

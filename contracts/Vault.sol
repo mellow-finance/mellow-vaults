@@ -56,7 +56,7 @@ abstract contract Vault is IVault, VaultGovernance {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) public returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
@@ -70,7 +70,7 @@ abstract contract Vault is IVault, VaultGovernance {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokens.length; i++) {
             if (tokenAmounts[i] > 0) {
@@ -91,7 +91,7 @@ abstract contract Vault is IVault, VaultGovernance {
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256 nft = vaultManager().nftForVault(address(this));
@@ -103,7 +103,7 @@ abstract contract Vault is IVault, VaultGovernance {
         emit Pull(to, actualTokenAmounts);
     }
 
-    function collectEarnings(address to, bytes calldata options) external returns (uint256[] memory collectedEarnings) {
+    function collectEarnings(address to, bytes memory options) external returns (uint256[] memory collectedEarnings) {
         /// TODO: is allowed to pull
         /// TODO: verify that only RouterVault can call this (for fees reasons)
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
@@ -199,7 +199,7 @@ abstract contract Vault is IVault, VaultGovernance {
     function _push(
         uint256[] memory tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
     /// Guaranteed to have exact signature matchinn vault tokens
@@ -207,10 +207,10 @@ abstract contract Vault is IVault, VaultGovernance {
         address to,
         uint256[] memory tokenAmounts,
         bool optimized,
-        bytes calldata options
+        bytes memory options
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
-    function _collectEarnings(address to, bytes calldata options)
+    function _collectEarnings(address to, bytes memory options)
         internal
         virtual
         returns (uint256[] memory collectedEarnings);

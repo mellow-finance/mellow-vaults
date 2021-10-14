@@ -33,7 +33,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         address[] calldata tokens,
         address strategyTreasury,
         address admin,
-        bytes calldata options
+        bytes memory options
     ) external override returns (address vault, uint256 nft) {
         require(governanceParams().permissionless || _isProtocolAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
