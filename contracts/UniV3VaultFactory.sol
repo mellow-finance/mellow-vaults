@@ -7,14 +7,9 @@ import "./VaultManager.sol";
 import "./UniV3Vault.sol";
 
 contract UniV3VaultFactory is IVaultFactory {
-    function deployVault(
-        address[] calldata tokens,
-        address strategyTreasury,
-        address admin,
-        bytes calldata options
-    ) external override returns (address) {
+    function deployVault(IVaultGovernance vaultGovernance, bytes calldata options) external override returns (IVault) {
         uint256 fee = abi.decode(options, (uint256));
-        UniV3Vault vault = new UniV3Vault(tokens, IVaultManager(msg.sender), strategyTreasury, uint24(fee), admin);
-        return address(vault);
+        UniV3Vault vault = new UniV3Vault(vaultGovernance, uint24(fee));
+        return IVault(vault);
     }
 }
