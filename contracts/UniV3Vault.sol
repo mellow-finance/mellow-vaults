@@ -19,6 +19,11 @@ contract UniV3Vault is Vault {
         uint256 deadline;
     }
 
+    struct Pair {
+        uint256 a0;
+        uint256 a1;
+    }
+
     EnumerableSet.UintSet private _nfts;
     EnumerableSet.UintSet private _cachedNfts;
     IUniswapV3PoolState public pool;
@@ -105,18 +110,21 @@ contract UniV3Vault is Vault {
         Options memory opts = _parseOptions(options);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
-            uint256 a0 = (tokenAmounts[0] * tvls[i][0]) / totalTVL[0];
-            uint256 a1 = (tokenAmounts[1] * tvls[i][1]) / totalTVL[1];
-            uint256 a0Min = (opts.amount0Min * tvls[i][0]) / totalTVL[0];
-            uint256 a1Min = (opts.amount1Min * tvls[i][0]) / totalTVL[0];
-            // TODO: add options like minAmount
+            Pair memory amounts = Pair({
+                a0: (tokenAmounts[0] * tvls[i][0]) / totalTVL[0],
+                a1: (tokenAmounts[1] * tvls[i][1]) / totalTVL[1]
+            });
+            Pair memory minAmounts = Pair({
+                a0: (opts.amount0Min * tvls[i][0]) / totalTVL[0],
+                a1: (opts.amount1Min * tvls[i][1]) / totalTVL[1]
+            });
             (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
                 INonfungiblePositionManager.IncreaseLiquidityParams({
                     tokenId: nft,
-                    amount0Desired: a0,
-                    amount1Desired: a1,
-                    amount0Min: a0Min,
-                    amount1Min: a1Min,
+                    amount0Desired: amounts.a0,
+                    amount1Desired: amounts.a1,
+                    amount0Min: minAmounts.a0,
+                    amount1Min: minAmounts.a1,
                     deadline: opts.deadline
                 })
             );
@@ -142,37 +150,52 @@ contract UniV3Vault is Vault {
         }
         Options memory opts = _parseOptions(options);
         for (uint256 i = 0; i < _nfts.length(); i++) {
-            uint256 nft = _nfts.at(i);
-            uint256 a0 = (tokenAmounts[0] * tvls[i][0]) / totalTVL[0];
-            uint256 a1 = (tokenAmounts[1] * tvls[i][1]) / totalTVL[1];
-            uint256 a0Min = (opts.amount0Min * tvls[i][0]) / totalTVL[0];
-            uint256 a1Min = (opts.amount1Min * tvls[i][0]) / totalTVL[0];
-
-            uint256 liquidity = _getWithdrawLiquidity(nft, a0, a1, totalTVL);
-            if (liquidity == 0) {
-                continue;
-            }
-            // TODO: add options like minAmount
-            (uint256 amount0, uint256 amount1) = _positionManager().decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
-                    tokenId: nft,
-                    liquidity: uint128(liquidity),
-                    amount0Min: a0Min,
-                    amount1Min: a1Min,
-                    deadline: opts.deadline
-                })
-            );
-            (uint256 actualAmount0, uint256 actualAmount1) = _positionManager().collect(
-                INonfungiblePositionManager.CollectParams({
-                    tokenId: nft,
-                    recipient: to,
-                    amount0Max: uint128(amount0),
-                    amount1Max: uint128(amount1)
-                })
-            );
-            actualTokenAmounts[0] += actualAmount0;
-            actualTokenAmounts[1] += actualAmount1;
+            Pair memory amounts = _pullForOneNft(i, tokenAmounts, tvls, totalTVL, to, opts);
+            actualTokenAmounts[0] += amounts.a0;
+            actualTokenAmounts[1] += amounts.a1;
         }
+    }
+
+    function _pullForOneNft(
+        uint256 i,
+        uint256[] memory tokenAmounts,
+        uint256[][] memory tvls,
+        uint256[] memory totalTVL,
+        address to,
+        Options memory opts
+    ) internal returns (Pair memory) {
+        uint256 nft = _nfts.at(i);
+        Pair memory amounts = Pair({
+            a0: (tokenAmounts[0] * tvls[i][0]) / totalTVL[0],
+            a1: (tokenAmounts[1] * tvls[i][1]) / totalTVL[1]
+        });
+        Pair memory minAmounts = Pair({
+            a0: (opts.amount0Min * tvls[i][0]) / totalTVL[0],
+            a1: (opts.amount1Min * tvls[i][1]) / totalTVL[1]
+        });
+
+        uint256 liquidity = _getWithdrawLiquidity(nft, amounts, totalTVL);
+        if (liquidity == 0) {
+            return Pair({a0: 0, a1: 0});
+        }
+        (uint256 amount0, uint256 amount1) = _positionManager().decreaseLiquidity(
+            INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: nft,
+                liquidity: uint128(liquidity),
+                amount0Min: minAmounts.a0,
+                amount1Min: minAmounts.a1,
+                deadline: opts.deadline
+            })
+        );
+        (amount0, amount1) = _positionManager().collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: nft,
+                recipient: to,
+                amount0Max: uint128(amount0),
+                amount1Max: uint128(amount1)
+            })
+        );
+        return Pair({a0: amount0, a1: amount1});
     }
 
     function _collectEarnings(address to, bytes calldata)
@@ -210,27 +233,26 @@ contract UniV3Vault is Vault {
 
     function _getWithdrawLiquidity(
         uint256 nft,
-        uint256 amount0,
-        uint256 amount1,
+        Pair memory amounts,
         uint256[] memory totalAmounts
     ) internal view returns (uint256) {
         (, , , , , , , uint128 totalLiquidity, , , , ) = _positionManager().positions(nft);
         if (totalAmounts[0] == 0) {
-            if (amount0 == 0) {
-                return (totalLiquidity * amount1) / totalAmounts[1]; // liquidity1
+            if (amounts.a0 == 0) {
+                return (totalLiquidity * amounts.a1) / totalAmounts[1]; // liquidity1
             } else {
                 return 0;
             }
         }
         if (totalAmounts[1] == 0) {
-            if (amount1 == 0) {
-                return (totalLiquidity * amount0) / totalAmounts[0]; // liquidity0
+            if (amounts.a1 == 0) {
+                return (totalLiquidity * amounts.a0) / totalAmounts[0]; // liquidity0
             } else {
                 return 0;
             }
         }
-        uint256 liquidity0 = (totalLiquidity * amount0) / totalAmounts[0];
-        uint256 liquidity1 = (totalLiquidity * amount1) / totalAmounts[1];
+        uint256 liquidity0 = (totalLiquidity * amounts.a0) / totalAmounts[0];
+        uint256 liquidity1 = (totalLiquidity * amounts.a1) / totalAmounts[1];
         return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 
@@ -240,7 +262,7 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _parseOptions(bytes memory options) internal returns (Options memory) {
+    function _parseOptions(bytes memory options) internal view returns (Options memory) {
         if (options.length == 0) {
             return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
         }
