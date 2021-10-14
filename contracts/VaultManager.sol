@@ -25,7 +25,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         return _nftIndex[vault];
     }
 
-    function vaultForNft(uint256 nft) external view override returns (address) {
+    function vaultForNft(uint256 nft) public view override returns (address) {
         return _vaultIndex[nft];
     }
 
