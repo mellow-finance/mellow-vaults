@@ -14,9 +14,10 @@ contract GatewayVaultManager is IGatewayVaultManager, VaultManager {
         string memory name,
         string memory symbol,
         IVaultFactory factory,
+        IVaultGovernanceFactory goveranceFactory,
         bool permissionless,
         IProtocolGovernance governance
-    ) VaultManager(name, symbol, factory, permissionless, governance) {}
+    ) VaultManager(name, symbol, factory, goveranceFactory, permissionless, governance) {}
 
     function vaultOwnerNft(uint256 nft) public view override returns (uint256) {
         return _vaultOwners[nft];

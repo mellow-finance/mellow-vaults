@@ -25,7 +25,7 @@ contract GatewayVault is IGatewayVault, Vault {
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < tokens.length; j++) {
@@ -39,7 +39,7 @@ contract GatewayVault is IGatewayVault, Vault {
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.earnings();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < tokens.length; j++) {
@@ -50,7 +50,7 @@ contract GatewayVault is IGatewayVault, Vault {
 
     function vaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVault vault = IVault(_vaults[vaultNum]);
-        address[] memory pTokens = vault.vaultTokens();
+        address[] memory pTokens = vault.vaultGovernance().vaultTokens();
         uint256[] memory vTokenAmounts = vault.tvl();
         return Common.projectTokenAmounts(_vaultGovernance.vaultTokens(), pTokens, vTokenAmounts);
     }
@@ -60,7 +60,7 @@ contract GatewayVault is IGatewayVault, Vault {
         tokenAmounts = new uint256[][](_vaults.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             tokenAmounts[i] = new uint256[](tokens.length);
@@ -72,7 +72,7 @@ contract GatewayVault is IGatewayVault, Vault {
 
     function vaultEarnings(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVault vault = IVault(_vaults[vaultNum]);
-        address[] memory pTokens = vault.vaultTokens();
+        address[] memory pTokens = vault.vaultGovernance().vaultTokens();
         uint256[] memory vTokenAmounts = vault.earnings();
         return Common.projectTokenAmounts(_vaultGovernance.vaultTokens(), pTokens, vTokenAmounts);
     }
@@ -173,7 +173,7 @@ contract GatewayVault is IGatewayVault, Vault {
         bytes[] memory vaultsOptions = _parseOptions(options);
         for (uint256 i = 0; i < _vaults.length; i++) {
             IVault vault = IVault(_vaults[i]);
-            address[] memory vTokens = vault.vaultTokens();
+            address[] memory vTokens = vault.vaultGovernance().vaultTokens();
             uint256[] memory vTokenAmounts = vault.collectEarnings(address(this), vaultsOptions[i]);
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < tokens.length; j++) {

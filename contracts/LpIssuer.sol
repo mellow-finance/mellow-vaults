@@ -41,7 +41,7 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         bool optimized,
         bytes memory options
     ) external {
-        address[] memory tokens = governanceParams().gatewayVault.vaultTokens();
+        address[] memory tokens = governanceParams().gatewayVault.vaultGovernance().vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(governanceParams().gatewayVault), tokenAmounts[i]);
         }
@@ -89,7 +89,7 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         bytes memory options
     ) external {
         require(totalSupply() > 0, "TS");
-        address[] memory tokens = governanceParams().gatewayVault.vaultTokens();
+        address[] memory tokens = governanceParams().gatewayVault.vaultGovernance().vaultTokens();
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         uint256[] memory tvl = governanceParams().gatewayVault.tvl();
         for (uint256 i = 0; i < tokens.length; i++) {
