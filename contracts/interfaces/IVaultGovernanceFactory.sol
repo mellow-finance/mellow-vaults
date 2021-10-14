@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IVaultGovernance.sol";
 
-interface IVaultFactory {
+interface IVaultGovernanceFactory {
     function deployVaultGovernance(
         address[] memory tokens,
         IVaultManager manager,
