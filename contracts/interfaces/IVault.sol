@@ -12,20 +12,24 @@ interface IVault is IVaultGovernance {
 
     function earnings() external view returns (uint256[] memory tokenAmounts);
 
-    function push(address[] calldata tokens, uint256[] calldata tokenAmounts)
-        external
-        returns (uint256[] memory actualTokenAmounts);
+    function push(
+        address[] calldata tokens,
+        uint256[] calldata tokenAmounts,
+        bool optimized
+    ) external returns (uint256[] memory actualTokenAmounts);
 
     function transferAndPush(
         address from,
         address[] calldata tokens,
-        uint256[] calldata tokenAmounts
+        uint256[] calldata tokenAmounts,
+        bool optimized
     ) external returns (uint256[] memory actualTokenAmounts);
 
     function pull(
         address to,
         address[] calldata tokens,
-        uint256[] calldata tokenAmounts
+        uint256[] calldata tokenAmounts,
+        bool optimized
     ) external returns (uint256[] memory actualTokenAmounts);
 
     function collectEarnings(address to) external returns (uint256[] memory collectedEarnings);

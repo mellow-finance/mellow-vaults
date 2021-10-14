@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IProtocolGovernance {
+import "./IDefaultAccessControl.sol";
+
+interface IProtocolGovernance is IDefaultAccessControl {
     /// -------------------  PUBLIC, VIEW  -------------------
 
     struct Params {
@@ -18,6 +20,12 @@ interface IProtocolGovernance {
     function pendingPullAllowlistAdd() external view returns (address[] memory);
 
     function isAllowedToPull(address addr) external view returns (bool);
+
+    function claimAllowlist() external view returns (address[] memory);
+
+    function pendingClaimAllowlistAdd() external view returns (address[] memory);
+
+    function isAllowedToClaim(address addr) external view returns (bool);
 
     function maxTokensPerVault() external view returns (uint256);
 

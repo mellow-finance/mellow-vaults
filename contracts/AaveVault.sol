@@ -12,8 +12,9 @@ contract AaveVault is Vault {
     constructor(
         address[] memory tokens,
         IVaultManager vaultManager,
-        address strategyTreasury
-    ) Vault(tokens, vaultManager, strategyTreasury) {
+        address strategyTreasury,
+        address admin
+    ) Vault(tokens, vaultManager, strategyTreasury, admin) {
         for (uint256 i = 0; i < tokens.length; i++) {
             _aTokens[i] = _getAToken(tokens[i]);
         }
@@ -38,7 +39,11 @@ contract AaveVault is Vault {
         }
     }
 
-    function _push(uint256[] memory tokenAmounts) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bool)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
@@ -61,11 +66,11 @@ contract AaveVault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _pull(address to, uint256[] memory tokenAmounts)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _pull(
+        address to,
+        uint256[] memory tokenAmounts,
+        bool
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];

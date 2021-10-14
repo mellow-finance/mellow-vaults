@@ -9,9 +9,10 @@ contract AaveVaultFactory is IVaultFactory {
     function deployVault(
         address[] calldata tokens,
         address strategyTreasury,
+        address admin,
         bytes calldata
     ) external override returns (address) {
-        AaveVault vault = new AaveVault(tokens, IVaultManager(msg.sender), strategyTreasury);
+        AaveVault vault = new AaveVault(tokens, IVaultManager(msg.sender), strategyTreasury, admin);
         return address(vault);
     }
 }

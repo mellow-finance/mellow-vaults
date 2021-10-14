@@ -7,8 +7,9 @@ contract ERC20Vault is Vault {
     constructor(
         address[] memory tokens,
         IVaultManager vaultManager,
-        address strategyTreasury
-    ) Vault(tokens, vaultManager, strategyTreasury) {}
+        address strategyTreasury,
+        address admin
+    ) Vault(tokens, vaultManager, strategyTreasury, admin) {}
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();
@@ -22,16 +23,21 @@ contract ERC20Vault is Vault {
         tokenAmounts = new uint256[](vaultTokens().length);
     }
 
-    function _push(uint256[] memory tokenAmounts) internal pure override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bool)
+        internal
+        pure
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         // no-op, tokens are already on balance
         return tokenAmounts;
     }
 
-    function _pull(address to, uint256[] memory tokenAmounts)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _pull(
+        address to,
+        uint256[] memory tokenAmounts,
+        bool
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(vaultTokens()[i]).transfer(to, tokenAmounts[i]);
         }
