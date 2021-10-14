@@ -9,7 +9,6 @@ import {
     Signer 
 } from "ethers";
 import Exceptions from "./utils/Exceptions";
-import { Address } from "hardhat-deploy/dist/types";
 
 
 describe("VaultManagerGovernance", () => {
@@ -27,7 +26,7 @@ describe("VaultManagerGovernance", () => {
         ProtocolGovernance = await ethers.getContractFactory("ProtocolGovernance");
         [deployer, stranger] = await ethers.getSigners();
 
-        protocolGovernance = await ProtocolGovernance.deploy();
+        protocolGovernance = await ProtocolGovernance.deploy(deployer.getAddress());
         vaultManagerGovernance = await VaultManagerGovernance.deploy(true, protocolGovernance.address);
     });
 
@@ -55,16 +54,14 @@ describe("VaultManagerGovernance", () => {
         });
 
         it("address should not be 0x00", async () => {
-            let zeroAddress = ethers.constants.AddressZero;
             await expect(
-                vaultManagerGovernance.setPendingGovernanceParams([false, zeroAddress])
+                vaultManagerGovernance.setPendingGovernanceParams([false, ethers.constants.AddressZero])
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
         });
 
         it("sets correct pending timestamp", async () => {
             let customProtocol = await ProtocolGovernance.deploy();
-            let  zeroAddress = ethers.constants.AddressZero;
-            await customProtocol.setPendingParams([1, 0, 1, 1, 1, zeroAddress]);
+            await customProtocol.setPendingParams([1, 0, 1, 1, 1, ethers.constants.AddressZero]);
             await customProtocol.commitParams();
 
             timestamp = Math.ceil(new Date().getTime() / 1000) + 10**6;
@@ -99,7 +96,6 @@ describe("VaultManagerGovernance", () => {
     describe("commitGovernanceParams", () => {
         let newProtocolGovernance: Contract;
         let customProtocol: Contract;
-        let zeroAddress: Address;
 
         beforeEach(async () => {
             newProtocolGovernance = await ProtocolGovernance.deploy();
@@ -108,7 +104,6 @@ describe("VaultManagerGovernance", () => {
                 newProtocolGovernance.address
             ]);
             customProtocol = await ProtocolGovernance.deploy();
-            zeroAddress = ethers.constants.AddressZero;
         });
     
         it("role should be governance or delegate", async () => {
@@ -119,7 +114,7 @@ describe("VaultManagerGovernance", () => {
         
         it("waits governance delay", async () => {
             const timeout = 10**4;
-            await customProtocol.setPendingParams([1, timeout, 1, 1, 1, zeroAddress]);
+            await customProtocol.setPendingParams([1, timeout, 1, 1, 1, ethers.constants.AddressZero]);
             await customProtocol.commitParams();
 
             timestamp += 10 ** 3;
