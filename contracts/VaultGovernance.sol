@@ -16,17 +16,39 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     address private _strategyTreasury;
     address private _pendingStrategyTreasury;
     uint256 private _pendingStrategyTreasuryTimestamp;
+    address[] private _tokens;
+    mapping(address => bool) private _vaultTokensIndex;
 
     constructor(
+        address[] memory tokens,
         IVaultManager manager,
         address treasury,
         address admin
     ) DefaultAccessControl(admin) {
+        require(Common.isSortedAndUnique(tokens), "SAU");
+        require(tokens.length > 0, "TL");
+        require(tokens.length <= manager.governanceParams().protocolGovernance.maxTokensPerVault(), "MTL");
         _vaultManager = manager;
         _strategyTreasury = treasury;
+        _tokens = tokens;
+        for (uint256 i = 0; i < tokens.length; i++) {
+            _vaultTokensIndex[tokens[i]] = true;
+        }
     }
 
     /// -------------------  PUBLIC, VIEW  -------------------
+
+    function isProtocolAdmin() public view returns (bool) {
+        return _vaultManager.governanceParams().protocolGovernance.isAdmin();
+    }
+
+    function vaultTokens() public view returns (address[] memory) {
+        return _tokens;
+    }
+
+    function isVaultToken(address token) public view returns (bool) {
+        return _vaultTokensIndex[token];
+    }
 
     function vaultManager() public view returns (IVaultManager) {
         return _vaultManager;
@@ -55,7 +77,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     /// -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
 
     function setPendingVaultManager(IVaultManager manager) external {
-        require(_isProtocolAdmin(), "PADM");
+        require(isProtocolAdmin(), "PADM");
         require(address(manager) != address(0), "ZMG");
         _pendingVaultManager = manager;
         _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -63,7 +85,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     }
 
     function commitVaultManager() external {
-        require(_isProtocolAdmin(), "PADM");
+        require(isProtocolAdmin(), "PADM");
         require(_pendingVaultManagerTimestamp > 0, "NULL");
         require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
         _vaultManager = _pendingVaultManager;
@@ -89,8 +111,4 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     }
 
     /// -------------------  PRIVATE, VIEW  -------------------
-
-    function _isProtocolAdmin() internal view returns (bool) {
-        return _vaultManager.governanceParams().protocolGovernance.isAdmin();
-    }
 }

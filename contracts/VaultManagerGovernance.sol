@@ -7,6 +7,7 @@ import "./libraries/Common.sol";
 
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultManagerGovernance.sol";
+import "./interfaces/IVaultGovernanceFactory.sol";
 
 contract VaultManagerGovernance is IVaultManagerGovernance {
     GovernanceParams private _governanceParams;
@@ -16,12 +17,14 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
     constructor(
         bool permissionless,
         IProtocolGovernance protocolGovernance,
-        IVaultFactory factory
+        IVaultFactory factory,
+        IVaultGovernanceFactory governanceFactory
     ) {
         _governanceParams = GovernanceParams({
             permissionless: permissionless,
             protocolGovernance: protocolGovernance,
-            factory: factory
+            factory: factory,
+            governanceFactory: governanceFactory
         });
     }
 

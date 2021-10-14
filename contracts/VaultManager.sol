@@ -17,15 +17,16 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         string memory name,
         string memory symbol,
         IVaultFactory factory,
+        IVaultGovernanceFactory governanceFactory,
         bool permissionless,
         IProtocolGovernance protocolGovernance
-    ) ERC721(name, symbol) VaultManagerGovernance(permissionless, protocolGovernance, factory) {}
+    ) ERC721(name, symbol) VaultManagerGovernance(permissionless, protocolGovernance, factory, governanceFactory) {}
 
     function nftForVault(address vault) external view override returns (uint256) {
         return _nftIndex[vault];
     }
 
-    function vaultForNft(uint256 nft) external view override returns (address) {
+    function vaultForNft(uint256 nft) public view override returns (address) {
         return _vaultIndex[nft];
     }
 
@@ -33,14 +34,33 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         address[] calldata tokens,
         address strategyTreasury,
         address admin,
-        bytes calldata options
-    ) external override returns (address vault, uint256 nft) {
+        bytes memory options
+    )
+        external
+        override
+        returns (
+            IVaultGovernance vaultGovernance,
+            IVault vault,
+            uint256 nft
+        )
+    {
         require(governanceParams().permissionless || _isProtocolAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
         nft = _mintVaultNft();
-        vault = governanceParams().factory.deployVault(tokens, strategyTreasury, admin, options);
-        emit CreateVault(vault, nft, tokens, options);
+
+        // address[] memory tokens,
+        // IVaultManager manager,
+        // address treasury,
+        // address admin
+        vaultGovernance = governanceParams().governanceFactory.deployVaultGovernance(
+            tokens,
+            this,
+            strategyTreasury,
+            admin
+        );
+        vault = governanceParams().factory.deployVault(vaultGovernance, options);
+        emit CreateVault(address(vaultGovernance), address(vault), nft, tokens, options);
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, IERC165) returns (bool) {

@@ -14,10 +14,11 @@ contract AaveVaultManager is IAaveVaultManager, VaultManager {
         string memory name,
         string memory symbol,
         IVaultFactory factory,
+        IVaultGovernanceFactory governanceFactory,
         bool permissionless,
         IProtocolGovernance governance,
         ILendingPool pool
-    ) VaultManager(name, symbol, factory, permissionless, governance) {
+    ) VaultManager(name, symbol, factory, governanceFactory, permissionless, governance) {
         _lendingPool = pool;
     }
 

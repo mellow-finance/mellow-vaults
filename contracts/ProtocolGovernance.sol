@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
@@ -7,10 +8,6 @@ import "./DefaultAccessControl.sol";
 
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
-
-    EnumerableSet.AddressSet private _pullAllowlist;
-    address[] private _pendingPullAllowlistAdd;
-    uint256 public pendingPullAllowlistAddTimestamp;
 
     EnumerableSet.AddressSet private _claimAllowlist;
     address[] private _pendingClaimAllowlistAdd;
@@ -24,24 +21,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     constructor(address admin) DefaultAccessControl(admin) {}
 
     /// -------------------  PUBLIC, VIEW  -------------------
-
-    function pullAllowlist() external view returns (address[] memory) {
-        uint256 l = _pullAllowlist.length();
-        address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; i++) {
-            res[i] = _pullAllowlist.at(i);
-        }
-        return res;
-    }
-
-    function pendingPullAllowlistAdd() external view returns (address[] memory) {
-        return _pendingPullAllowlistAdd;
-    }
-
-    function isAllowedToPull(address addr) external view returns (bool) {
-        return _pullAllowlist.contains(addr);
-    }
-
     function claimAllowlist() external view returns (address[] memory) {
         uint256 l = _claimAllowlist.length();
         address[] memory res = new address[](l);
@@ -83,21 +62,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.protocolTreasury;
     }
 
+    function gatewayVaultManager() external view override returns (IGatewayVaultManager) {
+        return params.gatewayVaultManager;
+    }
+
     /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
-
-    function setPendingPullAllowlistAdd(address[] calldata addresses) external {
-        require(isAdmin(), "ADM");
-        _pendingPullAllowlistAdd = addresses;
-        pendingPullAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    function removeFromPullAllowlist(address addr) external {
-        require(isAdmin(), "ADM");
-        if (!_pullAllowlist.contains(addr)) {
-            return;
-        }
-        _pullAllowlist.remove(addr);
-    }
 
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
         require(isAdmin(), "ADM");
@@ -107,10 +76,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     function removeFromClaimAllowlist(address addr) external {
         require(isAdmin(), "ADM");
-        if (!_pullAllowlist.contains(addr)) {
+        if (!_claimAllowlist.contains(addr)) {
             return;
         }
-        _pullAllowlist.remove(addr);
+        _claimAllowlist.remove(addr);
     }
 
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
@@ -125,20 +94,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         require(isAdmin(), "ADM");
         require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
-            _pullAllowlist.add(_pendingClaimAllowlistAdd[i]);
+            _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
         }
         delete _pendingClaimAllowlistAdd;
         delete pendingClaimAllowlistAddTimestamp;
-    }
-
-    function commitPullAllowlistAdd() external {
-        require(isAdmin(), "ADM");
-        require((block.timestamp > pendingPullAllowlistAddTimestamp) && (pendingPullAllowlistAddTimestamp > 0), "TS");
-        for (uint256 i = 0; i < _pendingPullAllowlistAdd.length; i++) {
-            _pullAllowlist.add(_pendingPullAllowlistAdd[i]);
-        }
-        delete _pendingPullAllowlistAdd;
-        delete pendingPullAllowlistAddTimestamp;
     }
 
     function commitParams() external {

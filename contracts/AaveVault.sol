@@ -9,19 +9,15 @@ contract AaveVault is Vault {
     address[] private _aTokens;
     uint256[] private _baseBalances;
 
-    constructor(
-        address[] memory tokens,
-        IVaultManager vaultManager,
-        address strategyTreasury,
-        address admin
-    ) Vault(tokens, vaultManager, strategyTreasury, admin) {
+    constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {
+        address[] memory tokens = vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             _aTokens[i] = _getAToken(tokens[i]);
         }
     }
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
@@ -30,7 +26,7 @@ contract AaveVault is Vault {
     }
 
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
@@ -39,12 +35,12 @@ contract AaveVault is Vault {
         }
     }
 
-    function _push(uint256[] memory tokenAmounts, bool)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
-        address[] memory tokens = vaultTokens();
+    function _push(
+        uint256[] memory tokenAmounts,
+        bool,
+        bytes calldata
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
@@ -69,9 +65,10 @@ contract AaveVault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool
+        bool,
+        bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
             uint256 balance = IERC20(aToken).balanceOf(address(this));
@@ -88,9 +85,13 @@ contract AaveVault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address to, bytes calldata)
+        internal
+        override
+        returns (uint256[] memory collectedEarnings)
+    {
         collectedEarnings = earnings();
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < _aTokens.length; i++) {
             _lendingPool().withdraw(tokens[i], collectedEarnings[i], to);
         }
@@ -108,6 +109,6 @@ contract AaveVault is Vault {
     }
 
     function _lendingPool() internal view returns (ILendingPool) {
-        return IAaveVaultManager(address(vaultManager())).lendingPool();
+        return IAaveVaultManager(address(_vaultGovernance.vaultManager())).lendingPool();
     }
 }
