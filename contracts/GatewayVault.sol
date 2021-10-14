@@ -3,9 +3,10 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IVault.sol";
+import "./interfaces/IGatewayVault.sol";
 import "./Vault.sol";
 
-contract GatewayVault is Vault {
+contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     address[] private _vaults;
     mapping(address => uint256) private _vaultsIndex;
@@ -25,7 +26,7 @@ contract GatewayVault is Vault {
         }
     }
 
-    function tvl() public view override returns (uint256[] memory tokenAmounts) {
+    function tvl() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
@@ -39,7 +40,7 @@ contract GatewayVault is Vault {
         }
     }
 
-    function earnings() public view override returns (uint256[] memory tokenAmounts) {
+    function earnings() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
@@ -57,14 +58,14 @@ contract GatewayVault is Vault {
         return _limits;
     }
 
-    function vaultTvl(uint256 vaultNum) public view returns (uint256[] memory) {
+    function vaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVault vault = IVault(_vaults[vaultNum]);
         address[] memory pTokens = vault.vaultTokens();
         uint256[] memory vTokenAmounts = vault.tvl();
         return Common.projectTokenAmounts(vaultTokens(), pTokens, vTokenAmounts);
     }
 
-    function vaultsTvl() public view returns (uint256[][] memory tokenAmounts) {
+    function vaultsTvl() public view override returns (uint256[][] memory tokenAmounts) {
         address[] memory tokens = vaultTokens();
         tokenAmounts = new uint256[][](_vaults.length);
         for (uint256 i = 0; i < _vaults.length; i++) {
@@ -79,21 +80,25 @@ contract GatewayVault is Vault {
         }
     }
 
-    function vaultEarnings(uint256 vaultNum) public view returns (uint256[] memory) {
+    function vaultEarnings(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVault vault = IVault(_vaults[vaultNum]);
         address[] memory pTokens = vault.vaultTokens();
         uint256[] memory vTokenAmounts = vault.earnings();
         return Common.projectTokenAmounts(vaultTokens(), pTokens, vTokenAmounts);
     }
 
-    function setLimits(uint256[] calldata newLimits) external {
+    function hasVault(address vault) external view override returns (bool) {
+        return (_vaultsIndex[vault] > 0 || _vaults[0] == vault);
+    }
+
+    function setLimits(uint256[] calldata newLimits) external override {
         require(_isApprovedOrOwner(msg.sender) || isAdmin(), "IOG");
         require(newLimits.length == vaultTokens().length, "TL");
         _limits = newLimits;
         emit SetLimits(newLimits);
     }
 
-    function setRedirects(address[] calldata newRedirects) external {
+    function setRedirects(address[] calldata newRedirects) external override {
         require(_isApprovedOrOwner(msg.sender) || isAdmin(), "IOG");
         require(newRedirects.length == vaultTokens().length, "TL");
         _redirects = newRedirects;
