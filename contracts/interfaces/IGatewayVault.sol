@@ -11,8 +11,4 @@ interface IGatewayVault is IVault {
     function vaultTvl(uint256 vaultNum) external view returns (uint256[] memory);
 
     function vaultEarnings(uint256 vaultNum) external view returns (uint256[] memory);
-
-    function setLimits(uint256[] calldata newLimits) external;
-
-    function setRedirects(address[] calldata newRedirects) external;
 }

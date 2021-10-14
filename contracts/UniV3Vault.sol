@@ -28,13 +28,8 @@ contract UniV3Vault is Vault {
     EnumerableSet.UintSet private _cachedNfts;
     IUniswapV3PoolState public pool;
 
-    constructor(
-        address[] memory tokens,
-        IVaultManager vaultManager,
-        address strategyTreasury,
-        uint24 fee,
-        address admin
-    ) Vault(tokens, vaultManager, strategyTreasury, admin) {
+    constructor(IVaultGovernance vaultGovernance, uint24 fee) Vault(vaultGovernance) {
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         require(tokens.length == 2, "TL");
         pool = IUniswapV3PoolState(IUniswapV3Factory(_positionManager().factory()).getPool(tokens[0], tokens[1], fee));
     }
@@ -67,7 +62,7 @@ contract UniV3Vault is Vault {
     }
 
     function nftTvl(uint256 nft) public view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](vaultTokens().length);
+        tokenAmounts = new uint256[](_vaultGovernance.vaultTokens().length);
         (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
@@ -95,7 +90,7 @@ contract UniV3Vault is Vault {
         bool,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
         }
@@ -141,7 +136,7 @@ contract UniV3Vault is Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         uint256[][] memory tvls = nftTvls();
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         uint256[] memory totalTVL = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             for (uint256 j = 0; j < tokens.length; j++) {
@@ -203,7 +198,7 @@ contract UniV3Vault is Vault {
         override
         returns (uint256[] memory collectedEarnings)
     {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         collectedEarnings = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
@@ -222,13 +217,13 @@ contract UniV3Vault is Vault {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!_vaultGovernance.isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
         }
     }
 
     /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
-        return IUniV3VaultManager(address(vaultManager())).positionManager();
+        return IUniV3VaultManager(address(_vaultGovernance.vaultManager())).positionManager();
     }
 
     function _getWithdrawLiquidity(

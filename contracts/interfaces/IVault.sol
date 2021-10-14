@@ -3,10 +3,8 @@ pragma solidity 0.8.9;
 
 import "./IVaultGovernance.sol";
 
-interface IVault is IVaultGovernance {
-    function vaultTokens() external view returns (address[] memory);
-
-    function isVaultToken(address token) external view returns (bool);
+interface IVault {
+    function vaultGovernance() external view returns (IVaultGovernance);
 
     function tvl() external view returns (uint256[] memory tokenAmounts);
 

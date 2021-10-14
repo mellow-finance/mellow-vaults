@@ -4,15 +4,10 @@ pragma solidity 0.8.9;
 import "./Vault.sol";
 
 contract ERC20Vault is Vault {
-    constructor(
-        address[] memory tokens,
-        IVaultManager vaultManager,
-        address strategyTreasury,
-        address admin
-    ) Vault(tokens, vaultManager, strategyTreasury, admin) {}
+    constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}
 
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = vaultTokens();
+        address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
@@ -20,7 +15,7 @@ contract ERC20Vault is Vault {
     }
 
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](vaultTokens().length);
+        tokenAmounts = new uint256[](_vaultGovernance.vaultTokens().length);
     }
 
     function _push(
@@ -39,7 +34,7 @@ contract ERC20Vault is Vault {
         bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            IERC20(vaultTokens()[i]).transfer(to, tokenAmounts[i]);
+            IERC20(_vaultGovernance.vaultTokens()[i]).transfer(to, tokenAmounts[i]);
         }
         actualTokenAmounts = tokenAmounts;
     }
@@ -51,12 +46,12 @@ contract ERC20Vault is Vault {
         returns (uint256[] memory collectedEarnings)
     {
         // no-op, no earnings here
-        collectedEarnings = new uint256[](vaultTokens().length);
+        collectedEarnings = new uint256[](_vaultGovernance.vaultTokens().length);
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!_vaultGovernance.isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
         }
     }
 }
