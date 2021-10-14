@@ -23,12 +23,11 @@ contract ERC20Vault is Vault {
         tokenAmounts = new uint256[](vaultTokens().length);
     }
 
-    function _push(uint256[] memory tokenAmounts, bool)
-        internal
-        pure
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bool,
+        bytes calldata
+    ) internal pure override returns (uint256[] memory actualTokenAmounts) {
         // no-op, tokens are already on balance
         return tokenAmounts;
     }
@@ -36,7 +35,8 @@ contract ERC20Vault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool
+        bool,
+        bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(vaultTokens()[i]).transfer(to, tokenAmounts[i]);
@@ -44,7 +44,12 @@ contract ERC20Vault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address) internal view override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address, bytes calldata)
+        internal
+        view
+        override
+        returns (uint256[] memory collectedEarnings)
+    {
         // no-op, no earnings here
         collectedEarnings = new uint256[](vaultTokens().length);
     }

@@ -105,11 +105,11 @@ contract GatewayVault is IGatewayVault, Vault {
         emit SetRedirects(newRedirects);
     }
 
-    function _push(uint256[] memory tokenAmounts, bool optimized)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bool optimized,
+        bytes calldata
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         uint256[][] memory tvls = vaultsTvl();
         address[] memory tokens = vaultTokens();
         uint256[] memory totalTvl = new uint256[](tokens.length);
@@ -146,7 +146,8 @@ contract GatewayVault is IGatewayVault, Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool optimized
+        bool optimized,
+        bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         uint256[][] memory tvls = vaultsTvl();
         address[] memory tokens = vaultTokens();
@@ -173,7 +174,11 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
-    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address to, bytes calldata)
+        internal
+        override
+        returns (uint256[] memory collectedEarnings)
+    {
         address[] memory tokens = vaultTokens();
         collectedEarnings = new uint256[](tokens.length);
         for (uint256 i = 0; i < _vaults.length; i++) {

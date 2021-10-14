@@ -78,11 +78,11 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _push(uint256[] memory tokenAmounts, bool)
-        internal
-        override
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function _push(
+        uint256[] memory tokenAmounts,
+        bool,
+        bytes calldata options
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
@@ -95,19 +95,22 @@ contract UniV3Vault is Vault {
             }
         }
         actualTokenAmounts = new uint256[](2);
+        (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
             uint256 a0 = (tokenAmounts[0] * tvls[i][0]) / totalTVL[0];
             uint256 a1 = (tokenAmounts[1] * tvls[i][1]) / totalTVL[1];
+            uint256 a0Min = (amount0Min * tvls[i][0]) / totalTVL[0];
+            uint256 a1Min = (amount1Min * tvls[i][0]) / totalTVL[0];
             // TODO: add options like minAmount
             (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
                 INonfungiblePositionManager.IncreaseLiquidityParams({
                     tokenId: nft,
                     amount0Desired: a0,
                     amount1Desired: a1,
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp + 600
+                    amount0Min: a0Min,
+                    amount1Min: a1Min,
+                    deadline: deadline
                 })
             );
             actualTokenAmounts[0] += amount0;
@@ -118,13 +121,27 @@ contract UniV3Vault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool
+        bool,
+        bytes calldata options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
-
+        uint256[][] memory tvls = nftTvls();
+        address[] memory tokens = vaultTokens();
+        uint256[] memory totalTVL = new uint256[](tokens.length);
+        for (uint256 i = 0; i < _nfts.length(); i++) {
+            for (uint256 j = 0; j < tokens.length; j++) {
+                totalTVL[j] += tvls[i][j];
+            }
+        }
+        (uint256 amount0Min, uint256 amount1Min, uint256 deadline) = _parseOptions(options);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
-            uint256 liquidity = _getWithdrawLiquidity(nft, tokenAmounts);
+            uint256 a0 = (tokenAmounts[0] * tvls[i][0]) / totalTVL[0];
+            uint256 a1 = (tokenAmounts[1] * tvls[i][1]) / totalTVL[1];
+            uint256 a0Min = (amount0Min * tvls[i][0]) / totalTVL[0];
+            uint256 a1Min = (amount1Min * tvls[i][0]) / totalTVL[0];
+
+            uint256 liquidity = _getWithdrawLiquidity(nft, a0, a1, totalTVL);
             if (liquidity == 0) {
                 continue;
             }
@@ -133,9 +150,9 @@ contract UniV3Vault is Vault {
                 INonfungiblePositionManager.DecreaseLiquidityParams({
                     tokenId: nft,
                     liquidity: uint128(liquidity),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp + 600
+                    amount0Min: a0Min,
+                    amount1Min: a1Min,
+                    deadline: deadline
                 })
             );
             (uint256 actualAmount0, uint256 actualAmount1) = _positionManager().collect(
@@ -151,7 +168,11 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _collectEarnings(address to) internal override returns (uint256[] memory collectedEarnings) {
+    function _collectEarnings(address to, bytes calldata)
+        internal
+        override
+        returns (uint256[] memory collectedEarnings)
+    {
         address[] memory tokens = vaultTokens();
         collectedEarnings = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
@@ -180,31 +201,57 @@ contract UniV3Vault is Vault {
         return IUniV3VaultManager(address(vaultManager())).positionManager();
     }
 
-    function _getWithdrawLiquidity(uint256 nft, uint256[] memory tokenAmounts) internal view returns (uint256) {
-        uint256[] memory totalAmounts = nftTvl(nft);
+    function _getWithdrawLiquidity(
+        uint256 nft,
+        uint256 amount0,
+        uint256 amount1,
+        uint256[] memory totalAmounts
+    ) internal view returns (uint256) {
         (, , , , , , , uint128 totalLiquidity, , , , ) = _positionManager().positions(nft);
         if (totalAmounts[0] == 0) {
-            if (tokenAmounts[0] == 0) {
-                return (totalLiquidity * tokenAmounts[1]) / totalAmounts[1]; // liquidity1
+            if (amount0 == 0) {
+                return (totalLiquidity * amount1) / totalAmounts[1]; // liquidity1
             } else {
                 return 0;
             }
         }
         if (totalAmounts[1] == 0) {
-            if (tokenAmounts[1] == 0) {
-                return (totalLiquidity * tokenAmounts[0]) / totalAmounts[0]; // liquidity0
+            if (amount1 == 0) {
+                return (totalLiquidity * amount0) / totalAmounts[0]; // liquidity0
             } else {
                 return 0;
             }
         }
-        uint256 liquidity0 = (totalLiquidity * tokenAmounts[0]) / totalAmounts[0];
-        uint256 liquidity1 = (totalLiquidity * tokenAmounts[1]) / totalAmounts[1];
+        uint256 liquidity0 = (totalLiquidity * amount0) / totalAmounts[0];
+        uint256 liquidity1 = (totalLiquidity * amount1) / totalAmounts[1];
         return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 
     function _allowTokenIfNecessary(address token) internal {
         if (IERC20(token).allowance(address(_positionManager()), address(this)) < type(uint256).max / 2) {
             IERC20(token).approve(address(_positionManager()), type(uint256).max);
+        }
+    }
+
+    function _parseOptions(bytes calldata options)
+        internal
+        returns (
+            uint256 amount0Min,
+            uint256 amount1Min,
+            uint256 deadline
+        )
+    {
+        amount0Min = 0;
+        amount1Min = 0;
+        deadline = block.timestamp + 600;
+        if (options.length == 0) {
+            return (amount0Min, amount1Min, deadline);
+        }
+        require(options.length == 32 * 3, "IOL");
+        assembly {
+            amount0Min := mload(options.offset)
+            amount1Min := mload(add(options.offset, 32))
+            deadline := mload(add(options.offset, 64))
         }
     }
 }
