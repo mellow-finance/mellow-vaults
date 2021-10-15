@@ -1,20 +1,17 @@
 import { expect } from "chai";
-import { 
-    ethers,
-    network
-} from "hardhat";
+import { ethers } from "hardhat";
 import { 
     ContractFactory, 
     Contract, 
     Signer 
 } from "ethers";
-import Exceptions from "./utils/Exceptions";
+import Exceptions from "./lib/Exceptions";
 import {
     setupERC20VaultFactory,
     setupProtocolGovernance,
     setupVaultManagerGovernance,
-    setupCommonLibrary,
-} from "./utils/Fixtures";
+} from "./lib/Fixtures";
+import { sleepTo } from "./lib/Helpers";
 
 
 describe("VaultManagerGovernance", () => {
@@ -22,6 +19,7 @@ describe("VaultManagerGovernance", () => {
     let ERC20VaultFactory: ContractFactory;
     let vaultManagerGovernance: Contract;
     let protocolGovernance: Contract;
+    let newProtocolGovernance: Contract;
     let erc20VaultFactory: Contract;
     let deployer: Signer;
     let stranger: Signer;
@@ -37,6 +35,13 @@ describe("VaultManagerGovernance", () => {
         });
 
         protocolGovernance = await setupProtocolGovernance({
+            params: {
+                owner: deployer
+            },
+            admin: deployer
+        });
+
+        newProtocolGovernance = await setupProtocolGovernance({
             params: {
                 owner: deployer
             },
@@ -82,11 +87,6 @@ describe("VaultManagerGovernance", () => {
     });
 
     describe("setPendingGovernanceParams", () => {
-        let newProtocolGovernance: Contract;
-    
-        beforeEach(async () => {
-            newProtocolGovernance = await ProtocolGovernance.deploy(deployer.getAddress());
-        });
     
         it("role should be governance or delegate", async () => {
             await expect(
@@ -101,7 +101,7 @@ describe("VaultManagerGovernance", () => {
         it("governance params address should not be zero", async () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([
-                    false, ethers.constants.AddressZero,
+                    false, ethers.constants.AddressZero, erc20VaultFactory.address
                 ])
             ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
         });
@@ -120,8 +120,7 @@ describe("VaultManagerGovernance", () => {
             await customProtocol.commitParams();
 
             timestamp = Math.ceil(new Date().getTime() / 1000) + 10**6;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
+            await sleepTo(timestamp);
 
             await vaultManagerGovernance.setPendingGovernanceParams([
                 false, customProtocol.address, erc20VaultFactory.address
@@ -178,8 +177,7 @@ describe("VaultManagerGovernance", () => {
             await customProtocol.commitParams();
 
             timestamp += 10 ** 3;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send("evm_mine");
+            await sleepTo(timestamp);
 
             await vaultManagerGovernance.setPendingGovernanceParams([false, customProtocol.address]);
             await vaultManagerGovernance.commitGovernanceParams();

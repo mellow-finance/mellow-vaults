@@ -32,7 +32,7 @@ export const setupERC20Token = deployments.createFixture(async (
     await deployments.fixture();
     const owner: Signer = options?.params?.owner || (await ethers.getSigners())[0];
     const symbol: string = "TST" + (options?.id || "");
-    const ERC20TestToken: ContractFactory = await ethers.getContractFactory("ERC20TestToken", owner);
+    const ERC20TestToken: ContractFactory = await ethers.getContractFactory("ERC20Test", owner);
     return await ERC20TestToken.deploy(symbol, symbol);
 });
 
@@ -57,6 +57,7 @@ export const setupERC20VaultFactory = deployments.createFixture(async (
         params: FixtureParams,
     } | undefined
 ) => {
+    await deployments.fixture();
     const owner: Signer = options?.params?.owner || (await ethers.getSigners())[0];
     const ERC20VaultFactory = await ethers.getContractFactory("ERC20VaultFactory", owner);
     return await ERC20VaultFactory.deploy();
@@ -122,7 +123,19 @@ export const setupERC20Vault = deployments.createFixture(async (
         await admin.getAddress(),
         options?.calldata || []
     );
-    return erc20Vault;
+    return [
+        erc20Vault,
+        tokens
+    ];
+});
+
+export const setupVaultGovernanceFactory = deployments.createFixture(async (
+    _: HardhatRuntimeEnvironment,
+    options: {
+        params: FixtureParams,
+    } | undefined
+) => {
+
 });
 
 export const setupVaultManagerGovernance = deployments.createFixture(async (
