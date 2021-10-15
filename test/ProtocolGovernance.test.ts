@@ -9,7 +9,6 @@ import {
     Signer 
 } from "ethers";
 import Exceptions from "./utils/Exceptions";
-import { Address } from "hardhat-deploy/dist/types";
 import { BigNumber } from "@ethersproject/bignumber";
 
 describe("ProtocolGovernance", () => {
@@ -347,16 +346,6 @@ describe("ProtocolGovernance", () => {
                 await stranger1.getAddress(), 
                 await stranger2.getAddress()
             ]);
-        });
-
-        it("removes address from claim allow list", async () => {
-            await protocolGovernance.setPendingClaimAllowlistAdd([
-                deployer.getAddress(), 
-                stranger.getAddress(), 
-                stranger1.getAddress(), 
-                stranger2.getAddress()
-            ]);
-            await protocolGovernance.commitClaimAllowlistAdd();
         });
     });
 
