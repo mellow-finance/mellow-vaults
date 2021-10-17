@@ -5,13 +5,13 @@ import {
     Contract, 
     Signer 
 } from "ethers";
-import Exceptions from "./lib/Exceptions";
+import Exceptions from "./library/Exceptions";
 import {
     setupERC20VaultFactory,
     setupProtocolGovernance,
     setupVaultManagerGovernance,
-} from "./lib/Fixtures";
-import { sleepTo } from "./lib/Helpers";
+} from "./library/Fixtures";
+import { sleepTo } from "./library/Helpers";
 
 
 describe("VaultManagerGovernance", () => {
