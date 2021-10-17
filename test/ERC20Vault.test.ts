@@ -5,46 +5,75 @@ import {
     Contract, 
     Signer 
 } from "ethers";
-import Exceptions from "./lib/Exceptions";
+import Exceptions from "./library/Exceptions";
 import {
-    setupERC20VaultFactory,
-    setupProtocolGovernance,
-    setupVaultManagerGovernance,
-    setupERC20Vault
-} from "./lib/Fixtures";
-import { sleepTo } from "./lib/Helpers";
+    deployERC20VaultUniverse,
 
-describe("ERC20Vault", () => {
-    let deployer: Signer;
-    let stranger: Signer;
-    let treasury: Signer;
-    let admin: Signer;
-    let erc20Vault: Contract;
-    let vaultGovernance: Contract;
-    let tokens: Contract[];
+    // types
+    ERC20,
+    ERC20Vault,
+    ERC20VaultManager,
+    ERC20VaultFactory,
+    VaultGovernance,
+    VaultGovernanceFactory,
+    ProtocolGovernance
+} from "./library/Fixtures";
+import { sleepTo } from "./library/Helpers";
 
-    before(async () => {
-        [
-            deployer,
-            stranger,
-            treasury,
-            admin
-        ] = await ethers.getSigners();
+describe("ERC20Vault", function() {
+    this.timeout(0);
 
-        [erc20Vault, vaultGovernance, tokens] = await setupERC20Vault({
-            params: {
-                owner: deployer
-            },
-            treasury: treasury,
-            admin: admin,
-            tokensCount: 5,
-            calldata: []
+    describe("when permissionless is set to false", () => {
+
+        let deployer: Signer;
+        let stranger: Signer;
+        let treasury: Signer;
+        let protocolGovernanceAdmin: Signer;
+    
+        let tokens: ERC20[];
+        let erc20Vault: ERC20Vault;
+        let erc20VaultManager: ERC20VaultManager;
+        let erc20VaultFactory: ERC20VaultFactory;
+        let vaultGovernance: VaultGovernance;
+        let vaultGovernanceFactory: VaultGovernanceFactory;
+        let protocolGovernance: ProtocolGovernance;
+
+        let nft: number;
+    
+        before(async () => {
+            [
+                deployer,
+                stranger,
+                treasury,
+                protocolGovernanceAdmin,
+            ] = await ethers.getSigners();
+            
+            ({ 
+                erc20Vault, 
+                erc20VaultManager, 
+                erc20VaultFactory, 
+                vaultGovernance, 
+                vaultGovernanceFactory, 
+                protocolGovernance, 
+                nft 
+            } = await deployERC20VaultUniverse({
+                txParams: {
+                    from: deployer
+                },
+                protocolGovernanceAdmin: await protocolGovernanceAdmin.getAddress(),
+                treasury: await treasury.getAddress(),
+                tokensCount: 10,
+                permissionless: false,
+                vaultManagerName: "vault manager ¯\_(ツ)_/¯",
+                vaultManagerSymbol: "erc20vm"
+            })); // from scratch
+
         });
-    });
 
-    describe("vaultGovernance", async () => {
-        it("gets vault governace address", async () => {
-            expect(await erc20Vault.vaultGovernance()).to.equal(vaultGovernance.address);
+        describe("constructor", () => {
+            it("works", async () => {
+                console.log("really works!");
+            });
         });
     });
 });
