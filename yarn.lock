@@ -1214,12 +1214,7 @@ ansi-regex@^4.1.0:
   resolved "https://registry.yarnpkg.com/ansi-regex/-/ansi-regex-4.1.0.tgz#8b9f8f08cf1acb843756a839ca8c7e3168c51997"
   integrity sha512-1apePfXM1UOSqw0o9IiFAovVz9M5S1Dg+4TrDwfMewQ6p/rmMueb7tWZjQ1rx4Loy1ArBggoqGpfqqdI4rondg==
 
-ansi-regex@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/ansi-regex/-/ansi-regex-5.0.0.tgz#388539f55179bf39339c81af30a654d69f87cb75"
-  integrity sha512-bY6fj56OUQ0hU1KjFNDQuJFezqKdrAyFdIevADiqrWHwSlbmBNMHp5ak2f40Pm8JTFyM2mqxkG6ngkHO11f/lg==
-
-ansi-regex@^5.0.1:
+ansi-regex@^5.0.0, ansi-regex@^5.0.1:
   version "5.0.1"
   resolved "https://registry.yarnpkg.com/ansi-regex/-/ansi-regex-5.0.1.tgz#082cb2c89c9fe8659a311a53bd6a4dc5301db304"
   integrity sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==
@@ -4527,10 +4522,10 @@ hardhat-watcher@^2.1.1:
   dependencies:
     chokidar "^3.4.3"
 
-hardhat@^2.6.5:
-  version "2.6.5"
-  resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.6.5.tgz#61d3e22da34e1b175bbe599f77396b32f9788b58"
-  integrity sha512-sBhREWZjQTtR/KMMp2F3ySuDqL0norjNq68geR3nlXRHXYKuNKeL7xqVsmldekt3sVB5Wh1WX7xDX79kvUr+fA==
+hardhat@^2.6.6:
+  version "2.6.6"
+  resolved "https://registry.yarnpkg.com/hardhat/-/hardhat-2.6.6.tgz#11d2dc4c1659fcbb8632de9399b1b4999f8b3628"
+  integrity sha512-GneZAwvNxf3cNobYTmMSp2qGX/yJyUmHD/xjW+8zF2AgWkLS33CHmGn4aRFKqfjsk7BS7FU6jqMmmZhHHO3gUw==
   dependencies:
     "@ethereumjs/block" "^3.4.0"
     "@ethereumjs/blockchain" "^5.4.0"
