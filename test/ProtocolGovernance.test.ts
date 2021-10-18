@@ -10,11 +10,9 @@ import {
 } from "ethers";
 import Exceptions from "./utils/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
-import { getNamedAccounts } from "hardhat";
-import { time } from "console";
 
 
-type Params = [
+type GovernanceParams = [
     maxTokensPerVault: BigNumber, 
     governanceDelay: BigNumber, 
     strategyPerformanceFee: BigNumber, 
@@ -29,19 +27,19 @@ describe("ProtocolGovernance", () => {
     let protocolGovernance: Contract;
     let deployer: Signer;
     let stranger: Signer;
-    let stranger1: Signer;
-    let stranger2: Signer;
+    let user1: Signer;
+    let user2: Signer;
     let timestamp: number;
     let timeout: number;
-    let params: Params;
-    let paramsZero: Params;
-    let paramsTimeout: Params;
-    let paramsEmpty: Params;
-    let paramsDefault: Params;
+    let params: GovernanceParams;
+    let paramsZero: GovernanceParams;
+    let paramsTimeout: GovernanceParams;
+    let paramsEmpty: GovernanceParams;
+    let paramsDefault: GovernanceParams;
 
     before(async () => {
         ProtocolGovernance = await ethers.getContractFactory("ProtocolGovernance");
-        [deployer, stranger, stranger1, stranger2] = await ethers.getSigners();
+        [deployer, stranger, user1, user2] = await ethers.getSigners();
         timeout = 10**4;
         params = [
             BigNumber.from(1), 
@@ -49,8 +47,8 @@ describe("ProtocolGovernance", () => {
             BigNumber.from(3), 
             BigNumber.from(4), 
             BigNumber.from(5), 
-            await stranger1.getAddress(), 
-            await stranger2.getAddress()
+            await user1.getAddress(), 
+            await user2.getAddress()
         ];
         paramsZero = [
             BigNumber.from(1), 
@@ -58,8 +56,8 @@ describe("ProtocolGovernance", () => {
             BigNumber.from(2), 
             BigNumber.from(3), 
             BigNumber.from(4), 
-            await stranger1.getAddress(), 
-            await stranger2.getAddress()
+            await user1.getAddress(), 
+            await user2.getAddress()
         ];
         paramsTimeout = [
             BigNumber.from(1), 
@@ -67,8 +65,8 @@ describe("ProtocolGovernance", () => {
             BigNumber.from(2), 
             BigNumber.from(3), 
             BigNumber.from(4), 
-            await stranger1.getAddress(), 
-            await stranger2.getAddress()
+            await user1.getAddress(), 
+            await user2.getAddress()
         ];
         paramsEmpty = [
             BigNumber.from(0), 
@@ -76,8 +74,8 @@ describe("ProtocolGovernance", () => {
             BigNumber.from(2), 
             BigNumber.from(3), 
             BigNumber.from(4), 
-            await stranger1.getAddress(), 
-            await stranger2.getAddress()
+            await user1.getAddress(), 
+            await user2.getAddress()
         ];
         paramsDefault = [
             BigNumber.from(0), 
@@ -180,8 +178,8 @@ describe("ProtocolGovernance", () => {
                     BigNumber.from(8), 
                     BigNumber.from(9), 
                     BigNumber.from(10), 
-                    await stranger1.getAddress(), 
-                    await stranger2.getAddress()
+                    await user1.getAddress(), 
+                    await user2.getAddress()
                 ];
                 await protocolGovernance.setPendingParams(params);
                 await protocolGovernance.setPendingParams(paramsNew);
@@ -303,15 +301,15 @@ describe("ProtocolGovernance", () => {
 
         it("sets pending list", async () => {
             await protocolGovernance.setPendingClaimAllowlistAdd([
-                stranger1.getAddress(), 
-                stranger2.getAddress()
+                user1.getAddress(), 
+                user2.getAddress()
             ]);
 
             expect(
                 await protocolGovernance.pendingClaimAllowlistAdd()
             ).to.deep.equal([
-                await stranger1.getAddress(), 
-                await stranger2.getAddress()
+                await user1.getAddress(), 
+                await user2.getAddress()
             ]);
         });
 
@@ -328,8 +326,8 @@ describe("ProtocolGovernance", () => {
             await protocolGovernance.commitParams();
 
             await protocolGovernance.setPendingClaimAllowlistAdd([
-                stranger1.getAddress(), 
-                stranger2.getAddress()
+                user1.getAddress(), 
+                user2.getAddress()
             ]);
 
             expect(
@@ -350,8 +348,8 @@ describe("ProtocolGovernance", () => {
             await protocolGovernance.commitParams();
 
             await protocolGovernance.setPendingClaimAllowlistAdd([
-                stranger1.getAddress(), 
-                stranger2.getAddress()
+                user1.getAddress(), 
+                user2.getAddress()
             ]);
 
             expect(
@@ -394,8 +392,8 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.commitParams();
                 
                 await protocolGovernance.setPendingClaimAllowlistAdd([
-                    stranger1.getAddress(), 
-                    stranger2.getAddress()
+                    user1.getAddress(), 
+                    user2.getAddress()
                 ]);
 
                 await expect(
@@ -403,46 +401,54 @@ describe("ProtocolGovernance", () => {
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
+
+        describe("appends zero address to list", () => {
+            it("appends", async () => {
+                await protocolGovernance.setPendingClaimAllowlistAdd([]);
+
+                await protocolGovernance.commitClaimAllowlistAdd();
+                expect(
+                    await protocolGovernance.claimAllowlist()
+                ).to.deep.equal([]);
+            });
+    
+        });
         
         describe("appends one address to list", () => {
             it("appends", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
-                    stranger1.getAddress(), 
-                    stranger2.getAddress()
+                    user1.getAddress(),
                 ]);
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(
                     await protocolGovernance.claimAllowlist()
                 ).to.deep.equal([
-                    await stranger1.getAddress(), 
-                    await stranger2.getAddress()
+                    await user1.getAddress(),
                 ]);
             });
     
         });
         
-        describe("aappends multiple addresses to list", () => {
+        describe("appends multiple addresses to list", () => {
             it("appends", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     deployer.getAddress(),
-                    stranger.getAddress()
                 ]);
                 await protocolGovernance.commitClaimAllowlistAdd();
 
                 await protocolGovernance.setPendingClaimAllowlistAdd([
-                    stranger1.getAddress(), 
-                    stranger2.getAddress()
+                    user1.getAddress(), 
+                    user2.getAddress()
                 ]);
                 await protocolGovernance.commitClaimAllowlistAdd();
 
                 expect(
                     await protocolGovernance.claimAllowlist()
                 ).to.deep.equal([
-                    await deployer.getAddress(), 
-                    await stranger.getAddress(), 
-                    await stranger1.getAddress(), 
-                    await stranger2.getAddress()
+                    await deployer.getAddress(),
+                    await user1.getAddress(), 
+                    await user2.getAddress()
                 ]);
             });
         });
@@ -460,32 +466,30 @@ describe("ProtocolGovernance", () => {
         describe("when removing unexisting address", () => {
             it("passes", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
-                    stranger1.getAddress(), 
-                    stranger2.getAddress()
+                    user1.getAddress(), 
+                    user2.getAddress()
                 ]);
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(stranger.getAddress());
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal([
-                    await stranger1.getAddress(), 
-                    await stranger2.getAddress()
+                    await user1.getAddress(), 
+                    await user2.getAddress()
                 ]);
             });
         });
         describe("when remove called once", () => {
             it("removes", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
-                    deployer.getAddress(), 
-                    stranger.getAddress(), 
-                    stranger1.getAddress(), 
-                    stranger2.getAddress()
+                    deployer.getAddress(),  
+                    user1.getAddress(), 
+                    user2.getAddress()
                 ]);
                 await protocolGovernance.commitClaimAllowlistAdd();
-                await protocolGovernance.removeFromClaimAllowlist(stranger.getAddress());
+                await protocolGovernance.removeFromClaimAllowlist(user1.getAddress());
                 expect([
-                    await protocolGovernance.isAllowedToClaim(await deployer.getAddress()) && 
-                    await protocolGovernance.isAllowedToClaim(await stranger1.getAddress()) &&
-                    await protocolGovernance.isAllowedToClaim(await stranger2.getAddress()), 
-                    await protocolGovernance.isAllowedToClaim(await stranger.getAddress()) 
+                    await protocolGovernance.isAllowedToClaim(await deployer.getAddress()) &&
+                    await protocolGovernance.isAllowedToClaim(await user2.getAddress()), 
+                    await protocolGovernance.isAllowedToClaim(await user1.getAddress()) 
                 ]).to.deep.equal([true, false]);
             });
     
@@ -494,19 +498,35 @@ describe("ProtocolGovernance", () => {
         describe("when remove called twice", () => {
             it("removes", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
-                    deployer.getAddress(), 
-                    stranger.getAddress(), 
-                    stranger1.getAddress(), 
-                    stranger2.getAddress()
+                    deployer.getAddress(),  
+                    user1.getAddress(), 
+                    user2.getAddress()
                 ]);
                 await protocolGovernance.commitClaimAllowlistAdd();
-                await protocolGovernance.removeFromClaimAllowlist(stranger.getAddress());
-                await protocolGovernance.removeFromClaimAllowlist(stranger2.getAddress());
+                await protocolGovernance.removeFromClaimAllowlist(user1.getAddress());
+                await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());
+                expect([
+                    await protocolGovernance.isAllowedToClaim(await deployer.getAddress()),
+                    await protocolGovernance.isAllowedToClaim(await user1.getAddress()) &&
+                    await protocolGovernance.isAllowedToClaim(await user2.getAddress()) 
+                ]).to.deep.equal([true, false]);
+            });
+        });
+
+        describe("when remove called twice on the same address", () => {
+            it("removes", async () => {
+                await protocolGovernance.setPendingClaimAllowlistAdd([
+                    deployer.getAddress(),
+                    user1.getAddress(), 
+                    user2.getAddress()
+                ]);
+                await protocolGovernance.commitClaimAllowlistAdd();
+                await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());
+                await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());
                 expect([
                     await protocolGovernance.isAllowedToClaim(await deployer.getAddress()) && 
-                    await protocolGovernance.isAllowedToClaim(await stranger1.getAddress()),
-                    await protocolGovernance.isAllowedToClaim(await stranger.getAddress()) &&
-                    await protocolGovernance.isAllowedToClaim(await stranger2.getAddress()) 
+                    await protocolGovernance.isAllowedToClaim(await user1.getAddress()),
+                    await protocolGovernance.isAllowedToClaim(await user2.getAddress()) 
                 ]).to.deep.equal([true, false]);
             });
         });
