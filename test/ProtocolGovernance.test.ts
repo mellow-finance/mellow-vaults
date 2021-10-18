@@ -99,16 +99,6 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("constructor", () => {
-        describe("when maxTokensPerVault == 0 or governanceDelay == 0", () => {
-            it("reverts", async () => {
-                let protocolGovernanceReverted: Contract;
-                await expect(ProtocolGovernance.deploy(
-                    deployer.getAddress(),
-                    paramsEmpty
-                )).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
-            });
-        });
-
         it("has empty pending claim allow list", async () => {
             expect(
                 await protocolGovernance.claimAllowlist()
@@ -179,30 +169,34 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("setPendingParams", () => {
-        describe("sets params", () => {
-            it("when called once", async () => {
-                await protocolGovernance.setPendingParams(params);
-                expect(
-                    await protocolGovernance.pendingParams()
-                ).to.deep.equal(params);
+        it("sets the params", () => {
+            describe("when called once", () => {
+                it("sets the params", async () => {
+                    await protocolGovernance.setPendingParams(params);
+                    expect(
+                        await protocolGovernance.pendingParams()
+                    ).to.deep.equal(params);
+                });
             });
 
-            it("when called twice", async () => {
-                const paramsNew = [
-                    BigNumber.from(6), 
-                    BigNumber.from(7), 
-                    BigNumber.from(8), 
-                    BigNumber.from(9), 
-                    BigNumber.from(10), 
-                    await user1.getAddress(), 
-                    await user2.getAddress()
-                ];
-                await protocolGovernance.setPendingParams(params);
-                await protocolGovernance.setPendingParams(paramsNew);
-    
-                expect(
-                    await protocolGovernance.pendingParams()
-                ).to.deep.equal(paramsNew);
+            describe("when called twice", () => {
+                it("sets the params", async () => {
+                    const paramsNew = [
+                        BigNumber.from(6), 
+                        BigNumber.from(7), 
+                        BigNumber.from(8), 
+                        BigNumber.from(9), 
+                        BigNumber.from(10), 
+                        await user1.getAddress(), 
+                        await user2.getAddress()
+                    ];
+                    await protocolGovernance.setPendingParams(params);
+                    await protocolGovernance.setPendingParams(paramsNew);
+        
+                    expect(
+                        await protocolGovernance.pendingParams()
+                    ).to.deep.equal(paramsNew);
+                });
             });
         });
 
@@ -216,7 +210,7 @@ describe("ProtocolGovernance", () => {
             expect(Math.abs(await protocolGovernance.pendingParamsTimestamp() - timestamp)).to.be.lessThanOrEqual(10);
         });
 
-        describe("when not called by admin", () => {
+        describe("when callen by not admin", () => {
             it("reverts", async () => {
                 await expect(
                     protocolGovernance.connect(stranger).setPendingParams(params)
@@ -226,7 +220,7 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("commitParams", () => {
-        describe("when not called by admin", () => {
+        describe("when callen by not admin", () => {
             it("reverts", async () => {
                 await protocolGovernance.setPendingParams(paramsZero);
     
@@ -327,14 +321,6 @@ describe("ProtocolGovernance", () => {
 
     
     describe("setPendingClaimAllowlistAdd", () => {
-        describe("when not called by admin", () => {
-            it("reverts", async () => {
-                await expect(
-                    protocolGovernance.connect(stranger).setPendingClaimAllowlistAdd([])
-                ).to.be.revertedWith(Exceptions.ADMIN);
-            });
-        });
-
         it("sets pending list", async () => {
             await protocolGovernance.setPendingClaimAllowlistAdd([
                 user1.getAddress(), 
@@ -392,52 +378,17 @@ describe("ProtocolGovernance", () => {
                 Math.abs(await protocolGovernance.pendingClaimAllowlistAddTimestamp() - (timestamp + timeout))
             ).to.be.lessThanOrEqual(10);
         });
-    });
 
-    describe("commitClaimAllowlistAdd", () => {
-        describe("when not called by admin", () => {
+        describe("when callen by not admin", () => {
             it("reverts", async () => {
                 await expect(
-                    protocolGovernance.connect(stranger).commitClaimAllowlistAdd()
+                    protocolGovernance.connect(stranger).setPendingClaimAllowlistAdd([])
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
+    });
 
-        describe("when does not have pre-set claim allow list add timestamp", () => {
-            it("reverts", async () => {
-                timestamp += 10**6;
-                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-                await network.provider.send('evm_mine');
-    
-                await expect(
-                    protocolGovernance.commitClaimAllowlistAdd()
-                ).to.be.revertedWith(Exceptions.TIMESTAMP);
-            });
-        });
-        
-        describe("when governance delay has not passed", () => {
-            it("reverts", async () => {
-                timestamp += 10**6;
-                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-                await network.provider.send('evm_mine');
-                await protocolGovernance.setPendingParams(paramsTimeout);
-    
-                timestamp += 10**6;
-                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-                await network.provider.send('evm_mine');
-                await protocolGovernance.commitParams();
-                
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    user1.getAddress(), 
-                    user2.getAddress()
-                ]);
-
-                await expect(
-                    protocolGovernance.commitClaimAllowlistAdd()
-                ).to.be.revertedWith(Exceptions.TIMESTAMP);
-            });
-        });
-
+    describe("commitClaimAllowlistAdd", () => {
         describe("appends zero address to list", () => {
             it("appends", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([]);
@@ -502,19 +453,54 @@ describe("ProtocolGovernance", () => {
                 ]);
             });
         });
-    });
 
-    describe("removeFromClaimAllowlist", async () => {
-        describe("when not called by admin", () => {
+        describe("when callen by not admin", () => {
             it("reverts", async () => {
                 await expect(
-                    protocolGovernance.connect(stranger).removeFromClaimAllowlist(deployer.getAddress())
+                    protocolGovernance.connect(stranger).commitClaimAllowlistAdd()
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
 
-        describe("when removing unexisting address", () => {
-            it("passes", async () => {
+        describe("when does not have pre-set claim allow list add timestamp", () => {
+            it("reverts", async () => {
+                timestamp += 10**6;
+                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+                await network.provider.send('evm_mine');
+    
+                await expect(
+                    protocolGovernance.commitClaimAllowlistAdd()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+        
+        describe("when governance delay has not passed", () => {
+            it("reverts", async () => {
+                timestamp += 10**6;
+                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+                await network.provider.send('evm_mine');
+                await protocolGovernance.setPendingParams(paramsTimeout);
+    
+                timestamp += 10**6;
+                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+                await network.provider.send('evm_mine');
+                await protocolGovernance.commitParams();
+                
+                await protocolGovernance.setPendingClaimAllowlistAdd([
+                    user1.getAddress(), 
+                    user2.getAddress()
+                ]);
+
+                await expect(
+                    protocolGovernance.commitClaimAllowlistAdd()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+    });
+
+    describe("removeFromClaimAllowlist", async () => {
+        describe("when removing non-existing address", () => {
+            it("does nothing", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     user1.getAddress(), 
                     user2.getAddress()
@@ -532,7 +518,7 @@ describe("ProtocolGovernance", () => {
             });
         });
         describe("when remove called once", () => {
-            it("removes", async () => {
+            it("removes the address", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     deployer.getAddress(),  
                     user1.getAddress(), 
@@ -554,7 +540,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("when remove called twice", () => {
-            it("removes", async () => {
+            it("removes the addresses", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     deployer.getAddress(),  
                     user1.getAddress(), 
@@ -576,7 +562,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("when remove called twice on the same address", () => {
-            it("removes", async () => {
+            it("removes the address and does not fail then", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     deployer.getAddress(),
                     user1.getAddress(), 
@@ -594,6 +580,14 @@ describe("ProtocolGovernance", () => {
                     await protocolGovernance.isAllowedToClaim(await user1.getAddress()),
                     await protocolGovernance.isAllowedToClaim(await user2.getAddress()) 
                 ]).to.deep.equal([true, false]);
+            });
+        });
+
+        describe("when callen by not admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    protocolGovernance.connect(stranger).removeFromClaimAllowlist(deployer.getAddress())
+                ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
     });

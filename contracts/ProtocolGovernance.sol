@@ -17,9 +17,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     uint256 public pendingParamsTimestamp;
 
-    constructor(address admin, Params memory defaultParams) DefaultAccessControl(admin) {
-        require(defaultParams.governanceDelay > 0 && defaultParams.maxTokensPerVault > 0, "P0");
-        params = defaultParams;
+    constructor(address admin, Params memory _params) DefaultAccessControl(admin) {
+        params = _params;
     }
 
     /// -------------------  PUBLIC, VIEW  -------------------
