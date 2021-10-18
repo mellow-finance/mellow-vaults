@@ -89,10 +89,26 @@ describe("ProtocolGovernance", () => {
     });
 
     beforeEach(async () => {
-        protocolGovernance = await ProtocolGovernance.deploy(deployer.getAddress());
+        protocolGovernance = await ProtocolGovernance.deploy(
+            deployer.getAddress(),
+            params
+        );
+
+        await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+        await network.provider.send('evm_mine');
     });
 
     describe("constructor", () => {
+        describe("when maxTokensPerVault == 0 or governanceDelay == 0", () => {
+            it("reverts", async () => {
+                let protocolGovernanceReverted: Contract;
+                await expect(ProtocolGovernance.deploy(
+                    deployer.getAddress(),
+                    paramsEmpty
+                )).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
+            });
+        });
+
         it("has empty pending claim allow list", async () => {
             expect(
                 await protocolGovernance.claimAllowlist()
@@ -118,46 +134,46 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("initial params struct values", () => {
-            it("has 0 max tokens per vault", async () => {
+            it("has default max tokens per vault", async () => {
                 expect(
                     await protocolGovernance.maxTokensPerVault()
-                ).to.be.equal(0);
+                ).to.be.equal(params[0]);
             });
 
-            it("has no governance delay", async () => {
+            it("has default governance delay", async () => {
                 expect(
                     await protocolGovernance.governanceDelay()
-                ).to.be.equal(0);
+                ).to.be.equal(params[1]);
             });
 
-            it("has no strategy performance fee", async () => {
+            it("has default strategy performance fee", async () => {
                 expect(
                     await protocolGovernance.strategyPerformanceFee()
-                ).to.be.equal(0);
+                ).to.be.equal(params[2]);
             });
 
-            it("has no protocol performance fee", async () => {
+            it("has default protocol performance fee", async () => {
                 expect(
                     await protocolGovernance.protocolPerformanceFee()
-                ).to.be.equal(0);
+                ).to.be.equal(params[3]);
             });
 
-            it("has no protocol exit fee", async () => {
+            it("has default protocol exit fee", async () => {
                 expect(
                     await protocolGovernance.protocolExitFee()
-                ).to.be.equal(0);
+                ).to.be.equal(params[4]);
             });
 
-            it("has 0x0 protocol treasury", async () => {
+            it("has default protocol treasury", async () => {
                 expect(
                     await protocolGovernance.protocolTreasury()
-                ).to.be.equal(ethers.constants.AddressZero);
+                ).to.be.equal(params[5]);
             });
 
-            it("has 0x0 gateway vault manager", async () => {
+            it("has default gateway vault manager", async () => {
                 expect(
                     await protocolGovernance.gatewayVaultManager()
-                ).to.be.equal(ethers.constants.AddressZero);
+                ).to.be.equal(params[6]);
             });
         });
     });
@@ -224,6 +240,10 @@ describe("ProtocolGovernance", () => {
             describe("when call immediately", () => {
                 it("reverts", async () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
+
+                    await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                    await network.provider.send('evm_mine');
+
                     await protocolGovernance.commitParams();
         
                     await protocolGovernance.setPendingParams(paramsZero);
@@ -236,6 +256,10 @@ describe("ProtocolGovernance", () => {
             describe("when delay has almost passed", () => {
                 it("reverts", async () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
+
+                    await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                    await network.provider.send('evm_mine');
+
                     await protocolGovernance.commitParams();
 
                     await network.provider.send("evm_increaseTime", [timeout - 2]);
@@ -252,6 +276,10 @@ describe("ProtocolGovernance", () => {
         describe("when governanceDelay is 0 and maxTokensPerVault is 0", () => {
             it("reverts", async () => {
                 await protocolGovernance.setPendingParams(paramsEmpty);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await expect(
                     protocolGovernance.commitParams()
                 ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
@@ -260,12 +288,20 @@ describe("ProtocolGovernance", () => {
 
         it("commits params", async () => {
             await protocolGovernance.setPendingParams(paramsZero);
+
+            await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+            await network.provider.send('evm_mine');
+
             await protocolGovernance.commitParams();
             expect(await protocolGovernance.params()).to.deep.equal(paramsZero);
         });
 
         it("deletes pending params", async () => {
             await protocolGovernance.setPendingParams(paramsZero);
+
+            await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+            await network.provider.send('evm_mine');
+
             await protocolGovernance.commitParams();
             expect(await protocolGovernance.pendingParams()).to.deep.equal(paramsDefault);
         });
@@ -406,6 +442,9 @@ describe("ProtocolGovernance", () => {
             it("appends", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([]);
 
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(
                     await protocolGovernance.claimAllowlist()
@@ -419,6 +458,9 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     user1.getAddress(),
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(
@@ -435,12 +477,20 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     deployer.getAddress(),
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
 
                 await protocolGovernance.setPendingClaimAllowlistAdd([
                     user1.getAddress(), 
                     user2.getAddress()
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
 
                 expect(
@@ -469,6 +519,10 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(), 
                     user2.getAddress()
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(stranger.getAddress());
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal([
@@ -484,6 +538,10 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(), 
                     user2.getAddress()
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(user1.getAddress());
                 expect([
@@ -502,6 +560,10 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(), 
                     user2.getAddress()
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(user1.getAddress());
                 await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());
@@ -520,6 +582,10 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(), 
                     user2.getAddress()
                 ]);
+
+                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
+                await network.provider.send('evm_mine');
+
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());
                 await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());
