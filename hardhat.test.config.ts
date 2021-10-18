@@ -51,7 +51,7 @@ const config: HardhatUserConfig = {
       default: 2,
     },
     protocolGovernanceAdmin: {
-      default: 4,
+      default: 3,
     },
     usdc: {
       default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
