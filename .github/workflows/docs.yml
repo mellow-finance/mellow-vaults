@@ -9,11 +9,6 @@ jobs:
     name: Push docs
     runs-on: ubuntu-latest
     steps:
-      - name: Push file
-        run: |
-          echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
-          git clone https://git@github.com/mellow-finance/mellow-docs.git
-
       - name: Checkout main
         uses: actions/checkout@master
 
@@ -36,6 +31,11 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Install yarn dependencies
         run: yarn
+
+      - name: Push file
+        run: |
+          echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
+          git clone https://git@github.com/mellow-finance/mellow-docs.git
 
       - name: Autogen docs
         run: yarn docgen
