@@ -38,8 +38,7 @@ jobs:
       - name: Push file
         run: |
           echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
-
-          git clone https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/mellow-finance/mellow-docs.git
+          git clone https://git@github.com/mellow-finance/mellow-docs.git
 
       # - name: Push docs to doc repo
       #   uses: dmnemec/copy_file_to_another_repo_action@main
