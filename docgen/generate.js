@@ -2,8 +2,8 @@ const NODE_DIR = "node_modules";
 const INPUT_DIR = "contracts";
 const CONFIG_DIR = "docgen";
 const EXCLUDE_FILE = "docgen/exclude.txt";
-const OUTPUT_DIR = "docs/mellow-permissionless-vaults";
-const SUMMARY_FILE = "docs/mellow-permissionless-vaults/api/SUMMARY.md";
+const OUTPUT_DIR = "docs";
+const SUMMARY_FILE = "docs/api/SUMMARY.md";
 
 const fs = require("fs");
 const path = require("path");
