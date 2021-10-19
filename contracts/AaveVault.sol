@@ -5,6 +5,8 @@ import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultManager.sol";
 import "./Vault.sol";
 
+/// @title Aave vault contracts
+/// @dev Some contract details. `yo` this is markdown
 contract AaveVault is Vault {
     address[] private _aTokens;
     uint256[] private _baseBalances;
@@ -16,6 +18,8 @@ contract AaveVault is Vault {
         }
     }
 
+    /// @notice tvl function
+    /// @dev Some exceptions here
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);

@@ -17,4 +17,4 @@ coverage.json
 deployments/kovan
 deployments/localhost
 deployments/contracts.json
-docs
+docgen/docs
