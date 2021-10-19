@@ -2,7 +2,7 @@ const NODE_DIR = "node_modules";
 const INPUT_DIR = "contracts";
 const CONFIG_DIR = "docgen";
 const EXCLUDE_FILE = "docgen/exclude.txt";
-const OUTPUT_DIR = "docs/mellow-permissionless-vaults/api";
+const OUTPUT_DIR = "docs/mellow-permissionless-vaults";
 const SUMMARY_FILE = "docs/mellow-permissionless-vaults/api/SUMMARY.md";
 
 const fs = require("fs");
@@ -23,19 +23,19 @@ function lines(pathName) {
 function scan(pathName, indentation) {
   if (!excludeList.includes(pathName)) {
     if (fs.lstatSync(pathName).isDirectory()) {
-      fs.appendFileSync(
-        SUMMARY_FILE,
-        indentation + "* " + path.basename(pathName) + "\n"
-      );
+      // fs.appendFileSync(
+      //   SUMMARY_FILE,
+      //   indentation + "* " + path.basename(pathName) + "\n"
+      // );
       for (const fileName of fs.readdirSync(pathName))
         scan(pathName + "/" + fileName, indentation + "  ");
     } else if (pathName.endsWith(".sol")) {
       const text = path.basename(pathName).slice(0, -4);
       const link = pathName.slice(INPUT_DIR.length, -4);
-      fs.appendFileSync(
-        SUMMARY_FILE,
-        indentation + "* [" + text + "](" + relativePath + link + ".md)\n"
-      );
+      // fs.appendFileSync(
+      //   SUMMARY_FILE,
+      //   indentation + "* [" + text + "](" + relativePath + link + ".md)\n"
+      // );
     }
   }
 }
@@ -54,7 +54,7 @@ function fix(pathName) {
   }
 }
 
-fs.writeFileSync(SUMMARY_FILE, "# Summary\n");
+// fs.writeFileSync(SUMMARY_FILE, "# Summary\n");
 
 scan(INPUT_DIR, "");
 
@@ -66,7 +66,7 @@ const args = [
   "--solc-module=solc",
   "--solc-settings=" +
     JSON.stringify({ optimizer: { enabled: true, runs: 200 } }),
-  "--output-structure=contracts",
+  "--output-structure=single",
 ];
 
 const result = spawnSync("node", args, {
@@ -75,3 +75,4 @@ const result = spawnSync("node", args, {
 if (result.stderr.length > 0) throw new Error(result.stderr);
 
 fix(OUTPUT_DIR);
+fs.renameSync(`${OUTPUT_DIR}/index.md`, `${OUTPUT_DIR}/api.md`);
