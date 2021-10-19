@@ -1,4 +1,1 @@
-root: ./
-structure:
-  readme: docgen/README.md
-  summary: docgen/SUMMARY.md
+root: ./docgen
