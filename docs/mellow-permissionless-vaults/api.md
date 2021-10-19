@@ -14,7 +14,6 @@ Deploy new vault
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`vaultGovernance` | contract IVaultGovernance | reference to VaultGovernance for this vault
-
 ### tvl
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
@@ -28,11 +27,11 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
+
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -52,7 +51,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 # AaveVaultManager
 
 
@@ -65,12 +63,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### lendingPool
 ```solidity
   function lendingPool() external returns (contract ILendingPool)
 ```
-
 
 
 
@@ -88,12 +84,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### isAdmin
 ```solidity
   function isAdmin() public returns (bool)
 ```
-
 
 
 
@@ -111,7 +105,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### tvl
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
@@ -119,12 +112,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -144,7 +135,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 # GatewayVault
 
 
@@ -157,12 +147,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### tvl
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -173,12 +161,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultTvl
 ```solidity
   function vaultTvl(uint256 vaultNum) public returns (uint256[])
 ```
-
 
 
 
@@ -189,7 +175,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultEarnings
 ```solidity
   function vaultEarnings(uint256 vaultNum) public returns (uint256[])
@@ -197,12 +182,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### hasVault
 ```solidity
   function hasVault(address vault) external returns (bool)
 ```
-
 
 
 
@@ -237,12 +220,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### limits
 ```solidity
   function limits() external returns (uint256[])
 ```
-
 
 
 
@@ -253,7 +234,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### setLimits
 ```solidity
   function setLimits(uint256[] newLimits) external
@@ -261,12 +241,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### setRedirects
 ```solidity
   function setRedirects(address[] newRedirects) external
 ```
-
 
 
 
@@ -301,7 +279,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultOwnerNft
 ```solidity
   function vaultOwnerNft(uint256 nft) public returns (uint256)
@@ -309,12 +286,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultOwner
 ```solidity
   function vaultOwner(uint256 nft) external returns (address)
 ```
-
 
 
 
@@ -332,12 +307,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### setLimit
 ```solidity
   function setLimit(uint256 newLimitPerAddress) external
 ```
-
 
 
 
@@ -348,12 +321,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### withdraw
 ```solidity
   function withdraw(address to, uint256 lpTokenAmount, bool optimized, bytes options) external
 ```
-
 
 
 
@@ -396,7 +367,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### governanceParams
 ```solidity
   function governanceParams() public returns (struct ILpIssuerGovernance.GovernanceParams)
@@ -404,12 +374,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 -------------------  PUBLIC, VIEW  -------------------
 
 
-
 ### pendingGovernanceParams
 ```solidity
   function pendingGovernanceParams() external returns (struct ILpIssuerGovernance.GovernanceParams)
 ```
-
 
 
 
@@ -420,7 +388,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### setPendingGovernanceParams
 ```solidity
   function setPendingGovernanceParams(struct ILpIssuerGovernance.GovernanceParams newGovernanceParams) external
@@ -428,12 +395,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
 
-
 ### commitGovernanceParams
 ```solidity
   function commitGovernanceParams() external
 ```
-
 
 
 
@@ -451,7 +416,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### claimAllowlist
 ```solidity
   function claimAllowlist() external returns (address[])
@@ -459,12 +423,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 -------------------  PUBLIC, VIEW  -------------------
 
 
-
 ### pendingClaimAllowlistAdd
 ```solidity
   function pendingClaimAllowlistAdd() external returns (address[])
 ```
-
 
 
 
@@ -475,12 +437,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### maxTokensPerVault
 ```solidity
   function maxTokensPerVault() external returns (uint256)
 ```
-
 
 
 
@@ -491,12 +451,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### strategyPerformanceFee
 ```solidity
   function strategyPerformanceFee() external returns (uint256)
 ```
-
 
 
 
@@ -507,12 +465,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### protocolExitFee
 ```solidity
   function protocolExitFee() external returns (uint256)
 ```
-
 
 
 
@@ -523,12 +479,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### gatewayVaultManager
 ```solidity
   function gatewayVaultManager() external returns (contract IGatewayVaultManager)
 ```
-
 
 
 
@@ -539,12 +493,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
 
-
 ### removeFromClaimAllowlist
 ```solidity
   function removeFromClaimAllowlist(address addr) external
 ```
-
 
 
 
@@ -555,7 +507,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### commitClaimAllowlistAdd
 ```solidity
   function commitClaimAllowlistAdd() external
@@ -563,12 +514,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
 
-
 ### commitParams
 ```solidity
   function commitParams() external
 ```
-
 
 
 
@@ -586,12 +535,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### tvl
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -602,12 +549,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### nftEarnings
 ```solidity
   function nftEarnings(uint256 nft) public returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -618,12 +563,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### nftTvls
 ```solidity
   function nftTvls() public returns (uint256[][] tokenAmounts)
 ```
-
 
 
 
@@ -643,7 +586,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 # UniV3VaultManager
 
 
@@ -656,12 +598,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### positionManager
 ```solidity
   function positionManager() external returns (contract INonfungiblePositionManager)
 ```
-
 
 
 
@@ -684,6 +624,7 @@ Address of the Vault Governance for this contract
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`Address`|  | of the Vault Governance for this contract
+
 ### tvl
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
@@ -697,11 +638,11 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
+
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -712,12 +653,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 tokens are used from contract balance
 
 
-
 ### transferAndPush
 ```solidity
   function transferAndPush(address from, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
-
 
 
 
@@ -728,12 +667,10 @@ tokens are used from contract balance
 
 
 
-
 ### collectEarnings
 ```solidity
   function collectEarnings(address to, bytes options) external returns (uint256[] collectedEarnings)
 ```
-
 
 
 
@@ -744,12 +681,10 @@ tokens are used from contract balance
 -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
 
 
-
 ### claimRewards
 ```solidity
   function claimRewards(address from, bytes data) external
 ```
-
 
 
 
@@ -767,7 +702,6 @@ tokens are used from contract balance
 
 
 
-
 ### isProtocolAdmin
 ```solidity
   function isProtocolAdmin() public returns (bool)
@@ -775,12 +709,10 @@ tokens are used from contract balance
 -------------------  PUBLIC, VIEW  -------------------
 
 
-
 ### vaultTokens
 ```solidity
   function vaultTokens() public returns (address[])
 ```
-
 
 
 
@@ -791,12 +723,10 @@ tokens are used from contract balance
 
 
 
-
 ### vaultManager
 ```solidity
   function vaultManager() public returns (contract IVaultManager)
 ```
-
 
 
 
@@ -807,12 +737,10 @@ tokens are used from contract balance
 
 
 
-
 ### pendingVaultManagerTimestamp
 ```solidity
   function pendingVaultManagerTimestamp() external returns (uint256)
 ```
-
 
 
 
@@ -823,12 +751,10 @@ tokens are used from contract balance
 
 
 
-
 ### pendingStrategyTreasury
 ```solidity
   function pendingStrategyTreasury() external returns (address)
 ```
-
 
 
 
@@ -839,7 +765,6 @@ tokens are used from contract balance
 
 
 
-
 ### setPendingVaultManager
 ```solidity
   function setPendingVaultManager(contract IVaultManager manager) external
@@ -847,12 +772,10 @@ tokens are used from contract balance
 -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
 
 
-
 ### commitVaultManager
 ```solidity
   function commitVaultManager() external
 ```
-
 
 
 
@@ -863,12 +786,10 @@ tokens are used from contract balance
 -------------------  PUBLIC, MUTATING, ADMIN  -------------------
 
 
-
 ### commitStrategyTreasury
 ```solidity
   function commitStrategyTreasury() external
 ```
-
 
 
 
@@ -886,12 +807,10 @@ tokens are used from contract balance
 
 
 
-
 ### nftForVault
 ```solidity
   function nftForVault(address vault) external returns (uint256)
 ```
-
 
 
 
@@ -902,7 +821,6 @@ tokens are used from contract balance
 
 
 
-
 ### createVault
 ```solidity
   function createVault(address[] tokens, address strategyTreasury, address admin, bytes options) external returns (contract IVaultGovernance vaultGovernance, contract IVault vault, uint256 nft)
@@ -910,12 +828,10 @@ tokens are used from contract balance
 
 
 
-
 ### supportsInterface
 ```solidity
   function supportsInterface(bytes4 interfaceId) public returns (bool)
 ```
-
 
 
 
@@ -933,7 +849,6 @@ tokens are used from contract balance
 
 
 
-
 ### governanceParams
 ```solidity
   function governanceParams() public returns (struct IVaultManagerGovernance.GovernanceParams)
@@ -941,12 +856,10 @@ tokens are used from contract balance
 -------------------  PUBLIC, VIEW  -------------------
 
 
-
 ### pendingGovernanceParams
 ```solidity
   function pendingGovernanceParams() external returns (struct IVaultManagerGovernance.GovernanceParams)
 ```
-
 
 
 
@@ -957,7 +870,6 @@ tokens are used from contract balance
 
 
 
-
 ### setPendingGovernanceParams
 ```solidity
   function setPendingGovernanceParams(struct IVaultManagerGovernance.GovernanceParams newGovernanceParams) external
@@ -965,12 +877,10 @@ tokens are used from contract balance
 -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
 
-
 ### commitGovernanceParams
 ```solidity
   function commitGovernanceParams() external
 ```
-
 
 
 
@@ -990,7 +900,6 @@ tokens are used from contract balance
 
 
 
-
 # IDefaultAccessControl
 
 
@@ -1000,7 +909,6 @@ tokens are used from contract balance
 ```solidity
   function isAdmin() external returns (bool)
 ```
-
 
 
 
@@ -1018,12 +926,10 @@ tokens are used from contract balance
 
 
 
-
 ### vaultsTvl
 ```solidity
   function vaultsTvl() external returns (uint256[][] tokenAmounts)
 ```
-
 
 
 
@@ -1034,12 +940,10 @@ tokens are used from contract balance
 
 
 
-
 ### vaultEarnings
 ```solidity
   function vaultEarnings(uint256 vaultNum) external returns (uint256[])
 ```
-
 
 
 
@@ -1057,12 +961,10 @@ tokens are used from contract balance
 
 
 
-
 ### vaultOwner
 ```solidity
   function vaultOwner(uint256 nft) external returns (address)
 ```
-
 
 
 
@@ -1080,12 +982,10 @@ tokens are used from contract balance
 
 
 
-
 ### pendingGovernanceParams
 ```solidity
   function pendingGovernanceParams() external returns (struct ILpIssuerGovernance.GovernanceParams)
 ```
-
 
 
 
@@ -1096,7 +996,6 @@ tokens are used from contract balance
 
 
 
-
 ### setPendingGovernanceParams
 ```solidity
   function setPendingGovernanceParams(struct ILpIssuerGovernance.GovernanceParams newParams) external
@@ -1104,12 +1003,10 @@ tokens are used from contract balance
 
 
 
-
 ### commitGovernanceParams
 ```solidity
   function commitGovernanceParams() external
 ```
-
 
 
 
@@ -1144,12 +1041,10 @@ tokens are used from contract balance
 
 
 
-
 ### pendingClaimAllowlistAdd
 ```solidity
   function pendingClaimAllowlistAdd() external returns (address[])
 ```
-
 
 
 
@@ -1160,12 +1055,10 @@ tokens are used from contract balance
 
 
 
-
 ### maxTokensPerVault
 ```solidity
   function maxTokensPerVault() external returns (uint256)
 ```
-
 
 
 
@@ -1176,12 +1069,10 @@ tokens are used from contract balance
 
 
 
-
 ### strategyPerformanceFee
 ```solidity
   function strategyPerformanceFee() external returns (uint256)
 ```
-
 
 
 
@@ -1192,12 +1083,10 @@ tokens are used from contract balance
 
 
 
-
 ### protocolExitFee
 ```solidity
   function protocolExitFee() external returns (uint256)
 ```
-
 
 
 
@@ -1208,12 +1097,10 @@ tokens are used from contract balance
 
 
 
-
 ### gatewayVaultManager
 ```solidity
   function gatewayVaultManager() external returns (contract IGatewayVaultManager)
 ```
-
 
 
 
@@ -1224,13 +1111,11 @@ tokens are used from contract balance
 -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
 
-
 ### commitParams
 ```solidity
   function commitParams() external
 ```
 -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
-
 
 
 
@@ -1244,7 +1129,6 @@ tokens are used from contract balance
 ```solidity
   function positionManager() external returns (contract INonfungiblePositionManager)
 ```
-
 
 
 
@@ -1267,6 +1151,7 @@ Address of the Vault Governance for this contract
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`Address`|  | of the Vault Governance for this contract
+
 ### tvl
 ```solidity
   function tvl() external returns (uint256[] tokenAmounts)
@@ -1280,11 +1165,11 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
+
 ### earnings
 ```solidity
   function earnings() external returns (uint256[] tokenAmounts)
 ```
-
 
 
 
@@ -1295,12 +1180,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### transferAndPush
 ```solidity
   function transferAndPush(address from, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
-
 
 
 
@@ -1311,7 +1194,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### collectEarnings
 ```solidity
   function collectEarnings(address to, bytes options) external returns (uint256[] collectedEarnings)
@@ -1319,12 +1201,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### reclaimTokens
 ```solidity
   function reclaimTokens(address to, address[] tokens) external
 ```
-
 
 
 
@@ -1377,7 +1257,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 # IVaultGovernance
 
 
@@ -1390,12 +1269,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultTokens
 ```solidity
   function vaultTokens() external returns (address[])
 ```
-
 
 
 
@@ -1406,12 +1283,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultManager
 ```solidity
   function vaultManager() external returns (contract IVaultManager)
 ```
-
 
 
 
@@ -1422,12 +1297,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### pendingVaultManagerTimestamp
 ```solidity
   function pendingVaultManagerTimestamp() external returns (uint256)
 ```
-
 
 
 
@@ -1438,12 +1311,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### commitVaultManager
 ```solidity
   function commitVaultManager() external
 ```
-
 
 
 
@@ -1454,12 +1325,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### pendingStrategyTreasury
 ```solidity
   function pendingStrategyTreasury() external returns (address)
 ```
-
 
 
 
@@ -1470,7 +1339,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### setPendingStrategyTreasury
 ```solidity
   function setPendingStrategyTreasury(address newTreasury) external
@@ -1478,12 +1346,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### commitStrategyTreasury
 ```solidity
   function commitStrategyTreasury() external
 ```
-
 
 
 
@@ -1536,7 +1402,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 # IVaultManager
 
 
@@ -1549,7 +1414,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### vaultForNft
 ```solidity
   function vaultForNft(uint256 nft) external returns (address)
@@ -1557,12 +1421,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### createVault
 ```solidity
   function createVault(address[] tokens, address strategyTreasury, address admin, bytes options) external returns (contract IVaultGovernance vaultGovernance, contract IVault vault, uint256 nft)
 ```
-
 
 
 
@@ -1589,12 +1451,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### pendingGovernanceParams
 ```solidity
   function pendingGovernanceParams() external returns (struct IVaultManagerGovernance.GovernanceParams)
 ```
-
 
 
 
@@ -1605,7 +1465,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### setPendingGovernanceParams
 ```solidity
   function setPendingGovernanceParams(struct IVaultManagerGovernance.GovernanceParams newParams) external
@@ -1613,12 +1472,10 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 
 
 
-
 ### commitGovernanceParams
 ```solidity
   function commitGovernanceParams() external
 ```
-
 
 
 
@@ -1671,7 +1528,6 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 |`referralCode` | uint16 | Code used to register the integrator originating the operation, for potential rewards.
   0 if the action is executed directly by the user, without any middle-man
 
-
 ### withdraw
 ```solidity
   function withdraw(address asset, uint256 amount, address to) external returns (uint256)
@@ -1695,6 +1551,7 @@ E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | final amount withdrawn
 
+
 ### borrow
 ```solidity
   function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external
@@ -1717,7 +1574,6 @@ corresponding debt token (StableDebtToken or VariableDebtToken)
 |`onBehalfOf` | address | Address of the user who will receive the debt. Should be the address of the borrower itself
 calling the function if he wants to borrow against his own collateral, or the address of the credit delegator
 if he has been given credit delegation allowance
-
 
 ### repay
 ```solidity
@@ -1743,6 +1599,7 @@ other borrower whose debt should be removed
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | final amount repaid
 
+
 ### swapBorrowRateMode
 ```solidity
   function swapBorrowRateMode(address asset, uint256 rateMode) external
@@ -1755,7 +1612,6 @@ other borrower whose debt should be removed
 | :--- | :--- | :------------------------------------------------------------------- |
 |`asset` | address | The address of the underlying asset borrowed
 |`rateMode` | uint256 | The rate mode that the user wants to swap to
-
 
 ### rebalanceStableBorrowRate
 ```solidity
@@ -1774,7 +1630,6 @@ other borrower whose debt should be removed
 |`asset` | address | The address of the underlying asset borrowed
 |`user` | address | The address of the user to be rebalanced
 
-
 ### setUserUseReserveAsCollateral
 ```solidity
   function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external
@@ -1787,7 +1642,6 @@ other borrower whose debt should be removed
 | :--- | :--- | :------------------------------------------------------------------- |
 |`asset` | address | The address of the underlying asset deposited
 |`useAsCollateral` | bool | `true` if the user wants to use the deposit as collateral, `false` otherwise
-
 
 ### liquidationCall
 ```solidity
@@ -1807,7 +1661,6 @@ other borrower whose debt should be removed
 |`debtToCover` | uint256 | The debt amount of borrowed `asset` the liquidator wants to cover
 |`receiveAToken` | bool | `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
 to receive the underlying collateral asset directly
-
 
 ### flashLoan
 ```solidity
@@ -1834,7 +1687,6 @@ For further details please visit https://developers.aave.com
 |`referralCode` | uint16 | Code used to register the integrator originating the operation, for potential rewards.
   0 if the action is executed directly by the user, without any middle-man
 
-
 ### getUserAccountData
 ```solidity
   function getUserAccountData(address user) external returns (uint256 totalCollateralETH, uint256 totalDebtETH, uint256 availableBorrowsETH, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor)
@@ -1857,11 +1709,11 @@ For further details please visit https://developers.aave.com
 |`ltv`|  | the loan to value of the user
 |`healthFactor`|  | the current health factor of the user
 
+
 ### initReserve
 ```solidity
   function initReserve(address reserve, address aTokenAddress, address stableDebtAddress, address variableDebtAddress, address interestRateStrategyAddress) external
 ```
-
 
 
 
@@ -1872,12 +1724,10 @@ For further details please visit https://developers.aave.com
 
 
 
-
 ### setConfiguration
 ```solidity
   function setConfiguration(address reserve, uint256 configuration) external
 ```
-
 
 
 
@@ -1898,6 +1748,7 @@ For further details please visit https://developers.aave.com
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | configuration of the reserve
 
+
 ### getUserConfiguration
 ```solidity
   function getUserConfiguration(address user) external returns (struct DataTypes.UserConfigurationMap)
@@ -1915,6 +1766,7 @@ For further details please visit https://developers.aave.com
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | configuration of the user
 
+
 ### getReserveNormalizedIncome
 ```solidity
   function getReserveNormalizedIncome(address asset) external returns (uint256)
@@ -1931,6 +1783,7 @@ For further details please visit https://developers.aave.com
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | reserve's normalized income
+
 ### getReserveNormalizedVariableDebt
 ```solidity
   function getReserveNormalizedVariableDebt(address asset) external returns (uint256)
@@ -1947,6 +1800,7 @@ For further details please visit https://developers.aave.com
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | reserve normalized variable debt
+
 ### getReserveData
 ```solidity
   function getReserveData(address asset) external returns (struct DataTypes.ReserveData)
@@ -1964,11 +1818,11 @@ For further details please visit https://developers.aave.com
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| address | state of the reserve
 
+
 ### finalizeTransfer
 ```solidity
   function finalizeTransfer(address asset, address from, address to, uint256 amount, uint256 balanceFromAfter, uint256 balanceToBefore) external
 ```
-
 
 
 
@@ -1979,12 +1833,10 @@ For further details please visit https://developers.aave.com
 
 
 
-
 ### getAddressesProvider
 ```solidity
   function getAddressesProvider() external returns (contract ILendingPoolAddressesProvider)
 ```
-
 
 
 
@@ -1995,12 +1847,10 @@ For further details please visit https://developers.aave.com
 
 
 
-
 ### paused
 ```solidity
   function paused() external returns (bool)
 ```
-
 
 
 
@@ -2273,12 +2123,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### setMarketId
 ```solidity
   function setMarketId(string marketId) external
 ```
-
 
 
 
@@ -2289,12 +2137,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### setAddressAsProxy
 ```solidity
   function setAddressAsProxy(bytes32 id, address impl) external
 ```
-
 
 
 
@@ -2305,12 +2151,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getLendingPool
 ```solidity
   function getLendingPool() external returns (address)
 ```
-
 
 
 
@@ -2321,12 +2165,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getLendingPoolConfigurator
 ```solidity
   function getLendingPoolConfigurator() external returns (address)
 ```
-
 
 
 
@@ -2337,12 +2179,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getLendingPoolCollateralManager
 ```solidity
   function getLendingPoolCollateralManager() external returns (address)
 ```
-
 
 
 
@@ -2353,12 +2193,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getPoolAdmin
 ```solidity
   function getPoolAdmin() external returns (address)
 ```
-
 
 
 
@@ -2369,12 +2207,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getEmergencyAdmin
 ```solidity
   function getEmergencyAdmin() external returns (address)
 ```
-
 
 
 
@@ -2385,12 +2221,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getPriceOracle
 ```solidity
   function getPriceOracle() external returns (address)
 ```
-
 
 
 
@@ -2401,7 +2235,6 @@ gets added to the LendingPool ABI
 
 
 
-
 ### getLendingRateOracle
 ```solidity
   function getLendingRateOracle() external returns (address)
@@ -2409,12 +2242,10 @@ gets added to the LendingPool ABI
 
 
 
-
 ### setLendingRateOracle
 ```solidity
   function setLendingRateOracle(address lendingRateOracle) external
 ```
-
 
 
 
@@ -2535,6 +2366,7 @@ Returns the position information associated with a given token ID.
 |`feeGrowthInside1LastX128`|  | The fee growth of token1 as of the last action on the individual position
 |`tokensOwed0`|  | The uncollected amount of token0 owed to the position as of the last computation
 |`tokensOwed1`|  | The uncollected amount of token1 owed to the position as of the last computation
+
 ### mint
 ```solidity
   function mint(struct INonfungiblePositionManager.MintParams params) external returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
@@ -2556,6 +2388,7 @@ a method does not exist, i.e. the pool is assumed to be initialized.
 |`liquidity`|  | The amount of liquidity for this position
 |`amount0`|  | The amount of token0
 |`amount1`|  | The amount of token1
+
 ### increaseLiquidity
 ```solidity
   function increaseLiquidity(struct INonfungiblePositionManager.IncreaseLiquidityParams params) external returns (uint128 liquidity, uint256 amount0, uint256 amount1)
@@ -2579,6 +2412,7 @@ deadline The time by which the transaction must be included to effect the change
 |`liquidity`| struct INonfungiblePositionManager.IncreaseLiquidityParams | The new liquidity amount as a result of the increase
 |`amount0`|  | The amount of token0 to acheive resulting liquidity
 |`amount1`|  | The amount of token1 to acheive resulting liquidity
+
 ### decreaseLiquidity
 ```solidity
   function decreaseLiquidity(struct INonfungiblePositionManager.DecreaseLiquidityParams params) external returns (uint256 amount0, uint256 amount1)
@@ -2600,6 +2434,7 @@ deadline The time by which the transaction must be included to effect the change
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`amount0`| struct INonfungiblePositionManager.DecreaseLiquidityParams | The amount of token0 accounted to the position's tokens owed
 |`amount1`|  | The amount of token1 accounted to the position's tokens owed
+
 ### collect
 ```solidity
   function collect(struct INonfungiblePositionManager.CollectParams params) external returns (uint256 amount0, uint256 amount1)
@@ -2620,6 +2455,7 @@ amount1Max The maximum amount of token1 to collect
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`amount0`| struct INonfungiblePositionManager.CollectParams | The amount of fees collected in token0
 |`amount1`|  | The amount of fees collected in token1
+
 ### burn
 ```solidity
   function burn(uint256 tokenId) external
@@ -2632,7 +2468,6 @@ must be collected first.
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`tokenId` | uint256 | The ID of the token that is being burned
-
 ## Events
 ### IncreaseLiquidity
 ```solidity
@@ -2711,6 +2546,7 @@ Functions that return immutable state of the router
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`Returns`|  | the address of the Uniswap V3 factory
+
 ### WETH9
 ```solidity
   function WETH9() external returns (address)
@@ -2722,6 +2558,7 @@ Functions that return immutable state of the router
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`Returns`|  | the address of WETH9
+
 
 
 # IUniswapV3Factory
@@ -2742,6 +2579,7 @@ Returns the current owner of the factory
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`|  | address of the factory owner
+
 ### feeAmountTickSpacing
 ```solidity
   function feeAmountTickSpacing(uint24 fee) external returns (int24)
@@ -2759,6 +2597,7 @@ Returns the tick spacing for a given fee amount, if enabled, or 0 if not enabled
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`The`| uint24 | tick spacing
+
 ### getPool
 ```solidity
   function getPool(address tokenA, address tokenB, uint24 fee) external returns (address pool)
@@ -2778,6 +2617,7 @@ Returns the pool address for a given pair of tokens and a fee, or address 0 if i
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`pool`| address | The pool address
+
 ### createPool
 ```solidity
   function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool)
@@ -2799,6 +2639,7 @@ are invalid.
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`pool`| address | The address of the newly created pool
+
 ### setOwner
 ```solidity
   function setOwner(address _owner) external
@@ -2811,7 +2652,6 @@ Updates the owner of the factory
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_owner` | address | The new owner of the factory
-
 ### enableFeeAmount
 ```solidity
   function enableFeeAmount(uint24 fee, int24 tickSpacing) external
@@ -2825,7 +2665,6 @@ Enables a fee amount with the given tickSpacing
 | :--- | :--- | :------------------------------------------------------------------- |
 |`fee` | uint24 | The fee amount to enable, denominated in hundredths of a bip (i.e. 1e-6)
 |`tickSpacing` | int24 | The spacing between ticks to be enforced for all pools created with the given fee amount
-
 ## Events
 ### OwnerChanged
 ```solidity
@@ -2909,6 +2748,7 @@ feeProtocol The protocol fee for both tokens of the pool.
 Encoded as two 4 bit values, where the protocol fee of token1 is shifted 4 bits and the protocol fee of token0
 is the lower 4 bits. Used as the denominator of a fraction of the swap fee, e.g. 4 means 1/4th of the swap fee.
 unlocked Whether the pool is currently locked to reentrancy
+
 ### feeGrowthGlobal0X128
 ```solidity
   function feeGrowthGlobal0X128() external returns (uint256)
@@ -2916,7 +2756,6 @@ unlocked Whether the pool is currently locked to reentrancy
 The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool
 
 🤓 This value can overflow the uint256
-
 
 ### feeGrowthGlobal1X128
 ```solidity
@@ -2926,7 +2765,6 @@ The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for 
 
 🤓 This value can overflow the uint256
 
-
 ### protocolPerformanceFees
 ```solidity
   function protocolPerformanceFees() external returns (uint128 token0, uint128 token1)
@@ -2935,7 +2773,6 @@ The amounts of token0 and token1 that are owed to the protocol
 
 🤓 Protocol fees will never exceed uint128 max in either token
 
-
 ### liquidity
 ```solidity
   function liquidity() external returns (uint128)
@@ -2943,7 +2780,6 @@ The amounts of token0 and token1 that are owed to the protocol
 The currently in range liquidity available to the pool
 
 🤓 This value has no relationship to the total liquidity across all ticks
-
 
 ### ticks
 ```solidity
@@ -2972,12 +2808,12 @@ initialized Set to true if the tick is initialized, i.e. liquidityGross is great
 Outside values can only be used if the tick is initialized, i.e. if liquidityGross is greater than 0.
 In addition, these values are only relative and must be used only in comparison to previous snapshots for
 a specific position.
+
 ### tickBitmap
 ```solidity
   function tickBitmap(int16 wordPosition) external returns (uint256)
 ```
 Returns 256 packed tick initialized boolean values. See TickBitmap for more information
-
 
 
 ### positions
@@ -3000,6 +2836,7 @@ Returns feeGrowthInside0LastX128 fee growth of token0 inside the tick range as o
 Returns feeGrowthInside1LastX128 fee growth of token1 inside the tick range as of the last mint/burn/poke,
 Returns tokensOwed0 the computed amount of token0 owed to the position as of the last mint/burn/poke,
 Returns tokensOwed1 the computed amount of token1 owed to the position as of the last mint/burn/poke
+
 ### observations
 ```solidity
   function observations(uint256 index) external returns (uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, bool initialized)
@@ -3021,6 +2858,7 @@ ago, rather than at a specific index in the array.
 Returns tickCumulative the tick multiplied by seconds elapsed for the life of the pool as of the observation timestamp,
 Returns secondsPerLiquidityCumulativeX128 the seconds per in range liquidity for the life of the pool as of the observation timestamp,
 Returns initialized whether the observation has been initialized and the values are safe to use
+
 
 
 # Common

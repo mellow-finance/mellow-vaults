@@ -24,7 +24,9 @@
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 {{#natspec.returns}}
-|`{{param}}`| {{#lookup ../args.types @index}}{{/lookup}} | {{{description}}}{{/natspec.returns}}{{/if}}
+|`{{param}}`| {{#lookup ../args.types @index}}{{/lookup}} | {{{description}}}{{/natspec.returns}}
+
+{{/if}}
 {{/if}}
 {{/ownFunctions}}
 {{#if ownEvents}}
