@@ -17,7 +17,7 @@ contract LpIssuerGovernance is ILpIssuerGovernance {
         _governanceParams = params;
     }
 
-    /// -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  PUBLIC, VIEW  -------------------
 
     function governanceParams() public view returns (GovernanceParams memory) {
         return _governanceParams;
@@ -31,7 +31,7 @@ contract LpIssuerGovernance is ILpIssuerGovernance {
         return _pendingGovernanceParamsTimestamp;
     }
 
-    /// -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+    // -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
         require(_isProtocolAdmin(), "ADM");
@@ -49,7 +49,7 @@ contract LpIssuerGovernance is ILpIssuerGovernance {
         emit CommitGovernanceParams(_governanceParams);
     }
 
-    /// -------------------  PRIVATE, VIEW  -------------------
+    // -------------------  PRIVATE, VIEW  -------------------
 
     function _isProtocolAdmin() internal view returns (bool) {
         return _governanceParams.protocolGovernance.isAdmin();

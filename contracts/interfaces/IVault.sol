@@ -81,10 +81,29 @@ interface IVault {
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
+    /// @notice Update earnings of the vault and collect performance fees.
+    /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+    /// Strategy is approved address for the vault nft. There's a subtle difference however - while vault owner
+    /// can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
+    /// @param to Address where earnings are collected
+    /// @param options Additional arguments for earnings collections. Differ by vault.
+    /// @return collectedEarnings Amount of earnings actually collected. The array of amounts corresponds to the array of vaultTokens.
     function collectEarnings(address to, bytes memory options) external returns (uint256[] memory collectedEarnings);
 
+    /// @notice This method is for claiming accidentally accumulated tokens on the contact's balance.
+    /// @dev Can only be called by Protocol Governance
+    /// @param to Address that will receive the tokens
+    /// @param tokens Tokens to claim. Each token must be other than those in vaultTokens.
     function reclaimTokens(address to, address[] calldata tokens) external;
 
+    /// @notice Claim liquidity mining rewards
+    /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+    /// Strategy is approved address for the vault nft.
+    ///
+    /// Since this method allows sending arbitrary transactions, the destinations of the calls
+    /// are whitelisted by Protocol Governance.
+    /// @param from Address of the reward pool
+    /// @param data Abi encoded call to the `from` address
     function claimRewards(address from, bytes calldata data) external;
 
     event Push(uint256[] tokenAmounts);

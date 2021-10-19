@@ -19,7 +19,7 @@ abstract contract Vault is IVault {
         _vaultGovernance = vaultGovernance_;
     }
 
-    /// -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  PUBLIC, VIEW  -------------------
 
     /// @inheritdoc IVault
     function vaultGovernance() external view returns (IVaultGovernance) {
@@ -32,7 +32,7 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function earnings() public view virtual returns (uint256[] memory tokenAmounts);
 
-    /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
+    // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
     /// @inheritdoc IVault
     function push(
@@ -113,7 +113,7 @@ abstract contract Vault is IVault {
         emit IVault.CollectEarnings(to, collectedEarnings);
     }
 
-    /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+    // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
     function reclaimTokens(address to, address[] calldata tokens) external {
         bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin();
@@ -150,7 +150,7 @@ abstract contract Vault is IVault {
         }
     }
 
-    /// -------------------  PRIVATE, VIEW  -------------------
+    // -------------------  PRIVATE, VIEW  -------------------
 
     function _validateAndProjectTokens(address[] calldata tokens, uint256[] calldata tokenAmounts)
         internal
@@ -174,7 +174,7 @@ abstract contract Vault is IVault {
         return voFromNft == gw.vaultOwnerNft(toNft);
     }
 
-    /// -------------------  PRIVATE, VIEW  -------------------
+    // -------------------  PRIVATE, VIEW  -------------------
 
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
         IVaultManager vaultManager = _vaultGovernance.vaultManager();
@@ -185,7 +185,7 @@ abstract contract Vault is IVault {
         return vaultManager.getApproved(nft) == sender || vaultManager.ownerOf(nft) == sender;
     }
 
-    /// -------------------  PRIVATE, MUTATING  -------------------
+    // -------------------  PRIVATE, MUTATING  -------------------
 
     /// Guaranteed to have exact signature matchinn vault tokens
     function _push(

@@ -29,6 +29,7 @@ contract AaveVault is Vault {
         }
     }
 
+    /// @inheritdoc Vault
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);

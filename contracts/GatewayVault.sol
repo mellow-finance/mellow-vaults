@@ -20,6 +20,7 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
+    /// @inheritdoc Vault
     function tvl() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
@@ -34,6 +35,7 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
+    /// @inheritdoc Vault
     function earnings() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);

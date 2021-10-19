@@ -31,7 +31,14 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
+Total earnings available now. Earnings is only needed as the base for performance fees calculation.
+Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 
 
@@ -97,13 +104,27 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
+Total value locked for this contract. Generally it is the underlying token value of this contract in some
+other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
+Total earnings available now. Earnings is only needed as the base for performance fees calculation.
+Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 
 
@@ -133,13 +154,27 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
+Total value locked for this contract. Generally it is the underlying token value of this contract in some
+other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
+Total earnings available now. Earnings is only needed as the base for performance fees calculation.
+Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### vaultTvl
 ```solidity
@@ -323,7 +358,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function governanceParams() public returns (struct ILpIssuerGovernance.GovernanceParams)
 ```
--------------------  PUBLIC, VIEW  -------------------
+
 
 ### pendingGovernanceParams
 ```solidity
@@ -341,7 +376,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function setPendingGovernanceParams(struct ILpIssuerGovernance.GovernanceParams newGovernanceParams) external
 ```
--------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+
 
 ### commitGovernanceParams
 ```solidity
@@ -365,7 +400,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function claimAllowlist() external returns (address[])
 ```
--------------------  PUBLIC, VIEW  -------------------
+
 
 ### pendingClaimAllowlistAdd
 ```solidity
@@ -425,7 +460,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function setPendingClaimAllowlistAdd(address[] addresses) external
 ```
--------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+
 
 ### removeFromClaimAllowlist
 ```solidity
@@ -443,7 +478,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function commitClaimAllowlistAdd() external
 ```
--------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
 
 ### commitParams
 ```solidity
@@ -467,13 +502,27 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
+Total value locked for this contract. Generally it is the underlying token value of this contract in some
+other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
+Total earnings available now. Earnings is only needed as the base for performance fees calculation.
+Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`| uint256[] | Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### nftEarnings
 ```solidity
@@ -656,20 +705,55 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function collectEarnings(address to, bytes options) external returns (uint256[] collectedEarnings)
 ```
+Update earnings of the vault and collect performance fees.
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft. There's a subtle difference however - while vault owner
+can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`to` | address | Address where earnings are collected
+|`options` | bytes | Additional arguments for earnings collections. Differ by vault.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`collectedEarnings`| uint256[] | Amount of earnings actually collected. The array of amounts corresponds to the array of vaultTokens.
 
 ### reclaimTokens
 ```solidity
   function reclaimTokens(address to, address[] tokens) external
 ```
--------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+This method is for claiming accidentally accumulated tokens on the contact's balance.
 
+🤓 Can only be called by Protocol Governance
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`to` | address | Address that will receive the tokens
+|`tokens` | address[] | Tokens to claim. Each token must be other than those in vaultTokens.
 
 ### claimRewards
 ```solidity
   function claimRewards(address from, bytes data) external
 ```
+Claim liquidity mining rewards
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft.
+
+Since this method allows sending arbitrary transactions, the destinations of the calls
+are whitelisted by Protocol Governance.
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`from` | address | Address of the reward pool
+|`data` | bytes | Abi encoded call to the `from` address
 
 
 
@@ -687,7 +771,7 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function isProtocolAdmin() public returns (bool)
 ```
--------------------  PUBLIC, VIEW  -------------------
+
 
 ### vaultTokens
 ```solidity
@@ -741,7 +825,7 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function setPendingVaultManager(contract IVaultManager manager) external
 ```
--------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
+
 
 ### commitVaultManager
 ```solidity
@@ -753,7 +837,7 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function setPendingStrategyTreasury(address treasury) external
 ```
--------------------  PUBLIC, MUTATING, ADMIN  -------------------
+
 
 ### commitStrategyTreasury
 ```solidity
@@ -813,7 +897,7 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function governanceParams() public returns (struct IVaultManagerGovernance.GovernanceParams)
 ```
--------------------  PUBLIC, VIEW  -------------------
+
 
 ### pendingGovernanceParams
 ```solidity
@@ -831,7 +915,7 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function setPendingGovernanceParams(struct IVaultManagerGovernance.GovernanceParams newGovernanceParams) external
 ```
--------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+
 
 ### commitGovernanceParams
 ```solidity
@@ -1032,13 +1116,13 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function setPendingParams(struct IProtocolGovernance.Params newParams) external
 ```
--------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+
 
 ### commitParams
 ```solidity
   function commitParams() external
 ```
--------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
 
 
 
@@ -1185,19 +1269,55 @@ For the exact bytes structure see concrete vault descriptions.
 ```solidity
   function collectEarnings(address to, bytes options) external returns (uint256[] collectedEarnings)
 ```
+Update earnings of the vault and collect performance fees.
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft. There's a subtle difference however - while vault owner
+can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`to` | address | Address where earnings are collected
+|`options` | bytes | Additional arguments for earnings collections. Differ by vault.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`collectedEarnings`| uint256[] | Amount of earnings actually collected. The array of amounts corresponds to the array of vaultTokens.
 
 ### reclaimTokens
 ```solidity
   function reclaimTokens(address to, address[] tokens) external
 ```
+This method is for claiming accidentally accumulated tokens on the contact's balance.
 
+🤓 Can only be called by Protocol Governance
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`to` | address | Address that will receive the tokens
+|`tokens` | address[] | Tokens to claim. Each token must be other than those in vaultTokens.
 
 ### claimRewards
 ```solidity
   function claimRewards(address from, bytes data) external
 ```
+Claim liquidity mining rewards
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft.
+
+Since this method allows sending arbitrary transactions, the destinations of the calls
+are whitelisted by Protocol Governance.
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`from` | address | Address of the reward pool
+|`data` | bytes | Abi encoded call to the `from` address
 
 ## Events
 ### Push

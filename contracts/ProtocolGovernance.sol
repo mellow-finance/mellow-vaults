@@ -21,7 +21,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         params = _params;
     }
 
-    /// -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  PUBLIC, VIEW  -------------------
     function claimAllowlist() external view returns (address[] memory) {
         uint256 l = _claimAllowlist.length();
         address[] memory res = new address[](l);
@@ -67,7 +67,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.gatewayVaultManager;
     }
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
         require(isAdmin(), "ADM");
@@ -89,7 +89,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     function commitClaimAllowlistAdd() external {
         require(isAdmin(), "ADM");

@@ -36,7 +36,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         }
     }
 
-    /// -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  PUBLIC, VIEW  -------------------
 
     function isProtocolAdmin() public view returns (bool) {
         return _vaultManager.governanceParams().protocolGovernance.isAdmin();
@@ -74,7 +74,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         return _pendingStrategyTreasuryTimestamp;
     }
 
-    /// -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
+    // -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
 
     function setPendingVaultManager(IVaultManager manager) external {
         require(isProtocolAdmin(), "PADM");
@@ -92,7 +92,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         emit CommitVaultManager(_vaultManager);
     }
 
-    /// -------------------  PUBLIC, MUTATING, ADMIN  -------------------
+    // -------------------  PUBLIC, MUTATING, ADMIN  -------------------
 
     function setPendingStrategyTreasury(address treasury) external {
         require(isAdmin(), "AG");
@@ -110,5 +110,5 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         emit CommitStrategyTreasury(_strategyTreasury);
     }
 
-    /// -------------------  PRIVATE, VIEW  -------------------
+    // -------------------  PRIVATE, VIEW  -------------------
 }
