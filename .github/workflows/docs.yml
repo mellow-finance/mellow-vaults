@@ -35,6 +35,8 @@ jobs:
       - name: Push file
         run: |
           echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
+          sudo apt update
+          sudo apt install git
           git clone https://git@github.com/mellow-finance/mellow-docs.git
 
       - name: Autogen docs
