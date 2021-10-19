@@ -71,15 +71,11 @@ export const deployProtocolGovernance = deployments.createFixture(async (
     options?: {
         constructorArgs: ProtocolGovernance_constructorArgs,
         adminSigner: Signer
-        initializerArgs?: ProtocolGovernance_Params,
     }
 ) => {
     // defaults<
-    const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        admin: ethers.constants.AddressZero
-    };
-    const initializerArgs: ProtocolGovernance_Params = options?.initializerArgs ?? {
-        maxTokensPerVault: 100,
+    const params: ProtocolGovernance_Params = options?.constructorArgs?.params ?? {
+        maxTokensPerVault: 10,
         governanceDelay: 1,
 
         strategyPerformanceFee: 10**9,
@@ -88,23 +84,15 @@ export const deployProtocolGovernance = deployments.createFixture(async (
         protocolTreasury: ethers.constants.AddressZero,
         gatewayVaultManager: ethers.constants.AddressZero,
     };
+    const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
+        admin: < Address > ethers.constants.AddressZero,
+        params: < ProtocolGovernance_Params > params
+    };
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
     const contract = await Contract.deploy(
         constructorArgs.admin
     );
-    await contract.deployed();
-    await contract.connect(options!.adminSigner).setPendingParams([
-        initializerArgs.maxTokensPerVault,
-        initializerArgs.governanceDelay,
-        initializerArgs.strategyPerformanceFee,
-        initializerArgs.protocolPerformanceFee,
-        initializerArgs.protocolExitFee,
-        initializerArgs.protocolTreasury,
-        initializerArgs.gatewayVaultManager,
-    ]);
-    await sleep(initializerArgs.governanceDelay + 1);
-    await contract.connect(options!.adminSigner).commitParams();
     return contract;
 });
 
@@ -344,7 +332,17 @@ export const deployERC20VaultSystem = deployments.createFixture(async (
 
     const protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
         constructorArgs: {
-            admin: await options!.protocolGovernanceAdmin.getAddress()
+            admin: await options!.protocolGovernanceAdmin.getAddress(),
+            params: {
+                maxTokensPerVault: 10,
+                governanceDelay: 1,
+        
+                strategyPerformanceFee: 10**9,
+                protocolPerformanceFee: 10**9,
+                protocolExitFee: 10**9,
+                protocolTreasury: ethers.constants.AddressZero,
+                gatewayVaultManager: ethers.constants.AddressZero,
+            }
         },
         adminSigner: options!.protocolGovernanceAdmin
     });

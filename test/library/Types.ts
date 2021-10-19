@@ -20,10 +20,6 @@ export type VaultManagerGovernance = Contract;
 export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
 
-export type ProtocolGovernance_constructorArgs = {
-    admin: Address
-};
-
 export type ProtocolGovernance_Params = {
     maxTokensPerVault: number,
     governanceDelay: number,
@@ -33,6 +29,11 @@ export type ProtocolGovernance_Params = {
     protocolTreasury: Address,
     gatewayVaultManager: IGatewayVaultManager,
 }
+
+export type ProtocolGovernance_constructorArgs = {
+    admin: Address;
+    params: ProtocolGovernance_Params;
+};
 
 export type VaultGovernanceFactory_constructorArgs = {
     tokens: Address[],
