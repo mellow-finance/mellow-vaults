@@ -1,3 +1,4 @@
+name: Push docs
 on:
   push:
     branches:
@@ -34,14 +35,18 @@ jobs:
       - name: Autogen docs
         run: yarn docgen
 
-      - name: Push docs to doc repo
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          source_file: "docs/api.md"
-          destination_repo: "mellow-finance/mellow-docs"
-          destination_folder: "mellow-permissionless-vaults"
-          user_email: "ak@mellow.finance"
-          user_name: "alexk"
-          commit_message: "Updated docs for mellow permissionless vaults api"
+      - name: Push file
+        run: |
+          git clone https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/mellow-finance/mellow-docs.git
+
+      # - name: Push docs to doc repo
+      #   uses: dmnemec/copy_file_to_another_repo_action@main
+      #   env:
+      #     API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     source_file: "docs/api.md"
+      #     destination_repo: "mellow-finance/mellow-docs"
+      #     destination_folder: "mellow-permissionless-vaults"
+      #     user_email: "ak@mellow.finance"
+      #     user_name: "alexk"
+      #     commit_message: "Updated docs for mellow permissionless vaults api"
