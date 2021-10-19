@@ -21,23 +21,26 @@ function lines(pathName) {
 }
 
 function scan(pathName, indentation) {
-  if (!excludeList.includes(pathName)) {
-    if (fs.lstatSync(pathName).isDirectory()) {
-      // fs.appendFileSync(
-      //   SUMMARY_FILE,
-      //   indentation + "* " + path.basename(pathName) + "\n"
-      // );
-      for (const fileName of fs.readdirSync(pathName))
-        scan(pathName + "/" + fileName, indentation + "  ");
-    } else if (pathName.endsWith(".sol")) {
-      const text = path.basename(pathName).slice(0, -4);
-      const link = pathName.slice(INPUT_DIR.length, -4);
-      // fs.appendFileSync(
-      //   SUMMARY_FILE,
-      //   indentation + "* [" + text + "](" + relativePath + link + ".md)\n"
-      // );
-    }
-  }
+  // for (const line of excludeList) {
+  //   if (pathName.match(line)) {
+  //     return;
+  //   }
+  // }
+  // if (fs.lstatSync(pathName).isDirectory()) {
+  // fs.appendFileSync(
+  //   SUMMARY_FILE,
+  //   indentation + "* " + path.basename(pathName) + "\n"
+  // );
+  //   for (const fileName of fs.readdirSync(pathName))
+  //     scan(pathName + "/" + fileName, indentation + "  ");
+  // } else if (pathName.endsWith(".sol")) {
+  // const text = path.basename(pathName).slice(0, -4);
+  // const link = pathName.slice(INPUT_DIR.length, -4);
+  // fs.appendFileSync(
+  //   SUMMARY_FILE,
+  //   indentation + "* [" + text + "](" + relativePath + link + ".md)\n"
+  // );
+  // }
 }
 
 function fix(pathName) {
@@ -63,6 +66,7 @@ const args = [
   "--input=" + INPUT_DIR,
   "--output=" + OUTPUT_DIR,
   "--templates=" + CONFIG_DIR,
+  "--exclude=" + excludeList.join(","),
   "--solc-module=solc",
   "--solc-settings=" +
     JSON.stringify({ optimizer: { enabled: true, runs: 200 } }),
