@@ -29,11 +29,12 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory tokenAmounts);
 
+    /// @inheritdoc IVault
     function earnings() public view virtual returns (uint256[] memory tokenAmounts);
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
-    /// tokens are used from contract balance
+    /// @inheritdoc IVault
     function push(
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
@@ -47,6 +48,7 @@ abstract contract Vault is IVault {
         emit Push(pActualTokenAmounts);
     }
 
+    /// @inheritdoc IVault
     function transferAndPush(
         address from,
         address[] calldata tokens,
@@ -68,6 +70,7 @@ abstract contract Vault is IVault {
         }
     }
 
+    /// @inheritdoc IVault
     function pull(
         address to,
         address[] calldata tokens,
@@ -85,6 +88,7 @@ abstract contract Vault is IVault {
         emit Pull(to, actualTokenAmounts);
     }
 
+    /// @inheritdoc IVault
     function collectEarnings(address to, bytes memory options) external returns (uint256[] memory collectedEarnings) {
         /// TODO: is allowed to pull
         /// TODO: verify that only RouterVault can call this (for fees reasons)
@@ -110,6 +114,7 @@ abstract contract Vault is IVault {
     }
 
     /// -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+    /// @inheritdoc IVault
     function reclaimTokens(address to, address[] calldata tokens) external {
         bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin();
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
@@ -130,7 +135,8 @@ abstract contract Vault is IVault {
     }
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
-    function claimRewards(address from, bytes calldata data) external {
+    /// @inheritdoc IVault
+    function claimRewards(address from, bytes calldata data) external override {
         require(_isApprovedOrOwner(msg.sender), "ADM");
         IProtocolGovernance protocolGovernance = _vaultGovernance.vaultManager().governanceParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), "AC");

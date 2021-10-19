@@ -19,14 +19,14 @@ Deploy new vault
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
-Total value locked for this contract. This usually represents the value
-this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+Total value locked for this contract. Generally it is the underlying token value of this contract in some
+other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
+|`tokenAmounts`|  | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -568,38 +568,112 @@ Address of the Vault Governance for this contract
 ```solidity
   function tvl() public returns (uint256[] tokenAmounts)
 ```
-Total value locked for this contract. This usually represents the value
-this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+Total value locked for this contract. Generally it is the underlying token value of this contract in some
+other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
+|`tokenAmounts`|  | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
   function earnings() public returns (uint256[] tokenAmounts)
 ```
+Total earnings available now. Earnings is only needed as the base for performance fees calculation.
+Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`|  | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### push
 ```solidity
   function push(address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) public returns (uint256[] actualTokenAmounts)
 ```
-tokens are used from contract balance
+Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
+the contract balance and convert it to yUSDC.
+
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft.
+
+Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`tokens` | address[] | tokens to push
+|`tokenAmounts` | uint256[] | amounts of tokens to push
+|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+For the exact bytes structure see concrete vault descriptions.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`actualTokenAmounts`| address[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### transferAndPush
 ```solidity
   function transferAndPush(address from, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
+The same as `push` method above but transfers tokens to vault balance prior to calling push.
+After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full).
 
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`tokens` | address | tokens to push
+|`tokenAmounts` | address[] | amounts of tokens to push
+|`optimized` | uint256[] | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bool | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+For the exact bytes structure see concrete vault descriptions.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`actualTokenAmounts`| address | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### pull
 ```solidity
   function pull(address to, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
+Pulls tokens from the underlying protocol to the `to` address.
+For example, for Yearn this operation will take yUSDC from
+the Yearn protocol, convert it to USDC and send to `to` address.
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft. There's a subtle difference however - while vault owner
+can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
+
+Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`to` | address | address to receive the tokens
+|`tokens` | address[] | tokens to pull
+|`tokenAmounts` | uint256[] | amounts of tokens to pull
+|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+For the exact bytes structure see concrete vault descriptions.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`actualTokenAmounts`| address | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
 
 ### collectEarnings
 ```solidity
@@ -612,6 +686,7 @@ tokens are used from contract balance
   function reclaimTokens(address to, address[] tokens) external
 ```
 -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+
 
 ### claimRewards
 ```solidity
@@ -1035,38 +1110,112 @@ Address of the Vault Governance for this contract
 ```solidity
   function tvl() external returns (uint256[] tokenAmounts)
 ```
-Total value locked for this contract. This usually represents the value
-this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+Total value locked for this contract. Generally it is the underlying token value of this contract in some
+other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
+|`tokenAmounts`|  | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
   function earnings() external returns (uint256[] tokenAmounts)
 ```
+Total earnings available now. Earnings is only needed as the base for performance fees calculation.
+Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`tokenAmounts`|  | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### push
 ```solidity
   function push(address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
+Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
+the contract balance and convert it to yUSDC.
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft.
+
+Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`tokens` | address[] | tokens to push
+|`tokenAmounts` | uint256[] | amounts of tokens to push
+|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+For the exact bytes structure see concrete vault descriptions.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`actualTokenAmounts`| address[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### transferAndPush
 ```solidity
   function transferAndPush(address from, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
+The same as `push` method above but transfers tokens to vault balance prior to calling push.
+After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full).
 
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`tokens` | address | tokens to push
+|`tokenAmounts` | address[] | amounts of tokens to push
+|`optimized` | uint256[] | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bool | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+For the exact bytes structure see concrete vault descriptions.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`actualTokenAmounts`| address | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### pull
 ```solidity
   function pull(address to, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 ```
+Pulls tokens from the underlying protocol to the `to` address.
+For example, for Yearn this operation will take yUSDC from
+the Yearn protocol, convert it to USDC and send to `to` address.
 
+🤓 Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
+Strategy is approved address for the vault nft. There's a subtle difference however - while vault owner
+can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
+
+Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`to` | address | address to receive the tokens
+|`tokens` | address[] | tokens to pull
+|`tokenAmounts` | uint256[] | amounts of tokens to pull
+|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+For the exact bytes structure see concrete vault descriptions.
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`actualTokenAmounts`| address | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
 
 ### collectEarnings
 ```solidity
@@ -1077,6 +1226,12 @@ this protocol has put into other protocols, i.e. total available for withdraw ba
 ### reclaimTokens
 ```solidity
   function reclaimTokens(address to, address[] tokens) external
+```
+
+
+### claimRewards
+```solidity
+  function claimRewards(address from, bytes data) external
 ```
 
 
