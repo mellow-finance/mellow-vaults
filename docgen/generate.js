@@ -78,5 +78,5 @@ const result = spawnSync("node", args, {
 });
 if (result.stderr.length > 0) throw new Error(result.stderr);
 
-fix(OUTPUT_DIR);
+// fix(OUTPUT_DIR);
 fs.renameSync(`${OUTPUT_DIR}/index.md`, `${OUTPUT_DIR}/api.md`);
