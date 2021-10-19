@@ -17,3 +17,5 @@ coverage.json
 deployments/kovan
 deployments/localhost
 deployments/contracts.json
+
+.vscode
