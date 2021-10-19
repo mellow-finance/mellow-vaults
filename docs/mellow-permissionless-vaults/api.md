@@ -6,9 +6,7 @@ Some contract details. `yo` this is markdown
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(contract IVaultGovernance vaultGovernance) public
 
 ```
 
@@ -16,9 +14,7 @@ Some contract details. `yo` this is markdown
 
 ```solidity
 
-  function tvl(
-
-  ) public returns (uint256[] tokenAmounts)
+  function tvl() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -30,9 +26,7 @@ Some exceptions here
 
 ```solidity
 
-  function earnings(
-
-  ) public returns (uint256[] tokenAmounts)
+  function earnings() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -42,9 +36,7 @@ Some exceptions here
 
 ```solidity
 
-  function deployVault(
-
-  ) external returns (contract IVault)
+  function deployVault(contract IVaultGovernance vaultGovernance, bytes) external returns (contract IVault)
 
 ```
 
@@ -54,9 +46,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory governanceFactory, bool permissionless, contract IProtocolGovernance governance, contract ILendingPool pool) public
 
 ```
 
@@ -64,9 +54,7 @@ Some exceptions here
 
 ```solidity
 
-  function lendingPool(
-
-  ) external returns (contract ILendingPool)
+  function lendingPool() external returns (contract ILendingPool)
 
 ```
 
@@ -76,9 +64,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(address admin) public
 
 ```
 
@@ -86,9 +72,7 @@ Some exceptions here
 
 ```solidity
 
-  function isAdmin(
-
-  ) public returns (bool)
+  function isAdmin() public returns (bool)
 
 ```
 
@@ -98,9 +82,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(contract IVaultGovernance vaultGovernance) public
 
 ```
 
@@ -108,9 +90,7 @@ Some exceptions here
 
 ```solidity
 
-  function tvl(
-
-  ) public returns (uint256[] tokenAmounts)
+  function tvl() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -118,9 +98,7 @@ Some exceptions here
 
 ```solidity
 
-  function earnings(
-
-  ) public returns (uint256[] tokenAmounts)
+  function earnings() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -130,9 +108,7 @@ Some exceptions here
 
 ```solidity
 
-  function deployVault(
-
-  ) external returns (contract IVault)
+  function deployVault(contract IVaultGovernance vaultGovernance, bytes) external returns (contract IVault)
 
 ```
 
@@ -142,9 +118,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(contract IVaultGovernance vaultGovernance, address[] vaults) public
 
 ```
 
@@ -152,9 +126,7 @@ Some exceptions here
 
 ```solidity
 
-  function tvl(
-
-  ) public returns (uint256[] tokenAmounts)
+  function tvl() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -162,9 +134,7 @@ Some exceptions here
 
 ```solidity
 
-  function earnings(
-
-  ) public returns (uint256[] tokenAmounts)
+  function earnings() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -172,9 +142,7 @@ Some exceptions here
 
 ```solidity
 
-  function vaultTvl(
-
-  ) public returns (uint256[])
+  function vaultTvl(uint256 vaultNum) public returns (uint256[])
 
 ```
 
@@ -182,9 +150,7 @@ Some exceptions here
 
 ```solidity
 
-  function vaultsTvl(
-
-  ) public returns (uint256[][] tokenAmounts)
+  function vaultsTvl() public returns (uint256[][] tokenAmounts)
 
 ```
 
@@ -192,9 +158,7 @@ Some exceptions here
 
 ```solidity
 
-  function vaultEarnings(
-
-  ) public returns (uint256[])
+  function vaultEarnings(uint256 vaultNum) public returns (uint256[])
 
 ```
 
@@ -202,9 +166,7 @@ Some exceptions here
 
 ```solidity
 
-  function hasVault(
-
-  ) external returns (bool)
+  function hasVault(address vault) external returns (bool)
 
 ```
 
@@ -236,9 +198,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(address[] tokens, contract IVaultManager manager, address treasury, address admin, address[] vaults, address[] redirects_, uint256[] limits_) public
 
 ```
 
@@ -246,9 +206,7 @@ Some exceptions here
 
 ```solidity
 
-  function limits(
-
-  ) external returns (uint256[])
+  function limits() external returns (uint256[])
 
 ```
 
@@ -256,9 +214,7 @@ Some exceptions here
 
 ```solidity
 
-  function redirects(
-
-  ) external returns (address[])
+  function redirects() external returns (address[])
 
 ```
 
@@ -266,9 +222,7 @@ Some exceptions here
 
 ```solidity
 
-  function setLimits(
-
-  ) external
+  function setLimits(uint256[] newLimits) external
 
 ```
 
@@ -276,9 +230,7 @@ Some exceptions here
 
 ```solidity
 
-  function setRedirects(
-
-  ) external
+  function setRedirects(address[] newRedirects) external
 
 ```
 
@@ -310,9 +262,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory goveranceFactory, bool permissionless, contract IProtocolGovernance governance) public
 
 ```
 
@@ -320,9 +270,7 @@ Some exceptions here
 
 ```solidity
 
-  function vaultOwnerNft(
-
-  ) public returns (uint256)
+  function vaultOwnerNft(uint256 nft) public returns (uint256)
 
 ```
 
@@ -330,9 +278,7 @@ Some exceptions here
 
 ```solidity
 
-  function vaultOwner(
-
-  ) external returns (address)
+  function vaultOwner(uint256 nft) external returns (address)
 
 ```
 
@@ -342,9 +288,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(string name_, string symbol_, contract IVault gatewayVault, contract IProtocolGovernance protocolGovernance, uint256 limitPerAddress, address admin) public
 
 ```
 
@@ -352,9 +296,7 @@ Some exceptions here
 
 ```solidity
 
-  function setLimit(
-
-  ) external
+  function setLimit(uint256 newLimitPerAddress) external
 
 ```
 
@@ -362,9 +304,7 @@ Some exceptions here
 
 ```solidity
 
-  function deposit(
-
-  ) external
+  function deposit(uint256[] tokenAmounts, bool optimized, bytes options) external
 
 ```
 
@@ -372,9 +312,7 @@ Some exceptions here
 
 ```solidity
 
-  function withdraw(
-
-  ) external
+  function withdraw(address to, uint256 lpTokenAmount, bool optimized, bytes options) external
 
 ```
 
@@ -416,9 +354,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(struct ILpIssuerGovernance.GovernanceParams params) public
 
 ```
 
@@ -426,9 +362,7 @@ Some exceptions here
 
 ```solidity
 
-  function governanceParams(
-
-  ) public returns (struct ILpIssuerGovernance.GovernanceParams)
+  function governanceParams() public returns (struct ILpIssuerGovernance.GovernanceParams)
 
 ```
 
@@ -438,9 +372,7 @@ Some exceptions here
 
 ```solidity
 
-  function pendingGovernanceParams(
-
-  ) external returns (struct ILpIssuerGovernance.GovernanceParams)
+  function pendingGovernanceParams() external returns (struct ILpIssuerGovernance.GovernanceParams)
 
 ```
 
@@ -448,9 +380,7 @@ Some exceptions here
 
 ```solidity
 
-  function pendingGovernanceParamsTimestamp(
-
-  ) external returns (uint256)
+  function pendingGovernanceParamsTimestamp() external returns (uint256)
 
 ```
 
@@ -458,9 +388,7 @@ Some exceptions here
 
 ```solidity
 
-  function setPendingGovernanceParams(
-
-  ) external
+  function setPendingGovernanceParams(struct ILpIssuerGovernance.GovernanceParams newGovernanceParams) external
 
 ```
 
@@ -470,9 +398,7 @@ Some exceptions here
 
 ```solidity
 
-  function commitGovernanceParams(
-
-  ) external
+  function commitGovernanceParams() external
 
 ```
 
@@ -482,9 +408,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(address admin, struct IProtocolGovernance.Params _params) public
 
 ```
 
@@ -492,9 +416,7 @@ Some exceptions here
 
 ```solidity
 
-  function claimAllowlist(
-
-  ) external returns (address[])
+  function claimAllowlist() external returns (address[])
 
 ```
 
@@ -504,9 +426,7 @@ Some exceptions here
 
 ```solidity
 
-  function pendingClaimAllowlistAdd(
-
-  ) external returns (address[])
+  function pendingClaimAllowlistAdd() external returns (address[])
 
 ```
 
@@ -514,9 +434,7 @@ Some exceptions here
 
 ```solidity
 
-  function isAllowedToClaim(
-
-  ) external returns (bool)
+  function isAllowedToClaim(address addr) external returns (bool)
 
 ```
 
@@ -524,9 +442,7 @@ Some exceptions here
 
 ```solidity
 
-  function maxTokensPerVault(
-
-  ) external returns (uint256)
+  function maxTokensPerVault() external returns (uint256)
 
 ```
 
@@ -534,9 +450,7 @@ Some exceptions here
 
 ```solidity
 
-  function governanceDelay(
-
-  ) external returns (uint256)
+  function governanceDelay() external returns (uint256)
 
 ```
 
@@ -544,9 +458,7 @@ Some exceptions here
 
 ```solidity
 
-  function strategyPerformanceFee(
-
-  ) external returns (uint256)
+  function strategyPerformanceFee() external returns (uint256)
 
 ```
 
@@ -554,9 +466,7 @@ Some exceptions here
 
 ```solidity
 
-  function protocolPerformanceFee(
-
-  ) external returns (uint256)
+  function protocolPerformanceFee() external returns (uint256)
 
 ```
 
@@ -564,9 +474,7 @@ Some exceptions here
 
 ```solidity
 
-  function protocolExitFee(
-
-  ) external returns (uint256)
+  function protocolExitFee() external returns (uint256)
 
 ```
 
@@ -574,9 +482,7 @@ Some exceptions here
 
 ```solidity
 
-  function protocolTreasury(
-
-  ) external returns (address)
+  function protocolTreasury() external returns (address)
 
 ```
 
@@ -584,9 +490,7 @@ Some exceptions here
 
 ```solidity
 
-  function gatewayVaultManager(
-
-  ) external returns (contract IGatewayVaultManager)
+  function gatewayVaultManager() external returns (contract IGatewayVaultManager)
 
 ```
 
@@ -594,9 +498,7 @@ Some exceptions here
 
 ```solidity
 
-  function setPendingClaimAllowlistAdd(
-
-  ) external
+  function setPendingClaimAllowlistAdd(address[] addresses) external
 
 ```
 
@@ -606,9 +508,7 @@ Some exceptions here
 
 ```solidity
 
-  function removeFromClaimAllowlist(
-
-  ) external
+  function removeFromClaimAllowlist(address addr) external
 
 ```
 
@@ -616,9 +516,7 @@ Some exceptions here
 
 ```solidity
 
-  function setPendingParams(
-
-  ) external
+  function setPendingParams(struct IProtocolGovernance.Params newParams) external
 
 ```
 
@@ -626,9 +524,7 @@ Some exceptions here
 
 ```solidity
 
-  function commitClaimAllowlistAdd(
-
-  ) external
+  function commitClaimAllowlistAdd() external
 
 ```
 
@@ -638,9 +534,7 @@ Some exceptions here
 
 ```solidity
 
-  function commitParams(
-
-  ) external
+  function commitParams() external
 
 ```
 
@@ -650,9 +544,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(contract IVaultGovernance vaultGovernance, uint24 fee) public
 
 ```
 
@@ -660,9 +552,7 @@ Some exceptions here
 
 ```solidity
 
-  function tvl(
-
-  ) public returns (uint256[] tokenAmounts)
+  function tvl() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -670,9 +560,7 @@ Some exceptions here
 
 ```solidity
 
-  function earnings(
-
-  ) public returns (uint256[] tokenAmounts)
+  function earnings() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -680,9 +568,7 @@ Some exceptions here
 
 ```solidity
 
-  function nftEarnings(
-
-  ) public returns (uint256[] tokenAmounts)
+  function nftEarnings(uint256 nft) public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -690,9 +576,7 @@ Some exceptions here
 
 ```solidity
 
-  function nftTvl(
-
-  ) public returns (uint256[] tokenAmounts)
+  function nftTvl(uint256 nft) public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -700,9 +584,7 @@ Some exceptions here
 
 ```solidity
 
-  function nftTvls(
-
-  ) public returns (uint256[][] tokenAmounts)
+  function nftTvls() public returns (uint256[][] tokenAmounts)
 
 ```
 
@@ -712,9 +594,7 @@ Some exceptions here
 
 ```solidity
 
-  function deployVault(
-
-  ) external returns (contract IVault)
+  function deployVault(contract IVaultGovernance vaultGovernance, bytes options) external returns (contract IVault)
 
 ```
 
@@ -724,9 +604,7 @@ Some exceptions here
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory goveranceFactory, bool permissionless, contract IProtocolGovernance governance, contract INonfungiblePositionManager uniV3PositionManager) public
 
 ```
 
@@ -734,9 +612,7 @@ Some exceptions here
 
 ```solidity
 
-  function positionManager(
-
-  ) external returns (contract INonfungiblePositionManager)
+  function positionManager() external returns (contract INonfungiblePositionManager)
 
 ```
 
@@ -746,9 +622,7 @@ Some exceptions here
 
 ```solidity
 
-  function vaultGovernance(
-
-  ) external returns (contract IVaultGovernance)
+  function vaultGovernance() external returns (contract IVaultGovernance)
 
 ```
 
@@ -758,9 +632,7 @@ Some exceptions here
 
 ```solidity
 
-  function tvl(
-
-  ) public returns (uint256[] tokenAmounts)
+  function tvl() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -768,9 +640,7 @@ Some exceptions here
 
 ```solidity
 
-  function earnings(
-
-  ) public returns (uint256[] tokenAmounts)
+  function earnings() public returns (uint256[] tokenAmounts)
 
 ```
 
@@ -778,9 +648,7 @@ Some exceptions here
 
 ```solidity
 
-  function push(
-
-  ) public returns (uint256[] actualTokenAmounts)
+  function push(address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) public returns (uint256[] actualTokenAmounts)
 
 ```
 
@@ -790,9 +658,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function transferAndPush(
-
-  ) external returns (uint256[] actualTokenAmounts)
+  function transferAndPush(address from, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 
 ```
 
@@ -800,9 +666,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pull(
-
-  ) external returns (uint256[] actualTokenAmounts)
+  function pull(address to, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 
 ```
 
@@ -810,9 +674,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function collectEarnings(
-
-  ) external returns (uint256[] collectedEarnings)
+  function collectEarnings(address to, bytes options) external returns (uint256[] collectedEarnings)
 
 ```
 
@@ -820,9 +682,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function reclaimTokens(
-
-  ) external
+  function reclaimTokens(address to, address[] tokens) external
 
 ```
 
@@ -832,9 +692,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function claimRewards(
-
-  ) external
+  function claimRewards(address from, bytes data) external
 
 ```
 
@@ -844,9 +702,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(address[] tokens, contract IVaultManager manager, address treasury, address admin) public
 
 ```
 
@@ -854,9 +710,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function isProtocolAdmin(
-
-  ) public returns (bool)
+  function isProtocolAdmin() public returns (bool)
 
 ```
 
@@ -866,9 +720,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultTokens(
-
-  ) public returns (address[])
+  function vaultTokens() public returns (address[])
 
 ```
 
@@ -876,9 +728,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function isVaultToken(
-
-  ) public returns (bool)
+  function isVaultToken(address token) public returns (bool)
 
 ```
 
@@ -886,9 +736,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultManager(
-
-  ) public returns (contract IVaultManager)
+  function vaultManager() public returns (contract IVaultManager)
 
 ```
 
@@ -896,9 +744,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingVaultManager(
-
-  ) external returns (contract IVaultManager)
+  function pendingVaultManager() external returns (contract IVaultManager)
 
 ```
 
@@ -906,9 +752,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingVaultManagerTimestamp(
-
-  ) external returns (uint256)
+  function pendingVaultManagerTimestamp() external returns (uint256)
 
 ```
 
@@ -916,9 +760,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function strategyTreasury(
-
-  ) public returns (address)
+  function strategyTreasury() public returns (address)
 
 ```
 
@@ -926,9 +768,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingStrategyTreasury(
-
-  ) external returns (address)
+  function pendingStrategyTreasury() external returns (address)
 
 ```
 
@@ -936,9 +776,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingStrategyTreasuryTimestamp(
-
-  ) external returns (uint256)
+  function pendingStrategyTreasuryTimestamp() external returns (uint256)
 
 ```
 
@@ -946,9 +784,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingVaultManager(
-
-  ) external
+  function setPendingVaultManager(contract IVaultManager manager) external
 
 ```
 
@@ -958,9 +794,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitVaultManager(
-
-  ) external
+  function commitVaultManager() external
 
 ```
 
@@ -968,9 +802,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingStrategyTreasury(
-
-  ) external
+  function setPendingStrategyTreasury(address treasury) external
 
 ```
 
@@ -980,9 +812,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitStrategyTreasury(
-
-  ) external
+  function commitStrategyTreasury() external
 
 ```
 
@@ -992,9 +822,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory governanceFactory, bool permissionless, contract IProtocolGovernance protocolGovernance) public
 
 ```
 
@@ -1002,9 +830,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function nftForVault(
-
-  ) external returns (uint256)
+  function nftForVault(address vault) external returns (uint256)
 
 ```
 
@@ -1012,9 +838,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultForNft(
-
-  ) public returns (address)
+  function vaultForNft(uint256 nft) public returns (address)
 
 ```
 
@@ -1022,9 +846,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function createVault(
-
-  ) external returns (contract IVaultGovernance vaultGovernance, contract IVault vault, uint256 nft)
+  function createVault(address[] tokens, address strategyTreasury, address admin, bytes options) external returns (contract IVaultGovernance vaultGovernance, contract IVault vault, uint256 nft)
 
 ```
 
@@ -1032,9 +854,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function supportsInterface(
-
-  ) public returns (bool)
+  function supportsInterface(bytes4 interfaceId) public returns (bool)
 
 ```
 
@@ -1044,9 +864,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function constructor(
-
-  ) public
+  function constructor(bool permissionless, contract IProtocolGovernance protocolGovernance, contract IVaultFactory factory, contract IVaultGovernanceFactory governanceFactory) public
 
 ```
 
@@ -1054,9 +872,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function governanceParams(
-
-  ) public returns (struct IVaultManagerGovernance.GovernanceParams)
+  function governanceParams() public returns (struct IVaultManagerGovernance.GovernanceParams)
 
 ```
 
@@ -1066,9 +882,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingGovernanceParams(
-
-  ) external returns (struct IVaultManagerGovernance.GovernanceParams)
+  function pendingGovernanceParams() external returns (struct IVaultManagerGovernance.GovernanceParams)
 
 ```
 
@@ -1076,9 +890,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingGovernanceParamsTimestamp(
-
-  ) external returns (uint256)
+  function pendingGovernanceParamsTimestamp() external returns (uint256)
 
 ```
 
@@ -1086,9 +898,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingGovernanceParams(
-
-  ) external
+  function setPendingGovernanceParams(struct IVaultManagerGovernance.GovernanceParams newGovernanceParams) external
 
 ```
 
@@ -1098,9 +908,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitGovernanceParams(
-
-  ) external
+  function commitGovernanceParams() external
 
 ```
 
@@ -1110,9 +918,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function lendingPool(
-
-  ) external returns (contract ILendingPool)
+  function lendingPool() external returns (contract ILendingPool)
 
 ```
 
@@ -1122,9 +928,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function isAdmin(
-
-  ) external returns (bool)
+  function isAdmin() external returns (bool)
 
 ```
 
@@ -1134,9 +938,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function hasVault(
-
-  ) external returns (bool)
+  function hasVault(address vault) external returns (bool)
 
 ```
 
@@ -1144,9 +946,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultsTvl(
-
-  ) external returns (uint256[][] tokenAmounts)
+  function vaultsTvl() external returns (uint256[][] tokenAmounts)
 
 ```
 
@@ -1154,9 +954,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultTvl(
-
-  ) external returns (uint256[])
+  function vaultTvl(uint256 vaultNum) external returns (uint256[])
 
 ```
 
@@ -1164,9 +962,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultEarnings(
-
-  ) external returns (uint256[])
+  function vaultEarnings(uint256 vaultNum) external returns (uint256[])
 
 ```
 
@@ -1176,9 +972,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultOwnerNft(
-
-  ) external returns (uint256)
+  function vaultOwnerNft(uint256 nft) external returns (uint256)
 
 ```
 
@@ -1186,9 +980,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultOwner(
-
-  ) external returns (address)
+  function vaultOwner(uint256 nft) external returns (address)
 
 ```
 
@@ -1198,9 +990,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function governanceParams(
-
-  ) external returns (struct ILpIssuerGovernance.GovernanceParams)
+  function governanceParams() external returns (struct ILpIssuerGovernance.GovernanceParams)
 
 ```
 
@@ -1208,9 +998,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingGovernanceParams(
-
-  ) external returns (struct ILpIssuerGovernance.GovernanceParams)
+  function pendingGovernanceParams() external returns (struct ILpIssuerGovernance.GovernanceParams)
 
 ```
 
@@ -1218,9 +1006,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingGovernanceParamsTimestamp(
-
-  ) external returns (uint256)
+  function pendingGovernanceParamsTimestamp() external returns (uint256)
 
 ```
 
@@ -1228,9 +1014,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingGovernanceParams(
-
-  ) external
+  function setPendingGovernanceParams(struct ILpIssuerGovernance.GovernanceParams newParams) external
 
 ```
 
@@ -1238,9 +1022,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitGovernanceParams(
-
-  ) external
+  function commitGovernanceParams() external
 
 ```
 
@@ -1272,9 +1054,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function claimAllowlist(
-
-  ) external returns (address[])
+  function claimAllowlist() external returns (address[])
 
 ```
 
@@ -1282,9 +1062,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingClaimAllowlistAdd(
-
-  ) external returns (address[])
+  function pendingClaimAllowlistAdd() external returns (address[])
 
 ```
 
@@ -1292,9 +1070,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function isAllowedToClaim(
-
-  ) external returns (bool)
+  function isAllowedToClaim(address addr) external returns (bool)
 
 ```
 
@@ -1302,9 +1078,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function maxTokensPerVault(
-
-  ) external returns (uint256)
+  function maxTokensPerVault() external returns (uint256)
 
 ```
 
@@ -1312,9 +1086,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function governanceDelay(
-
-  ) external returns (uint256)
+  function governanceDelay() external returns (uint256)
 
 ```
 
@@ -1322,9 +1094,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function strategyPerformanceFee(
-
-  ) external returns (uint256)
+  function strategyPerformanceFee() external returns (uint256)
 
 ```
 
@@ -1332,9 +1102,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function protocolPerformanceFee(
-
-  ) external returns (uint256)
+  function protocolPerformanceFee() external returns (uint256)
 
 ```
 
@@ -1342,9 +1110,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function protocolExitFee(
-
-  ) external returns (uint256)
+  function protocolExitFee() external returns (uint256)
 
 ```
 
@@ -1352,9 +1118,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function protocolTreasury(
-
-  ) external returns (address)
+  function protocolTreasury() external returns (address)
 
 ```
 
@@ -1362,9 +1126,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function gatewayVaultManager(
-
-  ) external returns (contract IGatewayVaultManager)
+  function gatewayVaultManager() external returns (contract IGatewayVaultManager)
 
 ```
 
@@ -1372,9 +1134,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingParams(
-
-  ) external
+  function setPendingParams(struct IProtocolGovernance.Params newParams) external
 
 ```
 
@@ -1384,9 +1144,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitParams(
-
-  ) external
+  function commitParams() external
 
 ```
 
@@ -1398,9 +1156,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function positionManager(
-
-  ) external returns (contract INonfungiblePositionManager)
+  function positionManager() external returns (contract INonfungiblePositionManager)
 
 ```
 
@@ -1410,9 +1166,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultGovernance(
-
-  ) external returns (contract IVaultGovernance)
+  function vaultGovernance() external returns (contract IVaultGovernance)
 
 ```
 
@@ -1420,9 +1174,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function tvl(
-
-  ) external returns (uint256[] tokenAmounts)
+  function tvl() external returns (uint256[] tokenAmounts)
 
 ```
 
@@ -1430,9 +1182,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function earnings(
-
-  ) external returns (uint256[] tokenAmounts)
+  function earnings() external returns (uint256[] tokenAmounts)
 
 ```
 
@@ -1440,9 +1190,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function push(
-
-  ) external returns (uint256[] actualTokenAmounts)
+  function push(address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 
 ```
 
@@ -1450,9 +1198,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function transferAndPush(
-
-  ) external returns (uint256[] actualTokenAmounts)
+  function transferAndPush(address from, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 
 ```
 
@@ -1460,9 +1206,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pull(
-
-  ) external returns (uint256[] actualTokenAmounts)
+  function pull(address to, address[] tokens, uint256[] tokenAmounts, bool optimized, bytes options) external returns (uint256[] actualTokenAmounts)
 
 ```
 
@@ -1470,9 +1214,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function collectEarnings(
-
-  ) external returns (uint256[] collectedEarnings)
+  function collectEarnings(address to, bytes options) external returns (uint256[] collectedEarnings)
 
 ```
 
@@ -1480,9 +1222,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function reclaimTokens(
-
-  ) external
+  function reclaimTokens(address to, address[] tokens) external
 
 ```
 
@@ -1534,9 +1274,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function deployVault(
-
-  ) external returns (contract IVault vault)
+  function deployVault(contract IVaultGovernance vaultGovernance, bytes options) external returns (contract IVault vault)
 
 ```
 
@@ -1546,9 +1284,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function isProtocolAdmin(
-
-  ) external returns (bool)
+  function isProtocolAdmin() external returns (bool)
 
 ```
 
@@ -1556,9 +1292,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultTokens(
-
-  ) external returns (address[])
+  function vaultTokens() external returns (address[])
 
 ```
 
@@ -1566,9 +1300,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function isVaultToken(
-
-  ) external returns (bool)
+  function isVaultToken(address token) external returns (bool)
 
 ```
 
@@ -1576,9 +1308,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultManager(
-
-  ) external returns (contract IVaultManager)
+  function vaultManager() external returns (contract IVaultManager)
 
 ```
 
@@ -1586,9 +1316,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingVaultManager(
-
-  ) external returns (contract IVaultManager)
+  function pendingVaultManager() external returns (contract IVaultManager)
 
 ```
 
@@ -1596,9 +1324,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingVaultManagerTimestamp(
-
-  ) external returns (uint256)
+  function pendingVaultManagerTimestamp() external returns (uint256)
 
 ```
 
@@ -1606,9 +1332,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingVaultManager(
-
-  ) external
+  function setPendingVaultManager(contract IVaultManager newManager) external
 
 ```
 
@@ -1616,9 +1340,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitVaultManager(
-
-  ) external
+  function commitVaultManager() external
 
 ```
 
@@ -1626,9 +1348,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function strategyTreasury(
-
-  ) external returns (address)
+  function strategyTreasury() external returns (address)
 
 ```
 
@@ -1636,9 +1356,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingStrategyTreasury(
-
-  ) external returns (address)
+  function pendingStrategyTreasury() external returns (address)
 
 ```
 
@@ -1646,9 +1364,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingStrategyTreasuryTimestamp(
-
-  ) external returns (uint256)
+  function pendingStrategyTreasuryTimestamp() external returns (uint256)
 
 ```
 
@@ -1656,9 +1372,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingStrategyTreasury(
-
-  ) external
+  function setPendingStrategyTreasury(address newTreasury) external
 
 ```
 
@@ -1666,9 +1380,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitStrategyTreasury(
-
-  ) external
+  function commitStrategyTreasury() external
 
 ```
 
@@ -1720,9 +1432,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function deployVaultGovernance(
-
-  ) external returns (contract IVaultGovernance vaultGovernance)
+  function deployVaultGovernance(address[] tokens, contract IVaultManager manager, address treasury, address admin) external returns (contract IVaultGovernance vaultGovernance)
 
 ```
 
@@ -1732,9 +1442,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function nftForVault(
-
-  ) external returns (uint256)
+  function nftForVault(address vault) external returns (uint256)
 
 ```
 
@@ -1742,9 +1450,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function vaultForNft(
-
-  ) external returns (address)
+  function vaultForNft(uint256 nft) external returns (address)
 
 ```
 
@@ -1752,9 +1458,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function createVault(
-
-  ) external returns (contract IVaultGovernance vaultGovernance, contract IVault vault, uint256 nft)
+  function createVault(address[] tokens, address strategyTreasury, address admin, bytes options) external returns (contract IVaultGovernance vaultGovernance, contract IVault vault, uint256 nft)
 
 ```
 
@@ -1776,9 +1480,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function governanceParams(
-
-  ) external returns (struct IVaultManagerGovernance.GovernanceParams)
+  function governanceParams() external returns (struct IVaultManagerGovernance.GovernanceParams)
 
 ```
 
@@ -1786,9 +1488,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingGovernanceParams(
-
-  ) external returns (struct IVaultManagerGovernance.GovernanceParams)
+  function pendingGovernanceParams() external returns (struct IVaultManagerGovernance.GovernanceParams)
 
 ```
 
@@ -1796,9 +1496,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function pendingGovernanceParamsTimestamp(
-
-  ) external returns (uint256)
+  function pendingGovernanceParamsTimestamp() external returns (uint256)
 
 ```
 
@@ -1806,9 +1504,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function setPendingGovernanceParams(
-
-  ) external
+  function setPendingGovernanceParams(struct IVaultManagerGovernance.GovernanceParams newParams) external
 
 ```
 
@@ -1816,9 +1512,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function commitGovernanceParams(
-
-  ) external
+  function commitGovernanceParams() external
 
 ```
 
@@ -1850,17 +1544,7 @@ tokens are used from contract balance
 
 ```solidity
 
-  function deposit(
-
-    address asset,
-
-    uint256 amount,
-
-    address onBehalfOf,
-
-    uint16 referralCode
-
-  ) external
+  function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external
 
 ```
 
@@ -1892,15 +1576,7 @@ Deposits an `amount` of underlying asset into the reserve, receiving in return o
 
 ```solidity
 
-  function withdraw(
-
-    address asset,
-
-    uint256 amount,
-
-    address to
-
-  ) external returns (uint256)
+  function withdraw(address asset, uint256 amount, address to) external returns (uint256)
 
 ```
 
@@ -1938,19 +1614,7 @@ E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100
 
 ```solidity
 
-  function borrow(
-
-    address asset,
-
-    uint256 amount,
-
-    uint256 interestRateMode,
-
-    uint16 referralCode,
-
-    address onBehalfOf
-
-  ) external
+  function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf) external
 
 ```
 
@@ -1990,17 +1654,7 @@ if he has been given credit delegation allowance
 
 ```solidity
 
-  function repay(
-
-    address asset,
-
-    uint256 amount,
-
-    uint256 rateMode,
-
-    address onBehalfOf
-
-  ) external returns (uint256)
+  function repay(address asset, uint256 amount, uint256 rateMode, address onBehalfOf) external returns (uint256)
 
 ```
 
@@ -2040,13 +1694,7 @@ other borrower whose debt should be removed
 
 ```solidity
 
-  function swapBorrowRateMode(
-
-    address asset,
-
-    uint256 rateMode
-
-  ) external
+  function swapBorrowRateMode(address asset, uint256 rateMode) external
 
 ```
 
@@ -2066,13 +1714,7 @@ Allows a borrower to swap his debt between stable and variable mode, or vicevers
 
 ```solidity
 
-  function rebalanceStableBorrowRate(
-
-    address asset,
-
-    address user
-
-  ) external
+  function rebalanceStableBorrowRate(address asset, address user) external
 
 ```
 
@@ -2100,13 +1742,7 @@ Rebalances the stable interest rate of a user to the current stable rate defined
 
 ```solidity
 
-  function setUserUseReserveAsCollateral(
-
-    address asset,
-
-    bool useAsCollateral
-
-  ) external
+  function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external
 
 ```
 
@@ -2126,19 +1762,7 @@ Allows depositors to enable/disable a specific deposited asset as collateral
 
 ```solidity
 
-  function liquidationCall(
-
-    address collateralAsset,
-
-    address debtAsset,
-
-    address user,
-
-    uint256 debtToCover,
-
-    bool receiveAToken
-
-  ) external
+  function liquidationCall(address collateralAsset, address debtAsset, address user, uint256 debtToCover, bool receiveAToken) external
 
 ```
 
@@ -2170,23 +1794,7 @@ to receive the underlying collateral asset directly
 
 ```solidity
 
-  function flashLoan(
-
-    address receiverAddress,
-
-    address[] assets,
-
-    uint256[] amounts,
-
-    uint256[] modes,
-
-    address onBehalfOf,
-
-    bytes params,
-
-    uint16 referralCode
-
-  ) external
+  function flashLoan(address receiverAddress, address[] assets, uint256[] amounts, uint256[] modes, address onBehalfOf, bytes params, uint16 referralCode) external
 
 ```
 
@@ -2230,11 +1838,7 @@ For further details please visit https://developers.aave.com
 
 ```solidity
 
-  function getUserAccountData(
-
-    address user
-
-  ) external returns (uint256 totalCollateralETH, uint256 totalDebtETH, uint256 availableBorrowsETH, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor)
+  function getUserAccountData(address user) external returns (uint256 totalCollateralETH, uint256 totalDebtETH, uint256 availableBorrowsETH, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor)
 
 ```
 
@@ -2270,9 +1874,7 @@ Returns the user account data across all the reserves
 
 ```solidity
 
-  function initReserve(
-
-  ) external
+  function initReserve(address reserve, address aTokenAddress, address stableDebtAddress, address variableDebtAddress, address interestRateStrategyAddress) external
 
 ```
 
@@ -2280,9 +1882,7 @@ Returns the user account data across all the reserves
 
 ```solidity
 
-  function setReserveInterestRateStrategyAddress(
-
-  ) external
+  function setReserveInterestRateStrategyAddress(address reserve, address rateStrategyAddress) external
 
 ```
 
@@ -2290,9 +1890,7 @@ Returns the user account data across all the reserves
 
 ```solidity
 
-  function setConfiguration(
-
-  ) external
+  function setConfiguration(address reserve, uint256 configuration) external
 
 ```
 
@@ -2300,11 +1898,7 @@ Returns the user account data across all the reserves
 
 ```solidity
 
-  function getConfiguration(
-
-    address asset
-
-  ) external returns (struct DataTypes.ReserveConfigurationMap)
+  function getConfiguration(address asset) external returns (struct DataTypes.ReserveConfigurationMap)
 
 ```
 
@@ -2330,11 +1924,7 @@ Returns the configuration of the reserve
 
 ```solidity
 
-  function getUserConfiguration(
-
-    address user
-
-  ) external returns (struct DataTypes.UserConfigurationMap)
+  function getUserConfiguration(address user) external returns (struct DataTypes.UserConfigurationMap)
 
 ```
 
@@ -2360,11 +1950,7 @@ Returns the configuration of the user across all the reserves
 
 ```solidity
 
-  function getReserveNormalizedIncome(
-
-    address asset
-
-  ) external returns (uint256)
+  function getReserveNormalizedIncome(address asset) external returns (uint256)
 
 ```
 
@@ -2390,11 +1976,7 @@ Returns the normalized income normalized income of the reserve
 
 ```solidity
 
-  function getReserveNormalizedVariableDebt(
-
-    address asset
-
-  ) external returns (uint256)
+  function getReserveNormalizedVariableDebt(address asset) external returns (uint256)
 
 ```
 
@@ -2420,11 +2002,7 @@ Returns the normalized variable debt per unit of asset
 
 ```solidity
 
-  function getReserveData(
-
-    address asset
-
-  ) external returns (struct DataTypes.ReserveData)
+  function getReserveData(address asset) external returns (struct DataTypes.ReserveData)
 
 ```
 
@@ -2450,9 +2028,7 @@ Returns the state and configuration of the reserve
 
 ```solidity
 
-  function finalizeTransfer(
-
-  ) external
+  function finalizeTransfer(address asset, address from, address to, uint256 amount, uint256 balanceFromAfter, uint256 balanceToBefore) external
 
 ```
 
@@ -2460,9 +2036,7 @@ Returns the state and configuration of the reserve
 
 ```solidity
 
-  function getReservesList(
-
-  ) external returns (address[])
+  function getReservesList() external returns (address[])
 
 ```
 
@@ -2470,9 +2044,7 @@ Returns the state and configuration of the reserve
 
 ```solidity
 
-  function getAddressesProvider(
-
-  ) external returns (contract ILendingPoolAddressesProvider)
+  function getAddressesProvider() external returns (contract ILendingPoolAddressesProvider)
 
 ```
 
@@ -2480,9 +2052,7 @@ Returns the state and configuration of the reserve
 
 ```solidity
 
-  function setPause(
-
-  ) external
+  function setPause(bool val) external
 
 ```
 
@@ -2490,9 +2060,7 @@ Returns the state and configuration of the reserve
 
 ```solidity
 
-  function paused(
-
-  ) external returns (bool)
+  function paused() external returns (bool)
 
 ```
 
@@ -2938,9 +2506,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getMarketId(
-
-  ) external returns (string)
+  function getMarketId() external returns (string)
 
 ```
 
@@ -2948,9 +2514,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setMarketId(
-
-  ) external
+  function setMarketId(string marketId) external
 
 ```
 
@@ -2958,9 +2522,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setAddress(
-
-  ) external
+  function setAddress(bytes32 id, address newAddress) external
 
 ```
 
@@ -2968,9 +2530,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setAddressAsProxy(
-
-  ) external
+  function setAddressAsProxy(bytes32 id, address impl) external
 
 ```
 
@@ -2978,9 +2538,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getAddress(
-
-  ) external returns (address)
+  function getAddress(bytes32 id) external returns (address)
 
 ```
 
@@ -2988,9 +2546,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getLendingPool(
-
-  ) external returns (address)
+  function getLendingPool() external returns (address)
 
 ```
 
@@ -2998,9 +2554,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setLendingPoolImpl(
-
-  ) external
+  function setLendingPoolImpl(address pool) external
 
 ```
 
@@ -3008,9 +2562,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getLendingPoolConfigurator(
-
-  ) external returns (address)
+  function getLendingPoolConfigurator() external returns (address)
 
 ```
 
@@ -3018,9 +2570,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setLendingPoolConfiguratorImpl(
-
-  ) external
+  function setLendingPoolConfiguratorImpl(address configurator) external
 
 ```
 
@@ -3028,9 +2578,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getLendingPoolCollateralManager(
-
-  ) external returns (address)
+  function getLendingPoolCollateralManager() external returns (address)
 
 ```
 
@@ -3038,9 +2586,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setLendingPoolCollateralManager(
-
-  ) external
+  function setLendingPoolCollateralManager(address manager) external
 
 ```
 
@@ -3048,9 +2594,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getPoolAdmin(
-
-  ) external returns (address)
+  function getPoolAdmin() external returns (address)
 
 ```
 
@@ -3058,9 +2602,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setPoolAdmin(
-
-  ) external
+  function setPoolAdmin(address admin) external
 
 ```
 
@@ -3068,9 +2610,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getEmergencyAdmin(
-
-  ) external returns (address)
+  function getEmergencyAdmin() external returns (address)
 
 ```
 
@@ -3078,9 +2618,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setEmergencyAdmin(
-
-  ) external
+  function setEmergencyAdmin(address admin) external
 
 ```
 
@@ -3088,9 +2626,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getPriceOracle(
-
-  ) external returns (address)
+  function getPriceOracle() external returns (address)
 
 ```
 
@@ -3098,9 +2634,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setPriceOracle(
-
-  ) external
+  function setPriceOracle(address priceOracle) external
 
 ```
 
@@ -3108,9 +2642,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function getLendingRateOracle(
-
-  ) external returns (address)
+  function getLendingRateOracle() external returns (address)
 
 ```
 
@@ -3118,9 +2650,7 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```solidity
 
-  function setLendingRateOracle(
-
-  ) external
+  function setLendingRateOracle(address lendingRateOracle) external
 
 ```
 
@@ -3236,11 +2766,7 @@ and authorized.
 
 ```solidity
 
-  function positions(
-
-    uint256 tokenId
-
-  ) external returns (uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
+  function positions(uint256 tokenId) external returns (uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
 
 ```
 
@@ -3290,11 +2816,7 @@ Throws if the token ID is not valid.
 
 ```solidity
 
-  function mint(
-
-    struct INonfungiblePositionManager.MintParams params
-
-  ) external returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
+  function mint(struct INonfungiblePositionManager.MintParams params) external returns (uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
 
 ```
 
@@ -3330,11 +2852,7 @@ a method does not exist, i.e. the pool is assumed to be initialized.
 
 ```solidity
 
-  function increaseLiquidity(
-
-    struct INonfungiblePositionManager.IncreaseLiquidityParams params
-
-  ) external returns (uint128 liquidity, uint256 amount0, uint256 amount1)
+  function increaseLiquidity(struct INonfungiblePositionManager.IncreaseLiquidityParams params) external returns (uint128 liquidity, uint256 amount0, uint256 amount1)
 
 ```
 
@@ -3374,11 +2892,7 @@ deadline The time by which the transaction must be included to effect the change
 
 ```solidity
 
-  function decreaseLiquidity(
-
-    struct INonfungiblePositionManager.DecreaseLiquidityParams params
-
-  ) external returns (uint256 amount0, uint256 amount1)
+  function decreaseLiquidity(struct INonfungiblePositionManager.DecreaseLiquidityParams params) external returns (uint256 amount0, uint256 amount1)
 
 ```
 
@@ -3414,11 +2928,7 @@ deadline The time by which the transaction must be included to effect the change
 
 ```solidity
 
-  function collect(
-
-    struct INonfungiblePositionManager.CollectParams params
-
-  ) external returns (uint256 amount0, uint256 amount1)
+  function collect(struct INonfungiblePositionManager.CollectParams params) external returns (uint256 amount0, uint256 amount1)
 
 ```
 
@@ -3452,11 +2962,7 @@ amount1Max The maximum amount of token1 to collect
 
 ```solidity
 
-  function burn(
-
-    uint256 tokenId
-
-  ) external
+  function burn(uint256 tokenId) external
 
 ```
 
@@ -3588,9 +3094,7 @@ Functions that return immutable state of the router
 
 ```solidity
 
-  function factory(
-
-  ) external returns (address)
+  function factory() external returns (address)
 
 ```
 
@@ -3606,9 +3110,7 @@ Functions that return immutable state of the router
 
 ```solidity
 
-  function WETH9(
-
-  ) external returns (address)
+  function WETH9() external returns (address)
 
 ```
 
@@ -3628,9 +3130,7 @@ The Uniswap V3 Factory facilitates creation of Uniswap V3 pools and control over
 
 ```solidity
 
-  function owner(
-
-  ) external returns (address)
+  function owner() external returns (address)
 
 ```
 
@@ -3650,11 +3150,7 @@ Can be changed by the current owner via setOwner
 
 ```solidity
 
-  function feeAmountTickSpacing(
-
-    uint24 fee
-
-  ) external returns (int24)
+  function feeAmountTickSpacing(uint24 fee) external returns (int24)
 
 ```
 
@@ -3682,15 +3178,7 @@ A fee amount can never be removed, so this value should be hard coded or cached 
 
 ```solidity
 
-  function getPool(
-
-    address tokenA,
-
-    address tokenB,
-
-    uint24 fee
-
-  ) external returns (address pool)
+  function getPool(address tokenA, address tokenB, uint24 fee) external returns (address pool)
 
 ```
 
@@ -3722,15 +3210,7 @@ tokenA and tokenB may be passed in either token0/token1 or token1/token0 order
 
 ```solidity
 
-  function createPool(
-
-    address tokenA,
-
-    address tokenB,
-
-    uint24 fee
-
-  ) external returns (address pool)
+  function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool)
 
 ```
 
@@ -3766,11 +3246,7 @@ are invalid.
 
 ```solidity
 
-  function setOwner(
-
-    address _owner
-
-  ) external
+  function setOwner(address _owner) external
 
 ```
 
@@ -3790,13 +3266,7 @@ Must be called by the current owner
 
 ```solidity
 
-  function enableFeeAmount(
-
-    uint24 fee,
-
-    int24 tickSpacing
-
-  ) external
+  function enableFeeAmount(uint24 fee, int24 tickSpacing) external
 
 ```
 
@@ -3916,9 +3386,7 @@ per transaction
 
 ```solidity
 
-  function slot0(
-
-  ) external returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)
+  function slot0() external returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)
 
 ```
 
@@ -3958,9 +3426,7 @@ unlocked Whether the pool is currently locked to reentrancy
 
 ```solidity
 
-  function feeGrowthGlobal0X128(
-
-  ) external returns (uint256)
+  function feeGrowthGlobal0X128() external returns (uint256)
 
 ```
 
@@ -3972,9 +3438,7 @@ This value can overflow the uint256
 
 ```solidity
 
-  function feeGrowthGlobal1X128(
-
-  ) external returns (uint256)
+  function feeGrowthGlobal1X128() external returns (uint256)
 
 ```
 
@@ -3986,9 +3450,7 @@ This value can overflow the uint256
 
 ```solidity
 
-  function protocolPerformanceFees(
-
-  ) external returns (uint128 token0, uint128 token1)
+  function protocolPerformanceFees() external returns (uint128 token0, uint128 token1)
 
 ```
 
@@ -4000,9 +3462,7 @@ Protocol fees will never exceed uint128 max in either token
 
 ```solidity
 
-  function liquidity(
-
-  ) external returns (uint128)
+  function liquidity() external returns (uint128)
 
 ```
 
@@ -4014,11 +3474,7 @@ This value has no relationship to the total liquidity across all ticks
 
 ```solidity
 
-  function ticks(
-
-    int24 tick
-
-  ) external returns (uint128 liquidityGross, int128 liquidityNet, uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128, int56 tickCumulativeOutside, uint160 secondsPerLiquidityOutsideX128, uint32 secondsOutside, bool initialized)
+  function ticks(int24 tick) external returns (uint128 liquidityGross, int128 liquidityNet, uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128, int56 tickCumulativeOutside, uint160 secondsPerLiquidityOutsideX128, uint32 secondsOutside, bool initialized)
 
 ```
 
@@ -4066,9 +3522,7 @@ a specific position.
 
 ```solidity
 
-  function tickBitmap(
-
-  ) external returns (uint256)
+  function tickBitmap(int16 wordPosition) external returns (uint256)
 
 ```
 
@@ -4078,11 +3532,7 @@ Returns 256 packed tick initialized boolean values. See TickBitmap for more info
 
 ```solidity
 
-  function positions(
-
-    bytes32 key
-
-  ) external returns (uint128 _liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
+  function positions(bytes32 key) external returns (uint128 _liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
 
 ```
 
@@ -4116,11 +3566,7 @@ Returns tokensOwed1 the computed amount of token1 owed to the position as of the
 
 ```solidity
 
-  function observations(
-
-    uint256 index
-
-  ) external returns (uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, bool initialized)
+  function observations(uint256 index) external returns (uint32 blockTimestamp, int56 tickCumulative, uint160 secondsPerLiquidityCumulativeX128, bool initialized)
 
 ```
 
