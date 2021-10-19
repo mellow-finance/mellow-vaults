@@ -1,4 +1,3 @@
-name: Update docs
 on:
   push:
     branches:
@@ -12,37 +11,37 @@ jobs:
       - name: Checkout main
       - uses: actions/checkout@master
 
-      # - name: Use Node.js 14.x
-      #   uses: actions/setup-node@v1
-      #   with:
-      #     node-version: 14.x
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
 
-      # - name: Get yarn cache directory path
-      #   id: yarn-cache-dir-path
-      #   run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
 
-      # - name: Yarn cache
-      #   uses: actions/cache@v2
-      #   id: yarn-cache
-      #   with:
-      #     path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-      #     key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-yarn-
-      # - name: Install yarn dependencies
-      #   run: yarn
+      - name: Yarn cache
+        uses: actions/cache@v2
+        id: yarn-cache
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Install yarn dependencies
+        run: yarn
 
-      # - name: Autogen docs
-      #   run: yarn docgen
+      - name: Autogen docs
+        run: yarn docgen
 
-      # - name: Push docs to doc repo
-      #   uses: dmnemec/copy_file_to_another_repo_action@main
-      #   env:
-      #     API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-      #   with:
-      #     source_file: "docs/api.md"
-      #     destination_repo: "mellow-finance/mellow-docs"
-      #     destination_folder: "mellow-permissionless-vaults"
-      #     user_email: "ak@mellow.finance"
-      #     user_name: "alexk"
-      #     commit_message: "Updated docs for mellow permissionless vaults api"
+      - name: Push docs to doc repo
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: "docs/api.md"
+          destination_repo: "mellow-finance/mellow-docs"
+          destination_folder: "mellow-permissionless-vaults"
+          user_email: "ak@mellow.finance"
+          user_name: "alexk"
+          commit_message: "Updated docs for mellow permissionless vaults api"
