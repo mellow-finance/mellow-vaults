@@ -8,6 +8,7 @@
     "compile": "rm -rf artifacts && hardhat compile",
     "deploy:kovan": "rm -rf artifacts && hardhat --network kovan deploy",
     "deploy:mainnet": "rm -rf artifacts && hardhat --network mainnet deploy",
+    "docgen": "solidity-docgen --solc-module solc",
     "verify:kovan": "rm -rf artifacts && hardhat compile && hardhat --network kovan etherscan-verify",
     "verify:mainnet": "rm -rf artifacts && hardhat compile && hardhat --network mainnet etherscan-verify",
     "export": "hardhat export --export-all ./deployments/contracts.json",
@@ -45,6 +46,8 @@
     "@openzeppelin3/contracts": "npm:@openzeppelin/contracts@3.4.1-solc-0.7-2",
     "@types/dotenv": "^8.2.0",
     "@uniswap/v3-core": "^1.0.0",
-    "@uniswap/v3-periphery": "^1.0.0"
+    "@uniswap/v3-periphery": "^1.0.0",
+    "solc": "^0.8.9",
+    "solidity-docgen": "^0.5.16"
   }
 }
