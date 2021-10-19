@@ -38,7 +38,6 @@ jobs:
       - name: Push file
         run: |
           echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
-          ssh-add ~/.ssh/id_rsa
 
           git clone https://${{github.actor}}:${{secrets.GITHUB_TOKEN}}@github.com/mellow-finance/mellow-docs.git
 
