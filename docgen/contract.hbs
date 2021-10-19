@@ -2,9 +2,6 @@
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
 {{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
 
-{{#if ownFunctions}}
-## Functions
-{{/if}}
 {{#ownFunctions}}
 {{#if (or (eq visibility "public") (eq visibility "external"))}}
 ### {{name}}
@@ -26,7 +23,7 @@
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 {{#natspec.returns}}
-|`{{param}}`| {{#lookup ../args.types @index}}{{/lookup}} | {{{description}}}{{/natspec.returns}}
+|`{{param}}`| {{#lookup ../outputs.types @index}}{{/lookup}} | {{{description}}}{{/natspec.returns}}
 
 {{/if}}
 {{/if}}

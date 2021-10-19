@@ -2,7 +2,6 @@
 Vault that interfaces Aave protocol in the integration layer.
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(contract IVaultGovernance vaultGovernance) public
@@ -26,7 +25,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -40,7 +39,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### deployVault
 ```solidity
   function deployVault(contract IVaultGovernance vaultGovernance, bytes) external returns (contract IVault)
@@ -53,7 +51,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory governanceFactory, bool permissionless, contract IProtocolGovernance governance, contract ILendingPool pool) public
@@ -72,7 +69,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(address admin) public
@@ -91,7 +87,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(contract IVaultGovernance vaultGovernance) public
@@ -116,7 +111,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### deployVault
 ```solidity
   function deployVault(contract IVaultGovernance vaultGovernance, bytes) external returns (contract IVault)
@@ -129,7 +123,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(contract IVaultGovernance vaultGovernance, address[] vaults) public
@@ -195,7 +188,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(address[] tokens, contract IVaultManager manager, address treasury, address admin, address[] vaults, address[] redirects_, uint256[] limits_) public
@@ -249,7 +241,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory goveranceFactory, bool permissionless, contract IProtocolGovernance governance) public
@@ -274,7 +265,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(string name_, string symbol_, contract IVault gatewayVault, contract IProtocolGovernance protocolGovernance, uint256 limitPerAddress, address admin) public
@@ -330,7 +320,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(struct ILpIssuerGovernance.GovernanceParams params) public
@@ -373,7 +362,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(address admin, struct IProtocolGovernance.Params _params) public
@@ -476,7 +464,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(contract IVaultGovernance vaultGovernance, uint24 fee) public
@@ -519,7 +506,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### deployVault
 ```solidity
   function deployVault(contract IVaultGovernance vaultGovernance, bytes options) external returns (contract IVault)
@@ -532,7 +518,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory goveranceFactory, bool permissionless, contract IProtocolGovernance governance, contract INonfungiblePositionManager uniV3PositionManager) public
@@ -551,7 +536,6 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 
 
 
-## Functions
 ### vaultGovernance
 ```solidity
   function vaultGovernance() external returns (contract IVaultGovernance)
@@ -562,7 +546,7 @@ Address of the Vault Governance for this contract
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`Address`|  | of the Vault Governance for this contract
+|`Address`| contract IVaultGovernance | of the Vault Governance for this contract
 
 ### tvl
 ```solidity
@@ -575,7 +559,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -588,7 +572,7 @@ Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### push
 ```solidity
@@ -617,7 +601,7 @@ For the exact bytes structure see concrete vault descriptions.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| address[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### transferAndPush
 ```solidity
@@ -641,7 +625,7 @@ For the exact bytes structure see concrete vault descriptions.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| address | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### pull
 ```solidity
@@ -673,7 +657,7 @@ For the exact bytes structure see concrete vault descriptions.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| address | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
 
 ### collectEarnings
 ```solidity
@@ -700,7 +684,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(address[] tokens, contract IVaultManager manager, address treasury, address admin) public
@@ -791,7 +774,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(string name, string symbol, contract IVaultFactory factory, contract IVaultGovernanceFactory governanceFactory, bool permissionless, contract IProtocolGovernance protocolGovernance) public
@@ -828,7 +810,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### constructor
 ```solidity
   function constructor(bool permissionless, contract IProtocolGovernance protocolGovernance, contract IVaultFactory factory, contract IVaultGovernanceFactory governanceFactory) public
@@ -871,7 +852,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### lendingPool
 ```solidity
   function lendingPool() external returns (contract ILendingPool)
@@ -884,7 +864,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### isAdmin
 ```solidity
   function isAdmin() external returns (bool)
@@ -897,7 +876,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### hasVault
 ```solidity
   function hasVault(address vault) external returns (bool)
@@ -928,7 +906,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### vaultOwnerNft
 ```solidity
   function vaultOwnerNft(uint256 nft) external returns (uint256)
@@ -947,7 +924,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### governanceParams
 ```solidity
   function governanceParams() external returns (struct ILpIssuerGovernance.GovernanceParams)
@@ -1001,7 +977,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### claimAllowlist
 ```solidity
   function claimAllowlist() external returns (address[])
@@ -1080,7 +1055,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### positionManager
 ```solidity
   function positionManager() external returns (contract INonfungiblePositionManager)
@@ -1093,7 +1067,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### vaultGovernance
 ```solidity
   function vaultGovernance() external returns (contract IVaultGovernance)
@@ -1104,7 +1077,7 @@ Address of the Vault Governance for this contract
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`Address`|  | of the Vault Governance for this contract
+|`Address`| contract IVaultGovernance | of the Vault Governance for this contract
 
 ### tvl
 ```solidity
@@ -1117,7 +1090,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -1130,7 +1103,7 @@ Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`|  | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### push
 ```solidity
@@ -1159,7 +1132,7 @@ For the exact bytes structure see concrete vault descriptions.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| address[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### transferAndPush
 ```solidity
@@ -1183,7 +1156,7 @@ For the exact bytes structure see concrete vault descriptions.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| address | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### pull
 ```solidity
@@ -1215,7 +1188,7 @@ For the exact bytes structure see concrete vault descriptions.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| address | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
 
 ### collectEarnings
 ```solidity
@@ -1274,7 +1247,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### deployVault
 ```solidity
   function deployVault(contract IVaultGovernance vaultGovernance, bytes options) external returns (contract IVault vault)
@@ -1287,7 +1259,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### isProtocolAdmin
 ```solidity
   function isProtocolAdmin() external returns (bool)
@@ -1405,7 +1376,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### deployVaultGovernance
 ```solidity
   function deployVaultGovernance(address[] tokens, contract IVaultManager manager, address treasury, address admin) external returns (contract IVaultGovernance vaultGovernance)
@@ -1418,7 +1388,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### nftForVault
 ```solidity
   function nftForVault(address vault) external returns (uint256)
@@ -1452,7 +1421,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### governanceParams
 ```solidity
   function governanceParams() external returns (struct IVaultManagerGovernance.GovernanceParams)
@@ -1512,7 +1480,6 @@ For the exact bytes structure see concrete vault descriptions.
 
 
 
-## Functions
 ### deposit
 ```solidity
   function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external
@@ -1555,7 +1522,7 @@ E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | final amount withdrawn
+|`The`| uint256 | final amount withdrawn
 
 
 ### borrow
@@ -1605,7 +1572,7 @@ other borrower whose debt should be removed
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | final amount repaid
+|`The`| uint256 | final amount repaid
 
 
 ### swapBorrowRateMode
@@ -1716,12 +1683,12 @@ For further details please visit https://developers.aave.com
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`totalCollateralETH`| address | the total collateral in ETH of the user
-|`totalDebtETH`|  | the total debt in ETH of the user
-|`availableBorrowsETH`|  | the borrowing power left of the user
-|`currentLiquidationThreshold`|  | the liquidation threshold of the user
-|`ltv`|  | the loan to value of the user
-|`healthFactor`|  | the current health factor of the user
+|`totalCollateralETH`| uint256 | the total collateral in ETH of the user
+|`totalDebtETH`| uint256 | the total debt in ETH of the user
+|`availableBorrowsETH`| uint256 | the borrowing power left of the user
+|`currentLiquidationThreshold`| uint256 | the liquidation threshold of the user
+|`ltv`| uint256 | the loan to value of the user
+|`healthFactor`| uint256 | the current health factor of the user
 
 
 ### initReserve
@@ -1758,7 +1725,7 @@ For further details please visit https://developers.aave.com
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | configuration of the reserve
+|`The`| struct DataTypes.ReserveConfigurationMap | configuration of the reserve
 
 
 ### getUserConfiguration
@@ -1777,7 +1744,7 @@ For further details please visit https://developers.aave.com
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | configuration of the user
+|`The`| struct DataTypes.UserConfigurationMap | configuration of the user
 
 
 ### getReserveNormalizedIncome
@@ -1796,7 +1763,7 @@ For further details please visit https://developers.aave.com
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | reserve's normalized income
+|`The`| uint256 | reserve's normalized income
 
 ### getReserveNormalizedVariableDebt
 ```solidity
@@ -1814,7 +1781,7 @@ For further details please visit https://developers.aave.com
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | reserve normalized variable debt
+|`The`| uint256 | reserve normalized variable debt
 
 ### getReserveData
 ```solidity
@@ -1832,7 +1799,7 @@ For further details please visit https://developers.aave.com
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| address | state of the reserve
+|`The`| struct DataTypes.ReserveData | state of the reserve
 
 
 ### finalizeTransfer
@@ -2126,7 +2093,6 @@ gets added to the LendingPool ABI
 - Owned by the Aave Governance
 
 
-## Functions
 ### getMarketId
 ```solidity
   function getMarketId() external returns (string)
@@ -2329,7 +2295,6 @@ Wraps Uniswap V3 positions in a non-fungible token interface which allows for th
 and authorized.
 
 
-## Functions
 ### positions
 ```solidity
   function positions(uint256 tokenId) external returns (uint96 nonce, address operator, address token0, address token1, uint24 fee, int24 tickLower, int24 tickUpper, uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128, uint128 tokensOwed0, uint128 tokensOwed1)
@@ -2347,18 +2312,18 @@ Returns the position information associated with a given token ID.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`nonce`| uint256 | The nonce for permits
-|`operator`|  | The address that is approved for spending
-|`token0`|  | The address of the token0 for a specific pool
-|`token1`|  | The address of the token1 for a specific pool
-|`fee`|  | The fee associated with the pool
-|`tickLower`|  | The lower end of the tick range for the position
-|`tickUpper`|  | The higher end of the tick range for the position
-|`liquidity`|  | The liquidity of the position
-|`feeGrowthInside0LastX128`|  | The fee growth of token0 as of the last action on the individual position
-|`feeGrowthInside1LastX128`|  | The fee growth of token1 as of the last action on the individual position
-|`tokensOwed0`|  | The uncollected amount of token0 owed to the position as of the last computation
-|`tokensOwed1`|  | The uncollected amount of token1 owed to the position as of the last computation
+|`nonce`| uint96 | The nonce for permits
+|`operator`| address | The address that is approved for spending
+|`token0`| address | The address of the token0 for a specific pool
+|`token1`| address | The address of the token1 for a specific pool
+|`fee`| uint24 | The fee associated with the pool
+|`tickLower`| int24 | The lower end of the tick range for the position
+|`tickUpper`| int24 | The higher end of the tick range for the position
+|`liquidity`| uint128 | The liquidity of the position
+|`feeGrowthInside0LastX128`| uint256 | The fee growth of token0 as of the last action on the individual position
+|`feeGrowthInside1LastX128`| uint256 | The fee growth of token1 as of the last action on the individual position
+|`tokensOwed0`| uint128 | The uncollected amount of token0 owed to the position as of the last computation
+|`tokensOwed1`| uint128 | The uncollected amount of token1 owed to the position as of the last computation
 
 ### mint
 ```solidity
@@ -2378,10 +2343,10 @@ a method does not exist, i.e. the pool is assumed to be initialized.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenId`| struct INonfungiblePositionManager.MintParams | The ID of the token that represents the minted position
-|`liquidity`|  | The amount of liquidity for this position
-|`amount0`|  | The amount of token0
-|`amount1`|  | The amount of token1
+|`tokenId`| uint256 | The ID of the token that represents the minted position
+|`liquidity`| uint128 | The amount of liquidity for this position
+|`amount0`| uint256 | The amount of token0
+|`amount1`| uint256 | The amount of token1
 
 ### increaseLiquidity
 ```solidity
@@ -2404,9 +2369,9 @@ deadline The time by which the transaction must be included to effect the change
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`liquidity`| struct INonfungiblePositionManager.IncreaseLiquidityParams | The new liquidity amount as a result of the increase
-|`amount0`|  | The amount of token0 to acheive resulting liquidity
-|`amount1`|  | The amount of token1 to acheive resulting liquidity
+|`liquidity`| uint128 | The new liquidity amount as a result of the increase
+|`amount0`| uint256 | The amount of token0 to acheive resulting liquidity
+|`amount1`| uint256 | The amount of token1 to acheive resulting liquidity
 
 ### decreaseLiquidity
 ```solidity
@@ -2428,8 +2393,8 @@ deadline The time by which the transaction must be included to effect the change
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`amount0`| struct INonfungiblePositionManager.DecreaseLiquidityParams | The amount of token0 accounted to the position's tokens owed
-|`amount1`|  | The amount of token1 accounted to the position's tokens owed
+|`amount0`| uint256 | The amount of token0 accounted to the position's tokens owed
+|`amount1`| uint256 | The amount of token1 accounted to the position's tokens owed
 
 ### collect
 ```solidity
@@ -2450,8 +2415,8 @@ amount1Max The maximum amount of token1 to collect
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`amount0`| struct INonfungiblePositionManager.CollectParams | The amount of fees collected in token0
-|`amount1`|  | The amount of fees collected in token1
+|`amount0`| uint256 | The amount of fees collected in token0
+|`amount1`| uint256 | The amount of fees collected in token1
 
 ### burn
 ```solidity
@@ -2532,7 +2497,6 @@ Emitted when tokens are collected for a position NFT
 Functions that return immutable state of the router
 
 
-## Functions
 ### factory
 ```solidity
   function factory() external returns (address)
@@ -2542,7 +2506,7 @@ Functions that return immutable state of the router
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`Returns`|  | the address of the Uniswap V3 factory
+|`Returns`| address | the address of the Uniswap V3 factory
 
 ### WETH9
 ```solidity
@@ -2553,7 +2517,7 @@ Functions that return immutable state of the router
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`Returns`|  | the address of WETH9
+|`Returns`| address | the address of WETH9
 
 
 
@@ -2561,7 +2525,6 @@ Functions that return immutable state of the router
 The Uniswap V3 Factory facilitates creation of Uniswap V3 pools and control over the protocol fees
 
 
-## Functions
 ### owner
 ```solidity
   function owner() external returns (address)
@@ -2573,7 +2536,7 @@ Returns the current owner of the factory
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`|  | address of the factory owner
+|`The`| address | address of the factory owner
 
 ### feeAmountTickSpacing
 ```solidity
@@ -2592,7 +2555,7 @@ Returns the tick spacing for a given fee amount, if enabled, or 0 if not enabled
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`The`| uint24 | tick spacing
+|`The`| int24 | tick spacing
 
 ### getPool
 ```solidity
@@ -2724,7 +2687,6 @@ These methods compose the pool's state, and can change with any frequency includ
 per transaction
 
 
-## Functions
 ### slot0
 ```solidity
   function slot0() external returns (uint160 sqrtPriceX96, int24 tick, uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, uint8 feeProtocol, bool unlocked)
@@ -2736,7 +2698,7 @@ when accessed externally.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`sqrtPriceX96`|  | The current price of the pool as a sqrt(token1/token0) Q64.96 value
+|`sqrtPriceX96`| uint160 | The current price of the pool as a sqrt(token1/token0) Q64.96 value
 tick The current tick of the pool, i.e. according to the last tick transition that was run.
 This value may not always be equal to SqrtTickMath.getTickAtSqrtRatio(sqrtPriceX96) if the price is on a tick
 boundary.
@@ -2792,7 +2754,7 @@ Look up information about a specific tick in the pool
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`liquidityGross`| int24 | the total amount of position liquidity that uses the pool either as tick lower or
+|`liquidityGross`| uint128 | the total amount of position liquidity that uses the pool either as tick lower or
 tick upper,
 liquidityNet how much liquidity changes when the pool price crosses the tick,
 feeGrowthOutside0X128 the fee growth on the other side of the tick from the current tick in token0,
@@ -2827,7 +2789,7 @@ Returns the information about a position by the position's key
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`_liquidity`| bytes32 | The amount of liquidity in the position,
+|`_liquidity`| uint128 | The amount of liquidity in the position,
 Returns feeGrowthInside0LastX128 fee growth of token0 inside the tick range as of the last mint/burn/poke,
 Returns feeGrowthInside1LastX128 fee growth of token1 inside the tick range as of the last mint/burn/poke,
 Returns tokensOwed0 the computed amount of token0 owed to the position as of the last mint/burn/poke,
@@ -2851,7 +2813,7 @@ ago, rather than at a specific index in the array.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`blockTimestamp`| uint256 | The timestamp of the observation,
+|`blockTimestamp`| uint32 | The timestamp of the observation,
 Returns tickCumulative the tick multiplied by seconds elapsed for the life of the pool as of the observation timestamp,
 Returns secondsPerLiquidityCumulativeX128 the seconds per in range liquidity for the life of the pool as of the observation timestamp,
 Returns initialized whether the observation has been initialized and the values are safe to use
@@ -2862,7 +2824,6 @@ Returns initialized whether the observation has been initialized and the values 
 
 
 
-## Functions
 
 
 # FixedPoint96
@@ -2877,14 +2838,12 @@ Facilitates multiplication and division that can have overflow of an intermediat
 
 🤓 Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
 
-## Functions
 
 
 # LiquidityAmounts
 Provides functions for computing liquidity amounts from token amounts and prices
 
 
-## Functions
 
 
 # TickMath
@@ -2892,4 +2851,3 @@ Computes sqrt price for ticks of size 1.0001, i.e. sqrt(1.0001^tick) as fixed po
 prices between 2**-128 and 2**128
 
 
-## Functions
