@@ -301,6 +301,15 @@ export const deployCommonLibrary = deployments.createFixture(async (
     return library;
 });
 
+export const deployCommonLibraryTest = deployments.createFixture(async (
+    _: HardhatRuntimeEnvironment,
+) => {
+    const CommonTest: ContractFactory = await ethers.getContractFactory("CommonTest");
+    const commonTest: Contract = await CommonTest.deploy();
+    await commonTest.deployed();
+    return commonTest;
+});
+
 /**
  * @dev From scratch.
  */
