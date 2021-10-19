@@ -1,4 +1,6 @@
-Some contract details. `yo` this is markdown
+# AaveVault
+
+🧒 Vault that interfaces Aave protocol in the integration layer.
 
 ## Functions
 
@@ -10,6 +12,16 @@ Some contract details. `yo` this is markdown
 
 ```
 
+🧒 Deploy new vault
+
+#### Parameters:
+
+| Name | Type | Description                                                          |
+
+| :--- | :--- | :------------------------------------------------------------------- |
+
+|`vaultGovernance` | contract IVaultGovernance | reference to VaultGovernance for this vault
+
 ### tvl
 
 ```solidity
@@ -18,9 +30,17 @@ Some contract details. `yo` this is markdown
 
 ```
 
-tvl function
+🧒 Total value locked for this contract. This usually represents the value
 
-Some exceptions here
+this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+
+#### Return Values:
+
+| Name                           | Type          | Description                                                                  |
+
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+
+|`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
 
 ### earnings
 
@@ -29,6 +49,8 @@ Some exceptions here
   function earnings() public returns (uint256[] tokenAmounts)
 
 ```
+
+# AaveVaultFactory
 
 ## Functions
 
@@ -39,6 +61,8 @@ Some exceptions here
   function deployVault(contract IVaultGovernance vaultGovernance, bytes) external returns (contract IVault)
 
 ```
+
+# AaveVaultManager
 
 ## Functions
 
@@ -58,6 +82,8 @@ Some exceptions here
 
 ```
 
+# DefaultAccessControl
+
 ## Functions
 
 ### constructor
@@ -75,6 +101,8 @@ Some exceptions here
   function isAdmin() public returns (bool)
 
 ```
+
+# ERC20Vault
 
 ## Functions
 
@@ -102,6 +130,8 @@ Some exceptions here
 
 ```
 
+# ERC20VaultFactory
+
 ## Functions
 
 ### deployVault
@@ -111,6 +141,8 @@ Some exceptions here
   function deployVault(contract IVaultGovernance vaultGovernance, bytes) external returns (contract IVault)
 
 ```
+
+# GatewayVault
 
 ## Functions
 
@@ -192,6 +224,8 @@ Some exceptions here
 
 ```
 
+# GatewayVaultGovernance
+
 ## Functions
 
 ### constructor
@@ -256,6 +290,8 @@ Some exceptions here
 
 ```
 
+# GatewayVaultManager
+
 ## Functions
 
 ### constructor
@@ -281,6 +317,8 @@ Some exceptions here
   function vaultOwner(uint256 nft) external returns (address)
 
 ```
+
+# LpIssuer
 
 ## Functions
 
@@ -348,6 +386,8 @@ Some exceptions here
 
 ```
 
+# LpIssuerGovernance
+
 ## Functions
 
 ### constructor
@@ -366,7 +406,7 @@ Some exceptions here
 
 ```
 
--------------------  PUBLIC, VIEW  -------------------
+🧒 -------------------  PUBLIC, VIEW  -------------------
 
 ### pendingGovernanceParams
 
@@ -392,7 +432,7 @@ Some exceptions here
 
 ```
 
--------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+🧒 -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
 ### commitGovernanceParams
 
@@ -401,6 +441,8 @@ Some exceptions here
   function commitGovernanceParams() external
 
 ```
+
+# ProtocolGovernance
 
 ## Functions
 
@@ -420,7 +462,7 @@ Some exceptions here
 
 ```
 
--------------------  PUBLIC, VIEW  -------------------
+🧒 -------------------  PUBLIC, VIEW  -------------------
 
 ### pendingClaimAllowlistAdd
 
@@ -502,7 +544,7 @@ Some exceptions here
 
 ```
 
--------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+🧒 -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
 ### removeFromClaimAllowlist
 
@@ -528,7 +570,7 @@ Some exceptions here
 
 ```
 
--------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+🧒 -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
 ### commitParams
 
@@ -537,6 +579,8 @@ Some exceptions here
   function commitParams() external
 
 ```
+
+# UniV3Vault
 
 ## Functions
 
@@ -588,6 +632,8 @@ Some exceptions here
 
 ```
 
+# UniV3VaultFactory
+
 ## Functions
 
 ### deployVault
@@ -597,6 +643,8 @@ Some exceptions here
   function deployVault(contract IVaultGovernance vaultGovernance, bytes options) external returns (contract IVault)
 
 ```
+
+# UniV3VaultManager
 
 ## Functions
 
@@ -616,6 +664,8 @@ Some exceptions here
 
 ```
 
+# Vault
+
 ## Functions
 
 ### vaultGovernance
@@ -626,7 +676,15 @@ Some exceptions here
 
 ```
 
--------------------  PUBLIC, VIEW  -------------------
+🧒 Address of the Vault Governance for this contract
+
+#### Return Values:
+
+| Name                           | Type          | Description                                                                  |
+
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+
+|`Address`|  | of the Vault Governance for this contract
 
 ### tvl
 
@@ -635,6 +693,18 @@ Some exceptions here
   function tvl() public returns (uint256[] tokenAmounts)
 
 ```
+
+🧒 Total value locked for this contract. This usually represents the value
+
+this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+
+#### Return Values:
+
+| Name                           | Type          | Description                                                                  |
+
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+
+|`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
 
 ### earnings
 
@@ -652,7 +722,7 @@ Some exceptions here
 
 ```
 
-tokens are used from contract balance
+🧒 tokens are used from contract balance
 
 ### transferAndPush
 
@@ -686,7 +756,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+🧒 -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
 
 ### claimRewards
 
@@ -695,6 +765,8 @@ tokens are used from contract balance
   function claimRewards(address from, bytes data) external
 
 ```
+
+# VaultGovernance
 
 ## Functions
 
@@ -714,7 +786,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, VIEW  -------------------
+🧒 -------------------  PUBLIC, VIEW  -------------------
 
 ### vaultTokens
 
@@ -788,7 +860,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
+🧒 -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
 
 ### commitVaultManager
 
@@ -806,7 +878,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, MUTATING, ADMIN  -------------------
+🧒 -------------------  PUBLIC, MUTATING, ADMIN  -------------------
 
 ### commitStrategyTreasury
 
@@ -815,6 +887,8 @@ tokens are used from contract balance
   function commitStrategyTreasury() external
 
 ```
+
+# VaultManager
 
 ## Functions
 
@@ -858,6 +932,8 @@ tokens are used from contract balance
 
 ```
 
+# VaultManagerGovernance
+
 ## Functions
 
 ### constructor
@@ -876,7 +952,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, VIEW  -------------------
+🧒 -------------------  PUBLIC, VIEW  -------------------
 
 ### pendingGovernanceParams
 
@@ -902,7 +978,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+🧒 -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
 ### commitGovernanceParams
 
@@ -911,6 +987,8 @@ tokens are used from contract balance
   function commitGovernanceParams() external
 
 ```
+
+# IAaveVaultManager
 
 ## Functions
 
@@ -922,6 +1000,8 @@ tokens are used from contract balance
 
 ```
 
+# IDefaultAccessControl
+
 ## Functions
 
 ### isAdmin
@@ -931,6 +1011,8 @@ tokens are used from contract balance
   function isAdmin() external returns (bool)
 
 ```
+
+# IGatewayVault
 
 ## Functions
 
@@ -966,6 +1048,8 @@ tokens are used from contract balance
 
 ```
 
+# IGatewayVaultManager
+
 ## Functions
 
 ### vaultOwnerNft
@@ -983,6 +1067,8 @@ tokens are used from contract balance
   function vaultOwner(uint256 nft) external returns (address)
 
 ```
+
+# ILpIssuerGovernance
 
 ## Functions
 
@@ -1047,6 +1133,8 @@ tokens are used from contract balance
   )
 
 ```
+
+# IProtocolGovernance
 
 ## Functions
 
@@ -1138,7 +1226,7 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+🧒 -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
 ### commitParams
 
@@ -1148,7 +1236,9 @@ tokens are used from contract balance
 
 ```
 
--------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+🧒 -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
+# IUniV3VaultManager
 
 ## Functions
 
@@ -1160,6 +1250,8 @@ tokens are used from contract balance
 
 ```
 
+# IVault
+
 ## Functions
 
 ### vaultGovernance
@@ -1170,6 +1262,16 @@ tokens are used from contract balance
 
 ```
 
+🧒 Address of the Vault Governance for this contract
+
+#### Return Values:
+
+| Name                           | Type          | Description                                                                  |
+
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+
+|`Address`|  | of the Vault Governance for this contract
+
 ### tvl
 
 ```solidity
@@ -1177,6 +1279,18 @@ tokens are used from contract balance
   function tvl() external returns (uint256[] tokenAmounts)
 
 ```
+
+🧒 Total value locked for this contract. This usually represents the value
+
+this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+
+#### Return Values:
+
+| Name                           | Type          | Description                                                                  |
+
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+
+|`tokenAmounts`|  | total available balances (in the same order as vaultTokens)
 
 ### earnings
 
@@ -1268,6 +1382,8 @@ tokens are used from contract balance
 
 ```
 
+# IVaultFactory
+
 ## Functions
 
 ### deployVault
@@ -1277,6 +1393,8 @@ tokens are used from contract balance
   function deployVault(contract IVaultGovernance vaultGovernance, bytes options) external returns (contract IVault vault)
 
 ```
+
+# IVaultGovernance
 
 ## Functions
 
@@ -1426,6 +1544,8 @@ tokens are used from contract balance
 
 ```
 
+# IVaultGovernanceFactory
+
 ## Functions
 
 ### deployVaultGovernance
@@ -1435,6 +1555,8 @@ tokens are used from contract balance
   function deployVaultGovernance(address[] tokens, contract IVaultManager manager, address treasury, address admin) external returns (contract IVaultGovernance vaultGovernance)
 
 ```
+
+# IVaultManager
 
 ## Functions
 
@@ -1473,6 +1595,8 @@ tokens are used from contract balance
   )
 
 ```
+
+# IVaultManagerGovernance
 
 ## Functions
 
@@ -1538,6 +1662,10 @@ tokens are used from contract balance
 
 ```
 
+# DataTypes
+
+# ILendingPool
+
 ## Functions
 
 ### deposit
@@ -1548,7 +1676,7 @@ tokens are used from contract balance
 
 ```
 
-Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
+🤓 Deposits an `amount` of underlying asset into the reserve, receiving in return overlying aTokens.
 
 - E.g. User deposits 100 USDC and gets in return 100 aUSDC
 
@@ -1580,7 +1708,7 @@ Deposits an `amount` of underlying asset into the reserve, receiving in return o
 
 ```
 
-Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
+🤓 Withdraws an `amount` of underlying asset from the reserve, burning the equivalent aTokens owned
 
 E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100 aUSDC
 
@@ -1618,7 +1746,7 @@ E.g. User has 100 aUSDC, calls withdraw() and receives 100 USDC, burning the 100
 
 ```
 
-Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
+🤓 Allows users to borrow a specific `amount` of the reserve underlying asset, provided that the borrower
 
 already deposited enough collateral, or he was given enough allowance by a credit delegator on the
 
@@ -1658,7 +1786,7 @@ if he has been given credit delegation allowance
 
 ```
 
-Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
+🧒 Repays a borrowed `amount` on a specific reserve, burning the equivalent debt tokens owned
 
 - E.g. User repays 100 USDC, burning 100 variable/stable debt tokens of the `onBehalfOf` address
 
@@ -1698,7 +1826,7 @@ other borrower whose debt should be removed
 
 ```
 
-Allows a borrower to swap his debt between stable and variable mode, or viceversa
+🤓 Allows a borrower to swap his debt between stable and variable mode, or viceversa
 
 #### Parameters:
 
@@ -1718,7 +1846,7 @@ Allows a borrower to swap his debt between stable and variable mode, or vicevers
 
 ```
 
-Rebalances the stable interest rate of a user to the current stable rate defined on the reserve.
+🤓 Rebalances the stable interest rate of a user to the current stable rate defined on the reserve.
 
 - Users can be rebalanced if the following conditions are satisfied:
 
@@ -1746,7 +1874,7 @@ Rebalances the stable interest rate of a user to the current stable rate defined
 
 ```
 
-Allows depositors to enable/disable a specific deposited asset as collateral
+🤓 Allows depositors to enable/disable a specific deposited asset as collateral
 
 #### Parameters:
 
@@ -1766,7 +1894,7 @@ Allows depositors to enable/disable a specific deposited asset as collateral
 
 ```
 
-Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
+🤓 Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
 
 - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
 
@@ -1798,7 +1926,7 @@ to receive the underlying collateral asset directly
 
 ```
 
-Allows smartcontracts to access the liquidity of the pool within one transaction,
+🤓 Allows smartcontracts to access the liquidity of the pool within one transaction,
 
 as long as the amount taken plus a fee is returned.
 
@@ -1842,7 +1970,7 @@ For further details please visit https://developers.aave.com
 
 ```
 
-Returns the user account data across all the reserves
+🤓 Returns the user account data across all the reserves
 
 #### Parameters:
 
@@ -1902,7 +2030,7 @@ Returns the user account data across all the reserves
 
 ```
 
-Returns the configuration of the reserve
+🤓 Returns the configuration of the reserve
 
 #### Parameters:
 
@@ -1928,7 +2056,7 @@ Returns the configuration of the reserve
 
 ```
 
-Returns the configuration of the user across all the reserves
+🤓 Returns the configuration of the user across all the reserves
 
 #### Parameters:
 
@@ -1954,7 +2082,7 @@ Returns the configuration of the user across all the reserves
 
 ```
 
-Returns the normalized income normalized income of the reserve
+🤓 Returns the normalized income normalized income of the reserve
 
 #### Parameters:
 
@@ -1980,7 +2108,7 @@ Returns the normalized income normalized income of the reserve
 
 ```
 
-Returns the normalized variable debt per unit of asset
+🤓 Returns the normalized variable debt per unit of asset
 
 #### Parameters:
 
@@ -2006,7 +2134,7 @@ Returns the normalized variable debt per unit of asset
 
 ```
 
-Returns the state and configuration of the reserve
+🤓 Returns the state and configuration of the reserve
 
 #### Parameters:
 
@@ -2086,7 +2214,7 @@ Returns the state and configuration of the reserve
 
 ```
 
-Emitted on deposit()
+🤓 Emitted on deposit()
 
 #### Parameters:
 
@@ -2122,7 +2250,7 @@ Emitted on deposit()
 
 ```
 
-Emitted on withdraw()
+🤓 Emitted on withdraw()
 
 #### Parameters:
 
@@ -2162,7 +2290,7 @@ Emitted on withdraw()
 
 ```
 
-Emitted on borrow() and flashLoan() when debt needs to be opened
+🤓 Emitted on borrow() and flashLoan() when debt needs to be opened
 
 #### Parameters:
 
@@ -2204,7 +2332,7 @@ initiator of the transaction on flashLoan()
 
 ```
 
-Emitted on repay()
+🤓 Emitted on repay()
 
 #### Parameters:
 
@@ -2236,7 +2364,7 @@ Emitted on repay()
 
 ```
 
-Emitted on swapBorrowRateMode()
+🤓 Emitted on swapBorrowRateMode()
 
 #### Parameters:
 
@@ -2264,7 +2392,7 @@ Emitted on swapBorrowRateMode()
 
 ```
 
-Emitted on setUserUseReserveAsCollateral()
+🤓 Emitted on setUserUseReserveAsCollateral()
 
 #### Parameters:
 
@@ -2290,7 +2418,7 @@ Emitted on setUserUseReserveAsCollateral()
 
 ```
 
-Emitted on setUserUseReserveAsCollateral()
+🤓 Emitted on setUserUseReserveAsCollateral()
 
 #### Parameters:
 
@@ -2316,7 +2444,7 @@ Emitted on setUserUseReserveAsCollateral()
 
 ```
 
-Emitted on rebalanceStableBorrowRate()
+🤓 Emitted on rebalanceStableBorrowRate()
 
 #### Parameters:
 
@@ -2350,7 +2478,7 @@ Emitted on rebalanceStableBorrowRate()
 
 ```
 
-Emitted on flashLoan()
+🤓 Emitted on flashLoan()
 
 #### Parameters:
 
@@ -2380,7 +2508,7 @@ Emitted on flashLoan()
 
 ```
 
-Emitted when the pause is triggered.
+🤓 Emitted when the pause is triggered.
 
 ### Unpaused
 
@@ -2392,7 +2520,7 @@ Emitted when the pause is triggered.
 
 ```
 
-Emitted when the pause is lifted.
+🤓 Emitted when the pause is lifted.
 
 ### LiquidationCall
 
@@ -2418,7 +2546,7 @@ Emitted when the pause is lifted.
 
 ```
 
-Emitted when a borrower is liquidated. This event is emitted by the LendingPool via
+🤓 Emitted when a borrower is liquidated. This event is emitted by the LendingPool via
 
 LendingPoolCollateral manager using a DELEGATECALL
 
@@ -2468,7 +2596,7 @@ to receive the underlying collateral asset directly
 
 ```
 
-Emitted when the state of a reserve is updated. NOTE: This event is actually declared
+🤓 Emitted when the state of a reserve is updated. NOTE: This event is actually declared
 
 in the ReserveLogic library and emitted in the updateInterestRates() function. Since the function is internal,
 
@@ -2494,7 +2622,9 @@ gets added to the LendingPool ABI
 
 |`variableBorrowIndex`| uint256 | The new variable borrow index
 
-Main registry of addresses part of or connected to the protocol, including permissioned roles
+# ILendingPoolAddressesProvider
+
+🤓 Main registry of addresses part of or connected to the protocol, including permissioned roles
 
 - Acting also as factory of proxies and admin of those, so with right to change its implementations
 
@@ -2756,7 +2886,9 @@ Main registry of addresses part of or connected to the protocol, including permi
 
 ```
 
-Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
+# INonfungiblePositionManager
+
+🧒 Wraps Uniswap V3 positions in a non-fungible token interface which allows for them to be transferred
 
 and authorized.
 
@@ -2770,9 +2902,9 @@ and authorized.
 
 ```
 
-Returns the position information associated with a given token ID.
+🧒 Returns the position information associated with a given token ID.
 
-Throws if the token ID is not valid.
+🤓 Throws if the token ID is not valid.
 
 #### Parameters:
 
@@ -2820,9 +2952,9 @@ Throws if the token ID is not valid.
 
 ```
 
-Creates a new position wrapped in a NFT
+🧒 Creates a new position wrapped in a NFT
 
-Call this when the pool does exist and is initialized. Note that if the pool is created but not initialized
+🤓 Call this when the pool does exist and is initialized. Note that if the pool is created but not initialized
 
 a method does not exist, i.e. the pool is assumed to be initialized.
 
@@ -2856,7 +2988,7 @@ a method does not exist, i.e. the pool is assumed to be initialized.
 
 ```
 
-Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
+🧒 Increases the amount of liquidity in a position, with tokens paid by the `msg.sender`
 
 #### Parameters:
 
@@ -2896,7 +3028,7 @@ deadline The time by which the transaction must be included to effect the change
 
 ```
 
-Decreases the amount of liquidity in a position and accounts it to the position
+🧒 Decreases the amount of liquidity in a position and accounts it to the position
 
 #### Parameters:
 
@@ -2932,7 +3064,7 @@ deadline The time by which the transaction must be included to effect the change
 
 ```
 
-Collects up to a maximum amount of fees owed to a specific position to the recipient
+🧒 Collects up to a maximum amount of fees owed to a specific position to the recipient
 
 #### Parameters:
 
@@ -2966,7 +3098,7 @@ amount1Max The maximum amount of token1 to collect
 
 ```
 
-Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
+🧒 Burns a token ID, which deletes it from the NFT contract. The token must have 0 liquidity and all tokens
 
 must be collected first.
 
@@ -2998,9 +3130,9 @@ must be collected first.
 
 ```
 
-Emitted when liquidity is increased for a position NFT
+🧒 Emitted when liquidity is increased for a position NFT
 
-Also emitted when a token is minted
+🤓 Also emitted when a token is minted
 
 #### Parameters:
 
@@ -3034,7 +3166,7 @@ Also emitted when a token is minted
 
 ```
 
-Emitted when liquidity is decreased for a position NFT
+🧒 Emitted when liquidity is decreased for a position NFT
 
 #### Parameters:
 
@@ -3068,9 +3200,9 @@ Emitted when liquidity is decreased for a position NFT
 
 ```
 
-Emitted when tokens are collected for a position NFT
+🧒 Emitted when tokens are collected for a position NFT
 
-The amounts reported may not be exactly equivalent to the amounts transferred, due to rounding behavior
+🤓 The amounts reported may not be exactly equivalent to the amounts transferred, due to rounding behavior
 
 #### Parameters:
 
@@ -3086,7 +3218,9 @@ The amounts reported may not be exactly equivalent to the amounts transferred, d
 
 |`amount1`| uint256 | The amount of token1 owed to the position that was collected
 
-Functions that return immutable state of the router
+# IPeripheryImmutableState
+
+🧒 Functions that return immutable state of the router
 
 ## Functions
 
@@ -3122,7 +3256,9 @@ Functions that return immutable state of the router
 
 |`Returns`|  | the address of WETH9
 
-The Uniswap V3 Factory facilitates creation of Uniswap V3 pools and control over the protocol fees
+# IUniswapV3Factory
+
+🧒 The Uniswap V3 Factory facilitates creation of Uniswap V3 pools and control over the protocol fees
 
 ## Functions
 
@@ -3134,9 +3270,9 @@ The Uniswap V3 Factory facilitates creation of Uniswap V3 pools and control over
 
 ```
 
-Returns the current owner of the factory
+🧒 Returns the current owner of the factory
 
-Can be changed by the current owner via setOwner
+🤓 Can be changed by the current owner via setOwner
 
 #### Return Values:
 
@@ -3154,9 +3290,9 @@ Can be changed by the current owner via setOwner
 
 ```
 
-Returns the tick spacing for a given fee amount, if enabled, or 0 if not enabled
+🧒 Returns the tick spacing for a given fee amount, if enabled, or 0 if not enabled
 
-A fee amount can never be removed, so this value should be hard coded or cached in the calling context
+🤓 A fee amount can never be removed, so this value should be hard coded or cached in the calling context
 
 #### Parameters:
 
@@ -3182,9 +3318,9 @@ A fee amount can never be removed, so this value should be hard coded or cached 
 
 ```
 
-Returns the pool address for a given pair of tokens and a fee, or address 0 if it does not exist
+🧒 Returns the pool address for a given pair of tokens and a fee, or address 0 if it does not exist
 
-tokenA and tokenB may be passed in either token0/token1 or token1/token0 order
+🤓 tokenA and tokenB may be passed in either token0/token1 or token1/token0 order
 
 #### Parameters:
 
@@ -3214,9 +3350,9 @@ tokenA and tokenB may be passed in either token0/token1 or token1/token0 order
 
 ```
 
-Creates a pool for the given two tokens and fee
+🧒 Creates a pool for the given two tokens and fee
 
-tokenA and tokenB may be passed in either order: token0/token1 or token1/token0. tickSpacing is retrieved
+🤓 tokenA and tokenB may be passed in either order: token0/token1 or token1/token0. tickSpacing is retrieved
 
 from the fee. The call will revert if the pool already exists, the fee is invalid, or the token arguments
 
@@ -3250,9 +3386,9 @@ are invalid.
 
 ```
 
-Updates the owner of the factory
+🧒 Updates the owner of the factory
 
-Must be called by the current owner
+🤓 Must be called by the current owner
 
 #### Parameters:
 
@@ -3270,9 +3406,9 @@ Must be called by the current owner
 
 ```
 
-Enables a fee amount with the given tickSpacing
+🧒 Enables a fee amount with the given tickSpacing
 
-Fee amounts may never be removed once enabled
+🤓 Fee amounts may never be removed once enabled
 
 #### Parameters:
 
@@ -3300,7 +3436,7 @@ Fee amounts may never be removed once enabled
 
 ```
 
-Emitted when the owner of the factory is changed
+🧒 Emitted when the owner of the factory is changed
 
 #### Parameters:
 
@@ -3332,7 +3468,7 @@ Emitted when the owner of the factory is changed
 
 ```
 
-Emitted when a pool is created
+🧒 Emitted when a pool is created
 
 #### Parameters:
 
@@ -3364,7 +3500,7 @@ Emitted when a pool is created
 
 ```
 
-Emitted when a new fee amount is enabled for pool creation via the factory
+🧒 Emitted when a new fee amount is enabled for pool creation via the factory
 
 #### Parameters:
 
@@ -3376,7 +3512,9 @@ Emitted when a new fee amount is enabled for pool creation via the factory
 
 |`tickSpacing`| int24 | The minimum number of ticks between initialized ticks for pools created with the given fee
 
-These methods compose the pool's state, and can change with any frequency including multiple times
+# IUniswapV3PoolState
+
+🧒 These methods compose the pool's state, and can change with any frequency including multiple times
 
 per transaction
 
@@ -3390,7 +3528,7 @@ per transaction
 
 ```
 
-The 0th storage slot in the pool stores many values, and is exposed as a single method to save gas
+🧒 The 0th storage slot in the pool stores many values, and is exposed as a single method to save gas
 
 when accessed externally.
 
@@ -3430,9 +3568,9 @@ unlocked Whether the pool is currently locked to reentrancy
 
 ```
 
-The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool
+🧒 The fee growth as a Q128.128 fees of token0 collected per unit of liquidity for the entire life of the pool
 
-This value can overflow the uint256
+🤓 This value can overflow the uint256
 
 ### feeGrowthGlobal1X128
 
@@ -3442,9 +3580,9 @@ This value can overflow the uint256
 
 ```
 
-The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool
+🧒 The fee growth as a Q128.128 fees of token1 collected per unit of liquidity for the entire life of the pool
 
-This value can overflow the uint256
+🤓 This value can overflow the uint256
 
 ### protocolPerformanceFees
 
@@ -3454,9 +3592,9 @@ This value can overflow the uint256
 
 ```
 
-The amounts of token0 and token1 that are owed to the protocol
+🧒 The amounts of token0 and token1 that are owed to the protocol
 
-Protocol fees will never exceed uint128 max in either token
+🤓 Protocol fees will never exceed uint128 max in either token
 
 ### liquidity
 
@@ -3466,9 +3604,9 @@ Protocol fees will never exceed uint128 max in either token
 
 ```
 
-The currently in range liquidity available to the pool
+🧒 The currently in range liquidity available to the pool
 
-This value has no relationship to the total liquidity across all ticks
+🤓 This value has no relationship to the total liquidity across all ticks
 
 ### ticks
 
@@ -3478,7 +3616,7 @@ This value has no relationship to the total liquidity across all ticks
 
 ```
 
-Look up information about a specific tick in the pool
+🧒 Look up information about a specific tick in the pool
 
 #### Parameters:
 
@@ -3526,7 +3664,7 @@ a specific position.
 
 ```
 
-Returns 256 packed tick initialized boolean values. See TickBitmap for more information
+🧒 Returns 256 packed tick initialized boolean values. See TickBitmap for more information
 
 ### positions
 
@@ -3536,7 +3674,7 @@ Returns 256 packed tick initialized boolean values. See TickBitmap for more info
 
 ```
 
-Returns the information about a position by the position's key
+🧒 Returns the information about a position by the position's key
 
 #### Parameters:
 
@@ -3570,9 +3708,9 @@ Returns tokensOwed1 the computed amount of token1 owed to the position as of the
 
 ```
 
-Returns data about a specific observation index
+🧒 Returns data about a specific observation index
 
-You most likely want to use #observe() instead of this method to get an observation as of some amount of time
+🤓 You most likely want to use #observe() instead of this method to get an observation as of some amount of time
 
 ago, rather than at a specific index in the array.
 
@@ -3598,23 +3736,33 @@ Returns secondsPerLiquidityCumulativeX128 the seconds per in range liquidity for
 
 Returns initialized whether the observation has been initialized and the values are safe to use
 
-## Functions
-
-A library for handling binary fixed point numbers, see https://en.wikipedia.org/wiki/Q_(number_format)
-
-Used in SqrtPriceMath.sol
-
-Facilitates multiplication and division that can have overflow of an intermediate value without any loss of precision
-
-Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
+# Common
 
 ## Functions
 
-Provides functions for computing liquidity amounts from token amounts and prices
+# FixedPoint96
+
+🧒 A library for handling binary fixed point numbers, see https://en.wikipedia.org/wiki/Q_(number_format)
+
+🤓 Used in SqrtPriceMath.sol
+
+# FullMath
+
+🧒 Facilitates multiplication and division that can have overflow of an intermediate value without any loss of precision
+
+🤓 Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
 
 ## Functions
 
-Computes sqrt price for ticks of size 1.0001, i.e. sqrt(1.0001^tick) as fixed point Q64.96 numbers. Supports
+# LiquidityAmounts
+
+🧒 Provides functions for computing liquidity amounts from token amounts and prices
+
+## Functions
+
+# TickMath
+
+🧒 Computes sqrt price for ticks of size 1.0001, i.e. sqrt(1.0001^tick) as fixed point Q64.96 numbers. Supports
 
 prices between 2**-128 and 2**128
 

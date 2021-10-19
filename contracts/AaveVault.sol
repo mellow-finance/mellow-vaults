@@ -5,12 +5,13 @@ import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultManager.sol";
 import "./Vault.sol";
 
-/// @title Aave vault contracts
-/// @dev Some contract details. `yo` this is markdown
+/// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
     address[] private _aTokens;
     uint256[] private _baseBalances;
 
+    /// @notice Deploy new vault
+    /// @param vaultGovernance reference to VaultGovernance for this vault
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {
         address[] memory tokens = vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -18,8 +19,7 @@ contract AaveVault is Vault {
         }
     }
 
-    /// @notice tvl function
-    /// @dev Some exceptions here
+    /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);

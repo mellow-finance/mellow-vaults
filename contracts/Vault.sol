@@ -21,10 +21,12 @@ abstract contract Vault is IVault {
 
     /// -------------------  PUBLIC, VIEW  -------------------
 
+    /// @inheritdoc IVault
     function vaultGovernance() external view returns (IVaultGovernance) {
         return _vaultGovernance;
     }
 
+    /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory tokenAmounts);
 
     function earnings() public view virtual returns (uint256[] memory tokenAmounts);

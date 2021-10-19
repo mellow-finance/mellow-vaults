@@ -4,8 +4,13 @@ pragma solidity 0.8.9;
 import "./IVaultGovernance.sol";
 
 interface IVault {
+    /// @notice Address of the Vault Governance for this contract
+    /// @return Address of the Vault Governance for this contract
     function vaultGovernance() external view returns (IVaultGovernance);
 
+    /// @notice Total value locked for this contract. This usually represents the value
+    /// this protocol has put into other protocols, i.e. total available for withdraw balance of this contract.
+    /// @return tokenAmounts total available balances (in the same order as vaultTokens)
     function tvl() external view returns (uint256[] memory tokenAmounts);
 
     function earnings() external view returns (uint256[] memory tokenAmounts);
