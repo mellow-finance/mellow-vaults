@@ -13,8 +13,10 @@ jobs:
         uses: actions/checkout@master
 
       - name: Push file
+        env:
+          DK: ${{secrets.DOCS_DEPLOY_KEY}}
         run: |
-          echo "${{secrets.DOCS_DEPLOY_KEY}}" > ~/.ssh/id_rsa
+          echo $DK > ~/.ssh/id_rsa
           git clone https://git@github.com/mellow-finance/mellow-docs.git
 
       - name: Use Node.js 14.x
