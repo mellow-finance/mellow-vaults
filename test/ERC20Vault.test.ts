@@ -17,7 +17,7 @@ import {
     VaultGovernanceFactory,
     ProtocolGovernance
 } from "./library/Types";
-import { deployERC20VaultUniverse } from "./library/Fixtures";
+import { deployERC20VaultSystem } from "./library/Fixtures";
 import { sleepTo } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 
@@ -54,7 +54,7 @@ describe("ERC20Vault", function() {
                 vaultGovernanceFactory, 
                 protocolGovernance, 
                 nft 
-            } = await deployERC20VaultUniverse({
+            } = await deployERC20VaultSystem({
                 protocolGovernanceAdmin: protocolGovernanceAdmin,
                 treasury: await treasury.getAddress(),
                 tokensCount: 10,

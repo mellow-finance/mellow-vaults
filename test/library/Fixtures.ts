@@ -33,7 +33,9 @@ import {
     VaultGovernance_constructorArgs,
     VaultManagerGovernance_constructorArgs,
 
-    ProtocolGovernance_Params
+    ProtocolGovernance_Params,
+    VaultManagerGovernance,
+    IVaultFactory
 } from "./Types"
 
 export const deployERC20Tokens = deployments.createFixture(async (
@@ -78,11 +80,11 @@ export const deployProtocolGovernance = deployments.createFixture(async (
     };
     const initializerArgs: ProtocolGovernance_Params = options?.initializerArgs ?? {
         maxTokensPerVault: 100,
-        governanceDelay: 0,
+        governanceDelay: 1,
 
-        strategyPerformanceFee: 0,
-        protocolPerformanceFee: 0,
-        protocolExitFee: 0,
+        strategyPerformanceFee: 10**9,
+        protocolPerformanceFee: 10**9,
+        protocolExitFee: 10**9,
         protocolTreasury: ethers.constants.AddressZero,
         gatewayVaultManager: ethers.constants.AddressZero,
     };
@@ -101,7 +103,7 @@ export const deployProtocolGovernance = deployments.createFixture(async (
         initializerArgs.protocolTreasury,
         initializerArgs.gatewayVaultManager,
     ]);
-    await sleep(1);
+    await sleep(initializerArgs.governanceDelay + 1);
     await contract.connect(options!.adminSigner).commitParams();
     return contract;
 });
@@ -126,11 +128,11 @@ export const deployVaultManagerGovernance = deployments.createFixture(async (
         permissionless: false,
         protocolGovernance: ethers.constants.AddressZero,
         factory: ethers.constants.AddressZero,
-        governanceFactory: ethers.constants.AddressZero
+        governanceFactory: ethers.constants.AddressZero,
     };
     // />
-    const Contract = await ethers.getContractFactory("VaultManagerGovernance");
-    const contract = await Contract.deploy(
+    const contractFactory: ContractFactory = await ethers.getContractFactory("VaultManagerGovernance");
+    const contract: VaultManagerGovernance = await contractFactory.deploy(
         constructorArgs.permissionless,
         constructorArgs.protocolGovernance,
         constructorArgs.factory,
@@ -188,7 +190,6 @@ export const deployVaultGovernance = deployments.createFixture(async (
         factory?: Contract,
     }
 ) => {
-    // await ctx.deployments.fixture();
     // defaults<
     const constructorArgs: VaultGovernance_constructorArgs = options?.constructorArgs ?? {
         tokens: [],
@@ -219,7 +220,7 @@ export const deployVaultGovernance = deployments.createFixture(async (
 export const deployERC20Vault = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
     options?: {
-        constructorArgs: ERC20Vault_constructorArgs | undefined,
+        constructorArgs?: ERC20Vault_constructorArgs,
         factory?: ERC20VaultFactory,
     }
 ) => {
@@ -275,7 +276,7 @@ export const deployERC20VaultFromVaultManager = deployments.createFixture(async 
         vaultGovernanceAddress,
         erc20VaultAddress,
         nft
-    ] = await options!.factory.callStatic.createVault(
+    ] = await options!.factory.connect(options.adminSigner).callStatic.createVault(
         constructorArgs.tokens,
         constructorArgs.strategyTreasury,
         constructorArgs.admin,
@@ -313,7 +314,7 @@ export const deployCommonLibraryTest = deployments.createFixture(async (
 /**
  * @dev From scratch.
  */
-export const deployERC20VaultUniverse = deployments.createFixture(async (
+export const deployERC20VaultSystem = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
     options?: {
         protocolGovernanceAdmin: Signer,
@@ -388,4 +389,4 @@ export const deployERC20VaultUniverse = deployments.createFixture(async (
         tokens: tokensSorted,
         nft: nft
     };
-}, "Deploy ERC20Vault Universe");
+}, "Deploy ERC20Vault system");
