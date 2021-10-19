@@ -62,6 +62,12 @@ const config: HardhatUserConfigWithTypechain = {
     protocolGovernanceAdmin: {
       default: 3,
     },
+    stranger1: {
+      default: 4,
+    },
+    stranger2: {
+      default: 5,
+    },
     usdc: {
       default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
       kovan: "0x600103d518cC5E8f3319D532eB4e5C268D32e604",
