@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Push file
-      run: |
-        echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
-        git clone https://git@github.com/mellow-finance/mellow-docs.git
+        run: |
+          echo ${{secrets.DOCS_DEPLOY_KEY}} > ~/.ssh/id_rsa
+          git clone https://git@github.com/mellow-finance/mellow-docs.git
 
       - name: Checkout main
         uses: actions/checkout@master
