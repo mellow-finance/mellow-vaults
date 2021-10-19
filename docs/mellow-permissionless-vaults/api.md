@@ -168,16 +168,14 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ## Events
 ### CollectProtocolFees
 ```solidity
-  event CollectProtocolFees(
-  )
+  event CollectProtocolFees(address protocolTreasury, address[] tokens, uint256[] amounts)
 ```
 
 
 
 ### CollectStrategyFees
 ```solidity
-  event CollectStrategyFees(
-  )
+  event CollectStrategyFees(address strategyTreasury, address[] tokens, uint256[] amounts)
 ```
 
 
@@ -221,16 +219,14 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ## Events
 ### SetLimits
 ```solidity
-  event SetLimits(
-  )
+  event SetLimits(uint256[] limits)
 ```
 
 
 
 ### SetRedirects
 ```solidity
-  event SetRedirects(
-  )
+  event SetRedirects(address[] redirects)
 ```
 
 
@@ -292,24 +288,21 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 ## Events
 ### Deposit
 ```solidity
-  event Deposit(
-  )
+  event Deposit(address from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted)
 ```
 
 
 
 ### Withdraw
 ```solidity
-  event Withdraw(
-  )
+  event Withdraw(address from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned)
 ```
 
 
 
 ### ExitFeeCollected
 ```solidity
-  event ExitFeeCollected(
-  )
+  event ExitFeeCollected(address from, address to, address[] tokens, uint256[] amounts)
 ```
 
 
@@ -585,6 +578,7 @@ the contract balance and convert it to yUSDC.
 Strategy is approved address for the vault nft.
 
 Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+
 Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
 
 #### Parameters:
@@ -639,6 +633,7 @@ Strategy is approved address for the vault nft. There's a subtle difference howe
 can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
 
 Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+
 Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
 
 #### Parameters:
@@ -955,16 +950,14 @@ For the exact bytes structure see concrete vault descriptions.
 ## Events
 ### SetPendingGovernanceParams
 ```solidity
-  event SetPendingGovernanceParams(
-  )
+  event SetPendingGovernanceParams(struct ILpIssuerGovernance.GovernanceParams)
 ```
 
 
 
 ### CommitGovernanceParams
 ```solidity
-  event CommitGovernanceParams(
-  )
+  event CommitGovernanceParams(struct ILpIssuerGovernance.GovernanceParams)
 ```
 
 
@@ -1114,6 +1107,7 @@ the contract balance and convert it to yUSDC.
 Strategy is approved address for the vault nft.
 
 Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+
 Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
 
 #### Parameters:
@@ -1168,6 +1162,7 @@ Strategy is approved address for the vault nft. There's a subtle difference howe
 can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
 
 Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+
 Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
 
 #### Parameters:
@@ -1207,32 +1202,28 @@ For the exact bytes structure see concrete vault descriptions.
 ## Events
 ### Push
 ```solidity
-  event Push(
-  )
+  event Push(uint256[] tokenAmounts)
 ```
 
 
 
 ### Pull
 ```solidity
-  event Pull(
-  )
+  event Pull(address to, uint256[] tokenAmounts)
 ```
 
 
 
 ### CollectEarnings
 ```solidity
-  event CollectEarnings(
-  )
+  event CollectEarnings(address to, uint256[] tokenAmounts)
 ```
 
 
 
 ### ReclaimTokens
 ```solidity
-  event ReclaimTokens(
-  )
+  event ReclaimTokens(address to, address[] tokens, uint256[] tokenAmounts)
 ```
 
 
@@ -1336,32 +1327,28 @@ For the exact bytes structure see concrete vault descriptions.
 ## Events
 ### SetPendingVaultManager
 ```solidity
-  event SetPendingVaultManager(
-  )
+  event SetPendingVaultManager(contract IVaultManager)
 ```
 
 
 
 ### CommitVaultManager
 ```solidity
-  event CommitVaultManager(
-  )
+  event CommitVaultManager(contract IVaultManager)
 ```
 
 
 
 ### SetPendingStrategyTreasury
 ```solidity
-  event SetPendingStrategyTreasury(
-  )
+  event SetPendingStrategyTreasury(address)
 ```
 
 
 
 ### CommitStrategyTreasury
 ```solidity
-  event CommitStrategyTreasury(
-  )
+  event CommitStrategyTreasury(address)
 ```
 
 
@@ -1405,8 +1392,7 @@ For the exact bytes structure see concrete vault descriptions.
 ## Events
 ### CreateVault
 ```solidity
-  event CreateVault(
-  )
+  event CreateVault(address vaultGovernance, address vault, uint256 nft, address[] tokens, bytes options)
 ```
 
 
@@ -1450,16 +1436,14 @@ For the exact bytes structure see concrete vault descriptions.
 ## Events
 ### SetPendingGovernanceParams
 ```solidity
-  event SetPendingGovernanceParams(
-  )
+  event SetPendingGovernanceParams(struct IVaultManagerGovernance.GovernanceParams)
 ```
 
 
 
 ### CommitGovernanceParams
 ```solidity
-  event CommitGovernanceParams(
-  )
+  event CommitGovernanceParams(struct IVaultManagerGovernance.GovernanceParams)
 ```
 
 
@@ -1831,13 +1815,7 @@ For further details please visit https://developers.aave.com
 ## Events
 ### Deposit
 ```solidity
-  event Deposit(
-    address reserve,
-    address user,
-    address onBehalfOf,
-    uint256 amount,
-    uint16 referral
-  )
+  event Deposit(address reserve, address user, address onBehalfOf, uint256 amount, uint16 referral)
 ```
 
 🤓 Emitted on deposit()
@@ -1853,12 +1831,7 @@ For further details please visit https://developers.aave.com
 
 ### Withdraw
 ```solidity
-  event Withdraw(
-    address reserve,
-    address user,
-    address to,
-    uint256 amount
-  )
+  event Withdraw(address reserve, address user, address to, uint256 amount)
 ```
 
 🤓 Emitted on withdraw()
@@ -1873,15 +1846,7 @@ For further details please visit https://developers.aave.com
 
 ### Borrow
 ```solidity
-  event Borrow(
-    address reserve,
-    address user,
-    address onBehalfOf,
-    uint256 amount,
-    uint256 borrowRateMode,
-    uint256 borrowRate,
-    uint16 referral
-  )
+  event Borrow(address reserve, address user, address onBehalfOf, uint256 amount, uint256 borrowRateMode, uint256 borrowRate, uint16 referral)
 ```
 
 🤓 Emitted on borrow() and flashLoan() when debt needs to be opened
@@ -1900,12 +1865,7 @@ initiator of the transaction on flashLoan()
 
 ### Repay
 ```solidity
-  event Repay(
-    address reserve,
-    address user,
-    address repayer,
-    uint256 amount
-  )
+  event Repay(address reserve, address user, address repayer, uint256 amount)
 ```
 
 🤓 Emitted on repay()
@@ -1920,11 +1880,7 @@ initiator of the transaction on flashLoan()
 
 ### Swap
 ```solidity
-  event Swap(
-    address reserve,
-    address user,
-    uint256 rateMode
-  )
+  event Swap(address reserve, address user, uint256 rateMode)
 ```
 
 🤓 Emitted on swapBorrowRateMode()
@@ -1938,10 +1894,7 @@ initiator of the transaction on flashLoan()
 
 ### ReserveUsedAsCollateralEnabled
 ```solidity
-  event ReserveUsedAsCollateralEnabled(
-    address reserve,
-    address user
-  )
+  event ReserveUsedAsCollateralEnabled(address reserve, address user)
 ```
 
 🤓 Emitted on setUserUseReserveAsCollateral()
@@ -1954,10 +1907,7 @@ initiator of the transaction on flashLoan()
 
 ### ReserveUsedAsCollateralDisabled
 ```solidity
-  event ReserveUsedAsCollateralDisabled(
-    address reserve,
-    address user
-  )
+  event ReserveUsedAsCollateralDisabled(address reserve, address user)
 ```
 
 🤓 Emitted on setUserUseReserveAsCollateral()
@@ -1970,10 +1920,7 @@ initiator of the transaction on flashLoan()
 
 ### RebalanceStableBorrowRate
 ```solidity
-  event RebalanceStableBorrowRate(
-    address reserve,
-    address user
-  )
+  event RebalanceStableBorrowRate(address reserve, address user)
 ```
 
 🤓 Emitted on rebalanceStableBorrowRate()
@@ -1986,14 +1933,7 @@ initiator of the transaction on flashLoan()
 
 ### FlashLoan
 ```solidity
-  event FlashLoan(
-    address target,
-    address initiator,
-    address asset,
-    uint256 amount,
-    uint256 premium,
-    uint16 referralCode
-  )
+  event FlashLoan(address target, address initiator, address asset, uint256 amount, uint256 premium, uint16 referralCode)
 ```
 
 🤓 Emitted on flashLoan()
@@ -2010,31 +1950,21 @@ initiator of the transaction on flashLoan()
 
 ### Paused
 ```solidity
-  event Paused(
-  )
+  event Paused()
 ```
 
 🤓 Emitted when the pause is triggered.
 
 ### Unpaused
 ```solidity
-  event Unpaused(
-  )
+  event Unpaused()
 ```
 
 🤓 Emitted when the pause is lifted.
 
 ### LiquidationCall
 ```solidity
-  event LiquidationCall(
-    address collateralAsset,
-    address debtAsset,
-    address user,
-    uint256 debtToCover,
-    uint256 liquidatedCollateralAmount,
-    address liquidator,
-    bool receiveAToken
-  )
+  event LiquidationCall(address collateralAsset, address debtAsset, address user, uint256 debtToCover, uint256 liquidatedCollateralAmount, address liquidator, bool receiveAToken)
 ```
 
 🤓 Emitted when a borrower is liquidated. This event is emitted by the LendingPool via
@@ -2055,14 +1985,7 @@ to receive the underlying collateral asset directly
 
 ### ReserveDataUpdated
 ```solidity
-  event ReserveDataUpdated(
-    address reserve,
-    uint256 liquidityRate,
-    uint256 stableBorrowRate,
-    uint256 variableBorrowRate,
-    uint256 liquidityIndex,
-    uint256 variableBorrowIndex
-  )
+  event ReserveDataUpdated(address reserve, uint256 liquidityRate, uint256 stableBorrowRate, uint256 variableBorrowRate, uint256 liquidityIndex, uint256 variableBorrowIndex)
 ```
 
 🤓 Emitted when the state of a reserve is updated. NOTE: This event is actually declared
@@ -2206,80 +2129,70 @@ gets added to the LendingPool ABI
 ## Events
 ### MarketIdSet
 ```solidity
-  event MarketIdSet(
-  )
+  event MarketIdSet(string newMarketId)
 ```
 
 
 
 ### LendingPoolUpdated
 ```solidity
-  event LendingPoolUpdated(
-  )
+  event LendingPoolUpdated(address newAddress)
 ```
 
 
 
 ### ConfigurationAdminUpdated
 ```solidity
-  event ConfigurationAdminUpdated(
-  )
+  event ConfigurationAdminUpdated(address newAddress)
 ```
 
 
 
 ### EmergencyAdminUpdated
 ```solidity
-  event EmergencyAdminUpdated(
-  )
+  event EmergencyAdminUpdated(address newAddress)
 ```
 
 
 
 ### LendingPoolConfiguratorUpdated
 ```solidity
-  event LendingPoolConfiguratorUpdated(
-  )
+  event LendingPoolConfiguratorUpdated(address newAddress)
 ```
 
 
 
 ### LendingPoolCollateralManagerUpdated
 ```solidity
-  event LendingPoolCollateralManagerUpdated(
-  )
+  event LendingPoolCollateralManagerUpdated(address newAddress)
 ```
 
 
 
 ### PriceOracleUpdated
 ```solidity
-  event PriceOracleUpdated(
-  )
+  event PriceOracleUpdated(address newAddress)
 ```
 
 
 
 ### LendingRateOracleUpdated
 ```solidity
-  event LendingRateOracleUpdated(
-  )
+  event LendingRateOracleUpdated(address newAddress)
 ```
 
 
 
 ### ProxyCreated
 ```solidity
-  event ProxyCreated(
-  )
+  event ProxyCreated(bytes32 id, address newAddress)
 ```
 
 
 
 ### AddressSet
 ```solidity
-  event AddressSet(
-  )
+  event AddressSet(bytes32 id, address newAddress, bool hasProxy)
 ```
 
 
@@ -2430,12 +2343,7 @@ must be collected first.
 ## Events
 ### IncreaseLiquidity
 ```solidity
-  event IncreaseLiquidity(
-    uint256 tokenId,
-    uint128 liquidity,
-    uint256 amount0,
-    uint256 amount1
-  )
+  event IncreaseLiquidity(uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
 ```
 Emitted when liquidity is increased for a position NFT
 
@@ -2450,12 +2358,7 @@ Emitted when liquidity is increased for a position NFT
 |`amount1`| uint256 | The amount of token1 that was paid for the increase in liquidity
 ### DecreaseLiquidity
 ```solidity
-  event DecreaseLiquidity(
-    uint256 tokenId,
-    uint128 liquidity,
-    uint256 amount0,
-    uint256 amount1
-  )
+  event DecreaseLiquidity(uint256 tokenId, uint128 liquidity, uint256 amount0, uint256 amount1)
 ```
 Emitted when liquidity is decreased for a position NFT
 
@@ -2469,12 +2372,7 @@ Emitted when liquidity is decreased for a position NFT
 |`amount1`| uint256 | The amount of token1 that was accounted for the decrease in liquidity
 ### Collect
 ```solidity
-  event Collect(
-    uint256 tokenId,
-    address recipient,
-    uint256 amount0,
-    uint256 amount1
-  )
+  event Collect(uint256 tokenId, address recipient, uint256 amount0, uint256 amount1)
 ```
 Emitted when tokens are collected for a position NFT
 
@@ -2627,10 +2525,7 @@ Enables a fee amount with the given tickSpacing
 ## Events
 ### OwnerChanged
 ```solidity
-  event OwnerChanged(
-    address oldOwner,
-    address newOwner
-  )
+  event OwnerChanged(address oldOwner, address newOwner)
 ```
 Emitted when the owner of the factory is changed
 
@@ -2642,13 +2537,7 @@ Emitted when the owner of the factory is changed
 |`newOwner`| address | The owner after the owner was changed
 ### PoolCreated
 ```solidity
-  event PoolCreated(
-    address token0,
-    address token1,
-    uint24 fee,
-    int24 tickSpacing,
-    address pool
-  )
+  event PoolCreated(address token0, address token1, uint24 fee, int24 tickSpacing, address pool)
 ```
 Emitted when a pool is created
 
@@ -2663,10 +2552,7 @@ Emitted when a pool is created
 |`pool`| address | The address of the created pool
 ### FeeAmountEnabled
 ```solidity
-  event FeeAmountEnabled(
-    uint24 fee,
-    int24 tickSpacing
-  )
+  event FeeAmountEnabled(uint24 fee, int24 tickSpacing)
 ```
 Emitted when a new fee amount is enabled for pool creation via the factory
 

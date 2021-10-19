@@ -24,6 +24,7 @@ interface IVault {
     /// Strategy is approved address for the vault nft.
     ///
     /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+    ///
     /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
     /// @param tokens Tokens to push
     /// @param tokenAmounts Amounts of tokens to push
@@ -63,6 +64,7 @@ interface IVault {
     /// can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
     ///
     /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+    ///
     /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
     /// @param to Address to receive the tokens
     /// @param tokens Tokens to pull

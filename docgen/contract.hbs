@@ -34,11 +34,7 @@
 {{#ownEvents}}
 ### {{name}}
 ```solidity
-  event {{name}}(
-    {{#natspec.params}}
-    {{#lookup ../args.types @index}}{{/lookup}} {{param}}{{#if @last}}{{else}},{{/if}}
-    {{/natspec.params}}
-  )
+  event {{name}}({{args}})
 ```
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
 {{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
