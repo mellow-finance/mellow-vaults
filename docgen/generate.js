@@ -3,14 +3,11 @@ const INPUT_DIR = "contracts";
 const CONFIG_DIR = "docgen";
 const EXCLUDE_FILE = "docgen/exclude.txt";
 const OUTPUT_DIR = "docs";
-const SUMMARY_FILE = "docs/api/SUMMARY.md";
 
 const fs = require("fs");
-const path = require("path");
 const spawnSync = require("child_process").spawnSync;
 
 const excludeList = lines(EXCLUDE_FILE).map((line) => INPUT_DIR + "/" + line);
-const relativePath = path.relative(path.dirname(SUMMARY_FILE), OUTPUT_DIR);
 
 function lines(pathName) {
   return fs
@@ -19,47 +16,6 @@ function lines(pathName) {
     .join("")
     .split("\n");
 }
-
-function scan(pathName, indentation) {
-  // for (const line of excludeList) {
-  //   if (pathName.match(line)) {
-  //     return;
-  //   }
-  // }
-  // if (fs.lstatSync(pathName).isDirectory()) {
-  // fs.appendFileSync(
-  //   SUMMARY_FILE,
-  //   indentation + "* " + path.basename(pathName) + "\n"
-  // );
-  //   for (const fileName of fs.readdirSync(pathName))
-  //     scan(pathName + "/" + fileName, indentation + "  ");
-  // } else if (pathName.endsWith(".sol")) {
-  // const text = path.basename(pathName).slice(0, -4);
-  // const link = pathName.slice(INPUT_DIR.length, -4);
-  // fs.appendFileSync(
-  //   SUMMARY_FILE,
-  //   indentation + "* [" + text + "](" + relativePath + link + ".md)\n"
-  // );
-  // }
-}
-
-function fix(pathName) {
-  if (fs.lstatSync(pathName).isDirectory()) {
-    for (const fileName of fs.readdirSync(pathName))
-      fix(pathName + "/" + fileName);
-  } else if (pathName.endsWith(".md")) {
-    fs.writeFileSync(
-      pathName,
-      lines(pathName)
-        .filter((line) => line.trim().length > 0)
-        .join("\n\n") + "\n"
-    );
-  }
-}
-
-// fs.writeFileSync(SUMMARY_FILE, "# Summary\n");
-
-scan(INPUT_DIR, "");
 
 const args = [
   NODE_DIR + "/solidity-docgen/dist/cli.js",
@@ -78,5 +34,4 @@ const result = spawnSync("node", args, {
 });
 if (result.stderr.length > 0) throw new Error(result.stderr);
 
-// fix(OUTPUT_DIR);
 fs.renameSync(`${OUTPUT_DIR}/index.md`, `${OUTPUT_DIR}/api.md`);
