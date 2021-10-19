@@ -47,6 +47,7 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
         require(_isProtocolAdmin(), "ADM");
         require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
+        require(address(newGovernanceParams.factory) != address(0), "ZVF");
         _pendingGovernanceParams = newGovernanceParams;
         _pendingGovernanceParamsTimestamp = block.timestamp + _governanceParams.protocolGovernance.governanceDelay();
         emit SetPendingGovernanceParams(newGovernanceParams);

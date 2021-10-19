@@ -14,7 +14,16 @@ import "./tasks/vault";
 
 dotenv();
 
-const config: HardhatUserConfig = {
+type HardhatUserConfigWithTypechain = HardhatUserConfig & {
+  typechain?: {
+    outDir?: string;
+    target?: string;
+    alwaysGenerateOverloads: boolean;
+    externalArtifacts?: string[];
+  };
+};
+
+const config: HardhatUserConfigWithTypechain = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
@@ -47,11 +56,17 @@ const config: HardhatUserConfig = {
     stranger: {
       default: 1,
     },
-    stranger1: {
+    treasury: {
       default: 2,
     },
-    stranger2: {
+    protocolGovernanceAdmin: {
       default: 3,
+    },
+    stranger1: {
+      default: 4,
+    },
+    stranger2: {
+      default: 5,
     },
     usdc: {
       default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -115,6 +130,12 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env["ETHERSCAN_API_KEY"],
+  },
+  typechain: {
+    outDir: 'src/types',
+    target: 'ethers-v5',
+    alwaysGenerateOverloads: false,
+    externalArtifacts: ['artifacts/@openzeppelin/*.json'],
   },
 };
 

@@ -1,32 +1,31 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { ContractFactory, Contract } from "ethers";
+import { Contract } from "@ethersproject/contracts";
+
+import { Address } from "./library/Types";
+import { deployCommonLibraryTest } from "./library/Fixtures";
 
 describe("Common", () => {
     let commonTest: Contract;
-
-    const addresses = [
+    const addresses: Address[] = [
         "0x0000000000000000000000000000000000000001",
         "0x0000000000000000000000000000000000000002",
         "0x0000000000000000000000000000000000000003",
         "0x0000000000000000000000000000000000000004",
     ];
-    
-    beforeEach(async () => {
-        const Common: ContractFactory = await ethers.getContractFactory("Common");
-        await Common.deploy();
-        const CommonTest: ContractFactory = await ethers.getContractFactory("CommonTest");
-        commonTest = await CommonTest.deploy();
+
+    before(async () => {
+        commonTest = await deployCommonLibraryTest();
     });
 
     describe("bubbleSort", () => {
         it("sort unsorted", async () => {
-            const array: Array<string> = [
+            const array: Address[] = [
                 addresses[3], 
                 addresses[2], 
                 addresses[1]
             ];
-            const sorted: Array<string> = await commonTest.bubbleSort(array);
+            const sorted: Address[] = await commonTest.bubbleSort(array);
             expect(sorted).to.deep.equal([
                 addresses[1], 
                 addresses[2], 
@@ -35,14 +34,14 @@ describe("Common", () => {
         });
 
         it("sort non-unique", async () => {
-            const array: Array<string> = [
+            const array: Address[] = [
                 addresses[3], 
                 addresses[2], 
                 addresses[1], 
                 addresses[2],
                 addresses[3]
             ];
-            const sorted: Array<string> = await commonTest.bubbleSort(array);
+            const sorted: Address[] = await commonTest.bubbleSort(array);
             expect(sorted).to.deep.equal([
                 addresses[1], 
                 addresses[2], 
@@ -60,7 +59,7 @@ describe("Common", () => {
 
     describe("isSortedAndUnique", () => {
         it("true for sorted and unique", async () => {
-            const array: Array<string> = [
+            const array: Address[] = [
                 addresses[1], 
                 addresses[2], 
                 addresses[3]
@@ -69,7 +68,7 @@ describe("Common", () => {
         });
 
         it("false for unsorted", async () => {
-            const array: Array<string> = [
+            const array: Address[] = [
                 addresses[3], 
                 addresses[1], 
                 addresses[2]
@@ -78,7 +77,7 @@ describe("Common", () => {
         });
 
         it("false for unsorted and non-unique", async () => {
-            const array: Array<string> = [
+            const array: Address[] = [
                 addresses[3], 
                 addresses[1], 
                 addresses[2], 
@@ -88,7 +87,7 @@ describe("Common", () => {
         });
 
         it("false for sorted an non-unique", async () => {
-            const array: Array<string> = [
+            const array: Address[] = [
                 addresses[0],
                 addresses[1],
                 addresses[1],
