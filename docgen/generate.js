@@ -1,10 +1,9 @@
 const NODE_DIR = "node_modules";
 const INPUT_DIR = "contracts";
-const CONFIG_DIR = "docs";
-const OUTPUT_DIR = "docs/docs";
-const README_FILE = "docs/README.md";
-const SUMMARY_FILE = "docs/SUMMARY.md";
-const EXCLUDE_FILE = "docs/exclude.txt";
+const CONFIG_DIR = "docgen";
+const EXCLUDE_FILE = "docgen/exclude.txt";
+const OUTPUT_DIR = "docs/mellow-permissionless-vaults/api";
+const SUMMARY_FILE = "docs/mellow-permissionless-vaults/api/SUMMARY.md";
 
 const fs = require("fs");
 const path = require("path");
@@ -56,10 +55,6 @@ function fix(pathName) {
 }
 
 fs.writeFileSync(SUMMARY_FILE, "# Summary\n");
-fs.writeFileSync(".gitbook.yaml", "root: ./\n");
-fs.appendFileSync(".gitbook.yaml", "structure:\n");
-fs.appendFileSync(".gitbook.yaml", "  readme: " + README_FILE + "\n");
-fs.appendFileSync(".gitbook.yaml", "  summary: " + SUMMARY_FILE + "\n");
 
 scan(INPUT_DIR, "");
 
