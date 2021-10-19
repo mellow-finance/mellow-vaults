@@ -25,7 +25,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`| uint256[] | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -559,7 +559,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`| uint256[] | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -572,7 +572,7 @@ Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`| uint256[] | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### push
 ```solidity
@@ -590,18 +590,18 @@ Also notice that this operation doesn't guarantee that tokenAmounts will be inve
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`tokens` | address[] | tokens to push
-|`tokenAmounts` | uint256[] | amounts of tokens to push
-|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+|`tokens` | address[] | Tokens to push
+|`tokenAmounts` | uint256[] | Amounts of tokens to push
+|`optimized` | bool | Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
 but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+|`options` | bytes | Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
 For the exact bytes structure see concrete vault descriptions.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | The amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### transferAndPush
 ```solidity
@@ -614,18 +614,17 @@ After the `push` it returns all the leftover tokens back (`push` method doesn't 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`tokens` | address | tokens to push
-|`tokenAmounts` | address[] | amounts of tokens to push
-|`optimized` | uint256[] | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-|`options` | bool | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+|`tokens` | address | Tokens to push
+|`tokenAmounts` | address[] | Amounts of tokens to push
+|`optimized` | uint256[] | Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bool | Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
 For the exact bytes structure see concrete vault descriptions.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | The amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### pull
 ```solidity
@@ -645,19 +644,18 @@ Also notice that this operation doesn't guarantee that tokenAmounts will be inve
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`to` | address | address to receive the tokens
-|`tokens` | address[] | tokens to pull
-|`tokenAmounts` | uint256[] | amounts of tokens to pull
-|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+|`to` | address | Address to receive the tokens
+|`tokens` | address[] | Tokens to pull
+|`tokenAmounts` | uint256[] | Amounts of tokens to pull
+|`optimized` | bool | Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bytes | Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
 For the exact bytes structure see concrete vault descriptions.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| uint256[] | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | The amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
 
 ### collectEarnings
 ```solidity
@@ -1090,7 +1088,7 @@ other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`| uint256[] | total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### earnings
 ```solidity
@@ -1103,7 +1101,7 @@ Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`tokenAmounts`| uint256[] | total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+|`tokenAmounts`| uint256[] | Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
 
 ### push
 ```solidity
@@ -1121,18 +1119,18 @@ Also notice that this operation doesn't guarantee that tokenAmounts will be inve
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`tokens` | address[] | tokens to push
-|`tokenAmounts` | uint256[] | amounts of tokens to push
-|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+|`tokens` | address[] | Tokens to push
+|`tokenAmounts` | uint256[] | Amounts of tokens to push
+|`optimized` | bool | Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
 but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+|`options` | bytes | Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
 For the exact bytes structure see concrete vault descriptions.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | The amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### transferAndPush
 ```solidity
@@ -1145,18 +1143,17 @@ After the `push` it returns all the leftover tokens back (`push` method doesn't 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`tokens` | address | tokens to push
-|`tokenAmounts` | address[] | amounts of tokens to push
-|`optimized` | uint256[] | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-|`options` | bool | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+|`tokens` | address | Tokens to push
+|`tokenAmounts` | address[] | Amounts of tokens to push
+|`optimized` | uint256[] | Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bool | Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
 For the exact bytes structure see concrete vault descriptions.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| uint256[] | the amounts actually invested. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | The amounts actually invested. It could be less than tokenAmounts (but not higher).
 
 ### pull
 ```solidity
@@ -1176,19 +1173,18 @@ Also notice that this operation doesn't guarantee that tokenAmounts will be inve
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`to` | address | address to receive the tokens
-|`tokens` | address[] | tokens to pull
-|`tokenAmounts` | uint256[] | amounts of tokens to pull
-|`optimized` | bool | whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-|`options` | bytes | additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+|`to` | address | Address to receive the tokens
+|`tokens` | address[] | Tokens to pull
+|`tokenAmounts` | uint256[] | Amounts of tokens to pull
+|`optimized` | bool | Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+|`options` | bytes | Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
 For the exact bytes structure see concrete vault descriptions.
 
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`actualTokenAmounts`| uint256[] | the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
+|`actualTokenAmounts`| uint256[] | The amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
 
 ### collectEarnings
 ```solidity

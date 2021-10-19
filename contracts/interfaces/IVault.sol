@@ -10,12 +10,12 @@ interface IVault {
 
     /// @notice Total value locked for this contract. Generally it is the underlying token value of this contract in some
     /// other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
-    /// @return tokenAmounts total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+    /// @return tokenAmounts Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
     function tvl() external view returns (uint256[] memory tokenAmounts);
 
     /// @notice Total earnings available now. Earnings is only needed as the base for performance fees calculation.
     /// Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
-    /// @return tokenAmounts total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
+    /// @return tokenAmounts Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
     function earnings() external view returns (uint256[] memory tokenAmounts);
 
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
@@ -25,13 +25,13 @@ interface IVault {
     ///
     /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
     /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
-    /// @param tokens tokens to push
-    /// @param tokenAmounts amounts of tokens to push
-    /// @param optimized whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+    /// @param tokens Tokens to push
+    /// @param tokenAmounts Amounts of tokens to push
+    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
     /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-    /// @param options additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     /// For the exact bytes structure see concrete vault descriptions.
-    /// @return actualTokenAmounts the amounts actually invested. It could be less than tokenAmounts (but not higher).
+    /// @return actualTokenAmounts The amounts actually invested. It could be less than tokenAmounts (but not higher).
     function push(
         address[] calldata tokens,
         uint256[] calldata tokenAmounts,
@@ -41,13 +41,12 @@ interface IVault {
 
     /// @notice The same as `push` method above but transfers tokens to vault balance prior to calling push.
     /// After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full).
-    /// @param tokens tokens to push
-    /// @param tokenAmounts amounts of tokens to push
-    /// @param optimized whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-    /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-    /// @param options additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    /// @param tokens Tokens to push
+    /// @param tokenAmounts Amounts of tokens to push
+    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     /// For the exact bytes structure see concrete vault descriptions.
-    /// @return actualTokenAmounts the amounts actually invested. It could be less than tokenAmounts (but not higher).
+    /// @return actualTokenAmounts The amounts actually invested. It could be less than tokenAmounts (but not higher).
     function transferAndPush(
         address from,
         address[] calldata tokens,
@@ -65,14 +64,13 @@ interface IVault {
     ///
     /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
     /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
-    /// @param to address to receive the tokens
-    /// @param tokens tokens to pull
-    /// @param tokenAmounts amounts of tokens to pull
-    /// @param optimized whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-    /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
-    /// @param options additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    /// @param to Address to receive the tokens
+    /// @param tokens Tokens to pull
+    /// @param tokenAmounts Amounts of tokens to pull
+    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     /// For the exact bytes structure see concrete vault descriptions.
-    /// @return actualTokenAmounts the amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
+    /// @return actualTokenAmounts The amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
     function pull(
         address to,
         address[] calldata tokens,
