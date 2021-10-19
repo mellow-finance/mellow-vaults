@@ -8,7 +8,7 @@ import {
     Contract, 
     Signer
 } from "ethers";
-import Exceptions from "./utils/Exceptions";
+import Exceptions from "./library/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
 
 
