@@ -37,7 +37,7 @@ jobs:
       - name: Push docs to doc repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+          API_TOKEN_GITHUB: ${{ secrets.GITHUB_TOKEN }}
         with:
           source_file: "docs/api.md"
           destination_repo: "mellow-finance/mellow-docs"
