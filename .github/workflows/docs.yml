@@ -5,7 +5,8 @@ on:
       - "main"
 
 jobs:
-  sync-docs:
+  push-docs:
+    name: Push docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -34,14 +35,14 @@ jobs:
       - name: Autogen docs
         run: yarn docgen
 
-      - name: Push docs to doc repo
-        uses: dmnemec/copy_file_to_another_repo_action@main
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source_file: "docs/api.md"
-          destination_repo: "mellow-finance/mellow-docs"
-          destination_folder: "mellow-permissionless-vaults"
-          user_email: "ak@mellow.finance"
-          user_name: "alexk"
-          commit_message: "Updated docs for mellow permissionless vaults api"
+      # - name: Push docs to doc repo
+      #   uses: dmnemec/copy_file_to_another_repo_action@main
+      #   env:
+      #     API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+      #   with:
+      #     source_file: "docs/api.md"
+      #     destination_repo: "mellow-finance/mellow-docs"
+      #     destination_folder: "mellow-permissionless-vaults"
+      #     user_email: "ak@mellow.finance"
+      #     user_name: "alexk"
+      #     commit_message: "Updated docs for mellow permissionless vaults api"
