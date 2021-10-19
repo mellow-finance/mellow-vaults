@@ -34,6 +34,7 @@ contract UniV3Vault is Vault {
         pool = IUniswapV3PoolState(IUniswapV3Factory(_positionManager().factory()).getPool(tokens[0], tokens[1], fee));
     }
 
+    /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         for (uint256 i = 0; i < _nfts.length(); i++) {
@@ -44,6 +45,7 @@ contract UniV3Vault is Vault {
         }
     }
 
+    /// @inheritdoc Vault
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         for (uint256 i = 0; i < _nfts.length(); i++) {

@@ -6,6 +6,7 @@ import "./Vault.sol";
 contract ERC20Vault is Vault {
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}
 
+    /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         tokenAmounts = new uint256[](tokens.length);
@@ -14,6 +15,7 @@ contract ERC20Vault is Vault {
         }
     }
 
+    /// @inheritdoc Vault
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultGovernance.vaultTokens().length);
     }

@@ -28,7 +28,7 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
         });
     }
 
-    /// -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  PUBLIC, VIEW  -------------------
 
     function governanceParams() public view returns (GovernanceParams memory) {
         return _governanceParams;
@@ -42,7 +42,7 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
         return _pendingGovernanceParamsTimestamp;
     }
 
-    /// -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
+    // -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
         require(_isProtocolAdmin(), "ADM");
@@ -61,7 +61,7 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
         emit CommitGovernanceParams(_governanceParams);
     }
 
-    /// -------------------  PRIVATE, VIEW  -------------------
+    // -------------------  PRIVATE, VIEW  -------------------
 
     function _isProtocolAdmin() internal view returns (bool) {
         return _governanceParams.protocolGovernance.isAdmin();

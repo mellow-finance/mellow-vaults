@@ -5,7 +5,7 @@ import "./IDefaultAccessControl.sol";
 import "./IGatewayVaultManager.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
-    /// -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  PUBLIC, VIEW  -------------------
 
     struct Params {
         uint256 maxTokensPerVault;
@@ -37,11 +37,11 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     function gatewayVaultManager() external view returns (IGatewayVaultManager);
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingParams(Params memory newParams) external;
 
-    /// -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     function commitParams() external;
 }
