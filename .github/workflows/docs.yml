@@ -6,7 +6,7 @@ on:
 
 jobs:
   push-docs:
-    name: Push docs
+    name: Push doc
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
