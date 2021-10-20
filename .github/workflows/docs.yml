@@ -17,8 +17,8 @@ jobs:
           DK: ${{secrets.DOCS_DEPLOY_KEY}}
         run: |
           mkdir -p ~/.ssh
-          echo $DK
           echo $DK > ~/.ssh/id_rsa
+          cat ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           git clone git@github.com:mellow-finance/mellow-docs.git
           rm -rf ~/.ssh/id_rsa
