@@ -17,18 +17,6 @@ jobs:
           DK: ${{secrets.DOCS_DEPLOY_KEY}}
         uses: mxschmitt/action-tmate@v3
 
-      - name: Push file
-        env:
-          DK: ${{secrets.DOCS_DEPLOY_KEY}}
-        run: |
-          mkdir -p ~/.ssh
-          echo $DK > ~/.ssh/id_rsa
-          ls -alh ~/.ssh
-          cat ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          git clone git@github.com:mellow-finance/mellow-docs.git
-          rm -rf ~/.ssh/id_rsa
-
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
         with:
