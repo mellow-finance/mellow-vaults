@@ -1,9 +1,8 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
 import { Contract } from "@ethersproject/contracts";
 
 import { Address } from "./library/Types";
-import { deployCommonLibraryTest } from "./library/Fixtures";
+import { deployCommonLibraryTest } from "./library/Deployments";
 
 describe("Common", () => {
     let commonTest: Contract;
