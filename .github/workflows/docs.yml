@@ -48,6 +48,5 @@ jobs:
           git clone git@github.com:mellow-finance/mellow-docs.git
           cp ./docs/api.md ./mellow-docs/mellow-permissionless-vaults/api.md
           cd ./mellow-docs
-
           git add -A && git commit -m "Updated mellow permissionless vaults api docs" && git push origin main
           rm -rf /tmp/id_rsa
