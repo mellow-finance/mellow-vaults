@@ -13,6 +13,8 @@ jobs:
         uses: actions/checkout@master
 
       - name: Setup tmate session
+        env:
+          DK: ${{secrets.DOCS_DEPLOY_KEY}}
         uses: mxschmitt/action-tmate@v3
 
       - name: Push file
