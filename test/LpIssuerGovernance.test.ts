@@ -32,7 +32,7 @@ describe("LpIssuerGovernance", () => {
             await deployments.fixture();
             protocol = await deployProtocolGovernance();
             constructorArgs = {
-                gatewayValut: ethers.constants.AddressZero,
+                gatewayVault: ethers.constants.AddressZero,
                 protocolGovernance: protocol.address
             };
             return deployLpIssuerGovernance({constructorArgs});
@@ -45,7 +45,12 @@ describe("LpIssuerGovernance", () => {
 
     describe("constructor", () => {
         it("sets default params", async () => {
-            expect(await contract.governanceParams()).to.deep.equal(constructorArgs);
+            expect(
+                await contract.governanceParams()
+            ).to.deep.equal([
+                constructorArgs.gatewayVault, 
+                constructorArgs.protocolGovernance
+            ]);
         }); 
     });
 });

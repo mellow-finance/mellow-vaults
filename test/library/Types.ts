@@ -39,7 +39,7 @@ export type ProtocolGovernance_constructorArgs = {
 };
 
 export type LpIssuerGovernance_constructorArgs = {
-    gatewayValut: IVault;
+    gatewayVault: IVault;
     protocolGovernance: IProtocolGovernance;
 }
 

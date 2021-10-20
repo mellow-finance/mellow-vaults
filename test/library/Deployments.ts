@@ -85,9 +85,7 @@ export const deployProtocolGovernance = async (
         gatewayVaultManager: ethers.constants.AddressZero,
     };
 
-    let tempAdmin: Signer;
-    [tempAdmin] = await ethers.getSigners();
-    const admin: Signer = options?.adminSigner ?? tempAdmin;
+    const admin: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
 
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
         admin: < Address > await admin.getAddress(),
@@ -95,14 +93,12 @@ export const deployProtocolGovernance = async (
     };
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
-    console.log("kok");
     const contract = await Contract.connect(
-        options?.adminSigner ?? tempAdmin
+        options?.adminSigner ?? (await ethers.getSigners())[0]
     ).deploy(
         constructorArgs.admin, 
         constructorArgs.params
     );
-    console.log("lol");
     return contract;
 };
 
@@ -407,18 +403,19 @@ export const deployLpIssuerGovernance = async (
 ) => {
     // defaults<
     console.log("ok");
-    // const constructorArgs: LpIssuerGovernance_constructorArgs = options?.constructorArgs ?? {
-    //     gatewayValut: ethers.constants.AddressZero,
-    //     protocolGovernance: ethers.constants.AddressZero,
-    // };
-    // // />
-    // let contract: Contract;
-    // console.log("ok1");
-    // const Contract = await ethers.getContractFactory("LpIssuerGovernance");
-    // console.log("ok2");
-    // contract = await Contract.deploy(constructorArgs);
-    // console.log("ok3");
-    // await contract.deployed();
-    // console.log("ok4");
-    // return contract;
+    const constructorArgs: LpIssuerGovernance_constructorArgs = options?.constructorArgs ?? {
+        gatewayVault: ethers.constants.AddressZero,
+        protocolGovernance: ethers.constants.AddressZero,
+    };
+    // />
+    let contract: Contract;
+    console.log("ok1");
+    const Contract = await ethers.getContractFactory("LpIssuerGovernance");
+    console.log("ok2");
+    console.log(constructorArgs);
+    contract = await Contract.deploy(constructorArgs);
+    console.log("ok3");
+    await contract.deployed();
+    console.log("ok4");
+    return contract;
 };
