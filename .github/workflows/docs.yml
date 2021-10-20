@@ -12,6 +12,9 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@master
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - name: Push file
         env:
           DK: ${{secrets.DOCS_DEPLOY_KEY}}
