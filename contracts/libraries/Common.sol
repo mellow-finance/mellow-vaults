@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+/// @notice Common shared utilities
 library Common {
     uint256 constant DENOMINATOR = 10**9;
 
+    /// @notice Sort addresses using bubble sort. The sorting is done in-place.
+    /// @param arr Array of addresses
     function bubbleSort(address[] memory arr) internal pure {
         uint256 l = arr.length;
         for (uint256 i = 0; i < l; i++) {
@@ -17,6 +20,9 @@ library Common {
         }
     }
 
+    /// @notice Checks if array of addresses is sorted and all adresses are unique
+    /// @param tokens A set of addresses to check
+    /// @return `true` if all addresses are sorted and unique, `false` otherwise
     function isSortedAndUnique(address[] memory tokens) internal pure returns (bool) {
         if (tokens.length < 2) {
             return true;
