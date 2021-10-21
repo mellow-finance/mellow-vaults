@@ -133,7 +133,7 @@ describe("VaultManagerGovernance", () => {
             });
             await customProtocol.commitParams();
 
-            timestamp = Math.ceil(new Date().getTime() / 1000) + 10**6;
+            timestamp = Math.ceil(new Date().getTime() / 1000) + 10**8;
             await sleepTo(timestamp);
 
             await vaultManagerGovernance.setPendingGovernanceParams([
