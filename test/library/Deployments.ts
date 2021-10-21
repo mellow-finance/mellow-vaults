@@ -5,7 +5,7 @@ import {
 } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 
-import { sortContractsByAddresses } from "./Helpers";
+import { sleep, sortContractsByAddresses } from "./Helpers";
 import {
     Address,
     IVaultGovernance,
@@ -60,30 +60,27 @@ export const deployERC20Tokens = async (
 export const deployProtocolGovernance = async (
     options?: {
         constructorArgs?: ProtocolGovernance_constructorArgs,
+        initializerArgs?: {
+            params: ProtocolGovernance_Params,
+        }
         adminSigner: Signer
     }
 ) => {
     // defaults<
-    const params: ProtocolGovernance_Params = options?.constructorArgs?.params ?? {
-        maxTokensPerVault: 10,
-        governanceDelay: 1,
-
-        strategyPerformanceFee: 10**9,
-        protocolPerformanceFee: 10**9,
-        protocolExitFee: 10**9,
-        protocolTreasury: ethers.constants.AddressZero,
-        gatewayVaultManager: ethers.constants.AddressZero,
-    };
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
         admin: await options?.adminSigner.getAddress() || ethers.constants.AddressZero,
-        params: params
     };
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
     const contract = await Contract.deploy(
         constructorArgs.admin,
-        constructorArgs.params
     );
+
+    if (options?.initializerArgs) {
+        await contract.setPendingParams(options.initializerArgs.params);
+        await sleep(1);
+        await contract.commitParams();
+    }
     return contract;
 };
 
@@ -300,6 +297,8 @@ export const deployERC20VaultSystem = async (
     let protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
         constructorArgs: {
             admin: await options!.protocolGovernanceAdmin.getAddress(),
+        },
+        initializerArgs: {
             params: {
                 maxTokensPerVault: 10,
                 governanceDelay: 1,
@@ -307,7 +306,7 @@ export const deployERC20VaultSystem = async (
                 strategyPerformanceFee: 10 * 10 ** 9,
                 protocolPerformanceFee: 2 * 10 ** 9,
                 protocolExitFee: 10 ** 9,
-                protocolTreasury: ethers.constants.AddressZero,
+                protocolTreasury: options.treasury,
                 gatewayVaultManager: ethers.constants.AddressZero,
             }
         },

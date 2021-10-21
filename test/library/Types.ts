@@ -22,33 +22,32 @@ export type VaultGovernance = Contract;
 export type GatewayVaultManager = Contract;
 
 export type ProtocolGovernance_Params = {
-    maxTokensPerVault: number,
-    governanceDelay: number,
-    strategyPerformanceFee: number,
-    protocolPerformanceFee: number,
-    protocolExitFee: number,
-    protocolTreasury: Address,
-    gatewayVaultManager: IGatewayVaultManager,
+    maxTokensPerVault: number;
+    governanceDelay: number;
+    strategyPerformanceFee: number;
+    protocolPerformanceFee: number;
+    protocolExitFee: number;
+    protocolTreasury: Address;
+    gatewayVaultManager: IGatewayVaultManager;
 }
 
 export type ProtocolGovernance_constructorArgs = {
     admin: Address;
-    params: ProtocolGovernance_Params;
 };
 
 export type VaultGovernanceFactory_constructorArgs = {
-    tokens: Address[],
-    manager: IVaultManager,
-    treasury: Address,
-    admin: Address
+    tokens: Address[];
+    manager: IVaultManager;
+    treasury: Address;
+    admin: Address;
 };
 
 /**
  * @dev creates IVault
  */
 export type ERC20VaultFactory_deployVault = {
-    vaultGovernance: IVaultGovernance,
-    options: BytesLike
+    vaultGovernance: IVaultGovernance;
+    options: BytesLike;
 };
 export type ERC20Vault_constructorArgs = ERC20VaultFactory_deployVault;
 
@@ -91,4 +90,13 @@ export type VaultGovernance_constructorArgs = VaultGovernanceFactory_deployVault
 export type ERC20Test_constructorArgs = {
     name: string,
     symbol: string
+};
+
+export type GatewayVaultManager_constructorArgs = {
+    name: string;
+    symbol: string;
+    factory: IVaultFactory;
+    governanceFactory: IVaultGovernanceFactory;
+    permissionless: boolean;
+    governance: IProtocolGovernance;
 };
