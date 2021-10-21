@@ -24,7 +24,7 @@ contract ERC20Vault is Vault {
     function _push(
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata
+        bytes memory
     ) internal pure override returns (uint256[] memory actualTokenAmounts) {
         // no-op, tokens are already on balance
         return tokenAmounts;
