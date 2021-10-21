@@ -12,6 +12,10 @@ export const sleep = async (seconds: number) => {
     await network.provider.send("evm_mine");
 }
 
+export const setTimestamp = () => {
+    return Math.ceil(new Date().getTime() / 1000);
+}
+
 export const sortContractsByAddresses = (contracts: Contract[]) => {
     return contracts.sort((a, b) => {
         return parseInt((

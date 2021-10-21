@@ -11,6 +11,7 @@ import {
 import { before } from "mocha";
 import Exceptions from "./library/Exceptions";
 import {
+    setTimestamp,
     sleep, 
     sleepTo
 } from "./library/Helpers";
@@ -46,7 +47,7 @@ describe("LpIssuerGovernance", () => {
         [deployer, stranger, user] = await ethers.getSigners();
         timeout = 5;
         timeEps = 2;
-        timestamp = Math.ceil(new Date().getTime() / 1000) + timeout;
+        timestamp = setTimestamp() + 10**2;
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
@@ -368,7 +369,7 @@ describe("LpIssuerGovernance", () => {
                     await sleepTo(timestamp);
                     await contract.setPendingGovernanceParams(temporaryParams);
                     sleep(longTimeout - timeEps);
-                    
+
                     await expect(
                         contract.commitGovernanceParams()
                     ).to.be.revertedWith(Exceptions.TIMESTAMP);
