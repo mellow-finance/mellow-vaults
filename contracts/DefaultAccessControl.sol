@@ -17,7 +17,7 @@ contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable 
         _setRoleAdmin(ADMIN_DELEGATE_ROLE, ADMIN_ROLE);
     }
 
-    function isAdmin() public view returns (bool) {
-        return hasRole(ADMIN_ROLE, msg.sender) || hasRole(ADMIN_DELEGATE_ROLE, msg.sender);
+    function isAdmin(address sender) public view returns (bool) {
+        return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
     }
 }
