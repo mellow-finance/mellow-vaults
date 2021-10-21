@@ -19,3 +19,5 @@ deployments/localhost
 deployments/contracts.json
 .vscode
 docs
+
+.DS_store
