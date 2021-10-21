@@ -60,6 +60,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
             admin
         );
         vault = governanceParams().factory.deployVault(vaultGovernance, options);
+        _registerVaultNft(vault, nft);
         emit CreateVault(address(vaultGovernance), address(vault), nft, tokens, options);
     }
 
@@ -72,5 +73,10 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         _topVaultNft += 1;
         _safeMint(_msgSender(), nft);
         return nft;
+    }
+
+    function _registerVaultNft(IVault vault, uint256 nft) internal{
+        _nftIndex[address(vault)] = nft;
+        _vaultIndex[nft] = address(vault);
     }
 }
