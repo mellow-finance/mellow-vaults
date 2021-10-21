@@ -19,6 +19,7 @@ export type VaultManager = Contract;
 export type VaultManagerGovernance = Contract;
 export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
+export type GatewayVaultManager = Contract;
 
 export type ProtocolGovernance_Params = {
     maxTokensPerVault: number,

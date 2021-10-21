@@ -341,14 +341,22 @@ export const deployERC20VaultSystem = async (
         vaultGovernance.address
     )
     await erc20Vault.deployed();
+    let anotherERC20Vault: ERC20Vault = await (await ethers.getContractFactory("ERC20Vault")).deploy(
+        vaultGovernance.address
+    );
 
     let nft: number = await erc20VaultManager.callStatic.mintVaultNft(erc20Vault.address);
     await erc20VaultManager.mintVaultNft(erc20Vault.address);
 
+    let anotherNft: number = await erc20VaultManager.callStatic.mintVaultNft(anotherERC20Vault.address);
+    await erc20VaultManager.mintVaultNft(anotherERC20Vault.address);
+
     return {
         vaultGovernance: vaultGovernance,
         erc20Vault: erc20Vault,
+        anotherERC20Vault: anotherERC20Vault,
         nft: nft,
+        anotherNft: anotherNft,
         tokens: tokensSorted,
         vaultManager: erc20VaultManager,
         protocolGovernance: protocolGovernance,
