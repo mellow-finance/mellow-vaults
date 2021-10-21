@@ -70,13 +70,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         _pendingClaimAllowlistAdd = addresses;
         pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     function removeFromClaimAllowlist(address addr) external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         if (!_claimAllowlist.contains(addr)) {
             return;
         }
@@ -84,7 +84,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
@@ -92,7 +92,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     function commitClaimAllowlistAdd() external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
             _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
@@ -102,7 +102,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     function commitParams() external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         require(block.timestamp > pendingParamsTimestamp, "TS");
         require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, "P0"); // sanity check for empty params
         params = pendingParams;

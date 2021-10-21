@@ -69,7 +69,7 @@ export const deployERC20Tokens = deployments.createFixture(async (
 
 export const deployProtocolGovernance = async (
     options?: {
-        constructorArgs: ProtocolGovernance_constructorArgs,
+        constructorArgs?: ProtocolGovernance_constructorArgs,
         adminSigner: Signer
     }
 ) => {
@@ -85,10 +85,10 @@ export const deployProtocolGovernance = async (
         gatewayVaultManager: ethers.constants.AddressZero,
     };
 
-    const admin: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
 
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        admin: < Address > await admin.getAddress(),
+        admin: < Address > await adminSigner.getAddress(),
         params: < ProtocolGovernance_Params > params
     };
     // />
@@ -399,23 +399,21 @@ export const deployERC20VaultSystem = deployments.createFixture(async (
 export const deployLpIssuerGovernance = async (
     options?: {
         constructorArgs: LpIssuerGovernance_constructorArgs,
+        adminSigner?: Signer 
     }
 ) => {
     // defaults<
-    console.log("ok");
     const constructorArgs: LpIssuerGovernance_constructorArgs = options?.constructorArgs ?? {
         gatewayVault: ethers.constants.AddressZero,
         protocolGovernance: ethers.constants.AddressZero,
     };
+
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
     // />
     let contract: Contract;
-    console.log("ok1");
     const Contract = await ethers.getContractFactory("LpIssuerGovernance");
-    console.log("ok2");
-    console.log(constructorArgs);
-    contract = await Contract.deploy(constructorArgs);
-    console.log("ok3");
+
+    contract = await Contract.connect(adminSigner).deploy(constructorArgs);
     await contract.deployed();
-    console.log("ok4");
     return contract;
 };

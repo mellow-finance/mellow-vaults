@@ -64,6 +64,6 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
     // -------------------  PRIVATE, VIEW  -------------------
 
     function _isProtocolAdmin() internal view returns (bool) {
-        return _governanceParams.protocolGovernance.isAdmin();
+        return _governanceParams.protocolGovernance.isAdmin(msg.sender);
     }
 }
