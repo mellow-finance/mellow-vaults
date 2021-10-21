@@ -1,6 +1,15 @@
 import { Contract } from "ethers";
 import { network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
+import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
+
+export const toObject = (obj: any) =>
+pipe(
+    keys,
+    filter((x: string) => isNaN(parseInt(x))),
+    map((x) => [x, obj[x]] as KeyValuePair<string, any>),
+    fromPairs
+)(obj);
 
 export const sleepTo = async (timestamp: number) => {
     await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
@@ -12,7 +21,7 @@ export const sleep = async (seconds: number) => {
     await network.provider.send("evm_mine");
 }
 
-export const setTimestamp = () => {
+export const now = () => {
     return Math.ceil(new Date().getTime() / 1000);
 }
 

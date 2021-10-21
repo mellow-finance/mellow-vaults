@@ -10,7 +10,7 @@ import {
 } from "ethers";
 import Exceptions from "./library/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
-import { setTimestamp } from "./library/Helpers";
+import { now } from "./library/Helpers";
 
 
 type GovernanceParams = [
@@ -171,7 +171,7 @@ describe("ProtocolGovernance", () => {
         });
 
         it("sets governance delay", async () => {
-            timestamp = setTimestamp() + timeShift;
+            timestamp = now() + timeShift;
 
             await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
             await network.provider.send('evm_mine');
