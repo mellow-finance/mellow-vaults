@@ -59,7 +59,7 @@ export const deployERC20Tokens = async (
 
 export const deployProtocolGovernance = async (
     options?: {
-        constructorArgs: ProtocolGovernance_constructorArgs,
+        constructorArgs?: ProtocolGovernance_constructorArgs,
         adminSigner: Signer
     }
 ) => {
@@ -75,7 +75,7 @@ export const deployProtocolGovernance = async (
         gatewayVaultManager: ethers.constants.AddressZero,
     };
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        admin: ethers.constants.AddressZero,
+        admin: await options?.adminSigner.getAddress() || ethers.constants.AddressZero,
         params: params
     };
     // />
@@ -272,86 +272,4 @@ export const deployCommonLibraryTest = async () => {
     const commonTest: Contract = await CommonTest.deploy();
     await commonTest.deployed();
     return commonTest;
-};
-
-export const deployERC20VaultSystem = async (options: {
-    protocolGovernanceAdmin: Signer,
-    treasury: Address,
-    tokensCount: number,
-    permissionless: boolean,
-    vaultManagerName?: string,
-    vaultManagerSymbol?: string,
-}) => {
-    let token_constructorArgs: ERC20Test_constructorArgs[] = [];
-    for (let i: number = 0; i < options!.tokensCount; ++i) {
-        token_constructorArgs.push({
-            name: "Test Token",
-            symbol: `TEST_${i}`
-        });
-    }
-    const tokens: Contract[] = await deployERC20Tokens({
-        constructorArgs: token_constructorArgs
-    });
-    // sort tokens by address using `sortAddresses` function
-    const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
-
-    console.log("going to deploy protocolGovernance");
-    const protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
-        constructorArgs: {
-            admin: await options!.protocolGovernanceAdmin.getAddress(),
-            params: {
-                maxTokensPerVault: 10,
-                governanceDelay: 1,
-        
-                strategyPerformanceFee: 10**9,
-                protocolPerformanceFee: 10**9,
-                protocolExitFee: 10**9,
-                protocolTreasury: ethers.constants.AddressZero,
-                gatewayVaultManager: ethers.constants.AddressZero,
-            }
-        },
-        adminSigner: options!.protocolGovernanceAdmin
-    });
-    console.log("protocolGovernance deployed at", protocolGovernance.address);
-
-    const vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
-
-    const erc20VaultFactory: ERC20VaultFactory = await deployERC20VaultFactory();
-
-    const erc20VaultManager: VaultManager = await deployVaultManager({
-        constructorArgs: {
-            name: options!.vaultManagerName ?? "ERC20VaultManager",
-            symbol: options!.vaultManagerSymbol ?? "E20VM",
-            factory: erc20VaultFactory.address,
-            governanceFactory: vaultGovernanceFactory.address,
-            permissionless: options!.permissionless,
-            governance: protocolGovernance.address
-        }
-    });
-    
-    let vaultGovernance: VaultGovernance;
-    let erc20Vault: ERC20Vault;
-    let nft: number;
-
-    ({ vaultGovernance, erc20Vault, nft } = await deployERC20VaultFromVaultManager({
-        constructorArgs: {
-            tokens: tokensSorted.map(t => t.address),
-            strategyTreasury: options!.treasury,
-            admin: await options!.protocolGovernanceAdmin.getAddress(),
-            options: []
-        },
-        factory: erc20VaultManager,
-        adminSigner: options!.protocolGovernanceAdmin
-    }));
-
-    return {
-        erc20Vault: erc20Vault,
-        erc20VaultManager: erc20VaultManager,
-        erc20VaultFactory: erc20VaultFactory,
-        vaultGovernance: vaultGovernance,
-        vaultGovernanceFactory: vaultGovernanceFactory,
-        protocolGovernance: protocolGovernance,
-        tokens: tokensSorted,
-        nft: nft
-    };
 };
