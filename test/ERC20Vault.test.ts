@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import {
     ERC20,
@@ -28,8 +28,8 @@ describe("ERC20Vault", function () {
         let vaultGovernance: VaultGovernance;
         let vaultGovernanceFactory: VaultGovernanceFactory;
         let protocolGovernance: ProtocolGovernance;
-
         let nft: number;
+        let deployment: Function;
 
         before(async () => {
             [
@@ -40,15 +40,21 @@ describe("ERC20Vault", function () {
                 protocolGovernanceAdmin,
             ] = await ethers.getSigners();
 
-            let options = {
-                protocolGovernanceAdmin: protocolGovernanceAdmin,
-                treasury: await treasury.getAddress(),
-                tokensCount: 2,
-                permissionless: true,
-                vaultManagerName: "vault manager ¯\\_(ツ)_/¯",
-                vaultManagerSymbol: "erc20vm"
-            };
+            deployment = deployments.createFixture(async () => {
+                await deployments.fixture();
+                let options = {
+                    protocolGovernanceAdmin: protocolGovernanceAdmin,
+                    treasury: await treasury.getAddress(),
+                    tokensCount: 2,
+                    permissionless: true,
+                    vaultManagerName: "vault manager ¯\\_(ツ)_/¯",
+                    vaultManagerSymbol: "erc20vm"
+                };
+                return await deployERC20VaultSystem(options);
+            });
+        });
 
+        beforeEach(async () => {
             ({
                 tokens,
                 erc20VaultFactory,
@@ -58,7 +64,14 @@ describe("ERC20Vault", function () {
                 protocolGovernance,
                 erc20Vault,
                 nft
-            } = await deployERC20VaultSystem(options));
+            } = await deployment());
+            // approve all tokens to the vault
+            for (let i: number = 0; i < tokens.length; ++i) {
+                await tokens[i].connect(deployer).approve(
+                    erc20Vault.address, 
+                    BigNumber.from(10**9).mul(BigNumber.from(10**9)).mul(BigNumber.from(10**9))
+                );
+            }
         });
 
         describe("constructor", () => {
@@ -155,14 +168,6 @@ describe("ERC20Vault", function () {
         });
 
         describe("transferAndPush", () => {
-            before(async () => {
-                for (let i: number = 0; i < tokens.length; ++i) {
-                    await tokens[i].connect(deployer).approve(
-                        erc20Vault.address, 
-                        BigNumber.from(10**9).mul(BigNumber.from(10**9))
-                    );
-                }
-            });
 
             it("when not approved nor owner", async () => {
                 await expect(erc20Vault.connect(stranger).transferAndPush(
