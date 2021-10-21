@@ -17,6 +17,7 @@ import {
     VaultManager,
     VaultGovernance,
     VaultGovernanceFactory,
+    LpIssuerGovernance,
 
     ERC20Test_constructorArgs,
     ERC20Vault_constructorArgs,
@@ -25,6 +26,7 @@ import {
     ProtocolGovernance_constructorArgs,
     VaultGovernance_constructorArgs,
     VaultManagerGovernance_constructorArgs,
+    LpIssuerGovernance_constructorArgs,
 
     ProtocolGovernance_Params,
     VaultManagerGovernance
@@ -363,4 +365,26 @@ export const deployERC20VaultSystem = async (
         erc20VaultManager: erc20VaultManager,
         vaultGovernanceFactory: vaultGovernanceFactory
     }
-}
+};
+
+export const deployLpIssuerGovernance = async (
+    options?: {
+        constructorArgs: LpIssuerGovernance_constructorArgs,
+        adminSigner?: Signer 
+    }
+) => {
+    // defaults<
+    const constructorArgs: LpIssuerGovernance_constructorArgs = options?.constructorArgs ?? {
+        gatewayVault: ethers.constants.AddressZero,
+        protocolGovernance: ethers.constants.AddressZero,
+    };
+
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
+    // />
+    let contract: Contract;
+    const Contract = await ethers.getContractFactory("LpIssuerGovernance");
+
+    contract = await Contract.connect(adminSigner).deploy(constructorArgs);
+    await contract.deployed();
+    return contract;
+};

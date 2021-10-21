@@ -10,6 +10,7 @@ import {
 } from "ethers";
 import Exceptions from "./library/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
+import { now } from "./library/Helpers";
 
 
 type GovernanceParams = [
@@ -31,6 +32,7 @@ describe("ProtocolGovernance", () => {
     let user2: Signer;
     let timestamp: number;
     let timeout: number;
+    let timeShift: number;
     let params: GovernanceParams;
     let paramsZero: GovernanceParams;
     let paramsTimeout: GovernanceParams;
@@ -43,7 +45,7 @@ describe("ProtocolGovernance", () => {
         [deployer, stranger, user1, user2] = await ethers.getSigners();
         timeout = 10**4;
         defaultGovernanceDelay = 1;
-
+        timeShift = 10**10;
         params = [
             BigNumber.from(1), 
             BigNumber.from(defaultGovernanceDelay), 
@@ -169,7 +171,7 @@ describe("ProtocolGovernance", () => {
         });
 
         it("sets governance delay", async () => {
-            timestamp = Math.ceil(new Date().getTime() / 1000) + 10**6;
+            timestamp = now() + timeShift;
 
             await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
             await network.provider.send('evm_mine');
