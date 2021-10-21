@@ -8,17 +8,9 @@ import {
     VaultManager,
     VaultGovernance,
     VaultGovernanceFactory,
-    ProtocolGovernance,
-    ERC20Test_constructorArgs
+    ProtocolGovernance
 } from "./library/Types";
-import {
-    deployERC20Tokens,
-    deployERC20VaultFactory,
-    deployProtocolGovernance,
-    deployVaultGovernanceFactory,
-    deployVaultManagerTest
-} from "./library/Deployments";
-import { sortContractsByAddresses } from "./library/Helpers";
+import { deployERC20VaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 
 describe("ERC20Vault", function () {
@@ -55,72 +47,21 @@ describe("ERC20Vault", function () {
                 permissionless: true,
                 vaultManagerName: "vault manager ¯\\_(ツ)_/¯",
                 vaultManagerSymbol: "erc20vm"
-            }
+            };
 
-            let token_constructorArgs: ERC20Test_constructorArgs[] = [];
-            for (let i: number = 0; i < options!.tokensCount; ++i) {
-                token_constructorArgs.push({
-                    name: "Test Token",
-                    symbol: `TEST_${i}`
-                });
-            }
-            tokens = await deployERC20Tokens({
-                constructorArgs: token_constructorArgs
-            });
-            // sort tokens by address using `sortAddresses` function
-            const tokensSorted: ERC20[] = sortContractsByAddresses(tokens);
-
-            protocolGovernance = await deployProtocolGovernance({
-                constructorArgs: {
-                    admin: await options!.protocolGovernanceAdmin.getAddress(),
-                    params: {
-                        maxTokensPerVault: 10,
-                        governanceDelay: 1,
-
-                        strategyPerformanceFee: 10 ** 9,
-                        protocolPerformanceFee: 10 ** 9,
-                        protocolExitFee: 10 ** 9,
-                        protocolTreasury: ethers.constants.AddressZero,
-                        gatewayVaultManager: ethers.constants.AddressZero,
-                    }
-                },
-                adminSigner: options!.protocolGovernanceAdmin
-            });
-
-            vaultGovernanceFactory = await deployVaultGovernanceFactory();
-
-            erc20VaultFactory = await deployERC20VaultFactory();
-
-            erc20VaultManager = await deployVaultManagerTest({
-                constructorArgs: {
-                    name: options!.vaultManagerName ?? "ERC20VaultManager",
-                    symbol: options!.vaultManagerSymbol ?? "E20VM",
-                    factory: erc20VaultFactory.address,
-                    governanceFactory: vaultGovernanceFactory.address,
-                    permissionless: options!.permissionless,
-                    governance: protocolGovernance.address
-                }
-            });
-
-            vaultGovernance = await (await ethers.getContractFactory("VaultGovernance")).deploy(
-                tokensSorted.map(t => t.address),
-                erc20VaultManager.address,
-                options!.treasury,
-                await protocolGovernanceAdmin.getAddress()
-            );
-            await vaultGovernance.deployed();
-
-            erc20Vault = await (await ethers.getContractFactory("ERC20Vault")).deploy(
-                vaultGovernance.address
-            )
-            await erc20Vault.deployed();
-
-            nft = await erc20VaultManager.callStatic.mintVaultNft(erc20Vault.address);
-            await erc20VaultManager.mintVaultNft(erc20Vault.address);
+            ({
+                tokens,
+                erc20VaultFactory,
+                erc20VaultManager,
+                vaultGovernanceFactory,
+                vaultGovernance,
+                protocolGovernance,
+                erc20Vault,
+                nft
+            } = await deployERC20VaultSystem(options));
         });
 
         describe("constructor", () => {
-
             it("has correct vaultGovernance address", async () => {
                 expect(await erc20Vault.vaultGovernance()).to.equal(vaultGovernance.address);
             });
@@ -184,7 +125,7 @@ describe("ERC20Vault", function () {
                 )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
             });
 
-            it("passes", async () => {
+            it("passes when no tokens transferred", async () => {
                 const amounts = await erc20Vault.callStatic.push(
                     [tokens[0].address], 
                     [BigNumber.from(10**9)],
@@ -192,6 +133,20 @@ describe("ERC20Vault", function () {
                     []
                 );
                 expect(amounts).to.deep.equal([BigNumber.from(10**9)]);
+            });
+
+            it("passes when tokens transferred", async () => {
+                await tokens[1].transfer(erc20Vault.address, BigNumber.from(100 * 10**9));
+                const args = [
+                    [tokens[1].address],
+                    [BigNumber.from(100 * 10**9)],
+                    true,
+                    []
+                ];
+                const amounts = await erc20Vault.callStatic.push(...args);
+                const tx = await erc20Vault.push(...args);
+                await tx.wait();
+                expect(amounts).to.deep.equal([BigNumber.from(100 * 10**9)]);
             });
         });
 
@@ -290,12 +245,12 @@ describe("ERC20Vault", function () {
                 for (let i: number = 0; i < tokens.length; ++i) {
                     await tokens[i].connect(deployer).approve(
                         erc20Vault.address, 
-                        BigNumber.from(10**9).mul(BigNumber.from(10**9))
+                        BigNumber.from(10**9).mul(BigNumber.from(10**9)).mul(BigNumber.from(10**9))
                     );
                 }
             });
 
-            it("when not approved nor owner", async () => {
+            it("passes", async () => {
                 await erc20Vault.transferAndPush(
                     await deployer.getAddress(),
                     [tokens[0].address], 
@@ -303,11 +258,13 @@ describe("ERC20Vault", function () {
                     false,
                     []
                 );
-                console.log(await erc20Vault.tvl());
-                expect(await erc20Vault.tvl()).to.deep.equal([
-                    BigNumber.from(10**9),
-                    BigNumber.from(0),
-                ]);
+                console.log((await erc20Vault.tvl()).map((x: BigNumber) => {
+                    return x.toString();
+                }));
+                // .to.deep.equal([
+                //     BigNumber.from(10**9),
+                //     BigNumber.from(0),
+                // ]);
             });
         });
 
