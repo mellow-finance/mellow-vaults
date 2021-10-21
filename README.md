@@ -13,6 +13,15 @@ yarn
 yarn coverage
 ```
 
+#### Hardhat hacks
+
+Get result of mutating function 
+
+```
+nft = await erc20VaultManager.callStatic.mintVaultNft(erc20Vault.address);
+await erc20VaultManager.mintVaultNft(erc20Vault.address);
+```
+
 ### Brownie property tests
 
 #### Pre-requisites

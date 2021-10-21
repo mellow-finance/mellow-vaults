@@ -14,9 +14,10 @@ contract VaultManagerTest is VaultManager {
         IProtocolGovernance protocolGovernance
     ) VaultManager(name, symbol, factory, governanceFactory, permissionless, protocolGovernance) {}
 
-    function mintAndRegisterVaultNft(IVault vault) public returns (uint256) {
-        uint256 nft = _mintVaultNft();
-        _registerVaultNft(vault, nft);
+    function mintVaultNft(IVault vault) public returns (uint256) {
+        uint256 nft = _mintVaultNft(vault);
+        console.log("TEST: owner of nft", nft, "is", ownerOf(nft));
+        console.log("balance of", msg.sender, "is", balanceOf(msg.sender));
         return nft;
     }
 }

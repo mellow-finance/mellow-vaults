@@ -36,6 +36,7 @@ const config: HardhatUserConfig = {
     },
     localhost: {
       url: "http://localhost:8545",
+      blockGasLimit: 100000000000000000,
     },
     kovan: {
       url: process.env["KOVAN_RPC"],

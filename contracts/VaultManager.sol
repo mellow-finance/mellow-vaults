@@ -7,6 +7,8 @@ import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./VaultManagerGovernance.sol";
 
+import "hardhat/console.sol";
+
 contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
     uint256 private _topVaultNft = 1;
 
@@ -47,7 +49,6 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         require(governanceParams().permissionless || _isProtocolAdmin(), "PGD");
         require(tokens.length <= governanceParams().protocolGovernance.maxTokensPerVault(), "MT");
         require(Common.isSortedAndUnique(tokens), "SAU");
-        nft = _mintVaultNft();
 
         // address[] memory tokens,
         // IVaultManager manager,
@@ -60,7 +61,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
             admin
         );
         vault = governanceParams().factory.deployVault(vaultGovernance, options);
-        _registerVaultNft(vault, nft);
+        nft = _mintVaultNft(vault);
         emit CreateVault(address(vaultGovernance), address(vault), nft, tokens, options);
     }
 
@@ -68,15 +69,12 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         return interfaceId == type(IVaultManager).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    function _mintVaultNft() internal returns (uint256) {
+    function _mintVaultNft(IVault vault) internal returns (uint256) {
         uint256 nft = _topVaultNft;
         _topVaultNft += 1;
-        _safeMint(_msgSender(), nft);
-        return nft;
-    }
-
-    function _registerVaultNft(IVault vault, uint256 nft) internal{
         _nftIndex[address(vault)] = nft;
         _vaultIndex[nft] = address(vault);
+        _safeMint(_msgSender(), nft);
+        return nft;
     }
 }

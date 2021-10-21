@@ -8,5 +8,5 @@ export default class Exceptions {
     static readonly ADMIN_ADDRESS_ZERO: string = "ZADM";
     static readonly VAULT_FACTORY_ADDRESS_ZERO: string = "ZVF";
     static readonly APPROVED_OR_OWNER: string = "IO";
-    static readonly VAULT_LIMITS: string = "L";
+    static readonly INCONSISTENT_LENGTH: string = "L";
 }

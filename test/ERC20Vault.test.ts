@@ -113,49 +113,56 @@ describe("ERC20Vault", function () {
             )
             await erc20Vault.deployed();
 
-            nft = await erc20VaultManager.callStatic.mintAndRegisterVaultNft(erc20Vault.address);
+            nft = await erc20VaultManager.callStatic.mintVaultNft(erc20Vault.address);
+            await erc20VaultManager.mintVaultNft(erc20Vault.address);
         });
 
-        describe("constructor", () => {
+        // describe("constructor", () => {
 
-            it("has correct vaultGovernance address", async () => {
-                expect(await erc20Vault.vaultGovernance()).to.equal(vaultGovernance.address);
-            });
+        //     it("has correct vaultGovernance address", async () => {
+        //         expect(await erc20Vault.vaultGovernance()).to.equal(vaultGovernance.address);
+        //     });
 
-            it("has zero tvl", async () => {
-                expect(await erc20Vault.tvl()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
-            });
+        //     it("has zero tvl", async () => {
+        //         expect(await erc20Vault.tvl()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
+        //     });
 
-            it("has zero earnings", async () => {
-                expect(await erc20Vault.earnings()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
-            });
+        //     it("has zero earnings", async () => {
+        //         expect(await erc20Vault.earnings()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
+        //     });
 
-            it("nft owner", async () => {
-                console.log("nft is", nft);
-                console.log(await erc20VaultManager.ownerOf(nft));
-                console.log(await deployer.getAddress());
-                console.log(await protocolGovernanceAdmin.getAddress());
-            })
-        });
+        //     it("nft owner", async () => {
+        //         expect(await erc20VaultManager.ownerOf(nft)).to.equals(await deployer.getAddress());
+        //     });
+        // });
 
         describe("push", () => {
-            it("not approved nor owner", async () => {
-                await expect(erc20Vault.push(
-                    [tokens[0].address], 
-                    [BigNumber.from(1)],
-                    false,
-                    []
-                )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
-            });
+            // it("when not approved nor owner", async () => {
+            //     await expect(erc20Vault.connect(stranger).push(
+            //         [tokens[0].address], 
+            //         [BigNumber.from(1)],
+            //         false,
+            //         []
+            //     )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            // });
 
-            it("tokens are not consisted to tokenAmounts", async () => {
-                await expect(erc20Vault.push(
+            // it("when tokens and tokenAmounts lengthes do not match", async () => {
+            //     await expect(erc20Vault.push(
+            //         [tokens[0].address], 
+            //         [BigNumber.from(1), BigNumber.from(1)],
+            //         true,
+            //         []
+            //     )).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+            // });
+
+            it("", async () => {
+                await erc20Vault.push(
                     [tokens[0].address], 
-                    [BigNumber.from(1), BigNumber.from(1)],
+                    [BigNumber.from(10**9).add(BigNumber.from(10**9))],
                     true,
                     []
-                )).to.be.revertedWith(Exceptions.VAULT_LIMITS);
-            })
+                );
+            });
         });
 
         describe("pull", () => {
