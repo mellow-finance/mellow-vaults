@@ -44,3 +44,12 @@ pip install -r requirements.txt
 ```bash
 brownie test
 ```
+
+
+### Visualize coverage report 
+
+```
+cd coverage
+python3 -m http.server
+open -a Safari http://localhost:8000
+```
