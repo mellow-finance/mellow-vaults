@@ -35,14 +35,14 @@ contract GatewayVaultGovernance is VaultGovernance {
     }
 
     function setLimits(uint256[] calldata newLimits) external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         require(newLimits.length == vaultTokens().length, "TL");
         _limits = newLimits;
         emit SetLimits(newLimits);
     }
 
     function setRedirects(address[] calldata newRedirects) external {
-        require(isAdmin(), "ADM");
+        require(isAdmin(msg.sender), "ADM");
         require(newRedirects.length == vaultTokens().length, "TL");
         _redirects = newRedirects;
         emit SetRedirects(newRedirects);

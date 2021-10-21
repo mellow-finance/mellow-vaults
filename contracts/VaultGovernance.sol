@@ -39,7 +39,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     // -------------------  PUBLIC, VIEW  -------------------
 
     function isProtocolAdmin() public view returns (bool) {
-        return _vaultManager.governanceParams().protocolGovernance.isAdmin();
+        return _vaultManager.governanceParams().protocolGovernance.isAdmin(msg.sender);
     }
 
     function vaultTokens() public view returns (address[] memory) {
@@ -95,7 +95,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     // -------------------  PUBLIC, MUTATING, ADMIN  -------------------
 
     function setPendingStrategyTreasury(address treasury) external {
-        require(isAdmin(), "AG");
+        require(isAdmin(msg.sender), "AG");
         require(address(treasury) != address(0), "ZMG");
         _pendingStrategyTreasury = treasury;
         _pendingStrategyTreasuryTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -103,7 +103,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     }
 
     function commitStrategyTreasury() external {
-        require(isAdmin(), "AG");
+        require(isAdmin(msg.sender), "AG");
         require(_pendingStrategyTreasuryTimestamp > 0, "NULL");
         require(block.timestamp > _pendingStrategyTreasuryTimestamp, "TV");
         _strategyTreasury = _pendingStrategyTreasury;

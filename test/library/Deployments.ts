@@ -24,6 +24,7 @@ import {
     ProtocolGovernance,
     VaultGovernance,
     VaultGovernanceFactory,
+    LpIssuerGovernance,
 
     ERC20Test_constructorArgs,
     ERC20Vault_constructorArgs,
@@ -32,10 +33,10 @@ import {
     ProtocolGovernance_constructorArgs,
     VaultGovernance_constructorArgs,
     VaultManagerGovernance_constructorArgs,
+    LpIssuerGovernance_constructorArgs,
 
     ProtocolGovernance_Params,
     VaultManagerGovernance,
-    IVaultFactory
 } from "./Types"
 
 export const deployERC20Tokens = deployments.createFixture(async (
@@ -66,10 +67,9 @@ export const deployERC20Tokens = deployments.createFixture(async (
     return tokens;
 });
 
-export const deployProtocolGovernance = deployments.createFixture(async (
-    _: HardhatRuntimeEnvironment,
+export const deployProtocolGovernance = async (
     options?: {
-        constructorArgs: ProtocolGovernance_constructorArgs,
+        constructorArgs?: ProtocolGovernance_constructorArgs,
         adminSigner: Signer
     }
 ) => {
@@ -84,17 +84,23 @@ export const deployProtocolGovernance = deployments.createFixture(async (
         protocolTreasury: ethers.constants.AddressZero,
         gatewayVaultManager: ethers.constants.AddressZero,
     };
+
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
+
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        admin: < Address > ethers.constants.AddressZero,
+        admin: < Address > await adminSigner.getAddress(),
         params: < ProtocolGovernance_Params > params
     };
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
-    const contract = await Contract.deploy(
-        constructorArgs.admin
+    const contract = await Contract.connect(
+        options?.adminSigner ?? (await ethers.getSigners())[0]
+    ).deploy(
+        constructorArgs.admin, 
+        constructorArgs.params
     );
     return contract;
-});
+};
 
 export const deployVaultGovernanceFactory = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment
@@ -388,3 +394,26 @@ export const deployERC20VaultSystem = deployments.createFixture(async (
         nft: nft
     };
 }, "Deploy ERC20Vault system");
+
+
+export const deployLpIssuerGovernance = async (
+    options?: {
+        constructorArgs: LpIssuerGovernance_constructorArgs,
+        adminSigner?: Signer 
+    }
+) => {
+    // defaults<
+    const constructorArgs: LpIssuerGovernance_constructorArgs = options?.constructorArgs ?? {
+        gatewayVault: ethers.constants.AddressZero,
+        protocolGovernance: ethers.constants.AddressZero,
+    };
+
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
+    // />
+    let contract: Contract;
+    const Contract = await ethers.getContractFactory("LpIssuerGovernance");
+
+    contract = await Contract.connect(adminSigner).deploy(constructorArgs);
+    await contract.deployed();
+    return contract;
+};
