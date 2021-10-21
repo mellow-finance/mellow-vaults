@@ -34,7 +34,7 @@ contract ERC20Vault is Vault {
         address to,
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata
+        bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(_vaultGovernance.vaultTokens()[i]).transfer(to, tokenAmounts[i]);
@@ -42,7 +42,7 @@ contract ERC20Vault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address, bytes calldata)
+    function _collectEarnings(address, bytes memory)
         internal
         view
         override
