@@ -302,7 +302,49 @@ export const deployCommonLibraryTest = deployments.createFixture(async (
 /**
  * @dev From scratch.
  */
-export const deployERC20VaultSystem = deployments.createFixture(async (
+type AaveToken = Contract;
+type AaveTest_constructorArgs = {
+    name: string;
+    symbol: string;
+}
+
+async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Promise<AaveToken[]> {
+    let tokens: AaveToken[] = [];
+    for (let i: number = 0; i < constructorArgs.length; ++i){
+        //Because Aave token is compability with ERC20
+        const Contract: ContractFactory = await ethers.getContractFactory("ERC20Test");
+        const contract: ERC20 = await Contract.deploy(
+            constructorArgs[i].name, 
+            constructorArgs[i].symbol
+        );
+        await contract.deployed();
+        tokens.push(contract);
+    }
+    return tokens;
+}
+
+
+async function deployAaveFactory(options?: {
+    protocolGovernanceAdmin: Signer,
+    treasury: Address,
+    tokensCount: number,
+    permissionless: boolean,
+    vaultManagerName?: string,
+    vaultManagerSymbol?: string,
+    Factory: Contract,
+}) {
+    let token_constructorArgs: AaveTest_constructorArgs[] = [];
+    for(let i: number = 0; i < options!.tokensCount; ++i) {
+        token_constructorArgs.push({
+            name: "Test Token",
+            symbol: `TEST_${i}`
+        });
+    }
+    const tokens: Contract[] = await deployAaveTokens( token_constructorArgs );
+    const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
+}
+
+export const deployERC20VaultSystem = deployments.createFixture(async ( //Сделать по аналогии, убрать фикстуру, сделать тупую функцию
     _: HardhatRuntimeEnvironment,
     options?: {
         protocolGovernanceAdmin: Signer,
