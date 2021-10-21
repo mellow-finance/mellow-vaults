@@ -1,13 +1,6 @@
 import { expect } from "chai";
-import {
-    ethers,
-    deployments
-} from "hardhat";
-import { 
-    ContractFactory, 
-    Contract, 
-    Signer 
-} from "ethers";
+import { ethers } from "hardhat";
+import { BigNumber, Signer } from "ethers";
 import {
     ERC20,
     ERC20Vault,
@@ -15,13 +8,20 @@ import {
     VaultManager,
     VaultGovernance,
     VaultGovernanceFactory,
-    ProtocolGovernance
+    ProtocolGovernance,
+    ERC20Test_constructorArgs
 } from "./library/Types";
-import { deployERC20VaultSystem } from "./library/Deployments";
-import { sleepTo } from "./library/Helpers";
+import {
+    deployERC20Tokens,
+    deployERC20VaultFactory,
+    deployProtocolGovernance,
+    deployVaultGovernanceFactory,
+    deployVaultManagerTest
+} from "./library/Deployments";
+import { sortContractsByAddresses } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 
-describe("ERC20Vault", function() {
+describe("ERC20Vault", function () {
     describe("when permissionless is set to true", () => {
         let deployer: Signer;
         let stranger: Signer;
@@ -45,29 +45,138 @@ describe("ERC20Vault", function() {
                 treasury,
                 protocolGovernanceAdmin,
             ] = await ethers.getSigners();
-            
-            ({ 
-                erc20Vault, 
-                erc20VaultManager, 
-                erc20VaultFactory, 
-                vaultGovernance, 
-                vaultGovernanceFactory, 
-                protocolGovernance, 
-                nft 
-            } = await deployERC20VaultSystem({
+
+            let options = {
                 protocolGovernanceAdmin: protocolGovernanceAdmin,
                 treasury: await treasury.getAddress(),
-                tokensCount: 10,
+                tokensCount: 2,
                 permissionless: true,
                 vaultManagerName: "vault manager ¯\\_(ツ)_/¯",
                 vaultManagerSymbol: "erc20vm"
-            }));
+            }
+
+            let token_constructorArgs: ERC20Test_constructorArgs[] = [];
+            for (let i: number = 0; i < options!.tokensCount; ++i) {
+                token_constructorArgs.push({
+                    name: "Test Token",
+                    symbol: `TEST_${i}`
+                });
+            }
+            tokens = await deployERC20Tokens({
+                constructorArgs: token_constructorArgs
+            });
+            // sort tokens by address using `sortAddresses` function
+            const tokensSorted: ERC20[] = sortContractsByAddresses(tokens);
+
+            protocolGovernance = await deployProtocolGovernance({
+                constructorArgs: {
+                    admin: await options!.protocolGovernanceAdmin.getAddress(),
+                    params: {
+                        maxTokensPerVault: 10,
+                        governanceDelay: 1,
+
+                        strategyPerformanceFee: 10 ** 9,
+                        protocolPerformanceFee: 10 ** 9,
+                        protocolExitFee: 10 ** 9,
+                        protocolTreasury: ethers.constants.AddressZero,
+                        gatewayVaultManager: ethers.constants.AddressZero,
+                    }
+                },
+                adminSigner: options!.protocolGovernanceAdmin
+            });
+
+            vaultGovernanceFactory = await deployVaultGovernanceFactory();
+
+            erc20VaultFactory = await deployERC20VaultFactory();
+
+            erc20VaultManager = await deployVaultManagerTest({
+                constructorArgs: {
+                    name: options!.vaultManagerName ?? "ERC20VaultManager",
+                    symbol: options!.vaultManagerSymbol ?? "E20VM",
+                    factory: erc20VaultFactory.address,
+                    governanceFactory: vaultGovernanceFactory.address,
+                    permissionless: options!.permissionless,
+                    governance: protocolGovernance.address
+                }
+            });
+
+            vaultGovernance = await (await ethers.getContractFactory("VaultGovernance")).deploy(
+                tokensSorted.map(t => t.address),
+                erc20VaultManager.address,
+                options!.treasury,
+                await protocolGovernanceAdmin.getAddress()
+            );
+            await vaultGovernance.deployed();
+
+            erc20Vault = await (await ethers.getContractFactory("ERC20Vault")).deploy(
+                vaultGovernance.address
+            )
+            await erc20Vault.deployed();
+
+            nft = await erc20VaultManager.callStatic.mintAndRegisterVaultNft(erc20Vault.address);
         });
 
         describe("constructor", () => {
-            it("works", async () => {
-                console.log("really works!");
+
+            it("has correct vaultGovernance address", async () => {
+                expect(await erc20Vault.vaultGovernance()).to.equal(vaultGovernance.address);
             });
+
+            it("has zero tvl", async () => {
+                expect(await erc20Vault.tvl()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
+            });
+
+            it("has zero earnings", async () => {
+                expect(await erc20Vault.earnings()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
+            });
+
+            it("nft owner", async () => {
+                console.log("nft is", nft);
+                console.log(await erc20VaultManager.ownerOf(nft));
+                console.log(await deployer.getAddress());
+                console.log(await protocolGovernanceAdmin.getAddress());
+            })
         });
+
+        describe("push", () => {
+            it("not approved nor owner", async () => {
+                await expect(erc20Vault.push(
+                    [tokens[0].address], 
+                    [BigNumber.from(1)],
+                    false,
+                    []
+                )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            });
+
+            it("tokens are not consisted to tokenAmounts", async () => {
+                await expect(erc20Vault.push(
+                    [tokens[0].address], 
+                    [BigNumber.from(1), BigNumber.from(1)],
+                    true,
+                    []
+                )).to.be.revertedWith(Exceptions.VAULT_LIMITS);
+            })
+        });
+
+        describe("pull", () => {
+
+        });
+
+        describe("transferAndPush", () => {
+
+        });
+
+        describe("collectEarnings", () => {
+
+        });
+
+        describe("reclaimTokens", () => {
+
+        });
+
+        describe("claimRewards", () => {
+            
+        });
+
     });
 });

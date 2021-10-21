@@ -118,7 +118,7 @@ export const deployVaultManagerGovernance = async (
     return contract;
 };
 
-export const deployVaultManager = async (
+export const deployVaultManagerTest = async (
     options?: {
         constructorArgs: VaultManager_constructorArgs
     }
@@ -133,7 +133,7 @@ export const deployVaultManager = async (
         governance: ethers.constants.AddressZero
     };
     // />
-    const Contract = await ethers.getContractFactory("VaultManager");
+    const Contract = await ethers.getContractFactory("VaultManagerTest");
     const contract = await Contract.deploy(
         constructorArgs.name,
         constructorArgs.symbol,
