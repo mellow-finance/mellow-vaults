@@ -184,14 +184,13 @@ describe("ERC20Vault", function () {
                 )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
             });
 
-            it("", async () => {
+            it("passes", async () => {
                 const amounts = await erc20Vault.callStatic.push(
                     [tokens[0].address], 
                     [BigNumber.from(10**9)],
                     true,
                     []
-                )
-                console.log(amounts);
+                );
                 expect(amounts).to.deep.equal([BigNumber.from(10**9)]);
             });
         });
@@ -283,6 +282,32 @@ describe("ERC20Vault", function () {
                     true,
                     []
                 )).to.be.revertedWith(Exceptions.ERC20_INSUFFICIENT_BALANCE);
+            });
+        });
+
+        describe("tvl", () => {
+            before(async () => {
+                for (let i: number = 0; i < tokens.length; ++i) {
+                    await tokens[i].connect(deployer).approve(
+                        erc20Vault.address, 
+                        BigNumber.from(10**9).mul(BigNumber.from(10**9))
+                    );
+                }
+            });
+
+            it("when not approved nor owner", async () => {
+                await erc20Vault.transferAndPush(
+                    await deployer.getAddress(),
+                    [tokens[0].address], 
+                    [BigNumber.from(10**9)],
+                    false,
+                    []
+                );
+                console.log(await erc20Vault.tvl());
+                expect(await erc20Vault.tvl()).to.deep.equal([
+                    BigNumber.from(10**9),
+                    BigNumber.from(0),
+                ]);
             });
         });
 
