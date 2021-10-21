@@ -37,6 +37,7 @@ import {
     VaultManagerGovernance,
     IVaultFactory
 } from "./Types"
+import { Bytes } from "@ethersproject/bytes";
 
 export const deployERC20Tokens = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
@@ -302,13 +303,30 @@ export const deployCommonLibraryTest = deployments.createFixture(async (
 /**
  * @dev From scratch.
  */
-type AaveToken = Contract;
-type AaveTest_constructorArgs = {
+export type AaveToken = Contract;
+export type AaveVaultFactory = Contract;
+export type AaveVaultManager = Contract;
+export type AaveVault = Contract;
+export type AaveTest_constructorArgs = {
     name: string;
     symbol: string;
-}
+};
+export type AaveVaultManager_constructorArgs = {
+    name: string,
+    symbol: string,
+    factory: IVaultFactory,
+    governanceFactory: string,
+    permissionless: boolean,
+    governance: string
+};
+export type AaveVaultManager_createVault = {
+    tokens: string[],
+    strategyTreasury: Address,
+    admin: Address,
+    options: string | Bytes
+};
 
-async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Promise<AaveToken[]> {
+export async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Promise<AaveToken[]> {
     let tokens: AaveToken[] = [];
     for (let i: number = 0; i < constructorArgs.length; ++i){
         //Because Aave token is compability with ERC20
@@ -323,16 +341,98 @@ async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Pr
     return tokens;
 }
 
+export async function deployAaveVaultFactory(): Promise<AaveVaultFactory>{
+    const Contract = await ethers.getContractFactory("AaveVaultFactory");
+    const contract = await Contract.deploy();
+    await contract.deployed();
+    return contract; 
+}
 
-async function deployAaveFactory(options?: {
+export async function deployAaveVaultManager(options?: {
+    constructor_args: AaveVaultManager_constructorArgs
+}): Promise<AaveVaultManager>{
+    const constructorArgs: AaveVaultManager_constructorArgs = options?.constructor_args ?? {
+        name: "Test Token",
+        symbol: "TEST",
+        factory: ethers.constants.AddressZero,
+        governanceFactory: ethers.constants.AddressZero,
+        permissionless: false,
+        governance: ethers.constants.AddressZero
+    };
+    // />
+    const Contract = await ethers.getContractFactory("AaveVaultManager");
+    const contract = await Contract.deploy(
+        constructorArgs.name,
+        constructorArgs.symbol,
+        constructorArgs.factory,
+        constructorArgs.governanceFactory,
+        constructorArgs.permissionless,
+        constructorArgs.governance
+    );
+    await contract.deployed();
+    return contract;
+}
+
+export async function deployAaveVaultFromVaulManager(options?: {
+    factory: AaveVaultManager,
+    adminSigner: Signer,
+    constructorArgs?: AaveVaultManager_createVault
+}): Promise<{
+    vaultGovernance: VaultGovernance,
+    AaveVault: AaveVault,
+    nft: number
+}> {
+    if (!options?.factory) {
+        throw new Error("Factory is required");
+    }
+
+    const constructorArgs: AaveVaultManager_createVault = options?.constructorArgs ?? {
+        tokens: [],
+        strategyTreasury: ethers.constants.AddressZero,
+        admin: ethers.constants.AddressZero,
+        options: []
+    }
+
+    let AaveVault: AaveVault;
+    let vaultGovernance: VaultGovernance;
+    let nft: number;
+
+    let vaultGovernanceAddress: string;
+    let AaveVaultAddress: Address;
+
+    [
+        vaultGovernanceAddress,
+        AaveVaultAddress,
+        nft
+    ] = await options!.factory.connect(options.adminSigner).callStatic.createVault(
+        constructorArgs.tokens,
+        constructorArgs.strategyTreasury,
+        constructorArgs.admin,
+        constructorArgs.options
+    );
+
+    AaveVault = await ethers.getContractAt("AaveVault", AaveVaultAddress);
+    vaultGovernance = await ethers.getContractAt("VaultGovernance", vaultGovernanceAddress);
+
+    return {
+        vaultGovernance: vaultGovernance,
+        AaveVault: AaveVault,
+        nft: nft
+    };
+}
+
+export async function deployAaveVaultSystem(options?: {
     protocolGovernanceAdmin: Signer,
     treasury: Address,
     tokensCount: number,
     permissionless: boolean,
     vaultManagerName?: string,
-    vaultManagerSymbol?: string,
-    Factory: Contract,
+    vaultManagerSymbol?: string
 }) {
+    if (options === undefined) {
+        throw new Error("options are required");
+    }
+
     let token_constructorArgs: AaveTest_constructorArgs[] = [];
     for(let i: number = 0; i < options!.tokensCount; ++i) {
         token_constructorArgs.push({
@@ -342,6 +442,64 @@ async function deployAaveFactory(options?: {
     }
     const tokens: Contract[] = await deployAaveTokens( token_constructorArgs );
     const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
+
+    const protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
+        constructorArgs: {
+            admin: await options!.protocolGovernanceAdmin.getAddress(),
+            params: {
+                maxTokensPerVault: 10,
+                governanceDelay: 1,
+        
+                strategyPerformanceFee: 10**9,
+                protocolPerformanceFee: 10**9,
+                protocolExitFee: 10**9,
+                protocolTreasury: ethers.constants.AddressZero,
+                gatewayVaultManager: ethers.constants.AddressZero,
+            }
+        },
+        adminSigner: options!.protocolGovernanceAdmin
+    });
+
+    const vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
+    
+    const AaveVaultFactory: AaveVaultFactory = await deployAaveVaultFactory();
+
+    const AaveVaultManager: AaveVaultManager = await deployAaveVaultManager({
+        constructor_args: {
+            name: options!.vaultManagerName ?? "AaveVaultManager",
+            symbol: options!.vaultManagerSymbol ?? "E20VM",
+            factory: AaveVaultFactory.address,
+            governanceFactory: vaultGovernanceFactory.address,
+            permissionless: options!.permissionless,
+            governance: protocolGovernance.address
+        } 
+    });
+
+    let vaultGovernance: VaultGovernance;
+    let AaveVault: AaveVault;
+    let nft: number;
+
+    ({ vaultGovernance, AaveVault, nft } = await deployAaveVaultFromVaulManager({
+        constructorArgs: {
+            tokens: tokensSorted.map(t => t.address),
+            strategyTreasury: options!.treasury,
+            admin: await options!.protocolGovernanceAdmin.getAddress(),
+            options: []
+        },
+        factory: AaveVaultManager,
+        adminSigner: options!.protocolGovernanceAdmin
+    }));
+
+    return {
+        AaveVault: AaveVault,
+        AaveVaultManager: AaveVaultManager,
+        AaveVaultFactory: AaveVaultFactory,
+        vaultGovernance: vaultGovernance,
+        vaultGovernanceFactory: vaultGovernanceFactory,
+        protocolGovernance: protocolGovernance,
+        tokens: tokensSorted,
+        nft: nft
+    }
 }
 
 export const deployERC20VaultSystem = deployments.createFixture(async ( //Сделать по аналогии, убрать фикстуру, сделать тупую функцию
