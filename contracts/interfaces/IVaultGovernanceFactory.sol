@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./IVaultGovernance.sol";
+import "./IVaultManager.sol";
 
 interface IVaultGovernanceFactory {
     function deployVaultGovernance(

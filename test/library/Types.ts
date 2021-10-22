@@ -10,6 +10,8 @@ export type IVaultGovernance = Address;
 export type IVaultGovernanceFactory = Address;
 export type IProtocolGovernance = Address;
 export type IGatewayVaultManager = Address;
+export type ILpIssuerGovernance = Address;
+export type IVault = Address;
 
 export type ERC20 = Contract;
 export type ERC20Vault = Contract;
@@ -19,6 +21,7 @@ export type ProtocolGovernance = Contract;
 export type VaultManagerGovernance = Contract;
 export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
+export type LpIssuerGovernance = Contract;
 
 export type ProtocolGovernance_Params = {
     maxTokensPerVault: number,
@@ -34,6 +37,11 @@ export type ProtocolGovernance_constructorArgs = {
     admin: Address;
     params: ProtocolGovernance_Params;
 };
+
+export type LpIssuerGovernance_constructorArgs = {
+    gatewayVault: IVault;
+    protocolGovernance: IProtocolGovernance;
+}
 
 export type VaultGovernanceFactory_constructorArgs = {
     tokens: Address[],
