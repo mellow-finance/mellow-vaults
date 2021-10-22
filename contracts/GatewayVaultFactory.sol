@@ -16,7 +16,8 @@ contract GatewayVaultFactory is IVaultFactory {
         for (uint256 i = 0; i < vaultsCount; ++i) {
             address vault;
             assembly {
-                vault := mload(add(add(options, 0x20), mul(i, 0x20)))
+                options := add(options, 0x20)
+                vault := mload(options)
             }
             vaults[i] = vault;
         }
