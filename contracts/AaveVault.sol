@@ -15,6 +15,7 @@ contract AaveVault is Vault {
     /// @param vaultGovernance reference to VaultGovernance for this vault
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {
         address[] memory tokens = vaultGovernance.vaultTokens();
+        _aTokens = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             console.log(address(tokens[i]));
             _aTokens[i] = _getAToken(tokens[i]);
