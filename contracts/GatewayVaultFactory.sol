@@ -7,20 +7,7 @@ import "./GatewayVault.sol";
 
 contract GatewayVaultFactory is IVaultFactory {
     function deployVault(IVaultGovernance vaultGovernance, bytes memory options) external override returns (IVault) {
-        uint256 len;
-        assembly {
-            len := mload(options)
-        }
-        uint256 vaultsCount = len / 32;
-        address[] memory vaults = new address[](vaultsCount);
-        for (uint256 i = 0; i < vaultsCount; ++i) {
-            address vault;
-            assembly {
-                options := add(options, 0x20)
-                vault := mload(options)
-            }
-            vaults[i] = vault;
-        }
+        address[] memory vaults = abi.decode(options, (address[]));
         GatewayVault gatewayVault = new GatewayVault(vaultGovernance, vaults);
         return IVault(gatewayVault);
     }
