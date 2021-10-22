@@ -31,6 +31,7 @@ import {
     ProtocolGovernance_Params,
     VaultManagerGovernance
 } from "./Types"
+import { BigNumber } from "@ethersproject/bignumber";
 
 export const deployERC20Tokens = async (
     options?: {
@@ -70,13 +71,11 @@ export const deployProtocolGovernance = async (
 ) => {
     // defaults<
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        admin: await options?.adminSigner.getAddress() || ethers.constants.AddressZero,
+        admin: await options?.adminSigner.getAddress() || await ((await ethers.getSigners())[0]).getAddress(),
     };
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
-    const contract = await Contract.deploy(
-        constructorArgs.admin,
-    );
+    const contract = await Contract.deploy(constructorArgs.admin);
 
     if (options?.initializerArgs) {
         await contract.setPendingParams(options.initializerArgs.params);
@@ -302,12 +301,12 @@ export const deployERC20VaultSystem = async (
         },
         initializerArgs: {
             params: {
-                maxTokensPerVault: 10,
-                governanceDelay: 1,
+                maxTokensPerVault: BigNumber.from(10),
+                governanceDelay: BigNumber.from(1),
 
-                strategyPerformanceFee: 10 * 10 ** 9,
-                protocolPerformanceFee: 2 * 10 ** 9,
-                protocolExitFee: 10 ** 9,
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: options.treasury,
                 gatewayVaultManager: ethers.constants.AddressZero,
             }

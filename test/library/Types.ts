@@ -1,3 +1,4 @@
+import { BigNumber } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
 import { Contract } from "@ethersproject/contracts";
 
@@ -25,11 +26,11 @@ export type GatewayVaultManager = Contract;
 export type LpIssuerGovernance = Contract;
 
 export type ProtocolGovernance_Params = {
-    maxTokensPerVault: number;
-    governanceDelay: number;
-    strategyPerformanceFee: number;
-    protocolPerformanceFee: number;
-    protocolExitFee: number;
+    maxTokensPerVault: BigNumber;
+    governanceDelay: BigNumber;
+    strategyPerformanceFee: BigNumber;
+    protocolPerformanceFee: BigNumber;
+    protocolExitFee: BigNumber;
     protocolTreasury: Address;
     gatewayVaultManager: IGatewayVaultManager;
 }
