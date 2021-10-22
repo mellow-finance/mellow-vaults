@@ -55,7 +55,10 @@ describe("AaveVaultFactory", () => {
                 treasury,
                 protocolGovernanceAdmin,
             ] = await ethers.getSigners();
-
+            // console.log(deployer,
+            //             stranger,
+            //             treasury,
+            //             protocolGovernanceAdmin,);
             ({
                 AaveVault,
                 AaveVaultManager,
@@ -71,7 +74,7 @@ describe("AaveVaultFactory", () => {
                 tokensCount: 10, 
                 permissionless: true,
                 vaultManagerName: "vault manager",
-                vaultManagerSymbol: "Aavevm"
+                vaultManagerSymbol: "Aavevm ¯\\_(ツ)_/¯"
             }));
     });
 

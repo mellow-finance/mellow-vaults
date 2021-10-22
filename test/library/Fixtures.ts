@@ -67,14 +67,10 @@ export const deployERC20Tokens = deployments.createFixture(async (
     return tokens;
 });
 
-export const deployProtocolGovernance = deployments.createFixture(async (
-    _: HardhatRuntimeEnvironment,
-    options?: {
-        constructorArgs: ProtocolGovernance_constructorArgs,
-        adminSigner: Signer
-    }
-) => {
-    // defaults<
+export async function deployProtocolGovernance(options?: {
+    constructorArgs: ProtocolGovernance_constructorArgs,
+    adminSigner: Signer
+}) : Promise<Contract> {
     const params: ProtocolGovernance_Params = options?.constructorArgs?.params ?? {
         maxTokensPerVault: 10,
         governanceDelay: 1,
@@ -89,13 +85,47 @@ export const deployProtocolGovernance = deployments.createFixture(async (
         admin: < Address > ethers.constants.AddressZero,
         params: < ProtocolGovernance_Params > params
     };
+
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
+    
     const contract = await Contract.deploy(
-        constructorArgs.admin
+        constructorArgs.admin,
+        constructorArgs.params
     );
+
     return contract;
-});
+}
+
+// export const deployProtocolGovernance = deployments.createFixture(async (
+    // _: HardhatRuntimeEnvironment,
+    // options?: {
+        // constructorArgs: ProtocolGovernance_constructorArgs,
+        // adminSigner: Signer
+    // }
+// ) => {
+    // defaults<
+    // const params: ProtocolGovernance_Params = options?.constructorArgs?.params ?? {
+        // maxTokensPerVault: 10,
+        // governanceDelay: 1,
+// 
+        // strategyPerformanceFee: 10**9,
+        // protocolPerformanceFee: 10**9,
+        // protocolExitFee: 10**9,
+        // protocolTreasury: ethers.constants.AddressZero,
+        // gatewayVaultManager: ethers.constants.AddressZero,
+    // };
+    // const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
+        // admin: < Address > ethers.constants.AddressZero,
+        // params: < ProtocolGovernance_Params > params
+    // };
+    // />
+    // const Contract = await ethers.getContractFactory("ProtocolGovernance");
+    // const contract = await Contract.deploy(
+        // constructorArgs.admin
+    // );
+    // return contract;
+// });
 
 export const deployVaultGovernanceFactory = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment
@@ -206,8 +236,7 @@ export const deployVaultGovernance = deployments.createFixture(async (
 });
 
 
-export const deployERC20Vault = deployments.createFixture(async (
-    _: HardhatRuntimeEnvironment,
+export const deployERC20Vault = async (
     options?: {
         constructorArgs?: ERC20Vault_constructorArgs,
         factory?: ERC20VaultFactory,
@@ -233,7 +262,7 @@ export const deployERC20Vault = deployments.createFixture(async (
         await contract.deployed();
     }
     return contract;
-});
+};
 
 export const deployERC20VaultFromVaultManager = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
@@ -328,11 +357,11 @@ export type AaveVaultManager_createVault = {
 
 export async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Promise<AaveToken[]> {
     let tokens: AaveToken[] = [];
+    const Contract: ContractFactory = await ethers.getContractFactory("ERC20Test");
     for (let i: number = 0; i < constructorArgs.length; ++i){
         //Because Aave token is compability with ERC20
-        const Contract: ContractFactory = await ethers.getContractFactory("ERC20Test");
         const contract: ERC20 = await Contract.deploy(
-            constructorArgs[i].name, 
+            constructorArgs[i].name + `_{i.toString()}`, 
             constructorArgs[i].symbol
         );
         await contract.deployed();
@@ -367,7 +396,8 @@ export async function deployAaveVaultManager(options?: {
         constructorArgs.factory,
         constructorArgs.governanceFactory,
         constructorArgs.permissionless,
-        constructorArgs.governance
+        constructorArgs.governance,
+        "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9"
     );
     await contract.deployed();
     return contract;
@@ -441,8 +471,13 @@ export async function deployAaveVaultSystem(options?: {
         });
     }
     const tokens: Contract[] = await deployAaveTokens( token_constructorArgs );
-    const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
+    // console.log(tokens);
 
+    // for(let i: number = 0; i < tokens.length; ++i){
+    //     console.log(tokens[i].address);
+    // }
+    const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
+    // console.log(tokensSorted);
     const protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
         constructorArgs: {
             admin: await options!.protocolGovernanceAdmin.getAddress(),
@@ -460,6 +495,8 @@ export async function deployAaveVaultSystem(options?: {
         adminSigner: options!.protocolGovernanceAdmin
     });
 
+    // console.log(protocolGovernance);
+
     const vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
     
     const AaveVaultFactory: AaveVaultFactory = await deployAaveVaultFactory();
@@ -472,8 +509,11 @@ export async function deployAaveVaultSystem(options?: {
             governanceFactory: vaultGovernanceFactory.address,
             permissionless: options!.permissionless,
             governance: protocolGovernance.address
+            
         } 
     });
+
+    console.log(AaveVaultManager);
 
     let vaultGovernance: VaultGovernance;
     let AaveVault: AaveVault;
