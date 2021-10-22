@@ -34,7 +34,7 @@ import {
     VaultManagerGovernance
 } from "./Types"
 import { BigNumber } from "@ethersproject/bignumber";
-import { construct } from "ramda";
+
 
 export const deployERC20Tokens = async (
     options?: {
@@ -97,26 +97,27 @@ export const deployVaultGovernanceFactory = async () => {
 
 export const deployVaultManagerGovernance = async (
     options?: {
-        constructorArgs: VaultManagerGovernance_constructorArgs
+        constructorArgs: VaultManagerGovernance_constructorArgs;
+        admin?: Signer;
     }
 ) => {
     // defaults<
+    const admin: Signer = options?.admin ?? (await ethers.getSigners())[0];
     const constructorArgs: VaultManagerGovernance_constructorArgs = options?.constructorArgs ?? {
         permissionless: false,
-        protocolGovernance: ethers.constants.AddressZero,
-        factory: ethers.constants.AddressZero,
-        governanceFactory: ethers.constants.AddressZero,
+        protocolGovernance: (await deployProtocolGovernance({adminSigner: admin})).address,
+        factory: (await deployERC20VaultFactory()).address,
+        governanceFactory: (await deployVaultGovernanceFactory()).address
     };
     // />
     const contractFactory: ContractFactory = await ethers.getContractFactory("VaultManagerGovernance");
-    const contract: VaultManagerGovernance = await contractFactory.deploy(
+    const contract: VaultManagerGovernance = await contractFactory.connect(admin).deploy(
         constructorArgs.permissionless,
         constructorArgs.protocolGovernance,
         constructorArgs.factory,
         constructorArgs.governanceFactory
     );
     await contract.deployed();
-    console.log("\n\n\ndeployed!!!\n\n")
     return contract;
 };
 

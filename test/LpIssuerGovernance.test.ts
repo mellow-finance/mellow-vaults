@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { 
     ethers,
-    network,
     deployments
 } from "hardhat";
 import {

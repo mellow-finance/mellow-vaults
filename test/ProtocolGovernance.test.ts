@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { 
     ethers,
-    network,
     deployments
 } from "hardhat";
 import { 
@@ -23,8 +22,6 @@ import {
     sleepTo,
     toObject
 } from "./library/Helpers";
-import { time } from "console";
-import { times } from "ramda";
 
 
 describe("ProtocolGovernance", () => {
