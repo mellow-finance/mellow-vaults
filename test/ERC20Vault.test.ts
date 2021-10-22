@@ -8,7 +8,8 @@ import {
     VaultManager,
     VaultGovernance,
     VaultGovernanceFactory,
-    ProtocolGovernance
+    ProtocolGovernance,
+    GatewayVaultManager,
 } from "./library/Types";
 import { deployERC20VaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
@@ -28,6 +29,7 @@ describe("ERC20Vault", function () {
         let vaultGovernance: VaultGovernance;
         let vaultGovernanceFactory: VaultGovernanceFactory;
         let protocolGovernance: ProtocolGovernance;
+        let gatewayVaultManager: GatewayVaultManager;
         let nft: number;
         let deployment: Function;
 
@@ -63,7 +65,8 @@ describe("ERC20Vault", function () {
                 vaultGovernance,
                 protocolGovernance,
                 erc20Vault,
-                nft
+                nft,
+                gatewayVaultManager,
             } = await deployment());
             // approve all tokens to the vault
             for (let i: number = 0; i < tokens.length; ++i) {

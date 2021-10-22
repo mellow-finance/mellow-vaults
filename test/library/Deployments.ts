@@ -18,6 +18,7 @@ import {
     VaultGovernance,
     VaultGovernanceFactory,
     LpIssuerGovernance,
+    GatewayVaultManager,
 
     ERC20Test_constructorArgs,
     ERC20Vault_constructorArgs,
@@ -27,10 +28,12 @@ import {
     VaultGovernance_constructorArgs,
     VaultManagerGovernance_constructorArgs,
     LpIssuerGovernance_constructorArgs,
+    GatewayVaultManager_constructorArgs,
 
     ProtocolGovernance_Params,
     VaultManagerGovernance
 } from "./Types"
+import { construct } from "ramda";
 
 export const deployERC20Tokens = async (
     options?: {
@@ -79,9 +82,9 @@ export const deployProtocolGovernance = async (
     );
 
     if (options?.initializerArgs) {
-        await contract.setPendingParams(options.initializerArgs.params);
+        await contract.connect(options!.adminSigner).setPendingParams(options.initializerArgs.params);
         await sleep(1);
-        await contract.commitParams();
+        await contract.connect(options!.adminSigner).commitParams();
     }
     return contract;
 };
@@ -114,6 +117,7 @@ export const deployVaultManagerGovernance = async (
         constructorArgs.governanceFactory
     );
     await contract.deployed();
+    console.log("\n\n\ndeployed!!!\n\n")
     return contract;
 };
 
@@ -273,6 +277,24 @@ export const deployCommonLibraryTest = async () => {
     return commonTest;
 };
 
+export const deployGatewayVaultManager = async (
+    options: {
+        constructorArgs: GatewayVaultManager_constructorArgs,
+    }
+) => {
+    const Contract: ContractFactory = await ethers.getContractFactory("GatewayVaultManager");
+    const contract: GatewayVaultManager = await Contract.deploy(
+        options.constructorArgs.name,
+        options.constructorArgs.symbol,
+        options.constructorArgs.factory,
+        options.constructorArgs.governanceFactory,
+        options.constructorArgs.permissionless,
+        options.constructorArgs.governance
+    );
+    await contract.deployed();
+    return contract;
+};
+
 export const deployERC20VaultSystem = async (
     options: {
         protocolGovernanceAdmin: Signer,
@@ -300,24 +322,36 @@ export const deployERC20VaultSystem = async (
         constructorArgs: {
             admin: await options!.protocolGovernanceAdmin.getAddress(),
         },
-        initializerArgs: {
-            params: {
-                maxTokensPerVault: 10,
-                governanceDelay: 1,
-
-                strategyPerformanceFee: 10 * 10 ** 9,
-                protocolPerformanceFee: 2 * 10 ** 9,
-                protocolExitFee: 10 ** 9,
-                protocolTreasury: options.treasury,
-                gatewayVaultManager: ethers.constants.AddressZero,
-            }
-        },
         adminSigner: options!.protocolGovernanceAdmin
     });
 
     let vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
 
     let erc20VaultFactory: ERC20VaultFactory = await deployERC20VaultFactory();
+
+    let gatewayVaultManager: GatewayVaultManager = await deployGatewayVaultManager({
+        constructorArgs: {
+            name: 'gateway vault manager',
+            symbol: 'gvm',
+            factory: erc20VaultFactory.address,
+            governanceFactory: vaultGovernanceFactory.address,
+            permissionless: options.permissionless,
+            governance: protocolGovernance.address
+        }
+    });
+
+    await protocolGovernance.connect(options.protocolGovernanceAdmin).setPendingParams({
+        maxTokensPerVault: 10,
+        governanceDelay: 1,
+
+        strategyPerformanceFee: 10 * 10 ** 9,
+        protocolPerformanceFee: 2 * 10 ** 9,
+        protocolExitFee: 10 ** 9,
+        protocolTreasury: options.treasury,
+        gatewayVaultManager: gatewayVaultManager.address,
+    });
+    await sleep(1);
+    await protocolGovernance.connect(options.protocolGovernanceAdmin).commitParams();
 
     let erc20VaultManager: VaultManager = await deployVaultManagerTest({
         constructorArgs: {
@@ -363,7 +397,8 @@ export const deployERC20VaultSystem = async (
         protocolGovernance: protocolGovernance,
         erc20VaultFactory: erc20VaultFactory,
         erc20VaultManager: erc20VaultManager,
-        vaultGovernanceFactory: vaultGovernanceFactory
+        vaultGovernanceFactory: vaultGovernanceFactory,
+        gatewayVaultManager: gatewayVaultManager
     }
 };
 
