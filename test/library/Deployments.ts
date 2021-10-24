@@ -37,8 +37,15 @@ import {
 
     ProtocolGovernance_Params,
     VaultManagerGovernance,
+
+    AaveToken,
+    AaveVaultFactory,
+    AaveVaultManager,
+    AaveVault,
+    AaveTest_constructorArgs,
+    AaveVaultManager_constructorArgs,
+    AaveVaultManager_createVault,
 } from "./Types"
-import { Bytes } from "@ethersproject/bytes";
 
 export const deployERC20Tokens = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
@@ -68,12 +75,6 @@ export const deployERC20Tokens = deployments.createFixture(async (
     return tokens;
 });
 
-<<<<<<< HEAD:test/library/Fixtures.ts
-export async function deployProtocolGovernance(options?: {
-    constructorArgs: ProtocolGovernance_constructorArgs,
-    adminSigner: Signer
-}) : Promise<Contract> {
-=======
 export const deployProtocolGovernance = async (
     options?: {
         constructorArgs?: ProtocolGovernance_constructorArgs,
@@ -81,7 +82,6 @@ export const deployProtocolGovernance = async (
     }
 ) => {
     // defaults<
->>>>>>> adfc135a61f6448b0e68853e217bbce27a2d139c:test/library/Deployments.ts
     const params: ProtocolGovernance_Params = options?.constructorArgs?.params ?? {
         maxTokensPerVault: 10,
         governanceDelay: 1,
@@ -102,55 +102,15 @@ export const deployProtocolGovernance = async (
 
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
-<<<<<<< HEAD:test/library/Fixtures.ts
-    
-    const contract = await Contract.deploy(
-        constructorArgs.admin,
-=======
     const contract = await Contract.connect(
         options?.adminSigner ?? (await ethers.getSigners())[0]
     ).deploy(
         constructorArgs.admin, 
->>>>>>> adfc135a61f6448b0e68853e217bbce27a2d139c:test/library/Deployments.ts
         constructorArgs.params
     );
 
     return contract;
-<<<<<<< HEAD:test/library/Fixtures.ts
-}
-
-// export const deployProtocolGovernance = deployments.createFixture(async (
-    // _: HardhatRuntimeEnvironment,
-    // options?: {
-        // constructorArgs: ProtocolGovernance_constructorArgs,
-        // adminSigner: Signer
-    // }
-// ) => {
-    // defaults<
-    // const params: ProtocolGovernance_Params = options?.constructorArgs?.params ?? {
-        // maxTokensPerVault: 10,
-        // governanceDelay: 1,
-// 
-        // strategyPerformanceFee: 10**9,
-        // protocolPerformanceFee: 10**9,
-        // protocolExitFee: 10**9,
-        // protocolTreasury: ethers.constants.AddressZero,
-        // gatewayVaultManager: ethers.constants.AddressZero,
-    // };
-    // const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        // admin: < Address > ethers.constants.AddressZero,
-        // params: < ProtocolGovernance_Params > params
-    // };
-    // />
-    // const Contract = await ethers.getContractFactory("ProtocolGovernance");
-    // const contract = await Contract.deploy(
-        // constructorArgs.admin
-    // );
-    // return contract;
-// });
-=======
 };
->>>>>>> adfc135a61f6448b0e68853e217bbce27a2d139c:test/library/Deployments.ts
 
 export const deployVaultGovernanceFactory = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment
@@ -357,28 +317,6 @@ export const deployCommonLibraryTest = deployments.createFixture(async (
 /**
  * @dev From scratch.
  */
-export type AaveToken = Contract;
-export type AaveVaultFactory = Contract;
-export type AaveVaultManager = Contract;
-export type AaveVault = Contract;
-export type AaveTest_constructorArgs = {
-    name: string;
-    symbol: string;
-};
-export type AaveVaultManager_constructorArgs = {
-    name: string,
-    symbol: string,
-    factory: IVaultFactory,
-    governanceFactory: string,
-    permissionless: boolean,
-    governance: string
-};
-export type AaveVaultManager_createVault = {
-    tokens: string[],
-    strategyTreasury: Address,
-    admin: Address,
-    options: string | Bytes
-};
 
 export async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Promise<AaveToken[]> {
     let tokens: AaveToken[] = [];
@@ -496,13 +434,9 @@ export async function deployAaveVaultSystem(options?: {
         });
     }
     const tokens: Contract[] = await deployAaveTokens( token_constructorArgs );
-    // console.log(tokens);
 
-    // for(let i: number = 0; i < tokens.length; ++i){
-    //     console.log(tokens[i].address);
-    // }
     const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
-    // console.log(tokensSorted);
+    
     const protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
         constructorArgs: {
             admin: await options!.protocolGovernanceAdmin.getAddress(),
@@ -520,8 +454,6 @@ export async function deployAaveVaultSystem(options?: {
         adminSigner: options!.protocolGovernanceAdmin
     });
 
-    // console.log(protocolGovernance);
-
     const vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
     
     const AaveVaultFactory: AaveVaultFactory = await deployAaveVaultFactory();
@@ -537,8 +469,6 @@ export async function deployAaveVaultSystem(options?: {
             
         } 
     });
-
-    console.log(AaveVaultManager);
 
     let vaultGovernance: VaultGovernance;
     let AaveVault: AaveVault;

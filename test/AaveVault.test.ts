@@ -15,7 +15,7 @@ import { deployAaveVaultSystem,
          AaveVaultFactory,
          AaveVault,
          AaveVaultManager,
-} from "./library/Fixtures";
+} from "./library/Deployments";
 import { ProtocolGovernance,
          VaultGovernance,
          VaultGovernanceFactory
@@ -37,17 +37,6 @@ describe("AaveVaultFactory", () => {
     let nft: number;
     let vaultGovernance: VaultGovernance;
     let vaultGovernanceFactory: VaultGovernanceFactory;
-
-    let user1: Signer;
-    let user2: Signer;
-    let timestamp: number;
-    let timeout: number;
-    // let params: GovernanceParams;
-    // let paramsZero: GovernanceParams;
-    // let paramsTimeout: GovernanceParams;
-    // let paramsEmpty: GovernanceParams;
-    // let paramsDefault: GovernanceParams;
-    let defaultGovernanceDelay: number;
     before(async() => {
             [
                 deployer,
@@ -55,10 +44,6 @@ describe("AaveVaultFactory", () => {
                 treasury,
                 protocolGovernanceAdmin,
             ] = await ethers.getSigners();
-            // console.log(deployer,
-            //             stranger,
-            //             treasury,
-            //             protocolGovernanceAdmin,);
             ({
                 AaveVault,
                 AaveVaultManager,

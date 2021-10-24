@@ -1,5 +1,6 @@
 import { BytesLike } from "@ethersproject/bytes";
 import { Contract } from "@ethersproject/contracts";
+import { Bytes } from "@ethersproject/bytes";
 
 export type Address = string;
 
@@ -22,6 +23,11 @@ export type VaultManagerGovernance = Contract;
 export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
 export type LpIssuerGovernance = Contract;
+
+export type AaveToken = Contract;
+export type AaveVaultFactory = Contract;
+export type AaveVaultManager = Contract;
+export type AaveVault = Contract;
 
 export type ProtocolGovernance_Params = {
     maxTokensPerVault: number,
@@ -98,4 +104,25 @@ export type VaultGovernance_constructorArgs = VaultGovernanceFactory_deployVault
 export type ERC20Test_constructorArgs = {
     name: string,
     symbol: string
+};
+
+export type AaveTest_constructorArgs = {
+    name: string;
+    symbol: string;
+};
+
+export type AaveVaultManager_constructorArgs = {
+    name: string,
+    symbol: string,
+    factory: string,
+    governanceFactory: string,
+    permissionless: boolean,
+    governance: string
+};
+
+export type AaveVaultManager_createVault = {
+    tokens: string[],
+    strategyTreasury: Address,
+    admin: Address,
+    options: string | Bytes
 };
