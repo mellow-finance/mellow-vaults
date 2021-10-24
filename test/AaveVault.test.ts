@@ -10,12 +10,12 @@ import {
 } from "ethers";
 import Exceptions from "./library/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
-import { deployAaveVaultSystem,
-         AaveToken, 
+import { AaveToken, 
          AaveVaultFactory,
          AaveVault,
          AaveVaultManager,
-} from "./library/Deployments";
+} from "./library/Types";
+import { deployAaveVaultSystem } from "./library/Deployments";
 import { ProtocolGovernance,
          VaultGovernance,
          VaultGovernanceFactory
