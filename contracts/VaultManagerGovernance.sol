@@ -14,6 +14,11 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
     GovernanceParams private _pendingGovernanceParams;
     uint256 private _pendingGovernanceParamsTimestamp;
 
+    /// @notice Deploys a new contract
+    /// @param permissionless Anyone can create a new vault
+    /// @param protocolGovernance Refernce to the Governance of the protocol
+    /// @param factory Vault Factory reference
+    /// @param governanceFactory VaultGovernance Factory reference
     constructor(
         bool permissionless,
         IProtocolGovernance protocolGovernance,
@@ -30,20 +35,24 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
+    /// @inheritdoc IVaultManagerGovernance
     function governanceParams() public view returns (GovernanceParams memory) {
         return _governanceParams;
     }
 
+    /// @inheritdoc IVaultManagerGovernance
     function pendingGovernanceParams() external view returns (GovernanceParams memory) {
         return _pendingGovernanceParams;
     }
 
+    /// @inheritdoc IVaultManagerGovernance
     function pendingGovernanceParamsTimestamp() external view returns (uint256) {
         return _pendingGovernanceParamsTimestamp;
     }
 
     // -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
+    /// @inheritdoc IVaultManagerGovernance
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
         require(_isProtocolAdmin(), "ADM");
         require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
@@ -53,6 +62,7 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
         emit SetPendingGovernanceParams(newGovernanceParams);
     }
 
+    /// @inheritdoc IVaultManagerGovernance
     function commitGovernanceParams() external {
         require(_isProtocolAdmin(), "ADM");
         require(_pendingGovernanceParamsTimestamp > 0, "NULL");

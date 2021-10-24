@@ -61,8 +61,18 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param newParams newParams to set
     function setPendingParams(Params memory newParams) external;
 
+    /// @notice Stage addresses for claim allow list
+    /// @param addresses Addresses to add
+    function setPendingClaimAllowlistAdd(address[] calldata addresses) external;
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @notice Commit pending params
     function commitParams() external;
+
+    /// @notice Commit pending allowlistAdd params
+    function commitClaimAllowlistAdd() external;
+
+    /// @notice Remove from claim list immediately
+    function removeFromClaimAllowlist(address addr) external;
 }

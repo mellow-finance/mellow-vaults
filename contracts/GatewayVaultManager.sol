@@ -10,14 +10,21 @@ import "./VaultManager.sol";
 contract GatewayVaultManager is IGatewayVaultManager, VaultManager {
     mapping(uint256 => uint256) private _vaultOwners;
 
+    /// @notice Creates a new contract
+    /// @param name Name of the ERC-721 token
+    /// @param symbol Symbol of the ERC-721 token
+    /// @param factory Vault Factory reference
+    /// @param governanceFactory VaultGovernance Factory reference
+    /// @param permissionless Anyone can create a new vault
+    /// @param governance Refernce to the Governance of the protocol
     constructor(
         string memory name,
         string memory symbol,
         IVaultFactory factory,
-        IVaultGovernanceFactory goveranceFactory,
+        IVaultGovernanceFactory governanceFactory,
         bool permissionless,
         IProtocolGovernance governance
-    ) VaultManager(name, symbol, factory, goveranceFactory, permissionless, governance) {}
+    ) VaultManager(name, symbol, factory, governanceFactory, permissionless, governance) {}
 
     function vaultOwnerNft(uint256 nft) public view override returns (uint256) {
         return _vaultOwners[nft];
