@@ -121,7 +121,7 @@ export type AaveVaultManager_constructorArgs = {
 };
 
 export type AaveVaultManager_createVault = {
-    tokens: string[],
+    tokens: IERC20[],
     strategyTreasury: Address,
     admin: Address,
     options: string | Bytes

@@ -23,7 +23,8 @@ import {
     VaultGovernanceFactory
  } from "./library/Types";
 
-describe("AaveVaultFactory", () => {
+describe("AaveVaultFactory", function() {
+    this.timeout(100 * 1000);
     let deployer: Signer;
     let stranger: Signer;
     let treasury: Signer;
@@ -39,6 +40,7 @@ describe("AaveVaultFactory", () => {
     let nft: number;
     let vaultGovernance: VaultGovernance;
     let vaultGovernanceFactory: VaultGovernanceFactory;
+
     before(async() => {
         [
             deployer,
@@ -67,7 +69,6 @@ describe("AaveVaultFactory", () => {
 
     describe("constructor", () => {
         it("", async () =>  {
-            
         });
     });
 });

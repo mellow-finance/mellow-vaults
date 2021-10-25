@@ -459,7 +459,7 @@ export async function deployAaveVaultSystem(options?: {
                 gatewayVaultManager: ethers.constants.AddressZero,
             }
         },
-        adminSigner: options!.protocolGovernanceAdmin
+        adminSigner: options.protocolGovernanceAdmin
     });
 
     const vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
