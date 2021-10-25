@@ -94,7 +94,6 @@ contract GatewayVault is IGatewayVault, Vault {
         uint256[] memory totalTvl = new uint256[](tokens.length);
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         address[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance)).redirects();
-        uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).limits();
         if (optimized) {
             for (uint256 i = 0; i < _vaults.length; i++) {
                 if (_redirects[i] == address(0)) {
@@ -125,6 +124,7 @@ contract GatewayVault is IGatewayVault, Vault {
                 totalTvl[j] += tvls[i][j];
             }
         }
+        uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).limits();
         for (uint256 i = 0; i < tokens.length; i++) {
             require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "L");
         }
