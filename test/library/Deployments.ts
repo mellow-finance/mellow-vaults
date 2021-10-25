@@ -1,6 +1,7 @@
 import { 
     deployments,
-    ethers
+    ethers,
+    getNamedAccounts,
 } from "hardhat";
 import {
     Contract,
@@ -8,7 +9,6 @@ import {
 } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-
 import {
     sortContractsByAddresses, 
     sleep
@@ -46,6 +46,7 @@ import {
     AaveVaultManager_constructorArgs,
     AaveVaultManager_createVault,
 } from "./Types"
+import { json } from "hardhat/internal/core/params/argumentTypes";
 
 export const deployERC20Tokens = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
@@ -351,8 +352,9 @@ export async function deployAaveVaultManager(options?: {
         permissionless: false,
         governance: ethers.constants.AddressZero
     };
-    // />
+
     const Contract = await ethers.getContractFactory("AaveVaultManager");
+    const { aaveLendingPool } = await getNamedAccounts();
     const contract = await Contract.deploy(
         constructorArgs.name,
         constructorArgs.symbol,
@@ -360,7 +362,7 @@ export async function deployAaveVaultManager(options?: {
         constructorArgs.governanceFactory,
         constructorArgs.permissionless,
         constructorArgs.governance,
-        "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9"
+        aaveLendingPool
     );
     await contract.deployed();
     return contract;
@@ -404,6 +406,13 @@ export async function deployAaveVaultFromVaulManager(options?: {
         constructorArgs.options
     );
 
+    await options!.factory.connect(options.adminSigner).createVault(
+        constructorArgs.tokens,
+        constructorArgs.strategyTreasury,
+        constructorArgs.admin,
+        constructorArgs.options
+    );
+
     AaveVault = await ethers.getContractAt("AaveVault", AaveVaultAddress);
     vaultGovernance = await ethers.getContractAt("VaultGovernance", vaultGovernanceAddress);
 
@@ -427,7 +436,7 @@ export async function deployAaveVaultSystem(options?: {
     }
 
     let token_constructorArgs: AaveTest_constructorArgs[] = [];
-    for(let i: number = 0; i < options!.tokensCount; ++i) {
+    for (let i = 0; i < options!.tokensCount; ++i) {
         token_constructorArgs.push({
             name: "Test Token",
             symbol: `TEST_${i}`
@@ -466,7 +475,6 @@ export async function deployAaveVaultSystem(options?: {
             governanceFactory: vaultGovernanceFactory.address,
             permissionless: options!.permissionless,
             governance: protocolGovernance.address
-            
         } 
     });
 
@@ -497,7 +505,7 @@ export async function deployAaveVaultSystem(options?: {
     }
 }
 
-export const deployERC20VaultSystem = deployments.createFixture(async ( //Сделать по аналогии, убрать фикстуру, сделать тупую функцию
+export const deployERC20VaultSystem = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
     options?: {
         protocolGovernanceAdmin: Signer,

@@ -114,10 +114,10 @@ export type AaveTest_constructorArgs = {
 export type AaveVaultManager_constructorArgs = {
     name: string,
     symbol: string,
-    factory: string,
-    governanceFactory: string,
+    factory: IVaultFactory,
+    governanceFactory: IVaultGovernanceFactory,
     permissionless: boolean,
-    governance: string
+    governance: IProtocolGovernance
 };
 
 export type AaveVaultManager_createVault = {

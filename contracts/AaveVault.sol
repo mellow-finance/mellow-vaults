@@ -4,11 +4,10 @@ pragma solidity 0.8.9;
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultManager.sol";
 import "./Vault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
-    address[] private _aTokens;
+    address[] private _aTokens; //Сделать обертку для геттера
     uint256[] private _baseBalances;
 
     /// @notice Deploy new vault
@@ -17,7 +16,6 @@ contract AaveVault is Vault {
         address[] memory tokens = vaultGovernance.vaultTokens();
         _aTokens = new address[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            console.log(address(tokens[i]));
             _aTokens[i] = _getAToken(tokens[i]);
         }
     }
