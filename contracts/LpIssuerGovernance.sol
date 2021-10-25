@@ -13,26 +13,32 @@ contract LpIssuerGovernance is ILpIssuerGovernance {
     GovernanceParams private _pendingGovernanceParams;
     uint256 private _pendingGovernanceParamsTimestamp;
 
+    /// @notice Creates a new contract
+    /// @param params params for this governance
     constructor(GovernanceParams memory params) {
         _governanceParams = params;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
 
+    /// @inheritdoc ILpIssuerGovernance
     function governanceParams() public view returns (GovernanceParams memory) {
         return _governanceParams;
     }
 
+    /// @inheritdoc ILpIssuerGovernance
     function pendingGovernanceParams() external view returns (GovernanceParams memory) {
         return _pendingGovernanceParams;
     }
 
+    /// @inheritdoc ILpIssuerGovernance
     function pendingGovernanceParamsTimestamp() external view returns (uint256) {
         return _pendingGovernanceParamsTimestamp;
     }
 
     // -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
 
+    /// @inheritdoc ILpIssuerGovernance
     function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
         require(_isProtocolAdmin(), "ADM");
         require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
@@ -41,6 +47,7 @@ contract LpIssuerGovernance is ILpIssuerGovernance {
         emit SetPendingGovernanceParams(newGovernanceParams);
     }
 
+    /// @inheritdoc ILpIssuerGovernance
     function commitGovernanceParams() external {
         require(_isProtocolAdmin(), "ADM");
         require(_pendingGovernanceParamsTimestamp > 0, "NULL");

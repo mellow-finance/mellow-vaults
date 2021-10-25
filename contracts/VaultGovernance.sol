@@ -19,6 +19,11 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
     address[] private _tokens;
     mapping(address => bool) private _vaultTokensIndex;
 
+    /// @notice Creates a new contract
+    /// @param tokens A set of tokens that will be managed by the Vault
+    /// @param manager Reference to Gateway Vault Manager
+    /// @param treasury Strategy treasury address that will be used to collect Strategy Performance Fee
+    /// @param admin Admin of the Vault
     constructor(
         address[] memory tokens,
         IVaultManager manager,
@@ -38,44 +43,54 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
+    /// @inheritdoc IVaultGovernance
     function isProtocolAdmin() public view returns (bool) {
         return _vaultManager.governanceParams().protocolGovernance.isAdmin(msg.sender);
     }
 
+    /// @inheritdoc IVaultGovernance
     function vaultTokens() public view returns (address[] memory) {
         return _tokens;
     }
 
+    /// @inheritdoc IVaultGovernance
     function isVaultToken(address token) public view returns (bool) {
         return _vaultTokensIndex[token];
     }
 
+    /// @inheritdoc IVaultGovernance
     function vaultManager() public view returns (IVaultManager) {
         return _vaultManager;
     }
 
+    /// @inheritdoc IVaultGovernance
     function pendingVaultManager() external view returns (IVaultManager) {
         return _pendingVaultManager;
     }
 
+    /// @inheritdoc IVaultGovernance
     function pendingVaultManagerTimestamp() external view returns (uint256) {
         return _pendingVaultManagerTimestamp;
     }
 
+    /// @inheritdoc IVaultGovernance
     function strategyTreasury() public view returns (address) {
         return _strategyTreasury;
     }
 
+    /// @inheritdoc IVaultGovernance
     function pendingStrategyTreasury() external view returns (address) {
         return _pendingStrategyTreasury;
     }
 
+    /// @inheritdoc IVaultGovernance
     function pendingStrategyTreasuryTimestamp() external view returns (uint256) {
         return _pendingStrategyTreasuryTimestamp;
     }
 
     // -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
 
+    /// @inheritdoc IVaultGovernance
     function setPendingVaultManager(IVaultManager manager) external {
         require(isProtocolAdmin(), "PADM");
         require(address(manager) != address(0), "ZMG");
@@ -84,6 +99,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         emit SetPendingVaultManager(manager);
     }
 
+    /// @inheritdoc IVaultGovernance
     function commitVaultManager() external {
         require(isProtocolAdmin(), "PADM");
         require(_pendingVaultManagerTimestamp > 0, "NULL");
@@ -94,6 +110,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
 
     // -------------------  PUBLIC, MUTATING, ADMIN  -------------------
 
+    /// @inheritdoc IVaultGovernance
     function setPendingStrategyTreasury(address treasury) external {
         require(isAdmin(msg.sender), "AG");
         require(address(treasury) != address(0), "ZMG");
@@ -102,6 +119,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
         emit SetPendingStrategyTreasury(treasury);
     }
 
+    /// @inheritdoc IVaultGovernance
     function commitStrategyTreasury() external {
         require(isAdmin(msg.sender), "AG");
         require(_pendingStrategyTreasuryTimestamp > 0, "NULL");

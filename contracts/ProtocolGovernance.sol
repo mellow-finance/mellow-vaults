@@ -22,6 +22,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
+
+    /// @inheritdoc IProtocolGovernance
     function claimAllowlist() external view returns (address[] memory) {
         uint256 l = _claimAllowlist.length();
         address[] memory res = new address[](l);
@@ -31,50 +33,61 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return res;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function pendingClaimAllowlistAdd() external view returns (address[] memory) {
         return _pendingClaimAllowlistAdd;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function isAllowedToClaim(address addr) external view returns (bool) {
         return _claimAllowlist.contains(addr);
     }
 
+    /// @inheritdoc IProtocolGovernance
     function maxTokensPerVault() external view returns (uint256) {
         return params.maxTokensPerVault;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function governanceDelay() external view returns (uint256) {
         return params.governanceDelay;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function strategyPerformanceFee() external view returns (uint256) {
         return params.strategyPerformanceFee;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function protocolPerformanceFee() external view returns (uint256) {
         return params.protocolPerformanceFee;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function protocolExitFee() external view returns (uint256) {
         return params.protocolExitFee;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function protocolTreasury() external view returns (address) {
         return params.protocolTreasury;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function gatewayVaultManager() external view override returns (IGatewayVaultManager) {
         return params.gatewayVaultManager;
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
+    /// @inheritdoc IProtocolGovernance
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
         require(isAdmin(msg.sender), "ADM");
         _pendingClaimAllowlistAdd = addresses;
         pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function removeFromClaimAllowlist(address addr) external {
         require(isAdmin(msg.sender), "ADM");
         if (!_claimAllowlist.contains(addr)) {
@@ -83,6 +96,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         _claimAllowlist.remove(addr);
     }
 
+    /// @inheritdoc IProtocolGovernance
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
         require(isAdmin(msg.sender), "ADM");
         pendingParams = newParams;
@@ -91,6 +105,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
+    /// @inheritdoc IProtocolGovernance
     function commitClaimAllowlistAdd() external {
         require(isAdmin(msg.sender), "ADM");
         require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
@@ -101,6 +116,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         delete pendingClaimAllowlistAddTimestamp;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function commitParams() external {
         require(isAdmin(msg.sender), "ADM");
         require(block.timestamp > pendingParamsTimestamp, "TS");

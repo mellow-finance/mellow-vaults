@@ -4,5 +4,8 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/access/IAccessControlEnumerable.sol";
 
 interface IDefaultAccessControl is IAccessControlEnumerable {
-    function isAdmin(address) external view returns (bool);
+    /// @notice Checks that the address is contract admin
+    /// @param who Address to check
+    /// @return `true` if who is admin, `false` otherwise
+    function isAdmin(address who) external view returns (bool);
 }

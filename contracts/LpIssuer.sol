@@ -15,6 +15,12 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
     GovernanceParams private _governanceParams;
     uint256 private _limitPerAddress;
 
+    /// @notice Creates a new contract
+    /// @param name_ Name of the ERC-721 token
+    /// @param symbol_ Symbol of the ERC-721 token
+    /// @param gatewayVault Reference to Gateway Vault
+    /// @param limitPerAddress Max amount of LP token per address
+    /// @param admin Admin of the Issuer
     constructor(
         string memory name_,
         string memory symbol_,
@@ -31,11 +37,18 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         _limitPerAddress = limitPerAddress;
     }
 
+    /// @notice Set new LP token limit per address
+    /// @param newLimitPerAddress - new value for limit per address
     function setLimit(uint256 newLimitPerAddress) external {
         require(isAdmin(msg.sender), "ADM");
         _limitPerAddress = newLimitPerAddress;
     }
 
+    /// @notice Deposit tokens into LpIssuer
+    /// @param tokenAmounts Amounts of tokens to push
+    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+    /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(
         uint256[] calldata tokenAmounts,
         bool optimized,
@@ -82,6 +95,12 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         emit Deposit(msg.sender, tokens, actualTokenAmounts, amountToMint);
     }
 
+    /// @notice Withdraw tokens from LpIssuer
+    /// @param to Address to withdraw to
+    /// @param lpTokenAmount Amount of token to withdraw
+    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
+    /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function withdraw(
         address to,
         uint256 lpTokenAmount,
