@@ -33,7 +33,8 @@ import {
     ProtocolGovernance_Params,
     VaultManagerGovernance
 } from "./Types"
-import { construct } from "ramda";
+import { BigNumber } from "@ethersproject/bignumber";
+
 
 export const deployERC20Tokens = async (
     options?: {
@@ -73,13 +74,11 @@ export const deployProtocolGovernance = async (
 ) => {
     // defaults<
     const constructorArgs: ProtocolGovernance_constructorArgs = options?.constructorArgs ?? {
-        admin: await options?.adminSigner.getAddress() || ethers.constants.AddressZero,
+        admin: await options?.adminSigner.getAddress() || await ((await ethers.getSigners())[0]).getAddress(),
     };
     // />
     const Contract = await ethers.getContractFactory("ProtocolGovernance");
-    const contract = await Contract.deploy(
-        constructorArgs.admin,
-    );
+    const contract = await Contract.deploy(constructorArgs.admin);
 
     if (options?.initializerArgs) {
         await contract.connect(options!.adminSigner).setPendingParams(options.initializerArgs.params);
@@ -98,26 +97,27 @@ export const deployVaultGovernanceFactory = async () => {
 
 export const deployVaultManagerGovernance = async (
     options?: {
-        constructorArgs: VaultManagerGovernance_constructorArgs
+        constructorArgs: VaultManagerGovernance_constructorArgs;
+        adminSigner?: Signer;
     }
 ) => {
     // defaults<
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
     const constructorArgs: VaultManagerGovernance_constructorArgs = options?.constructorArgs ?? {
         permissionless: false,
-        protocolGovernance: ethers.constants.AddressZero,
-        factory: ethers.constants.AddressZero,
-        governanceFactory: ethers.constants.AddressZero,
+        protocolGovernance: (await deployProtocolGovernance({adminSigner: adminSigner})).address,
+        factory: (await deployERC20VaultFactory()).address,
+        governanceFactory: (await deployVaultGovernanceFactory()).address
     };
     // />
     const contractFactory: ContractFactory = await ethers.getContractFactory("VaultManagerGovernance");
-    const contract: VaultManagerGovernance = await contractFactory.deploy(
+    const contract: VaultManagerGovernance = await contractFactory.connect(adminSigner).deploy(
         constructorArgs.permissionless,
         constructorArgs.protocolGovernance,
         constructorArgs.factory,
         constructorArgs.governanceFactory
     );
     await contract.deployed();
-    console.log("\n\n\ndeployed!!!\n\n")
     return contract;
 };
 
@@ -321,6 +321,18 @@ export const deployERC20VaultSystem = async (
     let protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
         constructorArgs: {
             admin: await options!.protocolGovernanceAdmin.getAddress(),
+        },
+        initializerArgs: {
+            params: {
+                maxTokensPerVault: BigNumber.from(10),
+                governanceDelay: BigNumber.from(1),
+
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(10 ** 9),
+                protocolTreasury: options.treasury,
+                gatewayVaultManager: ethers.constants.AddressZero,
+            }
         },
         adminSigner: options!.protocolGovernanceAdmin
     });
