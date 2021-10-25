@@ -54,8 +54,8 @@ describe("VaultManagerGovernance", () => {
 
             newProtocolGovernance = await deployProtocolGovernance();
             protocolGovernance = await deployProtocolGovernance();
-            ERC20VaultFactory = await deployProtocolGovernance();
-            vaultGovernanceFactory = await deployProtocolGovernance();
+            ERC20VaultFactory = await deployERC20VaultFactory();
+            vaultGovernanceFactory = await deployVaultGovernanceFactory();
 
             constructorArgs = {
                 permissionless: true,
@@ -66,7 +66,7 @@ describe("VaultManagerGovernance", () => {
 
             return await deployVaultManagerGovernance({
                 constructorArgs: constructorArgs,
-                admin: deployer
+                adminSigner: deployer
             });
         });
     });
@@ -125,7 +125,7 @@ describe("VaultManagerGovernance", () => {
                 },
                 initializerArgs: {
                     params:  {
-                        maxTokensPerVault: BigNumber.from(1),
+                        maxTokensPerVault: BigNumber.from(2),
                         governanceDelay: BigNumber.from(0),
                         strategyPerformanceFee: BigNumber.from(10 ** 9),
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
@@ -137,7 +137,7 @@ describe("VaultManagerGovernance", () => {
                 adminSigner: deployer
             });
             await customProtocol.setPendingParams({
-                maxTokensPerVault: 1,
+                maxTokensPerVault: 2,
                 governanceDelay: 0,
                 strategyPerformanceFee: 0,
                 protocolPerformanceFee: 1,
@@ -208,7 +208,7 @@ describe("VaultManagerGovernance", () => {
         it("waits governance delay", async () => {
             const timeout: number = 10000;
             await customProtocol.setPendingParams({
-                maxTokensPerVault: 1,
+                maxTokensPerVault: 2,
                 governanceDelay: 0,
                 strategyPerformanceFee: 0,
                 protocolPerformanceFee: 1,
@@ -229,7 +229,7 @@ describe("VaultManagerGovernance", () => {
                 },
                 initializerArgs: {
                     params: {
-                        maxTokensPerVault: BigNumber.from(1),
+                        maxTokensPerVault: BigNumber.from(2),
                         governanceDelay: BigNumber.from(100),
                         strategyPerformanceFee: BigNumber.from(10 ** 9),
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
@@ -292,7 +292,7 @@ describe("VaultManagerGovernance", () => {
                 },
                 initializerArgs: {
                     params: {
-                        maxTokensPerVault: BigNumber.from(1),
+                        maxTokensPerVault: BigNumber.from(2),
                         governanceDelay: BigNumber.from(100),
                         strategyPerformanceFee: BigNumber.from(10 ** 9),
                         protocolPerformanceFee: BigNumber.from(10 ** 9),

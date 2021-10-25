@@ -98,20 +98,20 @@ export const deployVaultGovernanceFactory = async () => {
 export const deployVaultManagerGovernance = async (
     options?: {
         constructorArgs: VaultManagerGovernance_constructorArgs;
-        admin?: Signer;
+        adminSigner?: Signer;
     }
 ) => {
     // defaults<
-    const admin: Signer = options?.admin ?? (await ethers.getSigners())[0];
+    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
     const constructorArgs: VaultManagerGovernance_constructorArgs = options?.constructorArgs ?? {
         permissionless: false,
-        protocolGovernance: (await deployProtocolGovernance({adminSigner: admin})).address,
+        protocolGovernance: (await deployProtocolGovernance({adminSigner: adminSigner})).address,
         factory: (await deployERC20VaultFactory()).address,
         governanceFactory: (await deployVaultGovernanceFactory()).address
     };
     // />
     const contractFactory: ContractFactory = await ethers.getContractFactory("VaultManagerGovernance");
-    const contract: VaultManagerGovernance = await contractFactory.connect(admin).deploy(
+    const contract: VaultManagerGovernance = await contractFactory.connect(adminSigner).deploy(
         constructorArgs.permissionless,
         constructorArgs.protocolGovernance,
         constructorArgs.factory,

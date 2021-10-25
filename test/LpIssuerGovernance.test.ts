@@ -65,7 +65,7 @@ describe("LpIssuerGovernance", () => {
             }
 
             params = {
-                maxTokensPerVault: BigNumber.from(1),
+                maxTokensPerVault: BigNumber.from(2),
                 governanceDelay: BigNumber.from(1),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
@@ -135,7 +135,7 @@ describe("LpIssuerGovernance", () => {
         it("sets params timestamp and emits SetPendingGovernanceParams", async () => {
             await sleepTo(timestamp);
             params = {
-                maxTokensPerVault: BigNumber.from(1),
+                maxTokensPerVault: BigNumber.from(2),
                 governanceDelay: BigNumber.from(timeout),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
@@ -290,7 +290,7 @@ describe("LpIssuerGovernance", () => {
                 it("reverts", async () => {
                     let longTimeout = 10**3;
                     params = {
-                        maxTokensPerVault: BigNumber.from(1),
+                        maxTokensPerVault: BigNumber.from(2),
                         governanceDelay: BigNumber.from(longTimeout),
                         strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                         protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
