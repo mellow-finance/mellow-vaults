@@ -11,7 +11,7 @@ contract AaveVault is Vault {
     uint256[] private _baseBalances;
 
     /// @notice Creates a new contract
-    /// @param vaultGovernance reference to VaultGovernance for this vault
+    /// @param vaultGovernance Reference to VaultGovernance for this vault
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {
         address[] memory tokens = vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {

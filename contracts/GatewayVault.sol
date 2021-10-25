@@ -13,7 +13,7 @@ contract GatewayVault is IGatewayVault, Vault {
     mapping(address => uint256) private _vaultsIndex;
 
     /// @notice Creates a new contract
-    /// @param vaultGovernance reference to VaultGovernance for this vault
+    /// @param vaultGovernance Reference to VaultGovernance for this vault
     constructor(IVaultGovernance vaultGovernance, address[] memory vaults) Vault(vaultGovernance) {
         _vaults = vaults;
         for (uint256 i = 0; i < _vaults.length; i++) {
