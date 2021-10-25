@@ -46,7 +46,6 @@ import {
     AaveVaultManager_constructorArgs,
     AaveVaultManager_createVault,
 } from "./Types"
-import { json } from "hardhat/internal/core/params/argumentTypes";
 
 export const deployERC20Tokens = deployments.createFixture(async (
     _: HardhatRuntimeEnvironment,
