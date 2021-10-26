@@ -108,7 +108,7 @@ const config: HardhatUserConfigWithTypechain = {
               },
             },
           },
-          evmVersion: "istanbul",
+          evmVersion: "london",
         },
       },
       {
@@ -123,7 +123,7 @@ const config: HardhatUserConfigWithTypechain = {
               },
             },
           },
-          evmVersion: "istanbul",
+          evmVersion: "london",
         },
       },
     ],

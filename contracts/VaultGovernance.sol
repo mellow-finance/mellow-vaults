@@ -43,9 +43,8 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    /// @inheritdoc IVaultGovernance
-    function isProtocolAdmin() public view returns (bool) {
-        return _vaultManager.governanceParams().protocolGovernance.isAdmin(msg.sender);
+    function isProtocolAdmin(address sender) public view returns (bool) {
+        return _vaultManager.governanceParams().protocolGovernance.isAdmin(sender);
     }
 
     /// @inheritdoc IVaultGovernance
@@ -92,7 +91,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
 
     /// @inheritdoc IVaultGovernance
     function setPendingVaultManager(IVaultManager manager) external {
-        require(isProtocolAdmin(), "PADM");
+        require(isProtocolAdmin(msg.sender), "PADM");
         require(address(manager) != address(0), "ZMG");
         _pendingVaultManager = manager;
         _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
@@ -101,7 +100,7 @@ contract VaultGovernance is IVaultGovernance, DefaultAccessControl {
 
     /// @inheritdoc IVaultGovernance
     function commitVaultManager() external {
-        require(isProtocolAdmin(), "PADM");
+        require(isProtocolAdmin(msg.sender), "PADM");
         require(_pendingVaultManagerTimestamp > 0, "NULL");
         require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
         _vaultManager = _pendingVaultManager;

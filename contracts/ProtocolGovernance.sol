@@ -17,9 +17,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     uint256 public pendingParamsTimestamp;
 
-    constructor(address admin, Params memory _params) DefaultAccessControl(admin) {
-        params = _params;
-    }
+    constructor(address admin) DefaultAccessControl(admin) {}
 
     // -------------------  PUBLIC, VIEW  -------------------
 
