@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { VaultGovernanceFactory } from "../test/library/Types";
 
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -8,7 +9,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const {deployer} = await getNamedAccounts();
 
-  await deploy('VaultGovernanceFactory', {
+  const contract = await deploy('VaultGovernanceFactory', {
     from: deployer,
     args: [],
     log: true,
@@ -18,24 +19,3 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func;
 func.tags = ['SimpleERC20'];
 
-let hre: HardhatRuntimeEnvironment = {
-  config: undefined,
-  hardhatArguments: undefined,
-  tasks: undefined,
-  run: function (name: string, taskArguments?: any): Promise<any> {
-    throw new Error('Function not implemented.');
-  },
-  network: undefined,
-  artifacts: undefined,
-  deployments: undefined,
-  getNamedAccounts: function (): Promise<{ [name: string]: string; }> {
-    throw new Error('Function not implemented.');
-  },
-  getUnnamedAccounts: function (): Promise<string[]> {
-    throw new Error('Function not implemented.');
-  },
-  getChainId: function (): Promise<string> {
-    throw new Error('Function not implemented.');
-  },
-  companionNetworks: {}
-};
