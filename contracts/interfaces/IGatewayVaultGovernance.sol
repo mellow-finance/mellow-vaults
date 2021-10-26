@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IVaultGovernance.sol";
+import "./IVaultGovernanceOld.sol";
 
-interface IGatewayVaultGovernance is IVaultGovernance {
+interface IGatewayVaultGovernance is IVaultGovernanceOld {
     function limits() external view returns (uint256[] memory);
 
     function redirects() external view returns (address[] memory);

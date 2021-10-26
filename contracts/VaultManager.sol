@@ -49,7 +49,7 @@ contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
         external
         override
         returns (
-            IVaultGovernance vaultGovernance,
+            IVaultGovernanceOld vaultGovernance,
             IVault vault,
             uint256 nft
         )

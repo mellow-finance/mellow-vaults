@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IVaultGovernance.sol";
+import "./IVaultGovernanceOld.sol";
 import "./IVaultManager.sol";
 
 interface IVaultGovernanceFactory {
@@ -15,5 +15,5 @@ interface IVaultGovernanceFactory {
         IVaultManager manager,
         address treasury,
         address admin
-    ) external returns (IVaultGovernance vaultGovernance);
+    ) external returns (IVaultGovernanceOld vaultGovernance);
 }

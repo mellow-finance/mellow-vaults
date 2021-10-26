@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IVaultManager.sol";
 
-interface IVaultGovernance {
+interface IVaultGovernanceOld {
     // -------------------  PUBLIC, MUTATING, VIEW  -------------------
 
     /// @notice Checks that sender is protocol admin

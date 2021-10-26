@@ -31,7 +31,7 @@ contract UniV3Vault is Vault {
     /// @notice Creates a new contract
     /// @param vaultGovernance Reference to vault governance
     /// @param fee Fee of the underlying UniV3 pool
-    constructor(IVaultGovernance vaultGovernance, uint24 fee) Vault(vaultGovernance) {
+    constructor(IVaultGovernanceOld vaultGovernance, uint24 fee) Vault(vaultGovernance) {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         require(tokens.length == 2, "TL");
         pool = IUniswapV3PoolState(IUniswapV3Factory(_positionManager().factory()).getPool(tokens[0], tokens[1], fee));

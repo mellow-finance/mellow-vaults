@@ -6,7 +6,7 @@ import "./GatewayVaultManager.sol";
 import "./GatewayVault.sol";
 
 contract GatewayVaultFactory is IVaultFactory {
-    function deployVault(IVaultGovernance vaultGovernance, bytes memory options) external override returns (IVault) {
+    function deployVault(IVaultGovernanceOld vaultGovernance, bytes memory options) external override returns (IVault) {
         address[] memory vaults = abi.decode(options, (address[]));
         GatewayVault gatewayVault = new GatewayVault(vaultGovernance, vaults);
         return IVault(gatewayVault);
