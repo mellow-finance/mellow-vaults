@@ -4,26 +4,30 @@ pragma solidity 0.8.9;
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./interfaces/IGatewayVaultManager.sol";
+import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "./VaultGovernance.sol";
 
-contract GatewayVaultGovernance is VaultGovernance {
+contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
     address[] private _redirects;
-    address[] private _vaults;
     uint256[] private _limits;
 
+    /// @notice Creates a new contract
+    /// @param tokens A set of tokens that will be managed by the Vault
+    /// @param manager Reference to Gateway Vault Manager
+    /// @param treasury Strategy treasury address that will be used to collect Strategy Performance Fee
+    /// @param admin Admin of the Vault
+    /// @param redirects_ Subvaults of the vault
     constructor(
         address[] memory tokens,
         IVaultManager manager,
         address treasury,
         address admin,
-        address[] memory vaults,
         address[] memory redirects_,
         uint256[] memory limits_
     ) VaultGovernance(tokens, manager, treasury, admin) {
         _redirects = redirects_;
         _limits = limits_;
-        _vaults = vaults;
     }
 
     function limits() external view returns (uint256[] memory) {

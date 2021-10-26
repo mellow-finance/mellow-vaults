@@ -4,6 +4,8 @@ pragma solidity 0.8.9;
 import "./Vault.sol";
 
 contract ERC20Vault is Vault {
+    /// @notice Creates a new contract
+    /// @param vaultGovernance Reference to VaultGovernance for this vault
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}
 
     /// @inheritdoc Vault
