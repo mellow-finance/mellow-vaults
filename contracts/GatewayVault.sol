@@ -2,13 +2,12 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 
-contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
+contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     address[] private _vaults;
     mapping(address => uint256) private _vaultsIndex;

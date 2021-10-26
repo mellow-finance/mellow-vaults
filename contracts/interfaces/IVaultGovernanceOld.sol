@@ -7,7 +7,7 @@ interface IVaultGovernanceOld {
     // -------------------  PUBLIC, MUTATING, VIEW  -------------------
 
     /// @notice Checks that sender is protocol admin
-    function isProtocolAdmin() external view returns (bool);
+    function isProtocolAdmin(address sender) external view returns (bool);
 
     /// @notice Tokens managed by the vault
     function vaultTokens() external view returns (address[] memory);
