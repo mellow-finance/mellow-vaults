@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 /// @dev The contract should be overriden by the concrete VaultGovernanceOld,
 /// define different params structs and use abi.decode / abi.encode to serialize
 /// to bytes in this contract. It also should emit events on params change.
-abstract contract VaultGovernanceNew {
+abstract contract VaultGovernance {
     /// @notice Internal references of the contract
     /// @param protocolGovernance Reference to Protocol Governance
     /// @param registry Reference to Vault Registry
