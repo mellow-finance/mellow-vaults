@@ -36,8 +36,8 @@ abstract contract Vault is IVault {
 
     /// @inheritdoc IVault
     function push(
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) public returns (uint256[] memory actualTokenAmounts) {
@@ -51,8 +51,8 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function transferAndPush(
         address from,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
@@ -73,8 +73,8 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function pull(
         address to,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
@@ -115,8 +115,8 @@ abstract contract Vault is IVault {
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
-    function reclaimTokens(address to, address[] calldata tokens) external {
-        bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin();
+    function reclaimTokens(address to, address[] memory tokens) external {
+        bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
         if (!isProtocolAdmin) {
             require(_isValidPullDestination(to), "INTRA");
@@ -136,7 +136,7 @@ abstract contract Vault is IVault {
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     /// @inheritdoc IVault
-    function claimRewards(address from, bytes calldata data) external override {
+    function claimRewards(address from, bytes memory data) external override {
         require(_isApprovedOrOwner(msg.sender), "ADM");
         IProtocolGovernance protocolGovernance = _vaultGovernance.vaultManager().governanceParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), "AC");
@@ -152,7 +152,7 @@ abstract contract Vault is IVault {
 
     // -------------------  PRIVATE, VIEW  -------------------
 
-    function _validateAndProjectTokens(address[] calldata tokens, uint256[] calldata tokenAmounts)
+    function _validateAndProjectTokens(address[] memory tokens, uint256[] memory tokenAmounts)
         internal
         view
         returns (uint256[] memory pTokenAmounts)
@@ -163,6 +163,7 @@ abstract contract Vault is IVault {
     }
 
     function _isValidPullDestination(address to) internal view returns (bool) {
+        require(Common.isContract(to), "C");
         IVaultManager vaultManager = _vaultGovernance.vaultManager();
         IGatewayVaultManager gw = vaultManager.governanceParams().protocolGovernance.gatewayVaultManager();
         uint256 fromNft = vaultManager.nftForVault(address(this));

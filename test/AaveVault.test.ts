@@ -11,10 +11,10 @@ import {
 import Exceptions from "./library/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
 import { 
-    AaveToken, 
     AaveVaultFactory,
     AaveVault,
     AaveVaultManager,
+    ERC20,
 } from "./library/Types";
 import { deployAaveVaultSystem } from "./library/Deployments";
 import { 
@@ -31,7 +31,7 @@ describe("AaveVaultFactory", function() {
     let protocolGovernanceAdmin: Signer;
 
     let protocolGovernance: ProtocolGovernance;
-    let tokens: AaveToken[];
+    let tokens: ERC20[];
     let AaveVault: AaveVault;
     let AaveVaultManager: AaveVaultManager;
     let AaveVaultFactory: AaveVaultFactory;

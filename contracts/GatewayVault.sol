@@ -4,15 +4,16 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IGatewayVault.sol";
+import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 
 contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     address[] private _vaults;
     mapping(address => uint256) private _vaultsIndex;
-    address[] private _redirects;
-    uint256[] private _limits;
 
+    /// @notice Creates a new contract
+    /// @param vaultGovernance Reference to VaultGovernance for this vault
     constructor(IVaultGovernance vaultGovernance, address[] memory vaults) Vault(vaultGovernance) {
         _vaults = vaults;
         for (uint256 i = 0; i < _vaults.length; i++) {
@@ -92,6 +93,7 @@ contract GatewayVault is IGatewayVault, Vault {
         address[] memory tokens = _vaultGovernance.vaultTokens();
         uint256[] memory totalTvl = new uint256[](tokens.length);
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
+        address[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance)).redirects();
         if (optimized) {
             for (uint256 i = 0; i < _vaults.length; i++) {
                 if (_redirects[i] == address(0)) {
@@ -122,6 +124,7 @@ contract GatewayVault is IGatewayVault, Vault {
                 totalTvl[j] += tvls[i][j];
             }
         }
+        uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).limits();
         for (uint256 i = 0; i < tokens.length; i++) {
             require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "L");
         }
@@ -136,6 +139,7 @@ contract GatewayVault is IGatewayVault, Vault {
         uint256[][] memory tvls = vaultsTvl();
         address[] memory tokens = _vaultGovernance.vaultTokens();
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
+        address[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance)).redirects();
         if (optimized) {
             for (uint256 i = 0; i < _vaults.length; i++) {
                 if (_redirects[i] == address(0)) {

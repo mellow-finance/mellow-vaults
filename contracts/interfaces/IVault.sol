@@ -34,8 +34,8 @@ interface IVault {
     /// For the exact bytes structure see concrete vault descriptions.
     /// @return actualTokenAmounts The amounts actually invested. It could be less than tokenAmounts (but not higher).
     function push(
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
@@ -50,8 +50,8 @@ interface IVault {
     /// @return actualTokenAmounts The amounts actually invested. It could be less than tokenAmounts (but not higher).
     function transferAndPush(
         address from,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
@@ -75,8 +75,8 @@ interface IVault {
     /// @return actualTokenAmounts The amounts actually withdrawn. It could be less than tokenAmounts (but not higher).
     function pull(
         address to,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
@@ -94,7 +94,7 @@ interface IVault {
     /// @dev Can only be called by Protocol Governance
     /// @param to Address that will receive the tokens
     /// @param tokens Tokens to claim. Each token must be other than those in vaultTokens.
-    function reclaimTokens(address to, address[] calldata tokens) external;
+    function reclaimTokens(address to, address[] memory tokens) external;
 
     /// @notice Claim liquidity mining rewards
     /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of nft for this vault in VaultManager.
@@ -104,7 +104,7 @@ interface IVault {
     /// are whitelisted by Protocol Governance.
     /// @param from Address of the reward pool
     /// @param data Abi encoded call to the `from` address
-    function claimRewards(address from, bytes calldata data) external;
+    function claimRewards(address from, bytes memory data) external;
 
     event Push(uint256[] tokenAmounts);
     event Pull(address to, uint256[] tokenAmounts);

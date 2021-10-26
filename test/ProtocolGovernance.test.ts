@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { 
     ethers,
-    network
+    deployments
 } from "hardhat";
 import { 
     ContractFactory, 
@@ -9,19 +9,20 @@ import {
     Signer
 } from "ethers";
 import Exceptions from "./library/Exceptions";
+import {
+    deployProtocolGovernance
+} from "./library/Deployments";
+import {
+    ProtocolGovernance_Params
+} from "./library/Types";
 import { BigNumber } from "@ethersproject/bignumber";
-import { now } from "./library/Helpers";
+import { 
+    now, 
+    sleep,
+    sleepTo,
+    toObject
+} from "./library/Helpers";
 
-
-type GovernanceParams = [
-    maxTokensPerVault: BigNumber, 
-    governanceDelay: BigNumber, 
-    strategyPerformanceFee: BigNumber, 
-    protocolPerformanceFee: BigNumber, 
-    protocolExitFee: BigNumber, 
-    protocolTreasury: String, 
-    gatewayVaultManager: String
-];
 
 describe("ProtocolGovernance", () => {
     let ProtocolGovernance: ContractFactory;
@@ -30,42 +31,90 @@ describe("ProtocolGovernance", () => {
     let stranger: Signer;
     let user1: Signer;
     let user2: Signer;
+    let gatewayVault: Signer;
+    let protocolTreasury: Signer;
     let timestamp: number;
     let timeout: number;
     let timeShift: number;
-    let params: GovernanceParams;
-    let paramsZero: GovernanceParams;
-    let paramsTimeout: GovernanceParams;
-    let paramsEmpty: GovernanceParams;
-    let paramsDefault: GovernanceParams;
+    let params: ProtocolGovernance_Params;
+    let paramsZero: ProtocolGovernance_Params;
+    let paramsTimeout: ProtocolGovernance_Params;
+    let paramsEmpty: ProtocolGovernance_Params;
+    let paramsDefault: ProtocolGovernance_Params;
     let defaultGovernanceDelay: number;
+    let deploymentFixture: Function;
 
     before(async () => {
-        ProtocolGovernance = await ethers.getContractFactory("ProtocolGovernance");
-        [deployer, stranger, user1, user2] = await ethers.getSigners();
+        [deployer, stranger, user1, user2, gatewayVault, protocolTreasury] = await ethers.getSigners();
         timeout = 10**4;
         defaultGovernanceDelay = 1;
         timeShift = 10**10;
-        params = [
-            BigNumber.from(1), 
-            BigNumber.from(defaultGovernanceDelay), 
-            BigNumber.from(3), 
-            BigNumber.from(4), 
-            BigNumber.from(5), 
-            await user1.getAddress(), 
-            await user2.getAddress()
-        ];
+        timestamp = now() + timeShift;
+        
+        deploymentFixture = deployments.createFixture(async () => {
+            await deployments.fixture();
+
+            params = {
+                maxTokensPerVault: BigNumber.from(1),
+                governanceDelay: BigNumber.from(1),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
+            paramsZero = {
+                maxTokensPerVault: BigNumber.from(1),
+                governanceDelay: BigNumber.from(0),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
+
+            paramsEmpty = {
+                maxTokensPerVault: BigNumber.from(0),
+                governanceDelay: BigNumber.from(0),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
+
+            paramsDefault = {
+                maxTokensPerVault: BigNumber.from(0),
+                governanceDelay: BigNumber.from(0),
+                strategyPerformanceFee: BigNumber.from(0),
+                protocolPerformanceFee: BigNumber.from(0),
+                protocolExitFee: BigNumber.from(0),
+                protocolTreasury: ethers.constants.AddressZero,
+                gatewayVaultManager: ethers.constants.AddressZero
+            }
+
+            paramsTimeout = {
+                maxTokensPerVault: BigNumber.from(1),
+                governanceDelay: BigNumber.from(timeout),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
+
+            return await deployProtocolGovernance({
+                constructorArgs: {
+                    admin: await deployer.getAddress()
+                },
+                adminSigner: deployer
+            });
+        });
     });
 
     beforeEach(async () => {
-
-        protocolGovernance = await ProtocolGovernance.deploy(
-            deployer.getAddress(),
-            params
-        );
-
-        await network.provider.send("evm_increaseTime", [defaultGovernanceDelay]);
-        await network.provider.send('evm_mine');
+        protocolGovernance = await deploymentFixture();
+        sleep(defaultGovernanceDelay);
     });
 
     describe("constructor", () => {
@@ -94,46 +143,46 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("initial params struct values", () => {
-            it("has default max tokens per vault", async () => {
+            it("has max tokens per vault", async () => {
                 expect(
                     await protocolGovernance.maxTokensPerVault()
-                ).to.be.equal(params[0]);
+                ).to.be.equal(paramsDefault.maxTokensPerVault);
             });
 
-            it("has default governance delay", async () => {
+            it("has governance delay", async () => {
                 expect(
                     await protocolGovernance.governanceDelay()
-                ).to.be.equal(params[1]);
+                ).to.be.equal(paramsDefault.governanceDelay);
             });
 
-            it("has default strategy performance fee", async () => {
+            it("has strategy performance fee", async () => {
                 expect(
                     await protocolGovernance.strategyPerformanceFee()
-                ).to.be.equal(params[2]);
+                ).to.be.equal(paramsDefault.strategyPerformanceFee);
             });
 
-            it("has default protocol performance fee", async () => {
+            it("has protocol performance fee", async () => {
                 expect(
                     await protocolGovernance.protocolPerformanceFee()
-                ).to.be.equal(params[3]);
+                ).to.be.equal(paramsDefault.protocolPerformanceFee);
             });
 
-            it("has default protocol exit fee", async () => {
+            it("has protocol exit fee", async () => {
                 expect(
                     await protocolGovernance.protocolExitFee()
-                ).to.be.equal(params[4]);
+                ).to.be.equal(paramsDefault.protocolExitFee);
             });
 
-            it("has default protocol treasury", async () => {
+            it("has protocol treasury", async () => {
                 expect(
                     await protocolGovernance.protocolTreasury()
-                ).to.be.equal(params[5]);
+                ).to.be.equal(paramsDefault.protocolTreasury);
             });
 
-            it("has default gateway vault manager", async () => {
+            it("has gateway vault manager", async () => {
                 expect(
                     await protocolGovernance.gatewayVaultManager()
-                ).to.be.equal(params[6]);
+                ).to.be.equal(paramsDefault.gatewayVaultManager);
             });
         });
     });
@@ -144,40 +193,29 @@ describe("ProtocolGovernance", () => {
                 it("sets the params", async () => {
                     await protocolGovernance.setPendingParams(params);
                     expect(
-                        await protocolGovernance.pendingParams()
+                       toObject(await protocolGovernance.pendingParams())
                     ).to.deep.equal(params);
                 });
             });
 
             describe("when called twice", () => {
                 it("sets the params", async () => {
-                    const paramsNew = [
-                        BigNumber.from(6), 
-                        BigNumber.from(7), 
-                        BigNumber.from(8), 
-                        BigNumber.from(9), 
-                        BigNumber.from(10), 
-                        await user1.getAddress(), 
-                        await user2.getAddress()
-                    ];
-                    await protocolGovernance.setPendingParams(params);
-                    await protocolGovernance.setPendingParams(paramsNew);
+                    await protocolGovernance.setPendingParams(paramsTimeout);
+                    await protocolGovernance.setPendingParams(paramsZero);
         
                     expect(
-                        await protocolGovernance.pendingParams()
-                    ).to.deep.equal(paramsNew);
+                        toObject(await protocolGovernance.pendingParams())
+                    ).to.deep.equal(paramsZero);
                 });
             });
         });
 
         it("sets governance delay", async () => {
-            timestamp = now() + timeShift;
-
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
-
+            sleepTo(timestamp);
             await protocolGovernance.setPendingParams(params);
-            expect(Math.abs(await protocolGovernance.pendingParamsTimestamp() - timestamp)).to.be.lessThanOrEqual(10);
+            expect(
+                Math.abs(await protocolGovernance.pendingParamsTimestamp() - timestamp)).
+            to.be.lessThanOrEqual(10);
         });
 
         describe("when callen by not admin", () => {
@@ -192,15 +230,6 @@ describe("ProtocolGovernance", () => {
     describe("commitParams", () => {
         describe("when callen by not admin", () => {
             it("reverts", async () => {
-                paramsZero = [
-                    BigNumber.from(1), 
-                    BigNumber.from(0), 
-                    BigNumber.from(2), 
-                    BigNumber.from(3), 
-                    BigNumber.from(4), 
-                    await user1.getAddress(), 
-                    await user2.getAddress()
-                ];
                 await protocolGovernance.setPendingParams(paramsZero);
     
                 await expect(
@@ -212,28 +241,9 @@ describe("ProtocolGovernance", () => {
         describe("when governance delay has not passed", () => {
             describe("when call immediately", () => {
                 it("reverts", async () => {
-                    paramsZero = [
-                        BigNumber.from(1), 
-                        BigNumber.from(0), 
-                        BigNumber.from(2), 
-                        BigNumber.from(3), 
-                        BigNumber.from(4), 
-                        await user1.getAddress(), 
-                        await user2.getAddress()
-                    ];
-                    paramsTimeout = [
-                        BigNumber.from(1), 
-                        BigNumber.from(timeout), 
-                        BigNumber.from(2), 
-                        BigNumber.from(3), 
-                        BigNumber.from(4), 
-                        await user1.getAddress(), 
-                        await user2.getAddress()
-                    ];
                     await protocolGovernance.setPendingParams(paramsTimeout);
 
-                    await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                    await network.provider.send('evm_mine');
+                    sleep((params.governanceDelay).toNumber());
 
                     await protocolGovernance.commitParams();
         
@@ -246,33 +256,13 @@ describe("ProtocolGovernance", () => {
             
             describe("when delay has almost passed", () => {
                 it("reverts", async () => {
-                    paramsZero = [
-                        BigNumber.from(1), 
-                        BigNumber.from(0), 
-                        BigNumber.from(2), 
-                        BigNumber.from(3), 
-                        BigNumber.from(4), 
-                        await user1.getAddress(), 
-                        await user2.getAddress()
-                    ];
-                    paramsTimeout = [
-                        BigNumber.from(1), 
-                        BigNumber.from(timeout), 
-                        BigNumber.from(2), 
-                        BigNumber.from(3), 
-                        BigNumber.from(4), 
-                        await user1.getAddress(), 
-                        await user2.getAddress()
-                    ];
                     await protocolGovernance.setPendingParams(paramsTimeout);
 
-                    await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                    await network.provider.send('evm_mine');
+                    sleep((params.governanceDelay).toNumber());
 
                     await protocolGovernance.commitParams();
 
-                    await network.provider.send("evm_increaseTime", [timeout - 2]);
-                    await network.provider.send("evm_mine");
+                    sleep(timeout - 2)
         
                     await protocolGovernance.setPendingParams(paramsZero);
                     await expect(
@@ -284,20 +274,9 @@ describe("ProtocolGovernance", () => {
 
         describe("when governanceDelay is 0 and maxTokensPerVault is 0", () => {
             it("reverts", async () => {
-                paramsEmpty = [
-                    BigNumber.from(0), 
-                    BigNumber.from(0), 
-                    BigNumber.from(2), 
-                    BigNumber.from(3), 
-                    BigNumber.from(4), 
-                    await user1.getAddress(), 
-                    await user2.getAddress()
-                ];
-
                 await protocolGovernance.setPendingParams(paramsEmpty);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await expect(
                     protocolGovernance.commitParams()
@@ -306,74 +285,36 @@ describe("ProtocolGovernance", () => {
         });
 
         it("commits params", async () => {
-            paramsZero = [
-                BigNumber.from(1), 
-                BigNumber.from(0), 
-                BigNumber.from(2), 
-                BigNumber.from(3), 
-                BigNumber.from(4), 
-                await user1.getAddress(), 
-                await user2.getAddress()
-            ];
             await protocolGovernance.setPendingParams(paramsZero);
 
-            await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-            await network.provider.send('evm_mine');
+            sleep((params.governanceDelay).toNumber());
 
             await protocolGovernance.commitParams();
-            expect(await protocolGovernance.params()).to.deep.equal(paramsZero);
+            expect(
+                toObject(await protocolGovernance.params())
+            ).to.deep.equal(paramsZero);
         });
 
         it("deletes pending params", async () => {
-            paramsZero = [
-                BigNumber.from(1), 
-                BigNumber.from(0), 
-                BigNumber.from(2), 
-                BigNumber.from(3), 
-                BigNumber.from(4), 
-                await user1.getAddress(), 
-                await user2.getAddress()
-            ];
-
-            paramsDefault = [
-                BigNumber.from(0), 
-                BigNumber.from(0), 
-                BigNumber.from(0), 
-                BigNumber.from(0), 
-                BigNumber.from(0), 
-                ethers.constants.AddressZero, 
-                ethers.constants.AddressZero
-            ];
             await protocolGovernance.setPendingParams(paramsZero);
 
-            await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-            await network.provider.send('evm_mine');
+            sleep((params.governanceDelay).toNumber());
 
             await protocolGovernance.commitParams();
-            expect(await protocolGovernance.pendingParams()).to.deep.equal(paramsDefault);
+            expect(
+               toObject(await protocolGovernance.pendingParams()) 
+            ).to.deep.equal(paramsDefault);
         });
 
         it("deletes pending params timestamp", async () => {
-            paramsTimeout = [
-                BigNumber.from(1), 
-                BigNumber.from(timeout), 
-                BigNumber.from(2), 
-                BigNumber.from(3), 
-                BigNumber.from(4), 
-                await user1.getAddress(), 
-                await user2.getAddress()
-            ];
-
             timestamp += 10**6;
 
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
+           sleepTo(timestamp);
             
             await protocolGovernance.setPendingParams(paramsTimeout);
 
             timestamp += 10**6;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
+            sleepTo(timestamp);
             await protocolGovernance.commitParams();
 
             expect(
@@ -399,25 +340,12 @@ describe("ProtocolGovernance", () => {
         });
 
         it("sets correct pending timestamp with zero gonernance delay", async () => {
-            paramsZero = [
-                BigNumber.from(1), 
-                BigNumber.from(0), 
-                BigNumber.from(2), 
-                BigNumber.from(3), 
-                BigNumber.from(4), 
-                await user1.getAddress(), 
-                await user2.getAddress()
-            ];
-
             timestamp += 10**6;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
-
+            sleepTo(timestamp);
             await protocolGovernance.setPendingParams(paramsZero);
 
             timestamp += 10**6;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
+            sleepTo(timestamp);
             await protocolGovernance.commitParams();
 
             await protocolGovernance.setPendingClaimAllowlistAdd([
@@ -431,25 +359,12 @@ describe("ProtocolGovernance", () => {
         });
 
         it("sets correct pending timestamp with non-zero governance delay", async () => {
-            paramsTimeout = [
-                BigNumber.from(1), 
-                BigNumber.from(timeout), 
-                BigNumber.from(2), 
-                BigNumber.from(3), 
-                BigNumber.from(4), 
-                await user1.getAddress(), 
-                await user2.getAddress()
-            ];
-
             timestamp += 10**6;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
-
+            sleepTo(timestamp);
             await protocolGovernance.setPendingParams(paramsTimeout);
 
             timestamp += 10**6;
-            await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-            await network.provider.send('evm_mine');
+            sleepTo(timestamp);
             await protocolGovernance.commitParams();
 
             await protocolGovernance.setPendingClaimAllowlistAdd([
@@ -476,9 +391,7 @@ describe("ProtocolGovernance", () => {
             it("appends", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
-
+                sleep((params.governanceDelay).toNumber());
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(
                     await protocolGovernance.claimAllowlist()
@@ -493,8 +406,7 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(),
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(
@@ -512,8 +424,7 @@ describe("ProtocolGovernance", () => {
                     deployer.getAddress(),
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
 
@@ -522,8 +433,7 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress()
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
 
@@ -548,9 +458,7 @@ describe("ProtocolGovernance", () => {
         describe("when does not have pre-set claim allow list add timestamp", () => {
             it("reverts", async () => {
                 timestamp += 10**6;
-                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-                await network.provider.send('evm_mine');
-    
+                sleepTo(timestamp);
                 await expect(
                     protocolGovernance.commitClaimAllowlistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
@@ -559,24 +467,12 @@ describe("ProtocolGovernance", () => {
         
         describe("when governance delay has not passed", () => {
             it("reverts", async () => {
-                paramsTimeout = [
-                    BigNumber.from(1), 
-                    BigNumber.from(timeout), 
-                    BigNumber.from(2), 
-                    BigNumber.from(3), 
-                    BigNumber.from(4), 
-                    await user1.getAddress(), 
-                    await user2.getAddress()
-                ];
-
                 timestamp += 10**6;
-                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-                await network.provider.send('evm_mine');
+                sleepTo(timestamp);
                 await protocolGovernance.setPendingParams(paramsTimeout);
     
                 timestamp += 10**6;
-                await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
-                await network.provider.send('evm_mine');
+                sleepTo(timestamp);
                 await protocolGovernance.commitParams();
                 
                 await protocolGovernance.setPendingClaimAllowlistAdd([
@@ -599,8 +495,7 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress()
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(stranger.getAddress());
@@ -610,6 +505,7 @@ describe("ProtocolGovernance", () => {
                 ]);
             });
         });
+
         describe("when remove called once", () => {
             it("removes the address", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([
@@ -618,8 +514,7 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress()
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(user1.getAddress());
@@ -640,8 +535,7 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress()
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(user1.getAddress());
@@ -662,8 +556,7 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress()
                 ]);
 
-                await network.provider.send("evm_increaseTime", [(params[1]).toNumber()]);
-                await network.provider.send('evm_mine');
+                sleep((params.governanceDelay).toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(user2.getAddress());

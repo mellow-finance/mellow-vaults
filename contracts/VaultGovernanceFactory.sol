@@ -8,6 +8,11 @@ import "./interfaces/IVaultGovernance.sol";
 import "./VaultGovernance.sol";
 
 contract VaultGovernanceFactory {
+    /// @notice Deploy a govrenance new contract
+    /// @param tokens A set of tokens that will be managed by the Vault
+    /// @param manager Reference to Gateway Vault Manager
+    /// @param treasury Strategy treasury address that will be used to collect Strategy Performance Fee
+    /// @param admin Admin of the Vault
     function deployVaultGovernance(
         address[] memory tokens,
         IVaultManager manager,
@@ -16,12 +21,7 @@ contract VaultGovernanceFactory {
     ) external returns (IVaultGovernance) {
         require(treasury != address(0), "TZA");
         require(admin != address(0), "AZA");
-        VaultGovernance vaultGovernance = new VaultGovernance(
-            tokens,
-            manager,
-            treasury,
-            admin
-        );
+        VaultGovernance vaultGovernance = new VaultGovernance(tokens, manager, treasury, admin);
         return IVaultGovernance(vaultGovernance);
     }
 }

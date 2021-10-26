@@ -1,6 +1,9 @@
+import { BigNumber } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
 import { Contract } from "@ethersproject/contracts";
 import { Bytes } from "@ethersproject/bytes";
+
+// TODO: use BigNumberish type insted of BigNumber
 
 export type Address = string;
 
@@ -16,32 +19,31 @@ export type IVault = Address;
 
 export type ERC20 = Contract;
 export type ERC20Vault = Contract;
-export type ERC20VaultManager = Contract;
 export type ERC20VaultFactory = Contract;
 export type ProtocolGovernance = Contract;
+export type VaultManager = Contract;
 export type VaultManagerGovernance = Contract;
 export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
+export type GatewayVaultManager = Contract;
 export type LpIssuerGovernance = Contract;
 
-export type AaveToken = Contract;
 export type AaveVaultFactory = Contract;
 export type AaveVaultManager = Contract;
 export type AaveVault = Contract;
 
 export type ProtocolGovernance_Params = {
-    maxTokensPerVault: number,
-    governanceDelay: number,
-    strategyPerformanceFee: number,
-    protocolPerformanceFee: number,
-    protocolExitFee: number,
-    protocolTreasury: Address,
-    gatewayVaultManager: IGatewayVaultManager,
+    maxTokensPerVault: BigNumber;
+    governanceDelay: BigNumber;
+    strategyPerformanceFee: BigNumber;
+    protocolPerformanceFee: BigNumber;
+    protocolExitFee: BigNumber;
+    protocolTreasury: Address;
+    gatewayVaultManager: IGatewayVaultManager;
 }
 
 export type ProtocolGovernance_constructorArgs = {
     admin: Address;
-    params: ProtocolGovernance_Params;
 };
 
 export type LpIssuerGovernance_constructorArgs = {
@@ -50,22 +52,22 @@ export type LpIssuerGovernance_constructorArgs = {
 }
 
 export type VaultGovernanceFactory_constructorArgs = {
-    tokens: Address[],
-    manager: IVaultManager,
-    treasury: Address,
-    admin: Address
+    tokens: Address[];
+    manager: IVaultManager;
+    treasury: Address;
+    admin: Address;
 };
 
 /**
  * @dev creates IVault
  */
 export type ERC20VaultFactory_deployVault = {
-    vaultGovernance: IVaultGovernance,
-    options: BytesLike
+    vaultGovernance: IVaultGovernance;
+    options: BytesLike;
 };
 export type ERC20Vault_constructorArgs = ERC20VaultFactory_deployVault;
 
-export type ERC20VaultManager_constructorArgs = {
+export type VaultManager_constructorArgs = {
     name: string,
     symbol: string,
     factory: IVaultFactory,
@@ -76,7 +78,7 @@ export type ERC20VaultManager_constructorArgs = {
 /**
  * @dev creates IVault
  */
-export type ERC20VaultManager_createVault = {
+export type VaultManager_createVault = {
     tokens: IERC20[],
     strategyTreasury: Address,
     admin: Address,
@@ -125,4 +127,13 @@ export type AaveVaultManager_createVault = {
     strategyTreasury: Address,
     admin: Address,
     options: string | Bytes
+};
+
+export type GatewayVaultManager_constructorArgs = {
+    name: string;
+    symbol: string;
+    factory: IVaultFactory;
+    governanceFactory: IVaultGovernanceFactory;
+    permissionless: boolean;
+    governance: IProtocolGovernance;
 };
