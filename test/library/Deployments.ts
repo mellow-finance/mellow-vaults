@@ -318,14 +318,22 @@ export const deployCommonLibraryTest = deployments.createFixture(async (
  * @dev From scratch.
  */
 
-export async function deployAaveTokens(constructorArgs: AaveTest_constructorArgs[]): Promise<AaveToken[]> {
+export async function deployERC20TokensA(lenght: number): Promise<AaveToken[]> {
     let tokens: AaveToken[] = [];
+    let token_constructorArgs: AaveTest_constructorArgs[] = [];
     const Contract: ContractFactory = await ethers.getContractFactory("ERC20Test");
-    for (let i: number = 0; i < constructorArgs.length; ++i){
-        //Because Aave token is compability with ERC20
+
+    for (let i = 0; i < lenght; ++i) {
+        token_constructorArgs.push({
+            name: "Test Token",
+            symbol: `TEST_${i}`
+        });
+    }
+    
+    for (let i: number = 0; i < length; ++i){
         const contract: ERC20 = await Contract.deploy(
-            constructorArgs[i].name + `_{i.toString()}`, 
-            constructorArgs[i].symbol
+            token_constructorArgs[i].name + `_{i.toString()}`, 
+            token_constructorArgs[i].symbol
         );
         await contract.deployed();
         tokens.push(contract);
@@ -422,7 +430,7 @@ export async function deployAaveVaultFromVaulManager(options?: {
     };
 }
 
-export async function deployAaveVaultSystem(options?: {
+export async function deployAaveVaultSystem(options: {
     protocolGovernanceAdmin: Signer,
     treasury: Address,
     tokensCount: number,
@@ -430,18 +438,7 @@ export async function deployAaveVaultSystem(options?: {
     vaultManagerName?: string,
     vaultManagerSymbol?: string
 }) {
-    if (options === undefined) {
-        throw new Error("options are required");
-    }
-
-    let token_constructorArgs: AaveTest_constructorArgs[] = [];
-    for (let i = 0; i < options!.tokensCount; ++i) {
-        token_constructorArgs.push({
-            name: "Test Token",
-            symbol: `TEST_${i}`
-        });
-    }
-    const tokens: Contract[] = await deployAaveTokens( token_constructorArgs );
+    const tokens: Contract[] = await deployERC20TokensA( options!.tokensCount );
 
     const tokensSorted: Contract[] = sortContractsByAddresses(tokens);
     

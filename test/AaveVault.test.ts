@@ -35,7 +35,6 @@ describe("AaveVaultFactory", function() {
     let AaveVault: AaveVault;
     let AaveVaultManager: AaveVaultManager;
     let AaveVaultFactory: AaveVaultFactory;
-    let aaveVaultFactory: AaveVault;
 
     let nft: number;
     let vaultGovernance: VaultGovernance;
@@ -65,10 +64,5 @@ describe("AaveVaultFactory", function() {
             vaultManagerName: "vault manager",
             vaultManagerSymbol: "Aavevm ¯\\_(ツ)_/¯"
         }));
-    });
-
-    describe("constructor", () => {
-        it("", async () =>  {
-        });
     });
 });
