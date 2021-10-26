@@ -6,7 +6,7 @@ import "./Vault.sol";
 contract ERC20Vault is Vault {
     /// @notice Creates a new contract
     /// @param vaultGovernance Reference to VaultGovernance for this vault
-    constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}
+    constructor(IVaultGovernanceOld vaultGovernance) Vault(vaultGovernance) {}
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {

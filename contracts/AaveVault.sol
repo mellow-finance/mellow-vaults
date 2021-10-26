@@ -12,7 +12,7 @@ contract AaveVault is Vault {
 
     /// @notice Creates a new contract
     /// @param vaultGovernance Reference to VaultGovernance for this vault
-    constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {
+    constructor(IVaultGovernanceOld vaultGovernance) Vault(vaultGovernance) {
         address[] memory tokens = vaultGovernance.vaultTokens();
         for (uint256 i = 0; i < tokens.length; i++) {
             _aTokens[i] = _getAToken(tokens[i]);

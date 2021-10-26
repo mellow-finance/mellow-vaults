@@ -15,7 +15,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
 
     /// @notice Creates a new contract
     /// @param vaultGovernance Reference to VaultGovernance for this vault
-    constructor(IVaultGovernance vaultGovernance, address[] memory vaults) Vault(vaultGovernance) {
+    constructor(IVaultGovernanceOld vaultGovernance, address[] memory vaults) Vault(vaultGovernance) {
         _vaults = vaults;
         for (uint256 i = 0; i < _vaults.length; i++) {
             _vaultsIndex[_vaults[i]] = i;

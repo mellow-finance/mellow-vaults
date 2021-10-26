@@ -13,16 +13,16 @@ import "./interfaces/IVault.sol";
 abstract contract Vault is IVault {
     using SafeERC20 for IERC20;
 
-    IVaultGovernance internal _vaultGovernance;
+    IVaultGovernanceOld internal _vaultGovernance;
 
-    constructor(IVaultGovernance vaultGovernance_) {
+    constructor(IVaultGovernanceOld vaultGovernance_) {
         _vaultGovernance = vaultGovernance_;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
 
     /// @inheritdoc IVault
-    function vaultGovernance() external view returns (IVaultGovernance) {
+    function vaultGovernance() external view returns (IVaultGovernanceOld) {
         return _vaultGovernance;
     }
 

@@ -9,7 +9,7 @@ export type Address = string;
 export type IERC20 = Address;
 export type IVaultManager = Address;
 export type IVaultFactory = Address;
-export type IVaultGovernance = Address;
+export type IVaultGovernanceOld = Address;
 export type IVaultGovernanceFactory = Address;
 export type IProtocolGovernance = Address;
 export type IGatewayVaultManager = Address;
@@ -42,9 +42,9 @@ export type ProtocolGovernance_constructorArgs = {
 };
 
 export type LpIssuerGovernance_constructorArgs = {
-    gatewayVault: IVault;
-    protocolGovernance: IProtocolGovernance;
-}
+  gatewayVault: IVault;
+  protocolGovernance: IProtocolGovernance;
+};
 
 export type VaultGovernanceFactory_constructorArgs = {
     tokens: Address[];
@@ -81,26 +81,27 @@ export type VaultManager_createVault = {
 };
 
 export type VaultManagerGovernance_constructorArgs = {
-    permissionless: boolean,
-    protocolGovernance: IProtocolGovernance,
-    factory: IVaultFactory,
-    governanceFactory: IVaultGovernanceFactory
+  permissionless: boolean;
+  protocolGovernance: IProtocolGovernance;
+  factory: IVaultFactory;
+  governanceFactory: IVaultGovernanceFactory;
 };
 
 /**
- * @dev creates IVaultGovernance
+ * @dev creates IVaultGovernanceOld
  */
 export type VaultGovernanceFactory_deployVaultGovernance = {
-    tokens: Address[],
-    manager: IVaultManager,
-    treasury: Address,
-    admin: Address
+  tokens: Address[];
+  manager: IVaultManager;
+  treasury: Address;
+  admin: Address;
 };
-export type VaultGovernance_constructorArgs = VaultGovernanceFactory_deployVaultGovernance;
+export type VaultGovernance_constructorArgs =
+  VaultGovernanceFactory_deployVaultGovernance;
 
 export type ERC20Test_constructorArgs = {
-    name: string,
-    symbol: string
+  name: string;
+  symbol: string;
 };
 
 export type GatewayVaultManager_constructorArgs = {

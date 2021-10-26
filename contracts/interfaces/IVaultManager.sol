@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IProtocolGovernance.sol";
 import "./IVaultManagerGovernance.sol";
-import "./IVaultGovernance.sol";
+import "./IVaultGovernanceOld.sol";
 
 interface IVaultManager is IERC721, IVaultManagerGovernance {
     /// @notice Nft for the vault in the VaultManager
@@ -33,7 +33,7 @@ interface IVaultManager is IERC721, IVaultManagerGovernance {
     )
         external
         returns (
-            IVaultGovernance vaultGovernance,
+            IVaultGovernanceOld vaultGovernance,
             IVault vault,
             uint256 nft
         );

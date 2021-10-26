@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "./libraries/Common.sol";
 
 import "./interfaces/IVaultGovernanceFactory.sol";
-import "./interfaces/IVaultGovernance.sol";
+import "./interfaces/IVaultGovernanceOld.sol";
 import "./VaultGovernance.sol";
 
 contract VaultGovernanceFactory {
@@ -18,10 +18,10 @@ contract VaultGovernanceFactory {
         IVaultManager manager,
         address treasury,
         address admin
-    ) external returns (IVaultGovernance) {
+    ) external returns (IVaultGovernanceOld) {
         require(treasury != address(0), "TZA");
         require(admin != address(0), "AZA");
         VaultGovernance vaultGovernance = new VaultGovernance(tokens, manager, treasury, admin);
-        return IVaultGovernance(vaultGovernance);
+        return IVaultGovernanceOld(vaultGovernance);
     }
 }
