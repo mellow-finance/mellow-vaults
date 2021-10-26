@@ -97,55 +97,65 @@ describe("ERC20Vault", function () {
                 expect(await erc20Vault.earnings()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
             });
 
-            it("nft owner", async () => {
+            it("has correct nft owner", async () => {
                 expect(await erc20VaultManager.ownerOf(nft)).to.equals(await deployer.getAddress());
             });
         });
 
         describe("push", () => {
-            it("when not approved nor owner", async () => {
-                await expect(erc20Vault.connect(stranger).push(
-                    [tokens[0].address], 
-                    [BigNumber.from(1)],
-                    false,
-                    []
-                )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            describe("when not approved not owner", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.connect(stranger).push(
+                        [tokens[0].address], 
+                        [BigNumber.from(1)],
+                        false,
+                        []
+                    )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+                });
             });
 
-            it("when tokens and tokenAmounts lengthes do not match", async () => {
-                await expect(erc20Vault.push(
-                    [tokens[0].address], 
-                    [BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+            describe("when tokens and tokenAmounts lengthes do not match", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.push(
+                        [tokens[0].address], 
+                        [BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+                });
             });
 
-            it("when tokens not sorted", async () => {
-                await expect(erc20Vault.push(
-                    [tokens[1].address, tokens[0].address], 
-                    [BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
-            })
-
-            it("when tokens not unique", async () => {
-                await expect(erc20Vault.push(
-                    [tokens[0].address, tokens[0].address],
-                    [BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+            describe("when tokens are not sorted", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.push(
+                        [tokens[1].address, tokens[0].address], 
+                        [BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+                })
             });
 
-            it("when tokens not sorted nor unique", async () => {
-                await expect(erc20Vault.push(
-                    [tokens[1].address, tokens[0].address, tokens[1].address],
-                    [BigNumber.from(1), BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+            describe("when tokens are not unique", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.push(
+                        [tokens[0].address, tokens[0].address],
+                        [BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+                });
+            });
+
+            describe("when tokens not sorted nor unique", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.push(
+                        [tokens[1].address, tokens[0].address, tokens[1].address],
+                        [BigNumber.from(1), BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+                });
             });
 
             // FIXME: Should NOT pass when amounts do not match actual balance!
@@ -175,54 +185,64 @@ describe("ERC20Vault", function () {
         });
 
         describe("transferAndPush", () => {
-            it("when not approved nor owner", async () => {
-                await expect(erc20Vault.connect(stranger).transferAndPush(
-                    await deployer.getAddress(),
-                    [tokens[0].address], 
-                    [BigNumber.from(1)],
-                    false,
-                    []
-                )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            describe("when not approved nor owner", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.connect(stranger).transferAndPush(
+                        await deployer.getAddress(),
+                        [tokens[0].address], 
+                        [BigNumber.from(1)],
+                        false,
+                        []
+                    )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+                });
             });
 
-            it("when tokens and tokenAmounts lengthes do not match", async () => {
-                await expect(erc20Vault.transferAndPush(
-                    await deployer.getAddress(),
-                    [tokens[0].address], 
-                    [BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+            describe("when tokens and tokenAmounts lengthes do not match", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.transferAndPush(
+                        await deployer.getAddress(),
+                        [tokens[0].address], 
+                        [BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+                });
             });
 
-            it("when tokens not sorted", async () => {
-                await expect(erc20Vault.transferAndPush(
-                    await deployer.getAddress(),
-                    [tokens[1].address, tokens[0].address], 
-                    [BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
-            })
-
-            it("when tokens not unique", async () => {
-                await expect(erc20Vault.transferAndPush(
-                    await deployer.getAddress(),
-                    [tokens[0].address, tokens[0].address],
-                    [BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+            describe("when tokens are not sorted", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.transferAndPush(
+                        await deployer.getAddress(),
+                        [tokens[1].address, tokens[0].address], 
+                        [BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+                });
             });
 
-            it("when tokens not sorted nor unique", async () => {
-                await expect(erc20Vault.transferAndPush(
-                    await deployer.getAddress(),
-                    [tokens[1].address, tokens[0].address, tokens[1].address],
-                    [BigNumber.from(1), BigNumber.from(1), BigNumber.from(1)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+            describe("when tokens are not unique", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.transferAndPush(
+                        await deployer.getAddress(),
+                        [tokens[0].address, tokens[0].address],
+                        [BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+                });
+            });
+
+            describe("when tokens are not sorted nor unique", async () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.transferAndPush(
+                        await deployer.getAddress(),
+                        [tokens[1].address, tokens[0].address, tokens[1].address],
+                        [BigNumber.from(1), BigNumber.from(1), BigNumber.from(1)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+                });
             });
 
             it("passes", async () => {
@@ -235,22 +255,24 @@ describe("ERC20Vault", function () {
                 )).to.deep.equal([BigNumber.from(10**9)]);
             });
 
-            it("when not enough balance", async () => {
-                await tokens[0].transfer(
-                    await user.getAddress(), 
-                    BigNumber.from(10**3)
-                );
-                await tokens[0].connect(user).approve(
-                    erc20Vault.address,
-                    BigNumber.from(10**3)
-                );
-                await expect(erc20Vault.transferAndPush(
-                    await user.getAddress(),
-                    [tokens[0].address], 
-                    [BigNumber.from(10**9)],
-                    true,
-                    []
-                )).to.be.revertedWith(Exceptions.ERC20_INSUFFICIENT_BALANCE);
+            describe("when not enough balance", () => {
+                it("reverts", async () => {
+                    await tokens[0].transfer(
+                        await user.getAddress(), 
+                        BigNumber.from(10**3)
+                    );
+                    await tokens[0].connect(user).approve(
+                        erc20Vault.address,
+                        BigNumber.from(10**3)
+                    );
+                    await expect(erc20Vault.transferAndPush(
+                        await user.getAddress(),
+                        [tokens[0].address], 
+                        [BigNumber.from(10**9)],
+                        true,
+                        []
+                    )).to.be.revertedWith(Exceptions.ERC20_INSUFFICIENT_BALANCE);
+                });
             });
         });
 
@@ -291,18 +313,22 @@ describe("ERC20Vault", function () {
         });
 
         describe("collectEarnings", () => {
-            it("when called by stranger", async () => {
-                await expect(erc20Vault.connect(stranger).collectEarnings(
-                    erc20Vault.address,
-                    []
-                )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            describe("when called by stranger", async () => {
+                it("when called by stranger", async () => {
+                    await expect(erc20Vault.connect(stranger).collectEarnings(
+                        erc20Vault.address,
+                        []
+                    )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+                });
             });
 
-            it("when destination is not a contract", async () => {
-                await expect(erc20Vault.collectEarnings(
-                    await deployer.getAddress(),
-                    []
-                )).to.be.revertedWith(Exceptions.CONTRACT_REQUIRED);
+            describe("when destination is not a contract address", () => {
+                it("reverts", async () => {
+                    await expect(erc20Vault.collectEarnings(
+                        await deployer.getAddress(),
+                        []
+                    )).to.be.revertedWith(Exceptions.CONTRACT_REQUIRED);
+                });
             });
 
             // TODO: test collectEarnings
