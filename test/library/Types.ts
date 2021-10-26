@@ -2,6 +2,8 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { BytesLike } from "@ethersproject/bytes";
 import { Contract } from "@ethersproject/contracts";
 
+// TODO: use BigNumberish type insted of BigNumber
+
 export type Address = string;
 
 export type IERC20 = Address;

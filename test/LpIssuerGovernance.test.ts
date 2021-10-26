@@ -26,7 +26,10 @@ import { LpIssuerGovernance,
     ProtocolGovernance_constructorArgs
  } from "./library/Types";
 
-
+/**
+ * TODO: Define some sort of default params for a series of tests 
+ * and then do smth like `{...defaultParams, maxTokensPerVault: 12}`
+ */
 describe("LpIssuerGovernance", () => {
     let contract: LpIssuerGovernance;
     let protocol: ProtocolGovernance;

@@ -70,10 +70,8 @@ brownie test
 ```
 
 
-### Visualize coverage report 
+### Visualize coverage report
 
 ```
-cd coverage
-python3 -m http.server
-open -a Safari http://localhost:8000
+open coverage/index.html
 ```
