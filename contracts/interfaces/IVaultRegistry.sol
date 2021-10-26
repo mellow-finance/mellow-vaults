@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IVault.sol";
 import "./IVaultGovernance.sol";
-import "./IVaultFactory.sol";
+import "./IVaultFactoryV2.sol";
 import "./IProtocolGovernance.sol";
 
 interface IVaultRegistry is IERC721 {
@@ -14,7 +14,7 @@ interface IVaultRegistry is IERC721 {
     /// @param vaultGovernance Address of the vault governance
     /// @param protocolGovernance Address of the protocol governance
     struct VaultKind {
-        IVaultFactory vaultFactory;
+        IVaultFactoryV2 vaultFactory;
         IVaultGovernance vaultGovernance;
     }
 
@@ -23,10 +23,10 @@ interface IVaultRegistry is IERC721 {
     /// @return vaultKind Vault Kind structure
     function vaultKindForId(uint256 vaultKindId) external view returns (VaultKind memory vaultKind);
 
-    /// @notice Get the ID of the vault kind for the given address
+    /// @notice Get the the vault kind for the given vault address
     /// @param vault Address of the vault
-    /// @return vaultKindId ID of the vault kind
-    function vaultKindForVault(IVault vault) external view returns (uint256 vaultKindId);
+    /// @return vaultKind VaultKind structure
+    function vaultKindForVault(IVault vault) external view returns (VaultKind memory vaultKind);
 
     /// @notice Get Vault for the giver NFT ID
     /// @param nftId NFT ID
@@ -41,13 +41,15 @@ interface IVaultRegistry is IERC721 {
     /// @notice Register a new vault kind
     /// @param vaultKind VaultKind structure
     /// @return vaultKindId ID of the new vault kind
-    function registerVaultKind(VaultKind calldata vaultKind) external returns (uint256 vaultKindId);
+    function registerVaultKind(VaultKind calldata vaultKind) 
+        external
+        returns (uint256 vaultKindId);
 
     /// @notice Register new Vault and mint NFT
     /// @param vaultKindId ID of the vault kind
     /// @return vault Address of created Vault
     /// @return nftId ID the NFT minted for the given Vault Group
-    function registerVault(uint256 vaultKindId) external returns (IVault vault, uint256 nftId);
+    function registerVault(uint256 vaultKindId, bytes calldata options) external returns (IVault vault, uint256 nftId);
 
     /// @param nftId NFT ID
     /// @param vault Address of the Vault contract
