@@ -108,9 +108,22 @@ library Common {
         return res;
     }
 
+    /// @notice Determines if a given address is a contract address
+    /// @param addr Address to check
+    /// @return `true` if the address is a contract address, `false` otherwise
+    function isContract(address addr) internal view returns (bool) {
+        uint32 size;
+        assembly {
+            size := extcodesize(addr)
+        }
+        return (size > 0);
+    }
+
     function _isSubsetOf(
         address[] memory tokens,
         address[] memory tokensToCheck,
         address[] memory amountsToCheck
-    ) internal {}
+    ) internal {
+        // TODO: implement or remove
+    }
 }

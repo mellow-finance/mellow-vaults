@@ -178,6 +178,7 @@ abstract contract Vault is IVault {
     }
 
     function _isValidPullDestination(address to) internal view returns (bool) {
+        require(Common.isContract(to), "C");
         IVaultManager vaultManager = _vaultGovernance.vaultManager();
         IGatewayVaultManager gw = vaultManager.governanceParams().protocolGovernance.gatewayVaultManager();
         uint256 fromNft = vaultManager.nftForVault(address(this));
