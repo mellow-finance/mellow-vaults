@@ -1,6 +1,5 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
-import { VaultGovernanceFactory } from "../test/library/Types";
 
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -9,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const {deployer} = await getNamedAccounts();
 
-  const contract = await deploy('VaultGovernanceFactory', {
+  await deploy('AaveVaultFactory', {
     from: deployer,
     args: [],
     log: true,
@@ -17,5 +16,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 };
 export default func;
-func.tags = ['SimpleERC20'];
+func.tags = ['SimpleAave'];
 
