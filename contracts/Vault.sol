@@ -9,7 +9,6 @@ import "./libraries/Common.sol";
 
 import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVault.sol";
-import "hardhat/console.sol";
 
 abstract contract Vault is IVault {
     using SafeERC20 for IERC20;
@@ -42,19 +41,9 @@ abstract contract Vault is IVault {
         bool optimized,
         bytes memory options
     ) public returns (uint256[] memory actualTokenAmounts) {
-        console.log("Vault::push");
-        console.log("_isApprovedOrOwner", _isApprovedOrOwner(msg.sender));
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        console.log("pTokenAmounts");
-        for (uint i = 0; i < pTokenAmounts.length; ++i) {
-            console.log(pTokenAmounts[i]);
-        }
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, optimized, options);
-        console.log("pActualTokenAmounts");
-        for (uint i = 0; i < pActualTokenAmounts.length; ++i) {
-            console.log(pActualTokenAmounts[i]);
-        }
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultGovernance.vaultTokens(), pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }
@@ -168,12 +157,8 @@ abstract contract Vault is IVault {
         view
         returns (uint256[] memory pTokenAmounts)
     {
-        console.log("Vault::_validateAndProjectTokens");
         require(Common.isSortedAndUnique(tokens), "SAU");
-        console.log("not SAU");
         require(tokens.length == tokenAmounts.length, "L");
-        console.log("not L");
-        console.log(tokens.length, tokenAmounts.length);
         pTokenAmounts = Common.projectTokenAmounts(_vaultGovernance.vaultTokens(), tokens, tokenAmounts);
     }
 
