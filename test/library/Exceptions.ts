@@ -12,5 +12,6 @@ export default class Exceptions {
     static readonly SORTED_AND_UNIQUE: string = "SAU";
     static readonly ERC20_INSUFFICIENT_BALANCE: string = "ERC20: transfer amount exceeds balance";
     static readonly VALID_PULL_DESTINATION: string = "INTRA";
+    static readonly CONTRACT_REQUIRED: string = "C";
 }
 // TODO: Remove outdated exceptions

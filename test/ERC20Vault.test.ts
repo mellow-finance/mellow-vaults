@@ -14,6 +14,8 @@ import {
 import { deployERC20Tokens, deployERC20VaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 
+// TODO: Add _isValidPullDestination tests
+
 describe("ERC20Vault", function () {
     describe("when permissionless is set to true", () => {
         let deployer: Signer;
@@ -171,10 +173,6 @@ describe("ERC20Vault", function () {
             });
         });
 
-        describe("pull", () => {
-
-        });
-
         describe("transferAndPush", () => {
             it("when not approved nor owner", async () => {
                 await expect(erc20Vault.connect(stranger).transferAndPush(
@@ -257,7 +255,9 @@ describe("ERC20Vault", function () {
                 for (let i: number = 0; i < tokens.length; ++i) {
                     await tokens[i].connect(deployer).approve(
                         erc20Vault.address, 
-                        BigNumber.from(10**9).mul(BigNumber.from(10**9)).mul(BigNumber.from(10**9))
+                        BigNumber.from(10**9)
+                            .mul(BigNumber.from(10**9))
+                            .mul(BigNumber.from(10**9))
                     );
                 }
             });
@@ -269,7 +269,7 @@ describe("ERC20Vault", function () {
                     [BigNumber.from(10**9)],
                     false,
                     []
-                )
+                );
                 
                 expect(await erc20Vault.tvl()).to.deep.equal([
                     BigNumber.from(10**9),
@@ -278,14 +278,15 @@ describe("ERC20Vault", function () {
             });
         });
 
-        describe("collectEarnings", () => {
-            it("when invalid pull destination", async () => {
-                await expect(erc20Vault.collectEarnings(
-                    anotherERC20Vault.address,
-                    []
-                )).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
-            });
+        describe("claimRewards", () => {
+            // TODO: test claimRewards
+        });
 
+        describe("pull", () => {
+            // TODO: test pull
+        });
+
+        describe("collectEarnings", () => {
             it("when called by stranger", async () => {
                 await expect(erc20Vault.connect(stranger).collectEarnings(
                     erc20Vault.address,
@@ -293,12 +294,14 @@ describe("ERC20Vault", function () {
                 )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
             });
 
-            // it("passes", async () => {
-            //     await erc20Vault.connect(protocolGovernanceAdmin).collectEarnings(
-            //         await deployer.getAddress(),
-            //         []
-            //     );
-            // });
+            it("when destination is not a contract", async () => {
+                await expect(erc20Vault.collectEarnings(
+                    await deployer.getAddress(),
+                    []
+                )).to.be.revertedWith(Exceptions.CONTRACT_REQUIRED);
+            });
+
+            // TODO: test collectEarnings
         });
 
         describe("reclaimTokens", () => {
@@ -316,17 +319,7 @@ describe("ERC20Vault", function () {
                 await anotherToken.connect(deployer).transfer(erc20Vault.address, BigNumber.from(10**9));
             });
 
-            // it("when called by admin", async () => {
-            //     await erc20Vault.connect(protocolGovernanceAdmin).reclaimTokens(
-            //         await stranger.getAddress(),
-            //         [anotherToken.address],
-            //     );
-            // });
-
-        });
-
-        describe("claimRewards", () => {
-            
+            // TODO: test reclaimTokens
         });
     });
 });
