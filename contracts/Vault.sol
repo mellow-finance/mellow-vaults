@@ -127,7 +127,7 @@ abstract contract Vault is IVault {
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
     function reclaimTokens(address to, address[] memory tokens) external {
-        bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin();
+        bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
         if (!isProtocolAdmin) {
             require(_isValidPullDestination(to), "INTRA");

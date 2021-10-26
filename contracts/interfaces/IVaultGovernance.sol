@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "./IVaultManager.sol";
 
 interface IVaultGovernance {
-    function isProtocolAdmin() external view returns (bool);
+    function isProtocolAdmin(address) external view returns (bool);
 
     function vaultTokens() external view returns (address[] memory);
 
