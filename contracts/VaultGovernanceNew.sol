@@ -4,7 +4,14 @@ pragma solidity 0.8.9;
 import "./interfaces/IProtocolGovernance.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-contract VaultGovernanceNew {
+/// @notice Internal contract for managing different params
+/// @dev The contract should be overriden by the concrete VaultGovernance,
+/// define different params structs and use abi.decode / abi.encode to serialize
+/// to bytes in this contract. It also should emit events on params change.
+abstract contract VaultGovernanceNew {
+    /// @notice Internal references of the contract
+    /// @param protocolGovernance Reference to Protocol Governance
+    /// @param registry Reference to Vault Registry
     struct InternalParams {
         IProtocolGovernance protocolGovernance;
         IERC721 registry;
@@ -25,6 +32,8 @@ contract VaultGovernanceNew {
     mapping(uint256 => bytes) internal _strategyParams;
     bytes internal _protocolParams;
 
+    /// @notice Creates a new contract
+    /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
         _internalParams = internalParams_;
     }
@@ -42,18 +51,18 @@ contract VaultGovernanceNew {
         return _delayedProtocolParamsTimestamp;
     }
 
-    /// @notice Timestamp in unix time seconds after which staged Protocol Governance could be committed
+    /// @notice Timestamp in unix time seconds after which staged Internal Params could be committed
     function internalParamsTimestamp() external view returns (uint256) {
         return _internalParamsTimestamp;
     }
 
-    /// @notice Reference to Protocol Governance
+    /// @notice Internal Params of the contract
     function internalParams() external view returns (InternalParams memory) {
         return _internalParams;
     }
 
-    /// @notice Staged new reference to Protocol Governance
-    /// @dev The internalParams could be committed after protocolGovernanceTimestamp
+    /// @notice Staged new Internal Params
+    /// @dev The Internal Params could be committed after internalParamsTimestamp
     function stagedInternalParams() external view returns (InternalParams memory) {
         return _stagedInternalParams;
     }
@@ -81,8 +90,7 @@ contract VaultGovernanceNew {
 
     // -------------------  INTERNAL  -------------------
 
-    /// @notice Set delayed strategy params
-    /// @dev Should require nft > 0
+    /// @notice Set Delayed Strategy Params
     /// @param nft Nft of the vault
     /// @param params New params
     function _stageDelayedStrategyParams(uint256 nft, bytes calldata params) internal {
@@ -91,7 +99,7 @@ contract VaultGovernanceNew {
         _delayedStrategyParamsTimestamp[nft] = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
     }
 
-    /// @notice Commit delayed strategy params
+    /// @notice Commit Delayed Strategy Params
     function _commitDelayedStrategyParams(uint256 nft) internal {
         _requireAtLeastStrategy(nft);
         require(_delayedStrategyParamsTimestamp[nft] > 0, "NULL");
@@ -100,7 +108,7 @@ contract VaultGovernanceNew {
         delete _delayedStrategyParamsTimestamp[nft];
     }
 
-    /// @notice Set delayed protocol params
+    /// @notice Set Delayed Protocol Params
     /// @param params New params
     function _stageDelayedProtocolParams(bytes calldata params) internal {
         _requireProtocolAdmin();
@@ -108,8 +116,7 @@ contract VaultGovernanceNew {
         _delayedProtocolParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
     }
 
-    /// @notice Commit delayed protocol params
-    /// @dev VaultRegistry guarantees `nft > 0`, so `nft == 0` is reserved for params common for all vaults
+    /// @notice Commit Delayed Protocol Params
     function _commitDelayedProtocolParams() internal {
         _requireProtocolAdmin();
         require(_delayedProtocolParamsTimestamp > 0, "NULL");
@@ -128,7 +135,6 @@ contract VaultGovernanceNew {
     }
 
     /// @notice Set immediate protocol params
-    /// @dev VaultRegistry guarantees `nft > 0`, so `nft == 0` is reserved for params common for all vaults
     /// @param params New params
     function _setProtocolParams(bytes calldata params) internal {
         _requireProtocolAdmin();
