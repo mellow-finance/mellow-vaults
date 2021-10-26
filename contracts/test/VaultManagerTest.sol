@@ -16,8 +16,6 @@ contract VaultManagerTest is VaultManager {
 
     function mintVaultNft(IVault vault) public returns (uint256) {
         uint256 nft = _mintVaultNft(vault);
-        console.log("TEST: owner of nft", nft, "is", ownerOf(nft));
-        console.log("balance of", msg.sender, "is", balanceOf(msg.sender));
         return nft;
     }
 }
