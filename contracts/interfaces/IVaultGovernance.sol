@@ -1,52 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IVaultManager.sol";
-
 interface IVaultGovernance {
-    function isProtocolAdmin(address sender) external view returns (bool);
+    /// @notice Set delayed strategy params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function stageDelayedStrategyParams(uint256 nft, bytes calldata params) external;
 
-    /// @notice Tokens managed by the vault
-    function vaultTokens() external view returns (address[] memory);
+    /// @notice Commit delayed strategy params
+    function commitDelayedStrategyParams(uint256 nft) external;
 
-    /// @notice Checks if token is managed by the Vault
-    function isVaultToken(address token) external view returns (bool);
+    /// @notice Set delayed protocol params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function stageDelayedProtocolParams(uint256 nft, bytes calldata params) external;
 
-    /// @notice Reference to Vault Manager
-    function vaultManager() external view returns (IVaultManager);
+    /// @notice Commit delayed protocol params
+    /// @param nft Nft of the vault
+    function commitDelayedProtocolParams(uint256 nft) external;
 
-    /// @notice Pending new vault manager that will be committed
-    function pendingVaultManager() external view returns (IVaultManager);
+    /// @notice Set immediate strategy params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function setStrategyParams(uint256 nft, bytes calldata params) external;
 
-    /// @notice When Pending Vault Manager could be committed
-    function pendingVaultManagerTimestamp() external view returns (uint256);
+    /// @notice Set immediate protocol params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function setProtocolParams(uint256 nft, bytes calldata params) external;
 
-    /// @notice Set new pending vault manager that will be committed
-    function setPendingVaultManager(IVaultManager newManager) external;
-
-    /// @notice Commit new vault manager
-    function commitVaultManager() external;
-
-    /// @notice Strategy treasury that will receive strategy performance fees
-    function strategyTreasury() external view returns (address);
-
-    /// @notice Pending strategy treasury that will be committed
-    function pendingStrategyTreasury() external view returns (address);
-
-    /// @notice When Pending strategy treasury can be committed (timestamp in secs)
-    function pendingStrategyTreasuryTimestamp() external view returns (uint256);
-
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
-
-    /// @notice Stage new pending strategy treasury
-    function setPendingStrategyTreasury(address newTreasury) external;
-
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
-    /// @notice Commit pending strategy treasury
-    function commitStrategyTreasury() external;
-
-    event SetPendingVaultManager(IVaultManager);
-    event CommitVaultManager(IVaultManager);
-    event SetPendingStrategyTreasury(address);
-    event CommitStrategyTreasury(address);
+    /// @notice Set immediate protocol params
+    /// @param params New params
+    function setCommonProtocolParams(bytes calldata params) external;
 }
