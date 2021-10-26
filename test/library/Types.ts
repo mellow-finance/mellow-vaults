@@ -9,6 +9,7 @@ export type Address = string;
 export type IERC20 = Address;
 export type IVaultManager = Address;
 export type IVaultFactory = Address;
+export type IVaultGovernance = Address;
 export type IVaultGovernanceOld = Address;
 export type IVaultGovernanceFactory = Address;
 export type IProtocolGovernance = Address;
@@ -24,6 +25,7 @@ export type VaultManager = Contract;
 export type VaultManagerGovernance = Contract;
 export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
+export type VaultGovernanceOld = Contract;
 export type GatewayVaultManager = Contract;
 export type LpIssuerGovernance = Contract;
 
