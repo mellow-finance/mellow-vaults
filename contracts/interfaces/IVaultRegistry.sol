@@ -7,38 +7,30 @@ import "./IVaultFactory.sol";
 import "./IProtocolGovernance.sol";
 
 interface IVaultRegistry is IERC721 {
-    /// @notice Register a new vault kind
-    /// @param vaultFactory Address of the VaultFactory
-    /// @param vaultGovernance Address of the VaultGovernance
-    /// @return vaultKind ID of the new vault kind
-    function registerVaultKind (
-        IVaultFactory vaultFactory,
-        IVaultGovernance vaultGovernance
-    ) 
-        external
-        returns (uint256 vaultKind);
+    /// @notice VaultKind structure
+    /// @param permissionless Is permissionless
+    /// @param vaultFactory Address of the vault factory
+    /// @param vaultGovernance Address of the vault governance
+    /// @param protocolGovernance Address of the protocol governance
+    struct VaultKind {
+        IVaultFactory vaultFactory;
+        IVaultGovernance vaultGovernance;
+    }
 
     /// @notice Get the address of the VaultFactory and VaultGovernance for the given vault kind
-    /// @param vaultKind ID of the vault kind
-    /// @return vaultFactory address
-    /// @return vaultGovernance address
-    function vaultKind(uint256 vaultKind) 
+    /// @param vaultKindId ID of the vault kind
+    /// @return vaultKind Vault Kind structure
+    function vaultKindForId(uint256 vaultKindId)
         external view 
-        returns (
-            IVaultFactory vaultFactory,
-            IVaultGovernance vaultGovernance
-        );
+        returns (VaultKind memory vaultKind);
+    
+    /// @notice Get the ID of the vault kind for the given address
+    /// @param vault Address of the vault
+    /// @return vaultKindId ID of the vault kind
+    function vaultKindForVault(IVault vault)
+        external view
+        returns (uint256 vaultKindId);
 
-    /// @notice Register new Vault and mint NFT
-    /// @param vaultKind ID of the vault kind
-    /// @return vault Address of created Vault
-    /// @return nftId ID the NFT minted for the given Vault Group
-    function createVault(uint256 vaultKind) 
-        external 
-        returns (
-            IVault vault,
-            uint256 nftId
-        );
     
     /// @notice Get Vault for the giver NFT ID
     /// @param nftId NFT ID
@@ -54,8 +46,31 @@ interface IVaultRegistry is IERC721 {
         external view
         returns (uint256 nftId);
 
+    /// @notice Register a new vault kind
+    /// @param vaultKind VaultKind structure
+    /// @return vaultKindId ID of the new vault kind
+    function registerVaultKind (VaultKind calldata vaultKind) 
+        external
+        returns (uint256 vaultKindId);
+
+    /// @notice Register new Vault and mint NFT
+    /// @param vaultKindId ID of the vault kind
+    /// @return vault Address of created Vault
+    /// @return nftId ID the NFT minted for the given Vault Group
+    function registerVault(uint256 vaultKindId) 
+        external 
+        returns (
+            IVault vault,
+            uint256 nftId
+        );
+
     /// @param nftId NFT ID
     /// @param vault Address of the Vault contract
-    /// @param message Optional message
-    event VaultRegistered(uint256 nftId, IVault vault, bytes message);
+    /// @param sender Address of the sender
+    event VaultRegistered(uint256 nftId, IVault vault, address sender);
+
+    /// @param vaultKindId ID of the vault kind
+    /// @param vaultKind New VaultKind structure
+    /// @param sender Address of the sender
+    event VaultKindRegistered(uint256 vaultKindId, VaultKind vaultKind, address sender);
 }
