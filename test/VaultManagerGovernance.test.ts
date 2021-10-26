@@ -1,8 +1,7 @@
 import { expect } from "chai";
 import {
     deployments,
-    ethers,
-    getNamedAccounts
+    ethers
 } from "hardhat";
 import { 
     Contract,
@@ -49,12 +48,12 @@ describe("VaultManagerGovernance", () => {
     let gatewayVaultManager: Signer;
 
     before(async () => {
-        const {
+        [
             deployer,
             stranger,
             protocolTreasury,
             gatewayVaultManager
-        } = await getNamedAccounts();
+        ] = await ethers.getSigners();
         timeShift = 10**10;
         timestamp = now() + timeShift;
         sleepTo(timestamp);
