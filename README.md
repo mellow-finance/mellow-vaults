@@ -13,6 +13,15 @@ yarn
 yarn coverage
 ```
 
+#### Hardhat hacks
+
+Get result of mutating function 
+
+```
+nft = await erc20VaultManager.callStatic.mintVaultNft(erc20Vault.address);
+await erc20VaultManager.mintVaultNft(erc20Vault.address);
+```
+
 ### Brownie property tests
 
 #### Pre-requisites
@@ -34,4 +43,13 @@ pip install -r requirements.txt
 
 ```bash
 brownie test
+```
+
+
+### Visualize coverage report 
+
+```
+cd coverage
+python3 -m http.server
+open -a Safari http://localhost:8000
 ```

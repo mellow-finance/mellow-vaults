@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { 
     ethers,
-    network,
     deployments
 } from "hardhat";
 import {
@@ -36,6 +35,7 @@ describe("LpIssuerGovernance", () => {
     let emptyParams: LpIssuerGovernance_constructorArgs;
     let temporaryProtocol: ProtocolGovernance;
     let protocolConstructorArgs: ProtocolGovernance_constructorArgs;
+    let params: ProtocolGovernance_Params;
     let timestamp: number;
     let timeout: number;
     let timeEps: number;
@@ -61,19 +61,22 @@ describe("LpIssuerGovernance", () => {
             };
 
             protocolConstructorArgs = {
-                admin: await deployer.getAddress(),
-                params: {
-                    maxTokensPerVault: 1,
-                    governanceDelay: 1,
-                    strategyPerformanceFee: 10 * 10 ** 9,
-                    protocolPerformanceFee: 2 * 10 ** 9,
-                    protocolExitFee: 1 * 10 ** 9,
-                    protocolTreasury: await gatewayVault.getAddress(),
-                    gatewayVaultManager: await protocolTreasury.getAddress()
-                }
+                admin: await deployer.getAddress()
             }
+
+            params = {
+                maxTokensPerVault: BigNumber.from(2),
+                governanceDelay: BigNumber.from(1),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(1 * 10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
+
             protocol = await deployProtocolGovernance({
                 constructorArgs: protocolConstructorArgs,
+                initializerArgs: {params},
                 adminSigner: deployer
             });
 
@@ -131,20 +134,20 @@ describe("LpIssuerGovernance", () => {
 
         it("sets params timestamp and emits SetPendingGovernanceParams", async () => {
             await sleepTo(timestamp);
-            let newGovernanceParams = {
-                maxTokensPerVault: 1,
-                governanceDelay: timeout,
-                strategyPerformanceFee: 10 * 10 ** 9,
-                protocolPerformanceFee: 2 * 10 ** 9,
-                protocolExitFee: 1 * 10 ** 9,
-                protocolTreasury: await protocolTreasury.getAddress(),
-                gatewayVaultManager: await gatewayVault.getAddress(),
-            };
+            params = {
+                maxTokensPerVault: BigNumber.from(2),
+                governanceDelay: BigNumber.from(timeout),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(1 * 10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
             temporaryProtocol = await deployProtocolGovernance({
                 constructorArgs: {
-                    admin: await deployer.getAddress(),
-                    params: newGovernanceParams
+                    admin: await deployer.getAddress()
                 },
+                initializerArgs: {params},
                 adminSigner: deployer
             });
             temporaryParams = {
@@ -186,20 +189,20 @@ describe("LpIssuerGovernance", () => {
         it("commits params and emits CommitGovernanceParams event", async () => {
             timestamp += 10**6;
             await sleepTo(timestamp);
-            let newGovernanceParams = {
-                maxTokensPerVault: 5,
-                governanceDelay: timeout,
-                strategyPerformanceFee: 10 * 10 ** 9,
-                protocolPerformanceFee: 2 * 10 ** 9,
-                protocolExitFee: 1 * 10 ** 9,
-                protocolTreasury: await protocolTreasury.getAddress(),
-                gatewayVaultManager: await gatewayVaultManager.getAddress()
-            };
+            params = {
+                maxTokensPerVault: BigNumber.from(5),
+                governanceDelay: BigNumber.from(timeout),
+                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                protocolExitFee: BigNumber.from(1 * 10 ** 9),
+                protocolTreasury: await gatewayVault.getAddress(),
+                gatewayVaultManager: await protocolTreasury.getAddress()
+            }
             temporaryProtocol = await deployProtocolGovernance({
                 constructorArgs: {
                     admin: await deployer.getAddress(),
-                    params: newGovernanceParams
                 },
+                initializerArgs: {params},
                 adminSigner: deployer
             });
             temporaryParams = {
@@ -256,20 +259,20 @@ describe("LpIssuerGovernance", () => {
                 it("reverts", async () => {
                     timestamp += 10**6;
                     await sleepTo(timestamp);
-                    let newGovernanceParams = {
-                        maxTokensPerVault: 9,
-                        governanceDelay: timeout,
-                        strategyPerformanceFee: 10 * 10 ** 9,
-                        protocolPerformanceFee: 2 * 10 ** 9,
-                        protocolExitFee: 1 * 10 ** 9,
-                        protocolTreasury: await protocolTreasury.getAddress(),
-                        gatewayVaultManager: await gatewayVaultManager.getAddress(),
-                    };
+                    params = {
+                        maxTokensPerVault: BigNumber.from(5),
+                        governanceDelay: BigNumber.from(timeout),
+                        strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                        protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                        protocolExitFee: BigNumber.from(1 * 10 ** 9),
+                        protocolTreasury: await gatewayVault.getAddress(),
+                        gatewayVaultManager: await protocolTreasury.getAddress()
+                    }
                     temporaryProtocol = await deployProtocolGovernance({
                         constructorArgs: {
                             admin: await deployer.getAddress(),
-                            params: newGovernanceParams
                         },
+                        initializerArgs: {params}, 
                         adminSigner: deployer
                     });
                     temporaryParams = {
@@ -286,20 +289,20 @@ describe("LpIssuerGovernance", () => {
             describe("when governance delay has almost passed", () => {
                 it("reverts", async () => {
                     let longTimeout = 10**3;
-                    let newGovernanceParams = {
-                        maxTokensPerVault: 9,
-                        governanceDelay: longTimeout,
-                        strategyPerformanceFee: 10 * 10 ** 9,
-                        protocolPerformanceFee: 2 * 10 ** 9,
-                        protocolExitFee: 1 * 10 ** 9,
-                        protocolTreasury: await protocolTreasury.getAddress(),
-                        gatewayVaultManager: await gatewayVaultManager.getAddress(),
-                    };
+                    params = {
+                        maxTokensPerVault: BigNumber.from(2),
+                        governanceDelay: BigNumber.from(longTimeout),
+                        strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                        protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                        protocolExitFee: BigNumber.from(1 * 10 ** 9),
+                        protocolTreasury: await gatewayVault.getAddress(),
+                        gatewayVaultManager: await protocolTreasury.getAddress()
+                    }
                     temporaryProtocol = await deployProtocolGovernance({
                         constructorArgs: {
                             admin: await deployer.getAddress(),
-                            params: newGovernanceParams
                         },
+                        initializerArgs: {params},
                         adminSigner: deployer
                     });
                     temporaryParams = {

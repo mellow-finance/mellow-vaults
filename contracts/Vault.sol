@@ -9,6 +9,7 @@ import "./libraries/Common.sol";
 
 import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVault.sol";
+import "hardhat/console.sol";
 
 abstract contract Vault is IVault {
     using SafeERC20 for IERC20;
@@ -36,14 +37,24 @@ abstract contract Vault is IVault {
 
     /// @inheritdoc IVault
     function push(
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) public returns (uint256[] memory actualTokenAmounts) {
+        console.log("Vault::push");
+        console.log("_isApprovedOrOwner", _isApprovedOrOwner(msg.sender));
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
+        console.log("pTokenAmounts");
+        for (uint i = 0; i < pTokenAmounts.length; ++i) {
+            console.log(pTokenAmounts[i]);
+        }
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, optimized, options);
+        console.log("pActualTokenAmounts");
+        for (uint i = 0; i < pActualTokenAmounts.length; ++i) {
+            console.log(pActualTokenAmounts[i]);
+        }
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultGovernance.vaultTokens(), pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }
@@ -51,8 +62,8 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function transferAndPush(
         address from,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
@@ -73,8 +84,8 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function pull(
         address to,
-        address[] calldata tokens,
-        uint256[] calldata tokenAmounts,
+        address[] memory tokens,
+        uint256[] memory tokenAmounts,
         bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
@@ -115,7 +126,7 @@ abstract contract Vault is IVault {
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
-    function reclaimTokens(address to, address[] calldata tokens) external {
+    function reclaimTokens(address to, address[] memory tokens) external {
         bool isProtocolAdmin = _vaultGovernance.isProtocolAdmin();
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
         if (!isProtocolAdmin) {
@@ -136,7 +147,7 @@ abstract contract Vault is IVault {
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     /// @inheritdoc IVault
-    function claimRewards(address from, bytes calldata data) external override {
+    function claimRewards(address from, bytes memory data) external override {
         require(_isApprovedOrOwner(msg.sender), "ADM");
         IProtocolGovernance protocolGovernance = _vaultGovernance.vaultManager().governanceParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), "AC");
@@ -152,13 +163,17 @@ abstract contract Vault is IVault {
 
     // -------------------  PRIVATE, VIEW  -------------------
 
-    function _validateAndProjectTokens(address[] calldata tokens, uint256[] calldata tokenAmounts)
+    function _validateAndProjectTokens(address[] memory tokens, uint256[] memory tokenAmounts)
         internal
         view
         returns (uint256[] memory pTokenAmounts)
     {
+        console.log("Vault::_validateAndProjectTokens");
         require(Common.isSortedAndUnique(tokens), "SAU");
+        console.log("not SAU");
         require(tokens.length == tokenAmounts.length, "L");
+        console.log("not L");
+        console.log(tokens.length, tokenAmounts.length);
         pTokenAmounts = Common.projectTokenAmounts(_vaultGovernance.vaultTokens(), tokens, tokenAmounts);
     }
 

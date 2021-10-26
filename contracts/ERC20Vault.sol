@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./Vault.sol";
+import "hardhat/console.sol";
 
 contract ERC20Vault is Vault {
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}
@@ -23,7 +24,7 @@ contract ERC20Vault is Vault {
     function _push(
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata
+        bytes memory
     ) internal pure override returns (uint256[] memory actualTokenAmounts) {
         // no-op, tokens are already on balance
         return tokenAmounts;
@@ -33,7 +34,7 @@ contract ERC20Vault is Vault {
         address to,
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata
+        bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(_vaultGovernance.vaultTokens()[i]).transfer(to, tokenAmounts[i]);
@@ -41,7 +42,7 @@ contract ERC20Vault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address, bytes calldata)
+    function _collectEarnings(address, bytes memory)
         internal
         view
         override

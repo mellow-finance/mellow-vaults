@@ -7,4 +7,8 @@ export default class Exceptions {
     static readonly ADMIN: string = "ADM";
     static readonly ADMIN_ADDRESS_ZERO: string = "ZADM";
     static readonly VAULT_FACTORY_ADDRESS_ZERO: string = "ZVF";
+    static readonly APPROVED_OR_OWNER: string = "IO";
+    static readonly INCONSISTENT_LENGTH: string = "L";
+    static readonly SORTED_AND_UNIQUE: string = "SAU";
+    static readonly ERC20_INSUFFICIENT_BALANCE: string = "ERC20: transfer amount exceeds balance";
 }
