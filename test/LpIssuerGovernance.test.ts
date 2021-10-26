@@ -335,4 +335,3 @@ describe("LpIssuerGovernance", () => {
         });
     });
 });
-

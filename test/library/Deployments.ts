@@ -218,17 +218,14 @@ export const deployERC20Vault = async (
 };
 
 export const deployERC20VaultFromVaultManager = async (
-    options?: {
+    options: {
         factory: VaultManager,
         adminSigner: Signer,
         constructorArgs?: VaultManager_createVault
     }
 ) => {
-    if (!options?.factory) {
-        throw new Error("factory is required");
-    }
     // defaults<
-    const constructorArgs: VaultManager_createVault = options?.constructorArgs ?? {
+    const constructorArgs: VaultManager_createVault = options.constructorArgs ?? {
         tokens: [],
         strategyTreasury: ethers.constants.AddressZero,
         admin: ethers.constants.AddressZero,
@@ -246,7 +243,7 @@ export const deployERC20VaultFromVaultManager = async (
         vaultGovernanceAddress,
         erc20VaultAddress,
         nft
-    ] = await options!.factory.connect(options.adminSigner).callStatic.createVault(
+    ] = await options.factory.connect(options.adminSigner).callStatic.createVault(
         constructorArgs.tokens,
         constructorArgs.strategyTreasury,
         constructorArgs.admin,
@@ -334,7 +331,7 @@ export const deployERC20VaultSystem = async (
                 gatewayVaultManager: ethers.constants.AddressZero,
             }
         },
-        adminSigner: options!.protocolGovernanceAdmin
+        adminSigner: options.protocolGovernanceAdmin
     });
 
     let vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
@@ -415,23 +412,20 @@ export const deployERC20VaultSystem = async (
 };
 
 export const deployLpIssuerGovernance = async (
-    options?: {
-        constructorArgs: LpIssuerGovernance_constructorArgs,
+    options: {
+        constructorArgs?: LpIssuerGovernance_constructorArgs,
         adminSigner?: Signer 
     }
 ) => {
     // defaults<
-    const constructorArgs: LpIssuerGovernance_constructorArgs = options?.constructorArgs ?? {
+    const constructorArgs: LpIssuerGovernance_constructorArgs = options.constructorArgs ?? {
         gatewayVault: ethers.constants.AddressZero,
         protocolGovernance: ethers.constants.AddressZero,
     };
-
-    const adminSigner: Signer = options?.adminSigner ?? (await ethers.getSigners())[0];
     // />
-    let contract: Contract;
-    const Contract = await ethers.getContractFactory("LpIssuerGovernance");
+    const Contract: ContractFactory = await ethers.getContractFactory("LpIssuerGovernance");
 
-    contract = await Contract.connect(adminSigner).deploy(constructorArgs);
+    let contract: LpIssuerGovernance = await Contract.deploy(constructorArgs);
     await contract.deployed();
     return contract;
 };

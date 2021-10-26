@@ -11,7 +11,7 @@ import {
     ProtocolGovernance,
     GatewayVaultManager,
 } from "./library/Types";
-import { deployERC20VaultSystem } from "./library/Deployments";
+import { deployERC20Tokens, deployERC20VaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 
 describe("ERC20Vault", function () {
@@ -24,6 +24,7 @@ describe("ERC20Vault", function () {
 
         let tokens: ERC20[];
         let erc20Vault: ERC20Vault;
+        let anotherERC20Vault: ERC20Vault;
         let erc20VaultFactory: ERC20VaultFactory;
         let erc20VaultManager: VaultManager;
         let vaultGovernance: VaultGovernance;
@@ -31,6 +32,7 @@ describe("ERC20Vault", function () {
         let protocolGovernance: ProtocolGovernance;
         let gatewayVaultManager: GatewayVaultManager;
         let nft: number;
+        let anotherNft: number;
         let deployment: Function;
 
         before(async () => {
@@ -66,6 +68,8 @@ describe("ERC20Vault", function () {
                 protocolGovernance,
                 erc20Vault,
                 nft,
+                anotherERC20Vault,
+                anotherNft,
                 gatewayVaultManager,
             } = await deployment());
             // approve all tokens to the vault
@@ -75,6 +79,7 @@ describe("ERC20Vault", function () {
                     BigNumber.from(10**9).mul(BigNumber.from(10**9)).mul(BigNumber.from(10**9))
                 );
             }
+            await erc20VaultManager.connect(deployer).approve(await protocolGovernanceAdmin.getAddress(), nft);
         });
 
         describe("constructor", () => {
@@ -171,7 +176,6 @@ describe("ERC20Vault", function () {
         });
 
         describe("transferAndPush", () => {
-
             it("when not approved nor owner", async () => {
                 await expect(erc20Vault.connect(stranger).transferAndPush(
                     await deployer.getAddress(),
@@ -265,28 +269,64 @@ describe("ERC20Vault", function () {
                     [BigNumber.from(10**9)],
                     false,
                     []
-                );
-                console.log((await erc20Vault.tvl()).map((x: BigNumber) => {
-                    return x.toString();
-                }));
-                // .to.deep.equal([
-                //     BigNumber.from(10**9),
-                //     BigNumber.from(0),
-                // ]);
+                )
+                
+                expect(await erc20Vault.tvl()).to.deep.equal([
+                    BigNumber.from(10**9),
+                    BigNumber.from(0),
+                ]);
             });
         });
 
         describe("collectEarnings", () => {
+            it("when invalid pull destination", async () => {
+                await expect(erc20Vault.collectEarnings(
+                    anotherERC20Vault.address,
+                    []
+                )).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
+            });
 
+            it("when called by stranger", async () => {
+                await expect(erc20Vault.connect(stranger).collectEarnings(
+                    erc20Vault.address,
+                    []
+                )).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            });
+
+            // it("passes", async () => {
+            //     await erc20Vault.connect(protocolGovernanceAdmin).collectEarnings(
+            //         await deployer.getAddress(),
+            //         []
+            //     );
+            // });
         });
 
         describe("reclaimTokens", () => {
+            let anotherToken: ERC20;
+
+            before(async () => {
+                anotherToken = (await deployERC20Tokens({
+                    constructorArgs: [
+                        {
+                            name: "Another Token",
+                            symbol: "AT",
+                        }
+                    ]
+                }))[0];
+                await anotherToken.connect(deployer).transfer(erc20Vault.address, BigNumber.from(10**9));
+            });
+
+            // it("when called by admin", async () => {
+            //     await erc20Vault.connect(protocolGovernanceAdmin).reclaimTokens(
+            //         await stranger.getAddress(),
+            //         [anotherToken.address],
+            //     );
+            // });
 
         });
 
         describe("claimRewards", () => {
             
         });
-
     });
 });
