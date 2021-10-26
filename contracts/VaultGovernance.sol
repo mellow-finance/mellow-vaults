@@ -1,131 +1,158 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./DefaultAccessControl.sol";
-import "./libraries/Common.sol";
+import "./interfaces/IProtocolGovernance.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import "./interfaces/IVaultManager.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IVaultGovernanceOld.sol";
+/// @notice Internal contract for managing different params
+/// @dev The contract should be overriden by the concrete VaultGovernanceOld,
+/// define different params structs and use abi.decode / abi.encode to serialize
+/// to bytes in this contract. It also should emit events on params change.
+abstract contract VaultGovernance {
+    /// @notice Internal references of the contract
+    /// @param protocolGovernance Reference to Protocol Governance
+    /// @param registry Reference to Vault Registry
+    struct InternalParams {
+        IProtocolGovernance protocolGovernance;
+        IERC721 registry;
+    }
 
-contract VaultGovernance is IVaultGovernanceOld, DefaultAccessControl {
-    IVaultManager private _vaultManager;
-    IVaultManager private _pendingVaultManager;
-    uint256 private _pendingVaultManagerTimestamp;
-    address private _strategyTreasury;
-    address private _pendingStrategyTreasury;
-    uint256 private _pendingStrategyTreasuryTimestamp;
-    address[] private _tokens;
-    mapping(address => bool) private _vaultTokensIndex;
+    InternalParams private _internalParams;
+    InternalParams private _stagedInternalParams;
+    uint256 internal _internalParamsTimestamp;
+
+    mapping(uint256 => bytes) internal _delayedStrategyParams;
+    mapping(uint256 => bytes) internal _stagedDelayedStrategyParams;
+    mapping(uint256 => uint256) internal _delayedStrategyParamsTimestamp;
+
+    bytes internal _delayedProtocolParams;
+    bytes internal _stagedDelayedProtocolParams;
+    uint256 internal _delayedProtocolParamsTimestamp;
+
+    mapping(uint256 => bytes) internal _strategyParams;
+    bytes internal _protocolParams;
 
     /// @notice Creates a new contract
-    /// @param tokens A set of tokens that will be managed by the Vault
-    /// @param manager Reference to Gateway Vault Manager
-    /// @param treasury Strategy treasury address that will be used to collect Strategy Performance Fee
-    /// @param admin Admin of the Vault
-    constructor(
-        address[] memory tokens,
-        IVaultManager manager,
-        address treasury,
-        address admin
-    ) DefaultAccessControl(admin) {
-        require(Common.isSortedAndUnique(tokens), "SAU");
-        require(tokens.length > 0, "TL");
-        require(tokens.length <= manager.governanceParams().protocolGovernance.maxTokensPerVault(), "MTL");
-        _vaultManager = manager;
-        _strategyTreasury = treasury;
-        _tokens = tokens;
-        for (uint256 i = 0; i < tokens.length; i++) {
-            _vaultTokensIndex[tokens[i]] = true;
-        }
+    /// @param internalParams_ Initial Internal Params
+    constructor(InternalParams memory internalParams_) {
+        _internalParams = internalParams_;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    function isProtocolAdmin(address sender) public view returns (bool) {
-        return _vaultManager.governanceParams().protocolGovernance.isAdmin(sender);
+    /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed
+    /// @param nft Nft of the vault
+    function delayedStrategyParamsTimestamp(uint256 nft) external view returns (uint256) {
+        return _delayedStrategyParamsTimestamp[nft];
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function vaultTokens() public view returns (address[] memory) {
-        return _tokens;
+    /// @notice Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed
+    function delayedProtocolParamsTimestamp() external view returns (uint256) {
+        return _delayedProtocolParamsTimestamp;
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function isVaultToken(address token) public view returns (bool) {
-        return _vaultTokensIndex[token];
+    /// @notice Timestamp in unix time seconds after which staged Internal Params could be committed
+    function internalParamsTimestamp() external view returns (uint256) {
+        return _internalParamsTimestamp;
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function vaultManager() public view returns (IVaultManager) {
-        return _vaultManager;
+    /// @notice Internal Params of the contract
+    function internalParams() external view returns (InternalParams memory) {
+        return _internalParams;
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function pendingVaultManager() external view returns (IVaultManager) {
-        return _pendingVaultManager;
+    /// @notice Staged new Internal Params
+    /// @dev The Internal Params could be committed after internalParamsTimestamp
+    function stagedInternalParams() external view returns (InternalParams memory) {
+        return _stagedInternalParams;
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function pendingVaultManagerTimestamp() external view returns (uint256) {
-        return _pendingVaultManagerTimestamp;
+    // -------------------  PUBLIC  -------------------
+
+    /// @notice Stage new Internal Params
+    /// @param newParams New Internal Params
+    function stageInternalParams(InternalParams memory newParams) internal {
+        _requireProtocolAdmin();
+        _stagedInternalParams = newParams;
+        _internalParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
+        emit StagedInternalParams(msg.sender, newParams, _internalParamsTimestamp);
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function strategyTreasury() public view returns (address) {
-        return _strategyTreasury;
+    /// @notice Commit staged Internal Params
+    function commitInternalParams() internal {
+        _requireProtocolAdmin();
+        require(_internalParamsTimestamp > 0, "NULL");
+        require(block.timestamp > _internalParamsTimestamp, "TS");
+        _internalParams = _stagedInternalParams;
+        delete _internalParamsTimestamp;
+        emit CommitedInternalParams(msg.sender, _internalParams);
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function pendingStrategyTreasury() external view returns (address) {
-        return _pendingStrategyTreasury;
+    // -------------------  INTERNAL  -------------------
+
+    /// @notice Set Delayed Strategy Params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function _stageDelayedStrategyParams(uint256 nft, bytes calldata params) internal {
+        _requireAtLeastStrategy(nft);
+        _stagedDelayedStrategyParams[nft] = params;
+        _delayedStrategyParamsTimestamp[nft] = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function pendingStrategyTreasuryTimestamp() external view returns (uint256) {
-        return _pendingStrategyTreasuryTimestamp;
+    /// @notice Commit Delayed Strategy Params
+    function _commitDelayedStrategyParams(uint256 nft) internal {
+        _requireAtLeastStrategy(nft);
+        require(_delayedStrategyParamsTimestamp[nft] > 0, "NULL");
+        require(block.timestamp > _delayedStrategyParamsTimestamp[nft], "TS");
+        _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
+        delete _delayedStrategyParamsTimestamp[nft];
     }
 
-    // -------------------  PUBLIC, MUTATING, PROTOCOL ADMIN  -------------------
-
-    /// @inheritdoc IVaultGovernanceOld
-    function setPendingVaultManager(IVaultManager manager) external {
-        require(isProtocolAdmin(msg.sender), "PADM");
-        require(address(manager) != address(0), "ZMG");
-        _pendingVaultManager = manager;
-        _pendingVaultManagerTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
-        emit SetPendingVaultManager(manager);
+    /// @notice Set Delayed Protocol Params
+    /// @param params New params
+    function _stageDelayedProtocolParams(bytes calldata params) internal {
+        _requireProtocolAdmin();
+        _stagedDelayedProtocolParams = params;
+        _delayedProtocolParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function commitVaultManager() external {
-        require(isProtocolAdmin(msg.sender), "PADM");
-        require(_pendingVaultManagerTimestamp > 0, "NULL");
-        require(block.timestamp > _pendingVaultManagerTimestamp, "TV");
-        _vaultManager = _pendingVaultManager;
-        emit CommitVaultManager(_vaultManager);
+    /// @notice Commit Delayed Protocol Params
+    function _commitDelayedProtocolParams() internal {
+        _requireProtocolAdmin();
+        require(_delayedProtocolParamsTimestamp > 0, "NULL");
+        require(block.timestamp > _delayedProtocolParamsTimestamp, "TS");
+        _delayedProtocolParams = _stagedDelayedProtocolParams;
+        delete _delayedProtocolParamsTimestamp;
     }
 
-    // -------------------  PUBLIC, MUTATING, ADMIN  -------------------
-
-    /// @inheritdoc IVaultGovernanceOld
-    function setPendingStrategyTreasury(address treasury) external {
-        require(isAdmin(msg.sender), "AG");
-        require(address(treasury) != address(0), "ZMG");
-        _pendingStrategyTreasury = treasury;
-        _pendingStrategyTreasuryTimestamp = _vaultManager.governanceParams().protocolGovernance.governanceDelay();
-        emit SetPendingStrategyTreasury(treasury);
+    /// @notice Set immediate strategy params
+    /// @dev Should require nft > 0
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function _setStrategyParams(uint256 nft, bytes calldata params) internal {
+        _requireAtLeastStrategy(nft);
+        _strategyParams[nft] = params;
     }
 
-    /// @inheritdoc IVaultGovernanceOld
-    function commitStrategyTreasury() external {
-        require(isAdmin(msg.sender), "AG");
-        require(_pendingStrategyTreasuryTimestamp > 0, "NULL");
-        require(block.timestamp > _pendingStrategyTreasuryTimestamp, "TV");
-        _strategyTreasury = _pendingStrategyTreasury;
-        emit CommitStrategyTreasury(_strategyTreasury);
+    /// @notice Set immediate protocol params
+    /// @param params New params
+    function _setProtocolParams(bytes calldata params) internal {
+        _requireProtocolAdmin();
+        _protocolParams = params;
     }
 
-    // -------------------  PRIVATE, VIEW  -------------------
+    function _requireAtLeastStrategy(uint256 nft) private view {
+        require(
+            (_internalParams.registry.getApproved(nft) == msg.sender) ||
+                _internalParams.protocolGovernance.isAdmin(msg.sender),
+            "RST"
+        );
+    }
+
+    function _requireProtocolAdmin() private view {
+        require(_internalParams.protocolGovernance.isAdmin(msg.sender), "ADM");
+    }
+
+    event StagedInternalParams(address who, InternalParams newParams, uint256 start);
+    event CommitedInternalParams(address who, InternalParams newParams);
 }

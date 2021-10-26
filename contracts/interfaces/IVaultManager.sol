@@ -17,12 +17,12 @@ interface IVaultManager is IERC721, IVaultManagerGovernance {
     /// @return Address of the Vault
     function vaultForNft(uint256 nft) external view returns (address);
 
-    /// @notice Create a new Vault and VaultGovernance
+    /// @notice Create a new Vault and VaultGovernanceOld
     /// @param tokens A set of tokens that will be managed by the Vault
     /// @param strategyTreasury Strategy treasury address that will be used to collect Strategy Performance Fee
     /// @param admin Admin of the Vault
     /// @param options Deployment options (varies between vault managers)
-    /// @return vaultGovernance The address of the depoyed VaultGovernance
+    /// @return vaultGovernance The address of the depoyed VaultGovernanceOld
     /// @return vault The address of the depoyed Vault
     /// @return nft The nft of the depoyed Vault in the VaultManager
     function createVault(

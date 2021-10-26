@@ -5,7 +5,7 @@ import "./libraries/Common.sol";
 
 import "./interfaces/IVaultGovernanceFactory.sol";
 import "./interfaces/IVaultGovernanceOld.sol";
-import "./VaultGovernance.sol";
+import "./VaultGovernanceOld.sol";
 
 contract VaultGovernanceFactory {
     /// @notice Deploy a govrenance new contract
@@ -21,7 +21,7 @@ contract VaultGovernanceFactory {
     ) external returns (IVaultGovernanceOld) {
         require(treasury != address(0), "TZA");
         require(admin != address(0), "AZA");
-        VaultGovernance vaultGovernance = new VaultGovernance(tokens, manager, treasury, admin);
+        VaultGovernanceOld vaultGovernance = new VaultGovernanceOld(tokens, manager, treasury, admin);
         return IVaultGovernanceOld(vaultGovernance);
     }
 }

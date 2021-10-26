@@ -14,7 +14,7 @@ contract UniV3VaultManager is IUniV3VaultManager, VaultManager {
     /// @param name Name of the ERC-721 token
     /// @param symbol Symbol of the ERC-721 token
     /// @param factory Vault Factory reference
-    /// @param governanceFactory VaultGovernance Factory reference
+    /// @param governanceFactory VaultGovernanceOld Factory reference
     /// @param permissionless Anyone can create a new vault
     /// @param governance Refernce to the Governance of the protocol
     /// @param uniV3PositionManager Reference to Uniswap V3 Nonfungible Position Manager
