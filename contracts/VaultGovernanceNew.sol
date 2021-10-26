@@ -5,7 +5,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @notice Internal contract for managing different params
-/// @dev The contract should be overriden by the concrete VaultGovernance,
+/// @dev The contract should be overriden by the concrete VaultGovernanceOld,
 /// define different params structs and use abi.decode / abi.encode to serialize
 /// to bytes in this contract. It also should emit events on params change.
 abstract contract VaultGovernanceNew {

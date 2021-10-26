@@ -6,9 +6,9 @@ import "./interfaces/IVaultFactory.sol";
 import "./interfaces/IGatewayVaultManager.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "./VaultGovernance.sol";
+import "./VaultGovernanceOld.sol";
 
-contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
+contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernanceOld {
     address[] private _redirects;
     uint256[] private _limits;
 
@@ -25,7 +25,7 @@ contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
         address admin,
         address[] memory redirects_,
         uint256[] memory limits_
-    ) VaultGovernance(tokens, manager, treasury, admin) {
+    ) VaultGovernanceOld(tokens, manager, treasury, admin) {
         _redirects = redirects_;
         _limits = limits_;
     }

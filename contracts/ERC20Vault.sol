@@ -5,7 +5,7 @@ import "./Vault.sol";
 
 contract ERC20Vault is Vault {
     /// @notice Creates a new contract
-    /// @param vaultGovernance Reference to VaultGovernance for this vault
+    /// @param vaultGovernance Reference to VaultGovernanceOld for this vault
     constructor(IVaultGovernanceOld vaultGovernance) Vault(vaultGovernance) {}
 
     /// @inheritdoc Vault

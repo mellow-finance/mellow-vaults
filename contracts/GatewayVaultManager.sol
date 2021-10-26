@@ -14,7 +14,7 @@ contract GatewayVaultManager is IGatewayVaultManager, VaultManager {
     /// @param name Name of the ERC-721 token
     /// @param symbol Symbol of the ERC-721 token
     /// @param factory Vault Factory reference
-    /// @param governanceFactory VaultGovernance Factory reference
+    /// @param governanceFactory VaultGovernanceOld Factory reference
     /// @param permissionless Anyone can create a new vault
     /// @param governance Refernce to the Governance of the protocol
     constructor(

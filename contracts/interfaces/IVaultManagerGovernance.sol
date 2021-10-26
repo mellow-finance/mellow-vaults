@@ -10,7 +10,7 @@ interface IVaultManagerGovernance {
     /// @param permissionless Anyone can create a new vault
     /// @param protocolGovernance Governance of the protocol
     /// @param factory Vault Factory reference
-    /// @param governanceFactory VaultGovernance Factory reference
+    /// @param governanceFactory VaultGovernanceOld Factory reference
     struct GovernanceParams {
         bool permissionless;
         IProtocolGovernance protocolGovernance;

@@ -9,7 +9,7 @@ import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IVaultGovernanceOld.sol";
 
-contract VaultGovernance is IVaultGovernanceOld, DefaultAccessControl {
+contract VaultGovernanceOld is IVaultGovernanceOld, DefaultAccessControl {
     IVaultManager private _vaultManager;
     IVaultManager private _pendingVaultManager;
     uint256 private _pendingVaultManagerTimestamp;

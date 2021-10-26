@@ -18,7 +18,7 @@ contract VaultManagerGovernance is IVaultManagerGovernance {
     /// @param permissionless Anyone can create a new vault
     /// @param protocolGovernance Refernce to the Governance of the protocol
     /// @param factory Vault Factory reference
-    /// @param governanceFactory VaultGovernance Factory reference
+    /// @param governanceFactory VaultGovernanceOld Factory reference
     constructor(
         bool permissionless,
         IProtocolGovernance protocolGovernance,
