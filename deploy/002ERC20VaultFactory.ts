@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const {deployer} = await getNamedAccounts();
 
-  await deploy('ERC20VaultFactory', {
+  const deployResult = await deploy('ERC20VaultFactory', {
     from: deployer,
     args: [],
     log: true,
@@ -16,5 +16,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 };
 export default func;
-func.tags = ['SimpleERC20'];
+func.tags = ['ERC20VaultFactory'];
 

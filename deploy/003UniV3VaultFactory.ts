@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const {deployer} = await getNamedAccounts();
 
-  await deploy('UniV3VaultFactory', {
+  const deployResult = await deploy('UniV3VaultFactory', {
     from: deployer,
     args: [],
     log: true,
@@ -16,5 +16,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 };
 export default func;
-func.tags = ['SimpleUniV3'];
+func.tags = ['UniV3VaultFactory'];
 

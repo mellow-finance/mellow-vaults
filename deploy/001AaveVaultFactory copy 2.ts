@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const {deployer} = await getNamedAccounts();
 
-  await deploy('AaveVaultFactory', {
+  const deployResult = await deploy('AaveVaultFactory', {
     from: deployer,
     args: [],
     log: true,
@@ -16,5 +16,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 };
 export default func;
-func.tags = ['SimpleAave'];
+func.tags = ['AaveVaultFactory'];
 
