@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "./Vault.sol";
-import "hardhat/console.sol";
 
 contract ERC20Vault is Vault {
     constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}

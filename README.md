@@ -1,13 +1,37 @@
 ## Mellow contracts
 
+### Branch naming rules
+
+Adding tests
+```
+tests/<ContractName>
+```
+
+Making changes to smart contracts
+```
+feature/<[RelatedContractName]FeatureName>
+```
+
 ### Hardhat unit test
 
 #### Pre-requisites
+
+Install dependencies
+
 ```bash
 yarn 
 ```
 
-#### Run tests
+
+Configure mainnet forking
+
+```bash
+echo """
+MAINNET_RPC=https://eth-mainnet.alchemyapi.io/v2/<your_api_key>
+""" > .env
+```
+
+#### Run all hardhat tests
 
 ```bash
 yarn coverage

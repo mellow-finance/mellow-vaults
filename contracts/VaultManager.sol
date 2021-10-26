@@ -7,8 +7,6 @@ import "./interfaces/IVaultManager.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./VaultManagerGovernance.sol";
 
-import "hardhat/console.sol";
-
 contract VaultManager is IVaultManager, VaultManagerGovernance, ERC721 {
     uint256 private _topVaultNft = 1;
 

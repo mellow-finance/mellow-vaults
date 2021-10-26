@@ -148,6 +148,7 @@ describe("ERC20Vault", function () {
                 )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
             });
 
+            // FIXME: Should NOT pass when amounts do not match actual balance!
             it("passes when no tokens transferred", async () => {
                 const amounts = await erc20Vault.callStatic.push(
                     [tokens[0].address], 
@@ -224,7 +225,7 @@ describe("ERC20Vault", function () {
                 )).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
             });
 
-            it("when ok", async () => {
+            it("passes", async () => {
                 expect(await erc20Vault.callStatic.transferAndPush(
                     await deployer.getAddress(),
                     [tokens[0].address], 
@@ -235,7 +236,10 @@ describe("ERC20Vault", function () {
             });
 
             it("when not enough balance", async () => {
-                await tokens[0].transfer(await user.getAddress(), BigNumber.from(10**3));
+                await tokens[0].transfer(
+                    await user.getAddress(), 
+                    BigNumber.from(10**3)
+                );
                 await tokens[0].connect(user).approve(
                     erc20Vault.address,
                     BigNumber.from(10**3)
