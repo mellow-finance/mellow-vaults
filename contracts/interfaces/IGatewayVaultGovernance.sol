@@ -15,6 +15,18 @@ interface IGatewayVaultGovernance {
         uint256[] limits;
     }
 
+    /// @notice Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
+    /// @param nft Nft of the vault
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
+
+    /// @notice Delayed Strategy Params staged for commit after delay
+    /// @param nft Nft of the vault
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
+
+    /// @notice Strategy Params
+    /// @param nft Nft of the vault
+    function strategyParams(uint256 nft) external view returns (StrategyParams memory);
+
     /// @notice Stage Delayed Strategy Params
     /// @param nft Nft of the vault
     /// @param params New params

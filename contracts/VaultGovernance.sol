@@ -58,6 +58,9 @@ abstract contract VaultGovernance is IVaultGovernance {
         return _stagedInternalParams;
     }
 
+    /// @inheritdoc IVaultGovernance
+    function strategyTreasury(uint256 nft) external view virtual returns (address);
+
     // -------------------  PUBLIC, MUTATING  -------------------
 
     /// @inheritdoc IVaultGovernance
