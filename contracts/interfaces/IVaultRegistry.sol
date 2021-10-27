@@ -51,6 +51,31 @@ interface IVaultRegistry is IERC721 {
     /// @return nftId ID the NFT minted for the given Vault Group
     function registerVault(uint256 vaultKindId, bytes calldata options) external returns (IVault vault, uint256 nftId);
 
+    /// @return `true` if VaultRegistry allows anyone to create a Vault, `false` otherwise
+    function permissionless() external view returns (bool);
+
+    /// @return Number of Vaults registered
+    function vaultsCount() external view returns (uint112);
+
+    /// @return Number of VaultKinds registered
+    function vaultKindsCount() external view returns (uint112);
+
+    /// @return Address of the ProtocolGovernance
+    function protocolGovernance() external view returns (IProtocolGovernance);
+
+    /// @return Address of the staged ProtocolGovernance
+    function stagedProtocolGovernance() external view returns (IProtocolGovernance);
+
+    /// @return Minimal timestamp when staged ProtocolGovernance can be applied
+    function stagedProtocolGovernanceTimestamp() external view returns (uint256);
+
+    /// @notice Stage new ProtocolGovernance
+    /// @param newProtocolGovernance new ProtocolGovernance
+    function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external;
+
+    /// @notice Comit new ProtocolGovernance
+    function commitStagedProtocolGovernance() external;
+
     /// @param nftId NFT ID
     /// @param vault Address of the Vault contract
     /// @param sender Address of the sender
@@ -60,4 +85,17 @@ interface IVaultRegistry is IERC721 {
     /// @param vaultKind New VaultKind structure
     /// @param sender Address of the sender
     event VaultKindRegistered(uint256 vaultKindId, VaultKind vaultKind, address sender);
+
+    /// @param sender Address of the sender who staged new ProtocolGovernance
+    /// @param newProtocolGovernance Address of the new ProtocolGovernance
+    /// @param start Timestamp of the start of the new ProtocolGovernance
+    event StagedProtocolGovernance(
+        address sender, 
+        IProtocolGovernance newProtocolGovernance, 
+        uint256 start
+    );
+
+    /// @param sender Address of the sender who commited staged ProtocolGovernance
+    /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
+    event CommitedProtocolGovernance(address sender, IProtocolGovernance newProtocolGovernance);
 }
