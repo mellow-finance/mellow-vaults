@@ -15,10 +15,14 @@ abstract contract Vault is IVault {
 
     IVaultGovernance internal _vaultGovernance;
     address[] internal _vaultTokens;
+    mapping(address => bool) internal _vaultTokensIndex;
 
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
+        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+            _vaultTokensIndex[vaultTokens_[i]] = true;
+        }
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -198,6 +202,10 @@ abstract contract Vault is IVault {
             return false;
         }
         return registry.getApproved(nft) == sender || registry.ownerOf(nft) == sender;
+    }
+
+    function _isVaultToken(address token) internal view returns (bool) {
+        return _vaultTokensIndex[token];
     }
 
     // -------------------  PRIVATE, MUTATING  -------------------

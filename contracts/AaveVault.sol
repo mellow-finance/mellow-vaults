@@ -12,7 +12,7 @@ contract AaveVault is Vault {
 
     /// @notice Creates a new contract
     /// @param vaultGovernance_ Reference to VaultGovernanceOld for this vault
-    /// @param vaultTokens_ ERC-20 tokens under Vault management
+    /// @param vaultTokens_ ERC20 tokens under Vault management
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
         Vault(vaultGovernance_, vaultTokens_)
     {
