@@ -337,7 +337,7 @@ export async function deployAaveVaultManager(options?: {
     return contract;
 }
 
-export async function deployAaveVaultFromVaulManager(options?: {
+export async function deployAaveVaultFromVaultManager(options?: {
     factory: AaveVaultManager,
     adminSigner: Signer,
     constructorArgs?: AaveVaultManager_createVault
@@ -442,7 +442,7 @@ export async function deployAaveVaultSystem(options: {
     let AaveVault: AaveVault;
     let nft: number;
 
-    ({ vaultGovernance, AaveVault, nft } = await deployAaveVaultFromVaulManager({
+    ({ vaultGovernance, AaveVault, nft } = await deployAaveVaultFromVaultManager({
         constructorArgs: {
             tokens: tokensSorted.map(t => t.address),
             strategyTreasury: options!.treasury,
