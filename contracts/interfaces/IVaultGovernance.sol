@@ -1,35 +1,50 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./IVaultRegistry.sol";
+
 interface IVaultGovernance {
-    /// @notice Set delayed strategy params
+    /// @notice Internal references of the contract
+    /// @param protocolGovernance Reference to Protocol Governance
+    /// @param registry Reference to Vault Registry
+    struct InternalParams {
+        IProtocolGovernance protocolGovernance;
+        IVaultRegistry registry;
+    }
+
+    // -------------------  PUBLIC, VIEW  -------------------
+
+    /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed
     /// @param nft Nft of the vault
-    /// @param params New params
-    function stageDelayedStrategyParams(uint256 nft, bytes calldata params) external;
+    function delayedStrategyParamsTimestamp(uint256 nft) external view returns (uint256);
 
-    /// @notice Commit delayed strategy params
-    function commitDelayedStrategyParams(uint256 nft) external;
+    /// @notice Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed
+    function delayedProtocolParamsTimestamp() external view returns (uint256);
 
-    /// @notice Set delayed protocol params
+    /// @notice Timestamp in unix time seconds after which staged Internal Params could be committed
+    function internalParamsTimestamp() external view returns (uint256);
+
+    /// @notice Internal Params of the contract
+    function internalParams() external view returns (InternalParams memory);
+
+    /// @notice Staged new Internal Params
+    /// @dev The Internal Params could be committed after internalParamsTimestamp
+    function stagedInternalParams() external view returns (InternalParams memory);
+
+    /// @notice Reference to Strategy Treasury address
     /// @param nft Nft of the vault
-    /// @param params New params
-    function stageDelayedProtocolParams(uint256 nft, bytes calldata params) external;
+    function strategyTreasury(uint256 nft) external view returns (address);
 
-    /// @notice Commit delayed protocol params
-    /// @param nft Nft of the vault
-    function commitDelayedProtocolParams(uint256 nft) external;
+    // -------------------  PUBLIC, MUTATING  -------------------
 
-    /// @notice Set immediate strategy params
-    /// @param nft Nft of the vault
-    /// @param params New params
-    function setStrategyParams(uint256 nft, bytes calldata params) external;
+    /// @notice Stage new Internal Params
+    /// @param newParams New Internal Params
+    function stageInternalParams(InternalParams memory newParams) external;
 
-    /// @notice Set immediate protocol params
-    /// @param nft Nft of the vault
-    /// @param params New params
-    function setProtocolParams(uint256 nft, bytes calldata params) external;
+    /// @notice Commit staged Internal Params
+    function commitInternalParams() external;
 
-    /// @notice Set immediate protocol params
-    /// @param params New params
-    function setCommonProtocolParams(bytes calldata params) external;
+    event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
+    event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);
 }

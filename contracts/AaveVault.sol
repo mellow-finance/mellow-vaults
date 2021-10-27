@@ -11,9 +11,12 @@ contract AaveVault is Vault {
     uint256[] private _baseBalances;
 
     /// @notice Creates a new contract
-    /// @param vaultGovernance Reference to VaultGovernanceOld for this vault
-    constructor(IVaultGovernanceOld vaultGovernance) Vault(vaultGovernance) {
-        address[] memory tokens = vaultGovernance.vaultTokens();
+    /// @param vaultGovernance_ Reference to VaultGovernanceOld for this vault
+    /// @param vaultTokens_ ERC-20 tokens under Vault management
+    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
+        Vault(vaultGovernance_, vaultTokens_)
+    {
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; i++) {
             _aTokens[i] = _getAToken(tokens[i]);
         }
@@ -21,7 +24,7 @@ contract AaveVault is Vault {
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
@@ -31,7 +34,7 @@ contract AaveVault is Vault {
 
     /// @inheritdoc Vault
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
@@ -45,7 +48,7 @@ contract AaveVault is Vault {
         bool,
         bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
@@ -73,7 +76,7 @@ contract AaveVault is Vault {
         bool,
         bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
             uint256 balance = IERC20(aToken).balanceOf(address(this));
@@ -96,7 +99,7 @@ contract AaveVault is Vault {
         returns (uint256[] memory collectedEarnings)
     {
         collectedEarnings = earnings();
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             _lendingPool().withdraw(tokens[i], collectedEarnings[i], to);
         }

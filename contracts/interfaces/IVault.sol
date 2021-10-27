@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IVaultGovernanceOld.sol";
+import "./IVaultGovernance.sol";
 
 interface IVault {
     /// @notice Address of the Vault Governance for this contract
     /// @return Address of the Vault Governance for this contract
-    function vaultGovernance() external view returns (IVaultGovernanceOld);
+    function vaultGovernance() external view returns (IVaultGovernance);
+
+    /// @notice ERC-20 tokens under Vault management
+    function vaultTokens() external view returns (address[] memory);
 
     /// @notice Total value locked for this contract. Generally it is the underlying token value of this contract in some
     /// other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
