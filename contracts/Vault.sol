@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./DefaultAccessControl.sol";
-import "./VaultGovernanceOld.sol";
+import "./VaultGovernance.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IVaultManager.sol";
@@ -13,16 +13,16 @@ import "./interfaces/IVault.sol";
 abstract contract Vault is IVault {
     using SafeERC20 for IERC20;
 
-    IVaultGovernanceOld internal _vaultGovernance;
+    IVaultGovernance internal _vaultGovernance;
 
-    constructor(IVaultGovernanceOld vaultGovernance_) {
+    constructor(IVaultGovernance vaultGovernance_) {
         _vaultGovernance = vaultGovernance_;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
 
     /// @inheritdoc IVault
-    function vaultGovernance() external view returns (IVaultGovernanceOld) {
+    function vaultGovernance() external view returns (IVaultGovernance) {
         return _vaultGovernance;
     }
 

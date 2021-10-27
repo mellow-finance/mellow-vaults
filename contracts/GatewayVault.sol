@@ -11,11 +11,13 @@ contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     address[] private _vaults;
     mapping(address => uint256) private _vaultsIndex;
+    IGatewayVaultGovernance private _vaultGovernance;
 
     /// @notice Creates a new contract
-    /// @param vaultGovernance Reference to VaultGovernanceOld for this vault
-    constructor(IVaultGovernanceOld vaultGovernance, address[] memory vaults) Vault(vaultGovernance) {
-        _vaults = vaults;
+    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
+    /// @param vaults_ Subvaults of this vault
+    constructor(IVaultGovernanceOld vaultGovernance_, address[] memory vaults_) Vault(vaultGovernance_) {
+        _vaults = vaults_;
         for (uint256 i = 0; i < _vaults.length; i++) {
             _vaultsIndex[_vaults[i]] = i;
         }
