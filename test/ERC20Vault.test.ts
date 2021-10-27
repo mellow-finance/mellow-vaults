@@ -338,14 +338,7 @@ describe("ERC20Vault", function () {
             let anotherToken: ERC20;
 
             before(async () => {
-                anotherToken = (await deployERC20Tokens({
-                    constructorArgs: [
-                        {
-                            name: "Another Token",
-                            symbol: "AT",
-                        }
-                    ]
-                }))[0];
+                anotherToken = (await deployERC20Tokens(0))[0];
                 await anotherToken.connect(deployer).transfer(erc20Vault.address, BigNumber.from(10**9));
             });
 
