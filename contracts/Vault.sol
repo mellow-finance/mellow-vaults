@@ -18,6 +18,7 @@ abstract contract Vault is IVault {
     mapping(address => bool) internal _vaultTokensIndex;
 
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
+        require(Common.isSortedAndUnique(vaultTokens_), "SAU");
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {

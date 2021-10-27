@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./external/aave/ILendingPool.sol";
+import "./external/univ3/INonfungiblePositionManager.sol";
 import "./IVaultGovernance.sol";
 
-interface IAaveVaultGovernance is IVaultGovernance {
+interface IUniV3VaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
     /// @param strategyTreasury Reference to address that will collect strategy fees
     struct DelayedStrategyParams {
         address strategyTreasury;
     }
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay
-    /// @param lendingPool Reference to Aave LendingPool
+    /// @param positionManager Reference to UniV3 INonfungiblePositionManager
     struct DelayedProtocolParams {
-        ILendingPool lendingPool;
+        INonfungiblePositionManager positionManager;
     }
 
     /// @notice Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
