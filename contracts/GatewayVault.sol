@@ -14,11 +14,12 @@ contract GatewayVault is IGatewayVault, Vault {
 
     /// @notice Creates a new contract
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
+    /// @param vaultTokens_ ERC20 tokens under Vault management
     /// @param vaults_ Subvaults of this vault
     constructor(
         IVaultGovernance vaultGovernance_,
-        address[] memory vaults_,
-        address[] memory vaultTokens_
+        address[] memory vaultTokens_,
+        address[] memory vaults_
     ) Vault(vaultGovernance_, vaultTokens_) {
         _vaults = vaults_;
         for (uint256 i = 0; i < _vaults.length; i++) {
