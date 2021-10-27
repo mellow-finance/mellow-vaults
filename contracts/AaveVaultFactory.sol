@@ -5,10 +5,9 @@ import "./interfaces/IVaultFactory.sol";
 import "./VaultManager.sol";
 import "./AaveVault.sol";
 
-contract AaveVaultFactory is IVaultFactory {
-    /// @inheritdoc IVaultFactory
-    function deployVault(IVaultGovernanceOld vaultGovernance, bytes calldata) external override returns (IVault) {
-        AaveVault vault = new AaveVault(vaultGovernance);
+contract AaveVaultFactory {
+    function deployVault(IVaultGovernance vaultGovernance, address[] memory vaultTokens) external returns (IVault) {
+        AaveVault vault = new AaveVault(vaultGovernance, vaultTokens);
         return IVault(vault);
     }
 }
