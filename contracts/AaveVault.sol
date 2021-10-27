@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/external/aave/ILendingPool.sol";
-import "./interfaces/IAaveVaultManager.sol";
+import "./interfaces/IAaveVaultGovernance.sol";
 import "./Vault.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
@@ -16,9 +16,8 @@ contract AaveVault is Vault {
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
         Vault(vaultGovernance_, vaultTokens_)
     {
-        address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; i++) {
-            _aTokens[i] = _getAToken(tokens[i]);
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            _aTokens[i] = _getAToken(_vaultTokens[i]);
         }
     }
 
@@ -117,6 +116,6 @@ contract AaveVault is Vault {
     }
 
     function _lendingPool() internal view returns (ILendingPool) {
-        return IAaveVaultManager(address(_vaultGovernance.vaultManager())).lendingPool();
+        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
 }

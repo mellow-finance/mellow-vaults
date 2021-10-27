@@ -8,13 +8,7 @@ import "./VaultGovernance.sol";
 contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
-    /// @param delayedStrategyParams_ Initial Delayed Strategy Params
-    /// @param strategyParams_ Initial Strategy Params
-    constructor(
-        InternalParams memory internalParams_,
-        DelayedStrategyParams memory delayedStrategyParams_,
-        StrategyParams memory strategyParams_
-    ) VaultGovernance(internalParams_) {}
+    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
 
     /// @inheritdoc IGatewayVaultGovernance
     function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
