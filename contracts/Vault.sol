@@ -29,6 +29,11 @@ abstract contract Vault is IVault {
     }
 
     /// @inheritdoc IVault
+    function vaultTokens() external view returns (address[] memory) {
+        return _vaultTokens;
+    }
+
+    /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory tokenAmounts);
 
     /// @inheritdoc IVault
@@ -82,8 +87,7 @@ abstract contract Vault is IVault {
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft = registry.nftForVault(this);
-        address owner = registry.ownerOf(nft);
+        address owner = registry.ownerOf(_selfNft());
         require(owner == msg.sender || _isValidPullDestination(to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, optimized, options);
@@ -168,26 +172,32 @@ abstract contract Vault is IVault {
 
     function _isValidPullDestination(address to) internal view returns (bool) {
         require(Common.isContract(to), "C");
-        IVaultManager vaultManager = _vaultGovernance.vaultManager();
-        IGatewayVaultManager gw = vaultManager.governanceParams().protocolGovernance.gatewayVaultManager();
-        uint256 fromNft = vaultManager.nftForVault(address(this));
-        uint256 toNft = IVault(to).vaultGovernance().vaultManager().nftForVault(to);
-        uint256 voFromNft = gw.vaultOwnerNft(fromNft);
-        if (voFromNft == 0) {
-            return false;
-        }
-        return voFromNft == gw.vaultOwnerNft(toNft);
+        /// TODO: fix
+        // IVaultManager vaultManager = _vaultGovernance.vaultManager();
+        // IGatewayVaultManager gw = vaultManager.governanceParams().protocolGovernance.gatewayVaultManager();
+        // uint256 fromNft = vaultManager.nftForVault(address(this));
+        // uint256 toNft = IVault(to).vaultGovernance().vaultManager().nftForVault(to);
+        // uint256 voFromNft = gw.vaultOwnerNft(fromNft);
+        // if (voFromNft == 0) {
+        //     return false;
+        // }
+        // return voFromNft == gw.vaultOwnerNft(toNft);
     }
 
     // -------------------  PRIVATE, VIEW  -------------------
 
+    function _selfNft() internal view returns (uint256) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        return registry.nftForVault(this);
+    }
+
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
-        IVaultManager vaultManager = _vaultGovernance.vaultManager();
-        uint256 nft = vaultManager.nftForVault(address(this));
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 nft = registry.nftForVault(this);
         if (nft == 0) {
             return false;
         }
-        return vaultManager.getApproved(nft) == sender || vaultManager.ownerOf(nft) == sender;
+        return registry.getApproved(nft) == sender || registry.ownerOf(nft) == sender;
     }
 
     // -------------------  PRIVATE, MUTATING  -------------------

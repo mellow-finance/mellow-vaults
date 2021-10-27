@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IGatewayVaultGovernance {
+import "./IVaultGovernance.sol";
+
+interface IGatewayVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
     /// @param strategyTreasury Reference to address that will collect strategy fees
     /// @param redirects Redirects[i] is the number of subvault that will receive deposit to i-th subvault. If the array is empty it is ignored.
     struct DelayedStrategyParams {
         address strategyTreasury;
-        uint256[] redirects;
+        address[] redirects;
     }
     /// @notice Params that could be changed by Strategy or Protocol Governance immediately
     /// @param limits Token limits for the vault

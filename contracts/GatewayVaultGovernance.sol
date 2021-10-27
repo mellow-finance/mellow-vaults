@@ -37,7 +37,7 @@ contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
-    function strategyTreasury(uint256 nft) external view override returns (address) {
+    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
         return delayedStrategyParams(nft).strategyTreasury;
     }
 
