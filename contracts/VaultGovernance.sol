@@ -93,7 +93,7 @@ abstract contract VaultGovernance {
     /// @notice Set Delayed Strategy Params
     /// @param nft Nft of the vault
     /// @param params New params
-    function _stageDelayedStrategyParams(uint256 nft, bytes calldata params) internal {
+    function _stageDelayedStrategyParams(uint256 nft, bytes memory params) internal {
         _requireAtLeastStrategy(nft);
         _stagedDelayedStrategyParams[nft] = params;
         _delayedStrategyParamsTimestamp[nft] = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
@@ -110,7 +110,7 @@ abstract contract VaultGovernance {
 
     /// @notice Set Delayed Protocol Params
     /// @param params New params
-    function _stageDelayedProtocolParams(bytes calldata params) internal {
+    function _stageDelayedProtocolParams(bytes memory params) internal {
         _requireProtocolAdmin();
         _stagedDelayedProtocolParams = params;
         _delayedProtocolParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
@@ -129,14 +129,14 @@ abstract contract VaultGovernance {
     /// @dev Should require nft > 0
     /// @param nft Nft of the vault
     /// @param params New params
-    function _setStrategyParams(uint256 nft, bytes calldata params) internal {
+    function _setStrategyParams(uint256 nft, bytes memory params) internal {
         _requireAtLeastStrategy(nft);
         _strategyParams[nft] = params;
     }
 
     /// @notice Set immediate protocol params
     /// @param params New params
-    function _setProtocolParams(bytes calldata params) internal {
+    function _setProtocolParams(bytes memory params) internal {
         _requireProtocolAdmin();
         _protocolParams = params;
     }

@@ -2,56 +2,40 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/IVaultFactory.sol";
-import "./interfaces/IGatewayVaultManager.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
-import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "./VaultGovernanceOld.sol";
+import "./VaultGovernance.sol";
 
-contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernanceOld {
-    address[] private _redirects;
-    uint256[] private _limits;
-
+contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract
-    /// @param tokens A set of tokens that will be managed by the Vault
-    /// @param manager Reference to Gateway Vault Manager
-    /// @param treasury Strategy treasury address that will be used to collect Strategy Performance Fee
-    /// @param admin Admin of the Vault
-    /// @param redirects_ Subvaults of the vault
+    /// @param internalParams_ Initial Internal Params
+    /// @param delayedStrategyParams_ Initial Delayed Strategy Params
+    /// @param strategyParams_ Initial Strategy Params
     constructor(
-        address[] memory tokens,
-        IVaultManager manager,
-        address treasury,
-        address admin,
-        address[] memory redirects_,
-        uint256[] memory limits_
-    ) VaultGovernanceOld(tokens, manager, treasury, admin) {
-        _redirects = redirects_;
-        _limits = limits_;
+        InternalParams memory internalParams_,
+        DelayedStrategyParams memory delayedStrategyParams_,
+        StrategyParams memory strategyParams_
+    ) VaultGovernance(internalParams_) {}
+
+    /// @inheritdoc IGatewayVaultGovernance
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
-    function limits() external view returns (uint256[] memory) {
-        return _limits;
+    /// @inheritdoc IGatewayVaultGovernance
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+        emit CommitDelayedStrategyParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
+        );
     }
 
-    function redirects() external view returns (address[] memory) {
-        return _redirects;
+    /// @inheritdoc IGatewayVaultGovernance
+    function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
+        _setStrategyParams(nft, abi.encode(params));
+        emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
-
-    function setLimits(uint256[] calldata newLimits) external {
-        require(isAdmin(msg.sender), "ADM");
-        require(newLimits.length == vaultTokens().length, "TL");
-        _limits = newLimits;
-        emit SetLimits(newLimits);
-    }
-
-    function setRedirects(address[] calldata newRedirects) external {
-        require(isAdmin(msg.sender), "ADM");
-        require(newRedirects.length == vaultTokens().length, "TL");
-        _redirects = newRedirects;
-        emit SetRedirects(newRedirects);
-    }
-
-    event SetLimits(uint256[] limits);
-    event SetRedirects(address[] redirects);
 }
