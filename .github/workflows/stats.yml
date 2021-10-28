@@ -22,6 +22,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           ref: main
+          fetch-depth: 0
 
       - name: Collect stats
         id: stats
@@ -33,9 +34,6 @@ jobs:
           echo "STATS<<EOF" >> $GITHUB_ENV
           echo "$STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
 
       - name: Notify chat 1
         uses: appleboy/telegram-action@master
