@@ -39,4 +39,4 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_1 }}
           token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
-            📊 https://github.com/${{ github.repository }} - ${{env.STATS}}
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
