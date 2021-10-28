@@ -1,6 +1,7 @@
 on:
-  schedule:
-    - cron: "*/5 * * * *"
+  "push"
+  # schedule:
+  #   - cron: "*/5 * * * *"
 
 name: Stats
 
@@ -25,6 +26,7 @@ jobs:
       - name: Collect stats
         id: stats
         run: |
+          git reset --hard HEAD~1
           git fetch --all
           export _GIT_SINCE=$(date -d "last monday" +%Y-%m-%d)
           export _GIT_LOG_OPTIONS="--no-merges --all"
