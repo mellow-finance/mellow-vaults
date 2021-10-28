@@ -23,7 +23,10 @@ jobs:
         run: |
           export _GIT_SINCE=$(date -dmonday +%Y-%m-%d)
           export _GIT_LOG_OPTIONS="--no-merges --all"
-          echo "::set-output name=stats::$(git-quick-stats -T)"
+          STATS=$(git-quick-stats -T)
+          echo "STATS<<EOF" >> $GITHUB_ENV
+          echo "$STATS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Notify chat 1
         uses: appleboy/telegram-action@master
@@ -31,4 +34,4 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_1 }}
           token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
-            ⚡️ ${{steps.stats.outputs.stats}}
+            📊 ${{env.STATS}}
