@@ -5,6 +5,12 @@
         "options": {
           "printWidth": 120
         }
+      },
+      {
+        "files": "*.test.ts",
+        "options": {
+          "tabWidth": 4
+        }
       }
     ]
   }
