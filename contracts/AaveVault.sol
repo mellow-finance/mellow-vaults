@@ -16,6 +16,7 @@ contract AaveVault is Vault {
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
         Vault(vaultGovernance_, vaultTokens_)
     {
+        _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _aTokens[i] = _getAToken(_vaultTokens[i]);
         }
