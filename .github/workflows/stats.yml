@@ -17,6 +17,7 @@ jobs:
           cd /tmp
 
       - uses: actions/checkout@v2
+        branch: main
 
       - name: Collect stats
         id: stats
