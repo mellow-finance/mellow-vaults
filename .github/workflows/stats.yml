@@ -9,7 +9,8 @@ jobs:
       - name: Install github stats
         run: |
           cd /tmp
-          apt-get update
+          sudo apt-get update
+          supo apt-get install bsdmainutils
           git clone https://github.com/arzzen/git-quick-stats.git
           cd git-quick-stats
           sudo make install
