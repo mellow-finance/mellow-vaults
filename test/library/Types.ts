@@ -49,7 +49,7 @@ export type ProtocolGovernance_Params = {
     protocolPerformanceFee: BigNumber;
     protocolExitFee: BigNumber;
     protocolTreasury: Address;
-    gatewayVaultManager: IGatewayVaultManager;
+    vaultRegistry: IGatewayVaultManager;
 };
 
 export type ProtocolGovernance_constructorArgs = {

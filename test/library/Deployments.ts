@@ -424,7 +424,7 @@ export async function deployAaveVaultSystem(options: {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: options.treasury,
-                gatewayVaultManager: ethers.constants.AddressZero,
+                vaultRegistry: ethers.constants.AddressZero,
             }
         },
         adminSigner: options.protocolGovernanceAdmin
@@ -499,7 +499,7 @@ export const deployERC20VaultSystem = async (
               protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
               protocolExitFee: BigNumber.from(10 ** 9),
               protocolTreasury: options.treasury,
-              gatewayVaultManager: ethers.constants.AddressZero,
+              vaultRegistry: ethers.constants.AddressZero,
           }
       },
       adminSigner: options.protocolGovernanceAdmin
