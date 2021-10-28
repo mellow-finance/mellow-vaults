@@ -49,7 +49,9 @@ interface IVaultRegistry is IERC721 {
     /// @param vaultKindId ID of the vault kind
     /// @return vault Address of created Vault
     /// @return nftId ID the NFT minted for the given Vault Group
-    function registerVault(uint256 vaultKindId, bytes calldata options) external returns (IVault vault, uint256 nftId);
+    function registerVault(uint256 vaultKindId, bytes calldata options) 
+        external 
+        returns (IVault vault, uint256 nftId);
 
     /// @return `true` if VaultRegistry allows anyone to create a Vault, `false` otherwise
     function permissionless() external view returns (bool);
@@ -79,7 +81,7 @@ interface IVaultRegistry is IERC721 {
     /// @param nftId NFT ID
     /// @param vault Address of the Vault contract
     /// @param sender Address of the sender
-    event VaultRegistered(uint256 nftId, IVault vault, address sender);
+    event VaultRegistered(uint256 indexed nftId, IVault vault, address indexed sender);
 
     /// @param vaultKindId ID of the vault kind
     /// @param vaultKind New VaultKind structure
@@ -90,12 +92,15 @@ interface IVaultRegistry is IERC721 {
     /// @param newProtocolGovernance Address of the new ProtocolGovernance
     /// @param start Timestamp of the start of the new ProtocolGovernance
     event StagedProtocolGovernance(
-        address sender, 
+        address indexed sender, 
         IProtocolGovernance newProtocolGovernance, 
         uint256 start
     );
 
     /// @param sender Address of the sender who commited staged ProtocolGovernance
     /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
-    event CommitedProtocolGovernance(address sender, IProtocolGovernance newProtocolGovernance);
+    event CommitedProtocolGovernance(
+        address indexed sender,
+        IProtocolGovernance newProtocolGovernance
+    );
 }
