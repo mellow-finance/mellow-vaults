@@ -39,6 +39,7 @@ export type AaveVault = Contract;
 export type GatewayVault_constructorArgs = {
     vaultGovernance: IVaultGovernance;
     vaults: Address[];
+    vaultTokens: Address[];
 };
 
 export type ProtocolGovernance_Params = {
