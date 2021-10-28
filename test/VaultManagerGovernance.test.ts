@@ -1,12 +1,6 @@
 import { expect } from "chai";
-import {
-    deployments,
-    ethers
-} from "hardhat";
-import { 
-    Contract,
-    Signer 
-} from "ethers";
+import { deployments, ethers } from "hardhat";
+import { Contract, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
 import {
     deployERC20VaultFactory,
@@ -23,14 +17,8 @@ import {
     VaultGovernanceFactory,
     VaultManagerGovernance_constructorArgs,
 } from "./library/Types";
-import { 
-    sleep, 
-    sleepTo,
-    now,
-    toObject
-} from "./library/Helpers";
+import { sleep, sleepTo, now, toObject } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
-
 
 describe("VaultManagerGovernance", () => {
     let vaultManagerGovernance: VaultManagerGovernance;
@@ -48,13 +36,9 @@ describe("VaultManagerGovernance", () => {
     let gatewayVaultManager: Signer;
 
     before(async () => {
-        [
-            deployer,
-            stranger,
-            protocolTreasury,
-            gatewayVaultManager
-        ] = await ethers.getSigners();
-        timeShift = 10**10;
+        [deployer, stranger, protocolTreasury, gatewayVaultManager] =
+            await ethers.getSigners();
+        timeShift = 10 ** 10;
         timestamp = now() + timeShift;
         sleepTo(timestamp);
         deploymentFixture = deployments.createFixture(async () => {
@@ -69,12 +53,12 @@ describe("VaultManagerGovernance", () => {
                 permissionless: true,
                 protocolGovernance: protocolGovernance.address,
                 governanceFactory: vaultGovernanceFactory.address,
-                factory: ERC20VaultFactory.address
-            }
+                factory: ERC20VaultFactory.address,
+            };
 
             return await deployVaultManagerGovernance({
                 constructorArgs: constructorArgs,
-                adminSigner: deployer
+                adminSigner: deployer,
             });
         });
     });
@@ -93,14 +77,18 @@ describe("VaultManagerGovernance", () => {
 
     describe("setPendingGovernanceParams", () => {
         it("role should be governance or delegate", async () => {
-            await protocolGovernance.setPendingClaimAllowlistAdd([ethers.constants.AddressZero]);
+            await protocolGovernance.setPendingClaimAllowlistAdd([
+                ethers.constants.AddressZero,
+            ]);
             await expect(
-                vaultManagerGovernance.connect(stranger).setPendingGovernanceParams([
-                    false, 
-                    protocolGovernance.address, 
-                    ERC20VaultFactory.address,
-                    vaultGovernanceFactory.address,
-                ])
+                vaultManagerGovernance
+                    .connect(stranger)
+                    .setPendingGovernanceParams([
+                        false,
+                        protocolGovernance.address,
+                        ERC20VaultFactory.address,
+                        vaultGovernanceFactory.address,
+                    ])
             ).to.be.revertedWith(Exceptions.ADMIN);
         });
 
@@ -108,23 +96,25 @@ describe("VaultManagerGovernance", () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([
                     false,
-                    ethers.constants.AddressZero, 
-                    ERC20VaultFactory.address, 
-                    vaultGovernanceFactory.address
+                    ethers.constants.AddressZero,
+                    ERC20VaultFactory.address,
+                    vaultGovernanceFactory.address,
                 ])
-            ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
+            ).to.be.revertedWith(
+                Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO
+            );
         });
 
         it("factory address should not be zero", async () => {
             await expect(
                 vaultManagerGovernance.setPendingGovernanceParams([
-                    false, 
-                    protocolGovernance.address, 
-                    ethers.constants.AddressZero, 
+                    false,
+                    protocolGovernance.address,
+                    ethers.constants.AddressZero,
                     vaultGovernanceFactory.address,
                 ])
             ).to.be.revertedWith(Exceptions.VAULT_FACTORY_ADDRESS_ZERO);
-        })
+        });
 
         it("sets correct pending timestamp", async () => {
             let customProtocol = await deployProtocolGovernance({
@@ -132,17 +122,18 @@ describe("VaultManagerGovernance", () => {
                     admin: await deployer.getAddress(),
                 },
                 initializerArgs: {
-                    params:  {
+                    params: {
                         maxTokensPerVault: BigNumber.from(2),
                         governanceDelay: BigNumber.from(0),
                         strategyPerformanceFee: BigNumber.from(10 ** 9),
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
                         protocolExitFee: BigNumber.from(10 ** 9),
                         protocolTreasury: await protocolTreasury.getAddress(),
-                        gatewayVaultManager: await gatewayVaultManager.getAddress()
-                    }
+                        gatewayVaultManager:
+                            await gatewayVaultManager.getAddress(),
+                    },
                 },
-                adminSigner: deployer
+                adminSigner: deployer,
             });
             await customProtocol.setPendingParams({
                 maxTokensPerVault: 2,
@@ -151,34 +142,39 @@ describe("VaultManagerGovernance", () => {
                 protocolPerformanceFee: 1,
                 protocolExitFee: 1,
                 protocolTreasury: ethers.constants.AddressZero,
-                gatewayVaultManager: ethers.constants.AddressZero
+                gatewayVaultManager: ethers.constants.AddressZero,
             });
             await customProtocol.commitParams();
 
-            timestamp += 10**6
+            timestamp += 10 ** 6;
             sleepTo(timestamp);
 
             await vaultManagerGovernance.setPendingGovernanceParams([
-                false, customProtocol.address, ERC20VaultFactory.address, vaultGovernanceFactory.address,
+                false,
+                customProtocol.address,
+                ERC20VaultFactory.address,
+                vaultGovernanceFactory.address,
             ]);
             expect(
-                Math.abs(await vaultManagerGovernance.pendingGovernanceParamsTimestamp() - timestamp)
+                Math.abs(
+                    (await vaultManagerGovernance.pendingGovernanceParamsTimestamp()) -
+                        timestamp
+                )
             ).to.be.lessThanOrEqual(10);
         });
 
         it("emits event SetPendingGovernanceParams", async () => {
             await expect(
-                vaultManagerGovernance.setPendingGovernanceParams([                    
-                    false, 
-                    newProtocolGovernance.address, 
+                vaultManagerGovernance.setPendingGovernanceParams([
+                    false,
+                    newProtocolGovernance.address,
                     ERC20VaultFactory.address,
                     vaultGovernanceFactory.address,
                 ])
-            ).to.emit(vaultManagerGovernance, "SetPendingGovernanceParams").withArgs([
-                false,
-                newProtocolGovernance.address
-            ]);
-        })
+            )
+                .to.emit(vaultManagerGovernance, "SetPendingGovernanceParams")
+                .withArgs([false, newProtocolGovernance.address]);
+        });
 
         it("sets pending params", async () => {
             await vaultManagerGovernance.setPendingGovernanceParams([
@@ -198,21 +194,23 @@ describe("VaultManagerGovernance", () => {
         });
     });
 
-     describe("commitGovernanceParams", () => {
+    describe("commitGovernanceParams", () => {
         let customProtocol: Contract;
 
         beforeEach(async () => {
             customProtocol = await deployProtocolGovernance({
-                adminSigner: deployer
+                adminSigner: deployer,
             });
         });
-    
+
         it("role should be admin", async () => {
             await expect(
-                vaultManagerGovernance.connect(stranger).commitGovernanceParams()
+                vaultManagerGovernance
+                    .connect(stranger)
+                    .commitGovernanceParams()
             ).to.be.revertedWith(Exceptions.ADMIN);
         });
-        
+
         it("waits governance delay", async () => {
             const timeout: number = 10000;
             await customProtocol.setPendingParams({
@@ -222,18 +220,19 @@ describe("VaultManagerGovernance", () => {
                 protocolPerformanceFee: 1,
                 protocolExitFee: 1,
                 protocolTreasury: ethers.constants.AddressZero,
-                gatewayVaultManager: ethers.constants.AddressZero
+                gatewayVaultManager: ethers.constants.AddressZero,
             });
 
             await customProtocol.commitParams();
 
             let newERC20VaultFactory = await deployERC20VaultFactory();
-            let newVaultGovernanceFactory = await deployVaultGovernanceFactory();
+            let newVaultGovernanceFactory =
+                await deployVaultGovernanceFactory();
 
             newProtocolGovernance = await deployProtocolGovernance({
                 adminSigner: deployer,
                 constructorArgs: {
-                    admin: await deployer.getAddress()
+                    admin: await deployer.getAddress(),
                 },
                 initializerArgs: {
                     params: {
@@ -243,23 +242,24 @@ describe("VaultManagerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
                         protocolExitFee: BigNumber.from(10 ** 9),
                         protocolTreasury: await protocolTreasury.getAddress(),
-                        gatewayVaultManager: await gatewayVaultManager.getAddress()
-                    }
-                }
+                        gatewayVaultManager:
+                            await gatewayVaultManager.getAddress(),
+                    },
+                },
             });
 
             await vaultManagerGovernance.setPendingGovernanceParams({
-                permissionless: false, 
-                protocolGovernance: newProtocolGovernance.address, 
+                permissionless: false,
+                protocolGovernance: newProtocolGovernance.address,
                 factory: newERC20VaultFactory.address,
                 governanceFactory: newVaultGovernanceFactory.address,
             });
 
-            await vaultManagerGovernance.commitGovernanceParams()
+            await vaultManagerGovernance.commitGovernanceParams();
 
             await vaultManagerGovernance.setPendingGovernanceParams({
-                permissionless: false, 
-                protocolGovernance: customProtocol.address, 
+                permissionless: false,
+                protocolGovernance: customProtocol.address,
                 factory: newERC20VaultFactory.address,
                 governanceFactory: newVaultGovernanceFactory.address,
             });
@@ -269,34 +269,35 @@ describe("VaultManagerGovernance", () => {
 
             timestamp += timeout;
             await sleep(timeout);
-            await expect(vaultManagerGovernance.commitGovernanceParams()).to.not.be.reverted;
+            await expect(vaultManagerGovernance.commitGovernanceParams()).to.not
+                .be.reverted;
         });
-        
+
         it("emits CommitGovernanceParams", async () => {
             const timeout: number = 10000;
             await vaultManagerGovernance.setPendingGovernanceParams({
-                permissionless: false, 
-                protocolGovernance: protocolGovernance.address, 
+                permissionless: false,
+                protocolGovernance: protocolGovernance.address,
                 factory: ERC20VaultFactory.address,
                 governanceFactory: vaultGovernanceFactory.address,
             });
 
             await sleep(timeout);
 
-             await expect(
-                vaultManagerGovernance.commitGovernanceParams()
-            ).to.emit(vaultManagerGovernance, "CommitGovernanceParams").withArgs([
-                false,
-                protocolGovernance.address,
-                ERC20VaultFactory.address
-            ]);
+            await expect(vaultManagerGovernance.commitGovernanceParams())
+                .to.emit(vaultManagerGovernance, "CommitGovernanceParams")
+                .withArgs([
+                    false,
+                    protocolGovernance.address,
+                    ERC20VaultFactory.address,
+                ]);
         });
 
         it("commits new governance params", async () => {
             newProtocolGovernance = await deployProtocolGovernance({
                 adminSigner: deployer,
                 constructorArgs: {
-                    admin: await deployer.getAddress()
+                    admin: await deployer.getAddress(),
                 },
                 initializerArgs: {
                     params: {
@@ -306,14 +307,15 @@ describe("VaultManagerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
                         protocolExitFee: BigNumber.from(10 ** 9),
                         protocolTreasury: await protocolTreasury.getAddress(),
-                        gatewayVaultManager: await gatewayVaultManager.getAddress()
-                    }
-                }
+                        gatewayVaultManager:
+                            await gatewayVaultManager.getAddress(),
+                    },
+                },
             });
 
             await vaultManagerGovernance.setPendingGovernanceParams({
-                permissionless: false, 
-                protocolGovernance: newProtocolGovernance.address, 
+                permissionless: false,
+                protocolGovernance: newProtocolGovernance.address,
                 factory: ERC20VaultFactory.address,
                 governanceFactory: vaultGovernanceFactory.address,
             });
@@ -322,11 +324,11 @@ describe("VaultManagerGovernance", () => {
             expect(
                 await vaultManagerGovernance.governanceParams()
             ).to.deep.equal([
-                false, 
-                newProtocolGovernance.address, 
-                ERC20VaultFactory.address, 
-                vaultGovernanceFactory.address
+                false,
+                newProtocolGovernance.address,
+                ERC20VaultFactory.address,
+                vaultGovernanceFactory.address,
             ]);
         });
-    });    
+    });
 });
