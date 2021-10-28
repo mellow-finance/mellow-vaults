@@ -8,6 +8,9 @@ interface IVault {
     /// @return Address of the Vault Governance for this contract
     function vaultGovernance() external view returns (IVaultGovernance);
 
+    /// @notice ERC-20 tokens under Vault management
+    function vaultTokens() external view returns (address[] memory);
+
     /// @notice Total value locked for this contract. Generally it is the underlying token value of this contract in some
     /// other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
     /// @return tokenAmounts Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)

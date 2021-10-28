@@ -5,12 +5,15 @@ import "./Vault.sol";
 
 contract ERC20Vault is Vault {
     /// @notice Creates a new contract
-    /// @param vaultGovernance Reference to VaultGovernance for this vault
-    constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {}
+    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
+    /// @param vaultTokens_ ERC20 tokens under Vault management
+    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
+        Vault(vaultGovernance_, vaultTokens_)
+    {}
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
@@ -19,7 +22,7 @@ contract ERC20Vault is Vault {
 
     /// @inheritdoc Vault
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](_vaultGovernance.vaultTokens().length);
+        tokenAmounts = new uint256[](_vaultTokens.length);
     }
 
     function _push(
@@ -38,7 +41,7 @@ contract ERC20Vault is Vault {
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            IERC20(_vaultGovernance.vaultTokens()[i]).transfer(to, tokenAmounts[i]);
+            IERC20(_vaultTokens[i]).transfer(to, tokenAmounts[i]);
         }
         actualTokenAmounts = tokenAmounts;
     }
@@ -50,12 +53,12 @@ contract ERC20Vault is Vault {
         returns (uint256[] memory collectedEarnings)
     {
         // no-op, no earnings here
-        collectedEarnings = new uint256[](_vaultGovernance.vaultTokens().length);
+        collectedEarnings = new uint256[](_vaultTokens.length);
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!_vaultGovernance.isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!_isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
         }
     }
 }

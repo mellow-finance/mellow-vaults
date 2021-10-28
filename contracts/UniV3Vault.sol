@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "./interfaces/external/univ3/IUniswapV3PoolState.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
-import "./interfaces/IUniV3VaultManager.sol";
+import "./interfaces/IUniV3VaultGovernance.sol";
 import "./libraries/external/TickMath.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./Vault.sol";
@@ -29,12 +29,18 @@ contract UniV3Vault is Vault {
     IUniswapV3PoolState public pool;
 
     /// @notice Creates a new contract
-    /// @param vaultGovernance Reference to vault governance
+    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
+    /// @param vaultTokens_ ERC20 tokens under Vault management
     /// @param fee Fee of the underlying UniV3 pool
-    constructor(IVaultGovernance vaultGovernance, uint24 fee) Vault(vaultGovernance) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
-        require(tokens.length == 2, "TL");
-        pool = IUniswapV3PoolState(IUniswapV3Factory(_positionManager().factory()).getPool(tokens[0], tokens[1], fee));
+    constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint24 fee
+    ) Vault(vaultGovernance_, vaultTokens_) {
+        require(_vaultTokens.length == 2, "TL");
+        pool = IUniswapV3PoolState(
+            IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
+        );
     }
 
     /// @inheritdoc Vault
@@ -67,7 +73,7 @@ contract UniV3Vault is Vault {
     }
 
     function nftTvl(uint256 nft) public view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](_vaultGovernance.vaultTokens().length);
+        tokenAmounts = new uint256[](_vaultTokens.length);
         (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
@@ -95,7 +101,7 @@ contract UniV3Vault is Vault {
         bool,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
         }
@@ -141,7 +147,7 @@ contract UniV3Vault is Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
         uint256[][] memory tvls = nftTvls();
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         uint256[] memory totalTVL = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             for (uint256 j = 0; j < tokens.length; j++) {
@@ -203,7 +209,7 @@ contract UniV3Vault is Vault {
         override
         returns (uint256[] memory collectedEarnings)
     {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         collectedEarnings = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
             uint256 nft = _nfts.at(i);
@@ -222,13 +228,13 @@ contract UniV3Vault is Vault {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!_vaultGovernance.isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!_isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
         }
     }
 
     /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
-        return IUniV3VaultManager(address(_vaultGovernance.vaultManager())).positionManager();
+        return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
     }
 
     function _getWithdrawLiquidity(

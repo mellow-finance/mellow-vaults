@@ -72,8 +72,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
-    function gatewayVaultManager() external view override returns (IGatewayVaultManager) {
-        return params.gatewayVaultManager;
+    function vaultRegistry() external view override returns (IVaultRegistry) {
+        return params.vaultRegistry;
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------

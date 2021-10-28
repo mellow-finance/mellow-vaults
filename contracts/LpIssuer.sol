@@ -14,6 +14,7 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
 
     GovernanceParams private _governanceParams;
     uint256 private _limitPerAddress;
+    address[] private _tokens;
 
     /// @notice Creates a new contract
     /// @param name_ Name of the ERC-721 token
@@ -27,7 +28,8 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         IVault gatewayVault,
         IProtocolGovernance protocolGovernance,
         uint256 limitPerAddress,
-        address admin
+        address admin,
+        address[] memory tokens
     )
         ERC20(name_, symbol_)
         DefaultAccessControl(admin)
@@ -35,6 +37,7 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
     {
         _governanceParams = GovernanceParams({gatewayVault: gatewayVault, protocolGovernance: protocolGovernance});
         _limitPerAddress = limitPerAddress;
+        _tokens = tokens;
     }
 
     /// @notice Set new LP token limit per address
@@ -54,27 +57,26 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         bool optimized,
         bytes memory options
     ) external {
-        address[] memory tokens = governanceParams().gatewayVault.vaultGovernance().vaultTokens();
-        for (uint256 i = 0; i < tokens.length; i++) {
-            IERC20(tokens[i]).safeTransferFrom(msg.sender, address(governanceParams().gatewayVault), tokenAmounts[i]);
+        for (uint256 i = 0; i < _tokens.length; i++) {
+            IERC20(_tokens[i]).safeTransferFrom(msg.sender, address(governanceParams().gatewayVault), tokenAmounts[i]);
         }
         uint256[] memory tvl = governanceParams().gatewayVault.tvl();
         uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.push(
-            tokens,
+            _tokens,
             tokenAmounts,
             optimized,
             options
         );
         uint256 amountToMint;
         if (totalSupply() == 0) {
-            for (uint256 i = 0; i < tokens.length; i++) {
+            for (uint256 i = 0; i < _tokens.length; i++) {
                 // TODO: check if there could be smth better
                 if (actualTokenAmounts[i] > amountToMint) {
                     amountToMint = actualTokenAmounts[i]; // some number correlated to invested assets volume
                 }
             }
         }
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < _tokens.length; i++) {
             if (tvl[i] > 0) {
                 uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
@@ -84,7 +86,7 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
                 }
             }
             if (tokenAmounts[i] > actualTokenAmounts[i]) {
-                IERC20(tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+                IERC20(_tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
             }
         }
         require(amountToMint + balanceOf(msg.sender) <= _limitPerAddress, "LPA");
@@ -92,7 +94,7 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
             _mint(msg.sender, amountToMint);
         }
 
-        emit Deposit(msg.sender, tokens, actualTokenAmounts, amountToMint);
+        emit Deposit(msg.sender, _tokens, actualTokenAmounts, amountToMint);
     }
 
     /// @notice Withdraw tokens from LpIssuer
@@ -108,34 +110,33 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         bytes memory options
     ) external {
         require(totalSupply() > 0, "TS");
-        address[] memory tokens = governanceParams().gatewayVault.vaultGovernance().vaultTokens();
-        uint256[] memory tokenAmounts = new uint256[](tokens.length);
+        uint256[] memory tokenAmounts = new uint256[](_tokens.length);
         uint256[] memory tvl = governanceParams().gatewayVault.tvl();
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < _tokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
         uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.pull(
             address(this),
-            tokens,
+            _tokens,
             tokenAmounts,
             optimized,
             options
         );
         uint256 protocolExitFee = governanceParams().protocolGovernance.protocolExitFee();
         address protocolTreasury = governanceParams().protocolGovernance.protocolTreasury();
-        uint256[] memory exitFees = new uint256[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
+        uint256[] memory exitFees = new uint256[](_tokens.length);
+        for (uint256 i = 0; i < _tokens.length; i++) {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
             exitFees[i] = (actualTokenAmounts[i] * protocolExitFee) / Common.DENOMINATOR;
             actualTokenAmounts[i] -= exitFees[i];
-            IERC20(tokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
-            IERC20(tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
+            IERC20(_tokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
+            IERC20(_tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
-        emit Withdraw(msg.sender, tokens, actualTokenAmounts, lpTokenAmount);
-        emit ExitFeeCollected(msg.sender, protocolTreasury, tokens, exitFees);
+        emit Withdraw(msg.sender, _tokens, actualTokenAmounts, lpTokenAmount);
+        emit ExitFeeCollected(msg.sender, protocolTreasury, _tokens, exitFees);
     }
 
     event Deposit(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);

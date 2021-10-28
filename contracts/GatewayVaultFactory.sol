@@ -2,13 +2,17 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IVaultFactory.sol";
-import "./GatewayVaultManager.sol";
 import "./GatewayVault.sol";
 
-contract GatewayVaultFactory is IVaultFactory {
-    function deployVault(IVaultGovernance vaultGovernance, bytes memory options) external override returns (IVault) {
-        address[] memory vaults = abi.decode(options, (address[]));
-        GatewayVault gatewayVault = new GatewayVault(vaultGovernance, vaults);
+contract GatewayVaultFactory {
+    function deployVault(
+        IVaultGovernance vaultGovernance,
+        bytes calldata options
+    ) external returns (IVault) {
+        address[] memory tokens;
+        address[] memory vaults;
+        (tokens, vaults) = abi.decode(options, (address[], address[]));
+        GatewayVault gatewayVault = new GatewayVault(vaultGovernance, tokens, vaults);
         return IVault(gatewayVault);
     }
 }
