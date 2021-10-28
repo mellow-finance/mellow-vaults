@@ -202,24 +202,23 @@ export const deployVaultGovernance = async (options?: {
   return contract;
 };
 
-// TODO
-// export const deployGatewayVault = async (
-//     options: {
-//         constructorArgs: GatewayVault_constructorArgs,
-//     }
-// ) => {
-//     const Contract: ContractFactory = await ethers.getContractFactory("GatewayVaultManager");
-//     const contract: GatewayVaultManager = await Contract.deploy(
-//         options.constructorArgs.name,
-//         options.constructorArgs.symbol,
-//         options.constructorArgs.factory,
-//         options.constructorArgs.governanceFactory,
-//         options.constructorArgs.permissionless,
-//         options.constructorArgs.governance
-//     );
-//     await contract.deployed();
-//     return contract;
-// };
+export const deployGatewayVault = async (
+    options: {
+        constructorArgs: GatewayVault_constructorArgs,
+    }
+) => {
+    const Contract: ContractFactory = await ethers.getContractFactory("GatewayVaultManager");
+    const contract: GatewayVaultManager = await Contract.deploy(
+        options.constructorArgs.name,
+        options.constructorArgs.symbol,
+        options.constructorArgs.factory,
+        options.constructorArgs.governanceFactory,
+        options.constructorArgs.permissionless,
+        options.constructorArgs.governance
+    );
+    await contract.deployed();
+    return contract;
+};
 
 export const deployGatewayVaultManager = async (
     options: {
