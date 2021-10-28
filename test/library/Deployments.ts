@@ -33,6 +33,7 @@ import {
     VaultManagerGovernance_constructorArgs,
     LpIssuerGovernance_constructorArgs,
     GatewayVaultManager_constructorArgs,
+    GatewayVault_constructorArgs,
 
     ProtocolGovernance_Params,
     VaultManagerGovernance,
@@ -193,6 +194,24 @@ export const deployVaultGovernance = async (
         );
         await contract.deployed();
     }
+    return contract;
+};
+
+export const deployGatewayVault = async (
+    options: {
+        constructorArgs: GatewayVault_constructorArgs,
+    }
+) => {
+    const Contract: ContractFactory = await ethers.getContractFactory("GatewayVaultManager");
+    const contract: GatewayVaultManager = await Contract.deploy(
+        options.constructorArgs.name,
+        options.constructorArgs.symbol,
+        options.constructorArgs.factory,
+        options.constructorArgs.governanceFactory,
+        options.constructorArgs.permissionless,
+        options.constructorArgs.governance
+    );
+    await contract.deployed();
     return contract;
 };
 
@@ -593,3 +612,22 @@ export const deployLpIssuerGovernance = async (
     await contract.deployed();
     return contract;
 };
+
+// export const deployLpIssuer = async (
+//     options: {
+//         constructorArgs?: LpIssuerGovernance_constructorArgs,
+//         adminSigner?: Signer 
+//     }
+// ) => {
+//     // defaults<
+//     const constructorArgs: LpIssuerGovernance_constructorArgs = options.constructorArgs ?? {
+//         gatewayVault: ethers.constants.AddressZero,
+//         protocolGovernance: ethers.constants.AddressZero,
+//     };
+//     // />
+//     const Contract: ContractFactory = await ethers.getContractFactory("LpIssuerGovernance");
+
+//     let contract: LpIssuerGovernance = await Contract.deploy(constructorArgs);
+//     await contract.deployed();
+//     return contract;
+// };

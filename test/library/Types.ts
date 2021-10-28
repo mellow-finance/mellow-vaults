@@ -27,10 +27,17 @@ export type VaultGovernanceFactory = Contract;
 export type VaultGovernance = Contract;
 export type GatewayVaultManager = Contract;
 export type LpIssuerGovernance = Contract;
+export type GatewayVault = Contract;
 
 export type AaveVaultFactory = Contract;
 export type AaveVaultManager = Contract;
 export type AaveVault = Contract;
+
+
+export type GatewayVault_constructorArgs = {
+    vaultGovernance: IVaultGovernance;
+    vaults: Address[];
+};
 
 export type ProtocolGovernance_Params = {
     maxTokensPerVault: BigNumber;
@@ -40,7 +47,7 @@ export type ProtocolGovernance_Params = {
     protocolExitFee: BigNumber;
     protocolTreasury: Address;
     gatewayVaultManager: IGatewayVaultManager;
-}
+};
 
 export type ProtocolGovernance_constructorArgs = {
     admin: Address;
