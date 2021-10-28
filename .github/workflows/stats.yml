@@ -26,7 +26,6 @@ jobs:
       - name: Collect stats
         id: stats
         run: |
-          git reset --hard HEAD~1
           git fetch --all
           export _GIT_SINCE=$(date -d "last monday" +%Y-%m-%d)
           export _GIT_LOG_OPTIONS="--no-merges --all"
@@ -34,6 +33,9 @@ jobs:
           echo "STATS<<EOF" >> $GITHUB_ENV
           echo "$STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       - name: Notify chat 1
         uses: appleboy/telegram-action@master
