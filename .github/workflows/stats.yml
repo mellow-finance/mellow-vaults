@@ -29,9 +29,6 @@ jobs:
           echo "$STATS" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
       - name: Notify chat 1
         uses: appleboy/telegram-action@master
         with:
