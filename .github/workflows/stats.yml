@@ -16,7 +16,10 @@ jobs:
           sudo make install
           cd /tmp
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       - name: Collect stats
         id: stats
