@@ -2,11 +2,10 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IVaultFactoryV2.sol";
-import "./interfaces/IVaultRegistry.sol";
-import "./interfaces/IVaultGovernanceFactory.sol";
 import "./interfaces/IProtocolGovernance.sol";
+import "./interfaces/IVault.sol";
+import "./interfaces/IVaultFactory.sol";
+import "./interfaces/IVaultRegistry.sol";
 
 /// @notice This contract is used to deploy the Vault contract and mint NFT for it.
 contract VaultRegistry is IVaultRegistry, ERC721 {
@@ -175,7 +174,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         internal 
         returns (IVault vault) {
         IVaultRegistry.VaultKind memory vaultKind = _vaultKinds[vaultKindId];
-        IVaultFactoryV2 vaultFactory = vaultKind.vaultFactory;
+        IVaultFactory vaultFactory = vaultKind.vaultFactory;
         IVaultGovernance vaultGovernance = vaultKind.vaultGovernance;
         vault = vaultFactory.deployVault(vaultGovernance, options);
         _vaultKindIds[vault] = vaultKindId;

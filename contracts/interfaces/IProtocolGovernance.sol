@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./IDefaultAccessControl.sol";
-import "./IGatewayVaultManager.sol";
+import "./IVaultRegistry.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Common protocol params
@@ -20,7 +20,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
         uint256 protocolPerformanceFee;
         uint256 protocolExitFee;
         address protocolTreasury;
-        IGatewayVaultManager gatewayVaultManager;
+        IVaultRegistry vaultRegistry;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -52,8 +52,8 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice The address that collect protocol fees
     function protocolTreasury() external view returns (address);
 
-    /// @notice Gateway VaultManager of the protocol
-    function gatewayVaultManager() external view returns (IGatewayVaultManager);
+    /// @notice VaultRegistry of the protocol
+    function vaultRegistry() external view returns (IVaultRegistry);
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 

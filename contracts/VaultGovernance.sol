@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultGovernance.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @notice Internal contract for managing different params
 /// @dev The contract should be overriden by the concrete VaultGovernanceOld,

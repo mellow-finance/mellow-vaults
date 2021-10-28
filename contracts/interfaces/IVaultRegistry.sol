@@ -2,10 +2,10 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "./IVault.sol";
-import "./IVaultGovernance.sol";
-import "./IVaultFactoryV2.sol";
 import "./IProtocolGovernance.sol";
+import "./IVault.sol";
+import "./IVaultFactory.sol";
+import "./IVaultGovernance.sol";
 
 interface IVaultRegistry is IERC721 {
     /// @notice VaultKind structure
@@ -14,7 +14,7 @@ interface IVaultRegistry is IERC721 {
     /// @param vaultGovernance Address of the vault governance
     /// @param protocolGovernance Address of the protocol governance
     struct VaultKind {
-        IVaultFactoryV2 vaultFactory;
+        IVaultFactory vaultFactory;
         IVaultGovernance vaultGovernance;
     }
 
