@@ -1,0 +1,33 @@
+on: ["push"]
+
+name: Stats
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install github stats
+        run: |
+          cd /tmp
+          apt-get update
+          git clone https://github.com/arzzen/git-quick-stats.git
+          cd git-quick-stats
+          sudo make install
+          cd /tmp
+
+      - uses: actions/checkout@v1
+
+      - name: Collect stats
+        id: stats
+        run: |
+          export _GIT_SINCE=$(date -dmonday +%Y-%m-%d)
+          export _GIT_LOG_OPTIONS="--no-merges --all"
+          echo "::set-output name=stats::$(git-quick-stats -T)"
+
+      - name: Notify chat 1
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_1 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            ⚡️ ${{steps.stats.outputs.stats}}
