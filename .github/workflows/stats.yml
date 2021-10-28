@@ -10,7 +10,7 @@ jobs:
         run: |
           cd /tmp
           sudo apt-get update
-          supo apt-get install bsdmainutils
+          sudo apt-get install bsdmainutils
           git clone https://github.com/arzzen/git-quick-stats.git
           cd git-quick-stats
           sudo make install
