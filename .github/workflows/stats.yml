@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: "*/3 * * * *"
+    - cron: "*/5 * * * *"
 
 name: Stats
 
