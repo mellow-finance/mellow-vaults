@@ -35,6 +35,13 @@ export const sortContractsByAddresses = (contracts: Contract[]) => {
     });
 }
 
+//  encodeToBytes(
+//     [ "uint", "tuple(uint256, string)" ],
+//     [
+//       1234,
+//       [ 5678, "Hello World" ]
+//     ]
+//  );
 export const encodeToBytes = (
     types: string[],
     objectToEncode: readonly any[]
@@ -43,6 +50,7 @@ export const encodeToBytes = (
     return toBytes.encode(types, objectToEncode);
 }
 
+//  abiCoder.decode([ "uint", "string" ], data);
 export const decodeFromBytes = (
     types: string[],
     bytesToDecode: string
