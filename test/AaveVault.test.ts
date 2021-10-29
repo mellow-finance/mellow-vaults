@@ -1,29 +1,22 @@
 import { expect } from "chai";
-import { 
-    ethers,
-    network
-} from "hardhat";
-import { 
-    ContractFactory, 
-    Contract, 
-    Signer
-} from "ethers";
+import { ethers, network } from "hardhat";
+import { ContractFactory, Contract, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
 import { BigNumber } from "@ethersproject/bignumber";
-import { 
+import {
     AaveVaultFactory,
     AaveVault,
     AaveVaultManager,
     ERC20,
 } from "./library/Types";
 import { deployAaveVaultSystem } from "./library/Deployments";
-import { 
+import {
     ProtocolGovernance,
     VaultGovernance,
-    VaultGovernanceFactory
- } from "./library/Types";
+    VaultGovernanceFactory,
+} from "./library/Types";
 
-describe("AaveVaultFactory", function() {
+describe("AaveVaultFactory", function () {
     this.timeout(100 * 1000);
 
     let deployer: Signer;
@@ -42,13 +35,9 @@ describe("AaveVaultFactory", function() {
     let vaultGovernance: VaultGovernance;
     let vaultGovernanceFactory: VaultGovernanceFactory;
 
-    before(async() => {
-        [
-            deployer,
-            stranger,
-            treasury,
-            protocolGovernanceAdmin,
-        ] = await ethers.getSigners();
+    before(async () => {
+        [deployer, stranger, treasury, protocolGovernanceAdmin] =
+            await ethers.getSigners();
         ({
             AaveVault,
             AaveVaultManager,
@@ -57,14 +46,14 @@ describe("AaveVaultFactory", function() {
             vaultGovernanceFactory,
             protocolGovernance,
             tokens,
-            nft
+            nft,
         } = await deployAaveVaultSystem({
             protocolGovernanceAdmin: protocolGovernanceAdmin,
             treasury: await treasury.getAddress(),
-            tokensCount: 10, 
+            tokensCount: 10,
             permissionless: true,
             vaultManagerName: "vault manager",
-            vaultManagerSymbol: "Aavevm ¯\\_(ツ)_/¯"
+            vaultManagerSymbol: "Aavevm ¯\\_(ツ)_/¯",
         }));
     });
 

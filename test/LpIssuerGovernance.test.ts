@@ -1,40 +1,30 @@
 import { expect } from "chai";
-import { 
-    ethers,
-    deployments
-} from "hardhat";
-import {
-    BigNumber,
-    Signer
-} from "ethers";
+import { ethers, deployments } from "hardhat";
+import { BigNumber, Signer } from "ethers";
 import { before } from "mocha";
 import Exceptions from "./library/Exceptions";
+import { now, sleep, sleepTo, toObject } from "./library/Helpers";
 import {
-    now,
-    sleep, 
-    sleepTo,
-    toObject
-} from "./library/Helpers";
-import { 
     deployLpIssuerGovernance,
-    deployProtocolGovernance 
+    deployProtocolGovernance,
 } from "./library/Deployments";
-import { LpIssuerGovernance, 
-    ProtocolGovernance, 
+import {
+    LpIssuerGovernance,
+    ProtocolGovernance,
     ProtocolGovernance_Params,
     LpIssuerGovernance_constructorArgs,
-    ProtocolGovernance_constructorArgs
- } from "./library/Types";
+    ProtocolGovernance_constructorArgs,
+} from "./library/Types";
 
 /**
- * TODO: Define some sort of default params for a series of tests 
+ * TODO: Define some sort of default params for a series of tests
  * and then do smth like `{...defaultParams, maxTokensPerVault: 12}`
  */
 describe("LpIssuerGovernance", () => {
     let contract: LpIssuerGovernance;
     let protocol: ProtocolGovernance;
     let constructorArgs: LpIssuerGovernance_constructorArgs;
-    let temporaryParams: LpIssuerGovernance_constructorArgs; 
+    let temporaryParams: LpIssuerGovernance_constructorArgs;
     let emptyParams: LpIssuerGovernance_constructorArgs;
     let temporaryProtocol: ProtocolGovernance;
     let protocolConstructorArgs: ProtocolGovernance_constructorArgs;
@@ -50,22 +40,28 @@ describe("LpIssuerGovernance", () => {
     let gatewayVaultManager: Signer;
 
     before(async () => {
-        [deployer, stranger, gatewayVault, protocolTreasury, gatewayVaultManager] = await ethers.getSigners();
+        [
+            deployer,
+            stranger,
+            gatewayVault,
+            protocolTreasury,
+            gatewayVaultManager,
+        ] = await ethers.getSigners();
         timeout = 5;
         timeEps = 2;
-        timestamp = now() + 10**2;
+        timestamp = now() + 10 ** 2;
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
-            
+
             emptyParams = {
                 gatewayVault: ethers.constants.AddressZero,
-                protocolGovernance: ethers.constants.AddressZero
+                protocolGovernance: ethers.constants.AddressZero,
             };
 
             protocolConstructorArgs = {
-                admin: await deployer.getAddress()
-            }
+                admin: await deployer.getAddress(),
+            };
 
             params = {
                 maxTokensPerVault: BigNumber.from(2),
@@ -74,20 +70,20 @@ describe("LpIssuerGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(1 * 10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress()
-            }
+                gatewayVaultManager: await protocolTreasury.getAddress(),
+            };
 
             protocol = await deployProtocolGovernance({
                 constructorArgs: protocolConstructorArgs,
-                initializerArgs: {params},
-                adminSigner: deployer
+                initializerArgs: { params },
+                adminSigner: deployer,
             });
 
             constructorArgs = {
                 gatewayVault: await gatewayVault.getAddress(),
-                protocolGovernance: protocol.address
+                protocolGovernance: protocol.address,
             };
-            return await deployLpIssuerGovernance({constructorArgs});
+            return await deployLpIssuerGovernance({ constructorArgs });
         });
     });
 
@@ -103,7 +99,7 @@ describe("LpIssuerGovernance", () => {
                 ).to.deep.equal(constructorArgs);
             });
         });
-        
+
         describe("pendingGovernanceParams", () => {
             it("is empty", async () => {
                 expect(
@@ -111,14 +107,14 @@ describe("LpIssuerGovernance", () => {
                 ).to.deep.equal(emptyParams);
             });
         });
-        
+
         describe("pendingGovernanceParamsTimestamp", () => {
             it("is zero", async () => {
                 expect(
                     await contract.pendingGovernanceParamsTimestamp()
                 ).to.be.equal(BigNumber.from(0));
-            }); 
-        }); 
+            });
+        });
     });
 
     describe("setPendingGovernanceParams", () => {
@@ -144,37 +140,39 @@ describe("LpIssuerGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(1 * 10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress()
-            }
+                gatewayVaultManager: await protocolTreasury.getAddress(),
+            };
             temporaryProtocol = await deployProtocolGovernance({
                 constructorArgs: {
-                    admin: await deployer.getAddress()
+                    admin: await deployer.getAddress(),
                 },
-                initializerArgs: {params},
-                adminSigner: deployer
+                initializerArgs: { params },
+                adminSigner: deployer,
             });
             temporaryParams = {
                 gatewayVault: await gatewayVault.getAddress(),
-                protocolGovernance: temporaryProtocol.address
+                protocolGovernance: temporaryProtocol.address,
             };
-            await expect(
-                contract.setPendingGovernanceParams(temporaryParams)
-            ).to.emit(
-                contract, 
-                "SetPendingGovernanceParams"
-            ).withArgs([
-                temporaryParams.gatewayVault,
-                temporaryParams.protocolGovernance
-            ]);
+            await expect(contract.setPendingGovernanceParams(temporaryParams))
+                .to.emit(contract, "SetPendingGovernanceParams")
+                .withArgs([
+                    temporaryParams.gatewayVault,
+                    temporaryParams.protocolGovernance,
+                ]);
             expect(
-                Math.abs(await contract.pendingGovernanceParamsTimestamp() - (timestamp + timeout))
+                Math.abs(
+                    (await contract.pendingGovernanceParamsTimestamp()) -
+                        (timestamp + timeout)
+                )
             ).to.be.lessThanOrEqual(timeEps);
         });
 
         describe("when called by not admin", () => {
             it("reverts", async () => {
                 await expect(
-                    contract.connect(stranger).setPendingGovernanceParams(temporaryParams)
+                    contract
+                        .connect(stranger)
+                        .setPendingGovernanceParams(temporaryParams)
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
@@ -183,14 +181,16 @@ describe("LpIssuerGovernance", () => {
             it("reverts", async () => {
                 await expect(
                     contract.setPendingGovernanceParams(emptyParams)
-                ).to.be.revertedWith(Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO);
+                ).to.be.revertedWith(
+                    Exceptions.GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO
+                );
             });
         });
     });
 
     describe("commitGovernanceParams", () => {
         it("commits params and emits CommitGovernanceParams event", async () => {
-            timestamp += 10**6;
+            timestamp += 10 ** 6;
             await sleepTo(timestamp);
             params = {
                 maxTokensPerVault: BigNumber.from(5),
@@ -199,35 +199,32 @@ describe("LpIssuerGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(1 * 10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress()
-            }
+                gatewayVaultManager: await protocolTreasury.getAddress(),
+            };
             temporaryProtocol = await deployProtocolGovernance({
                 constructorArgs: {
                     admin: await deployer.getAddress(),
                 },
-                initializerArgs: {params},
-                adminSigner: deployer
+                initializerArgs: { params },
+                adminSigner: deployer,
             });
             temporaryParams = {
                 gatewayVault: await gatewayVault.getAddress(),
-                protocolGovernance: temporaryProtocol.address
+                protocolGovernance: temporaryProtocol.address,
             };
             await contract.setPendingGovernanceParams(temporaryParams);
             await sleep(timeout);
 
-            await expect(
-                contract.commitGovernanceParams()
-            ).to.emit(
-                contract, 
-                "CommitGovernanceParams"
-            ).withArgs([
-                temporaryParams.gatewayVault,
-                temporaryParams.protocolGovernance
-            ]);
+            await expect(contract.commitGovernanceParams())
+                .to.emit(contract, "CommitGovernanceParams")
+                .withArgs([
+                    temporaryParams.gatewayVault,
+                    temporaryParams.protocolGovernance,
+                ]);
 
-            expect(
-                toObject(await contract.governanceParams())
-            ).to.deep.equal(temporaryParams);
+            expect(toObject(await contract.governanceParams())).to.deep.equal(
+                temporaryParams
+            );
         });
 
         describe("when called by not admin", () => {
@@ -235,7 +232,7 @@ describe("LpIssuerGovernance", () => {
                 temporaryProtocol = await deployProtocolGovernance();
                 temporaryParams = {
                     gatewayVault: await gatewayVault.getAddress(),
-                    protocolGovernance: temporaryProtocol.address
+                    protocolGovernance: temporaryProtocol.address,
                 };
                 await contract.setPendingGovernanceParams(temporaryParams);
                 await expect(
@@ -249,18 +246,18 @@ describe("LpIssuerGovernance", () => {
                 temporaryProtocol = await deployProtocolGovernance();
                 temporaryParams = {
                     gatewayVault: await gatewayVault.getAddress(),
-                    protocolGovernance: temporaryProtocol.address
+                    protocolGovernance: temporaryProtocol.address,
                 };
                 await expect(
                     contract.commitGovernanceParams()
                 ).to.be.revertedWith(Exceptions.NULL);
             });
-        }); 
+        });
 
         describe("when governanceDelay has not passed", () => {
             describe("when commit called immediately", () => {
                 it("reverts", async () => {
-                    timestamp += 10**6;
+                    timestamp += 10 ** 6;
                     await sleepTo(timestamp);
                     params = {
                         maxTokensPerVault: BigNumber.from(5),
@@ -269,18 +266,19 @@ describe("LpIssuerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                         protocolExitFee: BigNumber.from(1 * 10 ** 9),
                         protocolTreasury: await gatewayVault.getAddress(),
-                        gatewayVaultManager: await protocolTreasury.getAddress()
-                    }
+                        gatewayVaultManager:
+                            await protocolTreasury.getAddress(),
+                    };
                     temporaryProtocol = await deployProtocolGovernance({
                         constructorArgs: {
                             admin: await deployer.getAddress(),
                         },
-                        initializerArgs: {params}, 
-                        adminSigner: deployer
+                        initializerArgs: { params },
+                        adminSigner: deployer,
                     });
                     temporaryParams = {
                         gatewayVault: await gatewayVault.getAddress(),
-                        protocolGovernance: temporaryProtocol.address
+                        protocolGovernance: temporaryProtocol.address,
                     };
                     await contract.setPendingGovernanceParams(temporaryParams);
                     await expect(
@@ -288,10 +286,10 @@ describe("LpIssuerGovernance", () => {
                     ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 });
             });
-            
+
             describe("when governance delay has almost passed", () => {
                 it("reverts", async () => {
-                    let longTimeout = 10**3;
+                    let longTimeout = 10 ** 3;
                     params = {
                         maxTokensPerVault: BigNumber.from(2),
                         governanceDelay: BigNumber.from(longTimeout),
@@ -299,33 +297,34 @@ describe("LpIssuerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                         protocolExitFee: BigNumber.from(1 * 10 ** 9),
                         protocolTreasury: await gatewayVault.getAddress(),
-                        gatewayVaultManager: await protocolTreasury.getAddress()
-                    }
+                        gatewayVaultManager:
+                            await protocolTreasury.getAddress(),
+                    };
                     temporaryProtocol = await deployProtocolGovernance({
                         constructorArgs: {
                             admin: await deployer.getAddress(),
                         },
-                        initializerArgs: {params},
-                        adminSigner: deployer
+                        initializerArgs: { params },
+                        adminSigner: deployer,
                     });
                     temporaryParams = {
                         gatewayVault: await gatewayVault.getAddress(),
-                        protocolGovernance: temporaryProtocol.address
+                        protocolGovernance: temporaryProtocol.address,
                     };
 
-                    timestamp += 10**6;
+                    timestamp += 10 ** 6;
                     await sleepTo(timestamp);
                     await contract.setPendingGovernanceParams(temporaryParams);
                     sleep(2 * longTimeout);
                     await contract.commitGovernanceParams();
-                    
+
                     temporaryProtocol = await deployProtocolGovernance();
                     temporaryParams = {
                         gatewayVault: await gatewayVault.getAddress(),
-                        protocolGovernance: temporaryProtocol.address
+                        protocolGovernance: temporaryProtocol.address,
                     };
 
-                    timestamp += 10**6;
+                    timestamp += 10 ** 6;
                     await sleepTo(timestamp);
                     await contract.setPendingGovernanceParams(temporaryParams);
                     sleep(longTimeout - timeEps);

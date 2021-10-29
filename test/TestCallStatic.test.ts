@@ -15,6 +15,6 @@ describe("TestCallStatic", () => {
             expect(await c.a()).to.be.equals(0);
             await c.incA();
             expect(await c.a()).to.be.equals(1);
-        });        
+        });
     });
 });

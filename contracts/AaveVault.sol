@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/external/aave/ILendingPool.sol";
-import "./interfaces/IAaveVaultManager.sol";
+import "./interfaces/IAaveVaultGovernance.sol";
 import "./Vault.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
@@ -11,18 +11,20 @@ contract AaveVault is Vault {
     uint256[] private _baseBalances;
 
     /// @notice Creates a new contract
-    /// @param vaultGovernance Reference to VaultGovernance for this vault
-    constructor(IVaultGovernance vaultGovernance) Vault(vaultGovernance) {
-        address[] memory tokens = vaultGovernance.vaultTokens();
-        _aTokens = new address[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            _aTokens[i] = _getAToken(tokens[i]);
+    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
+    /// @param vaultTokens_ ERC20 tokens under Vault management
+    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
+        Vault(vaultGovernance_, vaultTokens_)
+    {
+        _aTokens = new address[](vaultTokens_.length);
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            _aTokens[i] = _getAToken(_vaultTokens[i]);
         }
     }
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
@@ -32,7 +34,7 @@ contract AaveVault is Vault {
 
     /// @inheritdoc Vault
     function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
@@ -46,7 +48,7 @@ contract AaveVault is Vault {
         bool,
         bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
@@ -74,7 +76,7 @@ contract AaveVault is Vault {
         bool,
         bytes calldata
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             address aToken = _aTokens[i];
             uint256 balance = IERC20(aToken).balanceOf(address(this));
@@ -97,7 +99,7 @@ contract AaveVault is Vault {
         returns (uint256[] memory collectedEarnings)
     {
         collectedEarnings = earnings();
-        address[] memory tokens = _vaultGovernance.vaultTokens();
+        address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             _lendingPool().withdraw(tokens[i], collectedEarnings[i], to);
         }
@@ -115,7 +117,7 @@ contract AaveVault is Vault {
     }
 
     function _lendingPool() internal view returns (ILendingPool) {
-        return IAaveVaultManager(address(_vaultGovernance.vaultManager())).lendingPool();
+        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
 
     function _getATokens() internal view returns (address[] memory) {

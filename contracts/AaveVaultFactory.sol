@@ -2,13 +2,13 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IVaultFactory.sol";
-import "./VaultManager.sol";
 import "./AaveVault.sol";
 
 contract AaveVaultFactory is IVaultFactory {
-    /// @inheritdoc IVaultFactory
-    function deployVault(IVaultGovernance vaultGovernance, bytes calldata) external override returns (IVault) {
-        AaveVault vault = new AaveVault(vaultGovernance);
+    function deployVault(IVaultGovernance vaultGovernance, bytes calldata options) 
+        external returns (IVault) {
+        address[] memory vaultTokens = abi.decode(options, (address[]));
+        AaveVault vault = new AaveVault(vaultGovernance, vaultTokens);
         return IVault(vault);
     }
 }
