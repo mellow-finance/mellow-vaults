@@ -1,9 +1,24 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
-import { Contract, ContractFactory } from "@ethersproject/contracts";
-import { encodeToBytes, decodeFromBytes, toObject } from "./library/Helpers";
-import { BigNumber } from "@ethersproject/bignumber";
-import { ProtocolGovernance_Params } from "./library/Types";
+import { 
+    ethers,
+    deployments
+} from "hardhat";
+import {
+    BigNumber,
+    Signer,
+    Contract,
+    ContractFactory
+} from "ethers";
+import { before } from "mocha";
+import Exceptions from "./library/Exceptions";
+import {
+    decodeFromBytes,
+    encodeToBytes,
+    now,
+    sleep, 
+    sleepTo,
+    toObject
+} from "./library/Helpers";
 
 describe("TestEncoding", () => {
     let TestEncoding: ContractFactory;
@@ -20,11 +35,11 @@ describe("TestEncoding", () => {
 
     describe("when encoding governance params", () => {
         data = {
-            maxTokensPerVault: 1,
-            governanceDelay: 1,
-            strategyPerformanceFee: 1,
-            protocolPerformanceFee: 1,
-            protocolExitFee: 1,
+            maxTokensPerVault: BigNumber.from(1),
+            governanceDelay: BigNumber.from(1),
+            strategyPerformanceFee: BigNumber.from(1),
+            protocolPerformanceFee: BigNumber.from(1),
+            protocolExitFee: BigNumber.from(1),
             protocolTreasury: ethers.constants.AddressZero,
             vaultRegistry: ethers.constants.AddressZero
         }
@@ -35,6 +50,12 @@ describe("TestEncoding", () => {
             await testEncoding.setDataCalldata(encoded);
             expect(toObject(await testEncoding.getData())).to.deep.equal(data);
         });
+
+        it("sets", async () => {
+            let addr: string = await ((await ethers.getSigners())[0]).getAddress();
+            let encoded = encodeToBytes(["string"], [addr]);
+            await testEncoding.setAddress(encoded);
+            expect(decodeFromBytes(["string"], encoded)).to.deep.equal([addr]);
+        });
     });
-    
 });

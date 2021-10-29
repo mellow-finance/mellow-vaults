@@ -9,9 +9,10 @@ import "hardhat/console.sol";
 
 contract TestEncoding {
     IProtocolGovernance.Params private data;
+    address addr;
 
     function setDataCalldata(bytes calldata tempData) public {
-        (uint256 a, uint256 b, uint256 c, uint256 d, uint256 e, address f, IVaultRegistry g) = abi.decode(tempData, (uint256, uint256, uint256, uint256, uint256, address, IVaultRegistry));
+        (uint256 a, uint256 b, uint256 c, uint256 d, uint256 e, address payable f, IVaultRegistry g) = abi.decode(tempData, (uint256, uint256, uint256, uint256, uint256, address, IVaultRegistry));
         data.maxTokensPerVault = a;
         data.governanceDelay = b;
         data.strategyPerformanceFee = c;
@@ -21,11 +22,21 @@ contract TestEncoding {
         data.vaultRegistry = g;
     }
 
-    // function setDataMemory(bytes memory tempData) public {
-    //     data = abi.decode(tempData, IProtocolGovernance.Params);
-    // }
+    function setDataMemory(bytes memory tempData) public {
+        data = abi.decode(tempData, (IProtocolGovernance.Params));
+    }
 
     function getData() public view returns(IProtocolGovernance.Params memory) {
         return data;
     }
+
+    function setAddress(bytes calldata _addr) public {
+        addr = abi.decode(_addr, (address));
+        console.log(addr);
+    }
+
+    function getAddress() public view returns(address) {
+        return addr;
+    }
+
 }
