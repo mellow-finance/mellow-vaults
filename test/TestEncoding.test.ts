@@ -1,19 +1,23 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import { BigNumber, Contract, ContractFactory } from "ethers";
 import { encodeToBytes, toObject } from "./library/Helpers";
 
 describe("TestEncoding", () => {
-    let TestEncoding: ContractFactory;
     let testEncoding: Contract;
     let data: any;
+    let deploymentFixture: Function;
 
     before(async () => {
-        TestEncoding = await ethers.getContractFactory("TestEncoding");
+        deploymentFixture = deployments.createFixture(async () => {
+            await deployments.fixture();
+            let TestEncoding = await ethers.getContractFactory("TestEncoding");
+            return await TestEncoding.deploy();
+        });
     });
 
     beforeEach(async () => {
-        testEncoding = await TestEncoding.deploy();
+        testEncoding = await deploymentFixture();
     });
 
     describe("when encoding governance params", () => {
