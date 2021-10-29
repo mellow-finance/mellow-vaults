@@ -1,6 +1,6 @@
 on:
   schedule:
-    - cron: "0 7 * * 1-5"
+    - cron: "0 7 * * 2-5"
 
 name: Stats
 
@@ -46,6 +46,29 @@ jobs:
         uses: appleboy/telegram-action@master
         with:
           to: ${{ secrets.TELEGRAM_CHAT_2 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+
+      - name: Notify chat 3
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_3 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+      - name: Notify chat 4
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_4 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+
+      - name: Notify chat 5
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_5 }}
           token: ${{ secrets.TELEGRAM_API_KEY }}
           message: |
             📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
