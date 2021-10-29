@@ -12,14 +12,7 @@ contract TestEncoding {
     address addr;
 
     function setDataCalldata(bytes calldata tempData) public {
-        (uint256 a, uint256 b, uint256 c, uint256 d, uint256 e, address payable f, IVaultRegistry g) = abi.decode(tempData, (uint256, uint256, uint256, uint256, uint256, address, IVaultRegistry));
-        data.maxTokensPerVault = a;
-        data.governanceDelay = b;
-        data.strategyPerformanceFee = c;
-        data.protocolPerformanceFee = d;
-        data.protocolExitFee = e;
-        data.protocolTreasury = f;
-        data.vaultRegistry = g;
+        data = abi.decode(tempData, (IProtocolGovernance.Params));
     }
 
     function setDataMemory(bytes memory tempData) public {
