@@ -2,7 +2,7 @@ import { Contract } from "ethers";
 import { network, ethers } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
-import {utils} from "ethers";
+import { utils } from "ethers";
 
 export const toObject = (obj: any) =>
 pipe(

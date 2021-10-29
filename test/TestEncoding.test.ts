@@ -29,7 +29,7 @@ describe("TestEncoding", () => {
             vaultRegistry: ethers.constants.AddressZero
         }
 
-        let encoded = encodeToBytes(["tuple(uint256 maxTokensPerVault, uint256 governanceDelay, uint256 strategyPerformanceFee, uint256 protocolPerformanceFee, uint256 protocolExitFee, string protocolTreasury, string vaultRegistry) x"], [data]);
+        let encoded = encodeToBytes(["tuple(uint256 maxTokensPerVault, uint256 governanceDelay, uint256 strategyPerformanceFee, uint256 protocolPerformanceFee, uint256 protocolExitFee, string protocolTreasury, string vaultRegistry)"], [data]);
 
         it("sets", async () => {
             await testEncoding.setDataCalldata(encoded);

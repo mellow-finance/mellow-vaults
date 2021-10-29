@@ -17,6 +17,7 @@ export type IProtocolGovernance = Address;
 export type IGatewayVaultManager = Address;
 export type ILpIssuerGovernance = Address;
 export type IVault = Address;
+export type IVaultRegistry = Address;
 
 export type ERC20 = Contract;
 export type ERC20Vault = Contract;
@@ -49,7 +50,7 @@ export type ProtocolGovernance_Params = {
     protocolPerformanceFee: BigNumber;
     protocolExitFee: BigNumber;
     protocolTreasury: Address;
-    vaultRegistry: IGatewayVaultManager;
+    vaultRegistry: IVaultRegistry;
 };
 
 export type ProtocolGovernance_constructorArgs = {
