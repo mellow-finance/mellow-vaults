@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./interfaces/IGatewayVault.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
@@ -171,18 +172,32 @@ abstract contract Vault is IVault {
         pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
+    /// The idea of the check is to check that this vault and to vault
+    /// nfts are owned by the same address. Then check that nft for this address
+    /// exists in registry => it's one of the vaults with trusted interface.
+    /// Then check that both this and to are registered in the nft owner using hasVault function.
+    /// Since only gateway vault has hasVault function this will prove correctly that
+    /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
-        require(Common.isContract(to), "C");
-        /// TODO: fix
-        // IVaultManager vaultManager = _vaultGovernance.vaultManager();
-        // IGatewayVaultManager gw = vaultManager.governanceParams().protocolGovernance.gatewayVaultManager();
-        // uint256 fromNft = vaultManager.nftForVault(address(this));
-        // uint256 toNft = IVault(to).vaultGovernance().vaultManager().nftForVault(to);
-        // uint256 voFromNft = gw.vaultOwnerNft(fromNft);
-        // if (voFromNft == 0) {
-        //     return false;
-        // }
-        // return voFromNft == gw.vaultOwnerNft(toNft);
+        if (!Common.isContract(to)) {
+            return false;
+        }
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 thisNft = registry.nftForVault(this);
+        address thisOwner = registry.ownerOf(thisNft);
+        uint256 toNft = registry.nftForVault(IVault(to));
+        address toOwner = registry.ownerOf(toNft);
+        // make sure that vault is a registered vault
+        uint256 thisOwnerNft = registry.nftForVault(IVault(thisOwner));
+        uint256 toOwnerNft = registry.nftForVault(IVault(toOwner));
+        if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
+            return false;
+        }
+        IGatewayVault gw = IGatewayVault(thisOwner);
+        if (!gw.hasVault(address(this)) || !gw.hasVault(to)) {
+            return false;
+        }
+        return true;
     }
 
     // -------------------  PRIVATE, VIEW  -------------------
