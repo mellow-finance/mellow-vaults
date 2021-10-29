@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/IVaultGovernance.sol";
-import "./interfaces/IVaultRegistry.sol";
-import "hardhat/console.sol";
+import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/IVaultGovernance.sol";
+import "../interfaces/IVaultRegistry.sol";
 
 
 contract TestEncoding {
@@ -25,7 +24,6 @@ contract TestEncoding {
 
     function setAddress(bytes calldata _addr) public {
         addr = abi.decode(_addr, (address));
-        console.log(addr);
     }
 
     function getAddress() public view returns(address) {
