@@ -15,7 +15,8 @@
     "test": "hardhat test --config hardhat.test.config.ts",
     "coverage": "hardhat coverage --config hardhat.test.config.ts",
     "size": "rm -rf artifacts && hardhat compile && hardhat size-contracts",
-    "prettier": "./node_modules/.bin/prettier --write contracts/**/*.sol"
+    "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol test/*.test.ts test/library/*.ts",
+    "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol test/*.test.ts test/library/*.ts"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",

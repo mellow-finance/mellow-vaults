@@ -1,0 +1,74 @@
+on:
+  schedule:
+    - cron: "0 7 * * 2-5"
+
+name: Stats
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install github stats
+        run: |
+          cd /tmp
+          sudo apt-get update
+          sudo apt-get install bsdmainutils
+          git clone https://github.com/arzzen/git-quick-stats.git
+          cd git-quick-stats
+          sudo make install
+          cd /tmp
+
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Collect stats
+        id: stats
+        run: |
+          git fetch --all
+          export _GIT_SINCE=$(date -d "last monday" +%Y-%m-%d)
+          export _GIT_LOG_OPTIONS="--no-merges --all"
+          STATS=$(git-quick-stats -T)
+          echo "STATS<<EOF" >> $GITHUB_ENV
+          echo "$STATS" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Notify chat 1
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_1 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+
+      - name: Notify chat 2
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_2 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+
+      - name: Notify chat 3
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_3 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+      - name: Notify chat 4
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_4 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
+
+      - name: Notify chat 5
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_5 }}
+          token: ${{ secrets.TELEGRAM_API_KEY }}
+          message: |
+            📊 https://github.com/${{ github.repository }}, since last Monday - ${{env.STATS}}
