@@ -86,7 +86,7 @@ contract GatewayVault is IGatewayVault, Vault {
         return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
     }
 
-    function hasVault(address vault) external view override returns (bool) {
+    function hasSubvault(address vault) external view override returns (bool) {
         return (_vaultsIndex[vault] > 0 || _vaults[0] == vault);
     }
 

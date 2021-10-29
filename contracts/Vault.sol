@@ -175,8 +175,8 @@ abstract contract Vault is IVault {
     /// The idea of the check is to check that this vault and to vault
     /// nfts are owned by the same address. Then check that nft for this address
     /// exists in registry => it's one of the vaults with trusted interface.
-    /// Then check that both this and to are registered in the nft owner using hasVault function.
-    /// Since only gateway vault has hasVault function this will prove correctly that
+    /// Then check that both this and to are registered in the nft owner using hasSubvault function.
+    /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
         if (!Common.isContract(to)) {
@@ -194,7 +194,7 @@ abstract contract Vault is IVault {
             return false;
         }
         IGatewayVault gw = IGatewayVault(thisOwner);
-        if (!gw.hasVault(address(this)) || !gw.hasVault(to)) {
+        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
             return false;
         }
         return true;
