@@ -129,8 +129,8 @@ describe("VaultManagerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
                         protocolExitFee: BigNumber.from(10 ** 9),
                         protocolTreasury: await protocolTreasury.getAddress(),
-                        vaultRegistry: await gatewayVaultManager.getAddress()
-                    }
+                        vaultRegistry: await gatewayVaultManager.getAddress(),
+                    },
                 },
                 adminSigner: deployer,
             });
@@ -241,9 +241,9 @@ describe("VaultManagerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
                         protocolExitFee: BigNumber.from(10 ** 9),
                         protocolTreasury: await protocolTreasury.getAddress(),
-                        vaultRegistry: await gatewayVaultManager.getAddress()
-                    }
-                }
+                        vaultRegistry: await gatewayVaultManager.getAddress(),
+                    },
+                },
             });
 
             await vaultManagerGovernance.setPendingGovernanceParams({
@@ -305,9 +305,9 @@ describe("VaultManagerGovernance", () => {
                         protocolPerformanceFee: BigNumber.from(10 ** 9),
                         protocolExitFee: BigNumber.from(10 ** 9),
                         protocolTreasury: await protocolTreasury.getAddress(),
-                        vaultRegistry: await gatewayVaultManager.getAddress()
-                    }
-                }
+                        vaultRegistry: await gatewayVaultManager.getAddress(),
+                    },
+                },
             });
 
             await vaultManagerGovernance.setPendingGovernanceParams({

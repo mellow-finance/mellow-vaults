@@ -35,7 +35,7 @@ export const sortContractsByAddresses = (contracts: Contract[]) => {
             ).toString()
         );
     });
-}
+};
 
 export const encodeToBytes = (
     types: string[],
@@ -43,12 +43,9 @@ export const encodeToBytes = (
 ) => {
     let toBytes = new utils.AbiCoder();
     return toBytes.encode(types, objectToEncode);
-}
+};
 
-export const decodeFromBytes = (
-    types: string[],
-    bytesToDecode: string
-) => {
+export const decodeFromBytes = (types: string[], bytesToDecode: string) => {
     let fromBytes = new utils.AbiCoder();
     return fromBytes.decode(types, bytesToDecode);
-}
+};

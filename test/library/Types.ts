@@ -36,7 +36,6 @@ export type AaveVaultFactory = Contract;
 export type AaveVaultManager = Contract;
 export type AaveVault = Contract;
 
-
 export type GatewayVault_constructorArgs = {
     vaultGovernance: IVaultGovernance;
     vaults: Address[];

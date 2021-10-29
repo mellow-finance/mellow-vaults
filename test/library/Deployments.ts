@@ -25,7 +25,6 @@ import {
     LpIssuerGovernance_constructorArgs,
     GatewayVaultManager_constructorArgs,
     GatewayVault_constructorArgs,
-
     ProtocolGovernance_Params,
     VaultManagerGovernance,
     AaveVaultFactory,
@@ -408,25 +407,26 @@ export async function deployAaveVaultSystem(options: {
     const tokens: ERC20[] = await deployERC20Tokens(options.tokensCount);
 
     const tokensSorted: ERC20[] = sortContractsByAddresses(tokens);
-    
-    const protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
-        constructorArgs: {
-            admin: await options!.protocolGovernanceAdmin.getAddress(),
-        },
-        initializerArgs: {
-            params: {
-                maxTokensPerVault: BigNumber.from(10),
-                governanceDelay: BigNumber.from(1),
 
-                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-                protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: options.treasury,
-                vaultRegistry: ethers.constants.AddressZero,
-            }
-        },
-        adminSigner: options.protocolGovernanceAdmin
-    });
+    const protocolGovernance: ProtocolGovernance =
+        await deployProtocolGovernance({
+            constructorArgs: {
+                admin: await options!.protocolGovernanceAdmin.getAddress(),
+            },
+            initializerArgs: {
+                params: {
+                    maxTokensPerVault: BigNumber.from(10),
+                    governanceDelay: BigNumber.from(1),
+
+                    strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                    protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                    protocolExitFee: BigNumber.from(10 ** 9),
+                    protocolTreasury: options.treasury,
+                    vaultRegistry: ethers.constants.AddressZero,
+                },
+            },
+            adminSigner: options.protocolGovernanceAdmin,
+        });
 
     const vaultGovernanceFactory: VaultGovernanceFactory =
         await deployVaultGovernanceFactory();
@@ -472,66 +472,68 @@ export async function deployAaveVaultSystem(options: {
     };
 }
 
-export const deployERC20VaultSystem = async (
-    options: {
-        protocolGovernanceAdmin: Signer,
-        treasury: Address,
-        tokensCount: number,
-        permissionless: boolean,
-        vaultManagerName: string,
-        vaultManagerSymbol: string
-    }
-) => {
-  const tokens: ERC20[] = await deployERC20Tokens(options.tokensCount);
-  // sort tokens by address using `sortAddresses` function
-  let tokensSorted: ERC20[] = sortContractsByAddresses(tokens);
+export const deployERC20VaultSystem = async (options: {
+    protocolGovernanceAdmin: Signer;
+    treasury: Address;
+    tokensCount: number;
+    permissionless: boolean;
+    vaultManagerName: string;
+    vaultManagerSymbol: string;
+}) => {
+    const tokens: ERC20[] = await deployERC20Tokens(options.tokensCount);
+    // sort tokens by address using `sortAddresses` function
+    let tokensSorted: ERC20[] = sortContractsByAddresses(tokens);
 
-  let protocolGovernance: ProtocolGovernance = await deployProtocolGovernance({
-      constructorArgs: {
-          admin: await options.protocolGovernanceAdmin.getAddress(),
-      },
-      initializerArgs: {
-          params: {
-              maxTokensPerVault: BigNumber.from(10),
-              governanceDelay: BigNumber.from(1),
+    let protocolGovernance: ProtocolGovernance = await deployProtocolGovernance(
+        {
+            constructorArgs: {
+                admin: await options.protocolGovernanceAdmin.getAddress(),
+            },
+            initializerArgs: {
+                params: {
+                    maxTokensPerVault: BigNumber.from(10),
+                    governanceDelay: BigNumber.from(1),
 
-              strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-              protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-              protocolExitFee: BigNumber.from(10 ** 9),
-              protocolTreasury: options.treasury,
-              vaultRegistry: ethers.constants.AddressZero,
-          }
-      },
-      adminSigner: options.protocolGovernanceAdmin
-  });
+                    strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                    protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                    protocolExitFee: BigNumber.from(10 ** 9),
+                    protocolTreasury: options.treasury,
+                    vaultRegistry: ethers.constants.AddressZero,
+                },
+            },
+            adminSigner: options.protocolGovernanceAdmin,
+        }
+    );
 
-  let vaultGovernanceFactory: VaultGovernanceFactory = await deployVaultGovernanceFactory();
+    let vaultGovernanceFactory: VaultGovernanceFactory =
+        await deployVaultGovernanceFactory();
 
-  let erc20VaultFactory: ERC20VaultFactory = await deployERC20VaultFactory();
+    let erc20VaultFactory: ERC20VaultFactory = await deployERC20VaultFactory();
 
-  let gatewayVaultManager: GatewayVaultManager = await deployGatewayVaultManager({
-      constructorArgs: {
-          name: 'gateway vault manager',
-          symbol: 'gvm',
-          factory: erc20VaultFactory.address,
-          governanceFactory: vaultGovernanceFactory.address,
-          permissionless: options.permissionless,
-          governance: protocolGovernance.address
-      }
-  });
+    let gatewayVaultManager: GatewayVaultManager =
+        await deployGatewayVaultManager({
+            constructorArgs: {
+                name: "gateway vault manager",
+                symbol: "gvm",
+                factory: erc20VaultFactory.address,
+                governanceFactory: vaultGovernanceFactory.address,
+                permissionless: options.permissionless,
+                governance: protocolGovernance.address,
+            },
+        });
 
-  await protocolGovernance
-    .connect(options.protocolGovernanceAdmin)
-    .setPendingParams({
-      maxTokensPerVault: 10,
-      governanceDelay: 1,
+    await protocolGovernance
+        .connect(options.protocolGovernanceAdmin)
+        .setPendingParams({
+            maxTokensPerVault: 10,
+            governanceDelay: 1,
 
-      strategyPerformanceFee: 10 * 10 ** 9,
-      protocolPerformanceFee: 2 * 10 ** 9,
-      protocolExitFee: 10 ** 9,
-      protocolTreasury: options.treasury,
-      gatewayVaultManager: gatewayVaultManager.address,
-    });
+            strategyPerformanceFee: 10 * 10 ** 9,
+            protocolPerformanceFee: 2 * 10 ** 9,
+            protocolExitFee: 10 ** 9,
+            protocolTreasury: options.treasury,
+            gatewayVaultManager: gatewayVaultManager.address,
+        });
 
     let vaultGovernance: VaultGovernance = await (
         await ethers.getContractFactory("VaultGovernanceOld")
