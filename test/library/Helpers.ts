@@ -1,7 +1,8 @@
 import { Contract } from "ethers";
-import { network } from "hardhat";
+import { network, ethers } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
+import { utils } from "ethers";
 
 export const toObject = (obj: any) =>
     pipe(
@@ -34,4 +35,17 @@ export const sortContractsByAddresses = (contracts: Contract[]) => {
             ).toString()
         );
     });
+};
+
+export const encodeToBytes = (
+    types: string[],
+    objectToEncode: readonly any[]
+) => {
+    let toBytes = new utils.AbiCoder();
+    return toBytes.encode(types, objectToEncode);
+};
+
+export const decodeFromBytes = (types: string[], bytesToDecode: string) => {
+    let fromBytes = new utils.AbiCoder();
+    return fromBytes.decode(types, bytesToDecode);
 };

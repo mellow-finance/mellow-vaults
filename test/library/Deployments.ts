@@ -24,6 +24,7 @@ import {
     VaultManagerGovernance_constructorArgs,
     LpIssuerGovernance_constructorArgs,
     GatewayVaultManager_constructorArgs,
+    GatewayVault_constructorArgs,
     ProtocolGovernance_Params,
     VaultManagerGovernance,
     AaveVaultFactory,
@@ -421,7 +422,7 @@ export async function deployAaveVaultSystem(options: {
                     protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                     protocolExitFee: BigNumber.from(10 ** 9),
                     protocolTreasury: options.treasury,
-                    gatewayVaultManager: ethers.constants.AddressZero,
+                    vaultRegistry: ethers.constants.AddressZero,
                 },
             },
             adminSigner: options.protocolGovernanceAdmin,
@@ -497,7 +498,7 @@ export const deployERC20VaultSystem = async (options: {
                     protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                     protocolExitFee: BigNumber.from(10 ** 9),
                     protocolTreasury: options.treasury,
-                    gatewayVaultManager: ethers.constants.AddressZero,
+                    vaultRegistry: ethers.constants.AddressZero,
                 },
             },
             adminSigner: options.protocolGovernanceAdmin,
@@ -533,21 +534,6 @@ export const deployERC20VaultSystem = async (options: {
             protocolTreasury: options.treasury,
             gatewayVaultManager: gatewayVaultManager.address,
         });
-    await sleep(1);
-    await protocolGovernance
-        .connect(options.protocolGovernanceAdmin)
-        .commitParams();
-
-    let erc20VaultManager: VaultManager = await deployVaultManagerTest({
-        constructorArgs: {
-            name: options!.vaultManagerName ?? "ERC20VaultManager",
-            symbol: options!.vaultManagerSymbol ?? "E20VM",
-            factory: erc20VaultFactory.address,
-            governanceFactory: vaultGovernanceFactory.address,
-            permissionless: options!.permissionless,
-            governance: protocolGovernance.address,
-        },
-    });
 
     let vaultGovernance: VaultGovernance = await (
         await ethers.getContractFactory("VaultGovernanceOld")
