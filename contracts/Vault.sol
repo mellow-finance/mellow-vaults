@@ -172,10 +172,10 @@ abstract contract Vault is IVault {
         pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
-    /// The idea of the check is to check that this vault and to vault
+    /// The idea is to check that `this` Vault and `to` Vault
     /// nfts are owned by the same address. Then check that nft for this address
-    /// exists in registry => it's one of the vaults with trusted interface.
-    /// Then check that both this and to are registered in the nft owner using hasSubvault function.
+    /// exists in registry as Vault => it's one of the vaults with trusted interface.
+    /// Then check that both `this` and `to` are registered in the nft owner using hasSubvault function.
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
