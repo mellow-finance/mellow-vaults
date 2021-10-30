@@ -7,22 +7,19 @@ import {
     Address,
     IVaultGovernance,
     IVaultRegistry,
+    IGatewayVault,
     ERC20,
     ERC20Vault,
     ERC20VaultFactory,
     ProtocolGovernance,
-    VaultManager,
     VaultGovernance,
-    VaultGovernanceFactory,
     LpIssuerGovernance,
     VaultRegistry,
     AaveVaultFactory,
     AaveVault,
     ERC20Vault_constructorArgs,
-    VaultManager_createVault,
     ProtocolGovernance_constructorArgs,
     VaultGovernance_constructorArgs,
-    VaultManagerGovernance_constructorArgs,
     LpIssuerGovernance_constructorArgs,
     ProtocolGovernance_Params,
     ERC20Test_constructorArgs,
@@ -46,7 +43,7 @@ export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
 
     for (let i: number = 0; i < length; ++i) {
         const contract: ERC20 = await Contract.deploy(
-            token_constructorArgs[i].name + `_{i.toString()}`,
+            token_constructorArgs[i].name + `_${i.toString()}`,
             token_constructorArgs[i].symbol
         );
         await contract.deployed();
