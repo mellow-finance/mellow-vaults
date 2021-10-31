@@ -10,7 +10,7 @@ import "./interfaces/IVaultGovernance.sol";
 /// define different params structs and use abi.decode / abi.encode to serialize
 /// to bytes in this contract. It also should emit events on params change.
 abstract contract VaultGovernance is IVaultGovernance {
-    InternalParams private _internalParams;
+    InternalParams internal _internalParams;
     InternalParams private _stagedInternalParams;
     uint256 internal _internalParamsTimestamp;
 

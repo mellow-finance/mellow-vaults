@@ -9,34 +9,46 @@ import "./Vault.sol";
 
 contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
-    address[] private _vaults;
-    mapping(address => uint256) private _vaultsIndex;
+    uint256[] private _vaultNfts;
+    mapping(uint256 => uint256) private _vaultNftsIndex;
+    bool initialized;
 
     /// @notice Creates a new contract
+    /// @dev All subvault nfts must be owned by this vault before
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
-    /// @param vaults_ Subvaults of this vault
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        address[] memory vaults_
-    ) Vault(vaultGovernance_, vaultTokens_) {
-        _vaults = vaults_;
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            _vaultsIndex[_vaults[i]] = i;
+    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
+        Vault(vaultGovernance_, vaultTokens_)
+    {}
+
+    /// @notice Build and fixes the structure of subvaults
+    /// @param vaultNfts_ nfts of the subvaults
+    /// @param strategy address of the strategy contract (or strategist external account if the strategy is manual)
+    function initialize(uint256[] memory vaultNfts_, address strategy) external {
+        require(!initialized, "INIT");
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 nft = registry.nftForVault(this);
+        require(nft > 0, "RGST");
+        require(registry.ownerOf(nft) == msg.sender, "OW");
+        _vaultNfts = vaultNfts_;
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            require(registry.ownerOf(_vaultNfts[i]) == address(this), "OWT");
+            registry.approve(strategy, _vaultNfts[i]);
+            _vaultNftsIndex[_vaultNfts[i]] = i;
         }
+        initialized = true;
     }
 
     /// @inheritdoc Vault
     function tvl() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultTokens;
-        tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            IVault vault = IVault(_vaults[i]);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        tokenAmounts = new uint256[](_vaultTokens.length);
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            IVault vault = IVault(registry.vaultForNft(_vaultNfts[i]));
             address[] memory vTokens = vault.vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
-            uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
-            for (uint256 j = 0; j < tokens.length; j++) {
+            uint256[] memory pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, vTokens, vTokenAmounts);
+            for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 tokenAmounts[j] += pTokenAmounts[j];
             }
         }
@@ -45,9 +57,10 @@ contract GatewayVault is IGatewayVault, Vault {
     /// @inheritdoc Vault
     function earnings() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultTokens;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            IVault vault = IVault(_vaults[i]);
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            IVault vault = IVault(registry.vaultForNft(_vaultNfts[i]));
             address[] memory vTokens = vault.vaultTokens();
             uint256[] memory vTokenAmounts = vault.earnings();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
@@ -58,17 +71,19 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     function vaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
-        IVault vault = IVault(_vaults[vaultNum]);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        IVault vault = IVault(registry.vaultForNft(_vaultNfts[vaultNum]));
         address[] memory pTokens = vault.vaultTokens();
         uint256[] memory vTokenAmounts = vault.tvl();
         return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
     }
 
     function vaultsTvl() public view override returns (uint256[][] memory tokenAmounts) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory tokens = _vaultTokens;
-        tokenAmounts = new uint256[][](_vaults.length);
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            IVault vault = IVault(_vaults[i]);
+        tokenAmounts = new uint256[][](_vaultNfts.length);
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            IVault vault = IVault(registry.vaultForNft(_vaultNfts[i]));
             address[] memory vTokens = vault.vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
@@ -80,14 +95,17 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     function vaultEarnings(uint256 vaultNum) public view override returns (uint256[] memory) {
-        IVault vault = IVault(_vaults[vaultNum]);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        IVault vault = IVault(registry.vaultForNft(_vaultNfts[vaultNum]));
         address[] memory pTokens = vault.vaultTokens();
         uint256[] memory vTokenAmounts = vault.earnings();
         return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
     }
 
     function hasSubvault(address vault) external view override returns (bool) {
-        return (_vaultsIndex[vault] > 0 || _vaults[0] == vault);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 nft = registry.nftForVault(IVault(vault));
+        return (_vaultNftsIndex[nft] > 0 || _vaultNfts[0] == nft);
     }
 
     function _push(
@@ -95,45 +113,45 @@ contract GatewayVault is IGatewayVault, Vault {
         bool optimized,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = vaultsTvl();
-        address[] memory tokens = _vaultTokens;
-        uint256[] memory totalTvl = new uint256[](tokens.length);
+        uint256[] memory totalTvl = new uint256[](_vaultTokens.length);
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         IGatewayVaultGovernance.DelayedStrategyParams memory strategyParams = IGatewayVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(_selfNft());
-        if (optimized) {
-            for (uint256 i = 0; i < _vaults.length; i++) {
-                if (strategyParams.redirects[i] == address(0)) {
+        if (optimized && strategyParams.redirects.length > 0) {
+            for (uint256 i = 0; i < _vaultNfts.length; i++) {
+                if (strategyParams.redirects[i] == 0) {
                     continue;
                 }
-                for (uint256 j = 0; j < tokens.length; j++) {
-                    uint256 vaultIndex = _vaultsIndex[strategyParams.redirects[i]];
+                for (uint256 j = 0; j < _vaultTokens.length; j++) {
+                    uint256 vaultIndex = _vaultNftsIndex[strategyParams.redirects[i]];
                     amountsByVault[vaultIndex][j] += amountsByVault[i][j];
                     amountsByVault[i][j] = 0;
                 }
             }
         }
         bytes[] memory vaultsOptions = _parseOptions(options);
-        actualTokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            if (optimized && (strategyParams.redirects[i] != address(0))) {
+        actualTokenAmounts = new uint256[](_vaultTokens.length);
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            if (optimized && (strategyParams.redirects[i] != 0)) {
                 continue;
             }
-            IVault vault = IVault(_vaults[i]);
+            IVault vault = IVault(registry.vaultForNft(_vaultNfts[i]));
             uint256[] memory actualVaultTokenAmounts = vault.push(
-                tokens,
+                _vaultTokens,
                 amountsByVault[i],
                 optimized,
                 vaultsOptions[i]
             );
-            for (uint256 j = 0; j < tokens.length; j++) {
+            for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
                 totalTvl[j] += tvls[i][j];
             }
         }
         uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).limits;
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "L");
         }
     }
@@ -144,37 +162,37 @@ contract GatewayVault is IGatewayVault, Vault {
         bool optimized,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = vaultsTvl();
-        address[] memory tokens = _vaultTokens;
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
-        address[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance))
+        uint256[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance))
             .delayedStrategyParams(_selfNft())
             .redirects;
 
-        if (optimized) {
-            for (uint256 i = 0; i < _vaults.length; i++) {
-                if (_redirects[i] == address(0)) {
+        if (optimized && (_redirects.length > 0)) {
+            for (uint256 i = 0; i < _vaultNfts.length; i++) {
+                if (_redirects[i] == 0) {
                     continue;
                 }
-                for (uint256 j = 0; j < tokens.length; j++) {
-                    uint256 vaultIndex = _vaultsIndex[_redirects[i]];
+                for (uint256 j = 0; j < _vaultTokens.length; j++) {
+                    uint256 vaultIndex = _vaultNftsIndex[_redirects[i]];
                     amountsByVault[vaultIndex][j] += amountsByVault[i][j];
                     amountsByVault[i][j] = 0;
                 }
             }
         }
         bytes[] memory vaultsOptions = _parseOptions(options);
-        actualTokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            IVault vault = IVault(_vaults[i]);
+        actualTokenAmounts = new uint256[](_vaultTokens.length);
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            IVault vault = IVault(registry.vaultForNft(_vaultNfts[i]));
             uint256[] memory actualVaultTokenAmounts = vault.pull(
                 to,
-                tokens,
+                _vaultTokens,
                 amountsByVault[i],
                 optimized,
                 vaultsOptions[i]
             );
-            for (uint256 j = 0; j < tokens.length; j++) {
+            for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
             }
         }
@@ -185,11 +203,12 @@ contract GatewayVault is IGatewayVault, Vault {
         override
         returns (uint256[] memory collectedEarnings)
     {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory tokens = _vaultTokens;
         collectedEarnings = new uint256[](tokens.length);
         bytes[] memory vaultsOptions = _parseOptions(options);
-        for (uint256 i = 0; i < _vaults.length; i++) {
-            IVault vault = IVault(_vaults[i]);
+        for (uint256 i = 0; i < _vaultNfts.length; i++) {
+            IVault vault = IVault(registry.vaultForNft(_vaultNfts[i]));
             address[] memory vTokens = vault.vaultTokens();
             uint256[] memory vTokenAmounts = vault.collectEarnings(address(this), vaultsOptions[i]);
             uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
@@ -228,7 +247,7 @@ contract GatewayVault is IGatewayVault, Vault {
 
     function _parseOptions(bytes memory options) internal view returns (bytes[] memory vaultOptions) {
         if (options.length == 0) {
-            return new bytes[](_vaults.length);
+            return new bytes[](_vaultNfts.length);
         }
         return abi.decode(options, (bytes[]));
     }
