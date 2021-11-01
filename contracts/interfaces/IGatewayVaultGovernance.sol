@@ -6,10 +6,10 @@ import "./IVaultGovernance.sol";
 interface IGatewayVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
     /// @param strategyTreasury Reference to address that will collect strategy fees
-    /// @param redirects Redirects[i] is the number of subvault that will receive deposit to i-th subvault. If the array is empty it is ignored.
+    /// @param redirects Redirects[i] is the nft of subvault that will receive deposit to i-th subvault. If the array is empty there is no redirects.
     struct DelayedStrategyParams {
         address strategyTreasury;
-        address[] redirects;
+        uint256[] redirects;
     }
     /// @notice Params that could be changed by Strategy or Protocol Governance immediately
     /// @param limits Token limits for the vault
