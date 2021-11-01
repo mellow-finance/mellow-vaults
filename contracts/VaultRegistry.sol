@@ -15,23 +15,20 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     string public constant INVALID_TIMESTAMP = "TS";
     string public constant NULL_OR_NOT_INITIALIZED = "NA";
 
-    bool private _permissionless;
-    uint112 private _vaultKindsCount;
-    uint112 private _vaultsCount;
     uint256 private _stagedProtocolGovernanceTimestamp;
     IProtocolGovernance private _protocolGovernance;
     IProtocolGovernance private _stagedProtocolGovernance;
-    IVaultRegistry.VaultKind[] private _vaultKinds;
+
     IVault[] private _vaults;
     mapping(IVault => uint256) private _nfts;
-    mapping(IVault => uint256) private _vaultKindIds;
-    mapping(bytes32 => bool) private _registeredVaultKinds;
+    mapping(uint256 => IVault) private _vaults;
+    uint256 private _topNft = 1;
 
     /// @notice Constructor
     /// @param name ERC721 token name
     /// @param symbol ERC721 token symbol
     /// @param protocolGovernance_ Reference to ProtocolGovernance
-    constructor (
+    constructor(
         string memory name,
         string memory symbol,
         IProtocolGovernance protocolGovernance_,
@@ -42,54 +39,18 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     }
 
     /// @inheritdoc IVaultRegistry
-    function vaultKindForId(uint256 vaultKindId) 
-        external 
-        view 
-        returns (IVaultRegistry.VaultKind memory vaultKind) {
-        vaultKind = _vaultKinds[vaultKindId];
-    }
-
-    /// @inheritdoc IVaultRegistry
-    function vaultKindForVault(IVault vault)
-        external
-        view
-        returns (IVaultRegistry.VaultKind memory vaultKind) {
-        uint256 vaultKindId = _vaultKindIds[vault];
-        vaultKind = _vaultKinds[vaultKindId];
-    }
-
-    /// @inheritdoc IVaultRegistry
-    function vaultForNft(uint256 nftId) external view returns (IVault vault) {
-        require(nftId < _vaultsCount, INDEX_OUT_OF_BOUNDS);
+    function vaultForNft(uint256 nftId) external view returns (IVault) {
         return _vaults[nftId];
     }
 
     /// @inheritdoc IVaultRegistry
-    function nftForVault(IVault vault) external view returns (uint256 nftId) {
-        nftId = _nfts[vault];
+    function nftForVault(IVault vault) external view returns (uint256) {
+        return _nfts[vault];
     }
 
     /// @inheritdoc IVaultRegistry
-    function registerVaultKind(IVaultRegistry.VaultKind memory vaultKind) 
-        external 
-        returns (uint256 vaultKindId) {
-        bytes32 vaultKindHash = _calcVaultKindHash(vaultKind);
-        require(!_registeredVaultKinds[vaultKindHash], UNIQUE_CONSTRAINT);
-        require(_isProtocolAdmin(_msgSender()), ADMIN_ACCESS_REQUIRED);
-        _saveNewVaultKind(vaultKind);
-        _registeredVaultKinds[vaultKindHash] = true;
-        emit VaultKindRegistered(vaultKindId, vaultKind, _msgSender());
-    }
-
-    /// @inheritdoc IVaultRegistry
-    function registerVault(uint256 vaultKindId, bytes calldata options) 
-        external 
-        returns 
-        (IVault vault, uint256 nftId) {
-        require(
-            _permissionless || _isProtocolAdmin(_msgSender()),
-            ADMIN_ACCESS_REQUIRED
-        );
+    function registerVault(uint256 vaultKindId, bytes calldata options) external returns (IVault vault, uint256 nftId) {
+        require(_permissionless || _isProtocolAdmin(_msgSender()), ADMIN_ACCESS_REQUIRED);
         vault = _createNewVault(vaultKindId, options);
         nftId = _saveNewVault(vault);
         _safeMint(_msgSender(), nftId);
@@ -130,15 +91,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
         require(_isProtocolAdmin(_msgSender()), ADMIN_ACCESS_REQUIRED);
         _stagedProtocolGovernance = newProtocolGovernance;
-        _stagedProtocolGovernanceTimestamp = (
-            block.timestamp + 
-            _protocolGovernance.governanceDelay()
-        );
-        emit StagedProtocolGovernance(
-            _msgSender(),
-            newProtocolGovernance,
-            _stagedProtocolGovernanceTimestamp
-        );
+        _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
+        emit StagedProtocolGovernance(_msgSender(), newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
     }
 
     /// @inheritdoc IVaultRegistry
@@ -155,9 +109,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         return _protocolGovernance.isAdmin(sender);
     }
 
-    function _saveNewVaultKind(IVaultRegistry.VaultKind memory vaultKind)
-        internal 
-        returns (uint256 vaultKindId) {
+    function _saveNewVaultKind(IVaultRegistry.VaultKind memory vaultKind) internal returns (uint256 vaultKindId) {
         vaultKindId = _vaultKindsCount;
         _vaultKindsCount++;
         _vaultKinds.push(vaultKind);
@@ -170,9 +122,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         _nfts[vault] = nftId;
     }
 
-    function _createNewVault(uint256 vaultKindId, bytes calldata options) 
-        internal 
-        returns (IVault vault) {
+    function _createNewVault(uint256 vaultKindId, bytes calldata options) internal returns (IVault vault) {
         IVaultRegistry.VaultKind memory vaultKind = _vaultKinds[vaultKindId];
         IVaultFactory vaultFactory = vaultKind.vaultFactory;
         IVaultGovernance vaultGovernance = vaultKind.vaultGovernance;
@@ -180,9 +130,11 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         _vaultKindIds[vault] = vaultKindId;
     }
 
-    function _calcVaultKindHash(IVaultRegistry.VaultKind memory vaultKind) 
-        internal pure 
-        returns (bytes32 vaultKindHash) {
+    function _calcVaultKindHash(IVaultRegistry.VaultKind memory vaultKind)
+        internal
+        pure
+        returns (bytes32 vaultKindHash)
+    {
         vaultKindHash = keccak256(abi.encode(vaultKind));
-    } 
+    }
 }
