@@ -88,7 +88,6 @@ export const deployERC20VaultFactory = async () => {
     return contract;
 };
 
-
 const deployVaultRegistryAndProtocolGovernance = async (options: {
     name: string;
     symbol: string;
@@ -122,7 +121,7 @@ const deployVaultRegistryAndProtocolGovernance = async (options: {
     return {
         vaultRegistry: contract,
         protocolGovernance: protocolGovernance,
-    }
+    };
 };
 
 export const deployVaultGovernance = async (options?: {
@@ -131,19 +130,22 @@ export const deployVaultGovernance = async (options?: {
     treasury: Address;
 }) => {
     // defaults<
-    const { vaultRegistry, protocolGovernance } = await deployVaultRegistryAndProtocolGovernance({
-        name: "kek",
-        symbol: "kek",
-        permissionless: true,
-        adminSigner: options!.adminSigner,
-        treasury: options?.treasury ?? (await (await ethers.getSigners())[0].getAddress()),
-    });
+    const { vaultRegistry, protocolGovernance } =
+        await deployVaultRegistryAndProtocolGovernance({
+            name: "kek",
+            symbol: "kek",
+            permissionless: true,
+            adminSigner: options!.adminSigner,
+            treasury:
+                options?.treasury ??
+                (await (await ethers.getSigners())[0].getAddress()),
+        });
     const constructorArgs: VaultGovernance_constructorArgs =
         options?.constructorArgs ?? {
             params: {
                 protocolGovernance: protocolGovernance.address,
                 vaultRegistry: vaultRegistry.address,
-            }
+            },
         };
     // />
     let contract: Contract;
