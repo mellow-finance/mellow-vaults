@@ -20,6 +20,7 @@ export type ProtocolGovernance = Contract;
 export type VaultGovernance = Contract;
 export type LpIssuerGovernance = Contract;
 export type GatewayVault = Contract;
+export type TestVaultGovernance = Contract;
 
 export type AaveVaultFactory = Contract;
 export type AaveVault = Contract;
@@ -82,7 +83,7 @@ export type GatewayVault_constructorArgs = {
  */
 export type VaultGovernance_InternalParams = {
     protocolGovernance: IProtocolGovernance;
-    vaultRegistry: IVaultRegistry;
+    registry: IVaultRegistry;
 };
 export type VaultGovernance_constructorArgs = {
     params: VaultGovernance_InternalParams;
