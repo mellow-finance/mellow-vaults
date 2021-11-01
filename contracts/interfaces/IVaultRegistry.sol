@@ -45,13 +45,13 @@ interface IVaultRegistry is IERC721 {
     /// @notice Comit new ProtocolGovernance
     function commitStagedProtocolGovernance() external;
 
-    /// @param nftId NFT ID
+    /// @param nft Nft of the vault
     /// @param vault Address of the Vault contract
     /// @param sender Address of the sender
     event VaultRegistered(
         address indexed origin,
         address indexed sender,
-        uint256 indexed nftId,
+        uint256 indexed nft,
         address vault,
         address owner
     );
