@@ -22,6 +22,7 @@ describe("TestEncoding", () => {
 
     describe("when encoding governance params", () => {
         data = {
+            permissionless: true,
             maxTokensPerVault: BigNumber.from(1),
             governanceDelay: BigNumber.from(2),
             strategyPerformanceFee: BigNumber.from(3),
@@ -33,7 +34,7 @@ describe("TestEncoding", () => {
 
         let encoded = encodeToBytes(
             [
-                "tuple(uint256 maxTokensPerVault, uint256 governanceDelay, uint256 strategyPerformanceFee, uint256 protocolPerformanceFee, uint256 protocolExitFee, address protocolTreasury, address vaultRegistry) data",
+                "tuple(bool permissionless, uint256 maxTokensPerVault, uint256 governanceDelay, uint256 strategyPerformanceFee, uint256 protocolPerformanceFee, uint256 protocolExitFee, address protocolTreasury, address vaultRegistry) data",
             ],
             [data]
         );
