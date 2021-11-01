@@ -42,6 +42,9 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Check if address is allowed to claim
     function isAllowedToClaim(address addr) external view returns (bool);
 
+    /// @notice Check if address is a registered vault governance
+    function isVaultGovernance(address addr) external view returns (bool);
+
     /// @notice Max different token addresses that could be managed by the protocol
     function maxTokensPerVault() external view returns (uint256);
 
