@@ -76,7 +76,7 @@ describe("ProtocolGovernance", () => {
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await protocolTreasury.getAddress(),
+                protocolTreasury: ethers.constants.AddressZero,
                 vaultRegistry: vaultRegistry.address,
             };
 
@@ -87,7 +87,7 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(0),
                 protocolExitFee: BigNumber.from(0),
                 protocolTreasury: ethers.constants.AddressZero,
-                vaultRegistry: vaultRegistry.address,
+                vaultRegistry: ethers.constants.AddressZero,
             };
 
             paramsTimeout = {
@@ -287,17 +287,30 @@ describe("ProtocolGovernance", () => {
             );
         });
 
-        // it("deletes pending params", async () => {
-        //     await protocolGovernance.setPendingParams(paramsZero);
+        it("deletes pending params", async () => {
+            await protocolGovernance.setPendingParams(paramsZero);
 
-        //     sleep(100 * 1000);
-        //     // sleep(params.governanceDelay.toNumber());
+            sleep(100 * 1000);
 
-        //     await protocolGovernance.commitParams();
-        //     expect(
-        //         toObject(await protocolGovernance.pendingParams())
-        //     ).to.deep.equal(paramsDefault);
-        // });
+            await protocolGovernance.commitParams();
+            expect(
+                toObject(await protocolGovernance.pendingParams())
+            ).to.deep.equal(paramsDefault);
+        });
+
+        describe("when commited twice", () => {
+            it("reverts", async () => {
+                await protocolGovernance.setPendingParams(paramsZero);
+
+                sleep(100 * 1000);
+
+                await protocolGovernance.commitParams();
+
+                await expect(
+                    protocolGovernance.commitParams()
+                ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
+            });
+        });
 
         it("deletes pending params timestamp", async () => {
             timestamp += 10 ** 6;

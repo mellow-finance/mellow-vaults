@@ -101,13 +101,6 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
         },
         adminSigner: options.adminSigner,
     });
-    const vaultRegistryConstructorArgs: VaultRegistry_consturctorArgs = {
-        name: options.name,
-        symbol: options.symbol,
-        permissionless_: options.permissionless_,
-        protocolGovernance_: protocolGovernance.address,
-    };
-    console.log("ok");
     const VaultRegistryFactory: ContractFactory =
         await ethers.getContractFactory("VaultRegistry");
     let contract: VaultRegistry = await VaultRegistryFactory.deploy(
@@ -127,7 +120,7 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
         protocolTreasury: options.treasury,
         vaultRegistry: contract.address,
     });
-    await sleep(2);
+    await sleep(1);
     return {
         vaultRegistry: contract,
         protocolGovernance: protocolGovernance,
