@@ -19,6 +19,8 @@ export type ERC20VaultFactory = Contract;
 export type ProtocolGovernance = Contract;
 export type VaultGovernance = Contract;
 export type LpIssuerGovernance = Contract;
+export type GatewayVault = Contract;
+
 export type AaveVaultFactory = Contract;
 export type AaveVault = Contract;
 export type VaultRegistry = Contract;
@@ -71,7 +73,7 @@ export type UniV3Vault_constructorArgs = {
 };
 export type GatewayVault_constructorArgs = {
     vaultGovernance_: IVaultGovernance;
-    vaultToens_: ERC20[];
+    vaultTokens_: ERC20[];
     vaults_: IVault[];
 };
 

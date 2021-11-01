@@ -5,14 +5,8 @@ import "./interfaces/IVaultFactory.sol";
 import "./GatewayVault.sol";
 
 contract GatewayVaultFactory {
-    function deployVault(
-        IVaultGovernance vaultGovernance,
-        bytes calldata options
-    ) external returns (IVault) {
-        address[] memory tokens;
-        address[] memory vaults;
-        (tokens, vaults) = abi.decode(options, (address[], address[]));
-        GatewayVault gatewayVault = new GatewayVault(vaultGovernance, tokens, vaults);
+    function deployVault(IVaultGovernance vaultGovernance, address[] calldata tokens) external returns (IVault) {
+        GatewayVault gatewayVault = new GatewayVault(vaultGovernance, tokens);
         return IVault(gatewayVault);
     }
 }

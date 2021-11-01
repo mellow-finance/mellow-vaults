@@ -7,7 +7,7 @@ interface IGatewayVault is IVault {
     /// @notice Checks that vault is subvault of the IGatewayVault
     /// @param vault The vault to check
     /// @return `true` if vault is a subvault of the IGatewayVault
-    function hasVault(address vault) external returns (bool);
+    function hasSubvault(address vault) external view returns (bool);
 
     /// @notice Breakdown of tvls by subvault
     /// @return tokenAmounts Token amounts with subvault breakdown. If there are `k` subvaults then token `j`, `tokenAmounts[j]` would be a vector 1 x k - breakdown of token amount by subvaults.

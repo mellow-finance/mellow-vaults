@@ -81,45 +81,6 @@ export const deployProtocolGovernance = async (options?: {
     return contract;
 };
 
-export const deployVaultGovernanceFactory = async () => {
-    const Contract = await ethers.getContractFactory("VaultGovernanceFactory");
-    const contract = await Contract.deploy();
-    await contract.deployed();
-    return contract;
-};
-
-export const deployVaultManagerGovernance = async (options?: {
-    constructorArgs: VaultManagerGovernance_constructorArgs;
-    adminSigner?: Signer;
-}) => {
-    // defaults<
-    const adminSigner: Signer =
-        options?.adminSigner ?? (await ethers.getSigners())[0];
-    const constructorArgs: VaultManagerGovernance_constructorArgs =
-        options?.constructorArgs ?? {
-            permissionless: false,
-            protocolGovernance: (
-                await deployProtocolGovernance({ adminSigner: adminSigner })
-            ).address,
-            factory: (await deployERC20VaultFactory()).address,
-            governanceFactory: (await deployVaultGovernanceFactory()).address,
-        };
-    // />
-    const contractFactory: ContractFactory = await ethers.getContractFactory(
-        "VaultManagerGovernance"
-    );
-    const contract: VaultManagerGovernance = await contractFactory
-        .connect(adminSigner)
-        .deploy(
-            constructorArgs.permissionless,
-            constructorArgs.protocolGovernance,
-            constructorArgs.factory,
-            constructorArgs.governanceFactory
-        );
-    await contract.deployed();
-    return contract;
-};
-
 export const deployERC20VaultFactory = async () => {
     const Contract = await ethers.getContractFactory("ERC20VaultFactory");
     const contract = await Contract.deploy();
@@ -129,7 +90,6 @@ export const deployERC20VaultFactory = async () => {
 
 export const deployVaultGovernance = async (options?: {
     constructorArgs?: VaultGovernance_constructorArgs;
-    factory?: Contract;
 }) => {
     // defaults<
     const constructorArgs: VaultGovernance_constructorArgs =
@@ -281,7 +241,7 @@ export async function deployAaveVaultSystem(options: {
                     protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                     protocolExitFee: BigNumber.from(10 ** 9),
                     protocolTreasury: options.treasury,
-                    gatewayVaultManager: ethers.constants.AddressZero,
+                    vaultRegistry: ethers.constants.AddressZero,
                 },
             },
             adminSigner: options.protocolGovernanceAdmin,
@@ -357,7 +317,7 @@ export const deployERC20VaultSystem = async (options: {
                     protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                     protocolExitFee: BigNumber.from(10 ** 9),
                     protocolTreasury: options.treasury,
-                    gatewayVaultManager: ethers.constants.AddressZero,
+                    vaultRegistry: ethers.constants.AddressZero,
                 },
             },
             adminSigner: options.protocolGovernanceAdmin,
@@ -393,25 +353,6 @@ export const deployERC20VaultSystem = async (options: {
             protocolTreasury: options.treasury,
             gatewayVaultManager: gatewayVaultManager.address,
         });
-    await sleep(1);
-    await protocolGovernance
-        .connect(options.protocolGovernanceAdmin)
-        .commitParams();
-
-    let erc20VaultManager: VaultManager = await deployVaultManagerTest({
-        constructorArgs: {
-            name: options!.vaultManagerName ?? "ERC20VaultManager",
-            symbol: options!.vaultManagerSymbol ?? "E20VM",
-            factory: erc20VaultFactory.address,
-            governanceFactory: vaultGovernanceFactory.address,
-            permissionless: options!.permissionless,
-            governance: protocolGovernance.address,
-        },
-    });
-    await sleep(1);
-    await protocolGovernance
-        .connect(options.protocolGovernanceAdmin)
-        .commitParams();
 
     let vaultGovernance: VaultGovernance = await (
         await ethers.getContractFactory("VaultGovernanceOld")
