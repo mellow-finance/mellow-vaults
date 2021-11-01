@@ -27,7 +27,7 @@ contract GatewayVault is IGatewayVault, Vault {
     function initialize(uint256[] memory vaultNfts_, address strategy) external {
         require(!initialized, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft = registry.nftForVault(this);
+        uint256 nft = registry.nftForVault(address(this));
         require(nft > 0, "RGST");
         require(registry.ownerOf(nft) == msg.sender, "OW");
         _vaultNfts = vaultNfts_;
@@ -104,7 +104,7 @@ contract GatewayVault is IGatewayVault, Vault {
 
     function hasSubvault(address vault) external view override returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft = registry.nftForVault(IVault(vault));
+        uint256 nft = registry.nftForVault(vault);
         return (_vaultNftsIndex[nft] > 0 || _vaultNfts[0] == nft);
     }
 
