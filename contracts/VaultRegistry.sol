@@ -34,8 +34,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     constructor (
         string memory name,
         string memory symbol,
-        IProtocolGovernance protocolGovernance_,
-        bool permissionless_
+        bool permissionless_,
+        IProtocolGovernance protocolGovernance_
     ) ERC721(name, symbol) {
         _protocolGovernance = protocolGovernance_;
         _permissionless = permissionless_;

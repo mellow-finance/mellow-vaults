@@ -2,10 +2,14 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { ContractFactory, Contract, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
-import { deployProtocolGovernance } from "./library/Deployments";
+import { 
+    deployProtocolGovernance,
+    deployVaultRegistryAndProtocolGovernance
+ } from "./library/Deployments";
 import { ProtocolGovernance_Params } from "./library/Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
+import { Address } from "hardhat-deploy/dist/types";
 
 describe("ProtocolGovernance", () => {
     let ProtocolGovernance: ContractFactory;
@@ -35,6 +39,19 @@ describe("ProtocolGovernance", () => {
         timeShift = 10 ** 10;
         timestamp = now() + timeShift;
 
+        const { vaultRegistry, protocolGovernance } =
+        await deployVaultRegistryAndProtocolGovernance({
+            name: "kek",
+            symbol: "kek",
+            permissionless: true,
+            adminSigner: deployer,
+            treasury:
+            (await protocolTreasury.getAddress()),
+            vaultRegistry: "0",
+        });
+
+        sleep(100 * 1000);
+
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
 
@@ -45,7 +62,7 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress(),
+                vaultRegistry: vaultRegistry.address,
             };
             paramsZero = {
                 maxTokensPerVault: BigNumber.from(1),
@@ -54,7 +71,7 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress(),
+                vaultRegistry: vaultRegistry.address,
             };
 
             paramsEmpty = {
@@ -64,7 +81,7 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress(),
+                vaultRegistry: vaultRegistry.address,
             };
 
             paramsDefault = {
@@ -74,7 +91,7 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(0),
                 protocolExitFee: BigNumber.from(0),
                 protocolTreasury: ethers.constants.AddressZero,
-                gatewayVaultManager: ethers.constants.AddressZero,
+                vaultRegistry: vaultRegistry.address,
             };
 
             paramsTimeout = {
@@ -84,12 +101,17 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: await gatewayVault.getAddress(),
-                gatewayVaultManager: await protocolTreasury.getAddress(),
+                vaultRegistry: vaultRegistry.address,
             };
+
+            console.log(vaultRegistry);
 
             return await deployProtocolGovernance({
                 constructorArgs: {
                     admin: await deployer.getAddress(),
+                },
+                initializerArgs: {
+                    params: params
                 },
                 adminSigner: deployer,
             });
@@ -160,11 +182,11 @@ describe("ProtocolGovernance", () => {
                 );
             });
 
-            it("has gateway vault manager", async () => {
-                expect(
-                    await protocolGovernance.gatewayVaultManager()
-                ).to.be.equal(paramsDefault.gatewayVaultManager);
-            });
+            // it("has gateway vault manager", async () => {
+            //     expect(
+            //         await protocolGovernance.gatewayVaultManager()
+            //     ).to.be.equal(paramsDefault.gatewayVaultManager);
+            // });
         });
     });
 
@@ -229,7 +251,8 @@ describe("ProtocolGovernance", () => {
                 it("reverts", async () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
 
-                    sleep(params.governanceDelay.toNumber());
+                    sleep(100 * 1000);
+                    // sleep(params.governanceDelay.toNumber());
 
                     await protocolGovernance.commitParams();
 
@@ -244,7 +267,8 @@ describe("ProtocolGovernance", () => {
                 it("reverts", async () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
 
-                    sleep(params.governanceDelay.toNumber());
+                    sleep(100 * 1000);
+                    // sleep(params.governanceDelay.toNumber());
 
                     await protocolGovernance.commitParams();
 
@@ -262,7 +286,8 @@ describe("ProtocolGovernance", () => {
             it("reverts", async () => {
                 await protocolGovernance.setPendingParams(paramsEmpty);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await expect(
                     protocolGovernance.commitParams()
@@ -273,7 +298,8 @@ describe("ProtocolGovernance", () => {
         it("commits params", async () => {
             await protocolGovernance.setPendingParams(paramsZero);
 
-            sleep(params.governanceDelay.toNumber());
+            sleep(100 * 1000);
+            // sleep(params.governanceDelay.toNumber());
 
             await protocolGovernance.commitParams();
             expect(toObject(await protocolGovernance.params())).to.deep.equal(
@@ -284,7 +310,8 @@ describe("ProtocolGovernance", () => {
         it("deletes pending params", async () => {
             await protocolGovernance.setPendingParams(paramsZero);
 
-            sleep(params.governanceDelay.toNumber());
+            sleep(100 * 1000);
+            // sleep(params.governanceDelay.toNumber());
 
             await protocolGovernance.commitParams();
             expect(
@@ -384,7 +411,8 @@ describe("ProtocolGovernance", () => {
             it("appends", async () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
                     []
@@ -398,7 +426,8 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(),
                 ]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
@@ -413,7 +442,8 @@ describe("ProtocolGovernance", () => {
                     deployer.getAddress(),
                 ]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
 
@@ -422,7 +452,8 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress(),
                 ]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
 
@@ -486,7 +517,8 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress(),
                 ]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
@@ -506,7 +538,8 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress(),
                 ]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
@@ -533,8 +566,8 @@ describe("ProtocolGovernance", () => {
                     user1.getAddress(),
                     user2.getAddress(),
                 ]);
-
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
@@ -565,7 +598,8 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress(),
                 ]);
 
-                sleep(params.governanceDelay.toNumber());
+                sleep(100 * 1000);
+                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
