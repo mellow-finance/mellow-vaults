@@ -98,8 +98,8 @@ export type VaultRegistry_VaultKind = {
 export type VaultRegistry_consturctorArgs = {
     name: string;
     symbol: string;
-    permissionless: boolean;
-    protocolGovernance: IProtocolGovernance;
+    permissionless_: boolean;
+    protocolGovernance_: IProtocolGovernance;
 };
 export type VaultRegistry_registerVault = {
     vaultKind: BigNumberish;

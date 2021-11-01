@@ -91,37 +91,31 @@ export const deployERC20VaultFactory = async () => {
 export const deployVaultRegistryAndProtocolGovernance = async (options: {
     name: string;
     symbol: string;
-    permissionless: boolean;
+    permissionless_: boolean;
     adminSigner: Signer;
     treasury: Address;
-    vaultRegistry: Address;
 }) => {
     const protocolGovernance = await deployProtocolGovernance({
         constructorArgs: {
             admin: await options.adminSigner.getAddress(),
         },
-        initializerArgs: {
-        params: {
-            maxTokensPerVault: BigNumber.from(10),
-            governanceDelay: BigNumber.from(1),
-    
-            strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-            protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-            protocolExitFee: BigNumber.from(10 ** 9),
-            protocolTreasury: options.treasury,
-            vaultRegistry: options.vaultRegistry,
-        },
-    },
         adminSigner: options.adminSigner,
     });
-    const VaultRegistryFactory: ContractFactory =
-        await ethers.getContractFactory("VaultRegistry");
-    let contract: VaultRegistry = await VaultRegistryFactory.deploy({
+    const vaultRegistryConstructorArgs: VaultRegistry_consturctorArgs = {
         name: options.name,
         symbol: options.symbol,
-        permissionless: options.permissionless,
-        protocolGovernance: protocolGovernance.address,
-    });
+        permissionless_: options.permissionless_,
+        protocolGovernance_: protocolGovernance.address,
+    };
+    console.log("ok");
+    const VaultRegistryFactory: ContractFactory =
+        await ethers.getContractFactory("VaultRegistry");
+    let contract: VaultRegistry = await VaultRegistryFactory.deploy(
+        options.name,
+        options.symbol,
+        options.permissionless_,
+        protocolGovernance.address
+    );
     await contract.deployed();
     await protocolGovernance.setPendingParams({
         maxTokensPerVault: BigNumber.from(10),
@@ -148,14 +142,13 @@ export const deployVaultGovernance = async (options?: {
     // defaults<
     const { vaultRegistry, protocolGovernance } =
         await deployVaultRegistryAndProtocolGovernance({
-            name: "kek",
-            symbol: "kek",
-            permissionless: true,
+            name: "VaultRegistry",
+            symbol: "MVR",
+            permissionless_: true,
             adminSigner: options!.adminSigner,
             treasury:
                 options?.treasury ??
                 (await (await ethers.getSigners())[0].getAddress()),
-            vaultRegistry: "0",
         });
     const constructorArgs: VaultGovernance_constructorArgs =
         options?.constructorArgs ?? {
@@ -167,7 +160,7 @@ export const deployVaultGovernance = async (options?: {
     // />
     let contract: Contract;
     const Contract = await ethers.getContractFactory("VaultGovernance");
-    contract = await Contract.deploy(constructorArgs);
+    contract = await Contract.deploy(constructorArgs.params);
     await contract.deployed();
     return contract;
 };
