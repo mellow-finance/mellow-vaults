@@ -27,7 +27,7 @@ jobs:
         id: stats
         run: |
           git fetch --all
-          export _GIT_SINCE=$(date -d "last monday" +%Y-%m-%d)
+          export _GIT_SINCE=$(date -d "last sunday" +%Y-%m-%d)
           export _GIT_LOG_OPTIONS="--no-merges --all"
           STATS=$(git-quick-stats -T)
           echo "STATS<<EOF" >> $GITHUB_ENV

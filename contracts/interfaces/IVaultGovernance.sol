@@ -4,14 +4,18 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IProtocolGovernance.sol";
 import "./IVaultRegistry.sol";
+import "./IVaultFactory.sol";
+import "./IVault.sol";
 
 interface IVaultGovernance {
     /// @notice Internal references of the contract
     /// @param protocolGovernance Reference to Protocol Governance
     /// @param registry Reference to Vault Registry
+    /// @param factory Factory for new vaults
     struct InternalParams {
         IProtocolGovernance protocolGovernance;
         IVaultRegistry registry;
+        IVaultFactory factory;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -38,6 +42,16 @@ interface IVaultGovernance {
     function strategyTreasury(uint256 nft) external view returns (address);
 
     // -------------------  PUBLIC, MUTATING  -------------------
+
+    /// @notice Deploy a new vault
+    /// @param vaultTokens ERC20 tokens under vault management
+    /// @param options Reserved additional deploy options. Should be 0x0.
+    /// @param owner Owner of the registry vault nft
+    function deployVault(
+        address[] memory vaultTokens,
+        bytes memory options,
+        address owner
+    ) external returns (IVault vault);
 
     /// @notice Stage new Internal Params
     /// @param newParams New Internal Params
