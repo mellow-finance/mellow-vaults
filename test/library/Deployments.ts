@@ -91,7 +91,6 @@ export const deployERC20VaultFactory = async () => {
 export const deployVaultRegistryAndProtocolGovernance = async (options: {
     name: string;
     symbol: string;
-    permissionless_: boolean;
     adminSigner: Signer;
     treasury: Address;
 }) => {
@@ -106,7 +105,6 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
     let contract: VaultRegistry = await VaultRegistryFactory.deploy(
         options.name,
         options.symbol,
-        options.permissionless_,
         protocolGovernance.address
     );
     await contract.deployed();
@@ -137,7 +135,6 @@ export const deployVaultGovernance = async (options?: {
         await deployVaultRegistryAndProtocolGovernance({
             name: "VaultRegistry",
             symbol: "MVR",
-            permissionless_: true,
             adminSigner: options!.adminSigner,
             treasury:
                 options?.treasury ??

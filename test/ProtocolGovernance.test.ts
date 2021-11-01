@@ -46,12 +46,12 @@ describe("ProtocolGovernance", () => {
                 await deployVaultRegistryAndProtocolGovernance({
                     name: "VaultRegistry",
                     symbol: "MVR",
-                    permissionless_: true,
                     adminSigner: deployer,
                     treasury: await protocolTreasury.getAddress(),
                 });
 
             params = {
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(1),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
@@ -61,6 +61,7 @@ describe("ProtocolGovernance", () => {
                 vaultRegistry: vaultRegistry.address,
             };
             paramsZero = {
+                permissionless: false,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(0),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
@@ -71,6 +72,7 @@ describe("ProtocolGovernance", () => {
             };
 
             paramsEmpty = {
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
@@ -81,6 +83,7 @@ describe("ProtocolGovernance", () => {
             };
 
             paramsDefault = {
+                permissionless: false,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
                 strategyPerformanceFee: BigNumber.from(0),
@@ -91,6 +94,7 @@ describe("ProtocolGovernance", () => {
             };
 
             paramsTimeout = {
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(timeout),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),

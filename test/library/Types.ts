@@ -30,6 +30,7 @@ export type UniV3VaultGovernance = Contract;
 export type GatewayVaultGovernance = Contract;
 
 export type ProtocolGovernance_Params = {
+    permissionless: boolean;
     maxTokensPerVault: BigNumberish;
     governanceDelay: BigNumberish;
     strategyPerformanceFee: BigNumberish;
