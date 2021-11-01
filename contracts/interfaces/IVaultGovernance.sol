@@ -47,11 +47,13 @@ interface IVaultGovernance {
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Reserved additional deploy options. Should be 0x0.
     /// @param owner Owner of the registry vault nft
+    /// @return vault Address of the new vault
+    /// @return nft Nft of the vault in the vault registry
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,
         address owner
-    ) external returns (IVault vault);
+    ) external returns (IVault vault, uint256 nft);
 
     /// @notice Stage new Internal Params
     /// @param newParams New Internal Params

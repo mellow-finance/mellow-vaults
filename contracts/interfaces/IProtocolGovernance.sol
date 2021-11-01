@@ -45,7 +45,10 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Check if address is a registered vault governance
     function isVaultGovernance(address addr) external view returns (bool);
 
-    /// @notice Max different token addresses that could be managed by the protocol
+    /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault
+    function permissionless() external view returns (bool);
+
+    /// @notice Max different ERC-20 token addresses that could be managed by the protocol
     function maxTokensPerVault() external view returns (uint256);
 
     /// @notice The delay for committing any governance params

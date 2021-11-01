@@ -22,4 +22,9 @@ interface IGatewayVault is IVault {
     /// @param vaultNum The number of the subvault in the subvaults array.
     /// @return An array of token amounts (earnings) in the same order as vaultTokens.
     function vaultEarnings(uint256 vaultNum) external view returns (uint256[] memory);
+
+    /// @notice Adds subvaults nfts to vault
+    /// @dev Can be called only once
+    /// @param nfts Subvault nfts to add
+    function addSubvaults(uint256[] memory nfts) external;
 }

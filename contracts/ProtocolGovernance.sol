@@ -66,6 +66,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
+    function permissionless() external view returns (bool) {
+        return params.permissionless;
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function maxTokensPerVault() external view returns (uint256) {
         return params.maxTokensPerVault;
     }

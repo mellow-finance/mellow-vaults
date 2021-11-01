@@ -11,7 +11,7 @@ contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _vaultNfts;
     mapping(uint256 => uint256) private _vaultNftsIndex;
-    bool initialized;
+    bool public subvaultsInitialized;
 
     /// @notice Creates a new contract
     /// @dev All subvault nfts must be owned by this vault before
@@ -20,24 +20,6 @@ contract GatewayVault is IGatewayVault, Vault {
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
         Vault(vaultGovernance_, vaultTokens_)
     {}
-
-    /// @notice Build and fixes the structure of subvaults
-    /// @param vaultNfts_ nfts of the subvaults
-    /// @param strategy address of the strategy contract (or strategist external account if the strategy is manual)
-    function initialize(uint256[] memory vaultNfts_, address strategy) external {
-        require(!initialized, "INIT");
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft = registry.nftForVault(address(this));
-        require(nft > 0, "RGST");
-        require(registry.ownerOf(nft) == msg.sender, "OW");
-        _vaultNfts = vaultNfts_;
-        for (uint256 i = 0; i < _vaultNfts.length; i++) {
-            require(registry.ownerOf(_vaultNfts[i]) == address(this), "OWT");
-            registry.approve(strategy, _vaultNfts[i]);
-            _vaultNftsIndex[_vaultNfts[i]] = i;
-        }
-        initialized = true;
-    }
 
     /// @inheritdoc Vault
     function tvl() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
@@ -70,6 +52,7 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
+    /// @inheritdoc IGatewayVault
     function vaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         IVault vault = IVault(registry.vaultForNft(_vaultNfts[vaultNum]));
@@ -78,6 +61,7 @@ contract GatewayVault is IGatewayVault, Vault {
         return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
     }
 
+    /// @inheritdoc IGatewayVault
     function vaultsTvl() public view override returns (uint256[][] memory tokenAmounts) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory tokens = _vaultTokens;
@@ -94,6 +78,7 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
+    /// @inheritdoc IGatewayVault
     function vaultEarnings(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         IVault vault = IVault(registry.vaultForNft(_vaultNfts[vaultNum]));
@@ -102,10 +87,23 @@ contract GatewayVault is IGatewayVault, Vault {
         return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
     }
 
+    /// @inheritdoc IGatewayVault
     function hasSubvault(address vault) external view override returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 nft = registry.nftForVault(vault);
         return (_vaultNftsIndex[nft] > 0 || _vaultNfts[0] == nft);
+    }
+
+    /// @inheritdoc IGatewayVault
+    function addSubvaults(uint256[] memory nfts) external {
+        require(msg.sender == address(_vaultGovernance), "RVG");
+        require(!subvaultsInitialized, "SBIN");
+        for (uint256 i = 0; i < nfts.length; i++) {
+            require(nfts[i] > 0, "NFT0");
+            _vaultNfts.push(nfts[i]);
+            _vaultNftsIndex[nfts[i]] = i;
+        }
+        subvaultsInitialized = true;
     }
 
     function _push(
