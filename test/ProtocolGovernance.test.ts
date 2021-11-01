@@ -2,10 +2,10 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { ContractFactory, Contract, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
-import { 
+import {
     deployProtocolGovernance,
-    deployVaultRegistryAndProtocolGovernance
- } from "./library/Deployments";
+    deployVaultRegistryAndProtocolGovernance,
+} from "./library/Deployments";
 import { ProtocolGovernance_Params } from "./library/Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
@@ -39,82 +39,72 @@ describe("ProtocolGovernance", () => {
         timeShift = 10 ** 10;
         timestamp = now() + timeShift;
 
-        const { vaultRegistry, protocolGovernance } =
-        await deployVaultRegistryAndProtocolGovernance({
-            name: "kek",
-            symbol: "kek",
-            permissionless: true,
-            adminSigner: deployer,
-            treasury:
-            (await protocolTreasury.getAddress()),
-            vaultRegistry: "0",
-        });
-
-        sleep(100 * 1000);
-
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
 
+            const { vaultRegistry, protocolGovernance } =
+                await deployVaultRegistryAndProtocolGovernance({
+                    name: "VaultRegistry",
+                    symbol: "MVR",
+                    adminSigner: deployer,
+                    treasury: await protocolTreasury.getAddress(),
+                });
+
             params = {
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(1),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await gatewayVault.getAddress(),
+                protocolTreasury: await protocolTreasury.getAddress(),
                 vaultRegistry: vaultRegistry.address,
             };
             paramsZero = {
+                permissionless: false,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(0),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await gatewayVault.getAddress(),
-                vaultRegistry: vaultRegistry.address,
+                protocolTreasury: ethers.constants.AddressZero,
+                vaultRegistry: ethers.constants.AddressZero,
             };
 
             paramsEmpty = {
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await gatewayVault.getAddress(),
+                protocolTreasury: ethers.constants.AddressZero,
                 vaultRegistry: vaultRegistry.address,
             };
 
             paramsDefault = {
+                permissionless: false,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
                 strategyPerformanceFee: BigNumber.from(0),
                 protocolPerformanceFee: BigNumber.from(0),
                 protocolExitFee: BigNumber.from(0),
                 protocolTreasury: ethers.constants.AddressZero,
-                vaultRegistry: vaultRegistry.address,
+                vaultRegistry: ethers.constants.AddressZero,
             };
 
             paramsTimeout = {
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(timeout),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await gatewayVault.getAddress(),
+                protocolTreasury: await user1.getAddress(),
                 vaultRegistry: vaultRegistry.address,
             };
 
-            console.log(vaultRegistry);
-
-            return await deployProtocolGovernance({
-                constructorArgs: {
-                    admin: await deployer.getAddress(),
-                },
-                initializerArgs: {
-                    params: params
-                },
-                adminSigner: deployer,
-            });
+            return protocolGovernance;
         });
     });
 
@@ -181,12 +171,6 @@ describe("ProtocolGovernance", () => {
                     paramsDefault.protocolTreasury
                 );
             });
-
-            // it("has gateway vault manager", async () => {
-            //     expect(
-            //         await protocolGovernance.gatewayVaultManager()
-            //     ).to.be.equal(paramsDefault.gatewayVaultManager);
-            // });
         });
     });
 
@@ -311,12 +295,25 @@ describe("ProtocolGovernance", () => {
             await protocolGovernance.setPendingParams(paramsZero);
 
             sleep(100 * 1000);
-            // sleep(params.governanceDelay.toNumber());
 
             await protocolGovernance.commitParams();
             expect(
                 toObject(await protocolGovernance.pendingParams())
             ).to.deep.equal(paramsDefault);
+        });
+
+        describe("when commited twice", () => {
+            it("reverts", async () => {
+                await protocolGovernance.setPendingParams(paramsZero);
+
+                sleep(100 * 1000);
+
+                await protocolGovernance.commitParams();
+
+                await expect(
+                    protocolGovernance.commitParams()
+                ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
+            });
         });
 
         it("deletes pending params timestamp", async () => {
