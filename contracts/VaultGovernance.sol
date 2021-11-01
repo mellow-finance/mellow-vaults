@@ -63,6 +63,15 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     // -------------------  PUBLIC, MUTATING  -------------------
 
+    function deployVault(
+        address[] memory vaultTokens,
+        bytes memory options,
+        address owner
+    ) external virtual returns (IVault vault) {
+        vault = _internalParams.factory.deployVault(vaultTokens, options);
+        _internalParams.registry.registerVault(address(vault), owner);
+    }
+
     /// @inheritdoc IVaultGovernance
     function stageInternalParams(InternalParams memory newParams) external {
         _requireProtocolAdmin();
