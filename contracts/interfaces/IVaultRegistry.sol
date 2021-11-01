@@ -23,19 +23,19 @@ interface IVaultRegistry is IERC721 {
     /// @return nft Nft minted for the given Vault
     function registerVault(address vault, address owner) external returns (uint256 nft);
 
-    /// @return Number of Vaults registered
+    /// @notice Number of Vaults registered
     function vaultsCount() external view returns (uint256);
 
-    /// @return Number of Vaults registered
+    /// @notice All Vaults registered
     function vaults() external view returns (address[] memory);
 
-    /// @return Address of the ProtocolGovernance
+    /// @notice Address of the ProtocolGovernance
     function protocolGovernance() external view returns (IProtocolGovernance);
 
-    /// @return Address of the staged ProtocolGovernance
+    /// @notice Address of the staged ProtocolGovernance
     function stagedProtocolGovernance() external view returns (IProtocolGovernance);
 
-    /// @return Minimal timestamp when staged ProtocolGovernance can be applied
+    /// @notice Minimal timestamp when staged ProtocolGovernance can be applied
     function stagedProtocolGovernanceTimestamp() external view returns (uint256);
 
     /// @notice Stage new ProtocolGovernance
