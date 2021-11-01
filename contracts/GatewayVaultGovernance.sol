@@ -39,6 +39,12 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         return delayedStrategyParams(nft).strategyTreasury;
     }
 
+    /// @notice Deploy a new vault
+    /// @param vaultTokens ERC20 tokens under vault management
+    /// @param options Abi encoded uint256[] - an array of Nfts of subvaults. It is required that each nft subvault is approved by the caller to this address.
+    /// @param strategy Strategy that will be approved to manage subvaults
+    /// @return vault Address of the new vault
+    /// @return nft Nft of the vault in the vault registry
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,

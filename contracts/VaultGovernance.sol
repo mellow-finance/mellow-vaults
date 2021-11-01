@@ -63,6 +63,7 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     // -------------------  PUBLIC, MUTATING  -------------------
 
+    /// @inheritdoc IVaultGovernance
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,
