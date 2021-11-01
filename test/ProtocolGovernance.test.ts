@@ -2,10 +2,10 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { ContractFactory, Contract, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
-import { 
+import {
     deployProtocolGovernance,
-    deployVaultRegistryAndProtocolGovernance
- } from "./library/Deployments";
+    deployVaultRegistryAndProtocolGovernance,
+} from "./library/Deployments";
 import { ProtocolGovernance_Params } from "./library/Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
@@ -42,15 +42,14 @@ describe("ProtocolGovernance", () => {
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
 
-            const { vaultRegistry, protocolGovernance } = 
-            await deployVaultRegistryAndProtocolGovernance({
-                name: "VaultRegistry",
-                symbol: "MVR",
-                permissionless_: true,
-                adminSigner: deployer,
-                treasury:
-                (await protocolTreasury.getAddress()),
-            });
+            const { vaultRegistry, protocolGovernance } =
+                await deployVaultRegistryAndProtocolGovernance({
+                    name: "VaultRegistry",
+                    symbol: "MVR",
+                    permissionless_: true,
+                    adminSigner: deployer,
+                    treasury: await protocolTreasury.getAddress(),
+                });
 
             params = {
                 maxTokensPerVault: BigNumber.from(1),
