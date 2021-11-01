@@ -3,9 +3,10 @@ pragma solidity 0.8.9;
 
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
+import "./interfaces/IGatewayVault.sol";
 import "./VaultGovernance.sol";
 
-contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
+contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
@@ -33,8 +34,24 @@ contract GatewayVaultGovernance is IGatewayVaultGovernance, VaultGovernance {
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
+    /// @inheritdoc IVaultGovernance
     function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
         return delayedStrategyParams(nft).strategyTreasury;
+    }
+
+    function deployVault(
+        address[] memory vaultTokens,
+        bytes memory options,
+        address strategy
+    ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
+        (vault, nft) = super.deployVault(vaultTokens, "", msg.sender);
+        uint256[] memory subvaultNfts = abi.decode(options, (uint256[]));
+        IVaultRegistry registry = _internalParams.registry;
+        for (uint256 i = 0; i < subvaultNfts.length; i++) {
+            registry.transferFrom(msg.sender, address(this), subvaultNfts[i]);
+            registry.approve(strategy, subvaultNfts[i]);
+        }
+        IGatewayVault(address(vault)).addSubvaults(subvaultNfts);
     }
 
     /// @inheritdoc IGatewayVaultGovernance
