@@ -97,21 +97,6 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
     vaultRegistry: Address;
 }) => {
     const protocolGovernance = await deployProtocolGovernance({
-        constructorArgs: {
-            admin: await options.adminSigner.getAddress(),
-        },
-        initializerArgs: {
-        params: {
-            maxTokensPerVault: BigNumber.from(10),
-            governanceDelay: BigNumber.from(1),
-    
-            strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-            protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-            protocolExitFee: BigNumber.from(10 ** 9),
-            protocolTreasury: options.treasury,
-            vaultRegistry: options.vaultRegistry,
-        },
-    },
         adminSigner: options.adminSigner,
     });
     const VaultRegistryFactory: ContractFactory =
