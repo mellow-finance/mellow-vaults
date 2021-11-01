@@ -53,11 +53,11 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         (vault, nft) = super.deployVault(vaultTokens, "", msg.sender);
         uint256[] memory subvaultNfts = abi.decode(options, (uint256[]));
         IVaultRegistry registry = _internalParams.registry;
+        IGatewayVault(address(vault)).addSubvaults(subvaultNfts);
         for (uint256 i = 0; i < subvaultNfts.length; i++) {
             registry.transferFrom(msg.sender, address(this), subvaultNfts[i]);
             registry.approve(strategy, subvaultNfts[i]);
         }
-        IGatewayVault(address(vault)).addSubvaults(subvaultNfts);
     }
 
     /// @inheritdoc IGatewayVaultGovernance
