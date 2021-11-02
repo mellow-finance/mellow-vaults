@@ -19,6 +19,7 @@ import {
     VaultFactory,
     VaultType,
     VaultGovernance_InternalParams,
+    IVaultGovernance,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 
@@ -60,8 +61,12 @@ export const deployProtocolGovernance = async (options: {
             admin: await options.adminSigner.getAddress(),
         };
     // />
-    const contractFactory: ContractFactory = await ethers.getContractFactory("ProtocolGovernance");
-    const contract: ProtocolGovernance = await contractFactory.deploy(constructorArgs.admin);
+    const contractFactory: ContractFactory = await ethers.getContractFactory(
+        "ProtocolGovernance"
+    );
+    const contract: ProtocolGovernance = await contractFactory.deploy(
+        constructorArgs.admin
+    );
 
     if (options?.initializerArgs) {
         await contract
@@ -108,10 +113,13 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
 };
 
 export async function deployVaultFactory(options: {
+    vaultGovernance: IVaultGovernance;
     vaultType: VaultType;
 }): Promise<VaultFactory> {
-    const Contract = await ethers.getContractFactory(`${options.vaultType}VaultFactory`);
-    const contract = await Contract.deploy();
+    const Contract = await ethers.getContractFactory(
+        `${options.vaultType}VaultFactory`
+    );
+    const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
 }
 
@@ -122,7 +130,9 @@ export const deployVaultGovernance = async (options: {
     vaultType: VaultType;
 }) => {
     let contract: Contract;
-    const Contract = await ethers.getContractFactory(`${options.vaultType}VaultGovernance`);
+    const Contract = await ethers.getContractFactory(
+        `${options.vaultType}VaultGovernance`
+    );
     contract = await Contract.deploy(options.constructorArgs.params);
     await contract.deployed();
     return contract;
@@ -139,31 +149,38 @@ export async function deployVaultGovernanceSystem(options: {
     vaultGovernance: VaultGovernance;
 }> {
     const { vaultRegistry, protocolGovernance } =
-    await deployVaultRegistryAndProtocolGovernance({
-        name: "VaultRegistry",
-        symbol: "MVR",
-        adminSigner: options.adminSigner,
-        treasury: options.treasury,
-    });
-    const vaultFactory = await deployVaultFactory({
-        vaultType: options.vaultType,
-    });
-    const params: VaultGovernance_InternalParams = {
+        await deployVaultRegistryAndProtocolGovernance({
+            name: "VaultRegistry",
+            symbol: "MVR",
+            adminSigner: options.adminSigner,
+            treasury: options.treasury,
+        });
+    let params: VaultGovernance_InternalParams = {
         protocolGovernance: protocolGovernance.address,
         registry: vaultRegistry.address,
-        factory: vaultFactory.address,
-    }
+        factory: ethers.constants.AddressZero,
+    };
     const contractFactory: ContractFactory = await ethers.getContractFactory(
         `${options.vaultType}VaultGovernance`
     );
     const vaultGovernance = await contractFactory.deploy(params);
     await vaultGovernance.deployed();
+    const vaultFactory = await deployVaultFactory({
+        vaultType: options.vaultType,
+        vaultGovernance: vaultGovernance.address,
+    });
+    params.factory = vaultFactory.address;
+    await vaultGovernance
+        .connect(options.adminSigner)
+        .stageInternalParams(params);
+    await sleep(1);
+    await vaultGovernance.connect(options.adminSigner).commitInternalParams();
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,
         protocolGovernance: protocolGovernance,
         vaultGovernance: vaultGovernance,
-    }
+    };
 }
 
 export async function deployCommonLibrary(): Promise<Contract> {
@@ -171,7 +188,7 @@ export async function deployCommonLibrary(): Promise<Contract> {
     const library: Contract = await Library.deploy();
     await library.deployed();
     return library;
-};
+}
 
 export async function deployCommonLibraryTest(): Promise<Contract> {
     const CommonTest: ContractFactory = await ethers.getContractFactory(
@@ -180,7 +197,7 @@ export async function deployCommonLibraryTest(): Promise<Contract> {
     const commonTest: Contract = await CommonTest.deploy();
     await commonTest.deployed();
     return commonTest;
-};
+}
 
 export const deployLpIssuerGovernance = async (options: {
     constructorArgs?: LpIssuerGovernance_constructorArgs;
@@ -203,6 +220,7 @@ export const deployLpIssuerGovernance = async (options: {
 };
 
 export async function deployERC20VaultSystem(options: {
+    tokensCount: number;
     adminSigner: Signer;
     treasury: Address;
     vaultOwner: Address;
@@ -211,34 +229,47 @@ export async function deployERC20VaultSystem(options: {
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     vaultGovernance: VaultGovernance;
+    tokens: ERC20[];
     vault: ERC20Vault;
     nft: number;
 }> {
-    const {
-        vaultRegistry,
-        protocolGovernance,
-        vaultFactory,
-        vaultGovernance, 
-    } = await deployVaultGovernanceSystem({
-        adminSigner: options.adminSigner,
-        treasury: options.treasury,
-        vaultType: "ERC20" as VaultType,
-    });
-    const vaultTokens: ERC20[] = sortContractsByAddresses(await deployERC20Tokens(2));
-    const {
-        vault: ERC20Vault,
-        nft: number
-    } = await vaultGovernance.callStatic.deployVault(
+    const { vaultRegistry, protocolGovernance, vaultFactory, vaultGovernance } =
+        await deployVaultGovernanceSystem({
+            adminSigner: options.adminSigner,
+            treasury: options.treasury,
+            vaultType: "ERC20" as VaultType,
+        });
+    const vaultTokens: ERC20[] = sortContractsByAddresses(
+        await deployERC20Tokens(options.tokensCount)
+    );
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .setPendingVaultGovernancesAdd([vaultGovernance.address]);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .commitVaultGovernancesAdd();
+    const { vault, nft } = await vaultGovernance.callStatic.deployVault(
         vaultTokens.map((token) => token.address),
         [],
-        options.vaultOwner,
+        options.vaultOwner
+    );
+    await vaultGovernance.deployVault(
+        vaultTokens.map((token) => token.address),
+        [],
+        options.vaultOwner
+    );
+    const vaultContract: ERC20Vault = await ethers.getContractAt(
+        "ERC20Vault",
+        vault
     );
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,
         protocolGovernance: protocolGovernance,
         vaultGovernance: vaultGovernance,
-        vault: ERC20Vault,
-        nft: number,
-    }
-};
+        tokens: vaultTokens,
+        vault: vaultContract,
+        nft: nft,
+    };
+}
