@@ -121,4 +121,8 @@ export type ERC20Test_constructorArgs = {
     symbol: string;
 };
 
-export type VaultType = "ERC20Vault" | "AaveVault" | "UniV3Vault" | "GatewayVault";
+export type VaultType =
+    | "ERC20Vault"
+    | "AaveVault"
+    | "UniV3Vault"
+    | "GatewayVault";
