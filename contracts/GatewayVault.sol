@@ -115,6 +115,7 @@ contract GatewayVault is IGatewayVault, Vault {
         bool optimized,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        require(_subvaultNfts.length > 0, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[] memory totalTvl = new uint256[](_vaultTokens.length);
@@ -164,6 +165,7 @@ contract GatewayVault is IGatewayVault, Vault {
         bool optimized,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        require(_subvaultNfts.length > 0, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
@@ -205,6 +207,7 @@ contract GatewayVault is IGatewayVault, Vault {
         override
         returns (uint256[] memory collectedEarnings)
     {
+        require(_subvaultNfts.length > 0, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory tokens = _vaultTokens;
         collectedEarnings = new uint256[](tokens.length);
@@ -226,6 +229,7 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     function _collectFees(uint256[] memory collectedEarnings) internal returns (uint256[] memory collectedFees) {
+        require(_subvaultNfts.length > 0, "INIT");
         address[] memory tokens = _vaultTokens;
         collectedFees = new uint256[](tokens.length);
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
