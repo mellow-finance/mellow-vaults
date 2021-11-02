@@ -53,21 +53,21 @@ contract LpIssuer is ILpIssuer, ERC20 {
         bytes memory options
     ) external {
         require(_subvaultNft > 0, "INIT");
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            IERC20(_tokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
         }
         uint256[] memory tvl = _subvault().tvl();
-        uint256[] memory actualTokenAmounts = _subvault().push(_tokens, tokenAmounts, optimized, options);
+        uint256[] memory actualTokenAmounts = _subvault().push(_vaultTokens, tokenAmounts, optimized, options);
         uint256 amountToMint;
         if (totalSupply() == 0) {
-            for (uint256 i = 0; i < _tokens.length; i++) {
+            for (uint256 i = 0; i < _vaultTokens.length; i++) {
                 // TODO: check if there could be smth better
                 if (actualTokenAmounts[i] > amountToMint) {
                     amountToMint = actualTokenAmounts[i]; // some number correlated to invested assets volume
                 }
             }
         }
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (tvl[i] > 0) {
                 uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
@@ -77,15 +77,19 @@ contract LpIssuer is ILpIssuer, ERC20 {
                 }
             }
             if (tokenAmounts[i] > actualTokenAmounts[i]) {
-                IERC20(_tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+                IERC20(_vaultTokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
             }
         }
-        require(amountToMint + balanceOf(msg.sender) <= _limitPerAddress, "LPA");
+        require(
+            amountToMint + balanceOf(msg.sender) <=
+                ILpIssuerVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
+            "LPA"
+        );
         if (amountToMint > 0) {
             _mint(msg.sender, amountToMint);
         }
 
-        emit Deposit(msg.sender, _tokens, actualTokenAmounts, amountToMint);
+        emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, amountToMint);
     }
 
     /// @notice Withdraw tokens from LpIssuer
@@ -102,33 +106,35 @@ contract LpIssuer is ILpIssuer, ERC20 {
     ) external {
         require(_subvaultNft > 0, "INIT");
         require(totalSupply() > 0, "TS");
-        uint256[] memory tokenAmounts = new uint256[](_tokens.length);
+        uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         uint256[] memory tvl = _subvault().tvl();
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
         uint256[] memory actualTokenAmounts = _subvault().pull(
             address(this),
-            _tokens,
+            _vaultTokens,
             tokenAmounts,
             optimized,
             options
         );
-        uint256 protocolExitFee = governanceParams().protocolGovernance.protocolExitFee();
-        address protocolTreasury = governanceParams().protocolGovernance.protocolTreasury();
-        uint256[] memory exitFees = new uint256[](_tokens.length);
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        // TODO: Move exit fees to gateway vault
+        uint256 protocolExitFee = protocolGovernance.protocolExitFee();
+        address protocolTreasury = protocolGovernance.protocolTreasury();
+        uint256[] memory exitFees = new uint256[](_vaultTokens.length);
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
             exitFees[i] = (actualTokenAmounts[i] * protocolExitFee) / Common.DENOMINATOR;
             actualTokenAmounts[i] -= exitFees[i];
-            IERC20(_tokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
-            IERC20(_tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
+            IERC20(_vaultTokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
+            IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
-        emit Withdraw(msg.sender, _tokens, actualTokenAmounts, lpTokenAmount);
-        emit ExitFeeCollected(msg.sender, protocolTreasury, _tokens, exitFees);
+        emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
+        emit ExitFeeCollected(msg.sender, protocolTreasury, _vaultTokens, exitFees);
     }
 
     /// @inheritdoc ILpIssuer
@@ -139,8 +145,13 @@ contract LpIssuer is ILpIssuer, ERC20 {
         _subvaultNft = nft;
     }
 
-    function _subvault() internal returns (IVault) {
-        return _vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft);
+    function _subvault() internal view returns (IVault) {
+        return IVault(_vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft));
+    }
+
+    function _selfNft() internal view returns (uint256) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        return registry.nftForVault(address(this));
     }
 
     event Deposit(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);
