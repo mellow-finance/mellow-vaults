@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { BigNumber, Contract, ContractFactory } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { encodeToBytes, toObject } from "./library/Helpers";
 
 describe("TestEncoding", () => {
