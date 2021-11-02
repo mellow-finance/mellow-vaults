@@ -249,18 +249,20 @@ export async function deployERC20VaultSystem(options: {
     await protocolGovernance
         .connect(options.adminSigner)
         .commitVaultGovernancesAdd();
-    const { vault, nft } =
-        await vaultGovernance.callStatic.deployVault(
-            vaultTokens.map((token) => token.address),
-            [],
-            options.vaultOwner
-        );
+    const { vault, nft } = await vaultGovernance.callStatic.deployVault(
+        vaultTokens.map((token) => token.address),
+        [],
+        options.vaultOwner
+    );
     await vaultGovernance.deployVault(
         vaultTokens.map((token) => token.address),
         [],
         options.vaultOwner
     );
-    const vaultContract: ERC20Vault = await ethers.getContractAt("ERC20Vault", vault);
+    const vaultContract: ERC20Vault = await ethers.getContractAt(
+        "ERC20Vault",
+        vault
+    );
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,

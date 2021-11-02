@@ -373,10 +373,7 @@ describe("ERC20Vault", function () {
             describe("when destination is not a contract address", () => {
                 it("reverts", async () => {
                     await expect(
-                        vault.collectEarnings(
-                            await deployer.getAddress(),
-                            []
-                        )
+                        vault.collectEarnings(await deployer.getAddress(), [])
                     ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
                 });
             });
