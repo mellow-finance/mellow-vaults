@@ -179,20 +179,24 @@ describe("ProtocolGovernance", () => {
             describe("when called once", () => {
                 it("sets the params", async () => {
                     await protocolGovernance.setPendingParams(params);
-                    
+
                     expect(
-                        toObject(await protocolGovernance.functions.pendingParams())
+                        toObject(
+                            await protocolGovernance.functions.pendingParams()
+                        )
                     ).to.deep.equal(params);
                 });
             });
 
             describe("when called twice", () => {
-                it("sets the params", async () => {      
+                it("sets the params", async () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
                     await protocolGovernance.setPendingParams(paramsZero);
-                    
+
                     expect(
-                        toObject(await protocolGovernance.functions.pendingParams())
+                        toObject(
+                            await protocolGovernance.functions.pendingParams()
+                        )
                     ).to.deep.equal(paramsZero);
                 });
             });
