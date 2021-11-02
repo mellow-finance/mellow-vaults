@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, getNamedAccounts } from "hardhat";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 
@@ -163,7 +163,28 @@ export async function deployVaultGovernanceSystem(options: {
     const contractFactory: ContractFactory = await ethers.getContractFactory(
         `${options.vaultType}VaultGovernance`
     );
-    const vaultGovernance = await contractFactory.deploy(params);
+    let vaultGovernance: VaultGovernance;
+    switch (options.vaultType) {
+        case "Aave" as VaultType: {
+            const { aaveLendingPool } = await getNamedAccounts();
+            vaultGovernance = await contractFactory.deploy(params, {
+                lendingPool: aaveLendingPool,
+            });
+            break;
+        }
+        case "UniV3" as VaultType: {
+            const { uniswapV3PositionManager } = await getNamedAccounts();
+            vaultGovernance = await contractFactory.deploy(params, {
+                positionManager: uniswapV3PositionManager,
+            });
+            break;
+        }
+        default: {
+            /// TODO: UniV3, Gateway
+            vaultGovernance = await contractFactory.deploy(params);
+            break;
+        }
+    }
     await vaultGovernance.deployed();
     const vaultFactory = await deployVaultFactory({
         vaultType: options.vaultType,
