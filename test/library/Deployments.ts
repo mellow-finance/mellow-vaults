@@ -89,10 +89,10 @@ export const deployERC20VaultFactory = async () => {
 };
 
 export const deployVaultRegistry = async (options: {
-    name: string,
-    symbol: string,
-    permissionless: boolean,
-    protocolGovernance: ProtocolGovernance
+    name: string;
+    symbol: string;
+    permissionless: boolean;
+    protocolGovernance: ProtocolGovernance;
 }) => {
     const VaultRegistryFactory: ContractFactory =
         await ethers.getContractFactory("VaultRegistry");
@@ -124,7 +124,7 @@ const deployVaultRegistryAndProtocolGovernance = async (options: {
         options.name,
         options.symbol,
         options.permissionless,
-        protocolGovernance.address 
+        protocolGovernance.address
     );
     await contract.deployed();
     await protocolGovernance.setPendingParams({
