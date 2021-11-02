@@ -178,9 +178,8 @@ describe("ProtocolGovernance", () => {
         it("sets the params", () => {
             describe("when called once", () => {
                 it("sets the params", async () => {
-                    console.log(1);
                     await protocolGovernance.setPendingParams(params);
-                    console.log(1);
+                    
                     expect(
                         toObject(await protocolGovernance.functions.pendingParams())
                     ).to.deep.equal(params);
