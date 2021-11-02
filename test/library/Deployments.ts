@@ -95,7 +95,7 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
         protocolGovernance.address
     );
     await contract.deployed();
-    await protocolGovernance.setPendingParams({
+    await protocolGovernance.connect(options.adminSigner).setPendingParams({
         maxTokensPerVault: BigNumber.from(10),
         governanceDelay: BigNumber.from(1),
 
