@@ -119,12 +119,4 @@ contract AaveVault is Vault {
     function _lendingPool() internal view returns (ILendingPool) {
         return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
-
-    function _getATokens() internal view returns (address[] memory) {
-        return _aTokens;
-    }
-
-    function _getBaseBalances() internal view returns (uint256[] memory) {
-        return _baseBalances;
-    }
 }

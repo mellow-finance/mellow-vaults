@@ -241,7 +241,6 @@ describe("ProtocolGovernance", () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
 
                     sleep(100 * 1000);
-                    // sleep(params.governanceDelay.toNumber());
 
                     await protocolGovernance.commitParams();
 
@@ -257,7 +256,6 @@ describe("ProtocolGovernance", () => {
                     await protocolGovernance.setPendingParams(paramsTimeout);
 
                     sleep(100 * 1000);
-                    // sleep(params.governanceDelay.toNumber());
 
                     await protocolGovernance.commitParams();
 
@@ -276,8 +274,7 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.setPendingParams(paramsEmpty);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
-
+            
                 await expect(
                     protocolGovernance.commitParams()
                 ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
@@ -288,7 +285,6 @@ describe("ProtocolGovernance", () => {
             await protocolGovernance.setPendingParams(paramsZero);
 
             sleep(100 * 1000);
-            // sleep(params.governanceDelay.toNumber());
 
             await protocolGovernance.commitParams();
             expect(toObject(await protocolGovernance.params())).to.deep.equal(
@@ -414,7 +410,7 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
+                
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
                     []
@@ -429,7 +425,6 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
@@ -445,8 +440,7 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
-
+            
                 await protocolGovernance.commitClaimAllowlistAdd();
 
                 await protocolGovernance.setPendingClaimAllowlistAdd([
@@ -455,7 +449,6 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
 
@@ -520,7 +513,6 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
@@ -541,7 +533,6 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
@@ -569,7 +560,6 @@ describe("ProtocolGovernance", () => {
                     user2.getAddress(),
                 ]);
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
@@ -601,7 +591,6 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-                // sleep(params.governanceDelay.toNumber());
 
                 await protocolGovernance.commitClaimAllowlistAdd();
                 await protocolGovernance.removeFromClaimAllowlist(
