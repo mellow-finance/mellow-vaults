@@ -19,6 +19,7 @@ import {
     VaultFactory,
     VaultType,
     VaultGovernance_InternalParams,
+    IVaultGovernance,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 
@@ -112,12 +113,13 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
 };
 
 export async function deployVaultFactory(options: {
+    vaultGovernance: IVaultGovernance;
     vaultType: VaultType;
 }): Promise<VaultFactory> {
     const Contract = await ethers.getContractFactory(
         `${options.vaultType}VaultFactory`
     );
-    const contract = await Contract.deploy();
+    const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
 }
 
@@ -153,19 +155,26 @@ export async function deployVaultGovernanceSystem(options: {
             adminSigner: options.adminSigner,
             treasury: options.treasury,
         });
-    const vaultFactory = await deployVaultFactory({
-        vaultType: options.vaultType,
-    });
-    const params: VaultGovernance_InternalParams = {
+    let params: VaultGovernance_InternalParams = {
         protocolGovernance: protocolGovernance.address,
         registry: vaultRegistry.address,
-        factory: vaultFactory.address,
+        factory: ethers.constants.AddressZero,
     };
     const contractFactory: ContractFactory = await ethers.getContractFactory(
         `${options.vaultType}VaultGovernance`
     );
     const vaultGovernance = await contractFactory.deploy(params);
     await vaultGovernance.deployed();
+    const vaultFactory = await deployVaultFactory({
+        vaultType: options.vaultType,
+        vaultGovernance: vaultGovernance.address,
+    });
+    params.factory = vaultFactory.address;
+    await vaultGovernance
+        .connect(options.adminSigner)
+        .stageInternalParams(params);
+    await sleep(1);
+    await vaultGovernance.connect(options.adminSigner).commitInternalParams();
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,
@@ -220,6 +229,7 @@ export async function deployERC20VaultSystem(options: {
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     vaultGovernance: VaultGovernance;
+    tokens: ERC20[];
     vault: ERC20Vault;
     nft: number;
 }> {
@@ -232,18 +242,32 @@ export async function deployERC20VaultSystem(options: {
     const vaultTokens: ERC20[] = sortContractsByAddresses(
         await deployERC20Tokens(options.tokensCount)
     );
-    const { vault: ERC20Vault, nft: number } =
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .setPendingVaultGovernancesAdd([vaultGovernance.address]);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .commitVaultGovernancesAdd();
+    const { vault, nft } =
         await vaultGovernance.callStatic.deployVault(
             vaultTokens.map((token) => token.address),
             [],
             options.vaultOwner
         );
+    await vaultGovernance.deployVault(
+        vaultTokens.map((token) => token.address),
+        [],
+        options.vaultOwner
+    );
+    const vaultContract: ERC20Vault = await ethers.getContractAt("ERC20Vault", vault);
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,
         protocolGovernance: protocolGovernance,
         vaultGovernance: vaultGovernance,
-        vault: ERC20Vault,
-        nft: number,
+        tokens: vaultTokens,
+        vault: vaultContract,
+        nft: nft,
     };
 }
