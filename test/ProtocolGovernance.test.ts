@@ -274,7 +274,7 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.setPendingParams(paramsEmpty);
 
                 sleep(100 * 1000);
-            
+
                 await expect(
                     protocolGovernance.commitParams()
                 ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
@@ -410,7 +410,7 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.setPendingClaimAllowlistAdd([]);
 
                 sleep(100 * 1000);
-                
+
                 await protocolGovernance.commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
                     []
@@ -440,7 +440,7 @@ describe("ProtocolGovernance", () => {
                 ]);
 
                 sleep(100 * 1000);
-            
+
                 await protocolGovernance.commitClaimAllowlistAdd();
 
                 await protocolGovernance.setPendingClaimAllowlistAdd([
