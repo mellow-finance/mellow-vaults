@@ -4,7 +4,6 @@ import { Signer } from "@ethersproject/abstract-signer";
 
 import { sleep, sortContractsByAddresses } from "./Helpers";
 import {
-    Address,
     ERC20,
     ERC20Vault,
     ProtocolGovernance,
@@ -22,6 +21,7 @@ import {
     IVaultGovernance,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
+import { Address } from "hardhat-deploy/dist/types";
 
 export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
     let tokens: ERC20[] = [];
@@ -121,7 +121,7 @@ export async function deployVaultFactory(options: {
     );
     const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
-}
+};
 
 export const deployVaultGovernance = async (options: {
     constructorArgs: VaultGovernance_constructorArgs;

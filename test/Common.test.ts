@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
 
-import { Address } from "./library/Types";
+import { Address } from "hardhat-deploy/dist/types";
 import { deployCommonLibraryTest } from "./library/Deployments";
 
 describe("Common", () => {

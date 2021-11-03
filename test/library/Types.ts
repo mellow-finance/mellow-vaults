@@ -1,8 +1,7 @@
 import { BytesLike } from "@ethersproject/bytes";
 import { Contract } from "@ethersproject/contracts";
 import { BigNumberish } from "@ethersproject/bignumber";
-
-export type Address = string;
+import { Address } from "hardhat-deploy/dist/types";
 
 export type IERC20 = Address;
 export type IVaultFactory = Address;
