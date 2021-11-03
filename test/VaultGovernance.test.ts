@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { BigNumber, Signer } from "ethers";
-import { before } from "mocha";
 import Exceptions from "./library/Exceptions";
 import {
     encodeToBytes,
