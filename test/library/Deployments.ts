@@ -204,6 +204,68 @@ export async function deployVaultGovernanceSystem(options: {
     };
 }
 
+export async function deployTestVaultGovernance(options: {
+    adminSigner: Signer;
+    treasury: Address;
+    vaultType: VaultType;
+}): Promise<{
+    vaultFactory: VaultFactory;
+    vaultRegistry: VaultRegistry;
+    protocolGovernance: ProtocolGovernance;
+    vaultGovernance: VaultGovernance;
+}> {
+    const { vaultRegistry, protocolGovernance } =
+        await deployVaultRegistryAndProtocolGovernance({
+            name: "VaultRegistry",
+            symbol: "MVR",
+            adminSigner: options.adminSigner,
+            treasury: options.treasury,
+        });
+    let contractFactory: ContractFactory = await ethers.getContractFactory(
+        "TestVaultGovernance"
+    );
+    let contract = await contractFactory.deploy({
+        protocolGovernance: protocolGovernance.address,
+        registry: vaultRegistry.address,
+        factory: ethers.constants.AddressZero,
+    });
+
+    let vaultFactory = await deployVaultFactory({
+        vaultGovernance: contract.address,
+        vaultType: "ERC20",
+    });
+
+    await contract.stageInternalParams({
+        protocolGovernance: protocolGovernance.address,
+        registry: vaultRegistry.address,
+        factory: vaultFactory.address,
+    });
+
+    await contract.commitInternalParams();
+
+    return {
+        vaultFactory: vaultFactory,
+        vaultRegistry: vaultRegistry,
+        protocolGovernance: protocolGovernance,
+        vaultGovernance: contract,
+    };
+}
+
+export async function deployVaultRegistry(options: {
+    name: string;
+    symbol: string;
+    protocolGovernance: ProtocolGovernance;
+}): Promise<Contract> {
+    let Contract = await ethers.getContractFactory("VaultRegistry");
+    let contract = await Contract.deploy(
+        options.name,
+        options.symbol,
+        options.protocolGovernance.address
+    );
+    await contract.deployed();
+    return contract;
+}
+
 export async function deployCommonLibrary(): Promise<Contract> {
     const Library: ContractFactory = await ethers.getContractFactory("Common");
     const library: Contract = await Library.deploy();

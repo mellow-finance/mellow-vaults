@@ -19,6 +19,7 @@ export type ProtocolGovernance = Contract;
 export type VaultGovernance = Contract;
 export type LpIssuerGovernance = Contract;
 export type GatewayVault = Contract;
+export type TestVaultGovernance = Contract;
 
 export type VaultFactory = Contract;
 export type Vault = Contract;
@@ -121,8 +122,4 @@ export type ERC20Test_constructorArgs = {
     symbol: string;
 };
 
-export type VaultType =
-    | "ERC20Vault"
-    | "AaveVault"
-    | "UniV3Vault"
-    | "GatewayVault";
+export type VaultType = "ERC20" | "Aave" | "UniV3" | "Gateway";
