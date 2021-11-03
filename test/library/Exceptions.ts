@@ -14,5 +14,6 @@ export default class Exceptions {
         "ERC20: transfer amount exceeds balance";
     static readonly VALID_PULL_DESTINATION: string = "INTRA";
     static readonly CONTRACT_REQUIRED: string = "C";
+    static readonly SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE: string = "VG";
 }
 // TODO: Remove outdated exceptions
