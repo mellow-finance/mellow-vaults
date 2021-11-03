@@ -1,64 +1,53 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-// import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-// import "./DefaultAccessControl.sol";
 import "./libraries/Common.sol";
 
 import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/ILpIssuerGovernance.sol";
+import "./interfaces/ILpIssuerVaultGovernance.sol";
+import "./interfaces/ILpIssuer.sol";
+import "./VaultGovernance.sol";
 
-contract LpIssuerGovernance is ILpIssuerGovernance {
-    GovernanceParams private _governanceParams;
-    GovernanceParams private _pendingGovernanceParams;
-    uint256 private _pendingGovernanceParamsTimestamp;
-
+contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract
-    /// @param params params for this governance
-    constructor(GovernanceParams memory params) {
-        _governanceParams = params;
+    /// @param internalParams_ Initial Internal Params
+    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
+
+    /// @inheritdoc IVaultGovernance
+    function strategyTreasury(uint256) external pure override(IVaultGovernance, VaultGovernance) returns (address) {
+        return address(0);
     }
 
-    // -------------------  PUBLIC, VIEW  -------------------
-
-    /// @inheritdoc ILpIssuerGovernance
-    function governanceParams() public view returns (GovernanceParams memory) {
-        return _governanceParams;
+    /// @notice Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance immediately
+    /// @param nft Nft of the vault
+    function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
+        return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
-    /// @inheritdoc ILpIssuerGovernance
-    function pendingGovernanceParams() external view returns (GovernanceParams memory) {
-        return _pendingGovernanceParams;
+    /// @notice Stage Strategy Params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
-    /// @inheritdoc ILpIssuerGovernance
-    function pendingGovernanceParamsTimestamp() external view returns (uint256) {
-        return _pendingGovernanceParamsTimestamp;
-    }
+    /// @notice Deploy a new vault
+    /// @param vaultTokens ERC20 tokens under vault management
+    /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault.
+    /// @return vault Address of the new vault
+    /// @return nft Nft of the vault in the vault registry
 
-    // -------------------  PUBLIC, PROTOCOL ADMIN  -------------------
-
-    /// @inheritdoc ILpIssuerGovernance
-    function setPendingGovernanceParams(GovernanceParams calldata newGovernanceParams) external {
-        require(_isProtocolAdmin(), "ADM");
-        require(address(newGovernanceParams.protocolGovernance) != address(0), "ZMG");
-        _pendingGovernanceParams = newGovernanceParams;
-        _pendingGovernanceParamsTimestamp = block.timestamp + _governanceParams.protocolGovernance.governanceDelay();
-        emit SetPendingGovernanceParams(newGovernanceParams);
-    }
-
-    /// @inheritdoc ILpIssuerGovernance
-    function commitGovernanceParams() external {
-        require(_isProtocolAdmin(), "ADM");
-        require(_pendingGovernanceParamsTimestamp > 0, "NULL");
-        require(block.timestamp > _pendingGovernanceParamsTimestamp, "TS");
-        _governanceParams = _pendingGovernanceParams;
-        emit CommitGovernanceParams(_governanceParams);
-    }
-
-    // -------------------  PRIVATE, VIEW  -------------------
-
-    function _isProtocolAdmin() internal view returns (bool) {
-        return _governanceParams.protocolGovernance.isAdmin(msg.sender);
+    function deployVault(
+        address[] memory vaultTokens,
+        bytes memory options,
+        address
+    ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
+        (vault, nft) = super.deployVault(vaultTokens, "", msg.sender);
+        uint256 subvaultNft = abi.decode(options, (uint256));
+        // TODO - add IERC165 check of the subvault interface == gateway vault interface
+        IVaultRegistry registry = _internalParams.registry;
+        ILpIssuer(address(vault)).addSubvault(subvaultNft);
+        registry.transferFrom(msg.sender, address(this), subvaultNft);
     }
 }

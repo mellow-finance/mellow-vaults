@@ -6,45 +6,40 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IProtocolGovernance.sol";
+import "./interfaces/ILpIssuer.sol";
 import "./DefaultAccessControl.sol";
 import "./LpIssuerGovernance.sol";
 
-contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
+contract LpIssuer is ILpIssuer, ERC20 {
     using SafeERC20 for IERC20;
-
-    GovernanceParams private _governanceParams;
-    uint256 private _limitPerAddress;
-    address[] private _tokens;
+    uint256 private _subvaultNft;
+    IVaultGovernance internal _vaultGovernance;
+    address[] internal _vaultTokens;
+    mapping(address => bool) internal _vaultTokensIndex;
 
     /// @notice Creates a new contract
+    /// @dev All subvault nfts must be owned by this vault before
+    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
+    /// @param vaultTokens_ ERC20 tokens under Vault management
     /// @param name_ Name of the ERC-721 token
     /// @param symbol_ Symbol of the ERC-721 token
-    /// @param gatewayVault Reference to Gateway Vault
-    /// @param limitPerAddress Max amount of LP token per address
-    /// @param admin Admin of the Issuer
     constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
         string memory name_,
-        string memory symbol_,
-        IVault gatewayVault,
-        IProtocolGovernance protocolGovernance,
-        uint256 limitPerAddress,
-        address admin,
-        address[] memory tokens
-    )
-        ERC20(name_, symbol_)
-        DefaultAccessControl(admin)
-        LpIssuerGovernance(GovernanceParams({protocolGovernance: protocolGovernance, gatewayVault: gatewayVault}))
-    {
-        _governanceParams = GovernanceParams({gatewayVault: gatewayVault, protocolGovernance: protocolGovernance});
-        _limitPerAddress = limitPerAddress;
-        _tokens = tokens;
+        string memory symbol_
+    ) ERC20(name_, symbol_) {
+        require(Common.isSortedAndUnique(vaultTokens_), "SAU");
+        _vaultGovernance = vaultGovernance_;
+        _vaultTokens = vaultTokens_;
+        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+            _vaultTokensIndex[vaultTokens_[i]] = true;
+        }
     }
 
-    /// @notice Set new LP token limit per address
-    /// @param newLimitPerAddress - new value for limit per address
-    function setLimit(uint256 newLimitPerAddress) external {
-        require(isAdmin(msg.sender), "ADM");
-        _limitPerAddress = newLimitPerAddress;
+    /// @inheritdoc ILpIssuer
+    function subvaultNft() external view returns (uint256) {
+        return _subvaultNft;
     }
 
     /// @notice Deposit tokens into LpIssuer
@@ -57,26 +52,22 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         bool optimized,
         bytes memory options
     ) external {
-        for (uint256 i = 0; i < _tokens.length; i++) {
-            IERC20(_tokens[i]).safeTransferFrom(msg.sender, address(governanceParams().gatewayVault), tokenAmounts[i]);
+        require(_subvaultNft > 0, "INIT");
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
         }
-        uint256[] memory tvl = governanceParams().gatewayVault.tvl();
-        uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.push(
-            _tokens,
-            tokenAmounts,
-            optimized,
-            options
-        );
+        uint256[] memory tvl = _subvault().tvl();
+        uint256[] memory actualTokenAmounts = _subvault().push(_vaultTokens, tokenAmounts, optimized, options);
         uint256 amountToMint;
         if (totalSupply() == 0) {
-            for (uint256 i = 0; i < _tokens.length; i++) {
+            for (uint256 i = 0; i < _vaultTokens.length; i++) {
                 // TODO: check if there could be smth better
                 if (actualTokenAmounts[i] > amountToMint) {
                     amountToMint = actualTokenAmounts[i]; // some number correlated to invested assets volume
                 }
             }
         }
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (tvl[i] > 0) {
                 uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
@@ -86,15 +77,19 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
                 }
             }
             if (tokenAmounts[i] > actualTokenAmounts[i]) {
-                IERC20(_tokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
+                IERC20(_vaultTokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
             }
         }
-        require(amountToMint + balanceOf(msg.sender) <= _limitPerAddress, "LPA");
+        require(
+            amountToMint + balanceOf(msg.sender) <=
+                ILpIssuerVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
+            "LPA"
+        );
         if (amountToMint > 0) {
             _mint(msg.sender, amountToMint);
         }
 
-        emit Deposit(msg.sender, _tokens, actualTokenAmounts, amountToMint);
+        emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, amountToMint);
     }
 
     /// @notice Withdraw tokens from LpIssuer
@@ -109,34 +104,54 @@ contract LpIssuer is ERC20, DefaultAccessControl, LpIssuerGovernance {
         bool optimized,
         bytes memory options
     ) external {
+        require(_subvaultNft > 0, "INIT");
         require(totalSupply() > 0, "TS");
-        uint256[] memory tokenAmounts = new uint256[](_tokens.length);
-        uint256[] memory tvl = governanceParams().gatewayVault.tvl();
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
+        uint256[] memory tvl = _subvault().tvl();
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
-        uint256[] memory actualTokenAmounts = governanceParams().gatewayVault.pull(
+        uint256[] memory actualTokenAmounts = _subvault().pull(
             address(this),
-            _tokens,
+            _vaultTokens,
             tokenAmounts,
             optimized,
             options
         );
-        uint256 protocolExitFee = governanceParams().protocolGovernance.protocolExitFee();
-        address protocolTreasury = governanceParams().protocolGovernance.protocolTreasury();
-        uint256[] memory exitFees = new uint256[](_tokens.length);
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        // TODO: Move exit fees to gateway vault
+        uint256 protocolExitFee = protocolGovernance.protocolExitFee();
+        address protocolTreasury = protocolGovernance.protocolTreasury();
+        uint256[] memory exitFees = new uint256[](_vaultTokens.length);
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
             exitFees[i] = (actualTokenAmounts[i] * protocolExitFee) / Common.DENOMINATOR;
             actualTokenAmounts[i] -= exitFees[i];
-            IERC20(_tokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
-            IERC20(_tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
+            IERC20(_vaultTokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
+            IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
-        emit Withdraw(msg.sender, _tokens, actualTokenAmounts, lpTokenAmount);
-        emit ExitFeeCollected(msg.sender, protocolTreasury, _tokens, exitFees);
+        emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
+        emit ExitFeeCollected(msg.sender, protocolTreasury, _vaultTokens, exitFees);
+    }
+
+    /// @inheritdoc ILpIssuer
+    function addSubvault(uint256 nft) external {
+        require(msg.sender == address(_vaultGovernance), "RVG");
+        require(_subvaultNft == 0, "SBIN");
+        require(nft > 0, "NFT0");
+        _subvaultNft = nft;
+    }
+
+    function _subvault() internal view returns (IVault) {
+        return IVault(_vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft));
+    }
+
+    function _selfNft() internal view returns (uint256) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        return registry.nftForVault(address(this));
     }
 
     event Deposit(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);

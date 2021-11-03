@@ -13,16 +13,20 @@ import {
 import {
     deployProtocolGovernance,
     deployTestVaultGovernance,
+    deployVaultFactory,
     deployVaultRegistry,
 } from "./library/Deployments";
 import {
+    ERC20,
+    ERC20VaultFactory_deployVault,
     ProtocolGovernance,
+    ProtocolGovernance_Params,
     TestVaultGovernance,
+    VaultFactory,
     VaultGovernance_constructorArgs,
     VaultGovernance_InternalParams,
     VaultRegistry,
 } from "./library/Types";
-import { time } from "console";
 
 describe("TestVaultGovernance", () => {
     let deploymentFixture: Function;
@@ -33,7 +37,7 @@ describe("TestVaultGovernance", () => {
     let contract: TestVaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let vaultRegistry: VaultRegistry;
-    let initialParams: VaultGovernance_InternalParams;
+    let initialParams: any;
     let emptyParams: VaultGovernance_InternalParams;
     let customParams: VaultGovernance_InternalParams;
     let timestamp: number;
@@ -41,6 +45,10 @@ describe("TestVaultGovernance", () => {
     let timeEps: number;
     let newVaultRegistry: VaultRegistry;
     let newProtocolGovernance: ProtocolGovernance;
+    let vaultFactory: VaultFactory;
+    let testVaultGovernanceSystem: any;
+    let protocolParams: ProtocolGovernance_Params;
+    let encodedParams: any;
 
     before(async () => {
         timestamp = now();
@@ -52,57 +60,75 @@ describe("TestVaultGovernance", () => {
             [deployer, stranger, treasury, newTreasury] =
                 await ethers.getSigners();
 
-            protocolGovernance = await deployProtocolGovernance({
-                adminSigner: deployer,
-            });
-            vaultRegistry = await deployVaultRegistry({
-                name: "name",
-                symbol: "sym",
-                permissionless: true,
-                protocolGovernance: protocolGovernance,
-            });
-
-            initialParams = {
-                protocolGovernance: protocolGovernance.address,
-                registry: vaultRegistry.address,
-            };
-
-            emptyParams = {
-                protocolGovernance: ethers.constants.AddressZero,
-                registry: ethers.constants.AddressZero,
-            };
-
-            newProtocolGovernance = await deployProtocolGovernance({
-                constructorArgs: {
-                    admin: await deployer.getAddress(),
-                },
-                adminSigner: deployer,
-            });
-
-            newVaultRegistry = await deployVaultRegistry({
-                name: "NAME",
-                symbol: "SYM",
-                permissionless: false,
-                protocolGovernance: newProtocolGovernance,
-            });
-
-            customParams = {
-                protocolGovernance: newProtocolGovernance.address,
-                registry: newVaultRegistry.address,
-            };
-
             return await deployTestVaultGovernance({
-                constructorArgs: {
-                    params: initialParams,
-                },
                 adminSigner: deployer,
                 treasury: await treasury.getAddress(),
+                vaultType: "ERC20",
             });
         });
     });
 
     beforeEach(async () => {
-        contract = await deploymentFixture();
+        testVaultGovernanceSystem = await deploymentFixture();
+
+        contract = testVaultGovernanceSystem.vaultGovernance;
+        vaultRegistry = testVaultGovernanceSystem.vaultRegistry;
+        vaultFactory = testVaultGovernanceSystem.vaultFactory;
+        protocolGovernance = testVaultGovernanceSystem.protocolGovernance;
+
+        initialParams = toObject(await contract.internalParams());
+
+        emptyParams = {
+            protocolGovernance: ethers.constants.AddressZero,
+            registry: ethers.constants.AddressZero,
+            factory: ethers.constants.AddressZero,
+        };
+
+        newProtocolGovernance = await deployProtocolGovernance({
+            constructorArgs: {
+                admin: await deployer.getAddress(),
+            },
+            adminSigner: deployer,
+        });
+
+        newVaultRegistry = await deployVaultRegistry({
+            name: "NAME",
+            symbol: "SYM",
+            protocolGovernance: newProtocolGovernance,
+        });
+
+        customParams = {
+            protocolGovernance: newProtocolGovernance.address,
+            registry: newVaultRegistry.address,
+            factory: ethers.constants.AddressZero,
+        };
+
+        protocolParams = {
+            permissionless: true,
+            maxTokensPerVault: BigNumber.from(2),
+            governanceDelay: BigNumber.from(1),
+            strategyPerformanceFee: BigNumber.from(10 ** 9),
+            protocolPerformanceFee: BigNumber.from(10 * 9),
+            protocolExitFee: BigNumber.from(10 ** 9),
+            protocolTreasury: await treasury.getAddress(),
+            vaultRegistry: vaultRegistry.address,
+        };
+
+        encodedParams = encodeToBytes(
+            [
+                "tuple(" +
+                    "bool permissionless, " +
+                    "uint256 maxTokensPerVault, " +
+                    "uint256 governanceDelay, " +
+                    "uint256 strategyPerformanceFee, " +
+                    "uint256 protocolPerformanceFee, " +
+                    "uint256 protocolExitFee, " +
+                    "address protocolTreasury, " +
+                    "address vaultRegistry) " +
+                    "protocolParams",
+            ],
+            [protocolParams]
+        );
     });
 
     describe("constructor", () => {
@@ -118,10 +144,10 @@ describe("TestVaultGovernance", () => {
             );
         });
 
-        it("has no staged internal params", async () => {
+        it("has initial staged internal params", async () => {
             expect(
                 toObject(await contract.stagedInternalParams())
-            ).to.deep.equal(emptyParams);
+            ).to.deep.equal(initialParams);
         });
 
         it("strategy treasury == 0x0", async () => {
@@ -200,13 +226,13 @@ describe("TestVaultGovernance", () => {
             let newVaultRegistryZero = await deployVaultRegistry({
                 name: "",
                 symbol: "",
-                permissionless: false,
                 protocolGovernance: newProtocolGovernanceZero,
             });
 
             customParamsZero = {
                 protocolGovernance: newProtocolGovernanceZero.address,
                 registry: newVaultRegistryZero.address,
+                factory: ethers.constants.AddressZero,
             };
 
             await expect(
@@ -252,7 +278,6 @@ describe("TestVaultGovernance", () => {
                 let newVaultRegistry = await deployVaultRegistry({
                     name: "",
                     symbol: "",
-                    permissionless: false,
                     protocolGovernance: newProtocolGovernance,
                 });
 
@@ -271,6 +296,7 @@ describe("TestVaultGovernance", () => {
                 customParams = {
                     protocolGovernance: newProtocolGovernance.address,
                     registry: newVaultRegistry.address,
+                    factory: ethers.constants.AddressZero,
                 };
 
                 timestamp += timeshift;
@@ -335,7 +361,7 @@ describe("TestVaultGovernance", () => {
             ).to.be.lessThanOrEqual(timeEps);
         });
 
-        describe("when not admin and not nft owner", () => {
+        describe("when called by not admin and not by nft owner", () => {
             it("reverts", async () => {
                 let params = encodeToBytes(
                     ["address"],
@@ -353,44 +379,31 @@ describe("TestVaultGovernance", () => {
         });
     });
 
-    describe("_stageDelayedStrategyParams", () => {
-        it("sets _stagedDelayedStrategyParams and _delayedStrategyParamsTimestamp", async () => {
-            let params = encodeToBytes(
-                ["address"],
-                [await newTreasury.getAddress()]
-            );
-            let nft = Math.random() * 2 ** 52;
-
+    describe("_stageDelayedProtocolParams", () => {
+        it("sets _stagedDelayedProtocolParams and _delayedProtocolParamsTimestamp", async () => {
             timestamp += timeshift;
             sleepTo(timestamp);
 
-            await contract.stageDelayedStrategyParams(nft, params);
+            await contract.stageDelayedProtocolParams(encodedParams);
 
             expect(
-                await contract.getStagedDelayedStrategyParams(nft)
-            ).to.deep.equal(params);
+                await contract.getStagedDelayedProtocolParams()
+            ).to.deep.equal(encodedParams);
 
             expect(
                 Math.abs(
-                    (await contract.getDelayedStrategyParamsTimestamp(nft)) -
+                    (await contract.getDelayedProtocolParamsTimestamp()) -
                         timestamp
                 )
             ).to.be.lessThanOrEqual(timeEps);
         });
 
-        describe("when not admin and not nft owner", () => {
+        describe("when called not by admin", () => {
             it("reverts", async () => {
-                let params = encodeToBytes(
-                    ["address"],
-                    [await newTreasury.getAddress()]
-                );
                 await expect(
                     contract
                         .connect(stranger)
-                        .stageDelayedStrategyParams(
-                            Math.random() * 2 ** 52,
-                            params
-                        )
+                        .stageDelayedProtocolParams(encodedParams)
                 ).to.be.reverted;
             });
         });
@@ -413,7 +426,7 @@ describe("TestVaultGovernance", () => {
             ).to.be.equal(BigNumber.from(0));
         });
 
-        describe("when not admin and not nft owner", () => {
+        describe("when called by not admin and not by nft owner", () => {
             it("reverts", async () => {
                 let params = encodeToBytes(
                     ["address"],
@@ -455,7 +468,6 @@ describe("TestVaultGovernance", () => {
                 let newVaultRegistry = await deployVaultRegistry({
                     name: "n",
                     symbol: "s",
-                    permissionless: false,
                     protocolGovernance: newProtocolGovernance,
                 });
 
@@ -476,6 +488,7 @@ describe("TestVaultGovernance", () => {
                 await contract.stageInternalParams({
                     protocolGovernance: newProtocolGovernance.address,
                     registry: newVaultRegistry.address,
+                    factory: vaultFactory.address,
                 });
 
                 await contract.commitInternalParams();
@@ -490,6 +503,130 @@ describe("TestVaultGovernance", () => {
                 await expect(
                     contract.commitDelayedStrategyParams(nft)
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+    });
+
+    describe("_commitDelayedProtocolParams", () => {
+        it("sets _delayedProtocolParams and deletes _delayedProtocolParamsTimestamp", async () => {
+            await contract.stageDelayedProtocolParams(encodedParams);
+            contract.commitDelayedProtocolParams();
+
+            expect(await contract.getDelayedProtocolParams()).to.be.equal(
+                encodedParams
+            );
+            expect(
+                await contract.getDelayedProtocolParamsTimestamp()
+            ).to.be.equal(BigNumber.from(0));
+        });
+
+        describe("when called by not admin", () => {
+            it("reverts", async () => {
+                await contract.stageDelayedProtocolParams(encodedParams);
+                await expect(
+                    contract.connect(stranger).commitDelayedProtocolParams()
+                ).to.be.reverted;
+            });
+        });
+
+        describe("when stageDelayedProtocolParams has not been called", () => {
+            it("reverts", async () => {
+                await expect(
+                    contract.commitDelayedProtocolParams()
+                ).to.be.revertedWith(Exceptions.NULL);
+            });
+        });
+
+        describe("when _delayedProtocolParamsTimestamp has not passed or has almost passed", () => {
+            it("reverts", async () => {
+                let newProtocolGovernance = await deployProtocolGovernance({
+                    constructorArgs: {
+                        admin: await deployer.getAddress(),
+                    },
+                    adminSigner: deployer,
+                });
+                let newVaultRegistry = await deployVaultRegistry({
+                    name: "n",
+                    symbol: "s",
+                    protocolGovernance: newProtocolGovernance,
+                });
+                await newProtocolGovernance.setPendingParams({
+                    maxTokensPerVault: BigNumber.from(2),
+                    governanceDelay: BigNumber.from(100),
+                    protocolPerformanceFee: BigNumber.from(10 ** 9),
+                    strategyPerformanceFee: BigNumber.from(10 ** 9),
+                    protocolExitFee: BigNumber.from(10 ** 9),
+                    protocolTreasury: await treasury.getAddress(),
+                    vaultRegistry: newVaultRegistry.address,
+                });
+                await newProtocolGovernance.commitParams();
+
+                timestamp += timeshift;
+                sleepTo(timestamp);
+
+                await contract.stageInternalParams({
+                    protocolGovernance: newProtocolGovernance.address,
+                    registry: newVaultRegistry.address,
+                    factory: vaultFactory.address,
+                });
+
+                // sleeps initial governance delay
+                sleep(1);
+                await contract.commitInternalParams();
+                await contract.stageDelayedProtocolParams(encodedParams);
+                await expect(
+                    contract.commitDelayedProtocolParams()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+
+                sleep(95);
+                await expect(
+                    contract.commitDelayedProtocolParams()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+    });
+
+    describe("_setStrategyParams", () => {
+        it("sets strategy params", async () => {
+            let params = encodeToBytes(
+                ["address"],
+                [await newTreasury.getAddress()]
+            );
+            let nft = Math.random() * 2 ** 52;
+
+            await contract.setStrategyParams(nft, params);
+
+            expect(await contract.getStrategyParams(nft)).to.be.equal(params);
+        });
+
+        describe("when called by not admin and not by nft owner", () => {
+            it("reverts", async () => {
+                let params = encodeToBytes(
+                    ["address"],
+                    [await newTreasury.getAddress()]
+                );
+                let nft = Math.random() * 2 ** 52;
+                await expect(
+                    contract.connect(stranger).setStrategyParams(nft, params)
+                ).to.be.reverted;
+            });
+        });
+    });
+
+    describe("_setProtocolParams", () => {
+        it("sets protocol params", async () => {
+            await contract.setProtocolParams(encodedParams);
+
+            expect(await contract.getProtocolParams()).to.be.equal(
+                encodedParams
+            );
+        });
+
+        describe("when called by not admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    contract.connect(stranger).setProtocolParams(encodedParams)
+                ).to.be.reverted;
             });
         });
     });

@@ -108,7 +108,7 @@ abstract contract Vault is IVault {
         address protocolTres = governance.protocolTreasury();
         uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
         uint256 strategyPerformanceFee = governance.strategyPerformanceFee();
-        uint256 nft = _vaultGovernance.internalParams().registry.nftForVault(this);
+        uint256 nft = _vaultGovernance.internalParams().registry.nftForVault(address(this));
         address strategyTres = _vaultGovernance.strategyTreasury(nft);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             IERC20 token = IERC20(_vaultTokens[i]);
@@ -183,13 +183,13 @@ abstract contract Vault is IVault {
             return false;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 thisNft = registry.nftForVault(this);
+        uint256 thisNft = registry.nftForVault(address(this));
         address thisOwner = registry.ownerOf(thisNft);
-        uint256 toNft = registry.nftForVault(IVault(to));
+        uint256 toNft = registry.nftForVault(to);
         address toOwner = registry.ownerOf(toNft);
         // make sure that vault is a registered vault
-        uint256 thisOwnerNft = registry.nftForVault(IVault(thisOwner));
-        uint256 toOwnerNft = registry.nftForVault(IVault(toOwner));
+        uint256 thisOwnerNft = registry.nftForVault(thisOwner);
+        uint256 toOwnerNft = registry.nftForVault(toOwner);
         if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
             return false;
         }
@@ -204,12 +204,12 @@ abstract contract Vault is IVault {
 
     function _selfNft() internal view returns (uint256) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        return registry.nftForVault(this);
+        return registry.nftForVault(address(this));
     }
 
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft = registry.nftForVault(this);
+        uint256 nft = registry.nftForVault(address(this));
         if (nft == 0) {
             return false;
         }

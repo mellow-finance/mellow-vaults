@@ -6,6 +6,7 @@ import "./IVaultRegistry.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Common protocol params
+    /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
     /// @param strategyPerformanceFee Strategy performance fee percent of the strategy (measured in 10 ** 9, i.e. you have to divide this param to this number to get the actual percentage)
@@ -14,6 +15,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param protocolTreasury The address that collect protocol fees
     /// @param gatewayVaultManager Gateway VaultManager of the protocol
     struct Params {
+        bool permissionless;
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
         uint256 strategyPerformanceFee;
@@ -31,10 +33,22 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Pending addresses to be added to claimAllowlist
     function pendingClaimAllowlistAdd() external view returns (address[] memory);
 
+    /// @notice Addresses allowed to claim liquidity mining rewards from
+    function vaultGovernances() external view returns (address[] memory);
+
+    /// @notice Pending addresses to be added to vaultGovernances
+    function pendingVaultGovernancesAdd() external view returns (address[] memory);
+
     /// @notice Check if address is allowed to claim
     function isAllowedToClaim(address addr) external view returns (bool);
 
-    /// @notice Max different token addresses that could be managed by the protocol
+    /// @notice Check if address is a registered vault governance
+    function isVaultGovernance(address addr) external view returns (bool);
+
+    /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault
+    function permissionless() external view returns (bool);
+
+    /// @notice Max different ERC-20 token addresses that could be managed by the protocol
     function maxTokensPerVault() external view returns (uint256);
 
     /// @notice The delay for committing any governance params
@@ -65,14 +79,24 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param addresses Addresses to add
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external;
 
+    /// @notice Stage addresses for vault governances
+    /// @param addresses Addresses to add
+    function setPendingVaultGovernancesAdd(address[] calldata addresses) external;
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @notice Commit pending params
     function commitParams() external;
 
-    /// @notice Commit pending allowlistAdd params
+    /// @notice Commit pending ClaimAllowlistAdd params
     function commitClaimAllowlistAdd() external;
 
-    /// @notice Remove from claim list immediately
+    /// @notice Commit pending VaultGovernancesAdd params
+    function commitVaultGovernancesAdd() external;
+
+    /// @notice Remove from claim allow list immediately
     function removeFromClaimAllowlist(address addr) external;
+
+    /// @notice Remove from vault governances immediately
+    function removeFromVaultGovernances(address addr) external;
 }

@@ -12,6 +12,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     address[] private _pendingClaimAllowlistAdd;
     uint256 public pendingClaimAllowlistAddTimestamp;
 
+    EnumerableSet.AddressSet private _vaultGovernances;
+    address[] private _pendingVaultGovernancesAdd;
+    uint256 public pendingVaultGovernancesAddTimestamp;
+
     IProtocolGovernance.Params public params;
     Params public pendingParams;
 
@@ -32,13 +36,39 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
+    function vaultGovernances() external view returns (address[] memory) {
+        // TODO: use iterable set
+        uint256 l = _vaultGovernances.length();
+        address[] memory res = new address[](l);
+        for (uint256 i = 0; i < l; i++) {
+            res[i] = _vaultGovernances.at(i);
+        }
+        return res;
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function pendingClaimAllowlistAdd() external view returns (address[] memory) {
         return _pendingClaimAllowlistAdd;
     }
 
     /// @inheritdoc IProtocolGovernance
+    function pendingVaultGovernancesAdd() external view returns (address[] memory) {
+        return _pendingVaultGovernancesAdd;
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function isAllowedToClaim(address addr) external view returns (bool) {
         return _claimAllowlist.contains(addr);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function isVaultGovernance(address addr) external view returns (bool) {
+        return _vaultGovernances.contains(addr);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function permissionless() external view returns (bool) {
+        return params.permissionless;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -95,6 +125,22 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
+    function setPendingVaultGovernancesAdd(address[] calldata addresses) external {
+        require(isAdmin(msg.sender), "ADM");
+        _pendingVaultGovernancesAdd = addresses;
+        pendingVaultGovernancesAddTimestamp = block.timestamp + params.governanceDelay;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function removeFromVaultGovernances(address addr) external {
+        require(isAdmin(msg.sender), "ADM");
+        if (!_vaultGovernances.contains(addr)) {
+            return;
+        }
+        _vaultGovernances.remove(addr);
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
         require(isAdmin(msg.sender), "ADM");
         pendingParams = newParams;
@@ -112,6 +158,20 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         }
         delete _pendingClaimAllowlistAdd;
         delete pendingClaimAllowlistAddTimestamp;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitVaultGovernancesAdd() external {
+        require(isAdmin(msg.sender), "ADM");
+        require(
+            (block.timestamp > pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
+            "TS"
+        );
+        for (uint256 i = 0; i < _pendingVaultGovernancesAdd.length; i++) {
+            _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
+        }
+        delete _pendingVaultGovernancesAdd;
+        delete pendingVaultGovernancesAddTimestamp;
     }
 
     /// @inheritdoc IProtocolGovernance

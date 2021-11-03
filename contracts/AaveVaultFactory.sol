@@ -5,9 +5,15 @@ import "./interfaces/IVaultFactory.sol";
 import "./AaveVault.sol";
 
 contract AaveVaultFactory is IVaultFactory {
-    function deployVault(IVaultGovernance vaultGovernance, bytes calldata options) 
-        external returns (IVault) {
-        address[] memory vaultTokens = abi.decode(options, (address[]));
+    IVaultGovernance public vaultGovernance;
+
+    constructor(IVaultGovernance vaultGovernance_) {
+        vaultGovernance = vaultGovernance_;
+    }
+
+    /// @inheritdoc IVaultFactory
+    function deployVault(address[] memory vaultTokens, bytes memory) external returns (IVault) {
+        require(msg.sender == address(vaultGovernance), "VG");
         AaveVault vault = new AaveVault(vaultGovernance, vaultTokens);
         return IVault(vault);
     }
