@@ -121,7 +121,7 @@ export async function deployVaultFactory(options: {
     );
     const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
-};
+}
 
 export const deployVaultGovernance = async (options: {
     constructorArgs: VaultGovernance_constructorArgs;

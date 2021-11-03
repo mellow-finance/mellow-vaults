@@ -101,16 +101,19 @@ describe("VaultRegistry", () => {
     describe("registerVault", () => {
         describe("when called by VaultGovernance", async () => {
             it("registers vault", async () => {
-                const anotherTokens = sortContractsByAddresses(await deployERC20Tokens(5));
-                const [anotherVaultAddress, anotherNft] = await vaultGovernance.callStatic.deployVault(
-                    anotherTokens.map((token) => token.address),
-                    [],
-                    await deployer.getAddress(),
+                const anotherTokens = sortContractsByAddresses(
+                    await deployERC20Tokens(5)
                 );
+                const [anotherVaultAddress, anotherNft] =
+                    await vaultGovernance.callStatic.deployVault(
+                        anotherTokens.map((token) => token.address),
+                        [],
+                        await deployer.getAddress()
+                    );
                 await vaultGovernance.deployVault(
                     anotherTokens.map((token) => token.address),
                     [],
-                    await deployer.getAddress(),
+                    await deployer.getAddress()
                 );
                 expect(await vaultRegistry.vaults()).to.deep.equal([
                     vault.address,
@@ -124,7 +127,7 @@ describe("VaultRegistry", () => {
             //         vaultRegistry.registerVault(vault.address)
             //     ).to.be.revertedWith("Vault already registered");
             // });
-    
+
             // it("throws when vault is not a vault", async () => {
             //     await expect(
             //         vaultRegistry.registerVault(vaultFactory.address)
@@ -139,10 +142,11 @@ describe("VaultRegistry", () => {
                         vaultFactory.address,
                         await stranger.getAddress()
                     )
-                ).to.be.revertedWith(Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+                ).to.be.revertedWith(
+                    Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+                );
             });
         });
-
     });
 
     describe("protocolGovernance", () => {
@@ -157,7 +161,7 @@ describe("VaultRegistry", () => {
 
     describe("vaultsCount", () => {
         it("has correct vaults count", async () => {
-
+            expect(await vaultRegistry.vaultsCount()).to.equal(1);
         });
     });
 
