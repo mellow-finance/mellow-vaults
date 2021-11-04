@@ -96,9 +96,9 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
     );
     await contract.deployed();
     await protocolGovernance.connect(options.adminSigner).setPendingParams({
+        permissionless: false,
         maxTokensPerVault: BigNumber.from(10),
         governanceDelay: BigNumber.from(1),
-
         strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
         protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
         protocolExitFee: BigNumber.from(10 ** 9),
@@ -106,6 +106,7 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
         vaultRegistry: contract.address,
     });
     await sleep(1);
+    await protocolGovernance.connect(options.adminSigner).commitParams();
     return {
         vaultRegistry: contract,
         protocolGovernance: protocolGovernance,
@@ -155,6 +156,7 @@ export async function deployVaultGovernanceSystem(options: {
             adminSigner: options.adminSigner,
             treasury: options.treasury,
         });
+
     let params: VaultGovernance_InternalParams = {
         protocolGovernance: protocolGovernance.address,
         registry: vaultRegistry.address,
@@ -221,6 +223,7 @@ export async function deployTestVaultGovernance(options: {
             adminSigner: options.adminSigner,
             treasury: options.treasury,
         });
+
     let contractFactory: ContractFactory = await ethers.getContractFactory(
         "TestVaultGovernance"
     );
@@ -241,6 +244,7 @@ export async function deployTestVaultGovernance(options: {
         factory: vaultFactory.address,
     });
 
+    await sleep(Number(await protocolGovernance.governanceDelay()));
     await contract.commitInternalParams();
 
     return {

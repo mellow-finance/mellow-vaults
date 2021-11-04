@@ -48,11 +48,13 @@ describe("TestVaultGovernance", () => {
     let testVaultGovernanceSystem: any;
     let protocolParams: ProtocolGovernance_Params;
     let encodedParams: any;
+    let defaultDelay: number;
 
     before(async () => {
         timestamp = now();
         timeshift = 10 ** 6;
         timeEps = 2;
+        defaultDelay = 10;
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
@@ -203,20 +205,6 @@ describe("TestVaultGovernance", () => {
         });
 
         it("sets params and emits StagedInternalParams", async () => {
-            // timestamp += timeshift
-            // sleepTo(timestamp);
-            // await expect(
-            //     await contract.stageInternalParams(initialParams.params)
-            // ).to.emit(contract, "StagedInternalParams").withArgs(
-            //     await deployer.getAddress(),
-            //     await deployer.getAddress(),
-            //     [
-            //         initialParams.params.protocolGovernance,
-            //         initialParams.params.registry
-            //     ],
-            //     timestamp + 1
-            // );
-
             let customParamsZero: VaultGovernance_InternalParams;
 
             let newProtocolGovernanceZero = await deployProtocolGovernance({
@@ -320,6 +308,7 @@ describe("TestVaultGovernance", () => {
 
         it("sets new params, deletes internal params timestamp, emits CommitedInternalParams", async () => {
             await contract.stageInternalParams(customParams);
+            await sleep(defaultDelay);
             await expect(contract.commitInternalParams()).to.emit(
                 contract,
                 "CommitedInternalParams"
@@ -416,6 +405,7 @@ describe("TestVaultGovernance", () => {
             );
             let nft = Math.random() * 2 ** 52;
             await contract.stageDelayedStrategyParams(nft, params);
+            await sleep(defaultDelay);
             contract.commitDelayedStrategyParams(nft);
             expect(await contract.getDelayedStrategyParams(nft)).to.be.equal(
                 params
@@ -509,6 +499,7 @@ describe("TestVaultGovernance", () => {
     describe("_commitDelayedProtocolParams", () => {
         it("sets _delayedProtocolParams and deletes _delayedProtocolParamsTimestamp", async () => {
             await contract.stageDelayedProtocolParams(encodedParams);
+            await sleep(defaultDelay);
             contract.commitDelayedProtocolParams();
 
             expect(await contract.getDelayedProtocolParams()).to.be.equal(
