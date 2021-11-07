@@ -148,8 +148,8 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     function _requireAtLeastStrategy(uint256 nft) private view {
         require(
-            (_internalParams.registry.getApproved(nft) == msg.sender) ||
-                _internalParams.protocolGovernance.isAdmin(msg.sender),
+            ( _internalParams.protocolGovernance.isAdmin(msg.sender) || 
+            _internalParams.registry.getApproved(nft) == msg.sender),
             "RST"
         );
     }
