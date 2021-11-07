@@ -96,7 +96,7 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
     );
     await contract.deployed();
     await protocolGovernance.connect(options.adminSigner).setPendingParams({
-        permissionless: false,
+        permissionless: true,
         maxTokensPerVault: BigNumber.from(10),
         governanceDelay: BigNumber.from(1),
         strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
@@ -350,6 +350,13 @@ export async function deployERC20VaultSystem(options: {
         "ERC20Vault",
         vault
     );
+    await vaultGovernance
+        .connect(options.adminSigner)
+        .stageDelayedStrategyParams(nft, [options.treasury]);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await vaultGovernance
+        .connect(options.adminSigner)
+        .commitDelayedStrategyParams(BigNumber.from(nft));
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,
