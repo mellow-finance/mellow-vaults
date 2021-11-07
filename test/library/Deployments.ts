@@ -2,7 +2,7 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 
-import { sleep, sortContractsByAddresses } from "./Helpers";
+import { sleep, sortContractsByAddresses, encodeToBytes } from "./Helpers";
 import {
     ERC20,
     ERC20Vault,
@@ -19,6 +19,7 @@ import {
     VaultType,
     VaultGovernance_InternalParams,
     IVaultGovernance,
+    Vault,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
@@ -179,6 +180,10 @@ export async function deployVaultGovernanceSystem(options: {
             vaultGovernance = await contractFactory.deploy(params, {
                 positionManager: uniswapV3PositionManager,
             });
+            break;
+        }
+        case "Gateway" as VaultType: {
+            vaultGovernance = await contractFactory.deploy(params);
             break;
         }
         default: {
@@ -367,3 +372,92 @@ export async function deployERC20VaultSystem(options: {
         nft: nft,
     };
 }
+
+export async function deployERC20VaultXVaultGovernanceSystem(options: {
+    adminSigner: Signer;
+    vaultOwnerSigner: Signer;
+    treasury: Address;
+    strategy: Address;
+}): Promise<{
+    vaultFactory: VaultFactory;
+    vaultRegistry: VaultRegistry;
+    protocolGovernance: ProtocolGovernance;
+    vaultGovernance: VaultGovernance;
+    tokens: ERC20[];
+    vault: ERC20Vault;
+    nft: number;
+    gatewayVaultGovernance: VaultGovernance;
+    gatewayVault: Vault;
+    gatewayNft: number;
+}> {
+    const {
+        vaultFactory,
+        vaultRegistry,
+        protocolGovernance,
+        vaultGovernance,
+        tokens,
+        vault,
+        nft,
+    } = await deployERC20VaultSystem({
+        tokensCount: 2,
+        adminSigner: options.adminSigner,
+        treasury: options.treasury,
+        vaultOwner: await options.vaultOwnerSigner.getAddress(),
+    });
+    let args: VaultGovernance_constructorArgs = {
+        params: {
+            protocolGovernance: protocolGovernance.address,
+            registry: vaultRegistry.address,
+            factory: ethers.constants.AddressZero,
+        }
+    };
+    const gatewayVaultGovernance = await deployVaultGovernance({
+        constructorArgs: args,
+        adminSigner: options.adminSigner,
+        treasury: options.treasury,
+        vaultType: "Gateway" as VaultType,
+    });
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .setPendingVaultGovernancesAdd([gatewayVaultGovernance.address]);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .commitVaultGovernancesAdd();
+    const gatewayVaultFactory = await deployVaultFactory({
+        vaultGovernance: gatewayVaultGovernance.address,
+        vaultType: "Gateway" as VaultType,
+    });
+    args.params.factory = gatewayVaultFactory.address;
+    await gatewayVaultGovernance
+        .connect(options.adminSigner)
+        .stageInternalParams(args.params);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await gatewayVaultGovernance.connect(options.adminSigner).commitInternalParams();
+    await vaultRegistry.approve(gatewayVaultGovernance.address, BigNumber.from(nft));
+    let gatewayVault: Vault;
+    let gatewayNft: number = 0;
+    const deployArgs = [
+        [],  // Gateway vault has no tokens
+        encodeToBytes(["uint256[]"], [[nft]]),
+        options.strategy
+    ];
+    ({ gatewayVault, gatewayNft } = await gatewayVaultGovernance.callStatic.deployVault(
+        ...deployArgs
+    ));
+    await gatewayVaultGovernance.deployVault(
+        ...deployArgs
+    );
+    return {
+        vaultFactory,
+        vaultRegistry,
+        protocolGovernance,
+        vaultGovernance,
+        tokens,
+        vault,
+        nft,
+        gatewayVaultGovernance,
+        gatewayVault,
+        gatewayNft,
+    };
+};
