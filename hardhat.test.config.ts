@@ -100,7 +100,7 @@ const config: HardhatUserConfigWithTypechain = {
         version: "0.8.9",
         settings: {
           optimizer: {
-            enabled: false,
+            enabled: true,
             details: {
               yul: true,
               yulDetails: {
