@@ -43,7 +43,8 @@ const config: HardhatUserConfigWithTypechain = {
           ]
         : undefined,
 
-      initialBaseFeePerGas: 0
+      initialBaseFeePerGas: 0,
+      allowUnlimitedContractSize: true,
     },
     localhost: {
       url: "http://localhost:8545",
@@ -100,7 +101,7 @@ const config: HardhatUserConfigWithTypechain = {
         version: "0.8.9",
         settings: {
           optimizer: {
-            enabled: true,
+            enabled: false,
             details: {
               yul: true,
               yulDetails: {
