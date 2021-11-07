@@ -44,7 +44,6 @@ describe("AaveVaultFactory", () => {
 
     describe("constructor", () => {
         it("passes", async () => {
-            console.log(deployer.provider?.getCode(vaultFactory.address));
             expect(
                 await deployer.provider?.getCode(vaultFactory.address)
             ).not.to.be.equal("0x");

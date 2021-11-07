@@ -47,7 +47,7 @@ describe("ERC20VaultGovernance", () => {
         it("passes", async () => {
             expect(
                 await deployer.provider?.getCode(vaultGovernance.address)
-            ).not.to.be.equal(0);
+            ).not.to.be.equal("0x");
         });
     });
 
