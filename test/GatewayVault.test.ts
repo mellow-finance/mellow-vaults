@@ -27,17 +27,15 @@ describe("ERC20VaultGovernance", () => {
     let deployment: Function;
 
     before(async () => {
-        [deployer, admin, stranger, treasury] =
-            await ethers.getSigners();
+        [deployer, admin, stranger, treasury] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ } =
-                await deployERC20VaultXVaultGovernanceSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultOwnerSigner: deployer,
-                    strategy: await stranger.getAddress(),
-                }));
+            ({} = await deployERC20VaultXVaultGovernanceSystem({
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+                vaultOwnerSigner: deployer,
+                strategy: await stranger.getAddress(),
+            }));
         });
     });
 
@@ -46,7 +44,6 @@ describe("ERC20VaultGovernance", () => {
     });
 
     describe("constructor", () => {
-        it("passes", async () => {
-        });
+        it("passes", async () => {});
     });
 });

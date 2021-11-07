@@ -409,7 +409,7 @@ export async function deployERC20VaultXVaultGovernanceSystem(options: {
             protocolGovernance: protocolGovernance.address,
             registry: vaultRegistry.address,
             factory: ethers.constants.AddressZero,
-        }
+        },
     };
     const gatewayVaultGovernance = await deployVaultGovernance({
         constructorArgs: args,
@@ -433,21 +433,23 @@ export async function deployERC20VaultXVaultGovernanceSystem(options: {
         .connect(options.adminSigner)
         .stageInternalParams(args.params);
     await sleep(Number(await protocolGovernance.governanceDelay()));
-    await gatewayVaultGovernance.connect(options.adminSigner).commitInternalParams();
-    await vaultRegistry.approve(gatewayVaultGovernance.address, BigNumber.from(nft));
+    await gatewayVaultGovernance
+        .connect(options.adminSigner)
+        .commitInternalParams();
+    await vaultRegistry.approve(
+        gatewayVaultGovernance.address,
+        BigNumber.from(nft)
+    );
     let gatewayVault: Vault;
     let gatewayNft: number = 0;
     const deployArgs = [
-        [],  // Gateway vault has no tokens
+        [], // Gateway vault has no tokens
         encodeToBytes(["uint256[]"], [[nft]]),
-        options.strategy
+        options.strategy,
     ];
-    ({ gatewayVault, gatewayNft } = await gatewayVaultGovernance.callStatic.deployVault(
-        ...deployArgs
-    ));
-    await gatewayVaultGovernance.deployVault(
-        ...deployArgs
-    );
+    ({ gatewayVault, gatewayNft } =
+        await gatewayVaultGovernance.callStatic.deployVault(...deployArgs));
+    await gatewayVaultGovernance.deployVault(...deployArgs);
     return {
         vaultFactory,
         vaultRegistry,
@@ -460,4 +462,4 @@ export async function deployERC20VaultXVaultGovernanceSystem(options: {
         gatewayVault,
         gatewayNft,
     };
-};
+}
