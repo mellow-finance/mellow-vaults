@@ -43,7 +43,7 @@ describe("ERC20VaultFactory", () => {
     });
 
     describe("constructor", () => {
-        it("passes", async () => {
+        it("creates ERC20VaultFactory", async () => {
             expect(
                 await deployer.provider?.getCode(vaultFactory.address)
             ).not.to.be.equal("0x");

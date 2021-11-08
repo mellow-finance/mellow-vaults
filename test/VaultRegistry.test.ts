@@ -62,17 +62,21 @@ describe("VaultRegistry", () => {
     });
 
     describe("constructor", () => {
-        it("deployes", async () => {});
+        it("creates VaultRegistry", async () => {
+            expect(
+                await deployer.provider?.getCode(vaultRegistry.address)
+            ).not.to.be.equal("0x");
+        });
     });
 
     describe("vaults", () => {
-        it("has correct vaults", async () => {
+        it("returns correct vaults", async () => {
             expect(await vaultRegistry.vaults()).to.deep.equal([vault.address]);
         });
     });
 
     describe("vaultForNft", () => {
-        it("has correct vault for existent nft", async () => {
+        it("returns correct vault for existing nft", async () => {
             expect(await vaultRegistry.vaultForNft(nft)).to.equal(
                 vault.address
             );
@@ -86,13 +90,13 @@ describe("VaultRegistry", () => {
     });
 
     describe("nftForVault", () => {
-        it("has correct vault for nft", async () => {
+        it("returns correct vault for nft", async () => {
             expect(await vaultRegistry.nftForVault(vault.address)).to.equal(
                 nft
             );
         });
 
-        it("has zero address for nonexistent nft", async () => {
+        it("returns zero address for nonexisting nft", async () => {
             expect(
                 await vaultRegistry.nftForVault(vaultFactory.address)
             ).to.equal(0);
@@ -153,7 +157,7 @@ describe("VaultRegistry", () => {
         });
 
         describe("when staged new protocolGovernance", () => {
-            it("has correct stagedProtocolGovernance", async () => {
+            it("returns correct stagedProtocolGovernance", async () => {
                 const newProtocolGovernance = await deployProtocolGovernance({
                     adminSigner: deployer,
                 });
@@ -193,7 +197,7 @@ describe("VaultRegistry", () => {
     });
 
     describe("vaultsCount", () => {
-        it("has correct vaults count", async () => {
+        it("returns correct vaults count", async () => {
             expect(await vaultRegistry.vaultsCount()).to.equal(1);
         });
     });
@@ -253,7 +257,7 @@ describe("VaultRegistry", () => {
             });
         });
 
-        it("passes", async () => {
+        it("commits staged ProtocolGovernance", async () => {
             await vaultRegistry.stageProtocolGovernance(
                 newProtocolGovernance.address
             );

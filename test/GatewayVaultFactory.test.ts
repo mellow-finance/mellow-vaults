@@ -34,7 +34,7 @@ describe("GatewayVaultFactory", () => {
     });
 
     describe("constructor", () => {
-        it("passes", async () => {
+        it("creates GatewayVaultFactory", async () => {
             expect(
                 await deployer.provider?.getCode(gatewayVaultFactory.address)
             ).not.to.be.equal("0x");

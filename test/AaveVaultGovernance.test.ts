@@ -45,7 +45,7 @@ describe("ERC20VaultGovernance", () => {
     });
 
     describe("constructor", () => {
-        it("passes", async () => {
+        it("creates AaveVaultGovernance", async () => {
             expect(
                 await deployer.provider?.getCode(vaultGovernance.address)
             ).not.to.be.equal("0x");
@@ -69,7 +69,7 @@ describe("ERC20VaultGovernance", () => {
     });
 
     describe("stageDelayedStrategyParams", () => {
-        it("passes", async () => {
+        it("stages DelayedStrategyParams", async () => {
             await vaultGovernance
                 .connect(admin)
                 .stageDelayedStrategyParams(nft, [
@@ -82,7 +82,7 @@ describe("ERC20VaultGovernance", () => {
             ).to.be.deep.equal([await anotherTreasury.getAddress()]);
         });
 
-        it("emits", async () => {
+        it("emits StageDelayedStrategyParams event", async () => {
             await expect(
                 vaultGovernance
                     .connect(admin)
@@ -117,7 +117,7 @@ describe("ERC20VaultGovernance", () => {
             );
         });
 
-        it("emits", async () => {
+        it("emits CommitDelayedStrategyParams event", async () => {
             await vaultGovernance
                 .connect(admin)
                 .stageDelayedStrategyParams(nft, [

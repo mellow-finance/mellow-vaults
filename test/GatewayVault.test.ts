@@ -46,7 +46,7 @@ describe("ERC20VaultGovernance", () => {
     });
 
     describe("constructor", () => {
-        it("passes", async () => {
+        it("creates GatewayVault", async () => {
             expect(
                 await deployer.provider?.getCode(gatewayVault.address)
             ).not.to.be.equal("0x");
