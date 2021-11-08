@@ -21,12 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // const uniV3VaultGovernance = await hre.ethers.getContract(
     //     "UniV3VaultGovernance"
     // );
-    // if (!initialized) {
-    //     log("Initializing factory...");
-    //     const factory = await get("LpIssuerVaultFactory");
-    //     const receipt = await governance.initialize(factory.address);
-    //     log(`Initialized with txHash ${receipt.hash}`);
-    // }
 };
 export default func;
 func.tags = ["LpIssuerGovernance", "Vaults"];

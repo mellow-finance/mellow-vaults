@@ -199,6 +199,7 @@ export async function deployVaultGovernanceSystem(options: {
         vaultType: options.vaultType,
         vaultGovernance: vaultGovernance.address,
     });
+    await vaultGovernance.initialize(vaultFactory.address);
     params.factory = vaultFactory.address;
     await vaultGovernance
         .connect(options.adminSigner)
