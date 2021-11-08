@@ -6,7 +6,9 @@ import "hardhat-deploy";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, log } = deployments;
-    const protocolGovernance = await get("ProtocolGovernance");
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
     await deploy("AaveVaultGovernance", {
