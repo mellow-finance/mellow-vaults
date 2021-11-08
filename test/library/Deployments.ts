@@ -448,10 +448,11 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
         encodeToBytes(["uint256[]"], [[nft]]),
         options.strategy,
     ];
-    let response = await gatewayVaultGovernance.callStatic.deployVault(...deployArgs);
+    let response = await gatewayVaultGovernance.callStatic.deployVault(
+        ...deployArgs
+    );
     gatewayVaultAddress = response.vault;
     gatewayNft = response.nft;
-    console.log(gatewayVaultAddress);
     await gatewayVaultGovernance.deployVault(...deployArgs);
     const gatewayVault: Vault = await ethers.getContractAt(
         "GatewayVault",

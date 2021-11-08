@@ -32,9 +32,7 @@ describe("ERC20VaultGovernance", () => {
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({
-                gatewayVault,
-            } = await deployERC20VaultXGatewayVaultSystem({
+            ({ gatewayVault } = await deployERC20VaultXGatewayVaultSystem({
                 adminSigner: admin,
                 treasury: await treasury.getAddress(),
                 vaultOwnerSigner: deployer,
