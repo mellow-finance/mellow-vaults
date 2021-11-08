@@ -296,12 +296,31 @@ export async function deployCommonLibraryTest(): Promise<Contract> {
 export const deployLpIssuerGovernance = async (options: {
     constructorArgs?: LpIssuerGovernance_constructorArgs;
     adminSigner?: Signer;
+    treasury?: Address;
 }) => {
     // defaults<
+
+    let deployer: Signer;
+    let treasury: Signer;
+
+    [deployer, treasury] = await ethers.getSigners();
+
+    const {
+        vaultFactory: vaultFactory,
+        vaultRegistry: vaultRegistry,
+        protocolGovernance: protocolGovernance,
+        vaultGovernance: vaultGovernance,
+    } = await deployVaultGovernanceSystem({
+        adminSigner: deployer,
+        treasury: await treasury.getAddress(),
+        vaultType: "ERC20"
+    });
+
     const constructorArgs: LpIssuerGovernance_constructorArgs =
         options.constructorArgs ?? {
-            gatewayVault: ethers.constants.AddressZero,
-            protocolGovernance: ethers.constants.AddressZero,
+            registry: vaultRegistry.address,
+            protocolGovernance: protocolGovernance.address,
+            factory: vaultFactory.address,
         };
     // />
     const Contract: ContractFactory = await ethers.getContractFactory(
@@ -310,7 +329,12 @@ export const deployLpIssuerGovernance = async (options: {
 
     let contract: LpIssuerGovernance = await Contract.deploy(constructorArgs);
     await contract.deployed();
-    return contract;
+    return {
+        LpIssuerGovernance: contract,
+        protocolGovernance: protocolGovernance,
+        vaultRegistry: vaultRegistry,
+        vaultFactory: vaultFactory
+    };
 };
 
 export async function deploySubVaultSystem(options: {

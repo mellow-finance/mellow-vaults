@@ -44,8 +44,9 @@ export type ProtocolGovernance_constructorArgs = {
 };
 
 export type LpIssuerGovernance_constructorArgs = {
-    gatewayVault: IGatewayVault;
+    registry: IVaultRegistry;
     protocolGovernance: IProtocolGovernance;
+    factory: IVaultFactory;
 };
 
 /**
