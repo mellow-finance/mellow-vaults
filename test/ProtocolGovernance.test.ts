@@ -63,7 +63,7 @@ describe("ProtocolGovernance", () => {
             };
 
             initialParams = {
-                permissionless: false,
+                permissionless: true,
                 maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(1),
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
@@ -189,7 +189,7 @@ describe("ProtocolGovernance", () => {
                 ).to.deep.equal(initialParams);
             });
 
-            it("by default permissionless == false", async () => {
+            it("by default permissionless == true", async () => {
                 expect(await protocolGovernance.permissionless()).to.be.equal(
                     initialParams.permissionless
                 );

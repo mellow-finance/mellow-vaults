@@ -12,17 +12,13 @@ import {
 import {
     deployProtocolGovernance,
     deployTestVaultGovernance,
-    deployVaultFactory,
     deployVaultRegistry,
 } from "./library/Deployments";
 import {
-    ERC20,
-    ERC20VaultFactory_deployVault,
     ProtocolGovernance,
     ProtocolGovernance_Params,
     TestVaultGovernance,
     VaultFactory,
-    VaultGovernance_constructorArgs,
     VaultGovernance_InternalParams,
     VaultRegistry,
 } from "./library/Types";

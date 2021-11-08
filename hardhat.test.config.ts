@@ -43,7 +43,8 @@ const config: HardhatUserConfigWithTypechain = {
           ]
         : undefined,
 
-      initialBaseFeePerGas: 0
+      initialBaseFeePerGas: 0,
+      allowUnlimitedContractSize: true,
     },
     localhost: {
       url: "http://localhost:8545",

@@ -13,7 +13,7 @@ import {
 import Exceptions from "./library/Exceptions";
 import { expect } from "chai";
 
-describe("ERC20VaultFactory", () => {
+describe("AaveVaultFactory", () => {
     const tokensCount = 2;
     let deployer: Signer;
     let admin: Signer;
@@ -32,7 +32,7 @@ describe("ERC20VaultFactory", () => {
                 await deployVaultGovernanceSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
-                    vaultType: "ERC20" as VaultType,
+                    vaultType: "UniV3" as VaultType,
                 }));
             tokens = await deployERC20Tokens(tokensCount);
         });
@@ -43,7 +43,7 @@ describe("ERC20VaultFactory", () => {
     });
 
     describe("constructor", () => {
-        it("creates ERC20VaultFactory", async () => {
+        it("passes", async () => {
             expect(
                 await deployer.provider?.getCode(vaultFactory.address)
             ).not.to.be.equal("0x");
