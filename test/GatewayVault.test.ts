@@ -7,7 +7,7 @@ import {
     VaultGovernance,
     ProtocolGovernance,
 } from "./library/Types";
-import { deployERC20VaultXVaultGovernanceSystem } from "./library/Deployments";
+import { deployERC20VaultXGatewayVaultSystem } from "./library/Deployments";
 
 describe("ERC20VaultGovernance", () => {
     const tokensCount = 2;
@@ -15,6 +15,7 @@ describe("ERC20VaultGovernance", () => {
     let admin: Signer;
     let stranger: Signer;
     let treasury: Signer;
+    let strategy: Signer;
     let anotherTreasury: Signer;
     let vaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
@@ -27,14 +28,17 @@ describe("ERC20VaultGovernance", () => {
     let deployment: Function;
 
     before(async () => {
-        [deployer, admin, stranger, treasury] = await ethers.getSigners();
+        [deployer, admin, stranger, treasury, anotherTreasury, strategy] =
+            await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({} = await deployERC20VaultXVaultGovernanceSystem({
+            ({
+                gatewayVault,
+            } = await deployERC20VaultXGatewayVaultSystem({
                 adminSigner: admin,
                 treasury: await treasury.getAddress(),
                 vaultOwnerSigner: deployer,
-                strategy: await stranger.getAddress(),
+                strategy: await strategy.getAddress(),
             }));
         });
     });
@@ -44,6 +48,10 @@ describe("ERC20VaultGovernance", () => {
     });
 
     describe("constructor", () => {
-        it("passes", async () => {});
+        it("passes", async () => {
+            expect(
+                await deployer.provider?.getCode(gatewayVault.address)
+            ).not.to.be.equal("0x");
+        });
     });
 });

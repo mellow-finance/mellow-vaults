@@ -20,6 +20,7 @@ import {
     VaultGovernance_InternalParams,
     IVaultGovernance,
     Vault,
+    IGatewayVault,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
@@ -373,7 +374,7 @@ export async function deployERC20VaultSystem(options: {
     };
 }
 
-export async function deployERC20VaultXVaultGovernanceSystem(options: {
+export async function deployERC20VaultXGatewayVaultSystem(options: {
     adminSigner: Signer;
     vaultOwnerSigner: Signer;
     treasury: Address;
@@ -440,16 +441,22 @@ export async function deployERC20VaultXVaultGovernanceSystem(options: {
         gatewayVaultGovernance.address,
         BigNumber.from(nft)
     );
-    let gatewayVault: Vault;
+    let gatewayVaultAddress: IGatewayVault;
     let gatewayNft: number = 0;
     const deployArgs = [
         [], // Gateway vault has no tokens
         encodeToBytes(["uint256[]"], [[nft]]),
         options.strategy,
     ];
-    ({ gatewayVault, gatewayNft } =
-        await gatewayVaultGovernance.callStatic.deployVault(...deployArgs));
+    let response = await gatewayVaultGovernance.callStatic.deployVault(...deployArgs);
+    gatewayVaultAddress = response.vault;
+    gatewayNft = response.nft;
+    console.log(gatewayVaultAddress);
     await gatewayVaultGovernance.deployVault(...deployArgs);
+    const gatewayVault: Vault = await ethers.getContractAt(
+        "GatewayVault",
+        gatewayVaultAddress
+    );
     return {
         vaultFactory,
         vaultRegistry,
