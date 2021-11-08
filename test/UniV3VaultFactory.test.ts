@@ -13,7 +13,7 @@ import {
 import Exceptions from "./library/Exceptions";
 import { expect } from "chai";
 
-describe("AaveVaultFactory", () => {
+describe("UniV3VaultFactory", () => {
     const tokensCount = 2;
     let deployer: Signer;
     let admin: Signer;
