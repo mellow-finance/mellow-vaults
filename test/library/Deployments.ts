@@ -313,68 +313,6 @@ export const deployLpIssuerGovernance = async (options: {
     return contract;
 };
 
-// export async function deployERC20VaultSystem(options: {
-//     tokensCount: number;
-//     adminSigner: Signer;
-//     treasury: Address;
-//     vaultOwner: Address;
-// }): Promise<{
-//     vaultFactory: VaultFactory;
-//     vaultRegistry: VaultRegistry;
-//     protocolGovernance: ProtocolGovernance;
-//     vaultGovernance: VaultGovernance;
-//     tokens: ERC20[];
-//     vault: ERC20Vault;
-//     nft: number;
-// }> {
-//     const { vaultRegistry, protocolGovernance, vaultFactory, vaultGovernance } =
-//         await deployVaultGovernanceSystem({
-//             adminSigner: options.adminSigner,
-//             treasury: options.treasury,
-//             vaultType: "ERC20" as VaultType,
-//         });
-//     const vaultTokens: ERC20[] = sortContractsByAddresses(
-//         await deployERC20Tokens(options.tokensCount)
-//     );
-//     await protocolGovernance
-//         .connect(options.adminSigner)
-//         .setPendingVaultGovernancesAdd([vaultGovernance.address]);
-//     await sleep(Number(await protocolGovernance.governanceDelay()));
-//     await protocolGovernance
-//         .connect(options.adminSigner)
-//         .commitVaultGovernancesAdd();
-//     const { vault, nft } = await vaultGovernance.callStatic.deployVault(
-//         vaultTokens.map((token) => token.address),
-//         [],
-//         options.vaultOwner
-//     );
-//     await vaultGovernance.deployVault(
-//         vaultTokens.map((token) => token.address),
-//         [],
-//         options.vaultOwner
-//     );
-//     const vaultContract: ERC20Vault = await ethers.getContractAt(
-//         "ERC20Vault",
-//         vault
-//     );
-//     await vaultGovernance
-//         .connect(options.adminSigner)
-//         .stageDelayedStrategyParams(nft, [options.treasury]);
-//     await sleep(Number(await protocolGovernance.governanceDelay()));
-//     await vaultGovernance
-//         .connect(options.adminSigner)
-//         .commitDelayedStrategyParams(BigNumber.from(nft));
-//     return {
-//         vaultFactory: vaultFactory,
-//         vaultRegistry: vaultRegistry,
-//         protocolGovernance: protocolGovernance,
-//         vaultGovernance: vaultGovernance,
-//         tokens: vaultTokens,
-//         vault: vaultContract,
-//         nft: nft,
-//     };
-// }
-
 export async function deploySubVaultSystem(options: {
     tokensCount: number;
     adminSigner: Signer;
