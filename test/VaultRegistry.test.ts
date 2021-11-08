@@ -121,19 +121,6 @@ describe("VaultRegistry", () => {
                     anotherVaultAddress,
                 ]);
             });
-
-            // it("reverts when vault is already registered", async () => {
-            //     await vaultRegistry.registerVault(vault.address);
-            //     await expect(
-            //         vaultRegistry.registerVault(vault.address)
-            //     ).to.be.revertedWith("Vault already registered");
-            // });
-
-            // it("throws when vault is not a vault", async () => {
-            //     await expect(
-            //         vaultRegistry.registerVault(vaultFactory.address)
-            //     ).to.be.revertedWith("Vault is not a vault");
-            // });
         });
 
         describe("when called by stranger", async () => {
