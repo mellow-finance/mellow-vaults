@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import { VaultFactory } from "./library/Types";
-import { deployERC20VaultXGatewayVaultSystem } from "./library/Deployments";
+import { deploySubVaultXGatewayVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 
 describe("GatewayVaultFactory", () => {
@@ -19,13 +19,13 @@ describe("GatewayVaultFactory", () => {
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ gatewayVaultFactory } =
-                await deployERC20VaultXGatewayVaultSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultOwnerSigner: deployer,
-                    strategy: await strategy.getAddress(),
-                }));
+            ({ gatewayVaultFactory } = await deploySubVaultXGatewayVaultSystem({
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+                vaultOwnerSigner: deployer,
+                strategy: await strategy.getAddress(),
+                vaultType: "ERC20",
+            }));
         });
     });
 

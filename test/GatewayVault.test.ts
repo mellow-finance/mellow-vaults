@@ -7,7 +7,7 @@ import {
     VaultGovernance,
     ProtocolGovernance,
 } from "./library/Types";
-import { deployERC20VaultXGatewayVaultSystem } from "./library/Deployments";
+import { deploySubVaultXGatewayVaultSystem } from "./library/Deployments";
 
 describe("ERC20VaultGovernance", () => {
     const tokensCount = 2;
@@ -32,11 +32,12 @@ describe("ERC20VaultGovernance", () => {
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ gatewayVault } = await deployERC20VaultXGatewayVaultSystem({
+            ({ gatewayVault } = await deploySubVaultXGatewayVaultSystem({
                 adminSigner: admin,
                 treasury: await treasury.getAddress(),
                 vaultOwnerSigner: deployer,
                 strategy: await strategy.getAddress(),
+                vaultType: "ERC20",
             }));
         });
     });
