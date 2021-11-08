@@ -5,6 +5,7 @@ import Exceptions from "./library/Exceptions";
 import {
     deployERC20VaultSystem,
     deployERC20Tokens,
+    deployProtocolGovernance,
 } from "./library/Deployments";
 import {
     ERC20,
@@ -15,9 +16,7 @@ import {
     VaultGovernance,
 } from "./library/Types";
 import { sortContractsByAddresses } from "./library/Helpers";
-import { ProtocolGovernance_Params } from "./library/Types";
-import { BigNumber } from "@ethersproject/bignumber";
-import { now, sleep, sleepTo, toObject } from "./library/Helpers";
+import { now, sleep, sleepTo } from "./library/Helpers";
 
 describe("VaultRegistry", () => {
     let vaultRegistry: VaultRegistry;
@@ -35,7 +34,8 @@ describe("VaultRegistry", () => {
     let deployment: Function;
 
     before(async () => {
-        [deployer, treasury, stranger] = await ethers.getSigners();
+        [deployer, treasury, stranger, protocolAdmin] =
+            await ethers.getSigners();
 
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
@@ -142,22 +142,67 @@ describe("VaultRegistry", () => {
                         vaultFactory.address,
                         await stranger.getAddress()
                     )
-                ).to.be.revertedWith(
-                    Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
-                );
+                ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
     });
 
     describe("protocolGovernance", () => {
-        it("has correct protocolGovernance", async () => {});
+        it("has correct protocolGovernance", async () => {
+            expect(await vaultRegistry.protocolGovernance()).to.equal(
+                protocolGovernance.address
+            );
+        });
     });
 
     describe("stagedProtocolGovernance", () => {
-        it("has correct stagedProtocolGovernance", async () => {});
+        describe("when nothing staged", () => {
+            it("returns address zero", async () => {
+                expect(await vaultRegistry.stagedProtocolGovernance()).to.equal(
+                    ethers.constants.AddressZero
+                );
+            });
+        });
+
+        describe("when staged new protocolGovernance", () => {
+            it("has correct stagedProtocolGovernance", async () => {
+                const newProtocolGovernance = await deployProtocolGovernance({
+                    adminSigner: deployer,
+                });
+                await vaultRegistry.stageProtocolGovernance(
+                    newProtocolGovernance.address
+                );
+                expect(await vaultRegistry.stagedProtocolGovernance()).to.equal(
+                    newProtocolGovernance.address
+                );
+            });
+        });
     });
 
-    describe("stagedProtocolGovernanceTimestamp", () => {});
+    describe("stagedProtocolGovernanceTimestamp", () => {
+        it("returns 0 when nothing is staged", async () => {
+            expect(
+                await vaultRegistry.stagedProtocolGovernanceTimestamp()
+            ).to.equal(0);
+        });
+
+        it("returns correct timestamp when new ProtocolGovernance is staged", async () => {
+            let ts = now();
+            const newProtocolGovernance = await deployProtocolGovernance({
+                adminSigner: deployer,
+            });
+            ts += 10 ** 4;
+            await sleepTo(ts);
+            await vaultRegistry.stageProtocolGovernance(
+                newProtocolGovernance.address
+            );
+            expect(
+                await vaultRegistry.stagedProtocolGovernanceTimestamp()
+            ).to.equal(
+                ts + Number(await protocolGovernance.governanceDelay()) + 1
+            );
+        });
+    });
 
     describe("vaultsCount", () => {
         it("has correct vaults count", async () => {
@@ -165,9 +210,70 @@ describe("VaultRegistry", () => {
         });
     });
 
-    describe("stageProtocolGovernance", () => {});
+    describe("stageProtocolGovernance", () => {
+        describe("when called by stranger", () => {
+            it("reverts", async () => {
+                await expect(
+                    vaultRegistry
+                        .connect(stranger)
+                        .stageProtocolGovernance(protocolGovernance.address)
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+        });
+    });
 
-    describe("commitStagedProtocolGovernance", () => {});
+    describe("commitStagedProtocolGovernance", () => {
+        let newProtocolGovernance: ProtocolGovernance;
 
-    describe("commitStagedProtocolGovernance", () => {});
+        beforeEach(async () => {
+            newProtocolGovernance = await deployProtocolGovernance({
+                adminSigner: deployer,
+            });
+        });
+
+        describe("when nothing staged", () => {
+            it("reverts", async () => {
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await expect(
+                    vaultRegistry.commitStagedProtocolGovernance()
+                ).to.be.revertedWith(Exceptions.NULL_OR_NOT_INITIALIZED);
+            });
+        });
+
+        describe("when called by stranger", () => {
+            it("reverts", async () => {
+                await vaultRegistry.stageProtocolGovernance(
+                    newProtocolGovernance.address
+                );
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await expect(
+                    vaultRegistry
+                        .connect(stranger)
+                        .commitStagedProtocolGovernance()
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+        });
+
+        describe("when called too early", () => {
+            it("reverts", async () => {
+                await vaultRegistry.stageProtocolGovernance(
+                    protocolGovernance.address
+                );
+                await expect(
+                    vaultRegistry.commitStagedProtocolGovernance()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+
+        it("passes", async () => {
+            await vaultRegistry.stageProtocolGovernance(
+                newProtocolGovernance.address
+            );
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await vaultRegistry.commitStagedProtocolGovernance();
+            expect(await vaultRegistry.protocolGovernance()).to.equal(
+                newProtocolGovernance.address
+            );
+        });
+    });
 });
