@@ -21,6 +21,7 @@ import {
     IVaultGovernance,
     Vault,
     IGatewayVault,
+    SubVaultType,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
@@ -312,25 +313,88 @@ export const deployLpIssuerGovernance = async (options: {
     return contract;
 };
 
-export async function deployERC20VaultSystem(options: {
+// export async function deployERC20VaultSystem(options: {
+//     tokensCount: number;
+//     adminSigner: Signer;
+//     treasury: Address;
+//     vaultOwner: Address;
+// }): Promise<{
+//     vaultFactory: VaultFactory;
+//     vaultRegistry: VaultRegistry;
+//     protocolGovernance: ProtocolGovernance;
+//     vaultGovernance: VaultGovernance;
+//     tokens: ERC20[];
+//     vault: ERC20Vault;
+//     nft: number;
+// }> {
+//     const { vaultRegistry, protocolGovernance, vaultFactory, vaultGovernance } =
+//         await deployVaultGovernanceSystem({
+//             adminSigner: options.adminSigner,
+//             treasury: options.treasury,
+//             vaultType: "ERC20" as VaultType,
+//         });
+//     const vaultTokens: ERC20[] = sortContractsByAddresses(
+//         await deployERC20Tokens(options.tokensCount)
+//     );
+//     await protocolGovernance
+//         .connect(options.adminSigner)
+//         .setPendingVaultGovernancesAdd([vaultGovernance.address]);
+//     await sleep(Number(await protocolGovernance.governanceDelay()));
+//     await protocolGovernance
+//         .connect(options.adminSigner)
+//         .commitVaultGovernancesAdd();
+//     const { vault, nft } = await vaultGovernance.callStatic.deployVault(
+//         vaultTokens.map((token) => token.address),
+//         [],
+//         options.vaultOwner
+//     );
+//     await vaultGovernance.deployVault(
+//         vaultTokens.map((token) => token.address),
+//         [],
+//         options.vaultOwner
+//     );
+//     const vaultContract: ERC20Vault = await ethers.getContractAt(
+//         "ERC20Vault",
+//         vault
+//     );
+//     await vaultGovernance
+//         .connect(options.adminSigner)
+//         .stageDelayedStrategyParams(nft, [options.treasury]);
+//     await sleep(Number(await protocolGovernance.governanceDelay()));
+//     await vaultGovernance
+//         .connect(options.adminSigner)
+//         .commitDelayedStrategyParams(BigNumber.from(nft));
+//     return {
+//         vaultFactory: vaultFactory,
+//         vaultRegistry: vaultRegistry,
+//         protocolGovernance: protocolGovernance,
+//         vaultGovernance: vaultGovernance,
+//         tokens: vaultTokens,
+//         vault: vaultContract,
+//         nft: nft,
+//     };
+// }
+
+export async function deploySubVaultSystem(options: {
     tokensCount: number;
     adminSigner: Signer;
     treasury: Address;
     vaultOwner: Address;
+    vaultType: SubVaultType;
 }): Promise<{
     vaultFactory: VaultFactory;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     vaultGovernance: VaultGovernance;
     tokens: ERC20[];
-    vault: ERC20Vault;
+    vault: Vault;
     nft: number;
 }> {
     const { vaultRegistry, protocolGovernance, vaultFactory, vaultGovernance } =
         await deployVaultGovernanceSystem({
             adminSigner: options.adminSigner,
             treasury: options.treasury,
-            vaultType: "ERC20" as VaultType,
+            vaultType: options.vaultType,
         });
     const vaultTokens: ERC20[] = sortContractsByAddresses(
         await deployERC20Tokens(options.tokensCount)
@@ -352,8 +416,8 @@ export async function deployERC20VaultSystem(options: {
         [],
         options.vaultOwner
     );
-    const vaultContract: ERC20Vault = await ethers.getContractAt(
-        "ERC20Vault",
+    const vaultContract: Vault = await ethers.getContractAt(
+        `${options.vaultType}Vault`,
         vault
     );
     await vaultGovernance
@@ -400,11 +464,12 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
         tokens,
         vault,
         nft,
-    } = await deployERC20VaultSystem({
+    } = await deploySubVaultSystem({
         tokensCount: 2,
         adminSigner: options.adminSigner,
         treasury: options.treasury,
         vaultOwner: await options.vaultOwnerSigner.getAddress(),
+        vaultType: "ERC20",
     });
     let args: VaultGovernance_constructorArgs = {
         params: {

@@ -3,7 +3,7 @@ import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
 import {
-    deployERC20VaultSystem,
+    deploySubVaultSystem,
     deployERC20Tokens,
     deployProtocolGovernance,
 } from "./library/Deployments";
@@ -39,11 +39,12 @@ describe("VaultRegistry", () => {
 
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            return await deployERC20VaultSystem({
+            return await deploySubVaultSystem({
                 tokensCount: 2,
                 adminSigner: deployer,
                 vaultOwner: await deployer.getAddress(),
                 treasury: await treasury.getAddress(),
+                vaultType: "ERC20",
             });
         });
     });

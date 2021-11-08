@@ -9,10 +9,7 @@ import {
     VaultFactory,
     VaultGovernance,
 } from "./library/Types";
-import {
-    deployERC20Tokens,
-    deployERC20VaultSystem,
-} from "./library/Deployments";
+import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 
 // TODO: Add _isValidPullDestination tests
@@ -42,11 +39,12 @@ describe("ERC20Vault", function () {
 
             deployment = deployments.createFixture(async () => {
                 await deployments.fixture();
-                return await deployERC20VaultSystem({
+                return await deploySubVaultSystem({
                     tokensCount: 2,
                     adminSigner: deployer,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
+                    vaultType: "ERC20",
                 });
             });
         });
