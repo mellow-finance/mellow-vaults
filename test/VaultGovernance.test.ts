@@ -78,7 +78,6 @@ describe("TestVaultGovernance", () => {
         emptyParams = {
             protocolGovernance: ethers.constants.AddressZero,
             registry: ethers.constants.AddressZero,
-            factory: ethers.constants.AddressZero,
         };
 
         newProtocolGovernance = await deployProtocolGovernance({
@@ -97,7 +96,6 @@ describe("TestVaultGovernance", () => {
         customParams = {
             protocolGovernance: newProtocolGovernance.address,
             registry: newVaultRegistry.address,
-            factory: ethers.constants.AddressZero,
         };
 
         protocolParams = {
@@ -108,7 +106,6 @@ describe("TestVaultGovernance", () => {
             protocolPerformanceFee: BigNumber.from(10 * 9),
             protocolExitFee: BigNumber.from(10 ** 9),
             protocolTreasury: await treasury.getAddress(),
-            vaultRegistry: vaultRegistry.address,
         };
 
         encodedParams = encodeToBytes(
@@ -120,8 +117,7 @@ describe("TestVaultGovernance", () => {
                     "uint256 strategyPerformanceFee, " +
                     "uint256 protocolPerformanceFee, " +
                     "uint256 protocolExitFee, " +
-                    "address protocolTreasury, " +
-                    "address vaultRegistry) " +
+                    "address protocolTreasury)" +
                     "protocolParams",
             ],
             [protocolParams]
@@ -215,7 +211,6 @@ describe("TestVaultGovernance", () => {
             customParamsZero = {
                 protocolGovernance: newProtocolGovernanceZero.address,
                 registry: newVaultRegistryZero.address,
-                factory: ethers.constants.AddressZero,
             };
 
             await expect(
@@ -279,7 +274,6 @@ describe("TestVaultGovernance", () => {
                 customParams = {
                     protocolGovernance: newProtocolGovernance.address,
                     registry: newVaultRegistry.address,
-                    factory: ethers.constants.AddressZero,
                 };
 
                 timestamp += timeshift;
@@ -480,11 +474,13 @@ describe("TestVaultGovernance", () => {
 
                 await contract.stageDelayedStrategyParams(nft, params);
 
+                // First time we can commit immediately
                 await expect(
                     contract.commitDelayedStrategyParams(nft)
-                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                ).not.to.be.revertedWith(Exceptions.TIMESTAMP);
 
                 sleep(95);
+                await contract.stageDelayedStrategyParams(nft, params);
                 await expect(
                     contract.commitDelayedStrategyParams(nft)
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
@@ -556,15 +552,15 @@ describe("TestVaultGovernance", () => {
                     factory: vaultFactory.address,
                 });
 
-                // sleeps initial governance delay
-                sleep(1);
+                // First time we can commit immediately
                 await contract.commitInternalParams();
                 await contract.stageDelayedProtocolParams(encodedParams);
                 await expect(
                     contract.commitDelayedProtocolParams()
-                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                ).to.not.be.revertedWith(Exceptions.TIMESTAMP);
 
                 sleep(95);
+                await contract.stageDelayedProtocolParams(encodedParams);
                 await expect(
                     contract.commitDelayedProtocolParams()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
