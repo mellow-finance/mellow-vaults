@@ -25,6 +25,9 @@ abstract contract VaultGovernance is IVaultGovernance {
     mapping(uint256 => bytes) internal _strategyParams;
     bytes internal _protocolParams;
 
+    IVaultFactory public factory;
+    bool public initialized;
+
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
@@ -64,14 +67,22 @@ abstract contract VaultGovernance is IVaultGovernance {
     // -------------------  PUBLIC, MUTATING  -------------------
 
     /// @inheritdoc IVaultGovernance
+    function initialize(IVaultFactory factory_) external {
+        require(!initialized, "INIT");
+        factory = factory_;
+        initialized = true;
+    }
+
+    /// @inheritdoc IVaultGovernance
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,
         address owner
     ) public virtual returns (IVault vault, uint256 nft) {
+        require(initialized, "INIT");
         IProtocolGovernance protocolGovernance = _internalParams.protocolGovernance;
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), "POA");
-        vault = _internalParams.factory.deployVault(vaultTokens, options);
+        vault = factory.deployVault(vaultTokens, options);
         nft = _internalParams.registry.registerVault(address(vault), owner);
     }
 
@@ -148,8 +159,8 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     function _requireAtLeastStrategy(uint256 nft) private view {
         require(
-            ( _internalParams.protocolGovernance.isAdmin(msg.sender) || 
-            _internalParams.registry.getApproved(nft) == msg.sender),
+            (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
+                _internalParams.registry.getApproved(nft) == msg.sender),
             "RST"
         );
     }
