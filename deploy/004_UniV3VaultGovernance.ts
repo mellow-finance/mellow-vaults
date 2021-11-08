@@ -8,21 +8,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, log } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, aaveLendingPool } = await getNamedAccounts();
-    await deploy("AaveVaultGovernance", {
+    const { deployer, uniswapV3PositionManager } = await getNamedAccounts();
+    await deploy("UniV3VaultGovernance", {
         from: deployer,
         args: [
             {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
             },
-            { lendingPool: aaveLendingPool },
+            { positionManager: uniswapV3PositionManager },
         ],
         log: true,
         autoMine: true,
     });
-    const governance = await hre.ethers.getContract("AaveVaultGovernance");
-    await deploy("AaveVaultFactory", {
+    const governance = await hre.ethers.getContract("UniV3VaultGovernance");
+    await deploy("UniV3VaultFactory", {
         from: deployer,
         args: [governance.address],
         log: true,
@@ -32,10 +32,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (!initialized) {
         log("Initializing factory...");
 
-        const factory = await get("AaveVaultFactory");
+        const factory = await get("UniV3VaultFactory");
         const receipt = await governance.initialize(factory.address);
         log(`Initialized with txHash ${receipt.hash}`);
     }
 };
 export default func;
-func.tags = ["AaveVaultGovernance", "Vaults"];
+func.tags = ["UniV3VaultGovernance", "Vaults"];
