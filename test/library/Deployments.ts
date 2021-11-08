@@ -388,6 +388,7 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
     vault: ERC20Vault;
     nft: number;
     gatewayVaultGovernance: VaultGovernance;
+    gatewayVaultFactory: VaultFactory;
     gatewayVault: Vault;
     gatewayNft: number;
 }> {
@@ -467,6 +468,7 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
         vault,
         nft,
         gatewayVaultGovernance,
+        gatewayVaultFactory,
         gatewayVault,
         gatewayNft,
     };
