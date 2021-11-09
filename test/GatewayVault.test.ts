@@ -9,7 +9,7 @@ import {
 } from "./library/Types";
 import { deployERC20VaultXGatewayVaultSystem } from "./library/Deployments";
 
-describe("ERC20VaultGovernance", () => {
+describe("GatewayVault", () => {
     const tokensCount = 2;
     let deployer: Signer;
     let admin: Signer;

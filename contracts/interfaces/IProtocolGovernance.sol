@@ -13,7 +13,6 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param protocolPerformanceFee Protocol performance fee percent of the strategy (measured same as strategyPerformanceFee)
     /// @param protocolExitFee Protocol exit fee percent of the strategy (measured same as strategyPerformanceFee)
     /// @param protocolTreasury The address that collect protocol fees
-    /// @param gatewayVaultManager Gateway VaultManager of the protocol
     struct Params {
         bool permissionless;
         uint256 maxTokensPerVault;
@@ -22,7 +21,6 @@ interface IProtocolGovernance is IDefaultAccessControl {
         uint256 protocolPerformanceFee;
         uint256 protocolExitFee;
         address protocolTreasury;
-        IVaultRegistry vaultRegistry;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -65,9 +63,6 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     /// @notice The address that collect protocol fees
     function protocolTreasury() external view returns (address);
-
-    /// @notice VaultRegistry of the protocol
-    function vaultRegistry() external view returns (IVaultRegistry);
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 

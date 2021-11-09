@@ -189,7 +189,6 @@ export async function deployVaultGovernanceSystem(options: {
     let params: VaultGovernance_InternalParams = {
         protocolGovernance: protocolGovernance.address,
         registry: vaultRegistry.address,
-        factory: ethers.constants.AddressZero,
     };
     const contractFactory: ContractFactory = await ethers.getContractFactory(
         `${options.vaultType}VaultGovernance`
@@ -225,7 +224,7 @@ export async function deployVaultGovernanceSystem(options: {
         vaultType: options.vaultType,
         vaultGovernance: vaultGovernance.address,
     });
-    params.factory = vaultFactory.address;
+    await vaultGovernance.initialize(vaultFactory.address);
     await vaultGovernance
         .connect(options.adminSigner)
         .stageInternalParams(params);
@@ -471,7 +470,6 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
         params: {
             protocolGovernance: protocolGovernance.address,
             registry: vaultRegistry.address,
-            factory: ethers.constants.AddressZero,
         },
     };
     const gatewayVaultGovernance = await deployVaultGovernance({
@@ -491,7 +489,6 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
         vaultGovernance: gatewayVaultGovernance.address,
         vaultType: "Gateway" as VaultType,
     });
-    args.params.factory = gatewayVaultFactory.address;
     await gatewayVaultGovernance
         .connect(options.adminSigner)
         .stageInternalParams(args.params);
@@ -499,6 +496,7 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
     await gatewayVaultGovernance
         .connect(options.adminSigner)
         .commitInternalParams();
+    await gatewayVaultGovernance.initialize(gatewayVaultFactory.address);
     await vaultRegistry.approve(
         gatewayVaultGovernance.address,
         BigNumber.from(nft)
