@@ -10,7 +10,7 @@ export async function sendTx(
 ): Promise<TransactionReceipt> {
     console.log("Sending transaction to the pool...");
     tx.type = 2;
-    tx.maxPriorityFeePerGas = BigNumber.from(2).mul(BigNumber.from(10).pow(9));
+    // tx.maxPriorityFeePerGas = BigNumber.from(2).mul(BigNumber.from(10).pow(9));
     const [operator] = await hre.ethers.getSigners();
     const txResp = await operator.sendTransaction(tx);
     console.log(
