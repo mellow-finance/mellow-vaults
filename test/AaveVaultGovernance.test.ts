@@ -140,8 +140,9 @@ describe("AaveVaultGovernance", () => {
     describe("stagedDelayedProtocolParams", () => {
         describe("when nothing is staged", async () => {
             it("returns an empty struct", async () => {
-                expect(await vaultGovernance.stagedDelayedProtocolParams())
-                    .to.be.deep.equal([ethers.constants.AddressZero]);
+                expect(
+                    await vaultGovernance.stagedDelayedProtocolParams()
+                ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
         });
 
