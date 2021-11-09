@@ -22,12 +22,38 @@ import {
     Vault,
     IGatewayVault,
     SubVaultType,
+    UniV3,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
 
 export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
     let tokens: ERC20[] = [];
+    let token_constructorArgs: ERC20Test_constructorArgs[] = [];
+    const Contract: ContractFactory = await ethers.getContractFactory(
+        "ERC20Test"
+    );
+
+    for (let i = 0; i < length; ++i) {
+        token_constructorArgs.push({
+            name: "Test Token",
+            symbol: `TEST_${i}`,
+        });
+    }
+
+    for (let i: number = 0; i < length; ++i) {
+        const contract: ERC20 = await Contract.deploy(
+            token_constructorArgs[i].name + `_${i.toString()}`,
+            token_constructorArgs[i].symbol
+        );
+        await contract.deployed();
+        tokens.push(contract);
+    }
+    return tokens;
+}
+
+export async function deployUniV3Tokens(length: number): Promise<UniV3[]> {
+    let tokens: UniV3[] = [];
     let token_constructorArgs: ERC20Test_constructorArgs[] = [];
     const Contract: ContractFactory = await ethers.getContractFactory(
         "ERC20Test"
@@ -313,7 +339,7 @@ export const deployLpIssuerGovernance = async (options: {
     } = await deployVaultGovernanceSystem({
         adminSigner: deployer,
         treasury: await treasury.getAddress(),
-        vaultType: "ERC20"
+        vaultType: "ERC20",
     });
 
     const constructorArgs: LpIssuerGovernance_constructorArgs =
@@ -333,7 +359,7 @@ export const deployLpIssuerGovernance = async (options: {
         LpIssuerGovernance: contract,
         protocolGovernance: protocolGovernance,
         vaultRegistry: vaultRegistry,
-        vaultFactory: vaultFactory
+        vaultFactory: vaultFactory,
     };
 };
 
@@ -352,36 +378,44 @@ export async function deploySubVaultSystem(options: {
     vault: Vault;
     nft: number;
 }> {
+    console.log(1);
     const { vaultRegistry, protocolGovernance, vaultFactory, vaultGovernance } =
         await deployVaultGovernanceSystem({
             adminSigner: options.adminSigner,
             treasury: options.treasury,
             vaultType: options.vaultType,
         });
+    console.log(2);
     const vaultTokens: ERC20[] = sortContractsByAddresses(
         await deployERC20Tokens(options.tokensCount)
     );
+    console.log(3);
     await protocolGovernance
         .connect(options.adminSigner)
         .setPendingVaultGovernancesAdd([vaultGovernance.address]);
+    console.log(4);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance
         .connect(options.adminSigner)
         .commitVaultGovernancesAdd();
+    console.log(5);
     const { vault, nft } = await vaultGovernance.callStatic.deployVault(
         vaultTokens.map((token) => token.address),
         [],
         options.vaultOwner
     );
+    console.log(6);
     await vaultGovernance.deployVault(
         vaultTokens.map((token) => token.address),
         [],
         options.vaultOwner
     );
+    console.log(7);
     const vaultContract: Vault = await ethers.getContractAt(
         `${options.vaultType}Vault`,
         vault
     );
+    console.log(8);
     await vaultGovernance
         .connect(options.adminSigner)
         .stageDelayedStrategyParams(nft, [options.treasury]);

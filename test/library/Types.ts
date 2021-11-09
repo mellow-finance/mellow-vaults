@@ -4,6 +4,7 @@ import { BigNumberish } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
 
 export type IERC20 = Address;
+export type IUniV3 = Address;
 export type IVaultFactory = Address;
 export type IVaultGovernance = Address;
 export type ILpIssuerGovernance = Address;
@@ -13,6 +14,7 @@ export type IVault = Address;
 export type IGatewayVault = Address;
 
 export type ERC20 = Contract;
+export type UniV3 = Contract;
 export type ERC20Vault = Contract;
 export type ProtocolGovernance = Contract;
 export type VaultGovernance = Contract;
