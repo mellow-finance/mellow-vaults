@@ -24,6 +24,8 @@ import {
 } from "./library/Types";
 
 describe("TestVaultGovernance", () => {
+    const SECONDS_PER_DAY = 60 * 60 * 24;
+
     let deploymentFixture: Function;
     let deployer: Signer;
     let stranger: Signer;
@@ -50,7 +52,7 @@ describe("TestVaultGovernance", () => {
         timestamp = now();
         timeshift = 10 ** 6;
         timeEps = 2;
-        defaultDelay = 10;
+        defaultDelay = SECONDS_PER_DAY;
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
@@ -192,7 +194,11 @@ describe("TestVaultGovernance", () => {
             sleepTo(timestamp);
             await contract.stageInternalParams(initialParams);
             expect(
-                Math.abs((await contract.internalParamsTimestamp()) - timestamp)
+                Math.abs(
+                    (await contract.internalParamsTimestamp()) -
+                        timestamp -
+                        defaultDelay
+                )
             ).lessThanOrEqual(timeEps);
         });
 
@@ -268,7 +274,7 @@ describe("TestVaultGovernance", () => {
                     protocolTreasury: await treasury.getAddress(),
                     vaultRegistry: newVaultRegistry.address,
                 });
-
+                await sleep(defaultDelay);
                 await newProtocolGovernance.commitParams();
 
                 customParams = {
@@ -280,7 +286,7 @@ describe("TestVaultGovernance", () => {
                 sleepTo(timestamp);
 
                 await contract.stageInternalParams(customParams);
-
+                await sleep(defaultDelay);
                 await contract.commitInternalParams();
 
                 await contract.stageInternalParams(initialParams);
@@ -459,7 +465,7 @@ describe("TestVaultGovernance", () => {
                     protocolTreasury: await treasury.getAddress(),
                     vaultRegistry: newVaultRegistry.address,
                 });
-
+                await sleep(defaultDelay);
                 await newProtocolGovernance.commitParams();
                 timestamp += timeshift;
                 sleepTo(timestamp);
@@ -469,7 +475,7 @@ describe("TestVaultGovernance", () => {
                     registry: newVaultRegistry.address,
                     factory: vaultFactory.address,
                 });
-
+                await sleep(defaultDelay);
                 await contract.commitInternalParams();
 
                 await contract.stageDelayedStrategyParams(nft, params);
@@ -541,6 +547,7 @@ describe("TestVaultGovernance", () => {
                     protocolTreasury: await treasury.getAddress(),
                     vaultRegistry: newVaultRegistry.address,
                 });
+                await sleep(defaultDelay);
                 await newProtocolGovernance.commitParams();
 
                 timestamp += timeshift;
@@ -551,8 +558,7 @@ describe("TestVaultGovernance", () => {
                     registry: newVaultRegistry.address,
                     factory: vaultFactory.address,
                 });
-
-                // First time we can commit immediately
+                await sleep(defaultDelay);
                 await contract.commitInternalParams();
                 await contract.stageDelayedProtocolParams(encodedParams);
                 await expect(

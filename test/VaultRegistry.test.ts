@@ -247,7 +247,7 @@ describe("VaultRegistry", () => {
         });
 
         describe("when called too early", () => {
-            xit("reverts", async () => {
+            it("reverts", async () => {
                 await vaultRegistry.stageProtocolGovernance(
                     protocolGovernance.address
                 );
