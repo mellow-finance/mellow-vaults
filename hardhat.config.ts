@@ -39,12 +39,14 @@ const config: HardhatUserConfig = {
         },
         kovan: {
             url: process.env["KOVAN_RPC"],
+            gasMultiplier: 1.1,
             accounts: process.env["KOVAN_DEPLOYER_PK"]
                 ? [process.env["KOVAN_DEPLOYER_PK"]]
                 : undefined,
         },
         mainnet: {
             url: process.env["MAINNET_RPC"],
+            gasMultiplier: 1.1,
             accounts: process.env["MAINNET_DEPLOYER_PK"]
                 ? [process.env["MAINNET_DEPLOYER_PK"]]
                 : undefined,

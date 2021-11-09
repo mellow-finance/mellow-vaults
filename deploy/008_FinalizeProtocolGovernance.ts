@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { ethers } from "ethers";
+import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -26,8 +27,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
     if (governances.length > 0) {
         log(`Registering Governances in ProtocolGovernance`);
-        await protocolGovernance.setPendingVaultGovernancesAdd(governances);
-        await protocolGovernance.commitVaultGovernancesAdd();
+        await sendTx(
+            hre,
+            await protocolGovernance.populateTransaction.setPendingVaultGovernancesAdd(
+                governances
+            )
+        );
+        await sendTx(
+            hre,
+            await protocolGovernance.populateTransaction.commitVaultGovernancesAdd()
+        );
         log("Done");
     }
 
@@ -44,8 +53,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         };
         log(`Setting ProtocolGovernance params`);
         log(JSON.stringify(params, null, 2));
-        await protocolGovernance.setPendingParams(params);
-        await protocolGovernance.commitParams();
+        await sendTx(
+            hre,
+            await protocolGovernance.populateTransaction.setPendingParams(
+                params
+            )
+        );
+        await sendTx(
+            hre,
+            await protocolGovernance.populateTransaction.commitParams()
+        );
         log("Done");
     }
 };

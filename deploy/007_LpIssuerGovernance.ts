@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -32,8 +33,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log("Initializing factory...");
 
         const factory = await get("LpIssuerVaultFactory");
-        const receipt = await governance.initialize(factory.address);
-        log(`Initialized with txHash ${receipt.hash}`);
+        const receipt = await sendTx(
+            hre,
+            await governance.populateTransaction.initialize(factory.address)
+        );
     }
 };
 export default func;
