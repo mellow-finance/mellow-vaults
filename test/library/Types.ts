@@ -37,7 +37,6 @@ export type ProtocolGovernance_Params = {
     protocolPerformanceFee: BigNumberish;
     protocolExitFee: BigNumberish;
     protocolTreasury: Address;
-    vaultRegistry: IVaultRegistry;
 };
 export type ProtocolGovernance_constructorArgs = {
     admin: Address;
@@ -84,7 +83,6 @@ export type GatewayVault_constructorArgs = {
 export type VaultGovernance_InternalParams = {
     protocolGovernance: IProtocolGovernance;
     registry: IVaultRegistry;
-    factory: IVaultFactory;
 };
 export type VaultGovernance_constructorArgs = {
     params: VaultGovernance_InternalParams;

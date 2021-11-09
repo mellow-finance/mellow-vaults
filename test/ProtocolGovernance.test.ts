@@ -30,7 +30,6 @@ describe("ProtocolGovernance", () => {
     let paramsDefault: ProtocolGovernance_Params;
     let defaultGovernanceDelay: number;
     let deploymentFixture: Function;
-    let vaultRegistry: VaultRegistry;
 
     before(async () => {
         [deployer, stranger, user1, user2, user3, protocolTreasury] =
@@ -59,7 +58,6 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(20 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 10),
                 protocolTreasury: await protocolTreasury.getAddress(),
-                vaultRegistry: vaultRegistry.address,
             };
 
             initialParams = {
@@ -70,7 +68,6 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: await protocolTreasury.getAddress(),
-                vaultRegistry: vaultRegistry.address,
             };
 
             paramsZero = {
@@ -81,7 +78,6 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: ethers.constants.AddressZero,
-                vaultRegistry: ethers.constants.AddressZero,
             };
 
             paramsEmpty = {
@@ -92,7 +88,6 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: ethers.constants.AddressZero,
-                vaultRegistry: vaultRegistry.address,
             };
 
             paramsDefault = {
@@ -103,7 +98,6 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(0),
                 protocolExitFee: BigNumber.from(0),
                 protocolTreasury: ethers.constants.AddressZero,
-                vaultRegistry: ethers.constants.AddressZero,
             };
 
             paramsTimeout = {
@@ -114,7 +108,6 @@ describe("ProtocolGovernance", () => {
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
                 protocolTreasury: await user1.getAddress(),
-                vaultRegistry: vaultRegistry.address,
             };
 
             return {
@@ -127,7 +120,6 @@ describe("ProtocolGovernance", () => {
     beforeEach(async () => {
         const protocolGovernanceSystem = await deploymentFixture();
         protocolGovernance = protocolGovernanceSystem.protocolGovernance;
-        vaultRegistry = protocolGovernanceSystem.vaultRegistry;
         sleep(defaultGovernanceDelay);
     });
 
@@ -228,12 +220,6 @@ describe("ProtocolGovernance", () => {
             it("has protocol treasury", async () => {
                 expect(await protocolGovernance.protocolTreasury()).to.be.equal(
                     initialParams.protocolTreasury
-                );
-            });
-
-            it("has vault registry", async () => {
-                expect(await protocolGovernance.vaultRegistry()).to.be.equal(
-                    initialParams.vaultRegistry
                 );
             });
         });

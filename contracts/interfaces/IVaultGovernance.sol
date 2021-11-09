@@ -11,14 +11,19 @@ interface IVaultGovernance {
     /// @notice Internal references of the contract
     /// @param protocolGovernance Reference to Protocol Governance
     /// @param registry Reference to Vault Registry
-    /// @param factory Factory for new vaults
     struct InternalParams {
         IProtocolGovernance protocolGovernance;
         IVaultRegistry registry;
-        IVaultFactory factory;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
+
+    /// @notice Checks if contract is initialized
+    /// @dev Uninitialized contracts cannot deploy vaults
+    function initialized() external view returns (bool);
+
+    /// @notice Vault factory for this Vault Governance
+    function factory() external view returns (IVaultFactory);
 
     /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed
     /// @param nft Nft of the vault
@@ -42,6 +47,12 @@ interface IVaultGovernance {
     function strategyTreasury(uint256 nft) external view returns (address);
 
     // -------------------  PUBLIC, MUTATING  -------------------
+
+    /// @notice Instantly initialize governance with factory
+    /// @dev Can only be called by initial deployer and only once.
+    /// Required to be called before any function starts working.
+    /// @param factory new factory
+    function initialize(IVaultFactory factory) external;
 
     /// @notice Deploy a new vault
     /// @param vaultTokens ERC20 tokens under vault management

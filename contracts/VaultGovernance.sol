@@ -25,6 +25,9 @@ abstract contract VaultGovernance is IVaultGovernance {
     mapping(uint256 => bytes) internal _strategyParams;
     bytes internal _protocolParams;
 
+    IVaultFactory public factory;
+    bool public initialized;
+
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
@@ -64,14 +67,22 @@ abstract contract VaultGovernance is IVaultGovernance {
     // -------------------  PUBLIC, MUTATING  -------------------
 
     /// @inheritdoc IVaultGovernance
+    function initialize(IVaultFactory factory_) external {
+        require(!initialized, "INIT");
+        factory = factory_;
+        initialized = true;
+    }
+
+    /// @inheritdoc IVaultGovernance
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,
         address owner
     ) public virtual returns (IVault vault, uint256 nft) {
+        require(initialized, "INIT");
         IProtocolGovernance protocolGovernance = _internalParams.protocolGovernance;
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), "POA");
-        vault = _internalParams.factory.deployVault(vaultTokens, options);
+        vault = factory.deployVault(vaultTokens, options);
         nft = _internalParams.registry.registerVault(address(vault), owner);
     }
 
@@ -101,14 +112,18 @@ abstract contract VaultGovernance is IVaultGovernance {
     function _stageDelayedStrategyParams(uint256 nft, bytes memory params) internal {
         _requireAtLeastStrategy(nft);
         _stagedDelayedStrategyParams[nft] = params;
-        _delayedStrategyParamsTimestamp[nft] = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
+        uint256 delayFactor = _delayedStrategyParams[nft].length == 0 ? 0 : 1;
+        _delayedStrategyParamsTimestamp[nft] =
+            block.timestamp +
+            _internalParams.protocolGovernance.governanceDelay() *
+            delayFactor;
     }
 
     /// @notice Commit Delayed Strategy Params
     function _commitDelayedStrategyParams(uint256 nft) internal {
         _requireAtLeastStrategy(nft);
         require(_delayedStrategyParamsTimestamp[nft] > 0, "NULL");
-        require(block.timestamp > _delayedStrategyParamsTimestamp[nft], "TS");
+        require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], "TS");
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
         delete _delayedStrategyParamsTimestamp[nft];
     }
@@ -117,15 +132,19 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @param params New params
     function _stageDelayedProtocolParams(bytes memory params) internal {
         _requireProtocolAdmin();
+        uint256 delayFactor = _delayedProtocolParams.length == 0 ? 0 : 1;
         _stagedDelayedProtocolParams = params;
-        _delayedProtocolParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
+        _delayedProtocolParamsTimestamp =
+            block.timestamp +
+            _internalParams.protocolGovernance.governanceDelay() *
+            delayFactor;
     }
 
     /// @notice Commit Delayed Protocol Params
     function _commitDelayedProtocolParams() internal {
         _requireProtocolAdmin();
         require(_delayedProtocolParamsTimestamp > 0, "NULL");
-        require(block.timestamp > _delayedProtocolParamsTimestamp, "TS");
+        require(block.timestamp >= _delayedProtocolParamsTimestamp, "TS");
         _delayedProtocolParams = _stagedDelayedProtocolParams;
         delete _delayedProtocolParamsTimestamp;
     }
@@ -148,8 +167,8 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     function _requireAtLeastStrategy(uint256 nft) private view {
         require(
-            ( _internalParams.protocolGovernance.isAdmin(msg.sender) || 
-            _internalParams.registry.getApproved(nft) == msg.sender),
+            (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
+                _internalParams.registry.getApproved(nft) == msg.sender),
             "RST"
         );
     }
