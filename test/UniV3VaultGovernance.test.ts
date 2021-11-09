@@ -10,13 +10,14 @@ import {
 import { deploySubVaultSystem } from "./library/Deployments";
 import { sleep } from "./library/Helpers";
 
-describe("ERC20VaultGovernance", () => {
+describe("UniV3VaultGovernance", () => {
     const tokensCount = 2;
     let deployer: Signer;
     let admin: Signer;
     let stranger: Signer;
     let treasury: Signer;
     let anotherTreasury: Signer;
+    let anotherPositionManager: Signer;
     let vaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let vault: Vault;
@@ -25,8 +26,14 @@ describe("ERC20VaultGovernance", () => {
     let deployment: Function;
 
     before(async () => {
-        [deployer, admin, stranger, treasury, anotherTreasury] =
-            await ethers.getSigners();
+        [
+            deployer,
+            admin,
+            stranger,
+            treasury,
+            anotherTreasury,
+            anotherPositionManager,
+        ] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({ protocolGovernance, vaultGovernance, tokens, nft } =
@@ -45,7 +52,7 @@ describe("ERC20VaultGovernance", () => {
     });
 
     describe("constructor", () => {
-        it("creates UniV3VaultGovernance", async () => {
+        it("create UniV3VaultGovernance", async () => {
             expect(
                 await deployer.provider?.getCode(vaultGovernance.address)
             ).not.to.be.equal("0x");
@@ -127,6 +134,86 @@ describe("ERC20VaultGovernance", () => {
             await expect(
                 vaultGovernance.connect(admin).commitDelayedStrategyParams(nft)
             ).to.emit(vaultGovernance, "CommitDelayedStrategyParams");
+        });
+    });
+
+    describe("stagedDelayedProtocolParams", () => {
+        describe("when nothing is staged", async () => {
+            it("returns an empty struct", async () => {
+                expect(
+                    await vaultGovernance.stagedDelayedProtocolParams()
+                ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
+        });
+
+        it("returns staged params", async () => {
+            await vaultGovernance
+                .connect(admin)
+                .stageDelayedProtocolParams([
+                    await anotherPositionManager.getAddress(),
+                ]);
+            expect(
+                await vaultGovernance
+                    .connect(admin)
+                    .stagedDelayedProtocolParams()
+            ).to.be.deep.equal([await anotherPositionManager.getAddress()]);
+        });
+    });
+
+    describe("stageDelayedProtocolParams", () => {
+        it("stages DelayedProtocolParams", async () => {
+            await vaultGovernance
+                .connect(admin)
+                .stageDelayedProtocolParams([
+                    await anotherPositionManager.getAddress(),
+                ]);
+            expect(
+                await vaultGovernance
+                    .connect(admin)
+                    .stagedDelayedProtocolParams()
+            ).to.be.deep.equal([await anotherPositionManager.getAddress()]);
+        });
+
+        it("emits StageDelayedProtocolParams event", async () => {
+            await vaultGovernance
+                .connect(admin)
+                .stageDelayedProtocolParams([
+                    await anotherPositionManager.getAddress(),
+                ]);
+            await expect(
+                vaultGovernance
+                    .connect(admin)
+                    .stageDelayedProtocolParams([
+                        await anotherPositionManager.getAddress(),
+                    ])
+            ).to.emit(vaultGovernance, "StageDelayedProtocolParams");
+        });
+    });
+
+    describe("commitDelayedProtocolParams", () => {
+        it("commits delayed protocol params", async () => {
+            await vaultGovernance
+                .connect(admin)
+                .stageDelayedProtocolParams([
+                    await anotherPositionManager.getAddress(),
+                ]);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await vaultGovernance.connect(admin).commitDelayedProtocolParams();
+            expect(await vaultGovernance.delayedProtocolParams()).to.deep.equal(
+                [await anotherPositionManager.getAddress()]
+            );
+        });
+
+        it("emits CommitDelayedProtocolParams event", async () => {
+            await vaultGovernance
+                .connect(admin)
+                .stageDelayedProtocolParams([
+                    await anotherPositionManager.getAddress(),
+                ]);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await expect(
+                vaultGovernance.connect(admin).commitDelayedProtocolParams()
+            ).to.emit(vaultGovernance, "CommitDelayedProtocolParams");
         });
     });
 });
