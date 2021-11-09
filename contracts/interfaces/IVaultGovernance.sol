@@ -75,4 +75,13 @@ interface IVaultGovernance {
 
     event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
     event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);
+    event DelployedVault(
+        address indexed origin,
+        address indexed sender,
+        address[] vaultTokens,
+        bytes options,
+        address owner,
+        address vaultAddress,
+        uint256 vaultNft
+    );
 }
