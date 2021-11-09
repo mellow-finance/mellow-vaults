@@ -120,9 +120,11 @@ export async function deployVaultFactory(options: {
     vaultGovernance: IVaultGovernance;
     vaultType: VaultType;
 }): Promise<VaultFactory> {
-    const Contract = await ethers.getContractFactory(
-        `${options.vaultType}VaultFactory`
-    );
+    const contractName =
+        options.vaultType === ("LpIssuer" as VaultType)
+            ? "LpIssuerFactory"
+            : `${options.vaultType}VaultFactory`;
+    const Contract = await ethers.getContractFactory(contractName);
     const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
 }
@@ -164,8 +166,12 @@ export async function deployVaultGovernanceSystem(options: {
         protocolGovernance: protocolGovernance.address,
         registry: vaultRegistry.address,
     };
+    const contractName =
+        options.vaultType === ("LpIssuer" as VaultType)
+            ? "LpIssuerGovernance"
+            : `${options.vaultType}VaultGovernance`;
     const contractFactory: ContractFactory = await ethers.getContractFactory(
-        `${options.vaultType}VaultGovernance`
+        contractName
     );
     let vaultGovernance: VaultGovernance;
     switch (options.vaultType) {
