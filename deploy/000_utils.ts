@@ -2,7 +2,6 @@ import { PopulatedTransaction } from "@ethersproject/contracts";
 import { TransactionReceipt } from "@ethersproject/abstract-provider";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { BigNumber } from "@ethersproject/bignumber";
 
 export async function sendTx(
     hre: HardhatRuntimeEnvironment,
@@ -10,7 +9,6 @@ export async function sendTx(
 ): Promise<TransactionReceipt> {
     console.log("Sending transaction to the pool...");
     tx.type = 2;
-    // tx.maxPriorityFeePerGas = BigNumber.from(2).mul(BigNumber.from(10).pow(9));
     const [operator] = await hre.ethers.getSigners();
     const txResp = await operator.sendTransaction(tx);
     console.log(

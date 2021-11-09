@@ -75,7 +75,7 @@ interface IVaultGovernance {
 
     event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
     event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);
-    event DelployedVault(
+    event DeployedVault(
         address indexed origin,
         address indexed sender,
         address[] vaultTokens,
