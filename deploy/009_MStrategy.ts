@@ -6,7 +6,7 @@ import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log } = deployments;
+    const { log, execute } = deployments;
     const { deployer, mStrategyTreasury, weth, usdc } =
         await getNamedAccounts();
     const vaultRegistry = await hre.ethers.getContract("VaultRegistry");
@@ -33,81 +33,110 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         return;
     }
     log("Deploying Aave vault...");
-    await sendTx(
-        hre,
-        await aaveVaultGovernance.populateTransaction.deployVault(
-            tokens,
-            [],
-            deployer
-        )
+    await execute(
+        "AaveVaultGovernance",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "deployVault",
+        tokens,
+        [],
+        deployer
     );
     const aaveVaultNft = startNft;
     log(`Done, nft = ${aaveVaultNft}`);
     startNft++;
     log("Deploying UniV3 vault...");
     const coder = hre.ethers.utils.defaultAbiCoder;
-    await sendTx(
-        hre,
-        await uniV3VaultGovernance.populateTransaction.deployVault(
-            tokens,
-            coder.encode(["uint256"], [3000]),
-            deployer
-        )
+    await execute(
+        "UniV3VaultGovernance",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "deployVault",
+        tokens,
+        coder.encode(["uint256"], [3000]),
+        deployer
     );
     const uniV3VaultNft = startNft;
     log(`Done, nft = ${uniV3VaultNft}`);
     startNft++;
     log("Deploying ERC20 vault...");
-    await sendTx(
-        hre,
-        await erc20VaultGovernance.populateTransaction.deployVault(
-            tokens,
-            [],
-            deployer
-        )
+    await execute(
+        "ERC20VaultGovernance",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "deployVault",
+        tokens,
+        [],
+        deployer
     );
     const erc20VaultNft = startNft;
     log(`Done, nft = ${erc20VaultNft}`);
     startNft++;
     log("Approving gateway and lp issuer vault governance");
-    await sendTx(
-        hre,
-        await vaultRegistry.populateTransaction.setApprovalForAll(
-            gatewayVaultGovernance.address,
-            true
-        )
+    await execute(
+        "VaultRegistry",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "setApprovalForAll",
+        gatewayVaultGovernance.address,
+        true
     );
-    await sendTx(
-        hre,
-        await vaultRegistry.populateTransaction.setApprovalForAll(
-            lpIssuerVaultGovernance.address,
-            true
-        )
+    await execute(
+        "VaultRegistry",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "setApprovalForAll",
+        lpIssuerVaultGovernance.address,
+        true
     );
+
     log("Done");
     log("Deploying GatewayVault");
-    await sendTx(
-        hre,
-        await uniV3VaultGovernance.populateTransaction.deployVault(
-            tokens,
-            coder.encode(
-                ["uint256[]"],
-                [[uniV3VaultNft, aaveVaultNft, erc20VaultNft]]
-            ),
-            deployer
-        )
+    await execute(
+        "GatewayVaultGovernance",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "deployVault",
+        tokens,
+        coder.encode(
+            ["uint256[]"],
+            [[uniV3VaultNft, aaveVaultNft, erc20VaultNft]]
+        ),
+        deployer
     );
     const gatewayVaultNft = startNft;
     log(`Done, nft = ${gatewayVaultNft}`);
     startNft++;
-    log("Deploying UniV3 vault...");
-    await sendTx(
-        hre,
-        await uniV3VaultGovernance.populateTransaction.deployVault(
-            tokens,
-            coder.encode(["uint256"], [gatewayVaultNft]),
-            deployer
-        )
+    log("Deploying LpIssuer vault...");
+    await execute(
+        "LpIssuerGovernance",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "deployVault",
+        tokens,
+        coder.encode(["uint256"], [gatewayVaultNft]),
+        deployer
     );
     const lpIssuerNft = startNft;
     log(`Done, nft = ${lpIssuerNft}`);

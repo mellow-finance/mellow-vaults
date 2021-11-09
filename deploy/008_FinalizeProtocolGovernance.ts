@@ -7,7 +7,7 @@ import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log } = deployments;
+    const { log, execute } = deployments;
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
@@ -27,15 +27,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
     if (governances.length > 0) {
         log(`Registering Governances in ProtocolGovernance`);
-        await sendTx(
-            hre,
-            await protocolGovernance.populateTransaction.setPendingVaultGovernancesAdd(
-                governances
-            )
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "setPendingVaultGovernancesAdd",
+            governances
         );
-        await sendTx(
-            hre,
-            await protocolGovernance.populateTransaction.commitVaultGovernancesAdd()
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "commitVaultGovernancesAdd"
         );
         log("Done");
     }
@@ -53,15 +54,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         };
         log(`Setting ProtocolGovernance params`);
         log(JSON.stringify(params, null, 2));
-        await sendTx(
-            hre,
-            await protocolGovernance.populateTransaction.setPendingParams(
-                params
-            )
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "setPendingParams",
+            params
         );
-        await sendTx(
-            hre,
-            await protocolGovernance.populateTransaction.commitParams()
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "commitParams"
         );
         log("Done");
     }

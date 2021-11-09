@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/IVaultFactory.sol";
 import "./LpIssuer.sol";
 
-contract LpIssuerVaultFactory is IVaultFactory {
+contract LpIssuerFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
     constructor(IVaultGovernance vaultGovernance_) {

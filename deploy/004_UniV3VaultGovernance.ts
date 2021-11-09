@@ -6,7 +6,7 @@ import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, get, log } = deployments;
+    const { deploy, get, log, execute } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, uniswapV3PositionManager } = await getNamedAccounts();
@@ -34,9 +34,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log("Initializing factory...");
 
         const factory = await get("UniV3VaultFactory");
-        await sendTx(
-            hre,
-            await governance.populateTransaction.initialize(factory.address)
+        await execute(
+            "UniV3VaultGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "initialize",
+            factory.address
         );
     }
 };

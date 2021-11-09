@@ -204,11 +204,7 @@ contract UniV3Vault is Vault {
         return Pair({a0: amount0, a1: amount1});
     }
 
-    function _collectEarnings(address to, bytes calldata)
-        internal
-        override
-        returns (uint256[] memory collectedEarnings)
-    {
+    function _collectEarnings(address to, bytes memory) internal override returns (uint256[] memory collectedEarnings) {
         address[] memory tokens = _vaultTokens;
         collectedEarnings = new uint256[](tokens.length);
         for (uint256 i = 0; i < _nfts.length(); i++) {
