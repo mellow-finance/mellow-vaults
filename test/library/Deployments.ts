@@ -101,14 +101,14 @@ export const deployVaultRegistryAndProtocolGovernance = async (options: {
     await protocolGovernance.connect(options.adminSigner).setPendingParams({
         permissionless: true,
         maxTokensPerVault: BigNumber.from(10),
-        governanceDelay: BigNumber.from(1),
+        governanceDelay: BigNumber.from(60 * 60 * 24), // 1 day
         strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
         protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
         protocolExitFee: BigNumber.from(10 ** 9),
         protocolTreasury: options.treasury,
         vaultRegistry: contract.address,
     });
-    await sleep(1);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance.connect(options.adminSigner).commitParams();
     return {
         vaultRegistry: contract,
@@ -188,7 +188,6 @@ export async function deployVaultGovernanceSystem(options: {
             break;
         }
         default: {
-            /// TODO: UniV3, Gateway
             vaultGovernance = await contractFactory.deploy(params);
             break;
         }
@@ -202,7 +201,7 @@ export async function deployVaultGovernanceSystem(options: {
     await vaultGovernance
         .connect(options.adminSigner)
         .stageInternalParams(params);
-    await sleep(1);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
     await vaultGovernance.connect(options.adminSigner).commitInternalParams();
     return {
         vaultFactory: vaultFactory,

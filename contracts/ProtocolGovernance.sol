@@ -147,7 +147,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function commitClaimAllowlistAdd() external {
         require(isAdmin(msg.sender), "ADM");
-        require((block.timestamp > pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0), "TS");
+        require(
+            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0),
+            "TS"
+        );
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
             _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
         }
@@ -159,7 +162,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitVaultGovernancesAdd() external {
         require(isAdmin(msg.sender), "ADM");
         require(
-            (block.timestamp > pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
+            (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
             "TS"
         );
         for (uint256 i = 0; i < _pendingVaultGovernancesAdd.length; i++) {
@@ -172,7 +175,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
         require(isAdmin(msg.sender), "ADM");
-        require(block.timestamp > pendingParamsTimestamp, "TS");
+        require(block.timestamp >= pendingParamsTimestamp, "TS");
         require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, "P0"); // sanity check for empty params
         params = pendingParams;
         delete pendingParams;

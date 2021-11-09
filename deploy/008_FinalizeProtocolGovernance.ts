@@ -3,10 +3,11 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { ethers } from "ethers";
+import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log } = deployments;
+    const { log, execute } = deployments;
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
@@ -16,6 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "AaveVaultGovernance",
         "UniV3VaultGovernance",
         "ERC20VaultGovernance",
+        "GatewayVaultGovernance",
         "LpIssuerGovernance",
     ]) {
         const governance = await hre.ethers.getContract(name);
@@ -24,10 +26,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }
         governances.push(governance.address);
     }
-    if (governances.length > 0) {
+    const currentGovernances = await protocolGovernance.vaultGovernances();
+    if (governances.length > 0 && currentGovernances.length == 0) {
         log(`Registering Governances in ProtocolGovernance`);
-        await protocolGovernance.setPendingVaultGovernancesAdd(governances);
-        await protocolGovernance.commitVaultGovernancesAdd();
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "setPendingVaultGovernancesAdd",
+            governances
+        );
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "commitVaultGovernancesAdd"
+        );
         log("Done");
     }
 
@@ -44,8 +56,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         };
         log(`Setting ProtocolGovernance params`);
         log(JSON.stringify(params, null, 2));
-        await protocolGovernance.setPendingParams(params);
-        await protocolGovernance.commitParams();
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "setPendingParams",
+            params
+        );
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "commitParams"
+        );
         log("Done");
     }
 };

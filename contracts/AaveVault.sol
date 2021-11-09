@@ -46,7 +46,7 @@ contract AaveVault is Vault {
     function _push(
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata
+        bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
@@ -74,7 +74,7 @@ contract AaveVault is Vault {
         address to,
         uint256[] memory tokenAmounts,
         bool,
-        bytes calldata
+        bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
@@ -93,11 +93,7 @@ contract AaveVault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _collectEarnings(address to, bytes calldata)
-        internal
-        override
-        returns (uint256[] memory collectedEarnings)
-    {
+    function _collectEarnings(address to, bytes memory) internal override returns (uint256[] memory collectedEarnings) {
         collectedEarnings = earnings();
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {

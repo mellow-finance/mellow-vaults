@@ -94,7 +94,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     function commitStagedProtocolGovernance() external {
         require(_isProtocolAdmin(_msgSender()), PROTOCOL_ADMIN);
         require(_stagedProtocolGovernanceTimestamp > 0, NULL_OR_NOT_INITIALIZED);
-        require(block.timestamp > _stagedProtocolGovernanceTimestamp, INVALID_TIMESTAMP);
+        require(block.timestamp >= _stagedProtocolGovernanceTimestamp, INVALID_TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);

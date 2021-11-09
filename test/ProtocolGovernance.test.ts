@@ -1,17 +1,15 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { ContractFactory, Contract, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
-import {
-    deployProtocolGovernance,
-    deployVaultRegistry,
-    deployVaultRegistryAndProtocolGovernance,
-} from "./library/Deployments";
-import { ProtocolGovernance_Params, VaultRegistry } from "./library/Types";
+import { deployVaultRegistryAndProtocolGovernance } from "./library/Deployments";
+import { ProtocolGovernance_Params } from "./library/Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
 
 describe("ProtocolGovernance", () => {
+    const SECONDS_PER_DAY = 60 * 60 * 24;
+
     let protocolGovernance: Contract;
     let deployer: Signer;
     let stranger: Signer;
@@ -63,7 +61,7 @@ describe("ProtocolGovernance", () => {
             initialParams = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(10),
-                governanceDelay: BigNumber.from(1),
+                governanceDelay: BigNumber.from(SECONDS_PER_DAY), // 1 day
                 strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
                 protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
                 protocolExitFee: BigNumber.from(10 ** 9),
@@ -261,7 +259,7 @@ describe("ProtocolGovernance", () => {
                     (await protocolGovernance.pendingParamsTimestamp()) -
                         timestamp
                 )
-            ).to.be.lessThanOrEqual(10);
+            ).to.be.equal(SECONDS_PER_DAY + 1);
         });
 
         describe("when callen by not admin", () => {
@@ -419,7 +417,7 @@ describe("ProtocolGovernance", () => {
                     (await protocolGovernance.pendingClaimAllowlistAddTimestamp()) -
                         timestamp
                 )
-            ).to.be.lessThanOrEqual(10);
+            ).to.be.lessThanOrEqual(SECONDS_PER_DAY + 1);
         });
 
         it("sets correct pending timestamp with non-zero governance delay", async () => {
@@ -441,7 +439,7 @@ describe("ProtocolGovernance", () => {
                     (await protocolGovernance.pendingClaimAllowlistAddTimestamp()) -
                         (timestamp + timeout)
                 )
-            ).to.be.lessThanOrEqual(10);
+            ).to.be.lessThanOrEqual(SECONDS_PER_DAY + 1);
         });
 
         describe("when callen by not admin", () => {
@@ -507,7 +505,7 @@ describe("ProtocolGovernance", () => {
                         (await protocolGovernance.pendingVaultGovernancesAddTimestamp()) -
                             timestamp
                     )
-                ).to.be.lessThanOrEqual(10);
+                ).to.be.lessThanOrEqual(SECONDS_PER_DAY + 1);
             });
         });
 
@@ -534,7 +532,7 @@ describe("ProtocolGovernance", () => {
                     await user3.getAddress(),
                 ]);
 
-                await sleep(100);
+                await sleep(SECONDS_PER_DAY);
 
                 await protocolGovernance.commitVaultGovernancesAdd();
 
@@ -571,7 +569,7 @@ describe("ProtocolGovernance", () => {
                     await user3.getAddress(),
                 ]);
 
-                await sleep(100);
+                await sleep(SECONDS_PER_DAY);
 
                 await protocolGovernance.commitVaultGovernancesAdd();
 
@@ -616,7 +614,7 @@ describe("ProtocolGovernance", () => {
         describe("when pendingVaultGovernancesAddTimestamp has not passed or has almost passed", () => {
             it("reverts", async () => {
                 await protocolGovernance.setPendingParams(params);
-                await sleep(10);
+                await sleep(SECONDS_PER_DAY + 1);
                 await protocolGovernance.commitParams();
                 timestamp += timeShift;
                 await sleepTo(timestamp);
@@ -629,7 +627,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance.commitVaultGovernancesAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
 
-                await sleep(95);
+                await sleep(1);
                 await expect(
                     protocolGovernance.commitVaultGovernancesAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
@@ -882,7 +880,7 @@ describe("ProtocolGovernance", () => {
                     await user1.getAddress(),
                     await user2.getAddress(),
                 ]);
-                await sleep(100);
+                await sleep(SECONDS_PER_DAY);
                 await protocolGovernance.commitVaultGovernancesAdd();
 
                 await expect(
@@ -905,7 +903,7 @@ describe("ProtocolGovernance", () => {
                         await user2.getAddress(),
                         await user3.getAddress(),
                     ]);
-                    await sleep(100);
+                    await sleep(SECONDS_PER_DAY);
                     await protocolGovernance.commitVaultGovernancesAdd();
 
                     await expect(
@@ -937,7 +935,7 @@ describe("ProtocolGovernance", () => {
                         await user2.getAddress(),
                         await user3.getAddress(),
                     ]);
-                    await sleep(100);
+                    await sleep(SECONDS_PER_DAY);
                     await protocolGovernance.commitVaultGovernancesAdd();
 
                     await expect(

@@ -84,6 +84,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), "POA");
         vault = factory.deployVault(vaultTokens, options);
         nft = _internalParams.registry.registerVault(address(vault), owner);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens, options, owner, address(vault), nft);
     }
 
     /// @inheritdoc IVaultGovernance
@@ -98,7 +99,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     function commitInternalParams() external {
         _requireProtocolAdmin();
         require(_internalParamsTimestamp > 0, "NULL");
-        require(block.timestamp > _internalParamsTimestamp, "TS");
+        require(block.timestamp >= _internalParamsTimestamp, "TS");
         _internalParams = _stagedInternalParams;
         delete _internalParamsTimestamp;
         emit CommitedInternalParams(tx.origin, msg.sender, _internalParams);
