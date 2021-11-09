@@ -53,6 +53,11 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
 
     /// @inheritdoc IAaveVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
+        if (_stagedDelayedProtocolParams.length == 0) {
+            return DelayedProtocolParams({
+                lendingPool: ILendingPool(address(0))
+            });
+        }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
