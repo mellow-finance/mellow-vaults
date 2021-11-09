@@ -135,7 +135,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         },
         "deployVault",
         tokens,
-        coder.encode(["uint256"], [gatewayVaultNft]),
+        coder.encode(
+            ["uint256", "string", "string"],
+            [gatewayVaultNft, "MStrategy LP Token", "MSLP"]
+        ),
         deployer
     );
     const lpIssuerNft = startNft;

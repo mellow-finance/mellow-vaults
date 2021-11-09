@@ -43,8 +43,11 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
         bytes memory options,
         address
     ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
-        (vault, nft) = super.deployVault(vaultTokens, "", msg.sender);
-        uint256 subvaultNft = abi.decode(options, (uint256));
+        (uint256 subvaultNft, string memory name, string memory symbol) = abi.decode(
+            options,
+            (uint256, string, string)
+        );
+        (vault, nft) = super.deployVault(vaultTokens, abi.encode(name, symbol), msg.sender);
         // TODO - add IERC165 check of the subvault interface == gateway vault interface
         IVaultRegistry registry = _internalParams.registry;
         ILpIssuer(address(vault)).addSubvault(subvaultNft);

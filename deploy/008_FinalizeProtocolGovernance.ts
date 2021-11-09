@@ -17,6 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "AaveVaultGovernance",
         "UniV3VaultGovernance",
         "ERC20VaultGovernance",
+        "GatewayVaultGovernance",
         "LpIssuerGovernance",
     ]) {
         const governance = await hre.ethers.getContract(name);
