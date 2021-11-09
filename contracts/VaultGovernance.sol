@@ -99,7 +99,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     function commitInternalParams() external {
         _requireProtocolAdmin();
         require(_internalParamsTimestamp > 0, "NULL");
-        require(block.timestamp > _internalParamsTimestamp, "TS");
+        require(block.timestamp >= _internalParamsTimestamp, "TS");
         _internalParams = _stagedInternalParams;
         delete _internalParamsTimestamp;
         emit CommitedInternalParams(tx.origin, msg.sender, _internalParams);

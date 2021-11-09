@@ -25,15 +25,5 @@ export async function sendTx(
     return receipt;
 }
 
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy } = deployments;
-    const { deployer } = await getNamedAccounts();
-    await deploy("ProtocolGovernance", {
-        from: deployer,
-        args: [deployer],
-        log: true,
-        autoMine: true,
-    });
-};
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;

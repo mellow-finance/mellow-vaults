@@ -26,7 +26,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }
         governances.push(governance.address);
     }
-    if (governances.length > 0) {
+    const currentGovernances = await protocolGovernance.vaultGovernances();
+    if (governances.length > 0 && currentGovernances.length == 0) {
         log(`Registering Governances in ProtocolGovernance`);
         await execute(
             "ProtocolGovernance",
