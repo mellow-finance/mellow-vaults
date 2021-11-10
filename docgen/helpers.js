@@ -1,14 +1,12 @@
 const { registerHelpers } = require("solidity-docgen/dist/handlebars.js");
 
 function inheritanceDescription(inheritance, options) {
-  if (inheritance.length < 2) {
+  const filtered = inheritance.slice(1).filter((x) => !x.name.startsWith("I"));
+
+  if (filtered.length == 0) {
     return "";
   }
-  const desc = inheritance
-    .slice(1)
-    .filter((x) => !x.name.startsWith("I"))
-    .map((x) => `[${x.name}](#${x.name})`)
-    .join(", ");
+  const desc = filtered.map((x) => `[${x.name}](#${x.name})`).join(", ");
   return `*Inherits from ${desc}*\n`;
 }
 
