@@ -6,7 +6,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultGovernance.sol";
 
 /// @notice Internal contract for managing different params.
-/// @dev The contract should be overriden by the concrete VaultGovernanceOld,
+/// @dev The contract should be overriden by the concrete VaultGovernance,
 /// define different params structs and use abi.decode / abi.encode to serialize
 /// to bytes in this contract. It also should emit events on params change.
 abstract contract VaultGovernance is IVaultGovernance {
