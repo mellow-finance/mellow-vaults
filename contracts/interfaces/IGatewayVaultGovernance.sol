@@ -18,31 +18,38 @@ interface IGatewayVaultGovernance is IVaultGovernance {
     }
 
     /// @notice Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
-    /// @param nft Nft of the vault
+    /// @param nft VaultRegistry NFT of the vault
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
 
     /// @notice Delayed Strategy Params staged for commit after delay
-    /// @param nft Nft of the vault
+    /// @param nft VaultRegistry NFT of the vault
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
 
     /// @notice Strategy Params
-    /// @param nft Nft of the vault
+    /// @param nft VaultRegistry NFT of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory);
 
-    /// @notice Stage Delayed Strategy Params
-    /// @param nft Nft of the vault
+    /// @notice Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
+    /// @param nft VaultRegistry NFT of the vault
     /// @param params New params
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external;
 
-    /// @notice Commit Delayed Strategy Params
+    /// @notice Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay
+    /// @dev Can only be called after delayedStrategyParamsTimestamp
+    /// @param nft VaultRegistry NFT of the vault
     function commitDelayedStrategyParams(uint256 nft) external;
 
-    /// @notice Set immediate strategy params
-    /// @dev Should require nft > 0
+    /// @notice Set Strategy params, i.e. Params that could be changed by Strategy or Protocol Governance immediately
     /// @param nft Nft of the vault
     /// @param params New params
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external;
 
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
     event StageDelayedStrategyParams(
         address indexed origin,
         address indexed sender,
@@ -50,11 +57,23 @@ interface IGatewayVaultGovernance is IVaultGovernance {
         DelayedStrategyParams params,
         uint256 when
     );
+
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
     event CommitDelayedStrategyParams(
         address indexed origin,
         address indexed sender,
         uint256 indexed nft,
         DelayedStrategyParams params
     );
+
+    /// @notice Emitted when new StrategyParams are set
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are set
     event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
 }
