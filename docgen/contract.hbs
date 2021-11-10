@@ -2,6 +2,10 @@
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
 {{#if natspec.devdoc}}📕 {{natspec.devdoc}}{{/if}}
 
+{{#if ownFunctions}}
+## Functions
+{{/if}}
+
 {{#ownFunctions}}
 {{#if (or (eq visibility "public") (eq visibility "external"))}}
 ### {{name}}
@@ -29,17 +33,18 @@
 {{/if}}
 {{/ownFunctions}}
 {{#if ownEvents}}
-### Events
+## Events
 {{/if}}
 {{#ownEvents}}
-#### {{name}}
+
+### {{name}}
 ```solidity
   event {{name}}({{args}})
 ```
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
 {{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
 {{#if natspec.params}}
-##### Parameters:
+#### Parameters:
 | Name                           | Type          | Description                                    |
 | :----------------------------- | :------------ | :--------------------------------------------- |
 {{#natspec.params}}
