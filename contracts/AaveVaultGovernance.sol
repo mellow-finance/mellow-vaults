@@ -31,13 +31,13 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
 
     /// @inheritdoc IAaveVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        _stageDelayedStrategyParams(nft, abi.encode(params), msg.sender);
+        _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
     /// @inheritdoc IAaveVaultGovernance
     function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft, msg.sender);
+        _commitDelayedStrategyParams(nft);
         emit CommitDelayedStrategyParams(
             tx.origin,
             msg.sender,
@@ -63,13 +63,13 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
 
     /// @inheritdoc IAaveVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
-        _stageDelayedProtocolParams(abi.encode(params), msg.sender);
+        _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
     /// @inheritdoc IAaveVaultGovernance
     function commitDelayedProtocolParams() external {
-        _commitDelayedProtocolParams(msg.sender);
+        _commitDelayedProtocolParams();
         emit CommitDelayedProtocolParams(
             tx.origin,
             msg.sender,

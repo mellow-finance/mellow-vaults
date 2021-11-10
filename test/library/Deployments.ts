@@ -200,11 +200,9 @@ export async function deployVaultGovernanceSystem(options: {
     await vaultGovernance.initialize(vaultFactory.address);
     await vaultGovernance
         .connect(options.adminSigner)
-        .stageInternalParams(params, await options.adminSigner.getAddress());
+        .stageInternalParams(params);
     await sleep(Number(await protocolGovernance.governanceDelay()));
-    await vaultGovernance
-        .connect(options.adminSigner)
-        .commitInternalParams(await options.adminSigner.getAddress());
+    await vaultGovernance.connect(options.adminSigner).commitInternalParams();
     return {
         vaultFactory: vaultFactory,
         vaultRegistry: vaultRegistry,
@@ -239,21 +237,20 @@ export async function deployTestVaultGovernance(options: {
         registry: vaultRegistry.address,
         factory: ethers.constants.AddressZero,
     });
+
     let vaultFactory = await deployVaultFactory({
         vaultGovernance: contract.address,
         vaultType: "ERC20",
     });
-    await contract.stageInternalParams(
-        {
-            protocolGovernance: protocolGovernance.address,
-            registry: vaultRegistry.address,
-            factory: vaultFactory.address,
-        },
-        await options.adminSigner.getAddress()
-    );
+
+    await contract.stageInternalParams({
+        protocolGovernance: protocolGovernance.address,
+        registry: vaultRegistry.address,
+        factory: vaultFactory.address,
+    });
 
     await sleep(Number(await protocolGovernance.governanceDelay()));
-    await contract.commitInternalParams(await options.adminSigner.getAddress());
+    await contract.commitInternalParams();
 
     return {
         vaultFactory: vaultFactory,
@@ -463,14 +460,11 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
     });
     await gatewayVaultGovernance
         .connect(options.adminSigner)
-        .stageInternalParams(
-            args.params,
-            await options.adminSigner.getAddress()
-        );
+        .stageInternalParams(args.params);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await gatewayVaultGovernance
         .connect(options.adminSigner)
-        .commitInternalParams(await options.adminSigner.getAddress());
+        .commitInternalParams();
     await gatewayVaultGovernance.initialize(gatewayVaultFactory.address);
     await vaultRegistry.approve(
         gatewayVaultGovernance.address,

@@ -68,10 +68,10 @@ interface IVaultGovernance {
 
     /// @notice Stage new Internal Params
     /// @param newParams New Internal Params
-    function stageInternalParams(InternalParams memory newParams, address sender) external;
+    function stageInternalParams(InternalParams memory newParams) external;
 
     /// @notice Commit staged Internal Params
-    function commitInternalParams(address sender) external;
+    function commitInternalParams() external;
 
     event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
     event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);

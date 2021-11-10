@@ -88,16 +88,16 @@ abstract contract VaultGovernance is IVaultGovernance {
     }
 
     /// @inheritdoc IVaultGovernance
-    function stageInternalParams(InternalParams memory newParams, address sender) external {
-        _requireProtocolAdmin(sender);
+    function stageInternalParams(InternalParams memory newParams) external {
+        _requireProtocolAdmin();
         _stagedInternalParams = newParams;
         _internalParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
         emit StagedInternalParams(tx.origin, msg.sender, newParams, _internalParamsTimestamp);
     }
 
     /// @inheritdoc IVaultGovernance
-    function commitInternalParams(address sender) external {
-        _requireProtocolAdmin(sender);
+    function commitInternalParams() external {
+        _requireProtocolAdmin();
         require(_internalParamsTimestamp > 0, "NULL");
         require(block.timestamp >= _internalParamsTimestamp, "TS");
         _internalParams = _stagedInternalParams;
@@ -110,8 +110,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Set Delayed Strategy Params
     /// @param nft Nft of the vault
     /// @param params New params
-    function _stageDelayedStrategyParams(uint256 nft, bytes memory params, address sender) internal {
-        _requireAtLeastStrategy(nft, sender);
+    function _stageDelayedStrategyParams(uint256 nft, bytes memory params) internal {
+        _requireAtLeastStrategy(nft);
         _stagedDelayedStrategyParams[nft] = params;
         uint256 delayFactor = _delayedStrategyParams[nft].length == 0 ? 0 : 1;
         _delayedStrategyParamsTimestamp[nft] =
@@ -121,8 +121,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     }
 
     /// @notice Commit Delayed Strategy Params
-    function _commitDelayedStrategyParams(uint256 nft, address sender) internal {
-        _requireAtLeastStrategy(nft, sender);
+    function _commitDelayedStrategyParams(uint256 nft) internal {
+        _requireAtLeastStrategy(nft);
         require(_delayedStrategyParamsTimestamp[nft] > 0, "NULL");
         require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], "TS");
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
@@ -131,8 +131,8 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     /// @notice Set Delayed Protocol Params
     /// @param params New params
-    function _stageDelayedProtocolParams(bytes memory params, address sender) internal {
-        _requireProtocolAdmin(sender);
+    function _stageDelayedProtocolParams(bytes memory params) internal {
+        _requireProtocolAdmin();
         uint256 delayFactor = _delayedProtocolParams.length == 0 ? 0 : 1;
         _stagedDelayedProtocolParams = params;
         _delayedProtocolParamsTimestamp =
@@ -142,8 +142,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     }
 
     /// @notice Commit Delayed Protocol Params
-    function _commitDelayedProtocolParams(address sender) internal {
-        _requireProtocolAdmin(sender);
+    function _commitDelayedProtocolParams() internal {
+        _requireProtocolAdmin();
         require(_delayedProtocolParamsTimestamp > 0, "NULL");
         require(block.timestamp >= _delayedProtocolParamsTimestamp, "TS");
         _delayedProtocolParams = _stagedDelayedProtocolParams;
@@ -154,27 +154,27 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @dev Should require nft > 0
     /// @param nft Nft of the vault
     /// @param params New params
-    function _setStrategyParams(uint256 nft, bytes memory params, address sender) internal {
-        _requireAtLeastStrategy(nft, sender);
+    function _setStrategyParams(uint256 nft, bytes memory params) internal {
+        _requireAtLeastStrategy(nft);
         _strategyParams[nft] = params;
     }
 
     /// @notice Set immediate protocol params
     /// @param params New params
-    function _setProtocolParams(bytes memory params, address sender) internal {
-        _requireProtocolAdmin(sender);
+    function _setProtocolParams(bytes memory params) internal {
+        _requireProtocolAdmin();
         _protocolParams = params;
     }
 
-    function _requireAtLeastStrategy(uint256 nft, address sender) private view {
+    function _requireAtLeastStrategy(uint256 nft) private view {
         require(
-            (_internalParams.protocolGovernance.isAdmin(sender) ||
-                _internalParams.registry.getApproved(nft) == sender),
+            (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
+                _internalParams.registry.getApproved(nft) == msg.sender),
             "RST"
         );
     }
 
-    function _requireProtocolAdmin(address sender) private view {
-        require(_internalParams.protocolGovernance.isAdmin(sender), "ADM");
+    function _requireProtocolAdmin() private view {
+        require(_internalParams.protocolGovernance.isAdmin(msg.sender), "ADM");
     }
 }

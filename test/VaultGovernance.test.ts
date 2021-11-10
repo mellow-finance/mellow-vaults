@@ -184,10 +184,7 @@ describe("TestVaultGovernance", () => {
                 await expect(
                     contract
                         .connect(stranger)
-                        .stageInternalParams(
-                            initialParams,
-                            await stranger.getAddress()
-                        )
+                        .stageInternalParams(initialParams)
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
@@ -195,10 +192,7 @@ describe("TestVaultGovernance", () => {
         it("sets internal params timestamp", async () => {
             timestamp += timeshift;
             sleepTo(timestamp);
-            await contract.stageInternalParams(
-                initialParams,
-                await deployer.getAddress()
-            );
+            await contract.stageInternalParams(initialParams);
             expect(
                 Math.abs(
                     (await contract.internalParamsTimestamp()) -
@@ -226,10 +220,7 @@ describe("TestVaultGovernance", () => {
             };
 
             await expect(
-                await contract.stageInternalParams(
-                    customParamsZero,
-                    await deployer.getAddress()
-                )
+                await contract.stageInternalParams(customParamsZero)
             ).to.emit(contract, "StagedInternalParams");
 
             expect(
@@ -241,15 +232,10 @@ describe("TestVaultGovernance", () => {
     describe("commitInternalParams", () => {
         describe("when called by not admin", () => {
             it("reverts", async () => {
-                await contract.stageInternalParams(
-                    initialParams,
-                    await deployer.getAddress()
-                );
-                await sleep(defaultDelay);
+                await contract.stageInternalParams(initialParams);
+
                 await expect(
-                    contract
-                        .connect(stranger)
-                        .commitInternalParams(await stranger.getAddress())
+                    contract.connect(stranger).commitInternalParams()
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
@@ -257,7 +243,7 @@ describe("TestVaultGovernance", () => {
         describe("when internal params timestamp == 0", () => {
             it("reverts", async () => {
                 await expect(
-                    contract.commitInternalParams(await deployer.getAddress())
+                    contract.commitInternalParams()
                 ).to.be.revertedWith(Exceptions.NULL);
             });
         });
@@ -299,40 +285,30 @@ describe("TestVaultGovernance", () => {
                 timestamp += timeshift;
                 sleepTo(timestamp);
 
-                await contract.stageInternalParams(
-                    customParams,
-                    await deployer.getAddress()
-                );
+                await contract.stageInternalParams(customParams);
                 await sleep(defaultDelay);
-                await contract.commitInternalParams(
-                    await deployer.getAddress()
-                );
+                await contract.commitInternalParams();
 
-                await contract.stageInternalParams(
-                    initialParams,
-                    await deployer.getAddress()
-                );
+                await contract.stageInternalParams(initialParams);
 
                 await expect(
-                    contract.commitInternalParams(await deployer.getAddress())
+                    contract.commitInternalParams()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
 
                 sleep(95);
                 await expect(
-                    contract.commitInternalParams(await deployer.getAddress())
+                    contract.commitInternalParams()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
 
         it("sets new params, deletes internal params timestamp, emits CommitedInternalParams", async () => {
-            await contract.stageInternalParams(
-                customParams,
-                await deployer.getAddress()
-            );
+            await contract.stageInternalParams(customParams);
             await sleep(defaultDelay);
-            await expect(
-                contract.commitInternalParams(await deployer.getAddress())
-            ).to.emit(contract, "CommitedInternalParams");
+            await expect(contract.commitInternalParams()).to.emit(
+                contract,
+                "CommitedInternalParams"
+            );
 
             expect(await contract.internalParamsTimestamp()).to.be.equal(
                 BigNumber.from(0)
@@ -494,18 +470,13 @@ describe("TestVaultGovernance", () => {
                 timestamp += timeshift;
                 sleepTo(timestamp);
 
-                await contract.stageInternalParams(
-                    {
-                        protocolGovernance: newProtocolGovernance.address,
-                        registry: newVaultRegistry.address,
-                        factory: vaultFactory.address,
-                    },
-                    await deployer.getAddress()
-                );
+                await contract.stageInternalParams({
+                    protocolGovernance: newProtocolGovernance.address,
+                    registry: newVaultRegistry.address,
+                    factory: vaultFactory.address,
+                });
                 await sleep(defaultDelay);
-                await contract.commitInternalParams(
-                    await deployer.getAddress()
-                );
+                await contract.commitInternalParams();
 
                 await contract.stageDelayedStrategyParams(nft, params);
 
@@ -582,18 +553,13 @@ describe("TestVaultGovernance", () => {
                 timestamp += timeshift;
                 sleepTo(timestamp);
 
-                await contract.stageInternalParams(
-                    {
-                        protocolGovernance: newProtocolGovernance.address,
-                        registry: newVaultRegistry.address,
-                        factory: vaultFactory.address,
-                    },
-                    await deployer.getAddress()
-                );
+                await contract.stageInternalParams({
+                    protocolGovernance: newProtocolGovernance.address,
+                    registry: newVaultRegistry.address,
+                    factory: vaultFactory.address,
+                });
                 await sleep(defaultDelay);
-                await contract.commitInternalParams(
-                    await deployer.getAddress()
-                );
+                await contract.commitInternalParams();
                 await contract.stageDelayedProtocolParams(encodedParams);
                 await expect(
                     contract.commitDelayedProtocolParams()

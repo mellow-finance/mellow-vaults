@@ -31,13 +31,13 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IUniV3VaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        _stageDelayedStrategyParams(nft, abi.encode(params), msg.sender);
+        _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
     /// @inheritdoc IUniV3VaultGovernance
     function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft, msg.sender);
+        _commitDelayedStrategyParams(nft);
         emit CommitDelayedStrategyParams(
             tx.origin,
             msg.sender,
@@ -63,13 +63,13 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IUniV3VaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
-        _stageDelayedProtocolParams(abi.encode(params), msg.sender);
+        _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
     /// @inheritdoc IUniV3VaultGovernance
     function commitDelayedProtocolParams() external {
-        _commitDelayedProtocolParams(msg.sender);
+        _commitDelayedProtocolParams();
         emit CommitDelayedProtocolParams(
             tx.origin,
             msg.sender,

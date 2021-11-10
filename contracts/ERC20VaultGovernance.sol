@@ -22,7 +22,7 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IERC20VaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        _stageDelayedStrategyParams(nft, abi.encode(params), msg.sender);
+        _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
@@ -32,7 +32,7 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IERC20VaultGovernance
     function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft, msg.sender);
+        _commitDelayedStrategyParams(nft);
         emit CommitDelayedStrategyParams(
             tx.origin,
             msg.sender,
