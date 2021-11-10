@@ -44,38 +44,4 @@ interface IVaultRegistry is IERC721 {
 
     /// @notice Comit new ProtocolGovernance
     function commitStagedProtocolGovernance() external;
-
-    /// @notice Emitted when new Vault is registered in VaultRegistry
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param nft VaultRegistry NFT of the vault
-    /// @param vault Address of the Vault contract
-    /// @param owner Owner of the VaultRegistry NFT
-    event VaultRegistered(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        address vault,
-        address owner
-    );
-
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param newProtocolGovernance Address of the new ProtocolGovernance
-    /// @param start Timestamp of the start of the new ProtocolGovernance
-    event StagedProtocolGovernance(
-        address indexed origin,
-        address indexed sender,
-        IProtocolGovernance newProtocolGovernance,
-        uint256 start
-    );
-
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
-    event CommitedProtocolGovernance(
-        address indexed origin,
-        address indexed sender,
-        IProtocolGovernance newProtocolGovernance
-    );
 }

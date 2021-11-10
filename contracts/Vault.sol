@@ -122,7 +122,7 @@ abstract contract Vault is IVault {
             token.safeTransfer(protocolTres, protocolFee);
             token.safeTransfer(to, strategyEarnings);
         }
-        emit IVault.CollectEarnings(to, collectedEarnings);
+        emit CollectEarnings(to, collectedEarnings);
     }
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
@@ -144,7 +144,7 @@ abstract contract Vault is IVault {
             token.safeTransfer(to, tokenAmounts[i]);
         }
         _postReclaimTokens(to, tokens);
-        emit IVault.ReclaimTokens(to, tokens, tokenAmounts);
+        emit ReclaimTokens(to, tokens, tokenAmounts);
     }
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
@@ -246,4 +246,24 @@ abstract contract Vault is IVault {
         returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
+
+    /// @notice Emitted on successful push
+    /// @param tokenAmounts The amounts of tokens to pushed
+    event Push(uint256[] tokenAmounts);
+
+    /// @notice Emitted on successful pull
+    /// @param to The target address for pulled tokens
+    /// @param tokenAmounts The amounts of tokens to pull
+    event Pull(address to, uint256[] tokenAmounts);
+
+    /// @notice Emitted when earnings are collected
+    /// @param to The target address for pulled tokens
+    /// @param tokenAmounts The amounts of earnings
+    event CollectEarnings(address to, uint256[] tokenAmounts);
+
+    /// @notice Emitted when tokens are reclaimed
+    /// @param to The target address for pulled tokens
+    /// @param tokens ERC20 tokens to be reclaimed
+    /// @param tokenAmounts The amounts of reclaims
+    event ReclaimTokens(address to, address[] tokens, uint256[] tokenAmounts);
 }

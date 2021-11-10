@@ -105,24 +105,4 @@ interface IVault {
     /// @param from Address of the reward pool
     /// @param data Abi encoded call to the `from` address
     function claimRewards(address from, bytes memory data) external;
-
-    /// @notice Emitted on successful push
-    /// @param tokenAmounts The amounts of tokens to pushed
-    event Push(uint256[] tokenAmounts);
-
-    /// @notice Emitted on successful pull
-    /// @param to The target address for pulled tokens
-    /// @param tokenAmounts The amounts of tokens to pull
-    event Pull(address to, uint256[] tokenAmounts);
-
-    /// @notice Emitted when earnings are collected
-    /// @param to The target address for pulled tokens
-    /// @param tokenAmounts The amounts of earnings
-    event CollectEarnings(address to, uint256[] tokenAmounts);
-
-    /// @notice Emitted when tokens are reclaimed
-    /// @param to The target address for pulled tokens
-    /// @param tokens ERC20 tokens to be reclaimed
-    /// @param tokenAmounts The amounts of reclaims
-    event ReclaimTokens(address to, address[] tokens, uint256[] tokenAmounts);
 }

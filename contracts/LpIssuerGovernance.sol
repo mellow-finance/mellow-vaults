@@ -56,4 +56,11 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
         registry.transferFrom(msg.sender, address(this), subvaultNft);
     }
+
+    /// @notice Emitted when new StrategyParams are set
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are set
+    event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
 }
