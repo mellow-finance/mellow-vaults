@@ -408,11 +408,12 @@ export async function deploySubVaultSystem(options: {
     };
 }
 
-export async function deployERC20VaultXGatewayVaultSystem(options: {
+export async function deploySubVaultXGatewayVaultSystem(options: {
     adminSigner: Signer;
     vaultOwnerSigner: Signer;
     treasury: Address;
     strategy: Address;
+    vaultType: SubVaultType;
 }): Promise<{
     vaultFactory: VaultFactory;
     vaultRegistry: VaultRegistry;
@@ -439,7 +440,7 @@ export async function deployERC20VaultXGatewayVaultSystem(options: {
         adminSigner: options.adminSigner,
         treasury: options.treasury,
         vaultOwner: await options.vaultOwnerSigner.getAddress(),
-        vaultType: "ERC20",
+        vaultType: options.vaultType,
     });
     let args: VaultGovernance_constructorArgs = {
         params: {
