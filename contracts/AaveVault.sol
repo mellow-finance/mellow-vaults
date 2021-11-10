@@ -5,12 +5,12 @@ import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
 import "./Vault.sol";
 
-/// @notice Vault that interfaces Aave protocol in the integration layer
+/// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
     address[] private _aTokens;
     uint256[] private _baseBalances;
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)

@@ -4,11 +4,11 @@ pragma solidity 0.8.9;
 import "./interfaces/IVaultFactory.sol";
 import "./LpIssuer.sol";
 
-/// @notice Helper contract for LpIssuerGovernance that can create new LpIssuers
+/// @notice Helper contract for LpIssuerGovernance that can create new LpIssuers.
 contract LpIssuerFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind
     constructor(IVaultGovernance vaultGovernance_) {
         vaultGovernance = vaultGovernance_;

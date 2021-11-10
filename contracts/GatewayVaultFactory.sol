@@ -4,11 +4,11 @@ pragma solidity 0.8.9;
 import "./interfaces/IVaultFactory.sol";
 import "./GatewayVault.sol";
 
-/// @notice Helper contract for GatewayVaultGovernance that can create new Gateway Vaults
+/// @notice Helper contract for GatewayVaultGovernance that can create new Gateway Vaults.
 contract GatewayVaultFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind
     constructor(IVaultGovernance vaultGovernance_) {
         vaultGovernance = vaultGovernance_;

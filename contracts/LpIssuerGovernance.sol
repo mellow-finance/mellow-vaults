@@ -8,9 +8,9 @@ import "./interfaces/ILpIssuerVaultGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault
+/// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
 
@@ -19,13 +19,13 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
         return address(0);
     }
 
-    /// @notice Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance immediately
+    /// @notice Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.
     /// @param nft Nft of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
-    /// @notice Stage Strategy Params
+    /// @notice Stage Strategy Params.
     /// @param nft Nft of the vault
     /// @param params New params
     function setDelayedStrategyParams(uint256 nft, StrategyParams calldata params) external {
@@ -37,7 +37,7 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
         _setStrategyParams(nft, abi.encode(params));
     }
 
-    /// @notice Deploy a new vault
+    /// @notice Deploy a new vault.
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault
     /// @return vault Address of the new vault
@@ -58,7 +58,7 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
         registry.transferFrom(msg.sender, address(this), subvaultNft);
     }
 
-    /// @notice Emitted when new StrategyParams are set
+    /// @notice Emitted when new StrategyParams are set.
     /// @param origin Origin of the transaction
     /// @param sender Sender of the transaction
     /// @param nft VaultRegistry NFT of the vault

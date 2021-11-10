@@ -7,7 +7,7 @@ import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Abstract contract that has logic common for every Vault
+/// @notice Abstract contract that has logic common for every Vault.
 abstract contract Vault is IVault {
     using SafeERC20 for IERC20;
 
@@ -15,7 +15,7 @@ abstract contract Vault is IVault {
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {

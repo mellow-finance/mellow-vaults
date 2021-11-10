@@ -5,9 +5,9 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all ERC20 Vaults params and can deploy a new ERC20 Vault
+/// @notice Governance that manages all ERC20 Vaults params and can deploy a new ERC20 Vault.
 contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
 

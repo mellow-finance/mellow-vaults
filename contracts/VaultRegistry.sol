@@ -7,7 +7,7 @@ import "./interfaces/IVault.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./interfaces/IVaultRegistry.sol";
 
-/// @notice This contract is used to manage ERC721 NFT for all Vaults
+/// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IVaultRegistry, ERC721 {
     string public constant INDEX_OUT_OF_BOUNDS = "ID";
     string public constant PROTOCOL_ADMIN = "ADM";
@@ -24,7 +24,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     mapping(uint256 => address) private _vaultIndex;
     uint256 private _topNft = 1;
 
-    /// @notice Constructor
+    /// @notice Creates a new contract.
     /// @param name ERC721 token name
     /// @param symbol ERC721 token symbol
     /// @param protocolGovernance_ Reference to ProtocolGovernance

@@ -5,9 +5,9 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IUniV3VaultGovernance.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault
+/// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
 contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
