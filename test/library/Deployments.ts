@@ -120,11 +120,7 @@ export async function deployVaultFactory(options: {
     vaultGovernance: IVaultGovernance;
     vaultType: VaultType;
 }): Promise<VaultFactory> {
-    const contractName =
-        options.vaultType === ("LpIssuer" as VaultType)
-            ? "LpIssuerFactory"
-            : `${options.vaultType}VaultFactory`;
-    const Contract = await ethers.getContractFactory(contractName);
+    const Contract = await ethers.getContractFactory(`${options.vaultType}Factory`);
     const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
 }
@@ -137,7 +133,7 @@ export const deployVaultGovernance = async (options: {
 }) => {
     let contract: Contract;
     const Contract = await ethers.getContractFactory(
-        `${options.vaultType}VaultGovernance`
+        `${options.vaultType}Governance`
     );
     contract = await Contract.deploy(options.constructorArgs.params);
     await contract.deployed();
@@ -166,30 +162,26 @@ export async function deployVaultGovernanceSystem(options: {
         protocolGovernance: protocolGovernance.address,
         registry: vaultRegistry.address,
     };
-    const contractName =
-        options.vaultType === ("LpIssuer" as VaultType)
-            ? "LpIssuerGovernance"
-            : `${options.vaultType}VaultGovernance`;
     const contractFactory: ContractFactory = await ethers.getContractFactory(
-        contractName
+        `${options.vaultType}Governance`
     );
     let vaultGovernance: VaultGovernance;
     switch (options.vaultType) {
-        case "Aave" as VaultType: {
+        case "AaveVault": {
             const { aaveLendingPool } = await getNamedAccounts();
             vaultGovernance = await contractFactory.deploy(params, {
                 lendingPool: aaveLendingPool,
             });
             break;
         }
-        case "UniV3" as VaultType: {
+        case "UniV3Vault": {
             const { uniswapV3PositionManager } = await getNamedAccounts();
             vaultGovernance = await contractFactory.deploy(params, {
                 positionManager: uniswapV3PositionManager,
             });
             break;
         }
-        case "Gateway" as VaultType: {
+        case "GatewayVault": {
             vaultGovernance = await contractFactory.deploy(params);
             break;
         }
@@ -246,7 +238,7 @@ export async function deployTestVaultGovernance(options: {
 
     let vaultFactory = await deployVaultFactory({
         vaultGovernance: contract.address,
-        vaultType: "ERC20",
+        vaultType: "ERC20Vault",
     });
 
     await contract.stageInternalParams({
@@ -317,7 +309,7 @@ export const deployLpIssuerGovernance = async (options: {
     } = await deployVaultGovernanceSystem({
         adminSigner: deployer,
         treasury: await treasury.getAddress(),
-        vaultType: "ERC20",
+        vaultType: "ERC20Vault",
     });
 
     const constructorArgs: LpIssuerGovernance_constructorArgs =
@@ -373,7 +365,7 @@ export async function deploySubVaultSystem(options: {
         .connect(options.adminSigner)
         .commitVaultGovernancesAdd();
     let optionsBytes: any = [];
-    if (options.vaultType === "UniV3") {
+    if (options.vaultType === "UniV3Vault") {
         optionsBytes = encodeToBytes(["uint"], [1]);
     }
     const { vault, nft } = await vaultGovernance.callStatic.deployVault(
@@ -387,7 +379,7 @@ export async function deploySubVaultSystem(options: {
         options.vaultOwner
     );
     const vaultContract: Vault = await ethers.getContractAt(
-        `${options.vaultType}Vault`,
+        options.vaultType,
         vault
     );
     await vaultGovernance
@@ -452,7 +444,7 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         constructorArgs: args,
         adminSigner: options.adminSigner,
         treasury: options.treasury,
-        vaultType: "Gateway" as VaultType,
+        vaultType: "GatewayVault",
     });
     await protocolGovernance
         .connect(options.adminSigner)
@@ -463,7 +455,7 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         .commitVaultGovernancesAdd();
     const gatewayVaultFactory = await deployVaultFactory({
         vaultGovernance: gatewayVaultGovernance.address,
-        vaultType: "Gateway" as VaultType,
+        vaultType: "GatewayVault",
     });
     await gatewayVaultGovernance
         .connect(options.adminSigner)

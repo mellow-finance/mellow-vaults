@@ -42,7 +42,7 @@ describe("AaveVaultGovernance", () => {
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
-                    vaultType: "Aave",
+                    vaultType: "AaveVault",
                 }));
         });
     });

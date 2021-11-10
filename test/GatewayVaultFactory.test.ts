@@ -24,7 +24,7 @@ describe("GatewayVaultFactory", () => {
                 treasury: await treasury.getAddress(),
                 vaultOwnerSigner: deployer,
                 strategy: await strategy.getAddress(),
-                vaultType: "ERC20",
+                vaultType: "ERC20Vault",
             }));
         });
     });

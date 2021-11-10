@@ -35,7 +35,7 @@ describe("ERC20VaultGovernance", () => {
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
-                    vaultType: "ERC20",
+                    vaultType: "ERC20Vault",
                 }));
         });
     });

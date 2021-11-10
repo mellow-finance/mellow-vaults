@@ -32,7 +32,7 @@ describe("AaveVaultFactory", () => {
                 await deployVaultGovernanceSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
-                    vaultType: "Aave" as VaultType,
+                    vaultType: "AaveVault",
                 }));
             tokens = await deployERC20Tokens(tokensCount);
         });

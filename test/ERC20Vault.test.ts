@@ -44,7 +44,7 @@ describe("ERC20Vault", function () {
                     adminSigner: deployer,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
-                    vaultType: "ERC20",
+                    vaultType: "ERC20Vault",
                 });
             });
         });

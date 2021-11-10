@@ -42,7 +42,7 @@ describe("UniV3VaultGovernance", () => {
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
-                    vaultType: "UniV3",
+                    vaultType: "UniV3Vault",
                 }));
         });
     });

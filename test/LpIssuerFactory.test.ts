@@ -32,7 +32,7 @@ describe("LpIssuerFactory", () => {
                 await deployVaultGovernanceSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
-                    vaultType: "LpIssuer" as VaultType,
+                    vaultType: "LpIssuer",
                 }));
             tokens = await deployERC20Tokens(tokensCount);
         });

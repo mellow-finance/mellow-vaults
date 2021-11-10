@@ -62,7 +62,7 @@ describe("TestVaultGovernance", () => {
             return await deployTestVaultGovernance({
                 adminSigner: deployer,
                 treasury: await treasury.getAddress(),
-                vaultType: "ERC20",
+                vaultType: "ERC20Vault",
             });
         });
     });

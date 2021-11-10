@@ -32,7 +32,7 @@ describe("UniV3VaultFactory", () => {
                 await deployVaultGovernanceSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
-                    vaultType: "UniV3" as VaultType,
+                    vaultType: "UniV3Vault",
                 }));
             tokens = await deployERC20Tokens(tokensCount);
         });
