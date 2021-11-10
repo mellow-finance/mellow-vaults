@@ -3,10 +3,23 @@ const INPUT_DIR = "contracts";
 const CONFIG_DIR = "docgen";
 const EXCLUDE_FILE = "docgen/exclude.txt";
 const OUTPUT_DIR = "docs";
+require("./helpers");
+
+const { docgen } = require("solidity-docgen/dist/docgen.js");
+
+const flags = {
+  input: "contracts",
+  output: "docs",
+  templates: "/Users/alex/dev/mellow-permissionless-vaults/docgen",
+  "solc-module":
+    "/Users/alex/dev/mellow-permissionless-vaults/node_modules/solc/index.js",
+  "solc-settings": { optimizer: { enabled: true, runs: 200 } },
+  "output-structure": "contracts",
+  extension: "md",
+};
 
 const fs = require("fs");
 const path = require("path");
-const spawnSync = require("child_process").spawnSync;
 
 const excludeList = lines(EXCLUDE_FILE);
 
@@ -17,17 +30,6 @@ function lines(pathName) {
     .join("")
     .split("\n");
 }
-
-const args = [
-  NODE_DIR + "/solidity-docgen/dist/cli.js",
-  "--input=" + INPUT_DIR,
-  "--output=" + OUTPUT_DIR,
-  "--templates=" + CONFIG_DIR,
-  "--solc-module=solc",
-  "--solc-settings=" +
-    JSON.stringify({ optimizer: { enabled: true, runs: 200 } }),
-  "--output-structure=contracts",
-];
 
 const getAllFiles = function (dirPath, arrayOfFiles) {
   files = fs.readdirSync(dirPath);
@@ -53,16 +55,12 @@ const getAllFiles = function (dirPath, arrayOfFiles) {
 
 const docsDir = path.resolve(path.join(OUTPUT_DIR, "..", "docs"));
 fs.rmSync(docsDir, { force: true, recursive: true });
-const result = spawnSync("node", args, {
-  stdio: ["inherit", "inherit", "pipe"],
+docgen(flags).then(() => {
+  let res = "";
+  getAllFiles(docsDir).forEach((file) => {
+    const data = fs.readFileSync(file);
+    res += `${data}\n`;
+  });
+
+  fs.writeFileSync(path.resolve(path.join(docsDir, "api.md")), res);
 });
-if (result.stderr.length > 0) throw new Error(result.stderr);
-
-let res = "";
-
-getAllFiles(docsDir).forEach((file) => {
-  const data = fs.readFileSync(file);
-  res += `${data}\n`;
-});
-
-fs.writeFileSync(path.resolve(path.join(docsDir, "api.md")), res);

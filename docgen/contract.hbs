@@ -1,10 +1,15 @@
 # {{name}}
+{{#inheritanceDescription inheritance}}
+{{/inheritanceDescription}}
+
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
 {{#if natspec.devdoc}}📕 {{natspec.devdoc}}{{/if}}
 
-{{#if ownEvents}}
+{{#shouldHaveSections ownFunctions ownEvents structs }}
+{{#if ownFunctions}}
 ## Functions
-{{/if}}
+{{/if }}
+{{/shouldHaveSections}}
 
 {{#ownFunctions}}
 {{#if (or (eq visibility "public") (eq visibility "external"))}}
@@ -32,9 +37,29 @@
 {{/if}}
 {{/if}}
 {{/ownFunctions}}
+
+{{#shouldHaveSections ownFunctions ownEvents structs }}
+{{#if structs}}
+## Structs
+{{/if}}
+{{/shouldHaveSections}}
+{{#structs}}
+```
+struct {{name}} {
+{{#members}}
+    {{#structType type}}{{/structType}} {{name}};
+{{/members}}
+}
+```
+{{/structs}}
+
+
+
+{{#shouldHaveSections ownFunctions ownEvents structs }}
 {{#if ownEvents}}
 ## Events
 {{/if}}
+{{/shouldHaveSections}}
 {{#ownEvents}}
 
 ### {{name}}
