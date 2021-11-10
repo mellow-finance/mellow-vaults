@@ -134,16 +134,4 @@ describe("GatewayVaultGovernance", () => {
             ).to.be.equal(await treasury.getAddress());
         });
     });
-
-    // describe("deployVault", () => {
-    //     describe("when called by stranger", () => {
-    //         it("reverts", async () => {
-    //             await expect(
-    //                 gatewayVaultGovernance.connect(stranger).deployVault([], [])
-    //             ).to.be.revertedWith(
-    //                 Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
-    //             );
-    //         });
-    //     });
-    // });
 });
