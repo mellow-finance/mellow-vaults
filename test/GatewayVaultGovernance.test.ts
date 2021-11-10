@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import { VaultGovernance } from "./library/Types";
-import { deployERC20VaultXGatewayVaultSystem } from "./library/Deployments";
+import { deploySubVaultXGatewayVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { toObject } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -23,11 +23,12 @@ describe("GatewayVaultGovernance", () => {
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({ gatewayVaultGovernance, nft } =
-                await deployERC20VaultXGatewayVaultSystem({
+                await deploySubVaultXGatewayVaultSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
                     vaultOwnerSigner: deployer,
                     strategy: await strategy.getAddress(),
+                    vaultType: "ERC20Vault",
                 }));
         });
     });
