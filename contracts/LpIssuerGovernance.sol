@@ -38,10 +38,9 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
 
     /// @notice Deploy a new vault
     /// @param vaultTokens ERC20 tokens under vault management
-    /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault.
+    /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault
     /// @return vault Address of the new vault
     /// @return nft Nft of the vault in the vault registry
-
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,

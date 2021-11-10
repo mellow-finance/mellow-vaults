@@ -14,6 +14,9 @@ abstract contract Vault is IVault {
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
 
+    /// @notice Creates a new contract
+    /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
+    /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
         require(Common.isSortedAndUnique(vaultTokens_), "SAU");
         _vaultGovernance = vaultGovernance_;
