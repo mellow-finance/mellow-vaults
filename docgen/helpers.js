@@ -6,7 +6,9 @@ function inheritanceDescription(inheritance, options) {
   if (filtered.length == 0) {
     return "";
   }
-  const desc = filtered.map((x) => `[${x.name}](#${x.name})`).join(", ");
+  const desc = filtered
+    .map((x) => `[${x.name}](#${x.name.toLowerCase()})`)
+    .join(", ");
   return `*Inherits from ${desc}*\n`;
 }
 
