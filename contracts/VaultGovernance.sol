@@ -80,7 +80,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         address owner
     ) public virtual returns (IVault vault, uint256 nft) {
         require(initialized, "INIT");
-        IProtocolGovernance protocolGovernance = _internalParams.protocolGovernance;
+        IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), "POA");
         vault = factory.deployVault(vaultTokens, options);
         nft = _internalParams.registry.registerVault(address(vault), owner);
