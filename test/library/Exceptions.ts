@@ -17,5 +17,6 @@ export default class Exceptions {
     static readonly SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE = "VG";
     static readonly REQUIRE_AT_LEAST_ADMIN: string = "RST";
     static readonly NULL_OR_NOT_INITIALIZED: string = "NA";
+    static readonly REDIRECTS_AND_VAULT_TOKENS_LENGTH: string = "RL";
 }
 // TODO: Remove outdated exceptions

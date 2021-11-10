@@ -11,11 +11,11 @@ contract TestVaultGovernance is VaultGovernance {
     }
 
     function stageDelayedStrategyParams(uint256 nft, bytes memory params) public {
-        _stageDelayedStrategyParams(nft, params);
+        _stageDelayedStrategyParams(nft, params, msg.sender);
     }
 
     function stageDelayedProtocolParams(bytes memory params) public {
-        _stageDelayedProtocolParams(params);
+        _stageDelayedProtocolParams(params, msg.sender);
     }
 
     function getStagedDelayedStrategyParams(uint256 nft) public view returns (bytes memory) {
@@ -43,19 +43,19 @@ contract TestVaultGovernance is VaultGovernance {
     }
 
     function commitDelayedStrategyParams(uint256 nft) public {
-        _commitDelayedStrategyParams(nft);
+        _commitDelayedStrategyParams(nft, msg.sender);
     }
 
     function commitDelayedProtocolParams() public {
-        _commitDelayedProtocolParams();
+        _commitDelayedProtocolParams(msg.sender);
     }
 
     function setStrategyParams(uint256 nft, bytes memory params) public {
-        _setStrategyParams(nft, params);
+        _setStrategyParams(nft, params, msg.sender);
     }
 
     function setProtocolParams(bytes memory params) public {
-        _setProtocolParams(params);
+        _setProtocolParams(params, msg.sender);
     }
 
     function getStrategyParams(uint256 nft) public view returns (bytes memory) {
