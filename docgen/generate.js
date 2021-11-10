@@ -1,25 +1,26 @@
+require("./helpers");
+const fs = require("fs");
+const path = require("path");
+
 const NODE_DIR = "node_modules";
 const INPUT_DIR = "contracts";
 const CONFIG_DIR = "docgen";
 const EXCLUDE_FILE = "docgen/exclude.txt";
 const OUTPUT_DIR = "docs";
-require("./helpers");
+
+const root = path.resolve(path.join(__dirname, ".."));
 
 const { docgen } = require("solidity-docgen/dist/docgen.js");
 
 const flags = {
-  input: "contracts",
-  output: "docs",
-  templates: "/Users/alex/dev/mellow-permissionless-vaults/docgen",
-  "solc-module":
-    "/Users/alex/dev/mellow-permissionless-vaults/node_modules/solc/index.js",
+  input: INPUT_DIR,
+  output: OUTPUT_DIR,
+  templates: CONFIG_DIR,
+  "solc-module": `${root}/node_modules/solc/index.js`,
   "solc-settings": { optimizer: { enabled: true, runs: 200 } },
   "output-structure": "contracts",
   extension: "md",
 };
-
-const fs = require("fs");
-const path = require("path");
 
 const excludeList = lines(EXCLUDE_FILE);
 
