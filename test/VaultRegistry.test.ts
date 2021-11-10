@@ -21,9 +21,12 @@ import { now, sleep, sleepTo } from "./library/Helpers";
 describe("VaultRegistry", () => {
     let vaultRegistry: VaultRegistry;
     let vaultFactory: VaultFactory;
+    let anotherVaultFactory: VaultFactory;
     let vaultGovernance: VaultGovernance;
+    let anotherVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let vault: ERC20Vault;
+    let anotherVault: ERC20Vault;
     let tokens: ERC20[];
     let deployer: Signer;
     let vaultOwner: Signer;
@@ -31,6 +34,7 @@ describe("VaultRegistry", () => {
     let treasury: Signer;
     let stranger: Signer;
     let nft: number;
+    let anotherNft: number;
     let deployment: Function;
 
     before(async () => {
@@ -57,7 +61,9 @@ describe("VaultRegistry", () => {
             vaultGovernance,
             tokens,
             vault,
+            anotherVault,
             nft,
+            anotherNft,
         } = await deployment());
     });
 
@@ -71,7 +77,10 @@ describe("VaultRegistry", () => {
 
     describe("vaults", () => {
         it("returns correct vaults", async () => {
-            expect(await vaultRegistry.vaults()).to.deep.equal([vault.address]);
+            expect(await vaultRegistry.vaults()).to.deep.equal([
+                vault.address,
+                anotherVault.address,
+            ]);
         });
     });
 
@@ -109,7 +118,7 @@ describe("VaultRegistry", () => {
                 const anotherTokens = sortContractsByAddresses(
                     await deployERC20Tokens(5)
                 );
-                const [anotherVaultAddress, anotherNft] =
+                const [newVaultAddress, _] =
                     await vaultGovernance.callStatic.deployVault(
                         anotherTokens.map((token) => token.address),
                         [],
@@ -122,7 +131,8 @@ describe("VaultRegistry", () => {
                 );
                 expect(await vaultRegistry.vaults()).to.deep.equal([
                     vault.address,
-                    anotherVaultAddress,
+                    anotherVault.address,
+                    newVaultAddress,
                 ]);
             });
         });
@@ -198,7 +208,7 @@ describe("VaultRegistry", () => {
 
     describe("vaultsCount", () => {
         it("returns correct vaults count", async () => {
-            expect(await vaultRegistry.vaultsCount()).to.equal(1);
+            expect(await vaultRegistry.vaultsCount()).to.equal(2);
         });
     });
 

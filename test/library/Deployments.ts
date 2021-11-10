@@ -120,7 +120,9 @@ export async function deployVaultFactory(options: {
     vaultGovernance: IVaultGovernance;
     vaultType: VaultType;
 }): Promise<VaultFactory> {
-    const Contract = await ethers.getContractFactory(`${options.vaultType}Factory`);
+    const Contract = await ethers.getContractFactory(
+        `${options.vaultType}Factory`
+    );
     const contract = await Contract.deploy(options.vaultGovernance);
     return contract;
 }
@@ -146,9 +148,11 @@ export async function deployVaultGovernanceSystem(options: {
     vaultType: VaultType;
 }): Promise<{
     vaultFactory: VaultFactory;
+    anotherVaultFactory: VaultFactory;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     vaultGovernance: VaultGovernance;
+    anotherVaultGovernance: VaultGovernance;
 }> {
     const { vaultRegistry, protocolGovernance } =
         await deployVaultRegistryAndProtocolGovernance({
@@ -166,46 +170,75 @@ export async function deployVaultGovernanceSystem(options: {
         `${options.vaultType}Governance`
     );
     let vaultGovernance: VaultGovernance;
+    let anotherVaultGovernance: VaultGovernance;
     switch (options.vaultType) {
         case "AaveVault": {
             const { aaveLendingPool } = await getNamedAccounts();
-            vaultGovernance = await contractFactory.deploy(params, {
+            const additionalParams = {
                 lendingPool: aaveLendingPool,
-            });
+            };
+            vaultGovernance = await contractFactory.deploy(
+                params,
+                additionalParams
+            );
+            anotherVaultGovernance = await contractFactory.deploy(
+                params,
+                additionalParams
+            );
             break;
         }
         case "UniV3Vault": {
             const { uniswapV3PositionManager } = await getNamedAccounts();
-            vaultGovernance = await contractFactory.deploy(params, {
+            const additionalParams = {
                 positionManager: uniswapV3PositionManager,
-            });
-            break;
-        }
-        case "GatewayVault": {
-            vaultGovernance = await contractFactory.deploy(params);
+            };
+            vaultGovernance = await contractFactory.deploy(
+                params,
+                additionalParams
+            );
+            anotherVaultGovernance = await contractFactory.deploy(
+                params,
+                additionalParams
+            );
             break;
         }
         default: {
+            // ERC20Vault
             vaultGovernance = await contractFactory.deploy(params);
+            anotherVaultGovernance = await contractFactory.deploy(params);
             break;
         }
     }
     await vaultGovernance.deployed();
+    await anotherVaultGovernance.deployed();
     const vaultFactory = await deployVaultFactory({
         vaultType: options.vaultType,
         vaultGovernance: vaultGovernance.address,
     });
+    const anotherVaultFactory = await deployVaultFactory({
+        vaultType: options.vaultType,
+        vaultGovernance: anotherVaultGovernance.address,
+    });
     await vaultGovernance.initialize(vaultFactory.address);
+    await anotherVaultGovernance.initialize(anotherVaultFactory.address);
     await vaultGovernance
+        .connect(options.adminSigner)
+        .stageInternalParams(params);
+    await anotherVaultGovernance
         .connect(options.adminSigner)
         .stageInternalParams(params);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await vaultGovernance.connect(options.adminSigner).commitInternalParams();
+    await anotherVaultGovernance
+        .connect(options.adminSigner)
+        .commitInternalParams();
     return {
-        vaultFactory: vaultFactory,
-        vaultRegistry: vaultRegistry,
-        protocolGovernance: protocolGovernance,
-        vaultGovernance: vaultGovernance,
+        vaultFactory,
+        anotherVaultFactory,
+        vaultRegistry,
+        protocolGovernance,
+        vaultGovernance,
+        anotherVaultGovernance,
     };
 }
 
@@ -341,25 +374,35 @@ export async function deploySubVaultSystem(options: {
     vaultType: SubVaultType;
 }): Promise<{
     vaultFactory: VaultFactory;
+    anotherVaultFactory: VaultFactory;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     vaultGovernance: VaultGovernance;
+    anotherVaultGovernance: VaultGovernance;
     tokens: ERC20[];
     vault: Vault;
     nft: number;
+    anotherVault: Vault;
+    anotherNft: number;
 }> {
-    const { vaultRegistry, protocolGovernance, vaultFactory, vaultGovernance } =
-        await deployVaultGovernanceSystem({
-            adminSigner: options.adminSigner,
-            treasury: options.treasury,
-            vaultType: options.vaultType,
-        });
+    const {
+        vaultRegistry,
+        protocolGovernance,
+        vaultFactory,
+        anotherVaultFactory,
+        vaultGovernance,
+        anotherVaultGovernance,
+    } = await deployVaultGovernanceSystem({
+        adminSigner: options.adminSigner,
+        treasury: options.treasury,
+        vaultType: options.vaultType,
+    });
     const vaultTokens: ERC20[] = sortContractsByAddresses(
         await deployERC20Tokens(options.tokensCount)
     );
     await protocolGovernance
         .connect(options.adminSigner)
-        .setPendingVaultGovernancesAdd([vaultGovernance.address]);
+        .setPendingVaultGovernancesAdd([vaultGovernance.address, anotherVaultGovernance.address]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance
         .connect(options.adminSigner)
@@ -368,35 +411,54 @@ export async function deploySubVaultSystem(options: {
     if (options.vaultType === "UniV3Vault") {
         optionsBytes = encodeToBytes(["uint"], [1]);
     }
+    const vaultDeployArgs = [
+        vaultTokens.map((token) => token.address),
+        optionsBytes,
+        options.vaultOwner,
+    ];
     const { vault, nft } = await vaultGovernance.callStatic.deployVault(
-        vaultTokens.map((token) => token.address),
-        optionsBytes,
-        options.vaultOwner
+        ...vaultDeployArgs
     );
-    await vaultGovernance.deployVault(
-        vaultTokens.map((token) => token.address),
-        optionsBytes,
-        options.vaultOwner
+    await vaultGovernance.deployVault(...vaultDeployArgs);
+    const anotherVaultResult = await anotherVaultGovernance.callStatic.deployVault(
+        ...vaultDeployArgs
     );
+    const anotherVault = anotherVaultResult.vault;
+    const anotherNft = anotherVaultResult.nft;
+    await anotherVaultGovernance.deployVault(...vaultDeployArgs);
     const vaultContract: Vault = await ethers.getContractAt(
         options.vaultType,
         vault
     );
+    const anotherVaultContract: Vault = await ethers.getContractAt(
+        options.vaultType,
+        anotherVault
+    );
     await vaultGovernance
         .connect(options.adminSigner)
         .stageDelayedStrategyParams(nft, [options.treasury]);
+    await anotherVaultGovernance
+        .connect(options.adminSigner)
+        .stageDelayedStrategyParams(anotherNft, [options.treasury]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await vaultGovernance
         .connect(options.adminSigner)
         .commitDelayedStrategyParams(BigNumber.from(nft));
+    await anotherVaultGovernance
+        .connect(options.adminSigner)
+        .commitDelayedStrategyParams(BigNumber.from(anotherNft));
     return {
         vaultFactory: vaultFactory,
+        anotherVaultFactory: anotherVaultFactory,
         vaultRegistry: vaultRegistry,
         protocolGovernance: protocolGovernance,
         vaultGovernance: vaultGovernance,
         tokens: vaultTokens,
         vault: vaultContract,
         nft: nft,
+        anotherVaultGovernance: anotherVaultGovernance,
+        anotherVault: anotherVaultContract,
+        anotherNft: anotherNft,
     };
 }
 
@@ -408,12 +470,16 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
     vaultType: SubVaultType;
 }): Promise<{
     vaultFactory: VaultFactory;
+    anotherVaultFactory: VaultFactory;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     vaultGovernance: VaultGovernance;
+    anotherVaultGovernance: VaultGovernance;
     tokens: ERC20[];
     vault: ERC20Vault;
     nft: number;
+    anotherVault: ERC20Vault;
+    anotherNft: number;
     gatewayVaultGovernance: VaultGovernance;
     gatewayVaultFactory: VaultFactory;
     gatewayVault: Vault;
@@ -421,12 +487,16 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
 }> {
     const {
         vaultFactory,
+        anotherVaultFactory,
         vaultRegistry,
         protocolGovernance,
         vaultGovernance,
+        anotherVaultGovernance,
         tokens,
         vault,
         nft,
+        anotherVault,
+        anotherNft,
     } = await deploySubVaultSystem({
         tokensCount: 2,
         adminSigner: options.adminSigner,
@@ -444,7 +514,7 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         constructorArgs: args,
         adminSigner: options.adminSigner,
         treasury: options.treasury,
-        vaultType: "GatewayVault",
+        vaultType: "GatewayVault" as VaultType,
     });
     await protocolGovernance
         .connect(options.adminSigner)
@@ -455,7 +525,7 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         .commitVaultGovernancesAdd();
     const gatewayVaultFactory = await deployVaultFactory({
         vaultGovernance: gatewayVaultGovernance.address,
-        vaultType: "GatewayVault",
+        vaultType: "GatewayVault" as VaultType,
     });
     await gatewayVaultGovernance
         .connect(options.adminSigner)
@@ -469,11 +539,15 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         gatewayVaultGovernance.address,
         BigNumber.from(nft)
     );
+    await vaultRegistry.approve(
+        gatewayVaultGovernance.address,
+        BigNumber.from(anotherNft)
+    );
     let gatewayVaultAddress: IGatewayVault;
     let gatewayNft: number = 0;
     const deployArgs = [
         [], // Gateway vault has no tokens
-        encodeToBytes(["uint256[]"], [[nft]]),
+        encodeToBytes(["uint256[]"], [[nft, anotherNft]]),
         options.strategy,
     ];
     let response = await gatewayVaultGovernance.callStatic.deployVault(
@@ -488,12 +562,16 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
     );
     return {
         vaultFactory,
+        anotherVaultFactory,
         vaultRegistry,
         protocolGovernance,
         vaultGovernance,
+        anotherVaultGovernance,
         tokens,
         vault,
+        anotherVault,
         nft,
+        anotherNft,
         gatewayVaultGovernance,
         gatewayVaultFactory,
         gatewayVault,
