@@ -5,12 +5,12 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "./interfaces/IDefaultAccessControl.sol";
 
 /// @notice This is a default access control with 2 roles -
-/// ADMIN and ADMIN_DELEGATE
+/// ADMIN and ADMIN_DELEGATE.
 contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable {
     bytes32 internal constant ADMIN_ROLE = keccak256("admin");
     bytes32 internal constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param admin Admin of the contract
     constructor(address admin) {
         require(admin != address(0), "ZADM");
@@ -19,7 +19,7 @@ contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable 
         _setRoleAdmin(ADMIN_DELEGATE_ROLE, ADMIN_ROLE);
     }
 
-    /// @notice Checks if the address is contract admin
+    /// @notice Checks if the address is contract admin.
     /// @param sender Adddress to check
     /// @return `true` if sender is an admin, `false` otherwise
     function isAdmin(address sender) public view returns (bool) {

@@ -10,6 +10,7 @@ import "./libraries/external/TickMath.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./Vault.sol";
 
+/// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is Vault {
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -28,7 +29,7 @@ contract UniV3Vault is Vault {
     EnumerableSet.UintSet private _cachedNfts;
     IUniswapV3PoolState public pool;
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
     /// @param fee Fee of the underlying UniV3 pool

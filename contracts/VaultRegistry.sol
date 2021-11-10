@@ -7,7 +7,7 @@ import "./interfaces/IVault.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./interfaces/IVaultRegistry.sol";
 
-/// @notice This contract is used to deploy the Vault contract and mint NFT for it.
+/// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IVaultRegistry, ERC721 {
     string public constant INDEX_OUT_OF_BOUNDS = "ID";
     string public constant PROTOCOL_ADMIN = "ADM";
@@ -24,7 +24,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     mapping(uint256 => address) private _vaultIndex;
     uint256 private _topNft = 1;
 
-    /// @notice Constructor
+    /// @notice Creates a new contract.
     /// @param name ERC721 token name
     /// @param symbol ERC721 token symbol
     /// @param protocolGovernance_ Reference to ProtocolGovernance
@@ -103,4 +103,38 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     function _isProtocolAdmin(address sender) internal view returns (bool) {
         return _protocolGovernance.isAdmin(sender);
     }
+
+    /// @notice Emitted when new Vault is registered in VaultRegistry
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param vault Address of the Vault contract
+    /// @param owner Owner of the VaultRegistry NFT
+    event VaultRegistered(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        address vault,
+        address owner
+    );
+
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param newProtocolGovernance Address of the new ProtocolGovernance
+    /// @param start Timestamp of the start of the new ProtocolGovernance
+    event StagedProtocolGovernance(
+        address indexed origin,
+        address indexed sender,
+        IProtocolGovernance newProtocolGovernance,
+        uint256 start
+    );
+
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
+    event CommitedProtocolGovernance(
+        address indexed origin,
+        address indexed sender,
+        IProtocolGovernance newProtocolGovernance
+    );
 }

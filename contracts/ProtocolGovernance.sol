@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./DefaultAccessControl.sol";
 
+/// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -21,6 +22,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     uint256 public pendingParamsTimestamp;
 
+    /// @notice Creates a new contract.
+    /// @param admin Initial admin of the contract
     constructor(address admin) DefaultAccessControl(admin) {}
 
     // -------------------  PUBLIC, VIEW  -------------------

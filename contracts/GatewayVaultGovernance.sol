@@ -6,8 +6,9 @@ import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./VaultGovernance.sol";
 
+/// @notice Governance that manages all Gateway Vaults params and can deploy a new Gateway Vault.
 contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
 
@@ -76,4 +77,37 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
+
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params
+    );
+
+    /// @notice Emitted when new StrategyParams are set
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are set
+    event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
 }

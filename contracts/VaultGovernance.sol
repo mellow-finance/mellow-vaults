@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultGovernance.sol";
 
-/// @notice Internal contract for managing different params
-/// @dev The contract should be overriden by the concrete VaultGovernanceOld,
+/// @notice Internal contract for managing different params.
+/// @dev The contract should be overriden by the concrete VaultGovernance,
 /// define different params structs and use abi.decode / abi.encode to serialize
 /// to bytes in this contract. It also should emit events on params change.
 abstract contract VaultGovernance is IVaultGovernance {
@@ -28,7 +28,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     IVaultFactory public factory;
     bool public initialized;
 
-    /// @notice Creates a new contract
+    /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
         _internalParams = internalParams_;
@@ -80,7 +80,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         address owner
     ) public virtual returns (IVault vault, uint256 nft) {
         require(initialized, "INIT");
-        IProtocolGovernance protocolGovernance = _internalParams.protocolGovernance;
+        IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), "POA");
         vault = factory.deployVault(vaultTokens, options);
         nft = _internalParams.registry.registerVault(address(vault), owner);
@@ -177,4 +177,35 @@ abstract contract VaultGovernance is IVaultGovernance {
     function _requireProtocolAdmin() private view {
         require(_internalParams.protocolGovernance.isAdmin(msg.sender), "ADM");
     }
+
+    /// @notice Emitted when InternalParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StagedInternalParams(address indexed origin, address indexed sender, InternalParams params, uint256 when);
+
+    /// @notice Emitted when InternalParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that were staged for commit
+    event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams params);
+
+    /// @notice Emitted when New Vault is deployed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param vaultTokens Vault tokens for this vault
+    /// @param options Options for deploy. The details of the options structure are specified in subcontracts
+    /// @param owner Owner of the VaultRegistry NFT for this vault
+    /// @param vaultAddress Address of the new Vault
+    /// @param vaultNft VaultRegistry NFT for the new Vault
+    event DeployedVault(
+        address indexed origin,
+        address indexed sender,
+        address[] vaultTokens,
+        bytes options,
+        address owner,
+        address vaultAddress,
+        uint256 vaultNft
+    );
 }

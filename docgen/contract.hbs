@@ -1,6 +1,15 @@
 # {{name}}
+{{#inheritanceDescription inheritance}}
+{{/inheritanceDescription}}
+
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
-{{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
+{{#if natspec.devdoc}}📕 {{natspec.devdoc}}{{/if}}
+
+{{#shouldHaveSections ownFunctions ownEvents structs }}
+{{#if ownFunctions}}
+## Functions
+{{/if }}
+{{/shouldHaveSections}}
 
 {{#ownFunctions}}
 {{#if (or (eq visibility "public") (eq visibility "external"))}}
@@ -9,7 +18,7 @@
   function {{name}}({{args}}) {{visibility}}{{#if outputs}} returns ({{outputs}}){{/if}}
 ```
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
-{{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
+{{#if natspec.devdoc}}📕 {{natspec.devdoc}}{{/if}}
 {{#if natspec.params}}
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -28,10 +37,31 @@
 {{/if}}
 {{/if}}
 {{/ownFunctions}}
-{{#if ownEvents}}
-### Events
+
+{{#shouldHaveSections ownFunctions ownEvents structs }}
+{{#if structs}}
+## Structs
 {{/if}}
+{{/shouldHaveSections}}
+{{#structs}}
+```solidity
+struct {{name}} {
+{{#members}}
+    {{#structType type}}{{/structType}} {{name}};
+{{/members}}
+}
+```
+{{/structs}}
+
+
+
+{{#shouldHaveSections ownFunctions ownEvents structs }}
+{{#if ownEvents}}
+## Events
+{{/if}}
+{{/shouldHaveSections}}
 {{#ownEvents}}
+
 ### {{name}}
 ```solidity
   event {{name}}({{args}})
@@ -44,4 +74,5 @@
 | :----------------------------- | :------------ | :--------------------------------------------- |
 {{#natspec.params}}
 |`{{param}}`| {{#lookup ../args.types @index}}{{/lookup}} | {{{description}}}{{/natspec.params}}{{/if}}
+
 {{/ownEvents}}

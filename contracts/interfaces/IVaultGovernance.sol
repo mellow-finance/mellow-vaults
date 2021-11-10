@@ -8,7 +8,7 @@ import "./IVaultFactory.sol";
 import "./IVault.sol";
 
 interface IVaultGovernance {
-    /// @notice Internal references of the contract
+    /// @notice Internal references of the contract.
     /// @param protocolGovernance Reference to Protocol Governance
     /// @param registry Reference to Vault Registry
     struct InternalParams {
@@ -18,43 +18,43 @@ interface IVaultGovernance {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    /// @notice Checks if contract is initialized
+    /// @notice Checks if contract is initialized.
     /// @dev Uninitialized contracts cannot deploy vaults
     function initialized() external view returns (bool);
 
-    /// @notice Vault factory for this Vault Governance
+    /// @notice Vault factory for this Vault Governance.
     function factory() external view returns (IVaultFactory);
 
-    /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed
+    /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.
     /// @param nft Nft of the vault
     function delayedStrategyParamsTimestamp(uint256 nft) external view returns (uint256);
 
-    /// @notice Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed
+    /// @notice Timestamp in unix time seconds after which staged Delayed Protocol Params could be committed.
     function delayedProtocolParamsTimestamp() external view returns (uint256);
 
-    /// @notice Timestamp in unix time seconds after which staged Internal Params could be committed
+    /// @notice Timestamp in unix time seconds after which staged Internal Params could be committed.
     function internalParamsTimestamp() external view returns (uint256);
 
-    /// @notice Internal Params of the contract
+    /// @notice Internal Params of the contract.
     function internalParams() external view returns (InternalParams memory);
 
-    /// @notice Staged new Internal Params
+    /// @notice Staged new Internal Params.
     /// @dev The Internal Params could be committed after internalParamsTimestamp
     function stagedInternalParams() external view returns (InternalParams memory);
 
-    /// @notice Reference to Strategy Treasury address
+    /// @notice Reference to Strategy Treasury address.
     /// @param nft Nft of the vault
     function strategyTreasury(uint256 nft) external view returns (address);
 
     // -------------------  PUBLIC, MUTATING  -------------------
 
-    /// @notice Instantly initialize governance with factory
+    /// @notice Instantly initialize governance with factory.
     /// @dev Can only be called by initial deployer and only once.
     /// Required to be called before any function starts working.
     /// @param factory new factory
     function initialize(IVaultFactory factory) external;
 
-    /// @notice Deploy a new vault
+    /// @notice Deploy a new vault.
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Reserved additional deploy options. Should be 0x0.
     /// @param owner Owner of the registry vault nft
@@ -66,22 +66,10 @@ interface IVaultGovernance {
         address owner
     ) external returns (IVault vault, uint256 nft);
 
-    /// @notice Stage new Internal Params
+    /// @notice Stage new Internal Params.
     /// @param newParams New Internal Params
     function stageInternalParams(InternalParams memory newParams) external;
 
-    /// @notice Commit staged Internal Params
+    /// @notice Commit staged Internal Params.
     function commitInternalParams() external;
-
-    event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
-    event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);
-    event DeployedVault(
-        address indexed origin,
-        address indexed sender,
-        address[] vaultTokens,
-        bytes options,
-        address owner,
-        address vaultAddress,
-        uint256 vaultNft
-    );
 }

@@ -7,13 +7,14 @@ import "./interfaces/IGatewayVault.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 
+/// @notice Vault that combines several integration layer Vaults into one Vault.
 contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _subvaultNfts;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
 
-    /// @notice Creates a new contract
-    /// @dev All subvault nfts must be owned by this vault before
+    /// @notice Creates a new contract.
+    /// @dev All subvault nfts must be owned by this vault before.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)

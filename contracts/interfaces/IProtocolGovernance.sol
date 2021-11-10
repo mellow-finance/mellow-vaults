@@ -5,7 +5,7 @@ import "./IDefaultAccessControl.sol";
 import "./IVaultRegistry.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
-    /// @notice Common protocol params
+    /// @notice Common protocol params.
     /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
@@ -25,73 +25,73 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    /// @notice Addresses allowed to claim liquidity mining rewards from
+    /// @notice Addresses allowed to claim liquidity mining rewards from.
     function claimAllowlist() external view returns (address[] memory);
 
-    /// @notice Pending addresses to be added to claimAllowlist
+    /// @notice Pending addresses to be added to claimAllowlist.
     function pendingClaimAllowlistAdd() external view returns (address[] memory);
 
-    /// @notice Addresses allowed to claim liquidity mining rewards from
+    /// @notice Addresses allowed to claim liquidity mining rewards from.
     function vaultGovernances() external view returns (address[] memory);
 
-    /// @notice Pending addresses to be added to vaultGovernances
+    /// @notice Pending addresses to be added to vaultGovernances.
     function pendingVaultGovernancesAdd() external view returns (address[] memory);
 
-    /// @notice Check if address is allowed to claim
+    /// @notice Check if address is allowed to claim.
     function isAllowedToClaim(address addr) external view returns (bool);
 
-    /// @notice Check if address is a registered vault governance
+    /// @notice Check if address is a registered vault governance.
     function isVaultGovernance(address addr) external view returns (bool);
 
-    /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault
+    /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
     function permissionless() external view returns (bool);
 
-    /// @notice Max different ERC-20 token addresses that could be managed by the protocol
+    /// @notice Max different ERC20 token addresses that could be managed by the protocol.
     function maxTokensPerVault() external view returns (uint256);
 
-    /// @notice The delay for committing any governance params
+    /// @notice The delay for committing any governance params.
     function governanceDelay() external view returns (uint256);
 
-    /// @notice Strategy performance fee percent of the strategy (measured in 10 ** 9, i.e. you have to divide this param to this number to get the actual percentage)
+    /// @notice Strategy performance fee percent of the strategy (measured in 10 ** 9, i.e. you have to divide this param to this number to get the actual percentage).
     function strategyPerformanceFee() external view returns (uint256);
 
-    /// @notice Protocol performance fee percent of the strategy (measured same as strategyPerformanceFee)
+    /// @notice Protocol performance fee percent of the strategy (measured same as strategyPerformanceFee).
     function protocolPerformanceFee() external view returns (uint256);
 
-    /// @notice Protocol exit fee percent of the strategy (measured same as strategyPerformanceFee)
+    /// @notice Protocol exit fee percent of the strategy (measured same as strategyPerformanceFee).
     function protocolExitFee() external view returns (uint256);
 
-    /// @notice The address that collect protocol fees
+    /// @notice The address that collect protocol fees.
     function protocolTreasury() external view returns (address);
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
-    /// @notice Set new pending params
+    /// @notice Set new pending params.
     /// @param newParams newParams to set
     function setPendingParams(Params memory newParams) external;
 
-    /// @notice Stage addresses for claim allow list
+    /// @notice Stage addresses for claim allow list.
     /// @param addresses Addresses to add
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external;
 
-    /// @notice Stage addresses for vault governances
+    /// @notice Stage addresses for vault governances.
     /// @param addresses Addresses to add
     function setPendingVaultGovernancesAdd(address[] calldata addresses) external;
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
-    /// @notice Commit pending params
+    /// @notice Commit pending params.
     function commitParams() external;
 
-    /// @notice Commit pending ClaimAllowlistAdd params
+    /// @notice Commit pending ClaimAllowlistAdd params.
     function commitClaimAllowlistAdd() external;
 
-    /// @notice Commit pending VaultGovernancesAdd params
+    /// @notice Commit pending VaultGovernancesAdd params.
     function commitVaultGovernancesAdd() external;
 
-    /// @notice Remove from claim allow list immediately
+    /// @notice Remove from claim allow list immediately.
     function removeFromClaimAllowlist(address addr) external;
 
-    /// @notice Remove from vault governances immediately
+    /// @notice Remove from vault governances immediately.
     function removeFromVaultGovernances(address addr) external;
 }

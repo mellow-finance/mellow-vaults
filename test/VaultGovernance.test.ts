@@ -43,6 +43,7 @@ describe("TestVaultGovernance", () => {
     let newVaultRegistry: VaultRegistry;
     let newProtocolGovernance: ProtocolGovernance;
     let vaultFactory: VaultFactory;
+    let newVaultFactory: Signer;
     let testVaultGovernanceSystem: any;
     let protocolParams: ProtocolGovernance_Params;
     let encodedParams: any;
@@ -56,7 +57,7 @@ describe("TestVaultGovernance", () => {
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
-            [deployer, stranger, treasury, newTreasury] =
+            [deployer, stranger, treasury, newTreasury, newVaultFactory] =
                 await ethers.getSigners();
 
             return await deployTestVaultGovernance({
@@ -615,6 +616,64 @@ describe("TestVaultGovernance", () => {
                 await expect(
                     contract.connect(stranger).setProtocolParams(encodedParams)
                 ).to.be.reverted;
+            });
+        });
+    });
+
+    describe("initialize", () => {
+        describe("when already initialized", () => {
+            it("reverts", async () => {
+                contract
+                    .connect(deployer)
+                    .initialize(await newVaultFactory.getAddress());
+                await expect(
+                    contract
+                        .connect(deployer)
+                        .initialize(await newVaultFactory.getAddress())
+                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
+            });
+        });
+        it("initializes vault factory", async () => {
+            await contract.initialize(await newVaultFactory.getAddress());
+            expect(await contract.initialized()).to.be.equal(true);
+            expect(await contract.factory()).to.be.equal(
+                await newVaultFactory.getAddress()
+            );
+        });
+    });
+
+    describe("deployVault", () => {
+        describe("when vault factory has not been initialized", () => {
+            it("reverts", async () => {
+                await expect(
+                    contract
+                        .connect(deployer)
+                        .deployVault([], [], await deployer.getAddress())
+                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
+            });
+        });
+
+        describe("when called by not admin", () => {
+            it("reverts", async () => {
+                await protocolGovernance.connect(deployer).setPendingParams({
+                    permissionless: false,
+                    maxTokensPerVault: BigNumber.from(10),
+                    governanceDelay: BigNumber.from(60 * 60 * 24), // 1 day
+                    strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
+                    protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
+                    protocolExitFee: BigNumber.from(10 ** 9),
+                    protocolTreasury: await treasury.getAddress(),
+                    vaultRegistry: vaultRegistry.address,
+                });
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await protocolGovernance.connect(deployer).commitParams();
+
+                await contract.initialize(await newVaultFactory.getAddress());
+                await expect(
+                    contract
+                        .connect(stranger)
+                        .deployVault([], [], await deployer.getAddress())
+                ).to.be.revertedWith(Exceptions.PERMISSIONLESS_OR_ADMIN);
             });
         });
     });
