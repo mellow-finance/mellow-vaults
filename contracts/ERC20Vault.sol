@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./Vault.sol";
 
+/// @notice Vault that stores ERC20 tokens
 contract ERC20Vault is Vault {
     /// @notice Creates a new contract
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault

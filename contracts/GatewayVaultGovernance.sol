@@ -6,6 +6,7 @@ import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./VaultGovernance.sol";
 
+/// @notice Governance that manages all Gateway Vaults params and can deploy a new Gateway Vault
 contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params

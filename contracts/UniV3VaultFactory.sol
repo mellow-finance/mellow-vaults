@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/IVaultFactory.sol";
 import "./UniV3Vault.sol";
 
+/// @notice Helper contract for UniV3VaultGovernance that can create new UniV3 Vaults
 contract UniV3VaultFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 

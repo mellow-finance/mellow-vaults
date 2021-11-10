@@ -10,6 +10,7 @@ import "./interfaces/ILpIssuer.sol";
 import "./DefaultAccessControl.sol";
 import "./LpIssuerGovernance.sol";
 
+/// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity
 contract LpIssuer is ILpIssuer, ERC20 {
     using SafeERC20 for IERC20;
     uint256 private _subvaultNft;

@@ -7,7 +7,7 @@ import "./interfaces/IVault.sol";
 import "./interfaces/IVaultFactory.sol";
 import "./interfaces/IVaultRegistry.sol";
 
-/// @notice This contract is used to deploy the Vault contract and mint NFT for it.
+/// @notice This contract is used to manage ERC721 NFT for all Vaults
 contract VaultRegistry is IVaultRegistry, ERC721 {
     string public constant INDEX_OUT_OF_BOUNDS = "ID";
     string public constant PROTOCOL_ADMIN = "ADM";

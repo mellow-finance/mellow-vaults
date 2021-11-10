@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/IVaultFactory.sol";
 import "./AaveVault.sol";
 
+/// @notice Helper contract for AaveVaultGovernance that can create new Aave Vaults
 contract AaveVaultFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 

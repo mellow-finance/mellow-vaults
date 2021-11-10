@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/IVaultFactory.sol";
 import "./GatewayVault.sol";
 
+/// @notice Helper contract for GatewayVaultGovernance that can create new Gateway Vaults
 contract GatewayVaultFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 

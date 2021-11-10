@@ -7,6 +7,7 @@ import "./interfaces/IGatewayVault.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 
+/// @notice Vault that combines several integration layer Vaults into one Vault
 contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _subvaultNfts;

@@ -7,6 +7,7 @@ import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
 
+/// @notice Abstract contract that has logic common for every Vault
 abstract contract Vault is IVault {
     using SafeERC20 for IERC20;
 

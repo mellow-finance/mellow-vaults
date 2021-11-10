@@ -5,7 +5,7 @@ import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
 import "./Vault.sol";
 
-/// @notice Vault that interfaces Aave protocol in the integration layer.
+/// @notice Vault that interfaces Aave protocol in the integration layer
 contract AaveVault is Vault {
     address[] private _aTokens;
     uint256[] private _baseBalances;

@@ -8,6 +8,7 @@ import "./interfaces/ILpIssuerVaultGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./VaultGovernance.sol";
 
+/// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault
 contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
