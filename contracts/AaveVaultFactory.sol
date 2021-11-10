@@ -7,6 +7,8 @@ import "./AaveVault.sol";
 contract AaveVaultFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
+    /// @notice Creates a new contract
+    /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind
     constructor(IVaultGovernance vaultGovernance_) {
         vaultGovernance = vaultGovernance_;
     }

@@ -154,7 +154,24 @@ contract LpIssuer is ILpIssuer, ERC20 {
         return registry.nftForVault(address(this));
     }
 
+    /// @notice Emitted when liquidity is deposited
+    /// @param from The source address for the liquidity
+    /// @param tokens ERC20 tokens deposited
+    /// @param actualTokenAmounts Token amounts deposited
+    /// @param lpTokenMinted LP tokens received by the liquidity provider
     event Deposit(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenMinted);
+
+    /// @notice Emitted when liquidity is withdrawn
+    /// @param from The source address for the liquidity
+    /// @param tokens ERC20 tokens withdrawn
+    /// @param actualTokenAmounts Token amounts withdrawn
+    /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+
+    /// @notice Emitted when exit fees are collected
+    /// @param from The initiator of the transaction
+    /// @param to The destination address for the fees
+    /// @param tokens ERC20 tokens collected as fees
+    /// @param amounts Token amounts collected as fees
     event ExitFeeCollected(address indexed from, address to, address[] tokens, uint256[] amounts);
 }

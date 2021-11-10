@@ -19,7 +19,7 @@ interface IVaultRegistry is IERC721 {
 
     /// @notice Register new Vault and mint NFT
     /// @param vault address of the vault
-    /// @param owner owner of the nft
+    /// @param owner owner of the NFT
     /// @return nft Nft minted for the given Vault
     function registerVault(address vault, address owner) external returns (uint256 nft);
 
@@ -44,33 +44,4 @@ interface IVaultRegistry is IERC721 {
 
     /// @notice Comit new ProtocolGovernance
     function commitStagedProtocolGovernance() external;
-
-    /// @param nft Nft of the vault
-    /// @param vault Address of the Vault contract
-    /// @param sender Address of the sender
-    event VaultRegistered(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        address vault,
-        address owner
-    );
-
-    /// @param sender Address of the sender who staged new ProtocolGovernance
-    /// @param newProtocolGovernance Address of the new ProtocolGovernance
-    /// @param start Timestamp of the start of the new ProtocolGovernance
-    event StagedProtocolGovernance(
-        address indexed origin,
-        address indexed sender,
-        IProtocolGovernance newProtocolGovernance,
-        uint256 start
-    );
-
-    /// @param sender Address of the sender who commited staged ProtocolGovernance
-    /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
-    event CommitedProtocolGovernance(
-        address indexed origin,
-        address indexed sender,
-        IProtocolGovernance newProtocolGovernance
-    );
 }

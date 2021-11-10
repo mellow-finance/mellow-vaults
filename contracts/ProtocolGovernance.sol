@@ -21,6 +21,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     uint256 public pendingParamsTimestamp;
 
+    /// @notice Creates a new contract
+    /// @param admin Initial admin of the contract
     constructor(address admin) DefaultAccessControl(admin) {}
 
     // -------------------  PUBLIC, VIEW  -------------------

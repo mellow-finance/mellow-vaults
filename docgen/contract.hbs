@@ -1,6 +1,6 @@
 # {{name}}
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
-{{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
+{{#if natspec.devdoc}}📕 {{natspec.devdoc}}{{/if}}
 
 {{#ownFunctions}}
 {{#if (or (eq visibility "public") (eq visibility "external"))}}
@@ -9,7 +9,7 @@
   function {{name}}({{args}}) {{visibility}}{{#if outputs}} returns ({{outputs}}){{/if}}
 ```
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
-{{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
+{{#if natspec.devdoc}}📕 {{natspec.devdoc}}{{/if}}
 {{#if natspec.params}}
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -32,14 +32,14 @@
 ### Events
 {{/if}}
 {{#ownEvents}}
-### {{name}}
+#### {{name}}
 ```solidity
   event {{name}}({{args}})
 ```
 {{#if natspec.userdoc}}{{natspec.userdoc}}{{/if}}
 {{#if natspec.devdoc}}🤓 {{natspec.devdoc}}{{/if}}
 {{#if natspec.params}}
-#### Parameters:
+##### Parameters:
 | Name                           | Type          | Description                                    |
 | :----------------------------- | :------------ | :--------------------------------------------- |
 {{#natspec.params}}

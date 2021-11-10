@@ -72,16 +72,4 @@ interface IVaultGovernance {
 
     /// @notice Commit staged Internal Params
     function commitInternalParams() external;
-
-    event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
-    event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);
-    event DeployedVault(
-        address indexed origin,
-        address indexed sender,
-        address[] vaultTokens,
-        bytes options,
-        address owner,
-        address vaultAddress,
-        uint256 vaultNft
-    );
 }

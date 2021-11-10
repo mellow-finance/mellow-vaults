@@ -54,9 +54,7 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
     /// @inheritdoc IUniV3VaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({
-                positionManager: INonfungiblePositionManager(address(0))
-            });
+            return DelayedProtocolParams({positionManager: INonfungiblePositionManager(address(0))});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -76,4 +74,45 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
         );
     }
+
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params,
+        uint256 when
+    );
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params
+    );
+    /// @notice Emitted when new DelayedProtocolParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedProtocolParams(
+        address indexed origin,
+        address indexed sender,
+        DelayedProtocolParams params,
+        uint256 when
+    );
+    /// @notice Emitted when new DelayedProtocolParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that are committed
+    event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

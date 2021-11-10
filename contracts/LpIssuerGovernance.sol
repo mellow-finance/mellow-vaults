@@ -38,10 +38,9 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
 
     /// @notice Deploy a new vault
     /// @param vaultTokens ERC20 tokens under vault management
-    /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault.
+    /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault
     /// @return vault Address of the new vault
     /// @return nft Nft of the vault in the vault registry
-
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,
@@ -57,4 +56,11 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
         registry.transferFrom(msg.sender, address(this), subvaultNft);
     }
+
+    /// @notice Emitted when new StrategyParams are set
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are set
+    event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
 }
