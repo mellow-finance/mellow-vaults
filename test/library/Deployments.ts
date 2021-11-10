@@ -402,7 +402,10 @@ export async function deploySubVaultSystem(options: {
     );
     await protocolGovernance
         .connect(options.adminSigner)
-        .setPendingVaultGovernancesAdd([vaultGovernance.address, anotherVaultGovernance.address]);
+        .setPendingVaultGovernancesAdd([
+            vaultGovernance.address,
+            anotherVaultGovernance.address,
+        ]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance
         .connect(options.adminSigner)
@@ -420,9 +423,8 @@ export async function deploySubVaultSystem(options: {
         ...vaultDeployArgs
     );
     await vaultGovernance.deployVault(...vaultDeployArgs);
-    const anotherVaultResult = await anotherVaultGovernance.callStatic.deployVault(
-        ...vaultDeployArgs
-    );
+    const anotherVaultResult =
+        await anotherVaultGovernance.callStatic.deployVault(...vaultDeployArgs);
     const anotherVault = anotherVaultResult.vault;
     const anotherNft = anotherVaultResult.nft;
     await anotherVaultGovernance.deployVault(...vaultDeployArgs);
