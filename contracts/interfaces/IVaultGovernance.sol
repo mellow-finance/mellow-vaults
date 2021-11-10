@@ -73,8 +73,27 @@ interface IVaultGovernance {
     /// @notice Commit staged Internal Params
     function commitInternalParams() external;
 
-    event StagedInternalParams(address indexed origin, address indexed sender, InternalParams newParams, uint256 start);
-    event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams newParams);
+    /// @notice Emitted when InternalParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StagedInternalParams(address indexed origin, address indexed sender, InternalParams params, uint256 when);
+
+    /// @notice Emitted when InternalParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that were staged for commit
+    event CommitedInternalParams(address indexed origin, address indexed sender, InternalParams params);
+
+    /// @notice Emitted when New Vault is deployed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param vaultTokens Vault tokens for this vault
+    /// @param options Options for deploy. The details of the options structure are specified in subcontracts
+    /// @param owner Owner of the VaultRegistry NFT for this vault
+    /// @param vaultAddress Address of the new Vault
+    /// @param vaultNft VaultRegistry NFT for the new Vault
     event DeployedVault(
         address indexed origin,
         address indexed sender,
