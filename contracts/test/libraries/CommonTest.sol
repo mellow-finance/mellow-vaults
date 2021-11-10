@@ -17,9 +17,30 @@ contract CommonTest {
         return Common.isSortedAndUnique(tokens);
     }
 
-    /// todo: projectTokenAmounts
+    function projectTokenAmountTest(
+        address[] memory tokens,
+        address[] memory tokensToProject,
+        uint256[] memory tokenAmountsToProject
+    ) external pure returns (uint256[] memory) {
+        return Common.projectTokenAmounts(tokens, tokensToProject, tokenAmountsToProject);
+    }
 
-    /// todo: splitAmounts
+    function splitAmountsTest(
+        uint256[] memory amounts,
+        uint256[][] memory weights
+    ) external pure returns (uint256[] memory) {
+        return Common.splitAmounts(amounts, weights);
+    }
 
-    /// todo: _isSubsetOf
+    function isContractTest(address addr) external view returns (bool) {
+        return Common.isContract(addr);
+    }
+
+    function isSubsetOfTest(
+        address[] memory tokens,
+        address[] memory tokensToCheck,
+        address[] memory amountsToCheck
+    ) external {
+        Common._isSubsetOf(tokens, tokensToCheck, amountsToCheck);
+    }
 }
