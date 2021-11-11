@@ -97,7 +97,6 @@ library Common {
                 weightsNorm[j] += weights[i][j];
             }
         }
-
         uint256[][] memory res = new uint256[][](k);
         for (uint256 i = 0; i < k; i++) {
             res[i] = new uint256[](n);
