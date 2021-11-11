@@ -166,7 +166,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         _protocolParams = params;
     }
 
-    function _requireAtLeastStrategy(uint256 nft) private view {
+    function _requireAtLeastStrategy(uint256 nft) internal view {
         require(
             (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
                 _internalParams.registry.getApproved(nft) == msg.sender),
@@ -174,7 +174,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         );
     }
 
-    function _requireProtocolAdmin() private view {
+    function _requireProtocolAdmin() internal view {
         require(_internalParams.protocolGovernance.isAdmin(msg.sender), "ADM");
     }
 

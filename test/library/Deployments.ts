@@ -575,9 +575,15 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
     await gatewayVaultGovernance
         .connect(options.adminSigner)
         .setStrategyParams(gatewayNft, [
-            [BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)), BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9))],
+            [
+                BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
+                BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
+            ],
         ]);
-    console.log("StrategyParams", (await gatewayVaultGovernance.strategyParams(gatewayNft)).toString());
+    console.log(
+        "StrategyParams",
+        (await gatewayVaultGovernance.strategyParams(gatewayNft)).toString()
+    );
     return {
         vaultFactory,
         anotherVaultFactory,

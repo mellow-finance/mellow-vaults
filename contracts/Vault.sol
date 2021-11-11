@@ -178,7 +178,9 @@ abstract contract Vault is IVault {
     }
 
     function _isValidEdge(address from, address to) internal view returns (bool) {
-        require(Common.isContract(to), "C");
+        if (!Common.isContract(to)) {
+            return false;
+        }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 fromNft = registry.nftForVault(from);
         address fromOwner = registry.ownerOf(fromNft);

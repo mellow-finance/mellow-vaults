@@ -64,15 +64,24 @@ describe("GatewayVault", () => {
                 vaultType: "ERC20Vault",
             }));
             console.log("gatewayVault", gatewayVault.address);
-            console.log("gatewayVaultGovernance", gatewayVaultGovernance.address);
+            console.log(
+                "gatewayVaultGovernance",
+                gatewayVaultGovernance.address
+            );
             console.log("vault", vault.address);
             console.log("vaultGovernance", vaultGovernance.address);
             console.log("protocolGovernance", protocolGovernance.address);
             console.log("nft", nft);
             console.log("anotherNft", anotherNft);
-            console.log("tokens", tokens.map(token => token.address));
+            console.log(
+                "tokens",
+                tokens.map((token) => token.address)
+            );
             console.log("anotherVault", anotherVault.address);
-            console.log("anotherVaultGovernance", anotherVaultGovernance.address);
+            console.log(
+                "anotherVaultGovernance",
+                anotherVaultGovernance.address
+            );
             console.log("vaultRegistry", vaultRegistry.address);
             for (let i: number = 0; i < tokens.length; ++i) {
                 await tokens[i].connect(deployer).approve(
@@ -83,8 +92,14 @@ describe("GatewayVault", () => {
                 );
             }
             await vaultRegistry.approve(await strategy.getAddress(), 3);
-            console.log("vaultRegistry.ownerOf(nft)", (await vaultRegistry.ownerOf(nft)).toString());
-            console.log("vaultRegistry.ownerOf(anotherNft)", (await vaultRegistry.ownerOf(anotherNft)).toString());
+            console.log(
+                "vaultRegistry.ownerOf(nft)",
+                (await vaultRegistry.ownerOf(nft)).toString()
+            );
+            console.log(
+                "vaultRegistry.ownerOf(anotherNft)",
+                (await vaultRegistry.ownerOf(anotherNft)).toString()
+            );
 
             console.log("\n\n=== RUNTIME ===\n\n");
         });
@@ -219,8 +234,14 @@ describe("GatewayVault", () => {
             // ).to.emit(vault, "Push");
 
             console.log("vault tvl", (await vault.tvl()).toString());
-            console.log("anotherVault tvl", (await anotherVault.tvl()).toString());
-            console.log("gatewayVault subvaults tvls", (await gatewayVault.subvaultsTvl()).toString());
+            console.log(
+                "anotherVault tvl",
+                (await anotherVault.tvl()).toString()
+            );
+            console.log(
+                "gatewayVault subvaults tvls",
+                (await gatewayVault.subvaultsTvl()).toString()
+            );
 
             await expect(
                 gatewayVault
@@ -234,8 +255,14 @@ describe("GatewayVault", () => {
             ).to.emit(gatewayVault, "Push");
 
             console.log("vault tvl", (await vault.tvl()).toString());
-            console.log("anotherVault tvl", (await anotherVault.tvl()).toString());
-            console.log("gatewayVault subvaults tvls", (await gatewayVault.subvaultsTvl()).toString());
+            console.log(
+                "anotherVault tvl",
+                (await anotherVault.tvl()).toString()
+            );
+            console.log(
+                "gatewayVault subvaults tvls",
+                (await gatewayVault.subvaultsTvl()).toString()
+            );
 
             await gatewayVault
                 .connect(deployer)
@@ -246,14 +273,28 @@ describe("GatewayVault", () => {
                     false,
                     []
                 );
-            
+
             console.log("vault tvl", (await vault.tvl()).toString());
-            console.log("anotherVault tvl", (await anotherVault.tvl()).toString());
-            console.log("gatewayVault subvaults tvls", (await gatewayVault.subvaultsTvl()).toString());
-            expect(await vault.tvl()).to.deep.equal([BigNumber.from(0), BigNumber.from(2 * 10 ** 9)]);
-            expect(await gatewayVault.tvl()).to.deep.equal([BigNumber.from(10 ** 9), BigNumber.from(2 * 10 ** 9)]);
+            console.log(
+                "anotherVault tvl",
+                (await anotherVault.tvl()).toString()
+            );
+            console.log(
+                "gatewayVault subvaults tvls",
+                (await gatewayVault.subvaultsTvl()).toString()
+            );
+            expect(await vault.tvl()).to.deep.equal([
+                BigNumber.from(0),
+                BigNumber.from(2 * 10 ** 9),
+            ]);
+            expect(await gatewayVault.tvl()).to.deep.equal([
+                BigNumber.from(10 ** 9),
+                BigNumber.from(2 * 10 ** 9),
+            ]);
             console.log("earnings", (await vault.earnings()).toString());
-            await gatewayVault.connect(deployer).collectEarnings(anotherVault.address, []);
+            await gatewayVault
+                .connect(deployer)
+                .collectEarnings(anotherVault.address, []);
             // await vault
             //     .connect(strategy)
             //     .pull(
@@ -285,7 +326,10 @@ describe("GatewayVault", () => {
 
     describe("tvl", () => {
         it("when nothing yet pushed", async () => {
-            expect(await vault.tvl()).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
+            expect(await vault.tvl()).to.deep.equal([
+                BigNumber.from(0),
+                BigNumber.from(0),
+            ]);
         });
     });
 
@@ -357,7 +401,9 @@ describe("GatewayVault", () => {
             it("reverts", async () => {
                 await expect(
                     gatewayVault.connect(strategy).addSubvaults([vault.address])
-                ).to.be.revertedWith(Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+                ).to.be.revertedWith(
+                    Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+                );
             });
         });
 
@@ -367,9 +413,6 @@ describe("GatewayVault", () => {
             });
         });
 
-        describe("when passed nfts contains zero", () => {
-
-        });
+        describe("when passed nfts contains zero", () => {});
     });
-
 });

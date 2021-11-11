@@ -677,4 +677,21 @@ describe("TestVaultGovernance", () => {
             });
         });
     });
+
+    describe("_requireProtocolAdmin", () => {
+        describe("when called by admin", () => {
+            it("not reverts", async () => {
+                await expect(contract.requireProtocolAdmin()).to.not.be
+                    .reverted;
+            });
+        });
+
+        describe("when called by admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    contract.connect(stranger).requireProtocolAdmin()
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+        });
+    });
 });
