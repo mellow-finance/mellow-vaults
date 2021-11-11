@@ -7,6 +7,7 @@ import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { add } from "ramda";
 import exp from "constants";
+import Exceptions from "./library/Exceptions";
 
 describe("Common", () => {
     let commonTest: Contract;
@@ -321,14 +322,14 @@ describe("Common", () => {
                             [7, 8, 9],
                         ]
                     )
-                ).to.be.revertedWith("NGT0");
+                ).to.be.revertedWith(Exceptions.AMOUNTS_LENGTH_IS_ZERO);
             });
         });
         describe("when weights.length == 0", () => {
             it("reverts", async () => {
                 await expect(
                     commonTest.splitAmountsTest([1, 2, 3], [])
-                ).to.be.revertedWith("KGT0");
+                ).to.be.revertedWith(Exceptions.WEIGHTS_LENGTH_IS_ZERO);
             });
         });
 
@@ -343,7 +344,7 @@ describe("Common", () => {
                             [7, 8, 9],
                         ]
                     )
-                ).to.be.revertedWith("NV");
+                ).to.be.revertedWith(Exceptions.MATRIX_NOT_RECTANGULAR);
             });
         });
     });

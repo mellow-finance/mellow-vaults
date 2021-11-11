@@ -21,5 +21,8 @@ export default class Exceptions {
     static readonly INITIALIZED_ALREADY: string = "INIT";
     static readonly PERMISSIONLESS_OR_ADMIN: string = "POA";
     static readonly TOKEN_NOT_IN_PROJECT: string = "TPS";
+    static readonly WEIGHTS_LENGTH_IS_ZERO: string = "KGT0";
+    static readonly AMOUNTS_LENGTH_IS_ZERO: string = "NGT0";
+    static readonly MATRIX_NOT_RECTANGULAR: string = "NV";
 }
 // TODO: Remove outdated exceptions
