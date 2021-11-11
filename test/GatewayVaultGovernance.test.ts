@@ -46,7 +46,7 @@ describe("GatewayVaultGovernance", () => {
     });
 
     describe("stageDelayedStrategyParams", () => {
-        describe("when redirects.length != vaultTokens.length and redirects.length > 0", () => {
+        describe("when redirects.length != subvaults.length and redirects.length > 0", () => {
             it("reverts", async () => {
                 await expect(
                     gatewayVaultGovernance.stageDelayedStrategyParams(
