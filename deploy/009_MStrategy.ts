@@ -96,28 +96,14 @@ const setupVault = async (
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute, read } = deployments;
+    const { log, execute, read, get } = deployments;
     const { deployer, mStrategyTreasury, weth, usdc } =
         await getNamedAccounts();
-    const vaultRegistry = await hre.ethers.getContract("VaultRegistry");
-    const erc20VaultGovernance = await hre.ethers.getContract(
-        "ERC20VaultGovernance"
-    );
-    const aaveVaultGovernance = await hre.ethers.getContract(
-        "AaveVaultGovernance"
-    );
-    const uniV3VaultGovernance = await hre.ethers.getContract(
-        "UniV3VaultGovernance"
-    );
-    const gatewayVaultGovernance = await hre.ethers.getContract(
-        "GatewayVaultGovernance"
-    );
-    const lpIssuerVaultGovernance = await hre.ethers.getContract(
-        "LpIssuerGovernance"
-    );
+    const gatewayVaultGovernance = await get("GatewayVaultGovernance");
+    const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
 
     const tokens = [weth, usdc].sort();
-    let startNft = (await vaultRegistry.vaultsCount()) + 1;
+    let startNft = (await read("VaultRegistry", "vaultsCount")) + 1;
     const coder = hre.ethers.utils.defaultAbiCoder;
     let aaveVaultNft = 1;
     let uniV3VaultNft = 2;
@@ -149,11 +135,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         { strategyTreasury: mStrategyTreasury }
     );
 
-    const approvedGw = await vaultRegistry.isApprovedForAll(
+    const approvedGw = await read(
+        "VaultRegistry",
+        "isApprovedForAll",
         deployer,
         gatewayVaultGovernance.address
     );
-    const approvedIssuer = await vaultRegistry.isApprovedForAll(
+    const approvedIssuer = await read(
+        "VaultRegistry",
+        "isApprovedForAll",
         deployer,
         lpIssuerVaultGovernance.address
     );
@@ -207,7 +197,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await setupVault(
         hre,
-        gatewayVaultNft,
+        lpIssuerNft,
         startNft,
         "LpIssuerGovernance",
         [
