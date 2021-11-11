@@ -65,6 +65,14 @@ describe("UniV3VaultGovernance", () => {
                 await vaultGovernance.delayedStrategyParams(nft)
             ).to.be.deep.equal([await treasury.getAddress()]);
         });
+
+        describe("when passed unknown nft", () => {
+            it("returns empty struct", async () => {
+                expect(
+                    await vaultGovernance.delayedStrategyParams(nft + 42)
+                ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
+        });
     });
 
     describe("stagedDelayedStrategyParams", () => {
@@ -72,6 +80,14 @@ describe("UniV3VaultGovernance", () => {
             expect(
                 await vaultGovernance.stagedDelayedStrategyParams(nft)
             ).to.be.deep.equal([await treasury.getAddress()]);
+        });
+
+        describe("when passed unknown nft", () => {
+            it("returns empty struct", async () => {
+                expect(
+                    await vaultGovernance.stagedDelayedStrategyParams(nft + 42)
+                ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
         });
     });
 
