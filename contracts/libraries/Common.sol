@@ -101,13 +101,6 @@ library Common {
                 console.log("weights[i][j]:", weights[i][j]);
             }
         }
-        console.log("[weights]");
-        console.log("Common::splitAmounts weightsNorm");
-        for (uint i = 0; i < weightsNorm.length; ++i) {
-            console.log("i:", i, "weightsNorm[i]", weightsNorm[i]);
-        }
-        console.log("[weightsNorm]");
-
         uint256[][] memory res = new uint256[][](k);
         for (uint256 i = 0; i < k; i++) {
             res[i] = new uint256[](n);

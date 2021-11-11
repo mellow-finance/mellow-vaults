@@ -22,6 +22,9 @@ contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
     /// @notice Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.
     /// @param nft Nft of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
+        if (_strategyParams[nft].length == 0) {
+            return StrategyParams({tokenLimitPerAddress: 0});
+        }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 

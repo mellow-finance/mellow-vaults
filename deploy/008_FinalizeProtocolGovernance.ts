@@ -7,10 +7,7 @@ import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute } = deployments;
-    const protocolGovernance = await hre.ethers.getContract(
-        "ProtocolGovernance"
-    );
+    const { log, execute, read, get } = deployments;
     const { deployer, protocolTreasury } = await getNamedAccounts();
     const governances = [];
     for (const name of [
@@ -20,13 +17,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "GatewayVaultGovernance",
         "LpIssuerGovernance",
     ]) {
-        const governance = await hre.ethers.getContract(name);
-        if (await protocolGovernance.isVaultGovernance(governance.address)) {
+        const governance = await get(name);
+        if (
+            await read(
+                "ProtocolGovernance",
+                "isVaultGovernance",
+                governance.address
+            )
+        ) {
             continue;
         }
         governances.push(governance.address);
     }
-    const currentGovernances = await protocolGovernance.vaultGovernances();
+    const currentGovernances = await read(
+        "ProtocolGovernance",
+        "vaultGovernances"
+    );
     if (governances.length > 0 && currentGovernances.length == 0) {
         log(`Registering Governances in ProtocolGovernance`);
         await execute(
@@ -43,7 +49,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log("Done");
     }
 
-    const delay = await protocolGovernance.governanceDelay();
+    const delay = await read("ProtocolGovernance", "governanceDelay");
     if (delay == 0) {
         const params = {
             permissionless: true,

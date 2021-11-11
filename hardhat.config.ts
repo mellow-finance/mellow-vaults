@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
         },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-            kovan: "0x600103d518cC5E8f3319D532eB4e5C268D32e604",
+            kovan: "0xe22da380ee6b445bb8273c81944adeb6e8450422",
         },
         weth: {
             default: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
