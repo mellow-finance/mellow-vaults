@@ -1,12 +1,9 @@
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
-
 import { Address } from "hardhat-deploy/dist/types";
 import { deployCommonLibraryTest } from "./library/Deployments";
 import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
-import { add } from "ramda";
-import exp from "constants";
 import Exceptions from "./library/Exceptions";
 
 describe("Common", () => {
