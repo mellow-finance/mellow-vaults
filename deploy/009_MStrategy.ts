@@ -6,7 +6,7 @@ import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute } = deployments;
+    const { log, execute, read } = deployments;
     const { deployer, mStrategyTreasury, weth, usdc } =
         await getNamedAccounts();
     const vaultRegistry = await hre.ethers.getContract("VaultRegistry");
@@ -49,6 +49,35 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             deployer
         );
         log(`Done, nft = ${aaveVaultNft}`);
+        const { strategyTreasury } = await read(
+            "AaveVaultGovernance",
+            "delayedStrategyParams",
+            aaveVaultNft
+        );
+        if (strategyTreasury !== mStrategyTreasury) {
+            log("Setting delayed strategy params for AaveVaultGovernance");
+            await execute(
+                "AaveVaultGovernance",
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "stageDelayedStrategyParams",
+                aaveVaultNft,
+                { strategyTreasury: mStrategyTreasury }
+            );
+            await execute(
+                "AaveVaultGovernance",
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "commitDelayedStrategyParams",
+                aaveVaultNft
+            );
+        }
     } else {
         log(`Aave vault with nft = ${aaveVaultNft} already deployed`);
     }
