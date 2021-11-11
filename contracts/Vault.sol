@@ -94,7 +94,7 @@ abstract contract Vault is IVault {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_selfNft());
-        require(owner == msg.sender || _isValidPullDestination(to), "INTRA"); // approved can only pull to whitelisted contracts
+        require(owner == msg.sender || _isValidEdge(address(this), to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, optimized, options);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
@@ -106,7 +106,7 @@ abstract contract Vault is IVault {
         /// TODO: is allowed to pull
         /// TODO: verify that only RouterVault can call this (for fees reasons)
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
-        require(_isValidPullDestination(to), "INTRA");
+        require(_isValidEdge(address(this), to), "INTRA");
         collectedEarnings = _collectEarnings(to, options);
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         address protocolTres = governance.protocolTreasury();
@@ -123,6 +123,7 @@ abstract contract Vault is IVault {
             token.safeTransfer(protocolTres, protocolFee);
             token.safeTransfer(to, strategyEarnings);
         }
+        /// TODO: emit CollectedFees
         emit CollectEarnings(to, collectedEarnings);
     }
 
@@ -133,7 +134,7 @@ abstract contract Vault is IVault {
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
         if (!isProtocolAdmin) {
-            require(_isValidPullDestination(to), "INTRA");
+            require(_isValidEdge(address(this), to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -176,33 +177,73 @@ abstract contract Vault is IVault {
         pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
+    function _isValidEdge(address from, address to) internal view returns (bool) {
+        require(Common.isContract(to), "C");
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 fromNft = registry.nftForVault(from);
+        address fromOwner = registry.ownerOf(fromNft);
+        uint256 toNft = registry.nftForVault(to);
+        address toOwner = registry.ownerOf(toNft);
+
+        // double check that nfts exist
+        if (fromNft == 0 || toNft == 0) {
+            return false;
+        }
+
+        IGatewayVault gw;
+        if (fromOwner == toOwner) {
+            // Same owner
+            gw = IGatewayVault(fromOwner);
+            return gw.hasSubvault(from) && gw.hasSubvault(to);
+        } else if (fromOwner == to) {
+            // from is owner of to
+            gw = IGatewayVault(to);
+            return gw.hasSubvault(from);
+        } else if (toOwner == from) {
+            // to is owner of from
+            gw = IGatewayVault(from);
+            return gw.hasSubvault(to);
+        } else {
+            return false;
+        }
+    }
+
     /// The idea is to check that `this` Vault and `to` Vault
     /// nfts are owned by the same address. Then check that nft for this address
     /// exists in registry as Vault => it's one of the vaults with trusted interface.
     /// Then check that both `this` and `to` are registered in the nft owner using hasSubvault function.
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
-    function _isValidPullDestination(address to) internal view returns (bool) {
-        if (!Common.isContract(to)) {
-            return false;
-        }
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 thisNft = registry.nftForVault(address(this));
-        address thisOwner = registry.ownerOf(thisNft);
-        uint256 toNft = registry.nftForVault(to);
-        address toOwner = registry.ownerOf(toNft);
-        // make sure that vault is a registered vault
-        uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-        uint256 toOwnerNft = registry.nftForVault(toOwner);
-        if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
-            return false;
-        }
-        IGatewayVault gw = IGatewayVault(thisOwner);
-        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
-            return false;
-        }
-        return true;
-    }
+    // function _isValidPullDestination(address to) internal view returns (bool) {
+    //     if (!Common.isContract(to)) {
+    //         return false;
+    //     }
+    //     IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+    //     uint256 thisNft = registry.nftForVault(address(this));
+    //     address thisOwner = registry.ownerOf(thisNft);
+    //     uint256 toNft = registry.nftForVault(to);
+    //     address toOwner = registry.ownerOf(toNft);
+    //     console.log("Vault::_isValidPullDestination thisNft", thisNft);
+    //     console.log("Vault::_isValidPullDestination thisOwner", thisOwner);
+    //     console.log("Vault::_isValidPullDestination toNft", toNft);
+    //     console.log("Vault::_isValidPullDestination toOwner", toOwner);
+    //     // make sure that vault is a registered vault
+    //     uint256 thisOwnerNft = registry.nftForVault(thisOwner);
+    //     uint256 toOwnerNft = registry.nftForVault(toOwner);
+    //     console.log("Vault::_isValidPullDestination thisOwnerNft", thisOwnerNft);
+    //     console.log("Vault::_isValidPullDestination toOwnerNft", toOwnerNft);
+    //     if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
+    //         return false;
+    //     }
+    //     IGatewayVault gw = IGatewayVault(thisOwner);
+    //     console.log("_isValidPullDestination: gw.hasSubvault(to)", gw.hasSubvault(to));
+    //     console.log("_isValidPullDestination: gw.hasSubvault(this)", gw.hasSubvault(address(this)));
+
+    //     if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
+    //         return false;
+    //     }
+    //     return true;
+    // }
 
     // -------------------  PRIVATE, VIEW  -------------------
 
@@ -214,9 +255,13 @@ abstract contract Vault is IVault {
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 nft = registry.nftForVault(address(this));
+        console.log("Vault::_isApprovedOrOwner: nft", nft);
         if (nft == 0) {
             return false;
         }
+        console.log("Vault::_isApprovedOrOwner: registry.getApproved(nft)", registry.getApproved(nft));
+        console.log("Vault::_isApprovedOrOwner: registry.ownerOf(nft)", registry.ownerOf(nft));
+        console.log("Vault::_isApprovedOrOwner: sender", sender);
         return registry.getApproved(nft) == sender || registry.ownerOf(nft) == sender;
     }
 

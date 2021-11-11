@@ -349,14 +349,6 @@ describe("ERC20Vault", function () {
             });
         });
 
-        describe("claimRewards", () => {
-            // TODO: test claimRewards
-        });
-
-        describe("pull", () => {
-            // TODO: test pull
-        });
-
         describe("collectEarnings", () => {
             describe("when called by stranger", async () => {
                 it("when called by stranger", async () => {
@@ -375,8 +367,6 @@ describe("ERC20Vault", function () {
                     ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
                 });
             });
-
-            // TODO: test collectEarnings
         });
 
         describe("reclaimTokens", () => {
@@ -388,8 +378,6 @@ describe("ERC20Vault", function () {
                     .connect(deployer)
                     .transfer(vault.address, BigNumber.from(10 ** 9));
             });
-
-            // TODO: test reclaimTokens
         });
     });
 });

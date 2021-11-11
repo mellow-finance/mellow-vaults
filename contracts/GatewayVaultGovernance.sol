@@ -5,6 +5,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./VaultGovernance.sol";
+import "hardhat/console.sol";
 
 /// @notice Governance that manages all Gateway Vaults params and can deploy a new Gateway Vault.
 contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
@@ -24,6 +25,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
 
     /// @inheritdoc IGatewayVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
+        console.log("GatewayVaultGovernance::strategyParams nft", nft);
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
@@ -58,6 +60,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         for (uint256 i = 0; i < subvaultNfts.length; i++) {
             registry.transferFrom(msg.sender, address(this), subvaultNfts[i]);
             registry.approve(strategy, subvaultNfts[i]);
+            registry.transferFrom(address(this), address(vault), subvaultNfts[i]);
         }
     }
 

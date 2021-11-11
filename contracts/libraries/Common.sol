@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
+import "hardhat/console.sol";
 
 /// @notice Common shared utilities
 library Common {
@@ -80,7 +81,7 @@ library Common {
     /// Weights do not need to sum to 1 in each column, but they will be normalized on split.
     function splitAmounts(uint256[] memory amounts, uint256[][] memory weights)
         internal
-        pure
+        view  // pure
         returns (uint256[][] memory)
     {
         uint256 k = weights.length;
@@ -91,18 +92,31 @@ library Common {
         for (uint256 i = 0; i < k; i++) {
             require(weights[i].length == n, "NV");
         }
+        console.log("Common::splitAmounts weights");
         for (uint256 j = 0; j < n; j++) {
             weightsNorm[j] = 0;
             for (uint256 i = 0; i < k; i++) {
                 weightsNorm[j] += weights[i][j];
+                console.log("i:", i, "j:", j);
+                console.log("weights[i][j]:", weights[i][j]);
             }
         }
+        console.log("[weights]");
+        console.log("Common::splitAmounts weightsNorm");
+        for (uint i = 0; i < weightsNorm.length; ++i) {
+            console.log("i:", i, "weightsNorm[i]", weightsNorm[i]);
+        }
+        console.log("[weightsNorm]");
 
         uint256[][] memory res = new uint256[][](k);
         for (uint256 i = 0; i < k; i++) {
             res[i] = new uint256[](n);
             for (uint256 j = 0; j < n; j++) {
-                res[i][j] = (weights[i][j] * amounts[j]) / weightsNorm[j];
+                if (weightsNorm[j] == 0) {
+                    res[i][j] = amounts[j] / k;
+                } else {
+                    res[i][j] = amounts[j] * weights[i][j] / weightsNorm[j];
+                }
             }
         }
         return res;

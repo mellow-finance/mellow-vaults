@@ -527,7 +527,7 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         .commitVaultGovernancesAdd();
     const gatewayVaultFactory = await deployVaultFactory({
         vaultGovernance: gatewayVaultGovernance.address,
-        vaultType: "GatewayVault" as VaultType,
+        vaultType: "GatewayVault",
     });
     await gatewayVaultGovernance
         .connect(options.adminSigner)
@@ -548,7 +548,7 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
     let gatewayVaultAddress: IGatewayVault;
     let gatewayNft: number = 0;
     const deployArgs = [
-        [], // Gateway vault has no tokens
+        tokens.map((token) => token.address),
         encodeToBytes(["uint256[]"], [[nft, anotherNft]]),
         options.strategy,
     ];
@@ -562,6 +562,22 @@ export async function deploySubVaultXGatewayVaultSystem(options: {
         "GatewayVault",
         gatewayVaultAddress
     );
+    await gatewayVaultGovernance
+        .connect(options.adminSigner)
+        .stageDelayedStrategyParams(gatewayNft, [
+            options.treasury,
+            [nft, anotherNft],
+        ]);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await gatewayVaultGovernance
+        .connect(options.adminSigner)
+        .commitDelayedStrategyParams(gatewayNft);
+    await gatewayVaultGovernance
+        .connect(options.adminSigner)
+        .setStrategyParams(gatewayNft, [
+            [BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)), BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9))],
+        ]);
+    console.log("StrategyParams", (await gatewayVaultGovernance.strategyParams(gatewayNft)).toString());
     return {
         vaultFactory,
         anotherVaultFactory,

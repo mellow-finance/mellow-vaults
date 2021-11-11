@@ -7,6 +7,8 @@ import "./interfaces/IGatewayVault.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 
+import "hardhat/console.sol";
+
 /// @notice Vault that combines several integration layer Vaults into one Vault.
 contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
@@ -120,6 +122,7 @@ contract GatewayVault is IGatewayVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[] memory totalTvl = new uint256[](_vaultTokens.length);
+        // tvls should not be zeroes (ZeroDivision)
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         IGatewayVaultGovernance.DelayedStrategyParams memory strategyParams = IGatewayVaultGovernance(
             address(_vaultGovernance)
@@ -143,6 +146,12 @@ contract GatewayVault is IGatewayVault, Vault {
                 continue;
             }
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
+            console.log("GatewayVault::_push() vault", address(vault));
+            console.log("GatewayVault::_push() amountsByVault");
+            for (uint k = 0; k < amountsByVault.length; k++) {
+                console.log("-->", amountsByVault[i][k]);
+            }
+            console.log("[amountsByVault]");
             uint256[] memory actualVaultTokenAmounts = vault.push(
                 _vaultTokens,
                 amountsByVault[i],
