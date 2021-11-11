@@ -59,6 +59,7 @@ describe("GatewayVaultGovernance", () => {
             //     );
             // });
         });
+
         it("sets stageDelayedStrategyParams and emits StageDelayedStrategyParams event", async () => {
             await expect(
                 await gatewayVaultGovernance
@@ -134,6 +135,38 @@ describe("GatewayVaultGovernance", () => {
                     .connect(admin)
                     .strategyTreasury(nft)
             ).to.be.equal(await treasury.getAddress());
+        });
+    });
+
+    describe("delayedStrategyParams", () => {
+        describe("when passed unknown nft", () => {
+            it("returns empty struct", async () => {
+                expect(
+                    await gatewayVaultGovernance.delayedStrategyParams(nft + 42)
+                ).to.be.deep.equal([ethers.constants.AddressZero, []]);
+            });
+        });
+    });
+
+    describe("stagedDelayedStrategyParams", () => {
+        describe("when passed unknown nft", () => {
+            it("returns empty struct", async () => {
+                expect(
+                    await gatewayVaultGovernance.stagedDelayedStrategyParams(
+                        nft + 42
+                    )
+                ).to.be.deep.equal([ethers.constants.AddressZero, []]);
+            });
+        });
+    });
+
+    describe("strategyParams", () => {
+        describe("when passed unknown nft", () => {
+            it("returns empty struct", async () => {
+                expect(
+                    await gatewayVaultGovernance.strategyParams(nft + 42)
+                ).to.be.deep.equal([[]]);
+            });
         });
     });
 });
