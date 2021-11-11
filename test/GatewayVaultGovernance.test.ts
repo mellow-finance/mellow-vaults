@@ -16,13 +16,14 @@ describe("GatewayVaultGovernance", () => {
     let gatewayVaultGovernance: VaultGovernance;
     let deployment: Function;
     let nft: number;
+    let gatewayNft: number;
 
     before(async () => {
         [deployer, admin, stranger, treasury, strategy] =
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ gatewayVaultGovernance, nft } =
+            ({ gatewayVaultGovernance, nft, gatewayNft } =
                 await deployERC20VaultXGatewayVaultSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
@@ -45,13 +46,16 @@ describe("GatewayVaultGovernance", () => {
     });
 
     describe("stageDelayedStrategyParams", () => {
-        describe("when redirects.length != vaultTokens.length and redirects.length > 0", () => {
+        describe("when redirects.length != subvaults.length and redirects.length > 0", () => {
             it("reverts", async () => {
                 await expect(
-                    gatewayVaultGovernance.stageDelayedStrategyParams(nft, {
-                        redirects: [1, 2, 3],
-                        strategyTreasury: await treasury.getAddress(),
-                    })
+                    gatewayVaultGovernance.stageDelayedStrategyParams(
+                        gatewayNft,
+                        {
+                            redirects: [1, 2, 3], // the real length is 1
+                            strategyTreasury: await treasury.getAddress(),
+                        }
+                    )
                 ).to.be.revertedWith(
                     Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH
                 );

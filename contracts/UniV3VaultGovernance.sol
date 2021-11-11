@@ -22,11 +22,18 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IUniV3VaultGovernance
     function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
+        if (_delayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({strategyTreasury: address(0)});
+        }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
     /// @inheritdoc IUniV3VaultGovernance
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({strategyTreasury: address(0)});
+        }
+
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
     }
 
@@ -49,6 +56,9 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IUniV3VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
+        if (_delayedProtocolParams.length == 0) {
+            return DelayedProtocolParams({positionManager: INonfungiblePositionManager(address(0))});
+        }
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 

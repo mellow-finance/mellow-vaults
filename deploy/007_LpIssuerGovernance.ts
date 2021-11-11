@@ -6,7 +6,7 @@ import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, get, log, execute } = deployments;
+    const { deploy, get, log, execute, read } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
@@ -21,14 +21,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
     });
-    const governance = await hre.ethers.getContract("LpIssuerGovernance");
+    const governance = await get("LpIssuerGovernance");
     await deploy("LpIssuerFactory", {
         from: deployer,
         args: [governance.address],
         log: true,
         autoMine: true,
     });
-    const initialized = await governance.initialized();
+    const initialized = await read("LpIssuerGovernance", "initialized");
     if (!initialized) {
         log("Initializing factory...");
 
