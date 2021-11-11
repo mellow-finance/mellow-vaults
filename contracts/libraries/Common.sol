@@ -43,7 +43,7 @@ library Common {
         address[] memory tokens,
         address[] memory tokensToProject,
         uint256[] memory tokenAmountsToProject
-    ) internal pure returns (uint256[] memory) {
+    ) internal view returns (uint256[] memory) {
         uint256[] memory res = new uint256[](tokens.length);
         uint256 t = 0;
         uint256 tp = 0;
@@ -97,7 +97,6 @@ library Common {
                 weightsNorm[j] += weights[i][j];
             }
         }
-
         uint256[][] memory res = new uint256[][](k);
         for (uint256 i = 0; i < k; i++) {
             res[i] = new uint256[](n);

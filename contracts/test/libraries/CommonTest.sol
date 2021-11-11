@@ -17,18 +17,18 @@ contract CommonTest {
         return Common.isSortedAndUnique(tokens);
     }
 
-    function projectTokenAmountTest(
+    function projectTokenAmountsTest(
         address[] memory tokens,
         address[] memory tokensToProject,
         uint256[] memory tokenAmountsToProject
-    ) external pure returns (uint256[] memory) {
+    ) external view returns (uint256[] memory) {
         return Common.projectTokenAmounts(tokens, tokensToProject, tokenAmountsToProject);
     }
 
     function splitAmountsTest(
         uint256[] memory amounts,
         uint256[][] memory weights
-    ) external pure returns (uint256[] memory) {
+    ) external pure returns (uint256[][] memory) {
         return Common.splitAmounts(amounts, weights);
     }
 

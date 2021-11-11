@@ -20,5 +20,6 @@ export default class Exceptions {
     static readonly REDIRECTS_AND_VAULT_TOKENS_LENGTH: string = "RL";
     static readonly INITIALIZED_ALREADY: string = "INIT";
     static readonly PERMISSIONLESS_OR_ADMIN: string = "POA";
+    static readonly TOKEN_NOT_IN_PROJECT: string = "TPS";
 }
 // TODO: Remove outdated exceptions
