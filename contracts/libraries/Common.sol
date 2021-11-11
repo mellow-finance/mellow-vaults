@@ -43,7 +43,7 @@ library Common {
         address[] memory tokens,
         address[] memory tokensToProject,
         uint256[] memory tokenAmountsToProject
-    ) internal view returns (uint256[] memory) {
+    ) internal pure returns (uint256[] memory) {
         uint256[] memory res = new uint256[](tokens.length);
         uint256 t = 0;
         uint256 tp = 0;
