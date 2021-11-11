@@ -38,8 +38,8 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
 
     /// @inheritdoc IGatewayVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        IVault vault = IVault(_internalParams.registry.vaultForNft(nft));
-        require((params.redirects.length == 0) || (params.redirects.length == vault.vaultTokens().length), "RL");
+        IGatewayVault vault = IGatewayVault(_internalParams.registry.vaultForNft(nft));
+        require((params.redirects.length == 0) || (params.redirects.length == vault.subvaultNfts().length), "RL");
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
