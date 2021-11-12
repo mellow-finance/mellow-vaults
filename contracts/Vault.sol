@@ -6,7 +6,6 @@ import "./interfaces/IGatewayVault.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
-import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 abstract contract Vault is IVault {
@@ -190,21 +189,13 @@ abstract contract Vault is IVault {
         address thisOwner = registry.ownerOf(thisNft);
         uint256 toNft = registry.nftForVault(to);
         address toOwner = registry.ownerOf(toNft);
-        console.log("Vault::_isValidPullDestination thisNft", thisNft);
-        console.log("Vault::_isValidPullDestination thisOwner", thisOwner);
-        console.log("Vault::_isValidPullDestination toNft", toNft);
-        console.log("Vault::_isValidPullDestination toOwner", toOwner);
         // make sure that vault is a registered vault
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
         uint256 toOwnerNft = registry.nftForVault(toOwner);
-        console.log("Vault::_isValidPullDestination thisOwnerNft", thisOwnerNft);
-        console.log("Vault::_isValidPullDestination toOwnerNft", toOwnerNft);
         if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
             return false;
         }
         IGatewayVault gw = IGatewayVault(thisOwner);
-        console.log("_isValidPullDestination: gw.hasSubvault(to)", gw.hasSubvault(to));
-        console.log("_isValidPullDestination: gw.hasSubvault(this)", gw.hasSubvault(address(this)));
 
         if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
             return false;
@@ -222,13 +213,9 @@ abstract contract Vault is IVault {
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 nft = registry.nftForVault(address(this));
-        console.log("Vault::_isApprovedOrOwner: nft", nft);
         if (nft == 0) {
             return false;
         }
-        console.log("Vault::_isApprovedOrOwner: registry.getApproved(nft)", registry.getApproved(nft));
-        console.log("Vault::_isApprovedOrOwner: registry.ownerOf(nft)", registry.ownerOf(nft));
-        console.log("Vault::_isApprovedOrOwner: sender", sender);
         return registry.getApproved(nft) == sender || registry.ownerOf(nft) == sender;
     }
 

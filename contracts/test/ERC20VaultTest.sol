@@ -10,10 +10,6 @@ contract ERC20VaultTest is ERC20Vault {
         ERC20Vault(vaultGovernance_, vaultTokens_)
     {}
 
-    function isValidEdge(address from, address to) public view returns (bool) {
-        return _isValidEdge(from, to);
-    }
-
     function setVaultGovernance(address newVaultGovernance) public {
         _vaultGovernance = IVaultGovernance(newVaultGovernance);
     }

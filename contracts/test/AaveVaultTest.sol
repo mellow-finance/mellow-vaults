@@ -17,10 +17,6 @@ contract AaveVaultTest is AaveVault {
         _baseBalances = baseBalances;
     }
 
-    function isValidEdge(address from, address to) public view returns (bool) {
-        return _isValidEdge(from, to);
-    }
-
     function setVaultGovernance(address newVaultGovernance) public {
         _vaultGovernance = IVaultGovernance(newVaultGovernance);
     }

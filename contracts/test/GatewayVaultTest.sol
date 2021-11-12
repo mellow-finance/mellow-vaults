@@ -10,8 +10,8 @@ contract GatewayVaultTest is GatewayVault {
         GatewayVault(vaultGovernance_, vaultTokens_)
     {}
 
-    function isValidEdge(address from, address to) public view returns (bool) {
-        return _isValidEdge(from, to);
+    function isValidPullDestination(address to) public view returns (bool) {
+        return _isValidPullDestination(to);
     }
 
     function setVaultGovernance(address newVaultGovernance) public {
@@ -22,7 +22,15 @@ contract GatewayVaultTest is GatewayVault {
         _subvaultNfts = nfts;
     }
 
-    function collectFees(uint256[] memory collectedEarnings) internal returns (uint256[] memory collectedFees) {
+    function collectFees(uint256[] memory collectedEarnings) public returns (uint256[] memory collectedFees) {
         _collectFees(collectedEarnings);
+    }
+
+    function isApprovedOrOwner(address sender) public view returns (bool) {
+        return _isApprovedOrOwner(sender);
+    }
+
+    function isVaultToken(address token) public view returns (bool) {
+        return _isVaultToken(token);
     }
 }

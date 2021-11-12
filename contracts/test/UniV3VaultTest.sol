@@ -12,10 +12,6 @@ contract UniV3VaultTest is UniV3Vault {
         uint24 fee
     ) UniV3Vault(vaultGovernance_, vaultTokens_, fee) {}
 
-    function isValidEdge(address from, address to) public view returns (bool) {
-        return _isValidEdge(from, to);
-    }
-
     function setVaultGovernance(address newVaultGovernance) public {
         _vaultGovernance = IVaultGovernance(newVaultGovernance);
     }

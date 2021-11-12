@@ -7,6 +7,7 @@ import {
     VaultGovernance,
     ProtocolGovernance,
     VaultRegistry,
+    AaveVault,
 } from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
@@ -19,6 +20,7 @@ describe("GatewayVault", () => {
     let strategy: Signer;
     let anotherTreasury: Signer;
     let ERC20VaultGovernance: VaultGovernance;
+    let AaveVault: AaveVault;
     let protocolGovernance: ProtocolGovernance;
     let vaultRegistry: VaultRegistry;
     let ERC20Vault: Vault;
@@ -53,6 +55,7 @@ describe("GatewayVault", () => {
                 ERC20Vault,
                 AnotherERC20Vault,
                 vaultRegistry,
+                AaveVault,
             } = await deploySubVaultsXGatewayVaultSystem({
                 adminSigner: admin,
                 treasury: await treasury.getAddress(),
@@ -356,6 +359,26 @@ describe("GatewayVault", () => {
                 await expect(
                     gatewayVault.addSubvaults([ERC20Vault.address, 0])
                 ).to.be.revertedWith("NFT0");
+            });
+        });
+    });
+
+    describe("_isValidPullDestination", () => {
+        describe("when passed some contract", () => {
+            it("returns false", async () => {
+                expect(
+                    await gatewayVault.isValidPullDestination(AaveVault.address)
+                ).to.be.false;
+            });
+        });
+    });
+
+    describe("_isVaultToken", () => {
+        describe("when passed not vault token", () => {
+            it("returns false", async () => {
+                expect(
+                    await gatewayVault.isVaultToken(await stranger.getAddress())
+                ).to.be.false;
             });
         });
     });
