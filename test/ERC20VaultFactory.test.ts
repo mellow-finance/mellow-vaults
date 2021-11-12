@@ -28,12 +28,13 @@ describe("ERC20VaultFactory", () => {
         [deployer, admin, stranger, treasury] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ vaultFactory, vaultGovernance } =
-                await deployVaultGovernanceSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultType: "ERC20Vault",
-                }));
+            ({
+                ERC20VaultFactory: vaultFactory,
+                ERC20VaultGovernance: vaultGovernance,
+            } = await deployVaultGovernanceSystem({
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+            }));
             tokens = await deployERC20Tokens(tokensCount);
         });
     });

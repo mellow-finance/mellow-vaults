@@ -3,9 +3,9 @@ pragma solidity 0.8.9;
 
 import "../interfaces/IVaultFactory.sol";
 import "../interfaces/IVaultGovernance.sol";
-import "./ERC20VaultTest.sol";
+import "./UniV3VaultTest.sol";
 
-contract ERC20VaultFactoryTest is IVaultFactory {
+contract UniV3VaultTestFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
     constructor(IVaultGovernance vaultGovernance_) {
@@ -16,9 +16,10 @@ contract ERC20VaultFactoryTest is IVaultFactory {
         vaultGovernance = IVaultGovernance(newVaultGovernance);
     }
 
-    function deployVault(address[] memory vaultTokens, bytes memory) external returns (IVault) {
+    function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
         require(msg.sender == address(vaultGovernance), "VG");
-        ERC20VaultTest vault = new ERC20VaultTest(vaultGovernance, vaultTokens);
+        uint256 fee = abi.decode(options, (uint256));
+        UniV3VaultTest vault = new UniV3VaultTest(vaultGovernance, vaultTokens, uint24(fee));
         return IVault(vault);
     }
 }

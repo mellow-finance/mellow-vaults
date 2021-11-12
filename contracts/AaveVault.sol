@@ -7,8 +7,8 @@ import "./Vault.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
-    address[] private _aTokens;
-    uint256[] private _baseBalances;
+    address[] internal _aTokens;
+    uint256[] internal _baseBalances;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault

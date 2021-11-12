@@ -9,6 +9,10 @@ contract AaveVaultTest is AaveVault {
         AaveVault(vaultGovernance_, vaultTokens_)
     {}
 
+    function setATokens(address[] memory aTokens) public {
+        _aTokens = aTokens;
+    }
+
     function isValidEdge(address from, address to) public view returns (bool) {
         return _isValidEdge(from, to);
     }

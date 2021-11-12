@@ -14,6 +14,8 @@ export type IGatewayVault = Address;
 
 export type ERC20 = Contract;
 export type ERC20Vault = Contract;
+export type AaveVault = Contract;
+export type UniV3Vault = Contract;
 export type ProtocolGovernance = Contract;
 export type VaultGovernance = Contract;
 export type LpIssuerGovernance = Contract;
@@ -121,4 +123,5 @@ export type ERC20Test_constructorArgs = {
 };
 
 export type SubVaultType = "ERC20Vault" | "AaveVault" | "UniV3Vault";
-export type VaultType = SubVaultType | "GatewayVault" | "LpIssuer";
+export type SubVaultTypeTest = "ERC20VaultTest" | "AaveVaultTest" | "UniV3VaultTest";
+export type VaultType = SubVaultType | SubVaultTypeTest | "GatewayVault" | "LpIssuer";

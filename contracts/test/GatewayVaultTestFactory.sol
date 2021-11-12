@@ -5,7 +5,7 @@ import "../interfaces/IVaultFactory.sol";
 import "../interfaces/IVaultGovernance.sol";
 import "./GatewayVaultTest.sol";
 
-contract GatewayVaultFactoryTest is IVaultFactory {
+contract GatewayVaultTestFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
     constructor(IVaultGovernance vaultGovernance_) {

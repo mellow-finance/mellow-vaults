@@ -11,7 +11,7 @@ import {
 } from "./library/Helpers";
 import {
     deployProtocolGovernance,
-    deployTestVaultGovernance,
+    deployTestVaultGovernanceSystem,
     deployVaultRegistry,
 } from "./library/Deployments";
 import {
@@ -60,10 +60,9 @@ describe("TestVaultGovernance", () => {
             [deployer, stranger, treasury, newTreasury, newVaultFactory] =
                 await ethers.getSigners();
 
-            return await deployTestVaultGovernance({
+            return await deployTestVaultGovernanceSystem({
                 adminSigner: deployer,
                 treasury: await treasury.getAddress(),
-                vaultType: "ERC20Vault",
             });
         });
     });

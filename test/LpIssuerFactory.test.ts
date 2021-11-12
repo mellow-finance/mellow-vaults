@@ -1,11 +1,6 @@
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
-import {
-    ERC20,
-    VaultFactory,
-    VaultGovernance,
-    VaultType,
-} from "./library/Types";
+import { ERC20, VaultFactory, VaultGovernance } from "./library/Types";
 import {
     deployERC20Tokens,
     deployVaultGovernanceSystem,
@@ -28,12 +23,13 @@ describe("LpIssuerFactory", () => {
         [deployer, admin, stranger, treasury] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ vaultFactory, vaultGovernance } =
-                await deployVaultGovernanceSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultType: "LpIssuer",
-                }));
+            ({
+                ERC20VaultFactory: vaultFactory,
+                ERC20VaultGovernance: vaultGovernance,
+            } = await deployVaultGovernanceSystem({
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+            }));
             tokens = await deployERC20Tokens(tokensCount);
         });
     });
