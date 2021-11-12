@@ -55,10 +55,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             permissionless: true,
             maxTokensPerVault: 10,
             governanceDelay: 86400,
-            strategyPerformanceFee: 20 * 10 ** 7,
-            protocolPerformanceFee: 3 * 10 ** 7,
-            protocolExitFee: 10 ** 7,
-            protocolTreasury: protocolTreasury,
         };
         log(`Setting ProtocolGovernance params`);
         log(JSON.stringify(params, null, 2));
