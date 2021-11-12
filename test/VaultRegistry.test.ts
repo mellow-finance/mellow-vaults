@@ -83,7 +83,7 @@ describe("VaultRegistry", () => {
         it("returns correct vaults", async () => {
             expect(await vaultRegistry.vaults()).to.deep.equal([
                 ERC20Vault.address,
-                AnotherERC20Vault,
+                AnotherERC20Vault.address,
                 AaveVault.address,
                 UniV3Vault.address,
             ]);
