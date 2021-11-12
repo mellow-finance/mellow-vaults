@@ -201,7 +201,7 @@ export async function deployVaultGovernanceSystem(options: {
     await AaveVaultGovernance.deployed();
     await UniV3VaultGovernance.deployed();
     const ERC20VaultFactory = await deployVaultFactory({
-        vaultType: "ERC20Vault",
+        vaultType: "ERC20VaultTest",
         VaultGovernance: ERC20VaultGovernance.address,
     });
     const AaveVaultFactory = await deployVaultFactory({
@@ -209,7 +209,7 @@ export async function deployVaultGovernanceSystem(options: {
         VaultGovernance: AaveVaultGovernance.address,
     });
     const UniV3VaultFactory = await deployVaultFactory({
-        vaultType: "UniV3Vault",
+        vaultType: "UniV3VaultTest",
         VaultGovernance: UniV3VaultGovernance.address,
     });
     await ERC20VaultGovernance.initialize(ERC20VaultFactory.address);
