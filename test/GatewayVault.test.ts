@@ -382,4 +382,12 @@ describe("GatewayVault", () => {
             });
         });
     });
+
+    describe("collectFees", () => {
+        describe("when there is no earnings:(", () => {
+            it("passes", async () => {
+                await gatewayVault.collectFees([0, 0]);
+            });
+        });
+    });
 });

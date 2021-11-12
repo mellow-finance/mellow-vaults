@@ -9,6 +9,7 @@ import {
 import {
     deployERC20Tokens,
     deployVaultGovernanceSystem,
+    deploySubVaultSystem,
 } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { expect } from "chai";
@@ -31,9 +32,12 @@ describe("AaveVaultFactory", () => {
             ({
                 AaveVaultFactory: vaultFactory,
                 AaveVaultGovernance: vaultGovernance,
-            } = await deployVaultGovernanceSystem({
+            } = await deploySubVaultSystem({
+                tokensCount: 2,
                 adminSigner: admin,
+                vaultOwner: await deployer.getAddress(),
                 treasury: await treasury.getAddress(),
+                dontUseTestSetup: true,
             }));
             tokens = await deployERC20Tokens(tokensCount);
         });

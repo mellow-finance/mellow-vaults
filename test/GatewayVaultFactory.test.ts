@@ -25,6 +25,7 @@ describe("GatewayVaultFactory", () => {
                     treasury: await treasury.getAddress(),
                     vaultOwnerSigner: deployer,
                     strategy: await strategy.getAddress(),
+                    dontUseTestSetup: true,
                 }
             ));
         });

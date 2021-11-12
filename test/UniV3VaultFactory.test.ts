@@ -6,10 +6,7 @@ import {
     VaultGovernance,
     VaultType,
 } from "./library/Types";
-import {
-    deployERC20Tokens,
-    deployVaultGovernanceSystem,
-} from "./library/Deployments";
+import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { expect } from "chai";
 
@@ -31,9 +28,12 @@ describe("UniV3VaultFactory", () => {
             ({
                 UniV3VaultFactory: vaultFactory,
                 UniV3VaultGovernance: vaultGovernance,
-            } = await deployVaultGovernanceSystem({
+            } = await deploySubVaultSystem({
+                tokensCount: 2,
                 adminSigner: admin,
+                vaultOwner: await deployer.getAddress(),
                 treasury: await treasury.getAddress(),
+                dontUseTestSetup: true,
             }));
             tokens = await deployERC20Tokens(tokensCount);
         });

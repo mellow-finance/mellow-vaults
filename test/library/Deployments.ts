@@ -149,6 +149,7 @@ export const deployVaultGovernance = async (options: {
 export async function deployVaultGovernanceSystem(options: {
     adminSigner: Signer;
     treasury: Address;
+    dontUseTestSetup?: boolean;
 }): Promise<{
     ERC20VaultFactory: VaultFactory;
     AaveVaultFactory: VaultFactory;
@@ -201,15 +202,15 @@ export async function deployVaultGovernanceSystem(options: {
     await AaveVaultGovernance.deployed();
     await UniV3VaultGovernance.deployed();
     const ERC20VaultFactory = await deployVaultFactory({
-        vaultType: "ERC20VaultTest",
+        vaultType: `ERC20Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         VaultGovernance: ERC20VaultGovernance.address,
     });
     const AaveVaultFactory = await deployVaultFactory({
-        vaultType: "AaveVaultTest",
+        vaultType: `AaveVault${options?.dontUseTestSetup ? "" : "Test"}`,
         VaultGovernance: AaveVaultGovernance.address,
     });
     const UniV3VaultFactory = await deployVaultFactory({
-        vaultType: "UniV3VaultTest",
+        vaultType: `UniV3Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         VaultGovernance: UniV3VaultGovernance.address,
     });
     await ERC20VaultGovernance.initialize(ERC20VaultFactory.address);
@@ -374,6 +375,7 @@ export async function deploySubVaultSystem(options: {
     adminSigner: Signer;
     treasury: Address;
     vaultOwner: Address;
+    dontUseTestSetup?: boolean;
 }): Promise<{
     ERC20VaultFactory: VaultFactory;
     AaveVaultFactory: VaultFactory;
@@ -406,6 +408,7 @@ export async function deploySubVaultSystem(options: {
     } = await deployVaultGovernanceSystem({
         adminSigner: options.adminSigner,
         treasury: options.treasury,
+        dontUseTestSetup: options.dontUseTestSetup,
     });
     const vaultTokens: ERC20[] = sortContractsByAddresses(
         await deployERC20Tokens(options.tokensCount)
@@ -468,27 +471,32 @@ export async function deploySubVaultSystem(options: {
     await UniV3VaultGovernance.deployVault(...vaultDeployArgsUniV3);
 
     const ERC20VaultContract: Vault = await ethers.getContractAt(
-        "ERC20VaultTest",
+        `ERC20Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         ERC20VaultInstance
     );
     const AnotherERC20VaultContract: Vault = await ethers.getContractAt(
-        "ERC20VaultTest",
+        `ERC20Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         AnotherERC20VaultInstance
     );
     const AaveVaultContract: Vault = await ethers.getContractAt(
-        "AaveVaultTest",
+        `AaveVault${options?.dontUseTestSetup ? "" : "Test"}`,
         AaveVaultInstance
     );
     const UniV3VaultContract: Vault = await ethers.getContractAt(
-        "UniV3VaultTest",
+        `UniV3Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         UniV3VaultInstance
     );
 
-    let aTokens = sortContractsByAddresses(
-        await deployERC20Tokens(options.tokensCount)
-    );
-    await AaveVaultContract.setATokens(aTokens.map((token) => token.address));
-    await AaveVaultContract.setBaseBalances([[0, 0]]);
+    let aTokens: ERC20[] = [];
+    if (!options?.dontUseTestSetup) {
+        aTokens = sortContractsByAddresses(
+            await deployERC20Tokens(options.tokensCount)
+        );
+        await AaveVaultContract.setATokens(
+            aTokens.map((token) => token.address)
+        );
+        await AaveVaultContract.setBaseBalances([[0, 0]]);
+    }
 
     await ERC20VaultGovernance.connect(
         options.adminSigner
@@ -538,6 +546,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     strategy: Address;
     enableAaveVault?: boolean;
     enableUniV3Vault?: boolean;
+    dontUseTestSetup?: boolean;
 }): Promise<{
     ERC20VaultFactory: VaultFactory;
     AaveVaultFactory: VaultFactory;
@@ -584,6 +593,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         adminSigner: options.adminSigner,
         treasury: options.treasury,
         vaultOwner: await options.vaultOwnerSigner.getAddress(),
+        dontUseTestSetup: options.dontUseTestSetup,
     });
     let args: VaultGovernance_constructorArgs = {
         params: {
@@ -606,7 +616,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         .commitVaultGovernancesAdd();
     const gatewayVaultFactory = await deployVaultFactory({
         VaultGovernance: gatewayVaultGovernance.address,
-        vaultType: "GatewayVaultTest",
+        vaultType: `GatewayVault${options?.dontUseTestSetup ? "" : "Test"}`,
     });
     await gatewayVaultGovernance
         .connect(options.adminSigner)
@@ -653,7 +663,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     gatewayNft = response.nft;
     await gatewayVaultGovernance.deployVault(...deployArgs);
     const gatewayVault: Vault = await ethers.getContractAt(
-        "GatewayVaultTest",
+        `GatewayVault${options?.dontUseTestSetup ? "" : "Test"}`,
         gatewayVaultAddress
     );
     await gatewayVaultGovernance
