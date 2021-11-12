@@ -146,13 +146,11 @@ contract GatewayVault is IGatewayVault, Vault {
             }
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
-                uint256 amount = amountsByVault[i][j];
-                if (amount > 0) {
-                    IERC20(_vaultTokens[j]).approve(address(vault), amountsByVault[i][j]);
+                if (amountsByVault[i][j] > 0) {
+                    IERC20(_vaultTokens[j]).safeTransfer(address(vault), amountsByVault[i][j]);
                 }
             }
-            uint256[] memory actualVaultTokenAmounts = vault.transferAndPush(
-                address(this),
+            uint256[] memory actualVaultTokenAmounts = vault.push(
                 _vaultTokens,
                 amountsByVault[i],
                 vaultsOptions[i]
@@ -173,9 +171,7 @@ contract GatewayVault is IGatewayVault, Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        bool optimized;
-        bytes[] memory vaultsOptions;
-        (optimized, vaultsOptions) = _parseOptions(options);
+        (bool optimized, bytes[] memory vaultsOptions) = _parseOptions(options);
 
         require(_subvaultNfts.length > 0, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -221,8 +217,7 @@ contract GatewayVault is IGatewayVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory tokens = _vaultTokens;
         collectedEarnings = new uint256[](tokens.length);
-        bytes[] memory vaultsOptions;
-        (, vaultsOptions) = _parseOptions(options);
+        (, bytes[] memory vaultsOptions) = _parseOptions(options);
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
             address[] memory vTokens = vault.vaultTokens();
