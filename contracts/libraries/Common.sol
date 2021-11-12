@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
-import "hardhat/console.sol";
 
 /// @notice Common shared utilities
 library Common {

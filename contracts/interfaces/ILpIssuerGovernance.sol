@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IVaultGovernance.sol";
 
-interface ILpIssuerVaultGovernance is IVaultGovernance {
+interface ILpIssuerGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param tokenLimitPerAddress Reference to address that will collect strategy fees
     struct StrategyParams {

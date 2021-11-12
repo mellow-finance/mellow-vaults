@@ -36,12 +36,6 @@ describe("GatewayVault", () => {
     before(async () => {
         [deployer, admin, stranger, treasury, anotherTreasury, strategy] =
             await ethers.getSigners();
-        console.log("deployer", await deployer.getAddress());
-        console.log("admin", await admin.getAddress());
-        console.log("treasury", await treasury.getAddress());
-        console.log("strategy", await strategy.getAddress());
-        console.log("stranger", await stranger.getAddress());
-        console.log("anotherTreasury", await anotherTreasury.getAddress());
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({
@@ -62,21 +56,6 @@ describe("GatewayVault", () => {
                 vaultOwnerSigner: deployer,
                 strategy: await strategy.getAddress(),
             }));
-            console.log("gatewayVault", gatewayVault.address);
-            console.log(
-                "gatewayVaultGovernance",
-                gatewayVaultGovernance.address
-            );
-            console.log("ERC20Vault", ERC20Vault.address);
-            console.log("ERC20VaultGovernance", ERC20VaultGovernance.address);
-            console.log("protocolGovernance", protocolGovernance.address);
-            console.log("nftERC20", nftERC20);
-            console.log("anotherNftERC20", anotherNftERC20);
-            console.log(
-                "tokens",
-                tokens.map((token) => token.address)
-            );
-            console.log("vaultRegistry", vaultRegistry.address);
             for (let i: number = 0; i < tokens.length; ++i) {
                 await tokens[i].connect(deployer).approve(
                     gatewayVault.address,
@@ -86,15 +65,6 @@ describe("GatewayVault", () => {
                 );
             }
             await vaultRegistry.approve(await strategy.getAddress(), 4);
-            console.log(
-                "vaultRegistry.ownerOf(nftERC20)",
-                (await vaultRegistry.ownerOf(nftERC20)).toString()
-            );
-            console.log(
-                "vaultRegistry.ownerOf(anotherNftERC20)",
-                (await vaultRegistry.ownerOf(anotherNftERC20)).toString()
-            );
-            console.log("\n\n=== RUNTIME ===\n\n");
         });
     });
 

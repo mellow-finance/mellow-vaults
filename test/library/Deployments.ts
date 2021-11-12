@@ -154,11 +154,13 @@ export async function deployVaultGovernanceSystem(options: {
     ERC20VaultFactory: VaultFactory;
     AaveVaultFactory: VaultFactory;
     UniV3VaultFactory: VaultFactory;
+    LpIssuerFactory: VaultFactory;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     ERC20VaultGovernance: VaultGovernance;
     AaveVaultGovernance: VaultGovernance;
     UniV3VaultGovernance: VaultGovernance;
+    LpIssuerGovernance: LpIssuerGovernance;
 }> {
     const { vaultRegistry, protocolGovernance } =
         await deployVaultRegistryAndProtocolGovernance({
@@ -178,9 +180,12 @@ export async function deployVaultGovernanceSystem(options: {
         await ethers.getContractFactory("AaveVaultGovernance");
     const contractFactoryUniV3: ContractFactory =
         await ethers.getContractFactory("UniV3VaultGovernance");
+    const contractFactoryLpIssuer: ContractFactory =
+        await ethers.getContractFactory("LpIssuerGovernance");
     let ERC20VaultGovernance: VaultGovernance;
     let AaveVaultGovernance: VaultGovernance;
     let UniV3VaultGovernance: VaultGovernance;
+    let LpIssuerGovernance: VaultGovernance;
     const { aaveLendingPool } = await getNamedAccounts();
     const additionalParamsForAave = {
         lendingPool: aaveLendingPool,
@@ -198,9 +203,11 @@ export async function deployVaultGovernanceSystem(options: {
         params,
         additionalParamsForUniV3
     );
+    LpIssuerGovernance = await contractFactoryLpIssuer.deploy(params);
     await ERC20VaultGovernance.deployed();
     await AaveVaultGovernance.deployed();
     await UniV3VaultGovernance.deployed();
+    await LpIssuerGovernance.deployed();
     const ERC20VaultFactory = await deployVaultFactory({
         vaultType: `ERC20Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         VaultGovernance: ERC20VaultGovernance.address,
@@ -213,9 +220,14 @@ export async function deployVaultGovernanceSystem(options: {
         vaultType: `UniV3Vault${options?.dontUseTestSetup ? "" : "Test"}`,
         VaultGovernance: UniV3VaultGovernance.address,
     });
+    const LpIssuerFactory = await deployVaultFactory({
+        vaultType: `LpIssuer`,
+        VaultGovernance: LpIssuerGovernance.address,
+    });
     await ERC20VaultGovernance.initialize(ERC20VaultFactory.address);
     await AaveVaultGovernance.initialize(AaveVaultFactory.address);
     await UniV3VaultGovernance.initialize(UniV3VaultFactory.address);
+    await LpIssuerGovernance.initialize(LpIssuerFactory.address);
     await ERC20VaultGovernance.connect(options.adminSigner).stageInternalParams(
         params
     );
@@ -223,6 +235,9 @@ export async function deployVaultGovernanceSystem(options: {
         params
     );
     await UniV3VaultGovernance.connect(options.adminSigner).stageInternalParams(
+        params
+    );
+    await LpIssuerGovernance.connect(options.adminSigner).stageInternalParams(
         params
     );
     await sleep(Number(await protocolGovernance.governanceDelay()));
@@ -235,15 +250,20 @@ export async function deployVaultGovernanceSystem(options: {
     await UniV3VaultGovernance.connect(
         options.adminSigner
     ).commitInternalParams();
+    await LpIssuerGovernance.connect(
+        options.adminSigner
+    ).commitInternalParams();
     return {
         ERC20VaultFactory,
         AaveVaultFactory,
         UniV3VaultFactory,
+        LpIssuerFactory,
         vaultRegistry,
         protocolGovernance,
         ERC20VaultGovernance,
         AaveVaultGovernance,
         UniV3VaultGovernance,
+        LpIssuerGovernance,
     };
 }
 
@@ -402,9 +422,11 @@ export async function deploySubVaultSystem(options: {
         ERC20VaultFactory,
         AaveVaultFactory,
         UniV3VaultFactory,
+        LpIssuerFactory,
         ERC20VaultGovernance,
         AaveVaultGovernance,
         UniV3VaultGovernance,
+        LpIssuerGovernance,
     } = await deployVaultGovernanceSystem({
         adminSigner: options.adminSigner,
         treasury: options.treasury,
@@ -681,10 +703,6 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
                 BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
             ],
         ]);
-    console.log(
-        "StrategyParams",
-        (await gatewayVaultGovernance.strategyParams(gatewayNft)).toString()
-    );
     return {
         ERC20VaultFactory,
         AaveVaultFactory,

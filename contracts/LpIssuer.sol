@@ -80,7 +80,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
         }
         require(
             amountToMint + balanceOf(msg.sender) <=
-                ILpIssuerVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
+                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
             "LPA"
         );
         if (amountToMint > 0) {
