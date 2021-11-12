@@ -320,7 +320,6 @@ describe("GatewayVault", () => {
             expect(await ERC20Vault.tvl()).to.deep.equal([
                 BigNumber.from(0),
                 BigNumber.from(0),
-                BigNumber.from(0),
             ]);
         });
     });
@@ -340,7 +339,6 @@ describe("GatewayVault", () => {
         describe("when nothing pushed yet", () => {
             it("returns empty tvl", async () => {
                 expect(await gatewayVault.subvaultTvl(0)).to.deep.equal([
-                    BigNumber.from(0),
                     BigNumber.from(0),
                     BigNumber.from(0),
                 ]);
@@ -363,7 +361,6 @@ describe("GatewayVault", () => {
         describe("when nothing pushed yet", () => {
             it("returns empty earnings", async () => {
                 expect(await gatewayVault.vaultEarnings(0)).to.be.deep.equal([
-                    BigNumber.from(0),
                     BigNumber.from(0),
                     BigNumber.from(0),
                 ]);
