@@ -45,12 +45,8 @@ async function verifyVault(hre: HardhatRuntimeEnvironment, nft: number) {
         erc721Artifact.abi,
         hre.ethers.provider
     );
-    console.log("1");
-
     const governanceAddress = await vault.vaultGovernance();
-    console.log("2");
     const vaultTokens = await vault.vaultTokens();
-    console.log("3");
     const args = [governanceAddress, vaultTokens];
     try {
         args.push(await erc721.name());
