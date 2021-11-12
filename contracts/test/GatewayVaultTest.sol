@@ -22,10 +22,6 @@ contract GatewayVaultTest is GatewayVault {
         _subvaultNfts = nfts;
     }
 
-    function collectFees(uint256[] memory collectedEarnings) public returns (uint256[] memory collectedFees) {
-        _collectFees(collectedEarnings);
-    }
-
     function isApprovedOrOwner(address sender) public view returns (bool) {
         return _isApprovedOrOwner(sender);
     }

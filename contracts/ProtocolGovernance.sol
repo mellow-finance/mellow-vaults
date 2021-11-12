@@ -84,26 +84,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.governanceDelay;
     }
 
-    /// @inheritdoc IProtocolGovernance
-    function strategyPerformanceFee() external view returns (uint256) {
-        return params.strategyPerformanceFee;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function protocolPerformanceFee() external view returns (uint256) {
-        return params.protocolPerformanceFee;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function protocolExitFee() external view returns (uint256) {
-        return params.protocolExitFee;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function protocolTreasury() external view returns (address) {
-        return params.protocolTreasury;
-    }
-
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @inheritdoc IProtocolGovernance

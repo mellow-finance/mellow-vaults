@@ -32,21 +32,11 @@ contract AaveVault is Vault {
         }
     }
 
-    /// @inheritdoc Vault
-    function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultTokens;
-        tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _aTokens.length; i++) {
-            address aToken = _aTokens[i];
-            uint256 balance = IERC20(aToken).balanceOf(address(this));
-            tokenAmounts[i] = balance - _baseBalances[i];
-        }
-    }
-
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
@@ -89,14 +79,6 @@ contract AaveVault is Vault {
             _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
         }
         actualTokenAmounts = tokenAmounts;
-    }
-
-    function _collectEarnings(address to, bytes memory) internal override returns (uint256[] memory collectedEarnings) {
-        collectedEarnings = earnings();
-        address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < _aTokens.length; i++) {
-            _lendingPool().withdraw(tokens[i], collectedEarnings[i], to);
-        }
     }
 
     function _getAToken(address token) internal view returns (address) {

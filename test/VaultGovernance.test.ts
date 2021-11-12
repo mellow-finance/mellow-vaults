@@ -104,10 +104,6 @@ describe("TestVaultGovernance", () => {
             permissionless: true,
             maxTokensPerVault: BigNumber.from(2),
             governanceDelay: BigNumber.from(1),
-            strategyPerformanceFee: BigNumber.from(10 ** 9),
-            protocolPerformanceFee: BigNumber.from(10 * 9),
-            protocolExitFee: BigNumber.from(10 ** 9),
-            protocolTreasury: await treasury.getAddress(),
         };
 
         encodedParams = encodeToBytes(
@@ -115,11 +111,7 @@ describe("TestVaultGovernance", () => {
                 "tuple(" +
                     "bool permissionless, " +
                     "uint256 maxTokensPerVault, " +
-                    "uint256 governanceDelay, " +
-                    "uint256 strategyPerformanceFee, " +
-                    "uint256 protocolPerformanceFee, " +
-                    "uint256 protocolExitFee, " +
-                    "address protocolTreasury)" +
+                    "uint256 governanceDelay)" +
                     "protocolParams",
             ],
             [protocolParams]

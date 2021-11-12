@@ -46,10 +46,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
     /// @notice Deposit tokens into LpIssuer
     /// @param tokenAmounts Amounts of tokens to push
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
-    function deposit(
-        uint256[] calldata tokenAmounts,
-        bytes memory options
-    ) external {
+    function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         require(_subvaultNft > 0, "INIT");
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
@@ -106,29 +103,16 @@ contract LpIssuer is ILpIssuer, ERC20 {
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
         }
-        uint256[] memory actualTokenAmounts = _subvault().pull(
-            address(this),
-            _vaultTokens,
-            tokenAmounts,
-            options
-        );
-        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        // TODO: Move exit fees to gateway vault
-        uint256 protocolExitFee = protocolGovernance.protocolExitFee();
-        address protocolTreasury = protocolGovernance.protocolTreasury();
-        uint256[] memory exitFees = new uint256[](_vaultTokens.length);
+        uint256[] memory actualTokenAmounts = _subvault().pull(address(this), _vaultTokens, tokenAmounts, options);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
-            exitFees[i] = (actualTokenAmounts[i] * protocolExitFee) / Common.DENOMINATOR;
-            actualTokenAmounts[i] -= exitFees[i];
-            IERC20(_vaultTokens[i]).safeTransfer(protocolTreasury, exitFees[i]);
+            actualTokenAmounts[i];
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
-        emit ExitFeeCollected(msg.sender, protocolTreasury, _vaultTokens, exitFees);
     }
 
     /// @inheritdoc ILpIssuer
@@ -161,11 +145,4 @@ contract LpIssuer is ILpIssuer, ERC20 {
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
-
-    /// @notice Emitted when exit fees are collected
-    /// @param from The initiator of the transaction
-    /// @param to The destination address for the fees
-    /// @param tokens ERC20 tokens collected as fees
-    /// @param amounts Token amounts collected as fees
-    event ExitFeeCollected(address indexed from, address to, address[] tokens, uint256[] amounts);
 }
