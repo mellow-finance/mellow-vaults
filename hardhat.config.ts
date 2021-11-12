@@ -8,9 +8,7 @@ import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "./plugins/contracts";
 import { config as dotenv } from "dotenv";
-import "./tasks/vaults";
-import "./tasks/uniV3Vaults";
-import "./tasks/vault";
+import "./tasks/verify";
 
 dotenv();
 
