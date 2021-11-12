@@ -147,12 +147,12 @@ contract GatewayVault is IGatewayVault, Vault {
                 continue;
             }
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
-            console.log("GatewayVault::_push() vault", address(vault));
-            console.log("GatewayVault::_push() amountsByVault");
-            for (uint k = 0; k < amountsByVault.length; k++) {
-                console.log("-->", amountsByVault[i][k]);
+            for (uint256 j = 0; j < _vaultTokens.length; j++) {
+                uint256 amount = amountsByVault[i][j];
+                if (amount > 0) {
+                    IERC20(_vaultTokens[j]).approve(address(vault), amountsByVault[i][j]);
+                }
             }
-            console.log("[amountsByVault]");
             uint256[] memory actualVaultTokenAmounts = vault.transferAndPush(
                 address(this),
                 _vaultTokens,

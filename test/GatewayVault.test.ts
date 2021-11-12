@@ -20,16 +20,12 @@ describe("GatewayVault", () => {
     let strategy: Signer;
     let anotherTreasury: Signer;
     let ERC20VaultGovernance: VaultGovernance;
-    let AaveVaultGovernance: VaultGovernance;
-    let UniV3VaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let vaultRegistry: VaultRegistry;
     let ERC20Vault: Vault;
-    let UniV3Vault: Vault;
-    let AaveVault: Vault;
+    let AnotherERC20Vault: Vault;
     let nftERC20: number;
-    let nftAave: number;
-    let nftUniV3: number;
+    let anotherNftERC20: number;
     let tokens: ERC20[];
     let gatewayVault: Vault;
     let gatewayVaultGovernance: VaultGovernance;
@@ -51,16 +47,12 @@ describe("GatewayVault", () => {
                 gatewayVault,
                 gatewayVaultGovernance,
                 ERC20VaultGovernance,
-                AaveVaultGovernance,
-                UniV3VaultGovernance,
                 protocolGovernance,
                 nftERC20,
-                nftAave,
-                nftUniV3,
+                anotherNftERC20,
                 tokens,
                 ERC20Vault,
-                AaveVault,
-                UniV3Vault,
+                AnotherERC20Vault,
                 vaultRegistry,
             } = await deploySubVaultsXGatewayVaultSystem({
                 adminSigner: admin,
@@ -77,16 +69,11 @@ describe("GatewayVault", () => {
             console.log("ERC20VaultGovernance", ERC20VaultGovernance.address);
             console.log("protocolGovernance", protocolGovernance.address);
             console.log("nftERC20", nftERC20);
-            console.log("nftAave", nftAave);
-            console.log("nftUniV3", nftUniV3);
+            console.log("anotherNftERC20", anotherNftERC20);
             console.log(
                 "tokens",
                 tokens.map((token) => token.address)
             );
-            console.log("AaveVault", AaveVault.address);
-            console.log("AaveVaultGovernance", AaveVaultGovernance.address);
-            console.log("UniV3Vault", UniV3Vault.address);
-            console.log("UniV3VaultGovernance", UniV3VaultGovernance.address);
             console.log("vaultRegistry", vaultRegistry.address);
             for (let i: number = 0; i < tokens.length; ++i) {
                 await tokens[i].connect(deployer).approve(
@@ -102,12 +89,8 @@ describe("GatewayVault", () => {
                 (await vaultRegistry.ownerOf(nftERC20)).toString()
             );
             console.log(
-                "vaultRegistry.ownerOf(nftAave)",
-                (await vaultRegistry.ownerOf(nftAave)).toString()
-            );
-            console.log(
-                "vaultRegistry.ownerOf(nftUniV3)",
-                (await vaultRegistry.ownerOf(nftUniV3)).toString()
+                "vaultRegistry.ownerOf(anotherNftERC20)",
+                (await vaultRegistry.ownerOf(anotherNftERC20)).toString()
             );
             console.log("\n\n=== RUNTIME ===\n\n");
         });
@@ -131,26 +114,25 @@ describe("GatewayVault", () => {
                 ERC20Vault.connect(stranger).push(
                     [tokens[0].address],
                     [BigNumber.from(10 ** 9)],
-                    false,
                     []
                 )
             ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
         });
 
-        xit("emits Push event", async () => {
+        it("emits Push event", async () => {
             // await tokens[0].connect(deployer).transfer(gatewayVault.address, BigNumber.from(10 ** 9));
             await tokens[0]
                 .connect(deployer)
-                .transfer(ERC20Vault.address, BigNumber.from(10 ** 9));
+                .approve(gatewayVault.address, BigNumber.from(10 ** 10));
             // await tokens[0].connect(deployer).transfer(AaveVault.address, BigNumber.from(10 ** 9));
             await expect(
-                ERC20Vault.connect(strategy).push(
+                gatewayVault.connect(deployer).transferAndPush(
+                    await deployer.getAddress(),
                     [tokens[0].address],
                     [BigNumber.from(10 ** 9)],
-                    false,
                     []
                 )
-            ).to.emit(ERC20Vault, "Push");
+            ).to.emit(gatewayVault, "Push");
             // await tokens[0].connect(deployer).approve(gatewayVault.address, BigNumber.from(10 ** 9));
             // await ERC20Vault.connect(strategy).transferAndPush(
             //     await deployer.getAddress(),
@@ -165,41 +147,6 @@ describe("GatewayVault", () => {
     });
 
     describe("pull", () => {
-        xit("test", async () => {
-            await tokens[0]
-                .connect(deployer)
-                .transfer(ERC20Vault.address, BigNumber.from(10 ** 9));
-            await tokens[1]
-                .connect(deployer)
-                .transfer(AaveVault.address, BigNumber.from(2 * 10 ** 9));
-            // await tokens[0].connect(deployer).transfer(AaveVault.address, BigNumber.from(10 ** 9));
-            await expect(
-                ERC20Vault.connect(strategy).push(
-                    [tokens[0].address, tokens[1].address],
-                    [BigNumber.from(10 ** 9), BigNumber.from(2 * 10 ** 9)],
-                    false,
-                    []
-                )
-            ).to.emit(ERC20Vault, "Push");
-            await ERC20Vault.connect(strategy).pull(
-                AaveVault.address,
-                [tokens[0].address],
-                [BigNumber.from(10 ** 9)],
-                false,
-                []
-            );
-            // await ERC20Vault
-            //     .connect(strategy)
-            //     .pull(
-            //         AaveVault.address,
-            //         [tokens[0].address],
-            //         [BigNumber.from(10 ** 9)],
-            //         false,
-            //         []
-            //     );
-            console.log((await ERC20Vault.tvl()).toString());
-            console.log((await AaveVault.tvl()).toString());
-        });
 
         // it("anotherTest", async () => {
         //     await tokens[0]
@@ -309,8 +256,7 @@ describe("GatewayVault", () => {
         it("returns nfts", async () => {
             expect(await gatewayVault.subvaultNfts()).to.be.deep.equal([
                 nftERC20,
-                nftAave,
-                nftUniV3,
+                anotherNftERC20,
             ]);
         });
     });
@@ -324,14 +270,14 @@ describe("GatewayVault", () => {
         });
     });
 
-    describe("earnings", () => {
+    xdescribe("earnings", () => {
         describe("when nothing pushed yet", () => {
-            // it("returns empty earnings", async () => {
-            //     expect(await gatewayVault.earnings()).to.deep.equal([
-            //         BigNumber.from(0),
-            //         BigNumber.from(0),
-            //     ]);
-            // });
+            it("returns empty earnings", async () => {
+                expect(await gatewayVault.earnings()).to.deep.equal([
+                    BigNumber.from(0),
+                    BigNumber.from(0),
+                ]);
+            });
         });
     });
 
@@ -348,12 +294,12 @@ describe("GatewayVault", () => {
 
     describe("subvaultsTvl", () => {
         describe("when nothing pushed yet", () => {
-            // it("returns empty tvl", async () => {
-            //     expect(await gatewayVault.subvaultsTvl()).to.be.deep.equal([
-            //         [BigNumber.from(0), BigNumber.from(0)],
-            //         [BigNumber.from(0), BigNumber.from(0)],
-            //     ]);
-            // });
+            it("returns empty tvl", async () => {
+                expect(await gatewayVault.subvaultsTvl()).to.be.deep.equal([
+                    [BigNumber.from(0), BigNumber.from(0)],
+                    [BigNumber.from(0), BigNumber.from(0)],
+                ]);
+            });
         });
     });
 
@@ -373,7 +319,7 @@ describe("GatewayVault", () => {
             it("returns true", async () => {
                 expect(await gatewayVault.hasSubvault(ERC20Vault.address)).to.be
                     .true;
-                expect(await gatewayVault.hasSubvault(AaveVault.address)).to.be
+                expect(await gatewayVault.hasSubvault(AnotherERC20Vault.address)).to.be
                     .true;
             });
         });
@@ -400,12 +346,12 @@ describe("GatewayVault", () => {
             });
         });
 
-        describe("when already initialized", () => {
+        xdescribe("when already initialized", () => {
             it("reverts", async () => {
                 ///
             });
         });
 
-        describe("when passed nfts contains zero", () => {});
+        xdescribe("when passed nfts contains zero", () => {});
     });
 });
