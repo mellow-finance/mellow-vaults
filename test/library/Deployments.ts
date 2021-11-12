@@ -429,7 +429,7 @@ export async function deploySubVaultSystem(options: {
         optionsBytes,
         options.vaultOwner,
     ];
-    optionsBytes = encodeToBytes(["uint"], [1]);
+    optionsBytes = encodeToBytes(["uint24"], [3000]);
     const vaultDeployArgsUniV3 = [
         vaultTokens.map((token) => token.address),
         optionsBytes,
