@@ -38,6 +38,14 @@ contract LpIssuer is ILpIssuer, ERC20 {
         }
     }
 
+    function vaultGovernance() external view returns (IVaultGovernance) {
+        return _vaultGovernance;
+    }
+
+    function vaultTokens() external view returns (address[] memory) {
+        return _vaultTokens;
+    }
+
     /// @inheritdoc ILpIssuer
     function subvaultNft() external view returns (uint256) {
         return _subvaultNft;

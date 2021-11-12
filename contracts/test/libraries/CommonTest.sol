@@ -4,11 +4,9 @@ pragma solidity ^0.8.9;
 import "../../libraries/Common.sol";
 
 contract CommonTest {
-    constructor() {
+    constructor() {}
 
-    }
-
-    function bubbleSort(address[] memory arr) external pure returns(address[] memory) {
+    function bubbleSort(address[] memory arr) external pure returns (address[] memory) {
         Common.bubbleSort(arr);
         return arr;
     }
@@ -21,14 +19,15 @@ contract CommonTest {
         address[] memory tokens,
         address[] memory tokensToProject,
         uint256[] memory tokenAmountsToProject
-    ) external view returns (uint256[] memory) {
+    ) external pure returns (uint256[] memory) {
         return Common.projectTokenAmounts(tokens, tokensToProject, tokenAmountsToProject);
     }
 
-    function splitAmountsTest(
-        uint256[] memory amounts,
-        uint256[][] memory weights
-    ) external pure returns (uint256[][] memory) {
+    function splitAmountsTest(uint256[] memory amounts, uint256[][] memory weights)
+        external
+        pure
+        returns (uint256[][] memory)
+    {
         return Common.splitAmounts(amounts, weights);
     }
 
