@@ -149,25 +149,42 @@ describe("GatewayVault", () => {
         describe("when leftovers happen", () => {
             it("returns them!", async () => {
                 const amount = BigNumber.from(10 ** 9);
-                expect(BigNumber.from(await tokens[0].balanceOf(await deployer.getAddress())).mod(2)).to.equal(
-                    0
-                );
+                expect(
+                    BigNumber.from(
+                        await tokens[0].balanceOf(await deployer.getAddress())
+                    ).mod(2)
+                ).to.equal(0);
                 await tokens[0]
                     .connect(deployer)
-                    .approve(gatewayVault.address, BigNumber.from(amount.mul(2).add(1)));
+                    .approve(
+                        gatewayVault.address,
+                        BigNumber.from(amount.mul(2).add(1))
+                    );
                 await expect(
                     gatewayVault
                         .connect(deployer)
-                        .transferAndPush(await deployer.getAddress(), [tokens[0].address], [amount], [])
+                        .transferAndPush(
+                            await deployer.getAddress(),
+                            [tokens[0].address],
+                            [amount],
+                            []
+                        )
                 ).to.emit(gatewayVault, "Push");
                 await expect(
                     gatewayVault
                         .connect(deployer)
-                        .transferAndPush(await deployer.getAddress(), [tokens[0].address], [amount.add(1)], [])
+                        .transferAndPush(
+                            await deployer.getAddress(),
+                            [tokens[0].address],
+                            [amount.add(1)],
+                            []
+                        )
                 ).to.emit(gatewayVault, "Push");
-                expect(BigNumber.from(await tokens[0].balanceOf(await deployer.getAddress())).mod(2)).to.equal(
-                    0
-                );
+                expect(
+                    BigNumber.from(
+                        await tokens[0].balanceOf(await deployer.getAddress())
+                    ).mod(2)
+                ).to.equal(0);
             });
         });
 

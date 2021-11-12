@@ -175,39 +175,6 @@ abstract contract Vault is IVault {
         pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
-    function _isValidEdge(address from, address to) internal view returns (bool) {
-        if (!Common.isContract(to)) {
-            return false;
-        }
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 fromNft = registry.nftForVault(from);
-        address fromOwner = registry.ownerOf(fromNft);
-        uint256 toNft = registry.nftForVault(to);
-        address toOwner = registry.ownerOf(toNft);
-
-        // double check that nfts exist
-        if (fromNft == 0 || toNft == 0) {
-            return false;
-        }
-
-        IGatewayVault gw;
-        if (fromOwner == toOwner) {
-            // Same owner
-            gw = IGatewayVault(fromOwner);
-            return gw.hasSubvault(from) && gw.hasSubvault(to);
-        } else if (fromOwner == to) {
-            // from is owner of to
-            gw = IGatewayVault(to);
-            return gw.hasSubvault(from);
-        } else if (toOwner == from) {
-            // to is owner of from
-            gw = IGatewayVault(from);
-            return gw.hasSubvault(to);
-        } else {
-            return false;
-        }
-    }
-
     /// The idea is to check that `this` Vault and `to` Vault
     /// nfts are owned by the same address. Then check that nft for this address
     /// exists in registry as Vault => it's one of the vaults with trusted interface.
