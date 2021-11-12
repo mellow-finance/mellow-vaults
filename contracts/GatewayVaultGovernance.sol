@@ -67,6 +67,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         for (uint256 i = 0; i < subvaultNfts.length; i++) {
             registry.transferFrom(msg.sender, address(this), subvaultNfts[i]);
             registry.approve(strategy, subvaultNfts[i]);
+            registry.transferFrom(address(this), address(vault), subvaultNfts[i]);
         }
     }
 

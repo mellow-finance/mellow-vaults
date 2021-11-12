@@ -101,7 +101,11 @@ library Common {
         for (uint256 i = 0; i < k; i++) {
             res[i] = new uint256[](n);
             for (uint256 j = 0; j < n; j++) {
-                res[i][j] = (weights[i][j] * amounts[j]) / weightsNorm[j];
+                if (weightsNorm[j] == 0) {
+                    res[i][j] = amounts[j] / k;
+                } else {
+                    res[i][j] = (amounts[j] * weights[i][j]) / weightsNorm[j];
+                }
             }
         }
         return res;

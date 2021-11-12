@@ -1,20 +1,14 @@
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
-import {
-    ERC20,
-    VaultFactory,
-    VaultGovernance,
-    VaultType,
-} from "./library/Types";
+import { ERC20, VaultFactory, VaultGovernance } from "./library/Types";
 import {
     deployERC20Tokens,
     deployVaultGovernanceSystem,
-    deploySubVaultSystem,
 } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { expect } from "chai";
 
-describe("AaveVaultFactory", () => {
+describe("LpIssuerFactory", () => {
     const tokensCount = 2;
     let deployer: Signer;
     let admin: Signer;
@@ -30,14 +24,11 @@ describe("AaveVaultFactory", () => {
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({
-                AaveVaultFactory: vaultFactory,
-                AaveVaultGovernance: vaultGovernance,
-            } = await deploySubVaultSystem({
-                tokensCount: 2,
+                ERC20VaultFactory: vaultFactory,
+                ERC20VaultGovernance: vaultGovernance,
+            } = await deployVaultGovernanceSystem({
                 adminSigner: admin,
-                vaultOwner: await deployer.getAddress(),
                 treasury: await treasury.getAddress(),
-                dontUseTestSetup: true,
             }));
             tokens = await deployERC20Tokens(tokensCount);
         });
@@ -48,7 +39,7 @@ describe("AaveVaultFactory", () => {
     });
 
     describe("constructor", () => {
-        it("creates AaveVaultFactory", async () => {
+        it("creates LpIssuerFactory", async () => {
             expect(
                 await deployer.provider?.getCode(vaultFactory.address)
             ).not.to.be.equal("0x");

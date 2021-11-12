@@ -11,7 +11,7 @@ import {
 } from "./library/Helpers";
 import {
     deployProtocolGovernance,
-    deployTestVaultGovernance,
+    deployTestVaultGovernanceSystem,
     deployVaultRegistry,
 } from "./library/Deployments";
 import {
@@ -60,10 +60,9 @@ describe("TestVaultGovernance", () => {
             [deployer, stranger, treasury, newTreasury, newVaultFactory] =
                 await ethers.getSigners();
 
-            return await deployTestVaultGovernance({
+            return await deployTestVaultGovernanceSystem({
                 adminSigner: deployer,
                 treasury: await treasury.getAddress(),
-                vaultType: "ERC20",
             });
         });
     });
@@ -674,6 +673,23 @@ describe("TestVaultGovernance", () => {
                         .connect(stranger)
                         .deployVault([], [], await deployer.getAddress())
                 ).to.be.revertedWith(Exceptions.PERMISSIONLESS_OR_ADMIN);
+            });
+        });
+    });
+
+    describe("_requireProtocolAdmin", () => {
+        describe("when called by admin", () => {
+            it("not reverts", async () => {
+                await expect(contract.requireProtocolAdmin()).to.not.be
+                    .reverted;
+            });
+        });
+
+        describe("when called by admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    contract.connect(stranger).requireProtocolAdmin()
+                ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
     });

@@ -7,8 +7,8 @@ import "./Vault.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
-    address[] private _aTokens;
-    uint256[] private _baseBalances;
+    address[] internal _aTokens;
+    uint256[] internal _baseBalances;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
@@ -45,7 +45,6 @@ contract AaveVault is Vault {
 
     function _push(
         uint256[] memory tokenAmounts,
-        bool,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -73,7 +72,6 @@ contract AaveVault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;

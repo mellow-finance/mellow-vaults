@@ -45,12 +45,9 @@ contract LpIssuer is ILpIssuer, ERC20 {
 
     /// @notice Deposit tokens into LpIssuer
     /// @param tokenAmounts Amounts of tokens to push
-    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-    /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(
         uint256[] calldata tokenAmounts,
-        bool optimized,
         bytes memory options
     ) external {
         require(_subvaultNft > 0, "INIT");
@@ -58,7 +55,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
         }
         uint256[] memory tvl = _subvault().tvl();
-        uint256[] memory actualTokenAmounts = _subvault().push(_vaultTokens, tokenAmounts, optimized, options);
+        uint256[] memory actualTokenAmounts = _subvault().push(_vaultTokens, tokenAmounts, options);
         uint256 amountToMint;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < _vaultTokens.length; i++) {
@@ -83,7 +80,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
         }
         require(
             amountToMint + balanceOf(msg.sender) <=
-                ILpIssuerVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
+                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
             "LPA"
         );
         if (amountToMint > 0) {
@@ -96,13 +93,10 @@ contract LpIssuer is ILpIssuer, ERC20 {
     /// @notice Withdraw tokens from LpIssuer
     /// @param to Address to withdraw to
     /// @param lpTokenAmount Amount of token to withdraw
-    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction
-    /// but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed.
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        bool optimized,
         bytes memory options
     ) external {
         require(_subvaultNft > 0, "INIT");
@@ -116,7 +110,6 @@ contract LpIssuer is ILpIssuer, ERC20 {
             address(this),
             _vaultTokens,
             tokenAmounts,
-            optimized,
             options
         );
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;

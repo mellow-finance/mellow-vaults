@@ -17,10 +17,10 @@ describe("ERC20VaultGovernance", () => {
     let stranger: Signer;
     let treasury: Signer;
     let anotherTreasury: Signer;
-    let vaultGovernance: VaultGovernance;
+    let ERC20VaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let vault: Vault;
-    let nft: number;
+    let nftERC20: number;
     let tokens: ERC20[];
     let deployment: Function;
 
@@ -29,13 +29,12 @@ describe("ERC20VaultGovernance", () => {
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ protocolGovernance, vaultGovernance, tokens, nft } =
+            ({ protocolGovernance, ERC20VaultGovernance, tokens, nftERC20 } =
                 await deploySubVaultSystem({
                     tokensCount: tokensCount,
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
-                    vaultType: "ERC20",
                 }));
         });
     });
@@ -47,7 +46,7 @@ describe("ERC20VaultGovernance", () => {
     describe("constructor", () => {
         it("creates ERC20VaultGovernance", async () => {
             expect(
-                await deployer.provider?.getCode(vaultGovernance.address)
+                await deployer.provider?.getCode(ERC20VaultGovernance.address)
             ).not.to.be.equal("0x");
         });
     });
@@ -55,78 +54,99 @@ describe("ERC20VaultGovernance", () => {
     describe("delayedStrategyParams", () => {
         it("returns correct params", async () => {
             expect(
-                await vaultGovernance.delayedStrategyParams(nft)
+                await ERC20VaultGovernance.delayedStrategyParams(nftERC20)
             ).to.be.deep.equal([await treasury.getAddress()]);
+        });
+
+        describe("when passed unknown nft", () => {
+            it("returns empty params", async () => {
+                expect(
+                    await ERC20VaultGovernance.delayedStrategyParams(
+                        nftERC20 + 1
+                    )
+                ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
         });
     });
 
     describe("stagedDelayedStrategyParams", () => {
         it("returns params", async () => {
             expect(
-                await vaultGovernance.stagedDelayedStrategyParams(nft)
+                await ERC20VaultGovernance.stagedDelayedStrategyParams(nftERC20)
             ).to.be.deep.equal([await treasury.getAddress()]);
+        });
+
+        describe("when passed unknown nft", () => {
+            it("returns empty params", async () => {
+                expect(
+                    await ERC20VaultGovernance.stagedDelayedStrategyParams(
+                        nftERC20 + 1
+                    )
+                ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
         });
     });
 
     describe("stageDelayedStrategyParams", () => {
         it("stages DelayedStrategyParams for commit", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(nft, [
-                    await anotherTreasury.getAddress(),
-                ]);
+            await ERC20VaultGovernance.connect(
+                admin
+            ).stageDelayedStrategyParams(nftERC20, [
+                await anotherTreasury.getAddress(),
+            ]);
             expect(
-                await vaultGovernance
-                    .connect(admin)
-                    .stagedDelayedStrategyParams(nft)
+                await ERC20VaultGovernance.connect(
+                    admin
+                ).stagedDelayedStrategyParams(nftERC20)
             ).to.be.deep.equal([await anotherTreasury.getAddress()]);
         });
 
         it("emits", async () => {
             await expect(
-                vaultGovernance
-                    .connect(admin)
-                    .stageDelayedStrategyParams(nft, [
-                        await anotherTreasury.getAddress(),
-                    ])
-            ).to.emit(vaultGovernance, "StageDelayedStrategyParams");
+                ERC20VaultGovernance.connect(admin).stageDelayedStrategyParams(
+                    nftERC20,
+                    [await anotherTreasury.getAddress()]
+                )
+            ).to.emit(ERC20VaultGovernance, "StageDelayedStrategyParams");
         });
     });
 
     describe("strategyTreasury", () => {
         it("returns correct strategy treasury", async () => {
-            expect(await vaultGovernance.strategyTreasury(nft)).to.be.equal(
-                await treasury.getAddress()
-            );
+            expect(
+                await ERC20VaultGovernance.strategyTreasury(nftERC20)
+            ).to.be.equal(await treasury.getAddress());
         });
     });
 
     describe("commitDelayedStrategyParams", () => {
         it("commits delayed strategy params", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(nft, [
-                    await anotherTreasury.getAddress(),
-                ]);
+            await ERC20VaultGovernance.connect(
+                admin
+            ).stageDelayedStrategyParams(nftERC20, [
+                await anotherTreasury.getAddress(),
+            ]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
-            await vaultGovernance
-                .connect(admin)
-                .commitDelayedStrategyParams(nft);
-            expect(await vaultGovernance.strategyTreasury(nft)).to.be.equal(
-                await anotherTreasury.getAddress()
-            );
+            await ERC20VaultGovernance.connect(
+                admin
+            ).commitDelayedStrategyParams(nftERC20);
+            expect(
+                await ERC20VaultGovernance.strategyTreasury(nftERC20)
+            ).to.be.equal(await anotherTreasury.getAddress());
         });
 
         it("emits", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(nft, [
-                    await anotherTreasury.getAddress(),
-                ]);
+            await ERC20VaultGovernance.connect(
+                admin
+            ).stageDelayedStrategyParams(nftERC20, [
+                await anotherTreasury.getAddress(),
+            ]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
             await expect(
-                vaultGovernance.connect(admin).commitDelayedStrategyParams(nft)
-            ).to.emit(vaultGovernance, "CommitDelayedStrategyParams");
+                ERC20VaultGovernance.connect(admin).commitDelayedStrategyParams(
+                    nftERC20
+                )
+            ).to.emit(ERC20VaultGovernance, "CommitDelayedStrategyParams");
         });
     });
 });

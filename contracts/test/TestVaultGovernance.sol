@@ -65,4 +65,12 @@ contract TestVaultGovernance is VaultGovernance {
     function getProtocolParams() public view returns (bytes memory) {
         return _protocolParams;
     }
+
+    function requireProtocolAdmin() public view {
+        _requireProtocolAdmin();
+    }
+
+    function requireAtLeastStrategy(uint256 nft) public view {
+        _requireAtLeastStrategy(nft);
+    }
 }

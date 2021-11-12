@@ -20,17 +20,23 @@ import { now, sleep, sleepTo } from "./library/Helpers";
 
 describe("VaultRegistry", () => {
     let vaultRegistry: VaultRegistry;
-    let vaultFactory: VaultFactory;
-    let vaultGovernance: VaultGovernance;
+    let ERC20VaultFactory: VaultFactory;
+    let AaveVaultFactory: VaultFactory;
+    let ERC20VaultGovernance: VaultGovernance;
+    let AaveVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
-    let vault: ERC20Vault;
+    let ERC20Vault: ERC20Vault;
+    let AnotherERC20Vault: ERC20Vault;
+    let UniV3Vault: ERC20Vault;
+    let AaveVault: ERC20Vault;
     let tokens: ERC20[];
     let deployer: Signer;
     let vaultOwner: Signer;
     let protocolAdmin: Signer;
     let treasury: Signer;
     let stranger: Signer;
-    let nft: number;
+    let nftERC20: number;
+    let nftAave: number;
     let deployment: Function;
 
     before(async () => {
@@ -44,7 +50,6 @@ describe("VaultRegistry", () => {
                 adminSigner: deployer,
                 vaultOwner: await deployer.getAddress(),
                 treasury: await treasury.getAddress(),
-                vaultType: "ERC20",
             });
         });
     });
@@ -52,12 +57,17 @@ describe("VaultRegistry", () => {
     beforeEach(async () => {
         ({
             vaultRegistry,
-            vaultFactory,
+            ERC20VaultFactory,
             protocolGovernance,
-            vaultGovernance,
+            ERC20VaultFactory,
+            ERC20VaultGovernance,
             tokens,
-            vault,
-            nft,
+            ERC20Vault,
+            AnotherERC20Vault,
+            AaveVault,
+            UniV3Vault,
+            nftERC20,
+            nftAave,
         } = await deployment());
     });
 
@@ -71,58 +81,66 @@ describe("VaultRegistry", () => {
 
     describe("vaults", () => {
         it("returns correct vaults", async () => {
-            expect(await vaultRegistry.vaults()).to.deep.equal([vault.address]);
+            expect(await vaultRegistry.vaults()).to.deep.equal([
+                ERC20Vault.address,
+                AnotherERC20Vault.address,
+                AaveVault.address,
+                UniV3Vault.address,
+            ]);
         });
     });
 
     describe("vaultForNft", () => {
-        it("returns correct vault for existing nft", async () => {
-            expect(await vaultRegistry.vaultForNft(nft)).to.equal(
-                vault.address
+        it("returns correct ERC20Vault for existing nftERC20", async () => {
+            expect(await vaultRegistry.vaultForNft(nftERC20)).to.equal(
+                ERC20Vault.address
             );
         });
 
-        it("returns zero nft for nonexistent vault", async () => {
-            expect(await vaultRegistry.vaultForNft(nft + 1)).to.equal(
+        it("returns zero nftERC20 for nonexistent ERC20Vault", async () => {
+            expect(await vaultRegistry.vaultForNft(nftERC20 + 1)).to.equal(
                 ethers.constants.AddressZero
             );
         });
     });
 
     describe("nftForVault", () => {
-        it("returns correct vault for nft", async () => {
-            expect(await vaultRegistry.nftForVault(vault.address)).to.equal(
-                nft
-            );
+        it("returns correct ERC20Vault for nftERC20", async () => {
+            expect(
+                await vaultRegistry.nftForVault(ERC20Vault.address)
+            ).to.equal(nftERC20);
         });
 
-        it("returns zero address for nonexisting nft", async () => {
+        it("returns zero address for nonexisting nftERC20", async () => {
             expect(
-                await vaultRegistry.nftForVault(vaultFactory.address)
+                await vaultRegistry.nftForVault(ERC20VaultFactory.address)
             ).to.equal(0);
         });
     });
 
     describe("registerVault", () => {
         describe("when called by VaultGovernance", async () => {
-            it("registers vault", async () => {
+            it("registers ERC20Vault", async () => {
                 const anotherTokens = sortContractsByAddresses(
                     await deployERC20Tokens(5)
                 );
-                const [anotherVaultAddress, anotherNft] =
-                    await vaultGovernance.callStatic.deployVault(
+                const [newVaultAddress, _] =
+                    await ERC20VaultGovernance.callStatic.deployVault(
                         anotherTokens.map((token) => token.address),
                         [],
                         await deployer.getAddress()
                     );
-                await vaultGovernance.deployVault(
+                await ERC20VaultGovernance.deployVault(
                     anotherTokens.map((token) => token.address),
                     [],
                     await deployer.getAddress()
                 );
                 expect(await vaultRegistry.vaults()).to.deep.equal([
-                    vault.address,
-                    anotherVaultAddress,
+                    ERC20Vault.address,
+                    AnotherERC20Vault.address,
+                    AaveVault.address,
+                    UniV3Vault.address,
+                    newVaultAddress,
                 ]);
             });
         });
@@ -131,7 +149,7 @@ describe("VaultRegistry", () => {
             it("reverts", async () => {
                 await expect(
                     vaultRegistry.registerVault(
-                        vaultFactory.address,
+                        ERC20VaultFactory.address,
                         await stranger.getAddress()
                     )
                 ).to.be.revertedWith(Exceptions.ADMIN);
@@ -198,7 +216,7 @@ describe("VaultRegistry", () => {
 
     describe("vaultsCount", () => {
         it("returns correct vaults count", async () => {
-            expect(await vaultRegistry.vaultsCount()).to.equal(1);
+            expect(await vaultRegistry.vaultsCount()).to.equal(4);
         });
     });
 

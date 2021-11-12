@@ -4,12 +4,12 @@ pragma solidity 0.8.9;
 import "./libraries/Common.sol";
 
 import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/ILpIssuerVaultGovernance.sol";
+import "./interfaces/ILpIssuerGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
-contract LpIssuerGovernance is ILpIssuerVaultGovernance, VaultGovernance {
+contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}

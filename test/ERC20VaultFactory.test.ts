@@ -6,10 +6,7 @@ import {
     VaultGovernance,
     VaultType,
 } from "./library/Types";
-import {
-    deployERC20Tokens,
-    deployVaultGovernanceSystem,
-} from "./library/Deployments";
+import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { expect } from "chai";
 
@@ -28,12 +25,16 @@ describe("ERC20VaultFactory", () => {
         [deployer, admin, stranger, treasury] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ vaultFactory, vaultGovernance } =
-                await deployVaultGovernanceSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultType: "ERC20" as VaultType,
-                }));
+            ({
+                ERC20VaultFactory: vaultFactory,
+                ERC20VaultGovernance: vaultGovernance,
+            } = await deploySubVaultSystem({
+                tokensCount: 2,
+                adminSigner: admin,
+                vaultOwner: await deployer.getAddress(),
+                treasury: await treasury.getAddress(),
+                dontUseTestSetup: true,
+            }));
             tokens = await deployERC20Tokens(tokensCount);
         });
     });
