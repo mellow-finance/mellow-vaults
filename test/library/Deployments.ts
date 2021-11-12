@@ -606,7 +606,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         .commitVaultGovernancesAdd();
     const gatewayVaultFactory = await deployVaultFactory({
         VaultGovernance: gatewayVaultGovernance.address,
-        vaultType: "GatewayVault",
+        vaultType: "GatewayVaultTest",
     });
     await gatewayVaultGovernance
         .connect(options.adminSigner)
@@ -653,7 +653,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     gatewayNft = response.nft;
     await gatewayVaultGovernance.deployVault(...deployArgs);
     const gatewayVault: Vault = await ethers.getContractAt(
-        "GatewayVault",
+        "GatewayVaultTest",
         gatewayVaultAddress
     );
     await gatewayVaultGovernance

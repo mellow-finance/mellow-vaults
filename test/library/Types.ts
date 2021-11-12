@@ -127,8 +127,10 @@ export type SubVaultTypeTest =
     | "ERC20VaultTest"
     | "AaveVaultTest"
     | "UniV3VaultTest";
+export type VaultTypeTest = "GatewayVaultTest";
 export type VaultType =
     | SubVaultType
     | SubVaultTypeTest
+    | VaultTypeTest
     | "GatewayVault"
     | "LpIssuer";

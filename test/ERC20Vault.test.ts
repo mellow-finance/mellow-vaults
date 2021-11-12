@@ -97,6 +97,26 @@ describe("ERC20Vault", function () {
                     await deployer.getAddress()
                 );
             });
+
+            describe("when tokens are not sorted", () => {
+                it("reverts", async () => {
+                    const factory = await ethers.getContractFactory(
+                        "ERC20Vault"
+                    );
+                    await expect(
+                        factory.deploy(await stranger.getAddress(), [
+                            tokens[1].address,
+                            tokens[0].address,
+                        ])
+                    ).to.be.revertedWith("SAU");
+                    await expect(
+                        factory.deploy(await stranger.getAddress(), [
+                            tokens[0].address,
+                            tokens[0].address,
+                        ])
+                    ).to.be.revertedWith("SAU");
+                });
+            });
         });
 
         describe("push", () => {

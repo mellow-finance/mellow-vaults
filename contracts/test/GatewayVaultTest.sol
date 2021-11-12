@@ -17,4 +17,12 @@ contract GatewayVaultTest is GatewayVault {
     function setVaultGovernance(address newVaultGovernance) public {
         _vaultGovernance = IVaultGovernance(newVaultGovernance);
     }
+
+    function setSubvaultNfts(uint256[] memory nfts) public {
+        _subvaultNfts = nfts;
+    }
+
+    function collectFees(uint256[] memory collectedEarnings) internal returns (uint256[] memory collectedFees) {
+        _collectFees(collectedEarnings);
+    }
 }

@@ -12,8 +12,8 @@ import "hardhat/console.sol";
 /// @notice Vault that combines several integration layer Vaults into one Vault.
 contract GatewayVault is IGatewayVault, Vault {
     using SafeERC20 for IERC20;
-    uint256[] private _subvaultNfts;
-    mapping(uint256 => uint256) private _subvaultNftsIndex;
+    uint256[] internal _subvaultNfts;
+    mapping(uint256 => uint256) internal _subvaultNftsIndex;
 
     /// @notice Creates a new contract.
     /// @dev All subvault nfts must be owned by this vault before.
