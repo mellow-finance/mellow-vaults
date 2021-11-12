@@ -79,11 +79,10 @@ library Common {
     /// @param amounts Amounts to split, vector n x 1
     /// @param weights Weights of the split, matrix n x k, weights[i] is vector n x 1.
     /// Weights do not need to sum to 1 in each column, but they will be normalized on split.
-    function splitAmounts(uint256[] memory amounts, uint256[][] memory weights)
-        internal
-        view  // pure
-        returns (uint256[][] memory)
-    {
+    function splitAmounts(
+        uint256[] memory amounts,
+        uint256[][] memory weights // pure
+    ) internal view returns (uint256[][] memory) {
         uint256 k = weights.length;
         require(k > 0, "KGT0");
         uint256 n = amounts.length;
@@ -103,7 +102,7 @@ library Common {
         }
         console.log("[weights]");
         console.log("Common::splitAmounts weightsNorm");
-        for (uint i = 0; i < weightsNorm.length; ++i) {
+        for (uint256 i = 0; i < weightsNorm.length; ++i) {
             console.log("i:", i, "weightsNorm[i]", weightsNorm[i]);
         }
         console.log("[weightsNorm]");
@@ -115,7 +114,7 @@ library Common {
                 if (weightsNorm[j] == 0) {
                     res[i][j] = amounts[j] / k;
                 } else {
-                    res[i][j] = amounts[j] * weights[i][j] / weightsNorm[j];
+                    res[i][j] = (amounts[j] * weights[i][j]) / weightsNorm[j];
                 }
             }
         }

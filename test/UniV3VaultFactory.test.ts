@@ -28,12 +28,13 @@ describe("UniV3VaultFactory", () => {
         [deployer, admin, stranger, treasury] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ vaultFactory, vaultGovernance } =
-                await deployVaultGovernanceSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultType: "UniV3Vault",
-                }));
+            ({
+                UniV3VaultFactory: vaultFactory,
+                UniV3VaultGovernance: vaultGovernance,
+            } = await deployVaultGovernanceSystem({
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+            }));
             tokens = await deployERC20Tokens(tokensCount);
         });
     });

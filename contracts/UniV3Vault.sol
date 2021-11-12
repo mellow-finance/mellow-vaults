@@ -38,7 +38,7 @@ contract UniV3Vault is Vault {
         address[] memory vaultTokens_,
         uint24 fee
     ) Vault(vaultGovernance_, vaultTokens_) {
-        require(_vaultTokens.length == 2, "TL");
+        require(_vaultTokens.length == 3, "TL");
         pool = IUniswapV3PoolState(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );

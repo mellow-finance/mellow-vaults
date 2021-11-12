@@ -18,10 +18,10 @@ describe("AaveVaultGovernance", () => {
     let treasury: Signer;
     let anotherTreasury: Signer;
     let anotherAaveLendingPool: Signer;
-    let vaultGovernance: VaultGovernance;
+    let AaveVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let vault: Vault;
-    let nft: number;
+    let nftAave: number;
     let tokens: ERC20[];
     let deployment: Function;
 
@@ -36,13 +36,12 @@ describe("AaveVaultGovernance", () => {
         ] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ protocolGovernance, vaultGovernance, tokens, nft } =
+            ({ protocolGovernance, AaveVaultGovernance, tokens, nftAave } =
                 await deploySubVaultSystem({
                     tokensCount: tokensCount,
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
-                    vaultType: "AaveVault",
                 }));
         });
     });
@@ -54,7 +53,7 @@ describe("AaveVaultGovernance", () => {
     describe("constructor", () => {
         it("creates AaveVaultGovernance", async () => {
             expect(
-                await deployer.provider?.getCode(vaultGovernance.address)
+                await deployer.provider?.getCode(AaveVaultGovernance.address)
             ).not.to.be.equal("0x");
         });
     });
@@ -62,7 +61,7 @@ describe("AaveVaultGovernance", () => {
     describe("delayedStrategyParams", () => {
         it("returns correct params", async () => {
             expect(
-                await vaultGovernance.delayedStrategyParams(nft)
+                await AaveVaultGovernance.delayedStrategyParams(nftAave)
             ).to.be.deep.equal([await treasury.getAddress()]);
         });
     });
@@ -70,70 +69,68 @@ describe("AaveVaultGovernance", () => {
     describe("stagedDelayedStrategyParams", () => {
         it("returns params", async () => {
             expect(
-                await vaultGovernance.stagedDelayedStrategyParams(nft)
+                await AaveVaultGovernance.stagedDelayedStrategyParams(nftAave)
             ).to.be.deep.equal([await treasury.getAddress()]);
         });
     });
 
     describe("stageDelayedStrategyParams", () => {
         it("stages DelayedStrategyParams", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(nft, [
-                    await anotherTreasury.getAddress(),
-                ]);
+            await AaveVaultGovernance.connect(admin).stageDelayedStrategyParams(
+                nftAave,
+                [await anotherTreasury.getAddress()]
+            );
             expect(
-                await vaultGovernance
-                    .connect(admin)
-                    .stagedDelayedStrategyParams(nft)
+                await AaveVaultGovernance.connect(
+                    admin
+                ).stagedDelayedStrategyParams(nftAave)
             ).to.be.deep.equal([await anotherTreasury.getAddress()]);
         });
 
         it("emits StageDelayedStrategyParams event", async () => {
             await expect(
-                vaultGovernance
-                    .connect(admin)
-                    .stageDelayedStrategyParams(nft, [
-                        await anotherTreasury.getAddress(),
-                    ])
-            ).to.emit(vaultGovernance, "StageDelayedStrategyParams");
+                AaveVaultGovernance.connect(admin).stageDelayedStrategyParams(
+                    nftAave,
+                    [await anotherTreasury.getAddress()]
+                )
+            ).to.emit(AaveVaultGovernance, "StageDelayedStrategyParams");
         });
     });
 
     describe("strategyTreasury", () => {
         it("returns correct strategy treasury", async () => {
-            expect(await vaultGovernance.strategyTreasury(nft)).to.be.equal(
-                await treasury.getAddress()
-            );
+            expect(
+                await AaveVaultGovernance.strategyTreasury(nftAave)
+            ).to.be.equal(await treasury.getAddress());
         });
     });
 
     describe("commitDelayedStrategyParams", () => {
         it("commits delayed strategy params", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(nft, [
-                    await anotherTreasury.getAddress(),
-                ]);
-            await sleep(Number(await protocolGovernance.governanceDelay()));
-            await vaultGovernance
-                .connect(admin)
-                .commitDelayedStrategyParams(nft);
-            expect(await vaultGovernance.strategyTreasury(nft)).to.be.equal(
-                await anotherTreasury.getAddress()
+            await AaveVaultGovernance.connect(admin).stageDelayedStrategyParams(
+                nftAave,
+                [await anotherTreasury.getAddress()]
             );
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await AaveVaultGovernance.connect(
+                admin
+            ).commitDelayedStrategyParams(nftAave);
+            expect(
+                await AaveVaultGovernance.strategyTreasury(nftAave)
+            ).to.be.equal(await anotherTreasury.getAddress());
         });
 
         it("emits CommitDelayedStrategyParams event", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(nft, [
-                    await anotherTreasury.getAddress(),
-                ]);
+            await AaveVaultGovernance.connect(admin).stageDelayedStrategyParams(
+                nftAave,
+                [await anotherTreasury.getAddress()]
+            );
             await sleep(Number(await protocolGovernance.governanceDelay()));
             await expect(
-                vaultGovernance.connect(admin).commitDelayedStrategyParams(nft)
-            ).to.emit(vaultGovernance, "CommitDelayedStrategyParams");
+                AaveVaultGovernance.connect(admin).commitDelayedStrategyParams(
+                    nftAave
+                )
+            ).to.emit(AaveVaultGovernance, "CommitDelayedStrategyParams");
         });
     });
 
@@ -141,79 +138,69 @@ describe("AaveVaultGovernance", () => {
         describe("when nothing is staged", async () => {
             it("returns an empty struct", async () => {
                 expect(
-                    await vaultGovernance.stagedDelayedProtocolParams()
+                    await AaveVaultGovernance.stagedDelayedProtocolParams()
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
         });
 
         it("returns staged params", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedProtocolParams([
-                    await anotherAaveLendingPool.getAddress(),
-                ]);
+            await AaveVaultGovernance.connect(admin).stageDelayedProtocolParams(
+                [await anotherAaveLendingPool.getAddress()]
+            );
             expect(
-                await vaultGovernance
-                    .connect(admin)
-                    .stagedDelayedProtocolParams()
+                await AaveVaultGovernance.connect(
+                    admin
+                ).stagedDelayedProtocolParams()
             ).to.be.deep.equal([await anotherAaveLendingPool.getAddress()]);
         });
     });
 
     describe("stageDelayedProtocolParams", () => {
         it("stages DelayedProtocolParams", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedProtocolParams([
-                    await anotherAaveLendingPool.getAddress(),
-                ]);
+            await AaveVaultGovernance.connect(admin).stageDelayedProtocolParams(
+                [await anotherAaveLendingPool.getAddress()]
+            );
             expect(
-                await vaultGovernance
-                    .connect(admin)
-                    .stagedDelayedProtocolParams()
+                await AaveVaultGovernance.connect(
+                    admin
+                ).stagedDelayedProtocolParams()
             ).to.be.deep.equal([await anotherAaveLendingPool.getAddress()]);
         });
 
         it("emits StageDelayedProtocolParams event", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedProtocolParams([
-                    await anotherAaveLendingPool.getAddress(),
-                ]);
+            await AaveVaultGovernance.connect(admin).stageDelayedProtocolParams(
+                [await anotherAaveLendingPool.getAddress()]
+            );
             await expect(
-                vaultGovernance
-                    .connect(admin)
-                    .stageDelayedProtocolParams([
-                        await anotherAaveLendingPool.getAddress(),
-                    ])
-            ).to.emit(vaultGovernance, "StageDelayedProtocolParams");
+                AaveVaultGovernance.connect(admin).stageDelayedProtocolParams([
+                    await anotherAaveLendingPool.getAddress(),
+                ])
+            ).to.emit(AaveVaultGovernance, "StageDelayedProtocolParams");
         });
     });
 
     describe("commitDelayedProtocolParams", () => {
         it("commits delayed protocol params", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedProtocolParams([
-                    await anotherAaveLendingPool.getAddress(),
-                ]);
-            await sleep(Number(await protocolGovernance.governanceDelay()));
-            await vaultGovernance.connect(admin).commitDelayedProtocolParams();
-            expect(await vaultGovernance.delayedProtocolParams()).to.deep.equal(
+            await AaveVaultGovernance.connect(admin).stageDelayedProtocolParams(
                 [await anotherAaveLendingPool.getAddress()]
             );
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await AaveVaultGovernance.connect(
+                admin
+            ).commitDelayedProtocolParams();
+            expect(
+                await AaveVaultGovernance.delayedProtocolParams()
+            ).to.deep.equal([await anotherAaveLendingPool.getAddress()]);
         });
 
         it("emits CommitDelayedProtocolParams event", async () => {
-            await vaultGovernance
-                .connect(admin)
-                .stageDelayedProtocolParams([
-                    await anotherAaveLendingPool.getAddress(),
-                ]);
+            await AaveVaultGovernance.connect(admin).stageDelayedProtocolParams(
+                [await anotherAaveLendingPool.getAddress()]
+            );
             await sleep(Number(await protocolGovernance.governanceDelay()));
             await expect(
-                vaultGovernance.connect(admin).commitDelayedProtocolParams()
-            ).to.emit(vaultGovernance, "CommitDelayedProtocolParams");
+                AaveVaultGovernance.connect(admin).commitDelayedProtocolParams()
+            ).to.emit(AaveVaultGovernance, "CommitDelayedProtocolParams");
         });
     });
 });

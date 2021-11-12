@@ -14,6 +14,8 @@ export type IGatewayVault = Address;
 
 export type ERC20 = Contract;
 export type ERC20Vault = Contract;
+export type AaveVault = Contract;
+export type UniV3Vault = Contract;
 export type ProtocolGovernance = Contract;
 export type VaultGovernance = Contract;
 export type LpIssuerGovernance = Contract;
