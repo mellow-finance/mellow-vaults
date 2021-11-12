@@ -220,17 +220,6 @@ describe("GatewayVault", () => {
         });
     });
 
-    describe("earnings", () => {
-        describe("when nothing pushed yet", () => {
-            it("returns empty earnings", async () => {
-                expect(await gatewayVault.earnings()).to.deep.equal([
-                    BigNumber.from(0),
-                    BigNumber.from(0),
-                ]);
-            });
-        });
-    });
-
     describe("subvaultTvl", () => {
         describe("when nothing pushed yet", () => {
             it("returns empty tvl", async () => {
@@ -248,17 +237,6 @@ describe("GatewayVault", () => {
                 expect(await gatewayVault.subvaultsTvl()).to.be.deep.equal([
                     [BigNumber.from(0), BigNumber.from(0)],
                     [BigNumber.from(0), BigNumber.from(0)],
-                ]);
-            });
-        });
-    });
-
-    describe("vaultEarnings", () => {
-        describe("when nothing pushed yet", () => {
-            it("returns empty earnings", async () => {
-                expect(await gatewayVault.vaultEarnings(0)).to.be.deep.equal([
-                    BigNumber.from(0),
-                    BigNumber.from(0),
                 ]);
             });
         });
@@ -349,14 +327,6 @@ describe("GatewayVault", () => {
                 expect(
                     await gatewayVault.isVaultToken(await stranger.getAddress())
                 ).to.be.false;
-            });
-        });
-    });
-
-    describe("collectFees", () => {
-        describe("when there is no earnings:(", () => {
-            it("passes", async () => {
-                await gatewayVault.collectFees([0, 0]);
             });
         });
     });

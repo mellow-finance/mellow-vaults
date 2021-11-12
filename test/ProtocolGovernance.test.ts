@@ -52,60 +52,36 @@ describe("ProtocolGovernance", () => {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(20),
                 governanceDelay: BigNumber.from(100),
-                strategyPerformanceFee: BigNumber.from(2 * 10 ** 9),
-                protocolPerformanceFee: BigNumber.from(20 * 10 ** 9),
-                protocolExitFee: BigNumber.from(10 ** 10),
-                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             initialParams = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(SECONDS_PER_DAY), // 1 day
-                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-                protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             paramsZero = {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(0),
-                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-                protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: ethers.constants.AddressZero,
             };
 
             paramsEmpty = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
-                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-                protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: ethers.constants.AddressZero,
             };
 
             paramsDefault = {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
-                strategyPerformanceFee: BigNumber.from(0),
-                protocolPerformanceFee: BigNumber.from(0),
-                protocolExitFee: BigNumber.from(0),
-                protocolTreasury: ethers.constants.AddressZero,
             };
 
             paramsTimeout = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(timeout),
-                strategyPerformanceFee: BigNumber.from(10 * 10 ** 9),
-                protocolPerformanceFee: BigNumber.from(2 * 10 ** 9),
-                protocolExitFee: BigNumber.from(10 ** 9),
-                protocolTreasury: await user1.getAddress(),
             };
 
             return {
@@ -194,30 +170,6 @@ describe("ProtocolGovernance", () => {
             it("has governance delay", async () => {
                 expect(await protocolGovernance.governanceDelay()).to.be.equal(
                     initialParams.governanceDelay
-                );
-            });
-
-            it("has strategy performance fee", async () => {
-                expect(
-                    await protocolGovernance.strategyPerformanceFee()
-                ).to.be.equal(initialParams.strategyPerformanceFee);
-            });
-
-            it("has protocol performance fee", async () => {
-                expect(
-                    await protocolGovernance.protocolPerformanceFee()
-                ).to.be.equal(initialParams.protocolPerformanceFee);
-            });
-
-            it("has protocol exit fee", async () => {
-                expect(await protocolGovernance.protocolExitFee()).to.be.equal(
-                    initialParams.protocolExitFee
-                );
-            });
-
-            it("has protocol treasury", async () => {
-                expect(await protocolGovernance.protocolTreasury()).to.be.equal(
-                    initialParams.protocolTreasury
                 );
             });
         });

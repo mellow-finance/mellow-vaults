@@ -85,13 +85,6 @@ describe("ERC20Vault", function () {
                 ]);
             });
 
-            it("has zero earnings", async () => {
-                expect(await ERC20Vault.earnings()).to.deep.equal([
-                    BigNumber.from(0),
-                    BigNumber.from(0),
-                ]);
-            });
-
             it("has correct nftERC20 owner", async () => {
                 expect(await vaultRegistry.ownerOf(nftERC20)).to.equals(
                     await deployer.getAddress()
@@ -348,30 +341,6 @@ describe("ERC20Vault", function () {
             });
         });
 
-        describe("collectEarnings", () => {
-            describe("when called by stranger", async () => {
-                it("when called by stranger", async () => {
-                    await expect(
-                        ERC20Vault.connect(stranger).collectEarnings(
-                            ERC20Vault.address,
-                            []
-                        )
-                    ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
-                });
-            });
-
-            describe("when destination is not a contract address", () => {
-                it("reverts", async () => {
-                    await expect(
-                        ERC20Vault.collectEarnings(
-                            await deployer.getAddress(),
-                            []
-                        )
-                    ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
-                });
-            });
-        });
-
         describe("reclaimTokens", () => {
             let anotherToken: ERC20;
 
@@ -406,17 +375,6 @@ describe("ERC20Vault", function () {
                         )
                     ).to.be.revertedWith("OWT");
                 });
-            });
-        });
-
-        describe("_collectEarnings", () => {
-            it("passes", async () => {
-                expect(
-                    await ERC20Vault.__collectEarnings(
-                        ethers.constants.AddressZero,
-                        []
-                    )
-                ).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
             });
         });
     });
