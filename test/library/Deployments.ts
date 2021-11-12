@@ -172,11 +172,11 @@ export async function deployVaultGovernanceSystem(options: {
         registry: vaultRegistry.address,
     };
     const contractFactoryERC20: ContractFactory =
-        await ethers.getContractFactory(`ERC20VaultGovernance`);
+        await ethers.getContractFactory("ERC20VaultGovernance");
     const contractFactoryAave: ContractFactory =
-        await ethers.getContractFactory(`AaveVaultGovernance`);
+        await ethers.getContractFactory("AaveVaultGovernance");
     const contractFactoryUniV3: ContractFactory =
-        await ethers.getContractFactory(`UniV3VaultGovernance`);
+        await ethers.getContractFactory("UniV3VaultGovernance");
     let ERC20VaultGovernance: VaultGovernance;
     let AaveVaultGovernance: VaultGovernance;
     let UniV3VaultGovernance: VaultGovernance;
@@ -205,7 +205,7 @@ export async function deployVaultGovernanceSystem(options: {
         VaultGovernance: ERC20VaultGovernance.address,
     });
     const AaveVaultFactory = await deployVaultFactory({
-        vaultType: "AaveVault",
+        vaultType: "AaveVaultTest",
         VaultGovernance: AaveVaultGovernance.address,
     });
     const UniV3VaultFactory = await deployVaultFactory({
@@ -390,6 +390,7 @@ export async function deploySubVaultSystem(options: {
     nftAave: number;
     UniV3Vault: Vault;
     nftUniV3: number;
+    aTokens: ERC20[];
 }> {
     const {
         vaultRegistry,
@@ -457,17 +458,22 @@ export async function deploySubVaultSystem(options: {
     await UniV3VaultGovernance.deployVault(...vaultDeployArgsUniV3);
 
     const ERC20VaultContract: Vault = await ethers.getContractAt(
-        "ERC20Vault" as SubVaultType,
+        "ERC20VaultTest",
         ERC20VaultInstance
     );
     const AaveVaultContract: Vault = await ethers.getContractAt(
-        "AaveVault" as SubVaultType,
+        "AaveVaultTest",
         AaveVaultInstance
     );
     const UniV3VaultContract: Vault = await ethers.getContractAt(
-        "UniV3Vault" as SubVaultType,
+        "UniV3VaultTest",
         UniV3VaultInstance
     );
+
+    let aTokens = sortContractsByAddresses(
+        await deployERC20Tokens(options.tokensCount)
+    );
+    await AaveVaultContract.setATokens(aTokens.map((token) => token.address));
 
     await ERC20VaultGovernance.connect(
         options.adminSigner
@@ -504,6 +510,7 @@ export async function deploySubVaultSystem(options: {
         nftERC20: nftERC20,
         nftAave: nftAave,
         nftUniV3: nftUniV3,
+        aTokens: aTokens,
     };
 }
 
@@ -565,7 +572,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         constructorArgs: args,
         adminSigner: options.adminSigner,
         treasury: options.treasury,
-        vaultType: "GatewayVault" as VaultType,
+        vaultType: "GatewayVault",
     });
     await protocolGovernance
         .connect(options.adminSigner)

@@ -5,7 +5,7 @@ import "../interfaces/IVaultFactory.sol";
 import "../interfaces/IVaultFactory.sol";
 import "./AaveVaultTest.sol";
 
-contract AaveVaultFactoryTest is IVaultFactory {
+contract AaveVaultTestFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
 
     constructor(IVaultGovernance vaultGovernance_) {
