@@ -13,4 +13,12 @@ contract ERC20VaultTest is ERC20Vault {
     function setVaultGovernance(address newVaultGovernance) public {
         _vaultGovernance = IVaultGovernance(newVaultGovernance);
     }
+
+    function __collectEarnings(address a, bytes memory b) public view returns (uint256[] memory) {
+        return _collectEarnings(a, b);
+    }
+
+    function __postReclaimTokens(address a, address[] memory tokens) public view {
+        _postReclaimTokens(a, tokens);
+    }
 }

@@ -382,5 +382,42 @@ describe("ERC20Vault", function () {
                     .transfer(ERC20Vault.address, BigNumber.from(10 ** 9));
             });
         });
+
+        describe("_postReclaimTokens", () => {
+            it("passes", async () => {
+                let anotherToken = (await deployERC20Tokens(1))[0];
+                await expect(
+                    ERC20Vault.__postReclaimTokens(
+                        ethers.constants.AddressZero,
+                        [anotherToken.address]
+                    )
+                ).to.not.be.reverted;
+            });
+
+            describe("passed some not vault tokens", () => {
+                it("reverts", async () => {
+                    let anotherToken = (await deployERC20Tokens(1))[0];
+                    let arg = tokens.map((t) => t.address);
+                    arg.push(anotherToken.address);
+                    await expect(
+                        ERC20Vault.__postReclaimTokens(
+                            ethers.constants.AddressZero,
+                            arg
+                        )
+                    ).to.be.revertedWith("OWT");
+                });
+            });
+        });
+
+        describe("_collectEarnings", () => {
+            it("passes", async () => {
+                expect(
+                    await ERC20Vault.__collectEarnings(
+                        ethers.constants.AddressZero,
+                        []
+                    )
+                ).to.deep.equal([BigNumber.from(0), BigNumber.from(0)]);
+            });
+        });
     });
 });
