@@ -126,12 +126,14 @@ describe("GatewayVault", () => {
                 .approve(gatewayVault.address, BigNumber.from(10 ** 10));
             // await tokens[0].connect(deployer).transfer(AaveVault.address, BigNumber.from(10 ** 9));
             await expect(
-                gatewayVault.connect(deployer).transferAndPush(
-                    await deployer.getAddress(),
-                    [tokens[0].address],
-                    [BigNumber.from(10 ** 9)],
-                    []
-                )
+                gatewayVault
+                    .connect(deployer)
+                    .transferAndPush(
+                        await deployer.getAddress(),
+                        [tokens[0].address],
+                        [BigNumber.from(10 ** 9)],
+                        []
+                    )
             ).to.emit(gatewayVault, "Push");
             // await tokens[0].connect(deployer).approve(gatewayVault.address, BigNumber.from(10 ** 9));
             // await ERC20Vault.connect(strategy).transferAndPush(
@@ -147,7 +149,6 @@ describe("GatewayVault", () => {
     });
 
     describe("pull", () => {
-
         // it("anotherTest", async () => {
         //     await tokens[0]
         //         .connect(deployer)
@@ -156,7 +157,6 @@ describe("GatewayVault", () => {
         //         .connect(deployer)
         //         .transfer(ERC20Vault.address, BigNumber.from(2 * 10 ** 9));
         //     // await tokens[0].connect(deployer).transfer(AaveVault.address, BigNumber.from(10 ** 9));
-
         //     // await expect(
         //     //     ERC20Vault
         //     //         .connect(strategy)
@@ -167,7 +167,6 @@ describe("GatewayVault", () => {
         //     //             []
         //     //         )
         //     // ).to.emit(ERC20Vault, "Push");
-
         //     // await expect(
         //     //     AaveVault
         //     //         .connect(strategy)
@@ -178,14 +177,12 @@ describe("GatewayVault", () => {
         //     //             []
         //     //         )
         //     // ).to.emit(ERC20Vault, "Push");
-
         //     console.log("ERC20Vault tvl", (await ERC20Vault.tvl()).toString());
         //     console.log("AaveVault tvl", (await AaveVault.tvl()).toString());
         //     console.log(
         //         "gatewayVault subvaults tvls",
         //         (await gatewayVault.subvaultsTvl()).toString()
         //     );
-
         //     await expect(
         //         gatewayVault
         //             .connect(strategy)
@@ -196,14 +193,12 @@ describe("GatewayVault", () => {
         //                 []
         //             )
         //     ).to.emit(gatewayVault, "Push");
-
         //     console.log("ERC20Vault tvl", (await ERC20Vault.tvl()).toString());
         //     console.log("AaveVault tvl", (await AaveVault.tvl()).toString());
         //     console.log(
         //         "gatewayVault subvaults tvls",
         //         (await gatewayVault.subvaultsTvl()).toString()
         //     );
-
         //     await gatewayVault
         //         .connect(deployer)
         //         .pull(
@@ -213,7 +208,6 @@ describe("GatewayVault", () => {
         //             false,
         //             []
         //         );
-
         //     console.log("ERC20Vault tvl", (await ERC20Vault.tvl()).toString());
         //     console.log("AaveVault tvl", (await AaveVault.tvl()).toString());
         //     console.log(
@@ -319,8 +313,9 @@ describe("GatewayVault", () => {
             it("returns true", async () => {
                 expect(await gatewayVault.hasSubvault(ERC20Vault.address)).to.be
                     .true;
-                expect(await gatewayVault.hasSubvault(AnotherERC20Vault.address)).to.be
-                    .true;
+                expect(
+                    await gatewayVault.hasSubvault(AnotherERC20Vault.address)
+                ).to.be.true;
             });
         });
 

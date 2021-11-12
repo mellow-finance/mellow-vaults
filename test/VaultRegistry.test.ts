@@ -26,6 +26,7 @@ describe("VaultRegistry", () => {
     let AaveVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let ERC20Vault: ERC20Vault;
+    let AnotherERC20Vault: ERC20Vault;
     let UniV3Vault: ERC20Vault;
     let AaveVault: ERC20Vault;
     let tokens: ERC20[];
@@ -62,6 +63,7 @@ describe("VaultRegistry", () => {
             ERC20VaultGovernance,
             tokens,
             ERC20Vault,
+            AnotherERC20Vault,
             AaveVault,
             UniV3Vault,
             nftERC20,
@@ -81,6 +83,7 @@ describe("VaultRegistry", () => {
         it("returns correct vaults", async () => {
             expect(await vaultRegistry.vaults()).to.deep.equal([
                 ERC20Vault.address,
+                AnotherERC20Vault,
                 AaveVault.address,
                 UniV3Vault.address,
             ]);
@@ -134,6 +137,7 @@ describe("VaultRegistry", () => {
                 );
                 expect(await vaultRegistry.vaults()).to.deep.equal([
                     ERC20Vault.address,
+                    AnotherERC20Vault.address,
                     AaveVault.address,
                     UniV3Vault.address,
                     newVaultAddress,
@@ -212,7 +216,7 @@ describe("VaultRegistry", () => {
 
     describe("vaultsCount", () => {
         it("returns correct vaults count", async () => {
-            expect(await vaultRegistry.vaultsCount()).to.equal(3);
+            expect(await vaultRegistry.vaultsCount()).to.equal(4);
         });
     });
 

@@ -445,9 +445,10 @@ export async function deploySubVaultSystem(options: {
     const nftERC20 = ERC20VaultResult.nft;
     await ERC20VaultGovernance.deployVault(...vaultDeployArgsERC20);
 
-    const AnotherERC20VaultResult = await ERC20VaultGovernance.callStatic.deployVault(
-        ...vaultDeployArgsERC20
-    );
+    const AnotherERC20VaultResult =
+        await ERC20VaultGovernance.callStatic.deployVault(
+            ...vaultDeployArgsERC20
+        );
     const AnotherERC20VaultInstance = AnotherERC20VaultResult.vault;
     const anotherNftERC20 = AnotherERC20VaultResult.nft;
     await ERC20VaultGovernance.deployVault(...vaultDeployArgsERC20);
@@ -657,10 +658,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     );
     await gatewayVaultGovernance
         .connect(options.adminSigner)
-        .stageDelayedStrategyParams(gatewayNft, [
-            options.treasury,
-            nfts,
-        ]);
+        .stageDelayedStrategyParams(gatewayNft, [options.treasury, nfts]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await gatewayVaultGovernance
         .connect(options.adminSigner)
