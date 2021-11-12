@@ -13,8 +13,6 @@ import {
 import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 
-// TODO: Add _isValidPullDestination tests
-
 describe("ERC20Vault", function () {
     describe("when permissionless is set to true", () => {
         let deployer: Signer;
@@ -108,7 +106,6 @@ describe("ERC20Vault", function () {
                         ERC20Vault.connect(stranger).push(
                             [tokens[0].address],
                             [BigNumber.from(1)],
-                            false,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
@@ -121,7 +118,6 @@ describe("ERC20Vault", function () {
                         ERC20Vault.push(
                             [tokens[0].address],
                             [BigNumber.from(1), BigNumber.from(1)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
@@ -134,7 +130,6 @@ describe("ERC20Vault", function () {
                         ERC20Vault.push(
                             [tokens[1].address, tokens[0].address],
                             [BigNumber.from(1), BigNumber.from(1)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
@@ -147,7 +142,6 @@ describe("ERC20Vault", function () {
                         ERC20Vault.push(
                             [tokens[0].address, tokens[0].address],
                             [BigNumber.from(1), BigNumber.from(1)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
@@ -168,7 +162,6 @@ describe("ERC20Vault", function () {
                                 BigNumber.from(1),
                                 BigNumber.from(1),
                             ],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
@@ -180,7 +173,6 @@ describe("ERC20Vault", function () {
                 const amounts = await ERC20Vault.callStatic.push(
                     [tokens[0].address],
                     [BigNumber.from(10 ** 9)],
-                    true,
                     []
                 );
                 expect(amounts).to.deep.equal([BigNumber.from(10 ** 9)]);
@@ -194,7 +186,6 @@ describe("ERC20Vault", function () {
                 const args = [
                     [tokens[1].address],
                     [BigNumber.from(100 * 10 ** 9)],
-                    true,
                     [],
                 ];
                 const amounts = await ERC20Vault.callStatic.push(...args);
@@ -212,7 +203,6 @@ describe("ERC20Vault", function () {
                             await deployer.getAddress(),
                             [tokens[0].address],
                             [BigNumber.from(1)],
-                            false,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
@@ -226,7 +216,6 @@ describe("ERC20Vault", function () {
                             await deployer.getAddress(),
                             [tokens[0].address],
                             [BigNumber.from(1), BigNumber.from(1)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
@@ -240,7 +229,6 @@ describe("ERC20Vault", function () {
                             await deployer.getAddress(),
                             [tokens[1].address, tokens[0].address],
                             [BigNumber.from(1), BigNumber.from(1)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
@@ -254,7 +242,6 @@ describe("ERC20Vault", function () {
                             await deployer.getAddress(),
                             [tokens[0].address, tokens[0].address],
                             [BigNumber.from(1), BigNumber.from(1)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
@@ -276,7 +263,6 @@ describe("ERC20Vault", function () {
                                 BigNumber.from(1),
                                 BigNumber.from(1),
                             ],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
@@ -289,7 +275,6 @@ describe("ERC20Vault", function () {
                         await deployer.getAddress(),
                         [tokens[0].address],
                         [BigNumber.from(10 ** 9)],
-                        true,
                         []
                     )
                 ).to.deep.equal([BigNumber.from(10 ** 9)]);
@@ -309,7 +294,6 @@ describe("ERC20Vault", function () {
                             await user.getAddress(),
                             [tokens[0].address],
                             [BigNumber.from(10 ** 9)],
-                            true,
                             []
                         )
                     ).to.be.revertedWith(Exceptions.ERC20_INSUFFICIENT_BALANCE);
@@ -334,7 +318,6 @@ describe("ERC20Vault", function () {
                     await deployer.getAddress(),
                     [tokens[0].address],
                     [BigNumber.from(10 ** 9)],
-                    false,
                     []
                 );
 
@@ -357,14 +340,16 @@ describe("ERC20Vault", function () {
                 });
             });
 
-            // FIXME
-            // describe("when destination is not a contract address", () => {
-            //     it("reverts", async () => {
-            //         await expect(
-            //             ERC20Vault.collectEarnings(await deployer.getAddress(), [])
-            //         ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
-            //     });
-            // });
+            describe("when destination is not a contract address", () => {
+                it("reverts", async () => {
+                    await expect(
+                        ERC20Vault.collectEarnings(
+                            await deployer.getAddress(),
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
+                });
+            });
         });
 
         describe("reclaimTokens", () => {
