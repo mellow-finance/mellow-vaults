@@ -99,7 +99,6 @@ contract UniV3Vault is Vault {
 
     function _push(
         uint256[] memory tokenAmounts,
-        bool,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -143,7 +142,6 @@ contract UniV3Vault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);

@@ -31,7 +31,6 @@ contract ERC20Vault is Vault {
 
     function _push(
         uint256[] memory tokenAmounts,
-        bool,
         bytes memory
     ) internal pure override returns (uint256[] memory actualTokenAmounts) {
         // no-op, tokens are already on balance
@@ -41,7 +40,6 @@ contract ERC20Vault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {

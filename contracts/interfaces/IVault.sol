@@ -32,13 +32,11 @@ interface IVault {
     /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
     /// @param tokens Tokens to push
     /// @param tokenAmounts Amounts of tokens to push
-    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions
     /// @return actualTokenAmounts The amounts actually invested. It could be less than tokenAmounts (but not higher)
     function push(
         address[] memory tokens,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
@@ -46,14 +44,12 @@ interface IVault {
     /// After the `push` it returns all the leftover tokens back (`push` method doesn't guarantee that tokenAmounts will be invested in full).
     /// @param tokens Tokens to push
     /// @param tokenAmounts Amounts of tokens to push
-    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions
     /// @return actualTokenAmounts The amounts actually invested. It could be less than tokenAmounts (but not higher)
     function transferAndPush(
         address from,
         address[] memory tokens,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
@@ -70,14 +66,12 @@ interface IVault {
     /// @param to Address to receive the tokens
     /// @param tokens Tokens to pull
     /// @param tokenAmounts Amounts of tokens to pull
-    /// @param optimized Whether to use gas optimization or not. When `true` the call can have some gas cost reduction but the operation is not guaranteed to succeed. When `false` the gas cost could be higher but the operation is guaranteed to succeed
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions
     /// @return actualTokenAmounts The amounts actually withdrawn. It could be less than tokenAmounts (but not higher)
     function pull(
         address to,
         address[] memory tokens,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 

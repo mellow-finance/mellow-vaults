@@ -115,14 +115,16 @@ contract GatewayVault is IGatewayVault, Vault {
 
     function _push(
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         require(_subvaultNfts.length > 0, "INIT");
+        bool optimized;
+        bytes[] memory vaultsOptions;
+        (optimized, vaultsOptions) = _parseOptions(options);
+
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[] memory totalTvl = new uint256[](_vaultTokens.length);
-        // tvls should not be zeroes (ZeroDivision)
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         IGatewayVaultGovernance.DelayedStrategyParams memory strategyParams = IGatewayVaultGovernance(
             address(_vaultGovernance)
@@ -139,7 +141,6 @@ contract GatewayVault is IGatewayVault, Vault {
                 }
             }
         }
-        bytes[] memory vaultsOptions = _parseOptions(options);
         actualTokenAmounts = new uint256[](_vaultTokens.length);
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             if (optimized && (strategyParams.redirects[i] != 0)) {
@@ -152,10 +153,10 @@ contract GatewayVault is IGatewayVault, Vault {
                 console.log("-->", amountsByVault[i][k]);
             }
             console.log("[amountsByVault]");
-            uint256[] memory actualVaultTokenAmounts = vault.push(
+            uint256[] memory actualVaultTokenAmounts = vault.transferAndPush(
+                address(this),
                 _vaultTokens,
                 amountsByVault[i],
-                optimized,
                 vaultsOptions[i]
             );
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
@@ -172,9 +173,12 @@ contract GatewayVault is IGatewayVault, Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        bool optimized;
+        bytes[] memory vaultsOptions;
+        (optimized, vaultsOptions) = _parseOptions(options);
+
         require(_subvaultNfts.length > 0, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
@@ -195,7 +199,6 @@ contract GatewayVault is IGatewayVault, Vault {
                 }
             }
         }
-        bytes[] memory vaultsOptions = _parseOptions(options);
         actualTokenAmounts = new uint256[](_vaultTokens.length);
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
@@ -203,7 +206,6 @@ contract GatewayVault is IGatewayVault, Vault {
                 to,
                 _vaultTokens,
                 amountsByVault[i],
-                optimized,
                 vaultsOptions[i]
             );
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
@@ -221,7 +223,8 @@ contract GatewayVault is IGatewayVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address[] memory tokens = _vaultTokens;
         collectedEarnings = new uint256[](tokens.length);
-        bytes[] memory vaultsOptions = _parseOptions(options);
+        bytes[] memory vaultsOptions;
+        (, vaultsOptions) = _parseOptions(options);
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
             address[] memory vTokens = vault.vaultTokens();
@@ -261,11 +264,11 @@ contract GatewayVault is IGatewayVault, Vault {
         emit CollectProtocolFees(protocolTres, tokens, protocolFees);
     }
 
-    function _parseOptions(bytes memory options) internal view returns (bytes[] memory vaultOptions) {
+    function _parseOptions(bytes memory options) internal view returns (bool, bytes[] memory) {
         if (options.length == 0) {
-            return new bytes[](_subvaultNfts.length);
+            return (false, new bytes[](_subvaultNfts.length));
         }
-        return abi.decode(options, (bytes[]));
+        return abi.decode(options, (bool, bytes[]));
     }
 
     event CollectProtocolFees(address protocolTreasury, address[] tokens, uint256[] amounts);

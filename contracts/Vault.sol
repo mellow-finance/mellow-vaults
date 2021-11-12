@@ -6,6 +6,7 @@ import "./interfaces/IGatewayVault.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
+import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 abstract contract Vault is IVault {
@@ -51,12 +52,11 @@ abstract contract Vault is IVault {
     function push(
         address[] memory tokens,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) public returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, optimized, options);
+        uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }
@@ -66,7 +66,6 @@ abstract contract Vault is IVault {
         address from,
         address[] memory tokens,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -74,7 +73,7 @@ abstract contract Vault is IVault {
                 IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
             }
         }
-        actualTokenAmounts = push(tokens, tokenAmounts, optimized, options);
+        actualTokenAmounts = push(tokens, tokenAmounts, options);
         for (uint256 i = 0; i < tokens.length; i++) {
             uint256 leftover = actualTokenAmounts[i] < tokenAmounts[i] ? tokenAmounts[i] - actualTokenAmounts[i] : 0;
             if (leftover > 0) {
@@ -88,15 +87,14 @@ abstract contract Vault is IVault {
         address to,
         address[] memory tokens,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_selfNft());
-        require(owner == msg.sender || _isValidEdge(address(this), to), "INTRA"); // approved can only pull to whitelisted contracts
+        require(owner == msg.sender || _isValidPullDestination(to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
-        uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, optimized, options);
+        uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
     }
@@ -106,7 +104,7 @@ abstract contract Vault is IVault {
         /// TODO: is allowed to pull
         /// TODO: verify that only RouterVault can call this (for fees reasons)
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
-        require(_isValidEdge(address(this), to), "INTRA");
+        require(_isValidPullDestination(to), "INTRA");
         collectedEarnings = _collectEarnings(to, options);
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         address protocolTres = governance.protocolTreasury();
@@ -134,7 +132,7 @@ abstract contract Vault is IVault {
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
         if (!isProtocolAdmin) {
-            require(_isValidEdge(address(this), to), "INTRA");
+            require(_isValidPullDestination(to), "INTRA");
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -216,36 +214,36 @@ abstract contract Vault is IVault {
     /// Then check that both `this` and `to` are registered in the nft owner using hasSubvault function.
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
-    // function _isValidPullDestination(address to) internal view returns (bool) {
-    //     if (!Common.isContract(to)) {
-    //         return false;
-    //     }
-    //     IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-    //     uint256 thisNft = registry.nftForVault(address(this));
-    //     address thisOwner = registry.ownerOf(thisNft);
-    //     uint256 toNft = registry.nftForVault(to);
-    //     address toOwner = registry.ownerOf(toNft);
-    //     console.log("Vault::_isValidPullDestination thisNft", thisNft);
-    //     console.log("Vault::_isValidPullDestination thisOwner", thisOwner);
-    //     console.log("Vault::_isValidPullDestination toNft", toNft);
-    //     console.log("Vault::_isValidPullDestination toOwner", toOwner);
-    //     // make sure that vault is a registered vault
-    //     uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-    //     uint256 toOwnerNft = registry.nftForVault(toOwner);
-    //     console.log("Vault::_isValidPullDestination thisOwnerNft", thisOwnerNft);
-    //     console.log("Vault::_isValidPullDestination toOwnerNft", toOwnerNft);
-    //     if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
-    //         return false;
-    //     }
-    //     IGatewayVault gw = IGatewayVault(thisOwner);
-    //     console.log("_isValidPullDestination: gw.hasSubvault(to)", gw.hasSubvault(to));
-    //     console.log("_isValidPullDestination: gw.hasSubvault(this)", gw.hasSubvault(address(this)));
+    function _isValidPullDestination(address to) internal view returns (bool) {
+        if (!Common.isContract(to)) {
+            return false;
+        }
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 thisNft = registry.nftForVault(address(this));
+        address thisOwner = registry.ownerOf(thisNft);
+        uint256 toNft = registry.nftForVault(to);
+        address toOwner = registry.ownerOf(toNft);
+        console.log("Vault::_isValidPullDestination thisNft", thisNft);
+        console.log("Vault::_isValidPullDestination thisOwner", thisOwner);
+        console.log("Vault::_isValidPullDestination toNft", toNft);
+        console.log("Vault::_isValidPullDestination toOwner", toOwner);
+        // make sure that vault is a registered vault
+        uint256 thisOwnerNft = registry.nftForVault(thisOwner);
+        uint256 toOwnerNft = registry.nftForVault(toOwner);
+        console.log("Vault::_isValidPullDestination thisOwnerNft", thisOwnerNft);
+        console.log("Vault::_isValidPullDestination toOwnerNft", toOwnerNft);
+        if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
+            return false;
+        }
+        IGatewayVault gw = IGatewayVault(thisOwner);
+        console.log("_isValidPullDestination: gw.hasSubvault(to)", gw.hasSubvault(to));
+        console.log("_isValidPullDestination: gw.hasSubvault(this)", gw.hasSubvault(address(this)));
 
-    //     if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
-    //         return false;
-    //     }
-    //     return true;
-    // }
+        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
+            return false;
+        }
+        return true;
+    }
 
     // -------------------  PRIVATE, VIEW  -------------------
 
@@ -276,7 +274,6 @@ abstract contract Vault is IVault {
     /// Guaranteed to have exact signature matchinn vault tokens
     function _push(
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
@@ -284,7 +281,6 @@ abstract contract Vault is IVault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bool optimized,
         bytes memory options
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
 
