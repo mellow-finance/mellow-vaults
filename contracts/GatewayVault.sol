@@ -41,22 +41,6 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
-    /// @inheritdoc Vault
-    function earnings() public view override(IVault, Vault) returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultTokens;
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _subvaultNfts.length; i++) {
-            IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
-            address[] memory vTokens = vault.vaultTokens();
-            uint256[] memory vTokenAmounts = vault.earnings();
-            uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
-            for (uint256 j = 0; j < tokens.length; j++) {
-                tokenAmounts[j] += pTokenAmounts[j];
-            }
-        }
-    }
-
     /// @inheritdoc IGatewayVault
     function subvaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -84,15 +68,6 @@ contract GatewayVault is IGatewayVault, Vault {
     }
 
     /// @inheritdoc IGatewayVault
-    function vaultEarnings(uint256 vaultNum) public view override returns (uint256[] memory) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        IVault vault = IVault(registry.vaultForNft(_subvaultNfts[vaultNum]));
-        address[] memory pTokens = vault.vaultTokens();
-        uint256[] memory vTokenAmounts = vault.earnings();
-        return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
-    }
-
-    /// @inheritdoc IGatewayVault
     function hasSubvault(address vault) external view override returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 nft = registry.nftForVault(vault);
@@ -111,10 +86,11 @@ contract GatewayVault is IGatewayVault, Vault {
         }
     }
 
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory options
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory options)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         require(_subvaultNfts.length > 0, "INIT");
         bool optimized;
         bytes[] memory vaultsOptions;
@@ -150,11 +126,7 @@ contract GatewayVault is IGatewayVault, Vault {
                     IERC20(_vaultTokens[j]).safeTransfer(address(vault), amountsByVault[i][j]);
                 }
             }
-            uint256[] memory actualVaultTokenAmounts = vault.push(
-                _vaultTokens,
-                amountsByVault[i],
-                vaultsOptions[i]
-            );
+            uint256[] memory actualVaultTokenAmounts = vault.push(_vaultTokens, amountsByVault[i], vaultsOptions[i]);
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
                 totalTvl[j] += tvls[i][j];
@@ -206,55 +178,6 @@ contract GatewayVault is IGatewayVault, Vault {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
             }
         }
-    }
-
-    function _collectEarnings(address to, bytes memory options)
-        internal
-        override
-        returns (uint256[] memory collectedEarnings)
-    {
-        require(_subvaultNfts.length > 0, "INIT");
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address[] memory tokens = _vaultTokens;
-        collectedEarnings = new uint256[](tokens.length);
-        (, bytes[] memory vaultsOptions) = _parseOptions(options);
-        for (uint256 i = 0; i < _subvaultNfts.length; i++) {
-            IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
-            address[] memory vTokens = vault.vaultTokens();
-            uint256[] memory vTokenAmounts = vault.collectEarnings(address(this), vaultsOptions[i]);
-            uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
-            for (uint256 j = 0; j < tokens.length; j++) {
-                collectedEarnings[j] += pTokenAmounts[j];
-            }
-        }
-        uint256[] memory fees = _collectFees(collectedEarnings);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            collectedEarnings[i] -= fees[i];
-            IERC20(tokens[i]).safeTransfer(to, collectedEarnings[i]);
-        }
-    }
-
-    function _collectFees(uint256[] memory collectedEarnings) internal returns (uint256[] memory collectedFees) {
-        require(_subvaultNfts.length > 0, "INIT");
-        address[] memory tokens = _vaultTokens;
-        collectedFees = new uint256[](tokens.length);
-        IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
-        address protocolTres = governance.protocolTreasury();
-        uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
-        uint256 strategyPerformanceFee = governance.strategyPerformanceFee();
-        address strategyTres = _vaultGovernance.strategyTreasury(_selfNft());
-        uint256[] memory strategyFees = new uint256[](tokens.length);
-        uint256[] memory protocolFees = new uint256[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            IERC20 token = IERC20(tokens[i]);
-            protocolFees[i] = (collectedEarnings[i] * protocolPerformanceFee) / Common.DENOMINATOR;
-            strategyFees[i] = (collectedEarnings[i] * strategyPerformanceFee) / Common.DENOMINATOR;
-            token.safeTransfer(strategyTres, strategyFees[i]);
-            token.safeTransfer(protocolTres, protocolFees[i]);
-            collectedFees[i] = protocolFees[i] + strategyFees[i];
-        }
-        emit CollectStrategyFees(strategyTres, tokens, strategyFees);
-        emit CollectProtocolFees(protocolTres, tokens, protocolFees);
     }
 
     function _parseOptions(bytes memory options) internal view returns (bool, bytes[] memory) {

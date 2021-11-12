@@ -55,24 +55,6 @@ contract UniV3Vault is Vault {
         }
     }
 
-    /// @inheritdoc Vault
-    function earnings() public view override returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](2);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            uint256 nft = _nfts.at(i);
-            uint256[] memory _nftEarnings = nftEarnings(nft);
-            tokenAmounts[0] += _nftEarnings[0];
-            tokenAmounts[1] += _nftEarnings[1];
-        }
-    }
-
-    function nftEarnings(uint256 nft) public view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](2);
-        (, , , , , , , , , , uint256 token0Owed, uint256 token1Owed) = _positionManager().positions(nft);
-        tokenAmounts[0] = token0Owed;
-        tokenAmounts[1] = token1Owed;
-    }
-
     function nftTvl(uint256 nft) public view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultTokens.length);
         (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(nft);
@@ -97,10 +79,11 @@ contract UniV3Vault is Vault {
         }
     }
 
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory options
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory options)
+        internal
+        override
+        returns (uint256[] memory actualTokenAmounts)
+    {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
@@ -201,24 +184,6 @@ contract UniV3Vault is Vault {
             })
         );
         return Pair({a0: amount0, a1: amount1});
-    }
-
-    function _collectEarnings(address to, bytes memory) internal override returns (uint256[] memory collectedEarnings) {
-        address[] memory tokens = _vaultTokens;
-        collectedEarnings = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            uint256 nft = _nfts.at(i);
-            (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
-                INonfungiblePositionManager.CollectParams({
-                    tokenId: nft,
-                    recipient: to,
-                    amount0Max: type(uint128).max,
-                    amount1Max: type(uint128).max
-                })
-            );
-            collectedEarnings[0] += collectedEarnings0;
-            collectedEarnings[1] += collectedEarnings1;
-        }
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {

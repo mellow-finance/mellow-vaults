@@ -16,12 +16,6 @@ interface IVault {
     /// @return tokenAmounts Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
     function tvl() external view returns (uint256[] memory tokenAmounts);
 
-    /// @notice Total earnings available now.
-    /// @dev Earnings is only needed as the base for performance fees calculation
-    /// Generally it would be DeFi yields like Yearn interest or Uniswap trading fees.
-    /// @return tokenAmounts Total earnings for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
-    function earnings() external view returns (uint256[] memory tokenAmounts);
-
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
     /// the contract balance and convert it to yUSDC.
     /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
@@ -74,15 +68,6 @@ interface IVault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
-
-    /// @notice Update earnings of the vault and collect performance fees.
-    /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
-    /// Strategy is approved address for the vault NFT. There's a subtle difference however - while vault owner
-    /// can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault).
-    /// @param to Address where earnings are collected
-    /// @param options Additional arguments for earnings collections. Differ by vault
-    /// @return collectedEarnings Amount of earnings actually collected. The array of amounts corresponds to the array of vaultTokens
-    function collectEarnings(address to, bytes memory options) external returns (uint256[] memory collectedEarnings);
 
     /// @notice This method is for claiming accidentally accumulated tokens on the contact's balance.
     /// @dev Can only be called by Protocol Governance.

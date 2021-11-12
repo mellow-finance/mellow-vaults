@@ -42,9 +42,6 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory tokenAmounts);
 
-    /// @inheritdoc IVault
-    function earnings() public view virtual returns (uint256[] memory tokenAmounts);
-
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
     /// @inheritdoc IVault
@@ -96,32 +93,6 @@ abstract contract Vault is IVault {
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
         actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
-    }
-
-    /// @inheritdoc IVault
-    function collectEarnings(address to, bytes memory options) external returns (uint256[] memory collectedEarnings) {
-        /// TODO: is allowed to pull
-        /// TODO: verify that only RouterVault can call this (for fees reasons)
-        require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
-        require(_isValidPullDestination(to), "INTRA");
-        collectedEarnings = _collectEarnings(to, options);
-        IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
-        address protocolTres = governance.protocolTreasury();
-        uint256 protocolPerformanceFee = governance.protocolPerformanceFee();
-        uint256 strategyPerformanceFee = governance.strategyPerformanceFee();
-        uint256 nft = _vaultGovernance.internalParams().registry.nftForVault(address(this));
-        address strategyTres = _vaultGovernance.strategyTreasury(nft);
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            IERC20 token = IERC20(_vaultTokens[i]);
-            uint256 protocolFee = (collectedEarnings[i] * protocolPerformanceFee) / Common.DENOMINATOR;
-            uint256 strategyFee = (collectedEarnings[i] * strategyPerformanceFee) / Common.DENOMINATOR;
-            uint256 strategyEarnings = collectedEarnings[i] - protocolFee - strategyFee;
-            token.safeTransfer(strategyTres, strategyFee);
-            token.safeTransfer(protocolTres, protocolFee);
-            token.safeTransfer(to, strategyEarnings);
-        }
-        /// TODO: emit CollectedFees
-        emit CollectEarnings(to, collectedEarnings);
     }
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
@@ -226,10 +197,10 @@ abstract contract Vault is IVault {
     // -------------------  PRIVATE, MUTATING  -------------------
 
     /// Guaranteed to have exact signature matchinn vault tokens
-    function _push(
-        uint256[] memory tokenAmounts,
-        bytes memory options
-    ) internal virtual returns (uint256[] memory actualTokenAmounts);
+    function _push(uint256[] memory tokenAmounts, bytes memory options)
+        internal
+        virtual
+        returns (uint256[] memory actualTokenAmounts);
 
     /// Guaranteed to have exact signature matchinn vault tokens
     function _pull(
@@ -237,11 +208,6 @@ abstract contract Vault is IVault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
-
-    function _collectEarnings(address to, bytes memory options)
-        internal
-        virtual
-        returns (uint256[] memory collectedEarnings);
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 
@@ -253,11 +219,6 @@ abstract contract Vault is IVault {
     /// @param to The target address for pulled tokens
     /// @param tokenAmounts The amounts of tokens to pull
     event Pull(address to, uint256[] tokenAmounts);
-
-    /// @notice Emitted when earnings are collected
-    /// @param to The target address for pulled tokens
-    /// @param tokenAmounts The amounts of earnings
-    event CollectEarnings(address to, uint256[] tokenAmounts);
 
     /// @notice Emitted when tokens are reclaimed
     /// @param to The target address for pulled tokens
