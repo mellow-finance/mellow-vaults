@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
-import { VaultGovernance } from "./library/Types";
+import { VaultGovernance, ProtocolGovernance } from "./library/Types";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
-import { toObject } from "./library/Helpers";
+import { sleep, toObject } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
 
 describe("GatewayVaultGovernance", () => {
@@ -14,6 +14,7 @@ describe("GatewayVaultGovernance", () => {
     let treasury: Signer;
     let strategy: Signer;
     let gatewayVaultGovernance: VaultGovernance;
+    let protocolGovernance: ProtocolGovernance;
     let deployment: Function;
     let gatewayNft: number;
 
@@ -22,7 +23,7 @@ describe("GatewayVaultGovernance", () => {
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ gatewayVaultGovernance, gatewayNft } =
+            ({ gatewayVaultGovernance, gatewayNft, protocolGovernance } =
                 await deploySubVaultsXGatewayVaultSystem({
                     adminSigner: admin,
                     treasury: await treasury.getAddress(),
@@ -118,6 +119,7 @@ describe("GatewayVaultGovernance", () => {
                     redirects: [],
                     strategyTreasury: await treasury.getAddress(),
                 });
+            await sleep(Number(await protocolGovernance.governanceDelay()));
             await expect(
                 gatewayVaultGovernance
                     .connect(admin)
@@ -145,7 +147,9 @@ describe("GatewayVaultGovernance", () => {
         describe("when passed unknown nft", () => {
             it("returns empty struct", async () => {
                 expect(
-                    await gatewayVaultGovernance.delayedStrategyParams(gatewayNft + 42)
+                    await gatewayVaultGovernance.delayedStrategyParams(
+                        gatewayNft + 42
+                    )
                 ).to.be.deep.equal([ethers.constants.AddressZero, []]);
             });
         });

@@ -68,7 +68,7 @@ describe("AaveVaultGovernance", () => {
         describe("when passed unknown nft", () => {
             it("returns empty struct", async () => {
                 expect(
-                    await vaultGovernance.delayedStrategyParams(nft + 1)
+                    await AaveVaultGovernance.delayedStrategyParams(nftAave + 1)
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
         });
@@ -84,7 +84,9 @@ describe("AaveVaultGovernance", () => {
         describe("when passed unknown nft", () => {
             it("returns empty struct", async () => {
                 expect(
-                    await vaultGovernance.stagedDelayedStrategyParams(nft + 1)
+                    await AaveVaultGovernance.stagedDelayedStrategyParams(
+                        nftAave + 1
+                    )
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
         });

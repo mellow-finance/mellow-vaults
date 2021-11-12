@@ -123,5 +123,12 @@ export type ERC20Test_constructorArgs = {
 };
 
 export type SubVaultType = "ERC20Vault" | "AaveVault" | "UniV3Vault";
-export type SubVaultTypeTest = "ERC20VaultTest" | "AaveVaultTest" | "UniV3VaultTest";
-export type VaultType = SubVaultType | SubVaultTypeTest | "GatewayVault" | "LpIssuer";
+export type SubVaultTypeTest =
+    | "ERC20VaultTest"
+    | "AaveVaultTest"
+    | "UniV3VaultTest";
+export type VaultType =
+    | SubVaultType
+    | SubVaultTypeTest
+    | "GatewayVault"
+    | "LpIssuer";

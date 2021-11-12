@@ -61,7 +61,9 @@ describe("ERC20VaultGovernance", () => {
         describe("when passed unknown nft", () => {
             it("returns empty params", async () => {
                 expect(
-                    await vaultGovernance.delayedStrategyParams(nft + 1)
+                    await ERC20VaultGovernance.delayedStrategyParams(
+                        nftERC20 + 1
+                    )
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
         });
@@ -77,7 +79,9 @@ describe("ERC20VaultGovernance", () => {
         describe("when passed unknown nft", () => {
             it("returns empty params", async () => {
                 expect(
-                    await vaultGovernance.stagedDelayedStrategyParams(nft + 1)
+                    await ERC20VaultGovernance.stagedDelayedStrategyParams(
+                        nftERC20 + 1
+                    )
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
         });
