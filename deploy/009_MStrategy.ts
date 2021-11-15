@@ -16,7 +16,6 @@ const setupVault = async (
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
     const { deployer } = await getNamedAccounts();
-
     if (startNft <= vaultNft) {
         log(`Deploying ${contractName.replace("Governance", "")}...`);
         await execute(
@@ -108,7 +107,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
 
     const tokens = [weth, usdc].sort();
-    let startNft = (await read("VaultRegistry", "vaultsCount")) + 1;
+    const startNft =
+        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
     const coder = hre.ethers.utils.defaultAbiCoder;
     let aaveVaultNft = 1;
     let uniV3VaultNft = 2;
@@ -221,7 +221,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         {
             strategyTreasury: mStrategyTreasury,
         },
-        { tokenLimitPerAddress: 0 }
+        { tokenLimitPerAddress: hre.ethers.constants.MaxUint256 }
     );
 };
 
