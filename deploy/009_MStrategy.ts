@@ -192,7 +192,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             strategyTreasury: mStrategyTreasury,
             redirects: [uniV3VaultNft, erc20VaultNft, erc20VaultNft],
         },
-        { limits: [0, 0, 0] }
+        {
+            limits: [
+                hre.ethers.constants.MaxUint256,
+                hre.ethers.constants.MaxUint256,
+            ],
+        }
     );
 
     await setupVault(
