@@ -12,4 +12,6 @@ interface IYearnVault is IERC20 {
         address recipient,
         uint256 maxLoss
     ) external returns (uint256);
+
+    function pricePerShare() external returns (uint256);
 }
