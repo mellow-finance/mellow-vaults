@@ -56,11 +56,18 @@ contract LpIssuer is ILpIssuer, ERC20 {
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         require(_subvaultNft > 0, "INIT");
+        uint256[] memory tvl = _subvault().tvl();
+        IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
         }
-        uint256[] memory tvl = _subvault().tvl();
-        uint256[] memory actualTokenAmounts = _subvault().push(_vaultTokens, tokenAmounts, options);
+        uint256[] memory actualTokenAmounts = subvault.transferAndPush(
+            address(this),
+            _vaultTokens,
+            tokenAmounts,
+            options
+        );
         uint256 amountToMint;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < _vaultTokens.length; i++) {
@@ -129,6 +136,12 @@ contract LpIssuer is ILpIssuer, ERC20 {
         require(_subvaultNft == 0, "SBIN");
         require(nft > 0, "NFT0");
         _subvaultNft = nft;
+    }
+
+    function _allowTokenIfNecessary(address token, address to) internal {
+        if (IERC20(token).allowance(address(to), address(this)) < type(uint256).max / 2) {
+            IERC20(token).approve(address(to), type(uint256).max);
+        }
     }
 
     function _subvault() internal view returns (IVault) {
