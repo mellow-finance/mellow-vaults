@@ -18,7 +18,7 @@ const setupVault = async (
     const { deployer } = await getNamedAccounts();
 
     if (startNft <= vaultNft) {
-        log("Deploying Aave vault...");
+        log(`Deploying ${contractName.replace("Governance", "")}...`);
         await execute(
             contractName,
             {
@@ -31,7 +31,12 @@ const setupVault = async (
         );
         log(`Done, nft = ${vaultNft}`);
     } else {
-        log(`Aave vault with nft = ${vaultNft} already deployed`);
+        log(
+            `${contractName.replace(
+                "Governance",
+                ""
+            )} with nft = ${vaultNft} already deployed`
+        );
     }
 
     if (strategyParams) {
