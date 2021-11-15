@@ -141,7 +141,7 @@ abstract contract Vault is IVault {
         returns (uint256[] memory pTokenAmounts)
     {
         require(Common.isSortedAndUnique(tokens), "SAU");
-        require(tokens.length == tokenAmounts.length, "L");
+        require(tokens.length == tokenAmounts.length, "LEN");
         pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 

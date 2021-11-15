@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { VAULT_LIMITS } from "../tasks/constants";
 import { sendTx } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -9,7 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, log, execute, read } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, aaveLendingPool } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
     await deploy("GatewayVaultGovernance", {
         from: deployer,
         args: [
