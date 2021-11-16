@@ -19,6 +19,7 @@ contract AaveVault is Vault {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _aTokens[i] = _getAToken(_vaultTokens[i]);
+            _baseBalances.push(0);
         }
     }
 
@@ -49,6 +50,7 @@ contract AaveVault is Vault {
             if (_baseBalances[i] == 0) {
                 baseTokensToMint = tokenAmounts[i];
             } else {
+                // TODO - IERC20(aToken).balanceOf(address(this)) to baseBalances[i]
                 baseTokensToMint = (tokenAmounts[i] * _baseBalances[i]) / IERC20(aToken).balanceOf(address(this));
             }
 
