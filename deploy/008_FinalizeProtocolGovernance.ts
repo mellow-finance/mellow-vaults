@@ -8,7 +8,7 @@ import { sendTx } from "./000_utils";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, protocolTreasury } = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
     const governances = [];
     for (const name of [
         "AaveVaultGovernance",

@@ -3,7 +3,7 @@ import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { map, pipe, prop, sortBy, zip } from "ramda";
 import { getContract, getContractWithAbi, sendTx } from "./base";
-import { CREATE_CELL_EVENT_HASH } from "./contants";
+import { CREATE_CELL_EVENT_HASH } from "./constants";
 
 task("deposit", "Deposits tokens into cell")
   .addParam("name", "Name of the cells contracts", undefined, types.string)
