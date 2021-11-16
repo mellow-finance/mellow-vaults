@@ -99,7 +99,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         address,
         uint256,
         bytes calldata
-    ) external returns (bytes4) {
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
