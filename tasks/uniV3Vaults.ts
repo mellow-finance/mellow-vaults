@@ -9,7 +9,7 @@ import {
 } from "./base";
 import { approve } from "./erc20";
 import { map, prop, propEq, sortBy } from "ramda";
-import { CREATE_CELL_EVENT_HASH } from "./constants";
+import { CREATE_CELL_EVENT_HASH } from "./contants";
 
 task("create-uni-v3-cell", "Mints nft for UniV3Vaults")
   .addParam("token0", "The name of the token0", undefined, types.string)

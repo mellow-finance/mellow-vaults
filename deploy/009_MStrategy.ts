@@ -3,7 +3,6 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { equals } from "ramda";
-import { TOKEN_LIMIT_PER_ADDRESS, VAULT_LIMITS } from "../tasks/constants";
 
 const setupVault = async (
     hre: HardhatRuntimeEnvironment,
@@ -104,7 +103,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
 
     const tokens = [weth, usdc].sort();
-    const tokenLimits = [VAULT_LIMITS[tokens[0]], VAULT_LIMITS[tokens[1]]];
     let startNft = (await read("VaultRegistry", "vaultsCount")) + 1;
     const coder = hre.ethers.utils.defaultAbiCoder;
     let aaveVaultNft = 1;
@@ -194,7 +192,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             strategyTreasury: mStrategyTreasury,
             redirects: [uniV3VaultNft, erc20VaultNft, erc20VaultNft],
         },
-        { limits: tokenLimits }
+        { limits: [0, 0, 0] }
     );
 
     await setupVault(
@@ -213,7 +211,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         {
             strategyTreasury: mStrategyTreasury,
         },
-        { tokenLimitPerAddress: TOKEN_LIMIT_PER_ADDRESS }
+        { tokenLimitPerAddress: 0 }
     );
 };
 

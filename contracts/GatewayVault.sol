@@ -134,7 +134,7 @@ contract GatewayVault is IGatewayVault, Vault {
         }
         uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).limits;
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "LIM");
+            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "L");
         }
     }
 
