@@ -28,9 +28,9 @@ contract YearnVault is Vault {
         address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _yTokens.length; i++) {
-            IYearnVault yToken = _yTokens[i];
+            IYearnVault yToken = IYearnVault(_yTokens[i]);
             /// TODO: Verify it's not subject to manipulation like in Cream hack
-            tokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / yToken.decimals();
+            tokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
     }
 
@@ -44,19 +44,11 @@ contract YearnVault is Vault {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
-            address yToken = _yTokens[i];
+
             address token = tokens[i];
             _allowTokenIfNecessary(token);
-            uint256 baseTokensToMint;
-            if (_baseBalances[i] == 0) {
-                baseTokensToMint = tokenAmounts[i];
-            } else {
-                baseTokensToMint = (tokenAmounts[i] * _baseBalances[i]) / IERC20(yToken).balanceOf(address(this));
-            }
-
-            // TODO: Check what is 0
-            _yearnVaultRegistry().deposit(tokens[i], tokenAmounts[i], address(this), 0);
-            _baseBalances[i] += baseTokensToMint;
+            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            yToken.deposit(tokenAmounts[i], address(this));
         }
         actualTokenAmounts = tokenAmounts;
     }
@@ -64,28 +56,24 @@ contract YearnVault is Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory
+        bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
+        uint256 maxLoss = abi.decode(options, (uint256));
         for (uint256 i = 0; i < _yTokens.length; i++) {
-            address yToken = _yTokens[i];
-            uint256 balance = IERC20(yToken).balanceOf(address(this));
-            if (balance == 0) {
+            if (tokenAmounts[i] == 0) {
                 continue;
             }
-            uint256 tokensToBurn = (tokenAmounts[i] * _baseBalances[i]) / balance;
-            if (tokensToBurn == 0) {
-                continue;
-            }
-            _baseBalances[i] -= tokensToBurn;
-            _yearnVaultRegistry().withdraw(tokens[i], tokenAmounts[i], to);
+
+            address token = tokens[i];
+            _allowTokenIfNecessary(token);
+            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            uint256 yTokenAmount = (tokenAmounts[i] / yToken.pricePerShare()) * (10**yToken.decimals());
+            require(yTokenAmount < yToken.balanceOf(address(this)), "INSY");
+            yToken.withdraw(yTokenAmount, to, maxLoss);
+            (tokenAmounts[i], address(this));
         }
         actualTokenAmounts = tokenAmounts;
-    }
-
-    function _getAToken(address token) internal view returns (address) {
-        DataTypes.ReserveData memory data = _yearnVaultRegistry().getReserveData(token);
-        return data.yTokenAddress;
     }
 
     function _allowTokenIfNecessary(address token) internal {
