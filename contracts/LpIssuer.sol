@@ -60,6 +60,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
+            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), tokenAmounts[i]);
         }
         uint256[] memory actualTokenAmounts = subvault.transferAndPush(
             address(this),
