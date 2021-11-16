@@ -4,11 +4,8 @@ import { BigNumber, Signer } from "ethers";
 import {
     ERC20,
     ERC20Vault,
-    ProtocolGovernance,
     VaultRegistry,
-    VaultFactory,
     ERC20VaultGovernance,
-    AaveVault,
 } from "./library/Types";
 import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
@@ -23,13 +20,9 @@ describe("ERC20Vault", function () {
 
         let tokens: ERC20[];
         let ERC20Vault: ERC20Vault;
-        let AaveVault: AaveVault;
-        let ERC20VaultFactory: VaultFactory;
-        let protocolGovernance: ProtocolGovernance;
         let ERC20VaultGovernance: ERC20VaultGovernance;
         let vaultRegistry: VaultRegistry;
         let nftERC20: number;
-        let nftAave: number;
         let deployment: Function;
 
         before(async () => {
@@ -49,9 +42,7 @@ describe("ERC20Vault", function () {
 
         beforeEach(async () => {
             ({
-                ERC20VaultFactory,
                 vaultRegistry,
-                protocolGovernance,
                 ERC20VaultGovernance,
                 tokens,
                 ERC20Vault,

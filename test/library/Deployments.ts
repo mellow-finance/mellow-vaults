@@ -23,9 +23,6 @@ import {
     IVaultGovernance,
     Vault,
     IGatewayVault,
-    SubVaultType,
-    AaveVault_constructorArgs,
-    UniV3Vault_constructorArgs,
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";

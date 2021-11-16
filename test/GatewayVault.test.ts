@@ -1,14 +1,7 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { BigNumber, Signer } from "ethers";
-import {
-    ERC20,
-    Vault,
-    VaultGovernance,
-    ProtocolGovernance,
-    VaultRegistry,
-    AaveVault,
-} from "./library/Types";
+import { ERC20, Vault, VaultRegistry, AaveVault } from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
 
@@ -18,10 +11,7 @@ describe("GatewayVault", () => {
     let stranger: Signer;
     let treasury: Signer;
     let strategy: Signer;
-    let anotherTreasury: Signer;
-    let ERC20VaultGovernance: VaultGovernance;
     let AaveVault: AaveVault;
-    let protocolGovernance: ProtocolGovernance;
     let vaultRegistry: VaultRegistry;
     let ERC20Vault: Vault;
     let AnotherERC20Vault: Vault;
@@ -29,20 +19,15 @@ describe("GatewayVault", () => {
     let anotherNftERC20: number;
     let tokens: ERC20[];
     let gatewayVault: Vault;
-    let gatewayVaultGovernance: VaultGovernance;
-    let gatewayNft: number;
     let deployment: Function;
 
     before(async () => {
-        [deployer, admin, stranger, treasury, anotherTreasury, strategy] =
+        [deployer, admin, stranger, treasury, strategy] =
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({
                 gatewayVault,
-                gatewayVaultGovernance,
-                ERC20VaultGovernance,
-                protocolGovernance,
                 nftERC20,
                 anotherNftERC20,
                 tokens,

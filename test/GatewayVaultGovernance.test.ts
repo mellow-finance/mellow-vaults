@@ -3,24 +3,21 @@ import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import { VaultGovernance, ProtocolGovernance } from "./library/Types";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
-import Exceptions from "./library/Exceptions";
 import { sleep, toObject } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
 
 describe("GatewayVaultGovernance", () => {
     let deployer: Signer;
     let admin: Signer;
-    let stranger: Signer;
     let treasury: Signer;
     let strategy: Signer;
     let gatewayVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
-    let deployment: Function;
     let gatewayNft: number;
+    let deployment: Function;
 
     before(async () => {
-        [deployer, admin, stranger, treasury, strategy] =
-            await ethers.getSigners();
+        [deployer, admin, treasury, strategy] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({ gatewayVaultGovernance, gatewayNft, protocolGovernance } =
@@ -62,6 +59,7 @@ describe("GatewayVaultGovernance", () => {
         //         );
         //     });
         // });
+
         it("sets stageDelayedStrategyParams and emits StageDelayedStrategyParams event", async () => {
             await expect(
                 await gatewayVaultGovernance

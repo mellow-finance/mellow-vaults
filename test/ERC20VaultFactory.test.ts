@@ -1,14 +1,9 @@
+import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
-import {
-    ERC20,
-    VaultFactory,
-    VaultGovernance,
-    VaultType,
-} from "./library/Types";
+import { ERC20, VaultFactory, VaultGovernance } from "./library/Types";
 import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
-import { expect } from "chai";
 
 describe("ERC20VaultFactory", () => {
     const tokensCount = 2;

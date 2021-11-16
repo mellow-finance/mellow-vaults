@@ -1,5 +1,5 @@
 import { Contract } from "ethers";
-import { network, ethers } from "hardhat";
+import { network } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
 import { utils } from "ethers";
