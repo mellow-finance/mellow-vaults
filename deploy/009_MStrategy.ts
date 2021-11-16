@@ -16,9 +16,8 @@ const setupVault = async (
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
     const { deployer } = await getNamedAccounts();
-
     if (startNft <= vaultNft) {
-        log("Deploying Aave vault...");
+        log(`Deploying ${contractName.replace("Governance", "")}...`);
         await execute(
             contractName,
             {
@@ -31,7 +30,12 @@ const setupVault = async (
         );
         log(`Done, nft = ${vaultNft}`);
     } else {
-        log(`Aave vault with nft = ${vaultNft} already deployed`);
+        log(
+            `${contractName.replace(
+                "Governance",
+                ""
+            )} with nft = ${vaultNft} already deployed`
+        );
     }
 
     if (strategyParams) {
@@ -103,7 +107,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
 
     const tokens = [weth, usdc].sort();
-    let startNft = (await read("VaultRegistry", "vaultsCount")) + 1;
+    const startNft =
+        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
     const coder = hre.ethers.utils.defaultAbiCoder;
     let aaveVaultNft = 1;
     let uniV3VaultNft = 2;
@@ -192,7 +197,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             strategyTreasury: mStrategyTreasury,
             redirects: [uniV3VaultNft, erc20VaultNft, erc20VaultNft],
         },
-        { limits: [0, 0, 0] }
+        {
+            limits: [
+                hre.ethers.constants.MaxUint256,
+                hre.ethers.constants.MaxUint256,
+            ],
+        }
     );
 
     await setupVault(
@@ -211,7 +221,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         {
             strategyTreasury: mStrategyTreasury,
         },
-        { tokenLimitPerAddress: 0 }
+        { tokenLimitPerAddress: hre.ethers.constants.MaxUint256 }
     );
 };
 
