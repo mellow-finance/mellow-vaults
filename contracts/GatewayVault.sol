@@ -123,10 +123,15 @@ contract GatewayVault is IGatewayVault, Vault {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 if (amountsByVault[i][j] > 0) {
-                    IERC20(_vaultTokens[j]).safeTransfer(address(vault), amountsByVault[i][j]);
+                    _allowTokenIfNecessary(_vaultTokens[j], address(vault));
                 }
             }
-            uint256[] memory actualVaultTokenAmounts = vault.push(_vaultTokens, amountsByVault[i], vaultsOptions[i]);
+            uint256[] memory actualVaultTokenAmounts = vault.transferAndPush(
+                address(this),
+                _vaultTokens,
+                amountsByVault[i],
+                vaultsOptions[i]
+            );
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
                 totalTvl[j] += tvls[i][j];
@@ -134,7 +139,7 @@ contract GatewayVault is IGatewayVault, Vault {
         }
         uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).limits;
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "L");
+            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "LIM");
         }
     }
 
@@ -177,6 +182,12 @@ contract GatewayVault is IGatewayVault, Vault {
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
             }
+        }
+    }
+
+    function _allowTokenIfNecessary(address token, address to) internal {
+        if (IERC20(token).allowance(address(to), address(this)) < type(uint256).max / 2) {
+            IERC20(token).approve(address(to), type(uint256).max);
         }
     }
 
