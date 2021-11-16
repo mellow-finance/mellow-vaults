@@ -2,13 +2,14 @@
 pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
-contract GatewayVault is IGatewayVault, Vault {
+contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] internal _subvaultNfts;
     mapping(uint256 => uint256) internal _subvaultNftsIndex;
@@ -76,7 +77,7 @@ contract GatewayVault is IGatewayVault, Vault {
 
     /// @inheritdoc IGatewayVault
     function addSubvaults(uint256[] memory nfts) external {
-        require(msg.sender == address(_vaultGovernance), "RVG");
+        require(msg.sender == address(_vaultGovernance), "RVG");  // TODO: rename to "VG"
         require(_subvaultNfts.length == 0, "SBIN");
         require(nfts.length > 0, "SBL");
         for (uint256 i = 0; i < nfts.length; i++) {
@@ -84,6 +85,22 @@ contract GatewayVault is IGatewayVault, Vault {
             _subvaultNfts.push(nfts[i]);
             _subvaultNftsIndex[nfts[i]] = i;
         }
+    }
+
+    function setApprovalForAll(address strategy) external {
+        require(msg.sender == address(_vaultGovernance), "VG");
+        require(msg.sender != address(0), "ZS");
+        IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
+        vaultRegistry.setApprovalForAll(strategy, true);
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external returns (bytes4) {
+        return this.onERC721Received.selector;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
