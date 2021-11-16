@@ -12,9 +12,9 @@ import {
     VaultGovernance,
     LpIssuerGovernance,
     VaultRegistry,
-    ProtocolGovernance_constructorArgs,
-    VaultGovernance_constructorArgs,
-    LpIssuerGovernance_constructorArgs,
+    ProtocolGovernance_constructor,
+    VaultGovernance_constructor,
+    LpIssuerGovernance_constructor,
     ProtocolGovernance_Params,
     ERC20Test_constructorArgs,
     VaultFactory,
@@ -53,14 +53,14 @@ export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
 }
 
 export const deployProtocolGovernance = async (options: {
-    constructorArgs?: ProtocolGovernance_constructorArgs;
+    constructorArgs?: ProtocolGovernance_constructor;
     initializerArgs?: {
         params: ProtocolGovernance_Params;
     };
     adminSigner: Signer;
 }) => {
     // defaults<
-    const constructorArgs: ProtocolGovernance_constructorArgs =
+    const constructorArgs: ProtocolGovernance_constructor =
         options.constructorArgs ?? {
             admin: await options.adminSigner.getAddress(),
         };
@@ -129,7 +129,7 @@ export async function deployVaultFactory(options: {
 }
 
 export const deployVaultGovernance = async (options: {
-    constructorArgs: VaultGovernance_constructorArgs;
+    constructorArgs: VaultGovernance_constructor;
     adminSigner: Signer;
     treasury: Address;
     vaultType: VaultType;
@@ -345,7 +345,7 @@ export async function deployCommonLibraryTest(): Promise<Contract> {
 }
 
 export const deployLpIssuerGovernance = async (options: {
-    constructorArgs?: LpIssuerGovernance_constructorArgs;
+    constructorArgs?: LpIssuerGovernance_constructor;
     adminSigner?: Signer;
     treasury?: Address;
 }) => {
@@ -366,7 +366,7 @@ export const deployLpIssuerGovernance = async (options: {
         treasury: await treasury.getAddress(),
     });
 
-    const constructorArgs: LpIssuerGovernance_constructorArgs =
+    const constructorArgs: LpIssuerGovernance_constructor =
         options.constructorArgs ?? {
             registry: vaultRegistry.address,
             protocolGovernance: protocolGovernance.address,
@@ -614,7 +614,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         vaultOwner: await options.vaultOwnerSigner.getAddress(),
         dontUseTestSetup: options.dontUseTestSetup,
     });
-    let args: VaultGovernance_constructorArgs = {
+    let args: VaultGovernance_constructor = {
         params: {
             protocolGovernance: protocolGovernance.address,
             registry: vaultRegistry.address,

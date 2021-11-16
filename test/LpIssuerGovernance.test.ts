@@ -6,7 +6,7 @@ import { toObject } from "./library/Helpers";
 import { deployLpIssuerGovernance } from "./library/Deployments";
 import {
     LpIssuerGovernance,
-    LpIssuerGovernance_constructorArgs,
+    LpIssuerGovernance_constructor,
 } from "./library/Types";
 
 /**
@@ -15,7 +15,7 @@ import {
  */
 describe("LpIssuerGovernance", () => {
     let contract: LpIssuerGovernance;
-    let constructorArgs: LpIssuerGovernance_constructorArgs;
+    let constructorArgs: LpIssuerGovernance_constructor;
     let deploymentFixture: Function;
     let deployer: Signer;
     let protocolTreasury: Signer;
