@@ -57,11 +57,18 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         require(_subvaultNft > 0, "INIT");
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(_subvault()), tokenAmounts[i]);
-        }
         uint256[] memory tvl = _subvault().tvl();
-        uint256[] memory actualTokenAmounts = _subvault().push(_vaultTokens, tokenAmounts, options);
+        IVault subvault = _subvault();
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
+            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), tokenAmounts[i]);
+        }
+        uint256[] memory actualTokenAmounts = subvault.transferAndPush(
+            address(this),
+            _vaultTokens,
+            tokenAmounts,
+            options
+        );
         uint256 amountToMint;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < _vaultTokens.length; i++) {
@@ -139,6 +146,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         bytes calldata
     ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
+    }
+
+    function _allowTokenIfNecessary(address token, address to) internal {
+        if (IERC20(token).allowance(address(to), address(this)) < type(uint256).max / 2) {
+            IERC20(token).approve(address(to), type(uint256).max);
+        }
     }
 
     function _subvault() internal view returns (IVault) {
