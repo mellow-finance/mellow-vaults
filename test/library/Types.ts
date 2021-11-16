@@ -35,6 +35,7 @@ export type GatewayVault = Contract;
 export type TestVaultGovernance = Contract;
 export type VaultFactory = Contract;
 export type Vault = Contract;
+export type LpIssuer = Contract;
 
 export type ProtocolGovernance_Params = {
     permissionless: boolean;
