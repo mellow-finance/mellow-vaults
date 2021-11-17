@@ -144,9 +144,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         address,
         uint256,
         bytes calldata
-    ) external returns (bytes4) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(msg.sender == address(registry), "NFTVR");
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 

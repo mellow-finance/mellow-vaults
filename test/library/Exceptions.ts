@@ -9,6 +9,7 @@ export default class Exceptions {
     static readonly VAULT_FACTORY_ADDRESS_ZERO: string = "ZVF";
     static readonly APPROVED_OR_OWNER: string = "IO";
     static readonly INCONSISTENT_LENGTH: string = "L";
+    static readonly LIMIT_OVERFLOW: string = "L";
     static readonly SORTED_AND_UNIQUE: string = "SAU";
     static readonly ERC20_INSUFFICIENT_BALANCE: string =
         "ERC20: transfer amount exceeds balance";
@@ -24,5 +25,10 @@ export default class Exceptions {
     static readonly WEIGHTS_LENGTH_IS_ZERO: string = "KGT0";
     static readonly AMOUNTS_LENGTH_IS_ZERO: string = "NGT0";
     static readonly MATRIX_NOT_RECTANGULAR: string = "NV";
+    static readonly ALLOWED_TO_CLAIM: string = "AC";
+    static readonly OTHER_VAULT_TOKENS: string = "OWT";
+    static readonly SUB_VAULT_INITIALIZED: string = "SBIN";
+    static readonly SUB_VAULT_LENGTH: string = "SBL";
+    static readonly NFT_ZERO: string = "NFT0";
 }
 // TODO: Remove outdated exceptions

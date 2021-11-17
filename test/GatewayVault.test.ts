@@ -101,7 +101,7 @@ describe("GatewayVault", () => {
                         [BigNumber.from(10 ** 9)],
                         []
                     )
-                ).to.be.revertedWith("INIT");
+                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
             });
         });
 
@@ -115,7 +115,7 @@ describe("GatewayVault", () => {
                     .transfer(gatewayVault.address, amount);
                 await expect(
                     gatewayVault.push([tokens[0].address], [amount], [])
-                ).to.be.revertedWith("L");
+                ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
             });
         });
 
@@ -174,6 +174,26 @@ describe("GatewayVault", () => {
     });
 
     describe("pull", () => {
+        describe("when called by stranger", () => {
+            it("reverts", async () => {
+                await tokens[0]
+                    .connect(deployer)
+                    .transfer(gatewayVault.address, BigNumber.from(10 ** 10));
+                await gatewayVault
+                    .connect(deployer)
+                    .push([tokens[0].address], [BigNumber.from(10 ** 9)], []);
+                await expect(
+                    gatewayVault
+                        .connect(stranger)
+                        .pull(
+                            await deployer.getAddress(),
+                            [tokens[0].address],
+                            [BigNumber.from(10 ** 9)],
+                            []
+                        )
+                ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            });
+        });
         it("emits Pull", async () => {
             await tokens[0]
                 .connect(deployer)
@@ -282,7 +302,7 @@ describe("GatewayVault", () => {
                 );
                 await expect(
                     gatewayVault.addSubvaults([ERC20Vault.address])
-                ).to.be.revertedWith("SBIN");
+                ).to.be.revertedWith(Exceptions.SUB_VAULT_INITIALIZED);
             });
         });
 
@@ -293,7 +313,7 @@ describe("GatewayVault", () => {
                 );
                 await gatewayVault.setSubvaultNfts([]);
                 await expect(gatewayVault.addSubvaults([])).to.be.revertedWith(
-                    "SBL"
+                    Exceptions.SUB_VAULT_LENGTH
                 );
             });
         });
@@ -306,7 +326,7 @@ describe("GatewayVault", () => {
                 await gatewayVault.setSubvaultNfts([]);
                 await expect(
                     gatewayVault.addSubvaults([ERC20Vault.address, 0])
-                ).to.be.revertedWith("NFT0");
+                ).to.be.revertedWith(Exceptions.NFT_ZERO);
             });
         });
     });

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { Signer } from "ethers";
 import {
     ERC20,
@@ -8,7 +8,7 @@ import {
     ProtocolGovernance,
 } from "./library/Types";
 import { deploySubVaultSystem } from "./library/Deployments";
-import { sleep } from "./library/Helpers";
+import { sleep, toObject } from "./library/Helpers";
 
 describe("AaveVaultGovernance", () => {
     const tokensCount = 2;
@@ -24,6 +24,7 @@ describe("AaveVaultGovernance", () => {
     let nftAave: number;
     let tokens: ERC20[];
     let deployment: Function;
+    let namedAccounts: any;
 
     before(async () => {
         [
@@ -44,6 +45,7 @@ describe("AaveVaultGovernance", () => {
                     vaultOwner: await deployer.getAddress(),
                 }));
         });
+        namedAccounts = await getNamedAccounts();
     });
 
     beforeEach(async () => {
@@ -71,6 +73,14 @@ describe("AaveVaultGovernance", () => {
                     await AaveVaultGovernance.delayedStrategyParams(nftAave + 1)
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
             });
+        });
+    });
+
+    describe("delayedProtocolParams", () => {
+        it("returns correct params", async () => {
+            expect(
+                toObject(await AaveVaultGovernance.delayedProtocolParams())
+            ).to.be.deep.equal({ lendingPool: namedAccounts.aaveLendingPool });
         });
     });
 

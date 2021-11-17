@@ -89,7 +89,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
 
     function setApprovalForAll(address strategy) external {
         require(msg.sender == address(_vaultGovernance), "VG");
-        require(strategy != address(0), "ZS");
+        require(msg.sender != address(0), "ZS");
         IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
         vaultRegistry.setApprovalForAll(strategy, true);
     }
@@ -99,9 +99,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         address,
         uint256,
         bytes calldata
-    ) external returns (bytes4) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(msg.sender == address(registry), "NFTVR");
+    ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
