@@ -32,11 +32,9 @@ contract GatewayVault is IGatewayVault, Vault {
         tokenAmounts = new uint256[](_vaultTokens.length);
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
-            address[] memory vTokens = vault.vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
-            uint256[] memory pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, vTokens, vTokenAmounts);
             for (uint256 j = 0; j < _vaultTokens.length; j++) {
-                tokenAmounts[j] += pTokenAmounts[j];
+                tokenAmounts[j] += vTokenAmounts[j];
             }
         }
     }
