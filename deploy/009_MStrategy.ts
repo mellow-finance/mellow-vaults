@@ -101,12 +101,12 @@ const setupVault = async (
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury, weth, usdc } =
+    const { deployer, mStrategyTreasury, weth, wbtc } =
         await getNamedAccounts();
     const gatewayVaultGovernance = await get("GatewayVaultGovernance");
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
 
-    const tokens = [weth, usdc].sort();
+    const tokens = [weth, wbtc].sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
     const coder = hre.ethers.utils.defaultAbiCoder;
