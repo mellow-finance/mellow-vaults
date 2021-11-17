@@ -51,16 +51,14 @@ contract GatewayVault is IGatewayVault, Vault {
     /// @inheritdoc IGatewayVault
     function subvaultsTvl() public view override returns (uint256[][] memory tokenAmounts) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address[] memory tokens = _vaultTokens;
+        uint256 vaultTokensLength = _vaultTokens.length;
         tokenAmounts = new uint256[][](_subvaultNfts.length);
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
-            address[] memory vTokens = vault.vaultTokens();
             uint256[] memory vTokenAmounts = vault.tvl();
-            uint256[] memory pTokenAmounts = Common.projectTokenAmounts(tokens, vTokens, vTokenAmounts);
-            tokenAmounts[i] = new uint256[](tokens.length);
-            for (uint256 j = 0; j < tokens.length; j++) {
-                tokenAmounts[i][j] = pTokenAmounts[j];
+            tokenAmounts[i] = new uint256[](vaultTokensLength);
+            for (uint256 j = 0; j < vaultTokensLength; j++) {
+                tokenAmounts[i][j] = vTokenAmounts[j];
             }
         }
     }
