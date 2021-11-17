@@ -22,7 +22,12 @@ interface IGatewayVault is IVault {
     function subvaultTvl(uint256 vaultNum) external view returns (uint256[] memory);
 
     /// @notice Adds subvaults NFTs to vault.
-    /// @dev Can be called only once
+    /// @dev Can be called only once by GatewayVaultGovernance
     /// @param nfts Subvault NFTs to add
     function addSubvaults(uint256[] memory nfts) external;
+
+    /// @notice Approves all NFTs to given address.
+    /// @dev Can be called only once by GatewayVaultGovernance
+    /// @param strategy The address to which all NFTs will be approved (strategy)
+    function setApprovalForAll(address strategy) external;
 }
