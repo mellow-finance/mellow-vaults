@@ -13,10 +13,6 @@ contract AaveVaultTest is AaveVault {
         _aTokens = aTokens;
     }
 
-    function setBaseBalances(uint256[] memory baseBalances) public {
-        _baseBalances = baseBalances;
-    }
-
     function setVaultGovernance(address newVaultGovernance) public {
         _vaultGovernance = IVaultGovernance(newVaultGovernance);
     }
