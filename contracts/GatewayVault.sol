@@ -97,9 +97,11 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     function onERC721Received(
         address,
         address,
-        uint256,
+        uint256 tokenId,
         bytes calldata
-    ) external pure returns (bytes4) {
+    ) external returns (bytes4) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(msg.sender == address(registry), "NFTVR");
         return this.onERC721Received.selector;
     }
 
