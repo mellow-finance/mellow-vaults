@@ -97,7 +97,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     function onERC721Received(
         address,
         address,
-        uint256 tokenId,
+        uint256,
         bytes calldata
     ) external returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
