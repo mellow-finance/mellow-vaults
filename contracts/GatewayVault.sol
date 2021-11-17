@@ -102,7 +102,7 @@ contract GatewayVault is IGatewayVault, Vault {
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         IGatewayVaultGovernance.DelayedStrategyParams memory strategyParams = IGatewayVaultGovernance(
             address(_vaultGovernance)
-        ).delayedStrategyParams(_selfNft());
+        ).delayedStrategyParams(_nft);
         if (optimized && strategyParams.redirects.length > 0) {
             for (uint256 i = 0; i < _subvaultNfts.length; i++) {
                 if (strategyParams.redirects[i] == 0) {
@@ -137,7 +137,7 @@ contract GatewayVault is IGatewayVault, Vault {
                 totalTvl[j] += tvls[i][j];
             }
         }
-        uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).limits;
+        uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_nft).limits;
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], "LIM");
         }
@@ -155,7 +155,7 @@ contract GatewayVault is IGatewayVault, Vault {
         uint256[][] memory tvls = subvaultsTvl();
         uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
         uint256[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance))
-            .delayedStrategyParams(_selfNft())
+            .delayedStrategyParams(_nft)
             .redirects;
 
         if (optimized && (_redirects.length > 0)) {

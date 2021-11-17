@@ -17,6 +17,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
     IVaultGovernance internal _vaultGovernance;
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
+    uint256 private _nft;
 
     /// @notice Creates a new contract.
     /// @dev All subvault nfts must be owned by this vault before.
@@ -49,6 +50,16 @@ contract LpIssuer is ILpIssuer, ERC20 {
     /// @inheritdoc ILpIssuer
     function subvaultNft() external view returns (uint256) {
         return _subvaultNft;
+    }
+
+    function nft() external view returns (uint256) {
+        return _nft;
+    }
+
+    /// @inheritdoc ILpIssuer
+    function initialize(uint256 nft_) external {
+        require(msg.sender == address(_vaultGovernance), "VG");
+        _nft = nft_;
     }
 
     /// @notice Deposit tokens into LpIssuer
@@ -92,7 +103,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
         }
         require(
             amountToMint + balanceOf(msg.sender) <=
-                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
+                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_nft).tokenLimitPerAddress,
             "LPA"
         );
         if (amountToMint > 0) {
@@ -131,11 +142,11 @@ contract LpIssuer is ILpIssuer, ERC20 {
     }
 
     /// @inheritdoc ILpIssuer
-    function addSubvault(uint256 nft) external {
+    function addSubvault(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "RVG");
         require(_subvaultNft == 0, "SBIN");
-        require(nft > 0, "NFT0");
-        _subvaultNft = nft;
+        require(nft_ > 0, "NFT0");
+        _subvaultNft = nft_;
     }
 
     function _allowTokenIfNecessary(address token, address to) internal {
@@ -146,11 +157,6 @@ contract LpIssuer is ILpIssuer, ERC20 {
 
     function _subvault() internal view returns (IVault) {
         return IVault(_vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft));
-    }
-
-    function _selfNft() internal view returns (uint256) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        return registry.nftForVault(address(this));
     }
 
     /// @notice Emitted when liquidity is deposited
