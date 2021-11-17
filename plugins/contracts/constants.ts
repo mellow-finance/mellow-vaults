@@ -5,4 +5,5 @@ export const CONTRACTS = <const>[
     "uniswapV3Router",
     "usdc",
     "weth",
+    "yearnVaultRegistry",
 ];
