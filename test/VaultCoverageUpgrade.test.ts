@@ -82,10 +82,6 @@ describe("Vault", () => {
             vaultOwner: await deployer.getAddress(),
             treasury: await deployer.getAddress(),
         }));
-        differentERC20Token = (await deployERC20Tokens(1))[0];
-        await differentERC20Token
-            .connect(deployer)
-            .transfer(differentERC20Vault.address, BigNumber.from(10 ** 9));
         token = (await deployERC20Tokens(1))[0];
         anotherERC20Token = (await deployERC20Tokens(1))[0];
         await token
