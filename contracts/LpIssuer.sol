@@ -67,7 +67,6 @@ contract LpIssuer is ILpIssuer, ERC20 {
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         require(_subvaultNft > 0, "INIT");
-        uint256[] memory tvl = _subvault().tvl();
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
@@ -79,7 +78,9 @@ contract LpIssuer is ILpIssuer, ERC20 {
             tokenAmounts,
             options
         );
-        uint256 amountToMint;
+        // TODO: Think if it's better to make pre-money valuation
+        uint256[] memory tvl = subvault.tvl(); //post-money
+        uint256 amountToMint = 0;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < _vaultTokens.length; i++) {
                 // TODO: check if there could be smth better
@@ -90,7 +91,8 @@ contract LpIssuer is ILpIssuer, ERC20 {
         }
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (tvl[i] > 0) {
-                uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
+                /// TODO: Check price manipulation here for yearn / aave (cached tvls)
+                uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / (tvl[i] - actualTokenAmounts[i]);
                 // TODO: check this algo. The assumption is that everything is rounded down.
                 // So that max token has the least error. Think about the case when one token is dust.
                 if (newMint > amountToMint) {
@@ -125,6 +127,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
         require(_subvaultNft > 0, "INIT");
         require(totalSupply() > 0, "TS");
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
+        // TODO: Check price manipulation here
         uint256[] memory tvl = _subvault().tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
@@ -134,7 +137,6 @@ contract LpIssuer is ILpIssuer, ERC20 {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
-            actualTokenAmounts[i];
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
