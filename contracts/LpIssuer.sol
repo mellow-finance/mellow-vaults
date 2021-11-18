@@ -91,8 +91,10 @@ contract LpIssuer is ILpIssuer, ERC20 {
         }
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (tvl[i] > 0) {
-                /// TODO: Check price manipulation here for yearn / aave (cached tvls)
-                uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / (tvl[i] - actualTokenAmounts[i]);
+                // TODO: Check price manipulation here for yearn / aave (cached tvls)
+                // TODO: Should be (actualTokenAmounts[i] * totalSupply()) / (tvl[i] - actualTokenAmounts[i]) for consistent post-money valuation
+                // However care needs to be taken in terms of rounding, etc.
+                uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
                 // So that max token has the least error. Think about the case when one token is dust.
                 if (newMint > amountToMint) {
