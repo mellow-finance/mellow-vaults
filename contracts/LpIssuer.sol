@@ -18,6 +18,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     IVaultGovernance internal _vaultGovernance;
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
+    uint256 private _nft;
 
     /// @notice Creates a new contract.
     /// @dev All subvault nfts must be owned by this vault before.
@@ -52,12 +53,21 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         return _subvaultNft;
     }
 
+    function nft() external view returns (uint256) {
+        return _nft;
+    }
+
+    /// @inheritdoc ILpIssuer
+    function initialize(uint256 nft_) external {
+        require(msg.sender == address(_vaultGovernance), "VG");
+        _nft = nft_;
+    }
+
     /// @notice Deposit tokens into LpIssuer
     /// @param tokenAmounts Amounts of tokens to push
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         require(_subvaultNft > 0, "INIT");
-        uint256[] memory tvl = _subvault().tvl();
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
@@ -69,7 +79,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             tokenAmounts,
             options
         );
-        uint256 amountToMint;
+        // TODO: Think if it's better to make pre-money valuation
+        uint256[] memory tvl = subvault.tvl(); //post-money
+        uint256 amountToMint = 0;
         if (totalSupply() == 0) {
             for (uint256 i = 0; i < _vaultTokens.length; i++) {
                 // TODO: check if there could be smth better
@@ -80,6 +92,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         }
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (tvl[i] > 0) {
+                // TODO: Check price manipulation here for yearn / aave (cached tvls)
+                // TODO: Should be (actualTokenAmounts[i] * totalSupply()) / (tvl[i] - actualTokenAmounts[i]) for consistent post-money valuation
+                // However care needs to be taken in terms of rounding, etc.
                 uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
                 // So that max token has the least error. Think about the case when one token is dust.
@@ -93,7 +108,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         }
         require(
             amountToMint + balanceOf(msg.sender) <=
-                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_selfNft()).tokenLimitPerAddress,
+                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_nft).tokenLimitPerAddress,
             "LPA"
         );
         if (amountToMint > 0) {
@@ -115,6 +130,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         require(_subvaultNft > 0, "INIT");
         require(totalSupply() > 0, "TS");
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
+        // TODO: Check price manipulation here
         uint256[] memory tvl = _subvault().tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
@@ -124,7 +140,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
-            actualTokenAmounts[i];
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
@@ -132,11 +147,11 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     }
 
     /// @inheritdoc ILpIssuer
-    function addSubvault(uint256 nft) external {
+    function addSubvault(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "RVG");
         require(_subvaultNft == 0, "SBIN");
-        require(nft > 0, "NFT0");
-        _subvaultNft = nft;
+        require(nft_ > 0, "NFT0");
+        _subvaultNft = nft_;
     }
 
     function onERC721Received(
@@ -158,11 +173,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
 
     function _subvault() internal view returns (IVault) {
         return IVault(_vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft));
-    }
-
-    function _selfNft() internal view returns (uint256) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        return registry.nftForVault(address(this));
     }
 
     /// @notice Emitted when liquidity is deposited
