@@ -106,7 +106,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const gatewayVaultGovernance = await get("GatewayVaultGovernance");
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
 
-    const tokens = [weth, wbtc].sort();
+    const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
     const coder = hre.ethers.utils.defaultAbiCoder;

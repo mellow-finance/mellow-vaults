@@ -82,7 +82,7 @@ contract GatewayVault is IGatewayVault, Vault {
             require(nft_ > 0, "NFT0");
             IVault vault = IVault(registry.vaultForNft(nft_));
             address[] memory vTokens = vault.vaultTokens();
-            require(selfTokens.length == vTokens.length, "VL");
+            require(selfTokens.length == vTokens.length, "L");
             for (uint256 j = 0; j < selfTokens.length; j++) {
                 require(selfTokens[j] == vTokens[j], "VT");
             }
