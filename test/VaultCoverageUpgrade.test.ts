@@ -45,6 +45,7 @@ describe("Vault", () => {
     let ERC20VaultGovernance: VaultGovernance;
     let testEncodingContract: any;
     let contract: any;
+    let deployment: Function;
 
     before(async () => {
         [
@@ -55,49 +56,58 @@ describe("Vault", () => {
             protocolGovernanceAdmin,
             strategy,
         ] = await ethers.getSigners();
+        deployment = deployments.createFixture(async () => {
+            await deployments.fixture();
+            ({
+                ERC20Vault,
+                AnotherERC20Vault,
+                AaveVault,
+                vaultRegistry,
+                nftERC20,
+                nftAave,
+                gatewayVault,
+                gatewayNft,
+                gatewayVaultGovernance,
+                protocolGovernance,
+                ERC20VaultGovernance,
+            } = await deploySubVaultsXGatewayVaultSystem({
+                adminSigner: protocolGovernanceAdmin,
+                vaultOwnerSigner: deployer,
+                strategy: await strategy.getAddress(),
+                treasury: await deployer.getAddress(),
+                enableUniV3Vault: false,
+            }));
 
-        ({
-            ERC20Vault,
-            AnotherERC20Vault,
-            AaveVault,
-            vaultRegistry,
-            nftERC20,
-            nftAave,
-            gatewayVault,
-            gatewayNft,
-            gatewayVaultGovernance,
-            protocolGovernance,
-            ERC20VaultGovernance,
-        } = await deploySubVaultsXGatewayVaultSystem({
-            adminSigner: protocolGovernanceAdmin,
-            vaultOwnerSigner: deployer,
-            strategy: await strategy.getAddress(),
-            treasury: await deployer.getAddress(),
-            enableUniV3Vault: false,
-        }));
-
-        ({ ERC20Vault: differentERC20Vault } = await deploySubVaultSystem({
-            tokensCount: 2,
-            adminSigner: protocolGovernanceAdmin,
-            vaultOwner: await deployer.getAddress(),
-            treasury: await deployer.getAddress(),
-        }));
-        token = (await deployERC20Tokens(1))[0];
-        anotherERC20Token = (await deployERC20Tokens(1))[0];
-        await token
-            .connect(deployer)
-            .transfer(ERC20Vault.address, BigNumber.from(10 ** 9));
-        await vaultRegistry
-            .connect(strategy)
-            .approve(await user.getAddress(), BigNumber.from(nftERC20));
-        let factory = await ethers.getContractFactory("TestFunctionEncoding");
-        testEncodingContract = await factory.deploy(ERC20Vault.address);
-        let factoryVaultTest = await ethers.getContractFactory("VaultTest");
-        contract = await factoryVaultTest.deploy(
-            ERC20VaultGovernance.address,
-            []
-        );
+            ({ ERC20Vault: differentERC20Vault } = await deploySubVaultSystem({
+                tokensCount: 2,
+                adminSigner: protocolGovernanceAdmin,
+                vaultOwner: await deployer.getAddress(),
+                treasury: await deployer.getAddress(),
+            }));
+            token = (await deployERC20Tokens(1))[0];
+            anotherERC20Token = (await deployERC20Tokens(1))[0];
+            await token
+                .connect(deployer)
+                .transfer(ERC20Vault.address, BigNumber.from(10 ** 9));
+            await vaultRegistry
+                .connect(strategy)
+                .approve(await user.getAddress(), BigNumber.from(nftERC20));
+            let factory = await ethers.getContractFactory(
+                "TestFunctionEncoding"
+            );
+            testEncodingContract = await factory.deploy(ERC20Vault.address);
+            let factoryVaultTest = await ethers.getContractFactory("VaultTest");
+            contract = await factoryVaultTest.deploy(
+                ERC20VaultGovernance.address,
+                []
+            );
+        });
     });
+
+    beforeEach(async () => {
+        await deployment();
+    });
+
     describe("reclaimTokens", () => {
         describe("when called by protocolGovernanceAdmin", () => {
             it("reclaims tokens and emits ReclaimTokens event", async () => {
