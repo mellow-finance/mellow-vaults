@@ -4,6 +4,9 @@ pragma solidity 0.8.10;
 import "./IVaultGovernance.sol";
 
 interface IVault {
+    /// @notice VaultRegistry NFT for this vault
+    function nft() external view returns (uint256);
+
     /// @notice Address of the Vault Governance for this contract.
     function vaultGovernance() external view returns (IVaultGovernance);
 
@@ -15,6 +18,10 @@ interface IVault {
     /// other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
     /// @return tokenAmounts Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
     function tvl() external view returns (uint256[] memory tokenAmounts);
+
+    /// @notice Initialize contract with vault nft
+    /// @param nft VaultRegistry NFT for this vault
+    function initialize(uint256 nft) external;
 
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
     /// the contract balance and convert it to yUSDC.

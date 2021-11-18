@@ -60,6 +60,10 @@ const config: HardhatUserConfig = {
         protocolTreasury: {
             default: 0,
         },
+        wbtc: {
+            default: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+            kovan: "0xd1b98b6607330172f1d991521145a22bce793277",
+        },
         yearnVaultRegistry: {
             default: "0xe15461b18ee31b7379019dc523231c57d1cbc18c",
         },
@@ -115,6 +119,9 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: process.env["ETHERSCAN_API_KEY"],
+    },
+    mocha: {
+        timeout: 200000,
     },
 };
 

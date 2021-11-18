@@ -8,7 +8,7 @@ import "./Vault.sol";
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
     address[] internal _aTokens;
-    uint256[] internal _baseBalances;
+    uint256[] internal _tvls;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
@@ -20,17 +20,18 @@ contract AaveVault is Vault {
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             // TODO: check if token doesn't exist
             _aTokens[i] = _getAToken(_vaultTokens[i]);
-            _baseBalances.push(0);
+            _tvls.push(0);
         }
     }
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        address[] memory tokens = _vaultTokens;
-        tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _aTokens.length; i++) {
-            address aToken = _aTokens[i];
-            tokenAmounts[i] = IERC20(aToken).balanceOf(address(this));
+        return _tvls;
+    }
+
+    function updateTvls() public {
+        for (uint256 i = 0; i < _tvls.length; i++) {
+            _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
         }
     }
 
@@ -44,21 +45,13 @@ contract AaveVault is Vault {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
-            address aToken = _aTokens[i];
             address token = tokens[i];
             _allowTokenIfNecessary(token);
-            uint256 baseTokensToMint;
-            if (_baseBalances[i] == 0) {
-                baseTokensToMint = tokenAmounts[i];
-            } else {
-                // TODO - IERC20(aToken).balanceOf(address(this)) to baseBalances[i]
-                baseTokensToMint = (tokenAmounts[i] * _baseBalances[i]) / IERC20(aToken).balanceOf(address(this));
-            }
-
             // TODO: Check what is 0
             _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), 0);
-            _baseBalances[i] += baseTokensToMint;
         }
+        // TODO: Check price manipulation here for LPIssuer
+        updateTvls();
         actualTokenAmounts = tokenAmounts;
     }
 
@@ -69,18 +62,12 @@ contract AaveVault is Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < _aTokens.length; i++) {
-            address aToken = _aTokens[i];
-            uint256 balance = IERC20(aToken).balanceOf(address(this));
-            if (balance == 0) {
+            if ((_tvls[i] == 0) || (tokenAmounts[i] == 0)) {
                 continue;
             }
-            uint256 tokensToBurn = (tokenAmounts[i] * _baseBalances[i]) / balance;
-            if (tokensToBurn == 0) {
-                continue;
-            }
-            _baseBalances[i] -= tokensToBurn;
             _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
         }
+        updateTvls();
         actualTokenAmounts = tokenAmounts;
     }
 

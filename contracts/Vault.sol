@@ -14,6 +14,7 @@ abstract contract Vault is IVault {
     IVaultGovernance internal _vaultGovernance;
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
+    uint256 internal _nft;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
@@ -42,6 +43,18 @@ abstract contract Vault is IVault {
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory tokenAmounts);
 
+    /// @inheritdoc IVault
+    function nft() external view returns (uint256) {
+        return _nft;
+    }
+
+    // -------------------  PUBLIC, MUTATING, VaultGovernance  -------------------
+
+    function initialize(uint256 nft_) external {
+        require(msg.sender == address(_vaultGovernance), "VG");
+        _nft = nft_;
+    }
+
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
     /// @inheritdoc IVault
@@ -50,6 +63,7 @@ abstract contract Vault is IVault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) public returns (uint256[] memory actualTokenAmounts) {
+        require(_nft > 0, "INIT");
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
@@ -87,7 +101,7 @@ abstract contract Vault is IVault {
     ) external returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address owner = registry.ownerOf(_selfNft());
+        address owner = registry.ownerOf(_nft);
         require(owner == msg.sender || _isValidPullDestination(to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
@@ -98,6 +112,7 @@ abstract contract Vault is IVault {
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
     function reclaimTokens(address to, address[] memory tokens) external {
+        require(_nft > 0, "INIT");
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), "ADM");
@@ -120,6 +135,7 @@ abstract contract Vault is IVault {
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     /// @inheritdoc IVault
     function claimRewards(address from, bytes memory data) external override {
+        require(_nft > 0, "INIT");
         require(_isApprovedOrOwner(msg.sender), "ADM");
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), "AC");
@@ -176,18 +192,13 @@ abstract contract Vault is IVault {
 
     // -------------------  PRIVATE, VIEW  -------------------
 
-    function _selfNft() internal view returns (uint256) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        return registry.nftForVault(address(this));
-    }
-
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft = registry.nftForVault(address(this));
-        if (nft == 0) {
+        uint256 nft_ = _nft;
+        if (nft_ == 0) {
             return false;
         }
-        return registry.getApproved(nft) == sender || registry.ownerOf(nft) == sender;
+        return registry.getApproved(nft_) == sender || registry.ownerOf(nft_) == sender;
     }
 
     function _isVaultToken(address token) internal view returns (bool) {
