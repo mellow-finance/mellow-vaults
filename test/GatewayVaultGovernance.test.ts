@@ -67,7 +67,6 @@ describe("GatewayVaultGovernance", () => {
         //         );
         //     });
         // });
-
         it("sets stageDelayedStrategyParams and emits StageDelayedStrategyParams event", async () => {
             await expect(
                 await gatewayVaultGovernance
