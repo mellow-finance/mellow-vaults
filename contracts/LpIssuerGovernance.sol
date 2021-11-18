@@ -38,12 +38,6 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
 
     function commitDelayedStrategyParams(uint256 nft) external {
         _commitDelayedStrategyParams(nft);
-        // emit CommitDelayedStrategyParams(
-        //     tx.origin,
-        //     msg.sender,
-        //     nft,
-        //     abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
-        // );
     }
 
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
