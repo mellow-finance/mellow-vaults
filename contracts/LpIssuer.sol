@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./libraries/Common.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IProtocolGovernance.sol";
@@ -11,7 +12,7 @@ import "./DefaultAccessControl.sol";
 import "./LpIssuerGovernance.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract LpIssuer is ILpIssuer, ERC20 {
+contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     using SafeERC20 for IERC20;
     uint256 private _subvaultNft;
     IVaultGovernance internal _vaultGovernance;
@@ -151,6 +152,17 @@ contract LpIssuer is ILpIssuer, ERC20 {
         require(_subvaultNft == 0, "SBIN");
         require(nft_ > 0, "NFT0");
         _subvaultNft = nft_;
+    }
+
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external returns (bytes4) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(msg.sender == address(registry), "NFTVR");
+        return this.onERC721Received.selector;
     }
 
     function _allowTokenIfNecessary(address token, address to) internal {
