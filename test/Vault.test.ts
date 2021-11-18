@@ -143,6 +143,18 @@ describe("Vault", () => {
             });
         });
 
+        describe("when token amount == 0", () => {
+            it("passes", async () => {
+                let tempToken = (await deployERC20Tokens(1))[0];
+                await tempToken
+                    .connect(deployer)
+                    .transfer(gatewayVault.address, BigNumber.from(0));
+                await gatewayVault
+                    .connect(protocolGovernanceAdmin)
+                    .reclaimTokens(gatewayVault.address, [tempToken.address]);
+            });
+        });
+
         describe("when contract is not approved by vaultRegistry", () => {
             it("reverts", async () => {
                 let anotherERC20Vault: ERC20Vault;
