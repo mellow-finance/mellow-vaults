@@ -1,7 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
-import { ethers, deployments, getNamedAccounts } from "hardhat";
-import { BigNumber } from "@ethersproject/bignumber";
+import { ethers, deployments } from "hardhat";
 import Exceptions from "./library/Exceptions";
 import { ERC20, LpIssuerGovernance } from "./library/Types";
 import { LpIssuer, ProtocolGovernance, VaultRegistry } from "./library/Types";
@@ -53,6 +52,10 @@ describe("LpIssuer", () => {
                 await deployer.provider?.getCode(LpIssuer.address)
             ).to.not.equal("0x");
         });
+
+        describe("when tokens not sorted nor unique", () => {
+            // TODO: implement
+        });
     });
 
     describe("::addSubvault", () => {
@@ -101,15 +104,25 @@ describe("LpIssuer", () => {
 
         describe("when not initialized", () => {
             it("passes", async () => {
-                await expect(LpIssuer.deposit([1, 1], [])).to.not.be.reverted;
+                await expect(LpIssuer.deposit([10 ** 9, 10 ** 9], [])).to.not.be
+                    .reverted;
                 expect(
                     await LpIssuer.balanceOf(await deployer.getAddress())
-                ).to.equal(1);
+                ).to.equal(10 ** 9);
             });
         });
     });
 
     describe("::withdraw", () => {
+        beforeEach(async () => {
+            for (let i: number = 0; i < tokens.length; i++) {
+                await tokens[i].approve(
+                    LpIssuer.address,
+                    ethers.constants.MaxUint256
+                );
+            }
+        });
+
         describe("when totalSupply is 0", () => {
             it("reverts", async () => {
                 await expect(
@@ -120,10 +133,13 @@ describe("LpIssuer", () => {
 
         describe("when totalSupply is greater then 0", () => {
             it("passes", async () => {
-                await expect(LpIssuer.deposit([1, 1], [])).to.not.be.reverted;
+                await LpIssuer.deposit([10 ** 9, 10 ** 9], []);
                 await expect(
                     LpIssuer.withdraw(await deployer.getAddress(), 1, [])
                 ).to.not.be.reverted;
+                expect(
+                    await LpIssuer.balanceOf(await deployer.getAddress())
+                ).to.equal(10 ** 9 - 1);
             });
         });
     });
