@@ -38,7 +38,7 @@ const config: HardhatUserConfigWithTypechain = {
         treasury: {
             default: 6,
         },
-        protocolGovernanceAdmin: {
+        admin: {
             default: 7,
         },
         stranger1: {
