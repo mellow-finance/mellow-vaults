@@ -8,17 +8,19 @@ import {
     ProtocolGovernance,
 } from "./library/Types";
 import { deploySubVaultSystem } from "./library/Deployments";
-import { sleep, toObject, withSigner } from "./library/Helpers";
+import { now, sleep, sleepTo, toObject, withSigner } from "./library/Helpers";
 import { Contract } from "hardhat/internal/hardhat-network/stack-traces/model";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { Deployment } from "hardhat-deploy/dist/types";
 import { read } from "fs";
+import Exceptions from "./library/Exceptions";
 
 describe("YearnVaultGovernance", () => {
     const tokensCount = 2;
     let deploymentFixture: Function;
     let deployer: string;
     let admin: string;
+    let stranger: string;
     let yearnVaultRegistry: string;
     let protocolGovernance: string;
     let vaultRegistry: string;
@@ -28,8 +30,9 @@ describe("YearnVaultGovernance", () => {
             deployer: d,
             admin: a,
             yearnVaultRegistry: y,
+            stranger: s,
         } = await getNamedAccounts();
-        [deployer, admin, yearnVaultRegistry] = [d, a, y];
+        [deployer, admin, yearnVaultRegistry, stranger] = [d, a, y, s];
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
@@ -86,17 +89,59 @@ describe("YearnVaultGovernance", () => {
             const params = {
                 yearnVaultRegistry: vaultRegistry,
             };
-            await deployments.execute(
+            const { read, execute } = deployments;
+            await execute(
                 "YearnVaultGovernance",
                 { from: admin, autoMine: true },
                 "stageDelayedProtocolParams",
                 params
             );
-            const stagedParams = await deployments.read(
+            const stagedParams = await read(
                 "YearnVaultGovernance",
                 "stagedDelayedProtocolParams"
             );
             expect(toObject(stagedParams)).to.eql(params);
+        });
+
+        it("sets the delay for commit", async () => {
+            const { read, execute } = deployments;
+            const params = {
+                yearnVaultRegistry: vaultRegistry,
+            };
+            const start = now();
+
+            await sleepTo(start);
+            await execute(
+                "YearnVaultGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedProtocolParams",
+                params
+            );
+            const governanceDelay = await read(
+                "ProtocolGovernance",
+                "governanceDelay"
+            );
+            const timestamp = await read(
+                "YearnVaultGovernance",
+                "delayedProtocolParamsTimestamp"
+            );
+            expect(timestamp).to.eq(governanceDelay.add(start).add(1));
+        });
+
+        describe("when called not by admin", () => {
+            it("reverts", async () => {
+                const params = {
+                    yearnVaultRegistry: vaultRegistry,
+                };
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: deployer, autoMine: true },
+                        "stageDelayedProtocolParams",
+                        params
+                    )
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
         });
     });
 });
