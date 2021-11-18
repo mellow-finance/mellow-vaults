@@ -176,52 +176,43 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("setPendingParams", () => {
-        it("sets the params", () => {
-            describe("when called once", () => {
-                it("sets the params", async () => {
-                    await protocolGovernance.setPendingParams(params);
+        describe("when called once", () => {
+            it("sets the params", async () => {
+                await protocolGovernance.setPendingParams(params);
 
-                    expect(
-                        toObject(
-                            await protocolGovernance.functions.pendingParams()
-                        )
-                    ).to.deep.equal(params);
-                });
-            });
-
-            describe("when called twice", () => {
-                it("sets the params", async () => {
-                    await protocolGovernance.setPendingParams(paramsTimeout);
-                    await protocolGovernance.setPendingParams(paramsZero);
-
-                    expect(
-                        toObject(
-                            await protocolGovernance.functions.pendingParams()
-                        )
-                    ).to.deep.equal(paramsZero);
-                });
+                expect(
+                    toObject(await protocolGovernance.functions.pendingParams())
+                ).to.deep.equal(params);
             });
         });
 
-        it("sets governance delay", async () => {
-            sleepTo(timestamp);
-            await protocolGovernance.setPendingParams(params);
-            expect(
-                Math.abs(
-                    (await protocolGovernance.pendingParamsTimestamp()) -
-                        timestamp
-                )
-            ).to.be.equal(SECONDS_PER_DAY + 1);
-        });
+        describe("when called twice", () => {
+            it("sets the params", async () => {
+                await protocolGovernance.setPendingParams(paramsTimeout);
+                await protocolGovernance.setPendingParams(paramsZero);
 
-        describe("when callen by not admin", () => {
-            it("reverts", async () => {
-                await expect(
-                    protocolGovernance
-                        .connect(stranger)
-                        .setPendingParams(params)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                expect(
+                    toObject(await protocolGovernance.functions.pendingParams())
+                ).to.deep.equal(paramsZero);
             });
+        });
+    });
+
+    it("sets governance delay", async () => {
+        sleepTo(timestamp);
+        await protocolGovernance.setPendingParams(params);
+        expect(
+            Math.abs(
+                (await protocolGovernance.pendingParamsTimestamp()) - timestamp
+            )
+        ).to.be.equal(SECONDS_PER_DAY);
+    });
+
+    describe("when callen by not admin", () => {
+        it("reverts", async () => {
+            await expect(
+                protocolGovernance.connect(stranger).setPendingParams(params)
+            ).to.be.revertedWith(Exceptions.ADMIN);
         });
     });
 
