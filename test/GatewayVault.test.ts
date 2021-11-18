@@ -1,7 +1,13 @@
 import { expect } from "chai";
-import { ethers, deployments, network } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import { BigNumber, Signer } from "ethers";
-import { ERC20, Vault, VaultRegistry, AaveVault } from "./library/Types";
+import {
+    ERC20,
+    Vault,
+    VaultRegistry,
+    AaveVault,
+    VaultGovernance,
+} from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
 import { withSigner } from "./library/Helpers";
@@ -20,6 +26,7 @@ describe("GatewayVault", () => {
     let anotherNftERC20: number;
     let tokens: ERC20[];
     let gatewayVault: Vault;
+    let gatewayVaultGovernance: VaultGovernance;
     let deployment: Function;
 
     before(async () => {
@@ -36,6 +43,7 @@ describe("GatewayVault", () => {
                 AnotherERC20Vault,
                 vaultRegistry,
                 AaveVault,
+                gatewayVaultGovernance,
             } = await deploySubVaultsXGatewayVaultSystem({
                 adminSigner: admin,
                 treasury: await treasury.getAddress(),
