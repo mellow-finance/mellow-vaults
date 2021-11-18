@@ -44,7 +44,7 @@ describe("Vault", () => {
     let differentERC20Vault: ERC20Vault;
     let ERC20VaultGovernance: VaultGovernance;
     let testEncodingContract: any;
-    let contract: any;
+    let testVault: any;
     let deployment: Function;
 
     before(async () => {
@@ -97,7 +97,7 @@ describe("Vault", () => {
             );
             testEncodingContract = await factory.deploy(ERC20Vault.address);
             let factoryVaultTest = await ethers.getContractFactory("VaultTest");
-            contract = await factoryVaultTest.deploy(
+            testVault = await factoryVaultTest.deploy(
                 ERC20VaultGovernance.address,
                 []
             );
@@ -131,7 +131,7 @@ describe("Vault", () => {
             });
         });
 
-        describe("when to is not a contract address", () => {
+        describe("when to is not a testVault address", () => {
             it("reverts", async () => {
                 await expect(
                     gatewayVault
@@ -155,7 +155,7 @@ describe("Vault", () => {
             });
         });
 
-        describe("when contract is not approved by vaultRegistry", () => {
+        describe("when testVault is not approved by vaultRegistry", () => {
             it("reverts", async () => {
                 let anotherERC20Vault: ERC20Vault;
                 let factory = await ethers.getContractFactory("ERC20Vault");
@@ -175,7 +175,7 @@ describe("Vault", () => {
                         .reclaimTokens(anotherERC20Vault.address, [
                             token.address,
                         ])
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
             });
         });
 
@@ -229,15 +229,6 @@ describe("Vault", () => {
                     ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
                 });
             });
-            describe("when from Vault is not registered", () => {
-                it("reverts", async () => {
-                    expect(
-                        await contract.isValidPullDestination(
-                            ERC20Vault.address
-                        )
-                    ).to.be.equal(false);
-                });
-            });
         });
     });
 
@@ -249,6 +240,15 @@ describe("Vault", () => {
                         .connect(stranger)
                         .claimRewards(ERC20Vault.address, [])
                 ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+        });
+        describe("when from Vault is not registered", () => {
+            it("reverts", async () => {
+                await expect(
+                    testVault
+                        .connect(deployer)
+                        .claimRewards(ERC20Vault.address, [])
+                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
             });
         });
         describe("when not allowed to claim", () => {
@@ -296,6 +296,16 @@ describe("Vault", () => {
         });
     });
 
+    describe("push", () => {
+        describe("when from Vault is not registered", () => {
+            it("reverts", async () => {
+                await expect(
+                    testVault.connect(deployer).push([], [], [])
+                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
+            });
+        });
+    });
+
     describe("pull", () => {
         describe("when called by approved address and pull destination is invalid", () => {
             it("reverts", async () => {
@@ -329,7 +339,51 @@ describe("Vault", () => {
 
     describe("_postReclaimTokens", () => {
         it("passes", async () => {
-            await contract.postReclaimTokens(ethers.constants.AddressZero, []);
+            await testVault.postReclaimTokens(ethers.constants.AddressZero, []);
+        });
+    });
+
+    describe("nft", () => {
+        it("returns nft", async () => {
+            expect(await ERC20Vault.nft()).to.be.equal(
+                BigNumber.from(nftERC20)
+            );
+        });
+    });
+
+    describe("_isApprovedOrOwner", () => {
+        describe("when vault has not been approved by vault registry", () => {
+            it("reverts", async () => {
+                expect(
+                    await testVault.isApprovedOrOwner(ERC20Vault.address)
+                ).to.be.equal(false);
+            });
+        });
+    });
+
+    describe("isValidPullDestination", () => {
+        describe("when from Vault is not registered", () => {
+            it("reverts", async () => {
+                expect(
+                    await testVault
+                        .connect(deployer)
+                        .isValidPullDestination(ERC20Vault.address)
+                ).to.be.equal(false);
+            });
+        });
+    });
+
+    describe("initialize", () => {
+        describe("when called not from vault governance", () => {
+            it("reverts", async () => {
+                await expect(
+                    testVault
+                        .connect(deployer)
+                        .initialize(ERC20Vault.address, [])
+                ).to.be.revertedWith(
+                    Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+                );
+            });
         });
     });
 });

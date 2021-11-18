@@ -39,4 +39,8 @@ contract VaultTest is Vault {
     function isValidPullDestination(address to) external view returns (bool) {
         return _isValidPullDestination(to);
     }
+
+    function isApprovedOrOwner(address to) external view returns (bool) {
+        return _isApprovedOrOwner(to);
+    }
 }
