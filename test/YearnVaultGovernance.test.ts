@@ -8,25 +8,37 @@ import {
     ProtocolGovernance,
 } from "./library/Types";
 import { deploySubVaultSystem } from "./library/Deployments";
-import { sleep } from "./library/Helpers";
+import { sleep, toObject, withSigner } from "./library/Helpers";
 import { Contract } from "hardhat/internal/hardhat-network/stack-traces/model";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { Deployment } from "hardhat-deploy/dist/types";
+import { read } from "fs";
 
 describe("YearnVaultGovernance", () => {
     const tokensCount = 2;
     let deploymentFixture: Function;
     let deployer: string;
     let admin: string;
+    let yearnVaultRegistry: string;
+    let protocolGovernance: string;
+    let vaultRegistry: string;
 
     before(async () => {
-        const { deployer: d, admin: a } = await getNamedAccounts();
-        [deployer, admin] = [d, a];
+        const {
+            deployer: d,
+            admin: a,
+            yearnVaultRegistry: y,
+        } = await getNamedAccounts();
+        [deployer, admin, yearnVaultRegistry] = [d, a, y];
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
-            const { execute, read } = deployments;
+
+            const { execute, read, deploy, get } = deployments;
+            protocolGovernance = (await get("ProtocolGovernance")).address;
+            vaultRegistry = (await get("VaultRegistry")).address;
+
             const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
-            console.log(adminRole, deployer, admin);
 
             await execute(
                 "ProtocolGovernance",
@@ -39,7 +51,7 @@ describe("YearnVaultGovernance", () => {
                 adminRole,
                 admin
             );
-            await await execute(
+            await execute(
                 "ProtocolGovernance",
                 {
                     from: deployer,
@@ -50,6 +62,18 @@ describe("YearnVaultGovernance", () => {
                 adminRole,
                 deployer
             );
+            await deploy("YearnVaultGovernance", {
+                from: deployer,
+                args: [
+                    {
+                        protocolGovernance: protocolGovernance,
+                        registry: vaultRegistry,
+                    },
+                    { yearnVaultRegistry },
+                ],
+                log: true,
+                autoMine: true,
+            });
         });
     });
 
@@ -57,5 +81,22 @@ describe("YearnVaultGovernance", () => {
         await deploymentFixture();
     });
 
-    it("succeeds", async () => {});
+    describe("stageDelayedProtocolParams", () => {
+        it("stages new delayed protocol params", async () => {
+            const params = {
+                yearnVaultRegistry: vaultRegistry,
+            };
+            await deployments.execute(
+                "YearnVaultGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedProtocolParams",
+                params
+            );
+            const stagedParams = await deployments.read(
+                "YearnVaultGovernance",
+                "stagedDelayedProtocolParams"
+            );
+            expect(toObject(stagedParams)).to.eql(params);
+        });
+    });
 });
