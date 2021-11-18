@@ -71,9 +71,16 @@ describe("ERC20VaultGovernance", () => {
 
     describe("stagedDelayedStrategyParams", () => {
         it("returns params", async () => {
+            const address = await treasury.getAddress();
+            await ERC20VaultGovernance.connect(
+                admin
+            ).stageDelayedStrategyParams(nftERC20, {
+                strategyTreasury: address,
+            });
+
             expect(
                 await ERC20VaultGovernance.stagedDelayedStrategyParams(nftERC20)
-            ).to.be.deep.equal([await treasury.getAddress()]);
+            ).to.be.deep.equal([address]);
         });
 
         describe("when passed unknown nft", () => {
