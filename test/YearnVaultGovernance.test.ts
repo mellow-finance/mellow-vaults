@@ -21,10 +21,12 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { Deployment } from "hardhat-deploy/dist/types";
 import { read } from "fs";
 import Exceptions from "./library/Exceptions";
-import { DelayedProtocolParamsStruct } from "./types/YearnVaultGovernance";
+import {
+    DelayedProtocolParamsStruct,
+    DelayedStrategyParamsStruct,
+} from "./types/YearnVaultGovernance";
 
 describe("YearnVaultGovernance", () => {
-    const tokensCount = 2;
     let deploymentFixture: Function;
     let deployer: string;
     let admin: string;
@@ -97,7 +99,7 @@ describe("YearnVaultGovernance", () => {
             yearnVaultRegistry: randomAddress(),
         };
 
-        describe("when called by protocol admin", () => {
+        describe("when happy case", () => {
             beforeEach(async () => {
                 await deployments.execute(
                     "YearnVaultGovernance",
@@ -191,6 +193,66 @@ describe("YearnVaultGovernance", () => {
                     "delayedProtocolParamsTimestamp"
                 );
                 expect(toObject(stagedProtocolParams)).to.eq(0);
+            });
+        });
+
+        describe("when called not by admin", () => {
+            it("reverts", async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedProtocolParams",
+                    paramsToCommit
+                );
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                for (const actor of [deployer, stranger]) {
+                    await expect(
+                        deployments.execute(
+                            "YearnVaultGovernance",
+                            { from: actor, autoMine: true },
+                            "stageDelayedProtocolParams",
+                            paramsToCommit
+                        )
+                    ).to.be.revertedWith(Exceptions.ADMIN);
+                }
+            });
+        });
+
+        describe("when time before delay has not elapsed", () => {
+            it("reverts", async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedProtocolParams",
+                    paramsToCommit
+                );
+                // immediate execution
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: admin, autoMine: true },
+                        "commitDelayedProtocolParams"
+                    )
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay.sub(15));
+                // execution one second before the deadline
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: admin, autoMine: true },
+                        "commitDelayedProtocolParams"
+                    )
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
     });
