@@ -1,9 +1,10 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, network } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import { ERC20, Vault, VaultRegistry, AaveVault } from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
+import { withSigner } from "./library/Helpers";
 
 describe("GatewayVault", () => {
     let deployer: Signer;
@@ -285,13 +286,15 @@ describe("GatewayVault", () => {
 
         describe("when passed nfts contains zero", () => {
             it("reverts", async () => {
-                await gatewayVault.setVaultGovernance(
-                    await deployer.getAddress()
-                );
                 await gatewayVault.setSubvaultNfts([]);
-                await expect(
-                    gatewayVault.addSubvaults([ERC20Vault.address, 0])
-                ).to.be.revertedWith("NFT0");
+                await withSigner(
+                    gatewayVaultGovernance.address,
+                    async (signer) => {
+                        await expect(
+                            gatewayVault.connect(signer).addSubvaults([0])
+                        ).to.be.revertedWith("NFT0");
+                    }
+                );
             });
         });
     });

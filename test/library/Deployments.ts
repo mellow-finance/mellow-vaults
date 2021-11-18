@@ -518,7 +518,6 @@ export async function deploySubVaultSystem(options: {
         await AaveVaultContract.setATokens(
             aTokens.map((token) => token.address)
         );
-        await AaveVaultContract.setBaseBalances([[0, 0]]);
     }
 
     await ERC20VaultGovernance.connect(

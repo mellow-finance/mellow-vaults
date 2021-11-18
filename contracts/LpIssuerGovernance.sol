@@ -63,7 +63,7 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
         // TODO - add IERC165 check of the subvault interface == gateway vault interface
         IVaultRegistry registry = _internalParams.registry;
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
-        registry.transferFrom(msg.sender, address(vault), subvaultNft);
+        registry.safeTransferFrom(msg.sender, address(vault), subvaultNft);
     }
 
     /// @notice Emitted when new StrategyParams are set.
