@@ -43,9 +43,7 @@ contract GatewayVault is IGatewayVault, Vault {
     function subvaultTvl(uint256 vaultNum) public view override returns (uint256[] memory) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         IVault vault = IVault(registry.vaultForNft(_subvaultNfts[vaultNum]));
-        address[] memory pTokens = vault.vaultTokens();
-        uint256[] memory vTokenAmounts = vault.tvl();
-        return Common.projectTokenAmounts(_vaultTokens, pTokens, vTokenAmounts);
+        return vault.tvl();
     }
 
     /// @inheritdoc IGatewayVault
