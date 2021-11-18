@@ -6,21 +6,13 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
+import "@typechain/hardhat";
 import "./plugins/contracts";
 import defaultConfig from "./hardhat.config";
-import { lens, lensPath, pipe, set } from "ramda";
+import { lensPath, set } from "ramda";
 import { MultiSolcUserConfig, SolcUserConfig } from "hardhat/types";
 
-type HardhatUserConfigWithTypechain = HardhatUserConfig & {
-    typechain?: {
-        outDir?: string;
-        target?: string;
-        alwaysGenerateOverloads: boolean;
-        externalArtifacts?: string[];
-    };
-};
-
-const config: HardhatUserConfigWithTypechain = {
+const config: HardhatUserConfig = {
     ...defaultConfig,
     networks: {
         ...defaultConfig.networks,
@@ -68,10 +60,12 @@ const config: HardhatUserConfigWithTypechain = {
         ),
     },
     typechain: {
-        outDir: "src/types",
+        outDir: "test/types",
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
-        externalArtifacts: ["artifacts/@openzeppelin/*.json"],
+        // externalArtifacts: [
+        // "artifacts/@openzeppelin/**/*.json",
+        // ],
     },
 };
 

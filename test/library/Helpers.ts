@@ -1,9 +1,17 @@
 import { Contract } from "ethers";
 import { network, ethers } from "hardhat";
-import { BigNumber } from "@ethersproject/bignumber";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
 import { utils } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { randomBytes } from "crypto";
+
+export const randomAddress = () => {
+    const id = randomBytes(32).toString("hex");
+    const privateKey = "0x" + id;
+    const wallet = new ethers.Wallet(privateKey);
+    return wallet.address;
+};
 
 export const toObject = (obj: any) =>
     pipe(
@@ -13,13 +21,17 @@ export const toObject = (obj: any) =>
         fromPairs
     )(obj);
 
-export const sleepTo = async (timestamp: number) => {
-    await network.provider.send("evm_setNextBlockTimestamp", [timestamp]);
+export const sleepTo = async (timestamp: BigNumberish) => {
+    await network.provider.send("evm_setNextBlockTimestamp", [
+        BigNumber.from(timestamp).toNumber(),
+    ]);
     await network.provider.send("evm_mine");
 };
 
-export const sleep = async (seconds: number) => {
-    await network.provider.send("evm_increaseTime", [seconds]);
+export const sleep = async (seconds: BigNumberish) => {
+    await network.provider.send("evm_increaseTime", [
+        BigNumber.from(seconds).toNumber(),
+    ]);
     await network.provider.send("evm_mine");
 };
 
