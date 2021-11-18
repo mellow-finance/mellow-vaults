@@ -112,7 +112,7 @@ contract LpIssuer is ILpIssuer, ERC20 {
         bytes memory options
     ) external {
         require(_subvaultNft > 0, "INIT");
-        require(totalSupply() > 0, "TS");
+        require(totalSupply() > 0, "TS0");
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         uint256[] memory tvl = _subvault().tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {

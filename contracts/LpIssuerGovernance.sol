@@ -48,6 +48,7 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
 
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         _setStrategyParams(nft, abi.encode(params));
+        emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
     /// @notice Deploy a new vault.

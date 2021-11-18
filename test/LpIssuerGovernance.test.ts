@@ -60,7 +60,7 @@ describe("LpIssuerGovernance", () => {
             let nft = Math.random() * 2 ** 52;
             let tokenLimit = Math.random() * 2 ** 52;
             await expect(
-                await contract.setDelayedStrategyParams(nft, {
+                await contract.setStrategyParams(nft, {
                     tokenLimitPerAddress: tokenLimit,
                 })
             ).to.emit(contract, "SetStrategyParams");

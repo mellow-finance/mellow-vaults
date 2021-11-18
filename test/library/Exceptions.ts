@@ -24,5 +24,6 @@ export default class Exceptions {
     static readonly WEIGHTS_LENGTH_IS_ZERO: string = "KGT0";
     static readonly AMOUNTS_LENGTH_IS_ZERO: string = "NGT0";
     static readonly MATRIX_NOT_RECTANGULAR: string = "NV";
+    static readonly TOTAL_SUPPLY_IS_ZERO: string = "TS0";
 }
 // TODO: Remove outdated exceptions

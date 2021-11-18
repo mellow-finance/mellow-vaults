@@ -1,5 +1,5 @@
-// TODO: add `configureVault` function
-// TODO: use camel case for variables
+// TODO: add `configureVault` function to avoid code duplication
+// TODO: fix: use camel case for variables
 import { ethers, getNamedAccounts } from "hardhat";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
@@ -596,8 +596,6 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     gatewayNft: number;
     LpIssuerFactory: VaultFactory;
     LpIssuerGovernance: VaultGovernance;
-    LpIssuer: Vault;
-    lpIssuerNft: number;
 }> {
     const {
         ERC20VaultFactory,
@@ -712,9 +710,100 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
                 BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
             ],
         ]);
+    return {
+        ERC20VaultFactory,
+        AaveVaultFactory,
+        UniV3VaultFactory,
+        vaultRegistry,
+        protocolGovernance,
+        ERC20VaultGovernance,
+        AaveVaultGovernance,
+        UniV3VaultGovernance,
+        tokens,
+        ERC20Vault,
+        AnotherERC20Vault,
+        AaveVault,
+        UniV3Vault,
+        nftERC20,
+        nftAave,
+        nftUniV3,
+        anotherNftERC20,
+        gatewayVaultGovernance,
+        gatewayVaultFactory,
+        gatewayVault,
+        gatewayNft,
+        LpIssuerGovernance,
+        LpIssuerFactory,
+    };
+}
+
+export async function deploySystem(options: {
+    adminSigner: Signer;
+    vaultOwnerSigner: Signer;
+    treasury: Address;
+    strategy: Address;
+    enableAaveVault?: boolean;
+    enableUniV3Vault?: boolean;
+    dontUseTestSetup?: boolean;
+}): Promise<{
+    ERC20VaultFactory: VaultFactory;
+    AaveVaultFactory: VaultFactory;
+    UniV3VaultFactory: VaultFactory;
+    vaultRegistry: VaultRegistry;
+    protocolGovernance: ProtocolGovernance;
+    ERC20VaultGovernance: VaultGovernance;
+    AaveVaultGovernance: VaultGovernance;
+    UniV3VaultGovernance: VaultGovernance;
+    tokens: ERC20[];
+    ERC20Vault: ERC20Vault;
+    nftERC20: number;
+    AnotherERC20Vault: ERC20Vault;
+    anotherNftERC20: number;
+    AaveVault: AaveVault;
+    nftAave: number;
+    UniV3Vault: UniV3Vault;
+    nftUniV3: number;
+    gatewayVaultGovernance: VaultGovernance;
+    gatewayVaultFactory: VaultFactory;
+    gatewayVault: Vault;
+    gatewayNft: number;
+    LpIssuerFactory: VaultFactory;
+    LpIssuerGovernance: VaultGovernance;
+    LpIssuer: Vault;
+    lpIssuerNft: number;
+}> {
+    const {
+        ERC20VaultFactory,
+        AaveVaultFactory,
+        UniV3VaultFactory,
+        vaultRegistry,
+        protocolGovernance,
+        ERC20VaultGovernance,
+        AaveVaultGovernance,
+        UniV3VaultGovernance,
+        AaveVault,
+        UniV3Vault,
+        tokens,
+        ERC20Vault,
+        AnotherERC20Vault,
+        nftERC20,
+        nftAave,
+        nftUniV3,
+        anotherNftERC20,
+        gatewayVaultGovernance,
+        gatewayVaultFactory,
+        gatewayVault,
+        gatewayNft,
+        LpIssuerGovernance,
+        LpIssuerFactory,
+    } = await deploySubVaultsXGatewayVaultSystem(options);
+
     const lpIssuerDeployArgs = [
         tokens.map((token) => token.address),
-        encodeToBytes(["uint256", "string", "string"], [gatewayNft, "MellowProtocol", "MELLOW"]),
+        encodeToBytes(
+            ["uint256", "string", "string"],
+            [gatewayNft, "MellowProtocol", "MELLOW"]
+        ),
         ethers.constants.AddressZero,
     ];
     await protocolGovernance
@@ -730,9 +819,13 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     await protocolGovernance
         .connect(options.adminSigner)
         .commitVaultGovernancesAdd();
-    await vaultRegistry.approve(LpIssuerGovernance.address, BigNumber.from(gatewayNft));
-    response = await LpIssuerGovernance.callStatic.deployVault(...lpIssuerDeployArgs);
-    console.log("NFT:", response.nft);
+    await vaultRegistry.approve(
+        LpIssuerGovernance.address,
+        BigNumber.from(gatewayNft)
+    );
+    const response = await LpIssuerGovernance.callStatic.deployVault(
+        ...lpIssuerDeployArgs
+    );
     const lpIssuerAddress = response.vault;
     const lpIssuerNft = response.nft;
     await LpIssuerGovernance.deployVault(...lpIssuerDeployArgs);
@@ -740,15 +833,18 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         `LpIssuer`,
         lpIssuerAddress
     );
-    await LpIssuerGovernance.connect(options.adminSigner).stageDelayedStrategyParams(lpIssuerNft, [
-        options.treasury,
-        []
-    ]);
+    await LpIssuerGovernance.connect(
+        options.adminSigner
+    ).stageDelayedStrategyParams(lpIssuerNft, [options.treasury, []]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
-    await LpIssuerGovernance.connect(options.adminSigner).commitDelayedStrategyParams(lpIssuerNft);
-    await LpIssuerGovernance.connect(options.adminSigner).setStrategyParams(lpIssuerNft, [
-        BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
-    ]);
+    await LpIssuerGovernance.connect(
+        options.adminSigner
+    ).commitDelayedStrategyParams(lpIssuerNft);
+    await LpIssuerGovernance.connect(options.adminSigner).setStrategyParams(
+        lpIssuerNft,
+        [BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9))]
+    );
+
     return {
         ERC20VaultFactory,
         AaveVaultFactory,
