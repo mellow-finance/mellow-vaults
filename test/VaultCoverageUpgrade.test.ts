@@ -20,8 +20,6 @@ import {
 } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { sleep } from "./library/Helpers";
-import { AbiCoder } from "@ethersproject/abi";
-import { Contract } from "hardhat/internal/hardhat-network/stack-traces/model";
 
 describe("Vault", () => {
     let deployer: Signer;
