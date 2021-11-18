@@ -23,7 +23,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     {}
 
     /// @inheritdoc IGatewayVault
-    function subvaultNfts() public view returns (uint256[] memory) {
+    function subvaultNfts() external view returns (uint256[] memory) {
         return _subvaultNfts;
     }
 
