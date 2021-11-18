@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "../../libraries/Common.sol";
+import "../../libraries/CommonLibrary.sol";
 
 contract CommonTest {
     constructor() {}
 
     function bubbleSort(address[] memory arr) external pure returns (address[] memory) {
-        Common.bubbleSort(arr);
+        CommonLibrary.bubbleSort(arr);
         return arr;
     }
 
     function isSortedAndUnique(address[] memory tokens) external pure returns (bool) {
-        return Common.isSortedAndUnique(tokens);
+        return CommonLibrary.isSortedAndUnique(tokens);
     }
 
     function projectTokenAmountsTest(
@@ -20,7 +20,7 @@ contract CommonTest {
         address[] memory tokensToProject,
         uint256[] memory tokenAmountsToProject
     ) external pure returns (uint256[] memory) {
-        return Common.projectTokenAmounts(tokens, tokensToProject, tokenAmountsToProject);
+        return CommonLibrary.projectTokenAmounts(tokens, tokensToProject, tokenAmountsToProject);
     }
 
     function splitAmountsTest(uint256[] memory amounts, uint256[][] memory weights)
@@ -28,11 +28,11 @@ contract CommonTest {
         pure
         returns (uint256[][] memory)
     {
-        return Common.splitAmounts(amounts, weights);
+        return CommonLibrary.splitAmounts(amounts, weights);
     }
 
     function isContractTest(address addr) external view returns (bool) {
-        return Common.isContract(addr);
+        return CommonLibrary.isContract(addr);
     }
 
     function isSubsetOfTest(
@@ -40,6 +40,6 @@ contract CommonTest {
         address[] memory tokensToCheck,
         address[] memory amountsToCheck
     ) external {
-        Common._isSubsetOf(tokens, tokensToCheck, amountsToCheck);
+        CommonLibrary._isSubsetOf(tokens, tokensToCheck, amountsToCheck);
     }
 }

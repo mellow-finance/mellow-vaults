@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IGatewayVault.sol";
-import "./libraries/Common.sol";
+import "./libraries/CommonLibrary.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
 
@@ -20,7 +20,7 @@ abstract contract Vault is IVault {
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
-        require(Common.isSortedAndUnique(vaultTokens_), "SAU");
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), "SAU");
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
@@ -67,7 +67,7 @@ abstract contract Vault is IVault {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
-        actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
+        actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }
 
@@ -105,7 +105,7 @@ abstract contract Vault is IVault {
         require(owner == msg.sender || _isValidPullDestination(to), "INTRA"); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
-        actualTokenAmounts = Common.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
+        actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
     }
 
@@ -156,9 +156,9 @@ abstract contract Vault is IVault {
         view
         returns (uint256[] memory pTokenAmounts)
     {
-        require(Common.isSortedAndUnique(tokens), "SAU");
+        require(CommonLibrary.isSortedAndUnique(tokens), "SAU");
         require(tokens.length == tokenAmounts.length, "L");
-        pTokenAmounts = Common.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
+        pTokenAmounts = CommonLibrary.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
     /// The idea is to check that `this` Vault and `to` Vault
@@ -168,7 +168,7 @@ abstract contract Vault is IVault {
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
-        if (!Common.isContract(to)) {
+        if (!CommonLibrary.isContract(to)) {
             return false;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;

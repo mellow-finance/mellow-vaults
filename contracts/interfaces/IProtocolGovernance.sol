@@ -5,7 +5,7 @@ import "./IDefaultAccessControl.sol";
 import "./IVaultRegistry.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
-    /// @notice Common protocol params.
+    /// @notice CommonLibrary protocol params.
     /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them

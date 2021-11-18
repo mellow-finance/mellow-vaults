@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "./libraries/Common.sol";
+import "./libraries/CommonLibrary.sol";
 
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuerGovernance.sol";
