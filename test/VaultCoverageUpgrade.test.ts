@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { BigNumber, Signer } from "ethers";
+import { BigNumber, Signer, utils } from "ethers";
 import {
     ERC20,
     ERC20Vault,
@@ -20,7 +20,8 @@ import {
 } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
 import { sleep } from "./library/Helpers";
-import { values } from "ramda";
+import { AbiCoder } from "@ethersproject/abi";
+import { Contract } from "hardhat/internal/hardhat-network/stack-traces/model";
 
 describe("Vault", () => {
     let deployer: Signer;
@@ -45,6 +46,7 @@ describe("Vault", () => {
     let protocolGovernance: ProtocolGovernance;
     let differentERC20Vault: ERC20Vault;
     let ERC20VaultGovernance: VaultGovernance;
+    let testEncodingContract: any;
 
     before(async () => {
         [
@@ -90,6 +92,8 @@ describe("Vault", () => {
         await vaultRegistry
             .connect(strategy)
             .approve(await user.getAddress(), BigNumber.from(nftERC20));
+        let factory = await ethers.getContractFactory("TestFunctionEncoding");
+        testEncodingContract = await factory.deploy(ERC20Vault.address);
     });
     describe("reclaimTokens", () => {
         describe("when called by protocolGovernanceAdmin", () => {
@@ -259,9 +263,15 @@ describe("Vault", () => {
                 await protocolGovernance
                     .connect(protocolGovernanceAdmin)
                     .commitClaimAllowlistAdd();
-                await expect(
-                    ERC20Vault.connect(user).claimRewards(AaveVault.address, [])
-                ).to.be.reverted;
+                await vaultRegistry
+                    .connect(strategy)
+                    .approve(
+                        testEncodingContract.address,
+                        BigNumber.from(nftERC20)
+                    );
+                await testEncodingContract.encodeWithSignatureTest(
+                    AaveVault.address
+                );
             });
         });
     });
@@ -269,6 +279,9 @@ describe("Vault", () => {
     describe("pull", () => {
         describe("when called by approved address and pull destination is invalid", () => {
             it("reverts", async () => {
+                await vaultRegistry
+                    .connect(strategy)
+                    .approve(await user.getAddress(), BigNumber.from(nftERC20));
                 await expect(
                     ERC20Vault.connect(user).pull(
                         await stranger.getAddress(),
