@@ -46,6 +46,7 @@ describe("Vault", () => {
     let differentERC20Vault: ERC20Vault;
     let ERC20VaultGovernance: VaultGovernance;
     let testEncodingContract: any;
+    let contract: any;
 
     before(async () => {
         [
@@ -93,6 +94,11 @@ describe("Vault", () => {
             .approve(await user.getAddress(), BigNumber.from(nftERC20));
         let factory = await ethers.getContractFactory("TestFunctionEncoding");
         testEncodingContract = await factory.deploy(ERC20Vault.address);
+        let factoryVaultTest = await ethers.getContractFactory("VaultTest");
+        contract = await factoryVaultTest.deploy(
+            ERC20VaultGovernance.address,
+            []
+        );
     });
     describe("reclaimTokens", () => {
         describe("when called by protocolGovernanceAdmin", () => {
@@ -205,11 +211,6 @@ describe("Vault", () => {
             });
             describe("when from Vault is not registered", () => {
                 it("reverts", async () => {
-                    let factory = await ethers.getContractFactory("VaultTest");
-                    let contract = await factory.deploy(
-                        ERC20VaultGovernance.address,
-                        []
-                    );
                     expect(
                         await contract.isValidPullDestination(
                             ERC20Vault.address
@@ -295,11 +296,6 @@ describe("Vault", () => {
 
     describe("_postReclaimTokens", () => {
         it("passes", async () => {
-            let factory = await ethers.getContractFactory("VaultTest");
-            let contract = await factory.deploy(
-                ERC20VaultGovernance.address,
-                []
-            );
             await contract.postReclaimTokens(ethers.constants.AddressZero, []);
         });
     });
