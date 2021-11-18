@@ -32,7 +32,6 @@ describe("Vault", () => {
     let strategy: Signer;
 
     let token: ERC20;
-    let differentERC20Token: ERC20;
     let ERC20Vault: ERC20Vault;
     let AnotherERC20Vault: ERC20Vault;
     let anotherERC20Token: ERC20;
@@ -291,6 +290,17 @@ describe("Vault", () => {
                     )
                 ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
             });
+        });
+    });
+
+    describe("_postReclaimTokens", () => {
+        it("passes", async () => {
+            let factory = await ethers.getContractFactory("VaultTest");
+            let contract = await factory.deploy(
+                ERC20VaultGovernance.address,
+                []
+            );
+            await contract.postReclaimTokens(ethers.constants.AddressZero, []);
         });
     });
 });
