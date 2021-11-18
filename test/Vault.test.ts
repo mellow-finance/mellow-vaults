@@ -312,6 +312,19 @@ describe("Vault", () => {
                 ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
             });
         });
+
+        describe("when called not by approved address and not by owner", () => {
+            it("reverts", async () => {
+                await expect(
+                    ERC20Vault.connect(stranger).pull(
+                        ERC20Vault.address,
+                        [],
+                        [],
+                        []
+                    )
+                ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+            });
+        });
     });
 
     describe("_postReclaimTokens", () => {

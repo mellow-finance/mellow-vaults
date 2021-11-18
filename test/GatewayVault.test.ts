@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, network } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import {
     ERC20,
@@ -11,6 +11,7 @@ import {
 } from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
+import { withSigner } from "./library/Helpers";
 
 describe("GatewayVault", () => {
     let deployer: Signer;
@@ -101,7 +102,7 @@ describe("GatewayVault", () => {
                         [BigNumber.from(10 ** 9)],
                         []
                     )
-                ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
+                ).to.be.revertedWith("INIT");
             });
         });
 
@@ -115,7 +116,7 @@ describe("GatewayVault", () => {
                     .transfer(gatewayVault.address, amount);
                 await expect(
                     gatewayVault.push([tokens[0].address], [amount], [])
-                ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                ).to.be.revertedWith("L");
             });
         });
 
@@ -174,26 +175,6 @@ describe("GatewayVault", () => {
     });
 
     describe("pull", () => {
-        describe("when called by stranger", () => {
-            it("reverts", async () => {
-                await tokens[0]
-                    .connect(deployer)
-                    .transfer(gatewayVault.address, BigNumber.from(10 ** 10));
-                await gatewayVault
-                    .connect(deployer)
-                    .push([tokens[0].address], [BigNumber.from(10 ** 9)], []);
-                await expect(
-                    gatewayVault
-                        .connect(stranger)
-                        .pull(
-                            await deployer.getAddress(),
-                            [tokens[0].address],
-                            [BigNumber.from(10 ** 9)],
-                            []
-                        )
-                ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
-            });
-        });
         it("emits Pull", async () => {
             await tokens[0]
                 .connect(deployer)
@@ -302,7 +283,7 @@ describe("GatewayVault", () => {
                 );
                 await expect(
                     gatewayVault.addSubvaults([ERC20Vault.address])
-                ).to.be.revertedWith(Exceptions.SUB_VAULT_INITIALIZED);
+                ).to.be.revertedWith("SBIN");
             });
         });
 
@@ -313,20 +294,22 @@ describe("GatewayVault", () => {
                 );
                 await gatewayVault.setSubvaultNfts([]);
                 await expect(gatewayVault.addSubvaults([])).to.be.revertedWith(
-                    Exceptions.SUB_VAULT_LENGTH
+                    "SBL"
                 );
             });
         });
 
         describe("when passed nfts contains zero", () => {
             it("reverts", async () => {
-                await gatewayVault.setVaultGovernance(
-                    await deployer.getAddress()
-                );
                 await gatewayVault.setSubvaultNfts([]);
-                await expect(
-                    gatewayVault.addSubvaults([ERC20Vault.address, 0])
-                ).to.be.revertedWith(Exceptions.NFT_ZERO);
+                await withSigner(
+                    gatewayVaultGovernance.address,
+                    async (signer) => {
+                        await expect(
+                            gatewayVault.connect(signer).addSubvaults([0])
+                        ).to.be.revertedWith("NFT0");
+                    }
+                );
             });
         });
     });
