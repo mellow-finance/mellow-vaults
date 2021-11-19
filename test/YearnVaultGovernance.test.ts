@@ -12,6 +12,8 @@ import {
     DelayedProtocolParamsStruct,
     DelayedStrategyParamsStruct,
 } from "./types/YearnVaultGovernance";
+import { BigNumber } from "@ethersproject/bignumber";
+import { F } from "ramda";
 
 describe("YearnVaultGovernance", () => {
     let deploymentFixture: Function;
@@ -222,64 +224,142 @@ describe("YearnVaultGovernance", () => {
         });
     });
 
-    // describe("stageDelayedStrategyParams", () => {
-    //     const paramsToStage: DelayedStrategyParamsStruct = {
-    //         strategyTreasury: randomAddress(),
-    //     };
+    describe("stageDelayedStrategyParams", () => {
+        const paramsToStage: DelayedStrategyParamsStruct = {
+            strategyTreasury: randomAddress(),
+        };
+        let nft: number;
+        let deploy: Function;
 
-    //     before(async () => {
-    //         await deployments.execute(
-    //             "YearnVaultGovernance",
-    //             { from: deployer, autoMine: true },
-    //             "deployVault"
-    //         );
-    //     });
+        before(async () => {
+            const { weth, wbtc } = await getNamedAccounts();
+            deploy = deployments.createFixture(async () => {
+                const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    [],
+                    deployer
+                );
+            });
+        });
 
-    //     describe("when happy case", () => {
-    //         beforeEach(async () => {
-    //             await deployments.execute(
-    //                 "YearnVaultGovernance",
-    //                 { from: admin, autoMine: true },
-    //                 "stageDelayedStrategyParams",
-    //                 paramsToStage
-    //             );
-    //         });
-    //         it("stages new delayed protocol params", async () => {
-    //             const stagedParams = await deployments.read(
-    //                 "YearnVaultGovernance",
-    //                 "stagedDelayedProtocolParams"
-    //             );
-    //             expect(toObject(stagedParams)).to.eql(paramsToStage);
-    //         });
+        beforeEach(async () => {
+            await deploy();
+            nft = (
+                await deployments.read("VaultRegistry", "vaultsCount")
+            ).toNumber();
+        });
 
-    //         it("sets the delay for commit", async () => {
-    //             const governanceDelay = await deployments.read(
-    //                 "ProtocolGovernance",
-    //                 "governanceDelay"
-    //             );
-    //             const timestamp = await deployments.read(
-    //                 "YearnVaultGovernance",
-    //                 "delayedProtocolParamsTimestamp"
-    //             );
-    //             expect(timestamp).to.eq(
-    //                 governanceDelay.add(startTimestamp).add(1)
-    //             );
-    //         });
-    //     });
+        describe("on first call (params are not initialized)", () => {
+            beforeEach(async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToStage
+                );
+            });
+            it("stages new delayed protocol params", async () => {
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
 
-    //     describe("when called not by protocol admin", () => {
-    //         it("reverts", async () => {
-    //             for (const actor of [deployer, stranger]) {
-    //                 await expect(
-    //                     deployments.execute(
-    //                         "YearnVaultGovernance",
-    //                         { from: actor, autoMine: true },
-    //                         "stageDelayedProtocolParams",
-    //                         paramsToStage
-    //                     )
-    //                 ).to.be.revertedWith(Exceptions.ADMIN);
-    //             }
-    //         });
-    //     });
-    // });
+            it("sets the delay = 0 for commit to enable instant init", async () => {
+                const timestamp = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParamsTimestamp",
+                    nft
+                );
+                expect(timestamp).to.eq(startTimestamp + 3);
+            });
+        });
+
+        describe("on subsequent calls (params are initialized)", () => {
+            beforeEach(async () => {
+                const otherParams: DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                };
+                // init params
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    otherParams
+                );
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+                // call stage again
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToStage
+                );
+            });
+            it("stages new delayed protocol params", async () => {
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+
+            it("sets the delay for commit", async () => {
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                const timestamp = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParamsTimestamp",
+                    nft
+                );
+                expect(timestamp).to.eq(
+                    governanceDelay.add(startTimestamp).add(7)
+                );
+            });
+        });
+
+        describe("when called not by protocol admin", () => {
+            it("reverts", async () => {
+                for (const actor of [deployer, stranger]) {
+                    console.log(
+                        "----",
+                        nft,
+                        (
+                            await deployments.read(
+                                "VaultRegistry",
+                                "vaultsCount"
+                            )
+                        ).toNumber()
+                    );
+
+                    await expect(
+                        deployments.execute(
+                            "YearnVaultGovernance",
+                            { from: actor, autoMine: true },
+                            "stageDelayedStrategyParams",
+                            nft,
+                            paramsToStage
+                        )
+                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                }
+            });
+        });
+    });
 });
