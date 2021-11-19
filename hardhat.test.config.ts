@@ -60,9 +60,6 @@ const config: HardhatUserConfig = {
         outDir: "test/types",
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
-        // externalArtifacts: [
-        // "artifacts/@openzeppelin/**/*.json",
-        // ],
     },
 };
 
