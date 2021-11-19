@@ -213,7 +213,7 @@ describe("YearnVaultGovernance", () => {
                     "governanceDelay"
                 );
                 await sleep(governanceDelay.sub(15));
-                // execution one second before the deadline
+                // execution 15 seconds before the deadline
                 await expect(
                     deployments.execute(
                         "YearnVaultGovernance",
@@ -422,5 +422,288 @@ describe("YearnVaultGovernance", () => {
         });
     });
 
-    describe("#commitDelayedStrategyParams", () => {});
+    describe("#commitDelayedStrategyParams", () => {
+        const paramsToCommit: DelayedStrategyParamsStruct = {
+            strategyTreasury: randomAddress(),
+        };
+        let nft: number;
+        let deploy: Function;
+
+        before(async () => {
+            const { weth, wbtc } = await getNamedAccounts();
+            deploy = deployments.createFixture(async () => {
+                const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    [],
+                    deployer
+                );
+            });
+        });
+
+        beforeEach(async () => {
+            await deploy();
+            nft = (
+                await deployments.read("VaultRegistry", "vaultsCount")
+            ).toNumber();
+        });
+
+        describe("on first call (params are not initialized)", () => {
+            beforeEach(async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+            });
+            it("commits new delayed protocol params immediately", async () => {
+                const params = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql(paramsToCommit);
+            });
+
+            it("resets staged strategy params", async () => {
+                const params = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql({
+                    strategyTreasury: ethers.constants.AddressZero,
+                });
+            });
+
+            it("resets staged strategy params timestamp", async () => {
+                const timestamp = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParamsTimestamp",
+                    nft
+                );
+                expect(timestamp).to.eq(0);
+            });
+        });
+
+        describe("on subsequent calls (params are initialized)", () => {
+            beforeEach(async () => {
+                const otherParams: DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                };
+                // init params
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    otherParams
+                );
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+                // call stage again
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+            });
+            it("commits new delayed protocol params", async () => {
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToCommit);
+            });
+
+            describe("when time before delay has not elapsed", () => {
+                it("reverts", async () => {
+                    await deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: admin, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        paramsToCommit
+                    );
+
+                    // immediate execution
+                    await expect(
+                        deployments.execute(
+                            "YearnVaultGovernance",
+                            { from: admin, autoMine: true },
+                            "commitDelayedStrategyParams",
+                            nft
+                        )
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
+
+                    const governanceDelay = await deployments.read(
+                        "ProtocolGovernance",
+                        "governanceDelay"
+                    );
+                    await sleep(governanceDelay.sub(150));
+                    // execution 15 seconds before the deadline
+                    await expect(
+                        deployments.execute(
+                            "YearnVaultGovernance",
+                            { from: admin, autoMine: true },
+                            "commitDelayedStrategyParams",
+                            nft
+                        )
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                });
+            });
+        });
+
+        describe("when called by protocol admin", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+                const strategyParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(strategyParams)).to.eql(paramsToCommit);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 owner", () => {
+            it("reverts", async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                const owner = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "transferFrom",
+                    deployer,
+                    owner,
+                    nft
+                );
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: owner, autoMine: true },
+                        "commitDelayedStrategyParams",
+                        nft
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 approved actor", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                const approved = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "approve",
+                    approved,
+                    nft
+                );
+                await withSigner(approved, async (signer) => {
+                    // default deployment commands don't work with unknown signer :(
+                    // https://github.com/nomiclabs/hardhat/issues/1226
+                    // so need to use ethers here
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(signer);
+                    await g.commitDelayedStrategyParams(nft);
+                });
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToCommit);
+            });
+        });
+
+        describe("when called not by protocol admin or not by strategy", () => {
+            it("reverts", async () => {
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                for (const actor of [deployer, stranger]) {
+                    await expect(
+                        deployments.execute(
+                            "YearnVaultGovernance",
+                            { from: actor, autoMine: true },
+                            "commitDelayedStrategyParams",
+                            nft
+                        )
+                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                }
+            });
+        });
+    });
 });
