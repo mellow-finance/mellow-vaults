@@ -55,9 +55,6 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
 
     /// @inheritdoc IYearnVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({yearnVaultRegistry: IYearnVaultRegistry(address(0))});
-        }
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 

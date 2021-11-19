@@ -62,6 +62,40 @@ describe("YearnVaultGovernance", () => {
         await sleepTo(startTimestamp);
     });
 
+    describe("stagedDelayedProtocolParams", () => {
+        const paramsToStage: DelayedProtocolParamsStruct = {
+            yearnVaultRegistry: randomAddress(),
+        };
+
+        it("returns delayed protocol params staged for commit", async () => {
+            await deployments.execute(
+                "YearnVaultGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedProtocolParams",
+                paramsToStage
+            );
+
+            const stagedParams = await deployments.read(
+                "YearnVaultGovernance",
+                "stagedDelayedProtocolParams"
+            );
+            expect(toObject(stagedParams)).to.eql(paramsToStage);
+        });
+
+        describe("when uninitialized", () => {
+            it("returns zero struct", async () => {
+                const expectedParams: DelayedProtocolParamsStruct = {
+                    yearnVaultRegistry: ethers.constants.AddressZero,
+                };
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedProtocolParams"
+                );
+                expect(toObject(stagedParams)).to.eql(expectedParams);
+            });
+        });
+    });
+
     describe("#stageDelayedProtocolParams", () => {
         const paramsToStage: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: randomAddress(),
