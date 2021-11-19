@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity 0.8.9;
 
 import "./external/univ3/INonfungiblePositionManager.sol";
 import "./IVaultGovernance.sol";
