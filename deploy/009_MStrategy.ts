@@ -101,7 +101,7 @@ const setupVault = async (
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury, weth, wbtc } =
+    const { deployer, mStrategyTreasury, mStrategy, weth, wbtc } =
         await getNamedAccounts();
     const gatewayVaultGovernance = await get("GatewayVaultGovernance");
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
@@ -191,7 +191,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 ["uint256[]"],
                 [[uniV3VaultNft, aaveVaultNft, erc20VaultNft]]
             ),
-            deployer,
+            mStrategy,
         ],
         {
             strategyTreasury: mStrategyTreasury,
