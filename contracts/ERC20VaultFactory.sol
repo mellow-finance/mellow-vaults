@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity 0.8.9;
 
 import "./interfaces/IVaultFactory.sol";
 import "./ERC20Vault.sol";

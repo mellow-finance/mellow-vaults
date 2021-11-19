@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.10;
+pragma solidity 0.8.9;
 
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/external/yearn/IYearnVault.sol";

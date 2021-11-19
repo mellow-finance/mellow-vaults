@@ -50,7 +50,7 @@
     "@uniswap/v3-core": "^1.0.0",
     "@uniswap/v3-periphery": "^1.0.0",
     "typechain": "^5.2.0",
-    "solc": "^0.8.10",
+    "solc": "^0.8.9",
     "solidity-docgen": "^0.5.16"
   }
 }
