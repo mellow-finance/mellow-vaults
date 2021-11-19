@@ -164,7 +164,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         require(msg.sender == address(registry), "NFTVR");
         return this.onERC721Received.selector;
     }
-    
+
     function _allowTokenIfNecessary(address token, address to) internal {
         if (IERC20(token).allowance(address(to), address(this)) < type(uint256).max / 2) {
             IERC20(token).approve(address(to), type(uint256).max);
