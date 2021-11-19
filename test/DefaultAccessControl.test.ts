@@ -1,7 +1,7 @@
+import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { ContractFactory } from "@ethersproject/contracts";
-import { expect } from "chai";
 
 describe("AaveVaultFactory", () => {
     let someSigner: Signer;

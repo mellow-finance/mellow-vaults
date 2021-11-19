@@ -2,8 +2,6 @@ import { expect } from "chai";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { Signer } from "ethers";
 import {
-    ERC20,
-    Vault,
     VaultGovernance,
     ProtocolGovernance,
     VaultRegistry,
@@ -15,34 +13,24 @@ describe("UniV3VaultGovernance", () => {
     const tokensCount = 2;
     let deployer: Signer;
     let admin: Signer;
-    let stranger: Signer;
     let treasury: Signer;
     let anotherTreasury: Signer;
     let anotherPositionManager: Signer;
     let UniV3VaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
-    let vault: Vault;
     let nftUniV3: number;
-    let tokens: ERC20[];
     let deployment: Function;
     let namedAccounts: any;
     let vaultRegistry: VaultRegistry;
 
     before(async () => {
-        [
-            deployer,
-            admin,
-            stranger,
-            treasury,
-            anotherTreasury,
-            anotherPositionManager,
-        ] = await ethers.getSigners();
+        [deployer, admin, treasury, anotherTreasury, anotherPositionManager] =
+            await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
             ({
                 protocolGovernance,
                 UniV3VaultGovernance,
-                tokens,
                 nftUniV3,
                 vaultRegistry,
             } = await deploySubVaultSystem({

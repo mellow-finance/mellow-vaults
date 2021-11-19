@@ -25,6 +25,7 @@ export default class Exceptions {
     static readonly WEIGHTS_LENGTH_IS_ZERO: string = "KGT0";
     static readonly AMOUNTS_LENGTH_IS_ZERO: string = "NGT0";
     static readonly MATRIX_NOT_RECTANGULAR: string = "NV";
+    static readonly TOTAL_SUPPLY_IS_ZERO: string = "TS0";
     static readonly ALLOWED_TO_CLAIM: string = "AC";
     static readonly OTHER_VAULT_TOKENS: string = "OWT";
     static readonly SUB_VAULT_INITIALIZED: string = "SBIN";

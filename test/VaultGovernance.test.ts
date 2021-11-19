@@ -16,11 +16,11 @@ import {
 } from "./library/Deployments";
 import {
     ProtocolGovernance,
-    ProtocolGovernance_Params,
     TestVaultGovernance,
     VaultFactory,
     VaultGovernance_InternalParams,
     VaultRegistry,
+    ProtocolGovernance_Params,
 } from "./library/Types";
 
 describe("TestVaultGovernance", () => {

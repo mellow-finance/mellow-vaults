@@ -67,7 +67,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     /// @param tokenAmounts Amounts of tokens to push
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
-        require(_subvaultNft > 0, "INIT");
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
@@ -127,8 +126,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         uint256 lpTokenAmount,
         bytes memory options
     ) external {
-        require(_subvaultNft > 0, "INIT");
-        require(totalSupply() > 0, "TS");
+        require(totalSupply() > 0, "TS0");
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         // TODO: Check price manipulation here
         uint256[] memory tvl = _subvault().tvl();
