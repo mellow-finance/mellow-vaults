@@ -31,13 +31,18 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
     /// @notice Stage Strategy Params.
     /// @param nft Nft of the vault
     /// @param params New params
-    function setDelayedStrategyParams(uint256 nft, StrategyParams calldata params) external {
+    function stageDelayedStrategyParams(uint256 nft, StrategyParams calldata params) external {
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+    }
+
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         _setStrategyParams(nft, abi.encode(params));
+        emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
     /// @notice Deploy a new vault.

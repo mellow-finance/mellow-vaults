@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Contract, Signer } from "ethers";
-import Exceptions from "./library/Exceptions";
-import { deployVaultRegistryAndProtocolGovernance } from "./library/Deployments";
-import { ProtocolGovernance_Params } from "./library/Types";
 import { BigNumber } from "@ethersproject/bignumber";
+import Exceptions from "./library/Exceptions";
+import { ProtocolGovernance_Params } from "./library/Types";
+import { deployVaultRegistryAndProtocolGovernance } from "./library/Deployments";
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
 
 describe("ProtocolGovernance", () => {

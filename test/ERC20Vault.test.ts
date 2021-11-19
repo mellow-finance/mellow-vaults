@@ -4,11 +4,8 @@ import { BigNumber, Signer } from "ethers";
 import {
     ERC20,
     ERC20Vault,
-    ProtocolGovernance,
     VaultRegistry,
-    VaultFactory,
     ERC20VaultGovernance,
-    AaveVault,
 } from "./library/Types";
 import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
@@ -23,13 +20,9 @@ describe("ERC20Vault", function () {
 
         let tokens: ERC20[];
         let ERC20Vault: ERC20Vault;
-        let AaveVault: AaveVault;
-        let ERC20VaultFactory: VaultFactory;
-        let protocolGovernance: ProtocolGovernance;
         let ERC20VaultGovernance: ERC20VaultGovernance;
         let vaultRegistry: VaultRegistry;
         let nftERC20: number;
-        let nftAave: number;
         let deployment: Function;
 
         before(async () => {
@@ -49,9 +42,7 @@ describe("ERC20Vault", function () {
 
         beforeEach(async () => {
             ({
-                ERC20VaultFactory,
                 vaultRegistry,
-                protocolGovernance,
                 ERC20VaultGovernance,
                 tokens,
                 ERC20Vault,
@@ -101,13 +92,13 @@ describe("ERC20Vault", function () {
                             tokens[1].address,
                             tokens[0].address,
                         ])
-                    ).to.be.revertedWith("SAU");
+                    ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
                     await expect(
                         factory.deploy(await stranger.getAddress(), [
                             tokens[0].address,
                             tokens[0].address,
                         ])
-                    ).to.be.revertedWith("SAU");
+                    ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
                 });
             });
         });
@@ -282,15 +273,33 @@ describe("ERC20Vault", function () {
                 });
             });
 
-            it("passes", async () => {
-                expect(
-                    await ERC20Vault.callStatic.transferAndPush(
-                        await deployer.getAddress(),
-                        [tokens[0].address],
-                        [BigNumber.from(10 ** 9)],
-                        []
-                    )
-                ).to.deep.equal([BigNumber.from(10 ** 9)]);
+            describe("when all tokenAmounts != 0", () => {
+                it("passes", async () => {
+                    expect(
+                        await ERC20Vault.callStatic.transferAndPush(
+                            await deployer.getAddress(),
+                            [tokens[0].address],
+                            [BigNumber.from(10 ** 9)],
+                            []
+                        )
+                    ).to.deep.equal([BigNumber.from(10 ** 9)]);
+                });
+            });
+
+            describe("when not all tokenAmounts != 0", () => {
+                it("passes", async () => {
+                    expect(
+                        await ERC20Vault.callStatic.transferAndPush(
+                            await deployer.getAddress(),
+                            [tokens[0].address, tokens[1].address],
+                            [BigNumber.from(10 ** 9), BigNumber.from(0)],
+                            []
+                        )
+                    ).to.deep.equal([
+                        BigNumber.from(10 ** 9),
+                        BigNumber.from(0),
+                    ]);
+                });
             });
 
             describe("when not enough balance", () => {
@@ -373,7 +382,7 @@ describe("ERC20Vault", function () {
                             ethers.constants.AddressZero,
                             arg
                         )
-                    ).to.be.revertedWith("OWT");
+                    ).to.be.revertedWith(Exceptions.OTHER_VAULT_TOKENS);
                 });
             });
         });

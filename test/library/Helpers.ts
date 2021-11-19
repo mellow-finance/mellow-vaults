@@ -2,7 +2,6 @@ import { Contract } from "ethers";
 import { network, ethers } from "hardhat";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
-import { utils } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomBytes } from "crypto";
 
@@ -54,12 +53,12 @@ export const encodeToBytes = (
     types: string[],
     objectToEncode: readonly any[]
 ) => {
-    let toBytes = new utils.AbiCoder();
+    let toBytes = new ethers.utils.AbiCoder();
     return toBytes.encode(types, objectToEncode);
 };
 
 export const decodeFromBytes = (types: string[], bytesToDecode: string) => {
-    let fromBytes = new utils.AbiCoder();
+    let fromBytes = new ethers.utils.AbiCoder();
     return fromBytes.decode(types, bytesToDecode);
 };
 

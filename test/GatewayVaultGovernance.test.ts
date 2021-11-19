@@ -10,26 +10,29 @@ import { BigNumber } from "@ethersproject/bignumber";
 describe("GatewayVaultGovernance", () => {
     let deployer: Signer;
     let admin: Signer;
-    let stranger: Signer;
     let treasury: Signer;
     let strategy: Signer;
     let gatewayVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
-    let deployment: Function;
     let gatewayNft: number;
+    let deployment: Function;
+    let nftERC20: number;
 
     before(async () => {
-        [deployer, admin, stranger, treasury, strategy] =
-            await ethers.getSigners();
+        [deployer, admin, treasury, strategy] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ gatewayVaultGovernance, gatewayNft, protocolGovernance } =
-                await deploySubVaultsXGatewayVaultSystem({
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultOwnerSigner: deployer,
-                    strategy: await strategy.getAddress(),
-                }));
+            ({
+                gatewayVaultGovernance,
+                gatewayNft,
+                protocolGovernance,
+                nftERC20,
+            } = await deploySubVaultsXGatewayVaultSystem({
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+                vaultOwnerSigner: deployer,
+                strategy: await strategy.getAddress(),
+            }));
         });
     });
 
@@ -46,7 +49,7 @@ describe("GatewayVaultGovernance", () => {
     });
 
     describe("stageDelayedStrategyParams", () => {
-        // FIXME
+        //FIXME
         // describe("when redirects.length != vaultTokens.length and redirects.length > 0", () => {
         //     it("reverts", async () => {
         //         await expect(
@@ -62,6 +65,7 @@ describe("GatewayVaultGovernance", () => {
         //         );
         //     });
         // });
+
         it("sets stageDelayedStrategyParams and emits StageDelayedStrategyParams event", async () => {
             await expect(
                 await gatewayVaultGovernance

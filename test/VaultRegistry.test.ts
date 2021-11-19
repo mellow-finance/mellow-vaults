@@ -21,27 +21,20 @@ import { now, sleep, sleepTo } from "./library/Helpers";
 describe("VaultRegistry", () => {
     let vaultRegistry: VaultRegistry;
     let ERC20VaultFactory: VaultFactory;
-    let AaveVaultFactory: VaultFactory;
     let ERC20VaultGovernance: VaultGovernance;
-    let AaveVaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
     let ERC20Vault: ERC20Vault;
     let AnotherERC20Vault: ERC20Vault;
     let UniV3Vault: ERC20Vault;
     let AaveVault: ERC20Vault;
-    let tokens: ERC20[];
     let deployer: Signer;
-    let vaultOwner: Signer;
-    let protocolAdmin: Signer;
     let treasury: Signer;
     let stranger: Signer;
     let nftERC20: number;
-    let nftAave: number;
     let deployment: Function;
 
     before(async () => {
-        [deployer, treasury, stranger, protocolAdmin] =
-            await ethers.getSigners();
+        [deployer, treasury, stranger] = await ethers.getSigners();
 
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
@@ -61,13 +54,11 @@ describe("VaultRegistry", () => {
             protocolGovernance,
             ERC20VaultFactory,
             ERC20VaultGovernance,
-            tokens,
             ERC20Vault,
             AnotherERC20Vault,
             AaveVault,
             UniV3Vault,
             nftERC20,
-            nftAave,
         } = await deployment());
     });
 
