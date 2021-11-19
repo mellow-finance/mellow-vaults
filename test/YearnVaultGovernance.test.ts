@@ -128,6 +128,67 @@ describe("YearnVaultGovernance", () => {
         });
     });
 
+    describe("stagedDelayedStrategyParams", () => {
+        const paramsToStage: DelayedStrategyParamsStruct = {
+            strategyTreasury: randomAddress(),
+        };
+        let nft: number;
+        let deploy: Function;
+
+        before(async () => {
+            const { weth, wbtc } = await getNamedAccounts();
+            deploy = deployments.createFixture(async () => {
+                const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    [],
+                    deployer
+                );
+            });
+        });
+
+        beforeEach(async () => {
+            await deploy();
+            nft = (
+                await deployments.read("VaultRegistry", "vaultsCount")
+            ).toNumber();
+        });
+
+        it("returns delayed strategy params staged for commit", async () => {
+            await deployments.execute(
+                "YearnVaultGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedStrategyParams",
+                nft,
+                paramsToStage
+            );
+
+            const stagedParams = await deployments.read(
+                "YearnVaultGovernance",
+                "stagedDelayedStrategyParams",
+                nft
+            );
+            expect(toObject(stagedParams)).to.eql(paramsToStage);
+        });
+
+        describe("when uninitialized", () => {
+            it("returns zero struct", async () => {
+                const expectedParams: DelayedStrategyParamsStruct = {
+                    strategyTreasury: ethers.constants.AddressZero,
+                };
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(expectedParams);
+            });
+        });
+    });
+
     describe("#stageDelayedProtocolParams", () => {
         const paramsToStage: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: randomAddress(),
