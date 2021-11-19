@@ -6,6 +6,7 @@ import {
     sleep,
     sleepTo,
     toObject,
+    withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 import {
@@ -61,7 +62,7 @@ describe("YearnVaultGovernance", () => {
         await sleepTo(startTimestamp);
     });
 
-    describe("stageDelayedProtocolParams", () => {
+    describe("#stageDelayedProtocolParams", () => {
         const paramsToStage: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: randomAddress(),
         };
@@ -114,7 +115,7 @@ describe("YearnVaultGovernance", () => {
         });
     });
 
-    describe("commitDelayedProtocolParams", () => {
+    describe("#commitDelayedProtocolParams", () => {
         const paramsToCommit: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: randomAddress(),
         };
@@ -224,7 +225,7 @@ describe("YearnVaultGovernance", () => {
         });
     });
 
-    describe("stageDelayedStrategyParams", () => {
+    describe("#stageDelayedStrategyParams", () => {
         const paramsToStage: DelayedStrategyParamsStruct = {
             strategyTreasury: randomAddress(),
         };
@@ -335,20 +336,78 @@ describe("YearnVaultGovernance", () => {
             });
         });
 
-        describe("when called not by protocol admin", () => {
+        describe("when called by protocol admin", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToStage
+                );
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 owner", () => {
+            it("reverts", async () => {
+                const owner = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "transferFrom",
+                    deployer,
+                    owner,
+                    nft
+                );
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: owner, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        paramsToStage
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 approved actor", () => {
+            it("succeeds", async () => {
+                const approved = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "approve",
+                    approved,
+                    nft
+                );
+                await withSigner(approved, async (signer) => {
+                    // default deployment commands don't work with unknown signer :(
+                    // https://github.com/nomiclabs/hardhat/issues/1226
+                    // so need to use ethers here
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(signer);
+                    await g.stageDelayedStrategyParams(nft, paramsToStage);
+                });
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+        });
+
+        describe("when called not by protocol admin or not by strategy", () => {
             it("reverts", async () => {
                 for (const actor of [deployer, stranger]) {
-                    console.log(
-                        "----",
-                        nft,
-                        (
-                            await deployments.read(
-                                "VaultRegistry",
-                                "vaultsCount"
-                            )
-                        ).toNumber()
-                    );
-
                     await expect(
                         deployments.execute(
                             "YearnVaultGovernance",
@@ -362,4 +421,6 @@ describe("YearnVaultGovernance", () => {
             });
         });
     });
+
+    describe("#commitDelayedStrategyParams", () => {});
 });
