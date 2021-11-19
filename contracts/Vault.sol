@@ -172,12 +172,11 @@ abstract contract Vault is IVault {
             return false;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 thisNft = registry.nftForVault(address(this));
          // make sure that this vault is a registered vault
-        if(thisNft == 0) {
+        if(_nft == 0) {
             return false;
         }
-        address thisOwner = registry.ownerOf(thisNft);
+        address thisOwner = registry.ownerOf(_nft);
         // make sure that vault has a registered owner
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
         if (thisOwnerNft == 0) {
