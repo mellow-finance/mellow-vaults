@@ -15,7 +15,7 @@ const setupVault = async (
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
-    const { deployer } = await getNamedAccounts();
+    const { deployer, admin } = await getNamedAccounts();
     if (startNft <= vaultNft) {
         log(`Deploying ${contractName.replace("Governance", "")}...`);
         await execute(
@@ -50,7 +50,7 @@ const setupVault = async (
             await execute(
                 contractName,
                 {
-                    from: deployer,
+                    from: admin,
                     log: true,
                     autoMine: true,
                 },
@@ -77,7 +77,7 @@ const setupVault = async (
         await execute(
             contractName,
             {
-                from: deployer,
+                from: admin,
                 log: true,
                 autoMine: true,
             },
@@ -88,7 +88,7 @@ const setupVault = async (
         await execute(
             contractName,
             {
-                from: deployer,
+                from: admin,
                 log: true,
                 autoMine: true,
             },

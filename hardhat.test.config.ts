@@ -30,9 +30,6 @@ const config: HardhatUserConfig = {
         treasury: {
             default: 6,
         },
-        admin: {
-            default: 7,
-        },
         stranger1: {
             default: 8,
         },

@@ -8,7 +8,10 @@ import {
     toObject,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
-import { DelayedProtocolParamsStruct } from "./types/YearnVaultGovernance";
+import {
+    DelayedProtocolParamsStruct,
+    DelayedStrategyParamsStruct,
+} from "./types/YearnVaultGovernance";
 
 describe("YearnVaultGovernance", () => {
     let deploymentFixture: Function;
@@ -32,32 +35,10 @@ describe("YearnVaultGovernance", () => {
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
 
-            const { execute, read, deploy, get } = deployments;
+            const { deploy, get } = deployments;
             protocolGovernance = (await get("ProtocolGovernance")).address;
             vaultRegistry = (await get("VaultRegistry")).address;
 
-            const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
-
-            await execute(
-                "ProtocolGovernance",
-                {
-                    from: deployer,
-                    autoMine: true,
-                },
-                "grantRole",
-                adminRole,
-                admin
-            );
-            await execute(
-                "ProtocolGovernance",
-                {
-                    from: deployer,
-                    autoMine: true,
-                },
-                "renounceRole",
-                adminRole,
-                deployer
-            );
             await deploy("YearnVaultGovernance", {
                 from: deployer,
                 args: [
@@ -240,4 +221,65 @@ describe("YearnVaultGovernance", () => {
             });
         });
     });
+
+    // describe("stageDelayedStrategyParams", () => {
+    //     const paramsToStage: DelayedStrategyParamsStruct = {
+    //         strategyTreasury: randomAddress(),
+    //     };
+
+    //     before(async () => {
+    //         await deployments.execute(
+    //             "YearnVaultGovernance",
+    //             { from: deployer, autoMine: true },
+    //             "deployVault"
+    //         );
+    //     });
+
+    //     describe("when happy case", () => {
+    //         beforeEach(async () => {
+    //             await deployments.execute(
+    //                 "YearnVaultGovernance",
+    //                 { from: admin, autoMine: true },
+    //                 "stageDelayedStrategyParams",
+    //                 paramsToStage
+    //             );
+    //         });
+    //         it("stages new delayed protocol params", async () => {
+    //             const stagedParams = await deployments.read(
+    //                 "YearnVaultGovernance",
+    //                 "stagedDelayedProtocolParams"
+    //             );
+    //             expect(toObject(stagedParams)).to.eql(paramsToStage);
+    //         });
+
+    //         it("sets the delay for commit", async () => {
+    //             const governanceDelay = await deployments.read(
+    //                 "ProtocolGovernance",
+    //                 "governanceDelay"
+    //             );
+    //             const timestamp = await deployments.read(
+    //                 "YearnVaultGovernance",
+    //                 "delayedProtocolParamsTimestamp"
+    //             );
+    //             expect(timestamp).to.eq(
+    //                 governanceDelay.add(startTimestamp).add(1)
+    //             );
+    //         });
+    //     });
+
+    //     describe("when called not by protocol admin", () => {
+    //         it("reverts", async () => {
+    //             for (const actor of [deployer, stranger]) {
+    //                 await expect(
+    //                     deployments.execute(
+    //                         "YearnVaultGovernance",
+    //                         { from: actor, autoMine: true },
+    //                         "stageDelayedProtocolParams",
+    //                         paramsToStage
+    //                     )
+    //                 ).to.be.revertedWith(Exceptions.ADMIN);
+    //             }
+    //         });
+    //     });
+    // });
 });

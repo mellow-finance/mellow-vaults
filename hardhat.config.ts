@@ -54,11 +54,21 @@ const config: HardhatUserConfig = {
         deployer: {
             default: 0,
         },
-        mStrategyTreasury: {
-            default: 0,
-        },
         protocolTreasury: {
             default: 0,
+        },
+        admin: {
+            // temporary
+            default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
+            kovan: "0xF7526b58c96BF3f81AF1Dc6aCa4224802C305F01",
+        },
+        mStrategy: {
+            // temporary
+            default: "0xF2BF7baa673a5Ac03D64f999b449Cc7F3C9a0F3A",
+        },
+        mStrategyTreasury: {
+            // temporary
+            default: "0xe3317d016914c7c985284654B01c7C265377B668",
         },
         wbtc: {
             default: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",

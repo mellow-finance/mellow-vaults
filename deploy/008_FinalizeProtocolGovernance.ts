@@ -8,7 +8,7 @@ import { sendTx } from "./000_utils";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, protocolTreasury } = await getNamedAccounts();
+    const { deployer, admin } = await getNamedAccounts();
     const governances = [];
     for (const name of [
         "AaveVaultGovernance",
@@ -70,6 +70,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             "commitParams"
         );
         log("Done");
+    }
+
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    const deployerIsAdmin = await read(
+        "ProtocolGovernance",
+        "hasRole",
+        adminRole,
+        deployer
+    );
+    if (deployerIsAdmin) {
+        await execute(
+            "ProtocolGovernance",
+            {
+                from: deployer,
+                autoMine: true,
+            },
+            "grantRole",
+            adminRole,
+            admin
+        );
+        await execute(
+            "ProtocolGovernance",
+            {
+                from: deployer,
+                autoMine: true,
+            },
+            "renounceRole",
+            adminRole,
+            deployer
+        );
     }
 };
 export default func;
