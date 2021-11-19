@@ -16,13 +16,19 @@ interface IYearnVaultGovernance is IVaultGovernance {
         IYearnVaultRegistry yearnVaultRegistry;
     }
 
+    /// @notice Delayed Strategy Params staged for commit after delay.
+    /// @param nft VaultRegistry NFT of the vault
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
+
     /// @notice Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param nft VaultRegistry NFT of the vault
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
 
-    /// @notice Delayed Strategy Params staged for commit after delay.
-    /// @param nft VaultRegistry NFT of the vault
-    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
+    /// @notice Delayed Protocol Params staged for commit after delay.
+    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
     /// @notice Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param nft VaultRegistry NFT of the vault
@@ -33,12 +39,6 @@ interface IYearnVaultGovernance is IVaultGovernance {
     /// @dev Can only be called after delayedStrategyParamsTimestamp.
     /// @param nft VaultRegistry NFT of the vault
     function commitDelayedStrategyParams(uint256 nft) external;
-
-    /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
-    function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
-
-    /// @notice Delayed Protocol Params staged for commit after delay.
-    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
     /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @dev Can only be called after delayedProtocolParamsTimestamp.

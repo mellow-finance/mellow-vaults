@@ -113,9 +113,16 @@ describe("AaveVaultGovernance", () => {
 
     describe("stagedDelayedStrategyParams", () => {
         it("returns params", async () => {
+            const address = await treasury.getAddress();
+            await AaveVaultGovernance.connect(admin).stageDelayedStrategyParams(
+                nftAave,
+                {
+                    strategyTreasury: address,
+                }
+            );
             expect(
                 await AaveVaultGovernance.stagedDelayedStrategyParams(nftAave)
-            ).to.be.deep.equal([await treasury.getAddress()]);
+            ).to.be.deep.equal([address]);
         });
 
         describe("when passed unknown nft", () => {

@@ -3,7 +3,8 @@ import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import { VaultGovernance, ProtocolGovernance } from "./library/Types";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
-import { sleep, toObject } from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
+import { randomAddress, sleep, toObject } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
 
 describe("GatewayVaultGovernance", () => {
@@ -159,6 +160,22 @@ describe("GatewayVaultGovernance", () => {
     });
 
     describe("stagedDelayedStrategyParams", () => {
+        it("returns params", async () => {
+            const address = randomAddress();
+
+            await gatewayVaultGovernance
+                .connect(admin)
+                .stageDelayedStrategyParams(gatewayNft, {
+                    strategyTreasury: address,
+                    redirects: [],
+                });
+            expect(
+                await gatewayVaultGovernance.stagedDelayedStrategyParams(
+                    gatewayNft
+                )
+            ).to.be.deep.equal([address, []]);
+        });
+
         describe("when passed unknown nft", () => {
             it("returns empty struct", async () => {
                 expect(

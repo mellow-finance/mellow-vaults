@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./libraries/Common.sol";
+import "./libraries/CommonLibrary.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
@@ -32,7 +32,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         string memory name_,
         string memory symbol_
     ) ERC20(name_, symbol_) {
-        require(Common.isSortedAndUnique(vaultTokens_), "SAU");
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), "SAU");
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {

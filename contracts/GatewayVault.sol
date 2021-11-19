@@ -71,7 +71,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
 
     /// @inheritdoc IGatewayVault
     function addSubvaults(uint256[] memory nfts) external {
-        require(msg.sender == address(_vaultGovernance), "RVG");  // TODO: rename to "VG"
+        require(msg.sender == address(_vaultGovernance), "RVG"); // TODO: rename to "VG"
         require(_subvaultNfts.length == 0, "SBIN");
         require(nfts.length > 0, "SBL");
         address[] memory selfTokens = _vaultTokens;
@@ -121,7 +121,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[] memory totalTvl = new uint256[](_vaultTokens.length);
-        uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
+        uint256[][] memory amountsByVault = CommonLibrary.splitAmounts(tokenAmounts, tvls);
         IGatewayVaultGovernance.DelayedStrategyParams memory strategyParams = IGatewayVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(_nft);
@@ -175,7 +175,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         require(_subvaultNfts.length > 0, "INIT");
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
-        uint256[][] memory amountsByVault = Common.splitAmounts(tokenAmounts, tvls);
+        uint256[][] memory amountsByVault = CommonLibrary.splitAmounts(tokenAmounts, tvls);
         uint256[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance))
             .delayedStrategyParams(_nft)
             .redirects;

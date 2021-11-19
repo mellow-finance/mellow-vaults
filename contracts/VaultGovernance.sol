@@ -127,6 +127,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         require(_delayedStrategyParamsTimestamp[nft] > 0, "NULL");
         require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], "TS");
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
+        delete _stagedDelayedStrategyParams[nft];
         delete _delayedStrategyParamsTimestamp[nft];
     }
 
@@ -148,6 +149,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         require(_delayedProtocolParamsTimestamp > 0, "NULL");
         require(block.timestamp >= _delayedProtocolParamsTimestamp, "TS");
         _delayedProtocolParams = _stagedDelayedProtocolParams;
+        delete _stagedDelayedProtocolParams;
         delete _delayedProtocolParamsTimestamp;
     }
 

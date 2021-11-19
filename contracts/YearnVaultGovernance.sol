@@ -7,7 +7,7 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
-    /// @notice Creates a new contract.
+    /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
@@ -21,6 +21,14 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     }
 
     /// @inheritdoc IYearnVaultGovernance
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({strategyTreasury: address(0)});
+        }
+        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc IYearnVaultGovernance
     function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
             return DelayedStrategyParams({strategyTreasury: address(0)});
@@ -29,11 +37,16 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     }
 
     /// @inheritdoc IYearnVaultGovernance
-    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
-        if (_stagedDelayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0)});
+    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
+        if (_stagedDelayedProtocolParams.length == 0) {
+            return DelayedProtocolParams({yearnVaultRegistry: IYearnVaultRegistry(address(0))});
         }
-        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+        return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
+    }
+
+    /// @inheritdoc IYearnVaultGovernance
+    function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
+        return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
     /// @inheritdoc IYearnVaultGovernance
@@ -51,22 +64,6 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
             nft,
             abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
         );
-    }
-
-    /// @inheritdoc IYearnVaultGovernance
-    function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({yearnVaultRegistry: IYearnVaultRegistry(address(0))});
-        }
-        return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
-    }
-
-    /// @inheritdoc IYearnVaultGovernance
-    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
-        if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({yearnVaultRegistry: IYearnVaultRegistry(address(0))});
-        }
-        return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
     /// @inheritdoc IYearnVaultGovernance

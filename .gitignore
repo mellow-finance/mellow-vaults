@@ -17,6 +17,7 @@ coverage.json
 deployments/kovan
 deployments/localhost
 deployments/contracts.json
+test/types
 .vscode
 docs
 .DS_store

@@ -105,9 +105,16 @@ describe("UniV3VaultGovernance", () => {
 
     describe("stagedDelayedStrategyParams", () => {
         it("returns params", async () => {
+            const address = await treasury.getAddress();
+            await UniV3VaultGovernance.connect(
+                admin
+            ).stageDelayedStrategyParams(nftUniV3, {
+                strategyTreasury: address,
+            });
+
             expect(
                 await UniV3VaultGovernance.stagedDelayedStrategyParams(nftUniV3)
-            ).to.be.deep.equal([await treasury.getAddress()]);
+            ).to.be.deep.equal([address]);
         });
 
         describe("when passed unknown nft", () => {

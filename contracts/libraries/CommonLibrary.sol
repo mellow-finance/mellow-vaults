@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-/// @notice Common shared utilities
-library Common {
+/// @notice CommonLibrary shared utilities
+library CommonLibrary {
     uint256 constant DENOMINATOR = 10**9;
 
     /// @notice Sort addresses using bubble sort. The sorting is done in-place.

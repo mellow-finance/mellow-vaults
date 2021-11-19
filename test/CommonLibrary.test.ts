@@ -6,7 +6,7 @@ import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import Exceptions from "./library/Exceptions";
 
-describe("Common", () => {
+describe("CommonLibrary", () => {
     let commonTest: Contract;
     const addresses: Address[] = [
         "0x0000000000000000000000000000000000000000",
