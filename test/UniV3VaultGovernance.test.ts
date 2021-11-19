@@ -1,9 +1,13 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { Signer } from "ethers";
-import { VaultGovernance, ProtocolGovernance } from "./library/Types";
+import {
+    VaultGovernance,
+    ProtocolGovernance,
+    VaultRegistry,
+} from "./library/Types";
 import { deploySubVaultSystem } from "./library/Deployments";
-import { sleep } from "./library/Helpers";
+import { sleep, toObject } from "./library/Helpers";
 
 describe("UniV3VaultGovernance", () => {
     const tokensCount = 2;
@@ -16,20 +20,27 @@ describe("UniV3VaultGovernance", () => {
     let protocolGovernance: ProtocolGovernance;
     let nftUniV3: number;
     let deployment: Function;
+    let namedAccounts: any;
+    let vaultRegistry: VaultRegistry;
 
     before(async () => {
         [deployer, admin, treasury, anotherTreasury, anotherPositionManager] =
             await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ protocolGovernance, UniV3VaultGovernance, nftUniV3 } =
-                await deploySubVaultSystem({
-                    tokensCount: tokensCount,
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultOwner: await deployer.getAddress(),
-                }));
+            ({
+                protocolGovernance,
+                UniV3VaultGovernance,
+                nftUniV3,
+                vaultRegistry,
+            } = await deploySubVaultSystem({
+                tokensCount: tokensCount,
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+                vaultOwner: await deployer.getAddress(),
+            }));
         });
+        namedAccounts = await getNamedAccounts();
     });
 
     beforeEach(async () => {
@@ -58,6 +69,36 @@ describe("UniV3VaultGovernance", () => {
                         nftUniV3 + 42
                     )
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
+        });
+    });
+
+    describe("delayedProtocolParams", () => {
+        it("returns correct params", async () => {
+            expect(
+                toObject(await UniV3VaultGovernance.delayedProtocolParams())
+            ).to.be.deep.equal({
+                positionManager: namedAccounts.uniswapV3PositionManager,
+            });
+        });
+
+        describe("when delayedProtocolParams is empty", () => {
+            it("returns zero address", async () => {
+                let factory = await ethers.getContractFactory(
+                    "UniV3VaultGovernanceTest"
+                );
+                let contract = await factory.deploy(
+                    {
+                        protocolGovernance: protocolGovernance.address,
+                        registry: vaultRegistry.address,
+                    },
+                    { positionManager: namedAccounts.uniswapV3PositionManager }
+                );
+                expect(
+                    toObject(await contract.delayedProtocolParams())
+                ).to.be.deep.equal({
+                    positionManager: ethers.constants.AddressZero,
+                });
             });
         });
     });

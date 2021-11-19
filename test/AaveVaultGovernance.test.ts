@@ -1,14 +1,15 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { Signer } from "ethers";
 import {
     ERC20,
     Vault,
     VaultGovernance,
     ProtocolGovernance,
+    VaultRegistry,
 } from "./library/Types";
 import { deploySubVaultSystem } from "./library/Deployments";
-import { sleep } from "./library/Helpers";
+import { sleep, toObject } from "./library/Helpers";
 
 describe("AaveVaultGovernance", () => {
     const tokensCount = 2;
@@ -24,6 +25,8 @@ describe("AaveVaultGovernance", () => {
     let nftAave: number;
     let tokens: ERC20[];
     let deployment: Function;
+    let namedAccounts: any;
+    let vaultRegistry: VaultRegistry;
 
     before(async () => {
         [
@@ -36,14 +39,20 @@ describe("AaveVaultGovernance", () => {
         ] = await ethers.getSigners();
         deployment = deployments.createFixture(async () => {
             await deployments.fixture();
-            ({ protocolGovernance, AaveVaultGovernance, tokens, nftAave } =
-                await deploySubVaultSystem({
-                    tokensCount: tokensCount,
-                    adminSigner: admin,
-                    treasury: await treasury.getAddress(),
-                    vaultOwner: await deployer.getAddress(),
-                }));
+            ({
+                protocolGovernance,
+                AaveVaultGovernance,
+                tokens,
+                nftAave,
+                vaultRegistry,
+            } = await deploySubVaultSystem({
+                tokensCount: tokensCount,
+                adminSigner: admin,
+                treasury: await treasury.getAddress(),
+                vaultOwner: await deployer.getAddress(),
+            }));
         });
+        namedAccounts = await getNamedAccounts();
     });
 
     beforeEach(async () => {
@@ -70,6 +79,34 @@ describe("AaveVaultGovernance", () => {
                 expect(
                     await AaveVaultGovernance.delayedStrategyParams(nftAave + 1)
                 ).to.be.deep.equal([ethers.constants.AddressZero]);
+            });
+        });
+    });
+
+    describe("delayedProtocolParams", () => {
+        it("returns correct params", async () => {
+            expect(
+                toObject(await AaveVaultGovernance.delayedProtocolParams())
+            ).to.be.deep.equal({ lendingPool: namedAccounts.aaveLendingPool });
+        });
+
+        describe("when delayedProtocolParams is empty", () => {
+            it("returns zero address", async () => {
+                let factory = await ethers.getContractFactory(
+                    "AaveVaultGovernanceTest"
+                );
+                let contract = await factory.deploy(
+                    {
+                        protocolGovernance: protocolGovernance.address,
+                        registry: vaultRegistry.address,
+                    },
+                    { lendingPool: namedAccounts.aaveLendingPool }
+                );
+                expect(
+                    toObject(await contract.delayedProtocolParams())
+                ).to.be.deep.equal({
+                    lendingPool: ethers.constants.AddressZero,
+                });
             });
         });
     });

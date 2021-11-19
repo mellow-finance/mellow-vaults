@@ -172,18 +172,17 @@ abstract contract Vault is IVault {
             return false;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 thisNft = registry.nftForVault(address(this));
-        address thisOwner = registry.ownerOf(thisNft);
-        uint256 toNft = registry.nftForVault(to);
-        address toOwner = registry.ownerOf(toNft);
-        // make sure that vault is a registered vault
+         // make sure that this vault is a registered vault
+        if(_nft == 0) {
+            return false;
+        }
+        address thisOwner = registry.ownerOf(_nft);
+        // make sure that vault has a registered owner
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-        uint256 toOwnerNft = registry.nftForVault(toOwner);
-        if ((toOwnerNft == 0) || (thisOwnerNft != toOwnerNft) || (thisOwner != toOwner)) {
+        if (thisOwnerNft == 0) {
             return false;
         }
         IGatewayVault gw = IGatewayVault(thisOwner);
-
         if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
             return false;
         }

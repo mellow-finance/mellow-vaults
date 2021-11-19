@@ -92,13 +92,13 @@ describe("ERC20Vault", function () {
                             tokens[1].address,
                             tokens[0].address,
                         ])
-                    ).to.be.revertedWith("SAU");
+                    ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
                     await expect(
                         factory.deploy(await stranger.getAddress(), [
                             tokens[0].address,
                             tokens[0].address,
                         ])
-                    ).to.be.revertedWith("SAU");
+                    ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
                 });
             });
         });
@@ -273,15 +273,33 @@ describe("ERC20Vault", function () {
                 });
             });
 
-            it("passes", async () => {
-                expect(
-                    await ERC20Vault.callStatic.transferAndPush(
-                        await deployer.getAddress(),
-                        [tokens[0].address],
-                        [BigNumber.from(10 ** 9)],
-                        []
-                    )
-                ).to.deep.equal([BigNumber.from(10 ** 9)]);
+            describe("when all tokenAmounts != 0", () => {
+                it("passes", async () => {
+                    expect(
+                        await ERC20Vault.callStatic.transferAndPush(
+                            await deployer.getAddress(),
+                            [tokens[0].address],
+                            [BigNumber.from(10 ** 9)],
+                            []
+                        )
+                    ).to.deep.equal([BigNumber.from(10 ** 9)]);
+                });
+            });
+
+            describe("when not all tokenAmounts != 0", () => {
+                it("passes", async () => {
+                    expect(
+                        await ERC20Vault.callStatic.transferAndPush(
+                            await deployer.getAddress(),
+                            [tokens[0].address, tokens[1].address],
+                            [BigNumber.from(10 ** 9), BigNumber.from(0)],
+                            []
+                        )
+                    ).to.deep.equal([
+                        BigNumber.from(10 ** 9),
+                        BigNumber.from(0),
+                    ]);
+                });
             });
 
             describe("when not enough balance", () => {
@@ -364,7 +382,7 @@ describe("ERC20Vault", function () {
                             ethers.constants.AddressZero,
                             arg
                         )
-                    ).to.be.revertedWith("OWT");
+                    ).to.be.revertedWith(Exceptions.OTHER_VAULT_TOKENS);
                 });
             });
         });
