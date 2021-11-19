@@ -96,6 +96,38 @@ describe("YearnVaultGovernance", () => {
         });
     });
 
+    describe("delayedProtocolParams", () => {
+        const paramsToStage: DelayedProtocolParamsStruct = {
+            yearnVaultRegistry: randomAddress(),
+        };
+
+        it("returns delayed protocol params staged for commit", async () => {
+            await deployments.execute(
+                "YearnVaultGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedProtocolParams",
+                paramsToStage
+            );
+            const governanceDelay = await deployments.read(
+                "ProtocolGovernance",
+                "governanceDelay"
+            );
+            await sleep(governanceDelay);
+
+            await deployments.execute(
+                "YearnVaultGovernance",
+                { from: admin, autoMine: true },
+                "commitDelayedProtocolParams"
+            );
+
+            const stagedParams = await deployments.read(
+                "YearnVaultGovernance",
+                "delayedProtocolParams"
+            );
+            expect(toObject(stagedParams)).to.eql(paramsToStage);
+        });
+    });
+
     describe("#stageDelayedProtocolParams", () => {
         const paramsToStage: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: randomAddress(),
