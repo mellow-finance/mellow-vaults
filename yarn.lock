@@ -7859,7 +7859,7 @@ solc@^0.6.3, solc@^0.6.7:
     semver "^5.5.0"
     tmp "0.0.33"
 
-solc@^0.8.10:
+solc@^0.8.9:
   version "0.8.10"
   resolved "https://registry.yarnpkg.com/solc/-/solc-0.8.10.tgz#3f761794677a36cdd8054f4ec57d84bab8455358"
   integrity sha512-I/Mcn6J5bEtJqveNLplQm9IRrhemm6v+qkw5S2+wM4x9HItJ1sYdrqVTN3j4DMhFDM3ZbvM0QywVzpPx666PHw==
