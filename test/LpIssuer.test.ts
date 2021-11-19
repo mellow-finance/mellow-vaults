@@ -1,10 +1,12 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
+import { BigNumber } from "ethers";
 import Exceptions from "./library/Exceptions";
 import { ERC20, LpIssuerGovernance } from "./library/Types";
 import { LpIssuer, ProtocolGovernance, VaultRegistry } from "./library/Types";
 import { deploySystem } from "./library/Deployments";
+import { comparator } from "ramda";
 
 describe("LpIssuer", () => {
     let deployer: SignerWithAddress;
@@ -54,7 +56,19 @@ describe("LpIssuer", () => {
         });
 
         describe("when tokens not sorted nor unique", () => {
-            // TODO: implement
+            it("reverts", async () => {
+                const contractFactory = await ethers.getContractFactory(
+                    "LpIssuer"
+                );
+                await expect(
+                    contractFactory.deploy(
+                        ethers.constants.AddressZero,
+                        [tokens[1].address, tokens[0].address],
+                        "name",
+                        "symbol"
+                    )
+                ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+            });
         });
     });
 
@@ -111,6 +125,27 @@ describe("LpIssuer", () => {
                 ).to.equal(10 ** 9);
             });
         });
+
+        describe("when leftovers happen", () => {
+            it("returns them", async () => {
+                const token0initialBalance = BigNumber.from(
+                    await tokens[0].balanceOf(await deployer.getAddress())
+                );
+                const token1initialBalance = BigNumber.from(
+                    await tokens[1].balanceOf(await deployer.getAddress())
+                );
+                await LpIssuer.deposit([10 ** 9 + 1, 10 ** 9 + 1], []);
+                expect(
+                    await LpIssuer.balanceOf(await deployer.getAddress())
+                ).to.equal(10 ** 9);
+                expect(
+                    await tokens[0].balanceOf(await deployer.getAddress())
+                ).to.equal(token0initialBalance.sub(10 ** 9));
+                expect(
+                    await tokens[1].balanceOf(await deployer.getAddress())
+                ).to.equal(token1initialBalance.sub(10 ** 9));
+            });
+        });
     });
 
     describe("::withdraw", () => {
@@ -140,6 +175,35 @@ describe("LpIssuer", () => {
                 expect(
                     await LpIssuer.balanceOf(await deployer.getAddress())
                 ).to.equal(10 ** 9 - 1);
+
+                await expect(
+                    LpIssuer.withdraw(
+                        await deployer.getAddress(),
+                        10 ** 9 - 1,
+                        []
+                    )
+                ).to.not.be.reverted;
+                expect(
+                    await LpIssuer.balanceOf(await deployer.getAddress())
+                ).to.equal(0);
+            });
+        });
+    });
+
+    describe("::nft", () => {
+        it("returns correct nft", async () => {
+            expect(await LpIssuer.nft()).to.equal(lpIssuerNft);
+        });
+    });
+
+    describe("::initialize", () => {
+        describe("when sender is not VaultGovernance", () => {
+            it("reverts", async () => {
+                await expect(
+                    LpIssuer.connect(stranger).initialize(42)
+                ).to.be.revertedWith(
+                    Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+                );
             });
         });
     });
