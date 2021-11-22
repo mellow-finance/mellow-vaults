@@ -149,10 +149,18 @@ describe("AaveVault", () => {
             it("nothing is pulled", async () => {
                 await withSigner(gatewayVault, async (signer) => {
                     const { weth, wbtc } = await getNamedAccounts();
-                    await aaveVaultContract
-                        .connect(signer)
-                        .pull(erc20Vault, [wbtc, weth], [0, 0], []);
-                    expect(await wethContract.balanceOf(erc20Vault)).to.eql(0);
+                    await expect(
+                        aaveVaultContract
+                            .connect(signer)
+                            .pull(erc20Vault, [wbtc, weth], [0, 0], [])
+                    ).to.not.be.reverted;
+                    const wethContract = await ethers.getContractAt(
+                        "WERC20Test",
+                        weth
+                    );
+                    expect(await wethContract.balanceOf(aaveVault)).to.eql(
+                        w9Amount
+                    );
                 });
             });
         });
