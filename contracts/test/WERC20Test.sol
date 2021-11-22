@@ -5,7 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 interface IWrapped {
     function deposit() external payable;
-    function withdraw(uint wad) external;
+
+    function withdraw(uint256 wad) external;
 }
 
 contract WERC20Test is IWrapped, ERC20 {
@@ -15,5 +16,5 @@ contract WERC20Test is IWrapped, ERC20 {
 
     function deposit() external payable {}
 
-    function withdraw(uint wad) external {}
+    function withdraw(uint256 wad) external {}
 }

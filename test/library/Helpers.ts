@@ -52,10 +52,7 @@ export const sortAddresses = (addresses: string[]) => {
 
 export const compareAddresses = (a: string, b: string) => {
     return parseInt(
-        (
-            BigNumber.from(a).toBigInt() -
-            BigNumber.from(b).toBigInt()
-        ).toString()
+        (BigNumber.from(a).toBigInt() - BigNumber.from(b).toBigInt()).toString()
     );
 };
 
