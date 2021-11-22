@@ -1,5 +1,5 @@
 import { Contract } from "ethers";
-import { network, ethers } from "hardhat";
+import { network, ethers, getNamedAccounts } from "hardhat";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
@@ -40,13 +40,23 @@ export const now = () => {
 
 export const sortContractsByAddresses = (contracts: Contract[]) => {
     return contracts.sort((a, b) => {
-        return parseInt(
-            (
-                BigNumber.from(a.address).toBigInt() -
-                BigNumber.from(b.address).toBigInt()
-            ).toString()
-        );
+        return compareAddresses(a.address, b.address);
     });
+};
+
+export const sortAddresses = (addresses: string[]) => {
+    return addresses.sort((a, b) => {
+        return compareAddresses(a, b);
+    });
+};
+
+export const compareAddresses = (a: string, b: string) => {
+    return parseInt(
+        (
+            BigNumber.from(a).toBigInt() -
+            BigNumber.from(b).toBigInt()
+        ).toString()
+    );
 };
 
 export const encodeToBytes = (
@@ -81,3 +91,13 @@ export const withSigner = async (
         params: [address],
     });
 };
+
+export async function depositW9(receiver: string, amount: BigNumberish) {
+    const { weth } = await getNamedAccounts();
+    const w9 = await ethers.getContractAt("WERC20Test", weth);
+    const sender = randomAddress();
+    await withSigner(sender, async (signer) => {
+        await w9.connect(signer).deposit({ value: amount });
+        await w9.connect(signer).transfer(receiver, amount);
+    });
+}
