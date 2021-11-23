@@ -259,10 +259,7 @@ describe("GatewayVault", () => {
             it("passes", async () => {
                 await tokens[0]
                     .connect(deployer)
-                    .transfer(
-                        gatewayVault.address,
-                        BigNumber.from(10 ** 10)
-                    );
+                    .transfer(gatewayVault.address, BigNumber.from(10 ** 10));
                 await gatewayVault
                     .connect(deployer)
                     .push([tokens[0].address], [BigNumber.from(10 ** 9)], []);
