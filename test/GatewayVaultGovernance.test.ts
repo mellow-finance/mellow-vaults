@@ -49,22 +49,21 @@ describe("GatewayVaultGovernance", () => {
     });
 
     describe("stageDelayedStrategyParams", () => {
-        //FIXME
-        // describe("when redirects.length != vaultTokens.length and redirects.length > 0", () => {
-        //     it("reverts", async () => {
-        //         await expect(
-        //             gatewayVaultGovernance.stageDelayedStrategyParams(
-        //                 nftERC20,
-        //                 {
-        //                     redirects: [1, 2, 3],
-        //                     strategyTreasury: await treasury.getAddress(),
-        //                 }
-        //             )
-        //         ).to.be.revertedWith(
-        //             Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH
-        //         );
-        //     });
-        // });
+        describe("when redirects.length != vaultTokens.length and redirects.length > 0", () => {
+            it("reverts", async () => {
+                await expect(
+                    gatewayVaultGovernance.stageDelayedStrategyParams(
+                        gatewayNft,
+                        {
+                            redirects: [1, 2, 3],
+                            strategyTreasury: await treasury.getAddress(),
+                        }
+                    )
+                ).to.be.revertedWith(
+                    Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH
+                );
+            });
+        });
 
         it("sets stageDelayedStrategyParams and emits StageDelayedStrategyParams event", async () => {
             await expect(
