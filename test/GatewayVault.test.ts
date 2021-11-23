@@ -292,20 +292,6 @@ describe("GatewayVault", () => {
             });
         });
 
-        //TODO
-        // describe("when has no sub vaults", () => {
-        //     it("reverts", async () => {
-        //         await expect(
-        //             anotherGatewayVault.connect(strategy)
-        //             .pull(
-        //                 await deployer.getAddress(),
-        //                 [],
-        //                 [BigNumber.from(10 ** 9)],
-        //                 encodeToBytes(["bool", "bytes[]"], [true, []])
-        //         )).to.be.revertedWith("INIT");
-        //     });
-        // });
-
         it("emits Pull", async () => {
             await tokens[0]
                 .connect(deployer)
@@ -443,13 +429,6 @@ describe("GatewayVault", () => {
                 );
             });
         });
-        //todo
-        // describe("when sub vaults have not been initialized and nfts.length > 0", () => {
-        //     it("reverts", async () => {
-
-        //         await expect(contract.addSubvaults([BigNumber.from(nftERC20)])).to.be.revertedWith("L");
-        //     });
-        // });
     });
 
     describe("_isValidPullDestination", () => {
