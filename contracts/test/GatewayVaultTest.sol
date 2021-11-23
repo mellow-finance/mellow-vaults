@@ -29,4 +29,8 @@ contract GatewayVaultTest is GatewayVault {
     function isVaultToken(address token) public view returns (bool) {
         return _isVaultToken(token);
     }
+
+    function setVaultTokens(address[] memory tokens) public {
+        _vaultTokens = tokens;
+    }
 }
