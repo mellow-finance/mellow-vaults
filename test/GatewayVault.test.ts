@@ -7,10 +7,11 @@ import {
     VaultRegistry,
     AaveVault,
     VaultGovernance,
+    ProtocolGovernance,
 } from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
-import { withSigner } from "./library/Helpers";
+import { encodeToBytes, sleep, withSigner } from "./library/Helpers";
 
 describe("GatewayVault", () => {
     let deployer: Signer;
@@ -23,11 +24,18 @@ describe("GatewayVault", () => {
     let ERC20Vault: Vault;
     let AnotherERC20Vault: Vault;
     let nftERC20: number;
+    let gatewayNft: number;
     let anotherNftERC20: number;
     let tokens: ERC20[];
     let gatewayVault: Vault;
     let gatewayVaultGovernance: VaultGovernance;
+    let protocolGovernance: ProtocolGovernance;
     let deployment: Function;
+    let anotherGatewayVault: Vault;
+    let anotherVaultRegistry: VaultRegistry;
+    let anotherGatewayNft: number;
+    let anotherProtocolGovernance: ProtocolGovernance;
+    let anotherGatewayVaultGovernance: VaultGovernance;
 
     before(async () => {
         [deployer, admin, stranger, treasury, strategy] =
@@ -44,6 +52,8 @@ describe("GatewayVault", () => {
                 vaultRegistry,
                 AaveVault,
                 gatewayVaultGovernance,
+                gatewayNft,
+                protocolGovernance,
             } = await deploySubVaultsXGatewayVaultSystem({
                 adminSigner: admin,
                 treasury: await treasury.getAddress(),
@@ -58,7 +68,10 @@ describe("GatewayVault", () => {
                         .mul(BigNumber.from(10 ** 9))
                 );
             }
-            await vaultRegistry.approve(await strategy.getAddress(), 4);
+            await vaultRegistry.approve(
+                await strategy.getAddress(),
+                gatewayNft
+            );
         });
     });
 
@@ -71,6 +84,44 @@ describe("GatewayVault", () => {
             expect(await ERC20Vault.vaultTokens()).to.deep.equal(
                 tokens.map((token) => token.address)
             );
+        });
+    });
+
+    describe("setApprovalForAll", () => {
+        describe("when called not by vault governance", () => {
+            it("reverts", async () => {
+                await expect(
+                    gatewayVault
+                        .connect(stranger)
+                        .setApprovalForAll(await stranger.getAddress())
+                ).to.be.revertedWith("VG");
+            });
+        });
+
+        describe("when passing a zero address", () => {
+            it("reverts", async () => {
+                await gatewayVault.setVaultGovernance(
+                    await deployer.getAddress()
+                );
+                await expect(
+                    gatewayVault.setApprovalForAll(ethers.constants.AddressZero)
+                ).to.be.revertedWith("ZS");
+            });
+        });
+    });
+
+    describe("onERC721Received", () => {
+        describe("when called not by vault registry", async () => {
+            it("reverts", async () => {
+                await expect(
+                    gatewayVault.onERC721Received(
+                        ethers.constants.AddressZero,
+                        ethers.constants.AddressZero,
+                        1,
+                        []
+                    )
+                ).to.be.revertedWith("NFTVR");
+            });
         });
     });
 
@@ -155,6 +206,42 @@ describe("GatewayVault", () => {
             });
         });
 
+        describe("when optimized", () => {
+            it("passes", async () => {
+                await gatewayVault.push(
+                    [],
+                    [],
+                    encodeToBytes(["bool", "bytes[]"], [true, []])
+                );
+            });
+        });
+
+        describe("when optimized and redirects contains zero", () => {
+            it("passes", async () => {
+                await gatewayVaultGovernance
+                    .connect(admin)
+                    .stageDelayedStrategyParams(gatewayNft, {
+                        strategyTreasury: await treasury.getAddress(),
+                        redirects: [1, 0],
+                    });
+                await sleep(
+                    Number(
+                        BigNumber.from(
+                            await protocolGovernance.governanceDelay()
+                        )
+                    )
+                );
+                await gatewayVaultGovernance
+                    .connect(admin)
+                    .commitDelayedStrategyParams(gatewayNft);
+                await gatewayVault.push(
+                    [],
+                    [],
+                    encodeToBytes(["bool", "bytes[]"], [true, [[], []]])
+                );
+            });
+        });
+
         it("emits Push", async () => {
             await tokens[0]
                 .connect(deployer)
@@ -168,6 +255,60 @@ describe("GatewayVault", () => {
     });
 
     describe("pull", () => {
+        describe("when optimized and redirects.length > 0", () => {
+            it("passes", async () => {
+                await tokens[0]
+                    .connect(deployer)
+                    .transfer(
+                        gatewayVault.address,
+                        BigNumber.from(10 ** 10)
+                    );
+                await gatewayVault
+                    .connect(deployer)
+                    .push([tokens[0].address], [BigNumber.from(10 ** 9)], []);
+                await gatewayVaultGovernance
+                    .connect(admin)
+                    .stageDelayedStrategyParams(gatewayNft, {
+                        strategyTreasury: await treasury.getAddress(),
+                        redirects: [1, 0],
+                    });
+                await sleep(
+                    Number(
+                        BigNumber.from(
+                            await protocolGovernance.governanceDelay()
+                        )
+                    )
+                );
+                await gatewayVaultGovernance
+                    .connect(admin)
+                    .commitDelayedStrategyParams(gatewayNft);
+                expect(
+                    await gatewayVault
+                        .connect(deployer)
+                        .pull(
+                            await deployer.getAddress(),
+                            [tokens[0].address],
+                            [BigNumber.from(10 ** 9)],
+                            encodeToBytes(["bool", "bytes[]"], [true, [[], []]])
+                        )
+                ).to.emit(gatewayVault, "Pull");
+            });
+        });
+
+        //TODO
+        // describe("when has no sub vaults", () => {
+        //     it("reverts", async () => {
+        //         await expect(
+        //             anotherGatewayVault.connect(strategy)
+        //             .pull(
+        //                 await deployer.getAddress(),
+        //                 [],
+        //                 [BigNumber.from(10 ** 9)],
+        //                 encodeToBytes(["bool", "bytes[]"], [true, []])
+        //         )).to.be.revertedWith("INIT");
+        //     });
+        // });
+
         it("emits Pull", async () => {
             await tokens[0]
                 .connect(deployer)
@@ -262,7 +403,7 @@ describe("GatewayVault", () => {
                 await expect(
                     gatewayVault
                         .connect(strategy)
-                        .addSubvaults([ERC20Vault.address])
+                        .addSubvaults([BigNumber.from(nftERC20)])
                 ).to.be.revertedWith(
                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
                 );
@@ -275,8 +416,8 @@ describe("GatewayVault", () => {
                     await deployer.getAddress()
                 );
                 await expect(
-                    gatewayVault.addSubvaults([ERC20Vault.address])
-                ).to.be.revertedWith("SBIN");
+                    gatewayVault.addSubvaults([BigNumber.from(nftERC20)])
+                ).to.be.revertedWith(Exceptions.SUB_VAULT_INITIALIZED);
             });
         });
 
@@ -287,7 +428,7 @@ describe("GatewayVault", () => {
                 );
                 await gatewayVault.setSubvaultNfts([]);
                 await expect(gatewayVault.addSubvaults([])).to.be.revertedWith(
-                    "SBL"
+                    Exceptions.SUB_VAULT_LENGTH
                 );
             });
         });
@@ -305,6 +446,13 @@ describe("GatewayVault", () => {
                 );
             });
         });
+        //todo
+        // describe("when sub vaults have not been initialized and nfts.length > 0", () => {
+        //     it("reverts", async () => {
+
+        //         await expect(contract.addSubvaults([BigNumber.from(nftERC20)])).to.be.revertedWith("L");
+        //     });
+        // });
     });
 
     describe("_isValidPullDestination", () => {
