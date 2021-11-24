@@ -23,6 +23,11 @@ contract YearnVault is Vault {
         }
     }
 
+    /// @notice Returns Yearn protocol vaults used by this contract
+    function yTokens() external view returns (address[] memory) {
+        return _yTokens;
+    }
+
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultTokens;
