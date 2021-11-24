@@ -77,7 +77,7 @@ contract YearnVault is Vault {
     }
 
     function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(_yearnVaultRegistry()), address(this)) < type(uint256).max / 2) {
+        if (IERC20(token).allowance(address(this), address(_yearnVaultRegistry())) < type(uint256).max / 2) {
             IERC20(token).approve(address(_yearnVaultRegistry()), type(uint256).max);
         }
     }

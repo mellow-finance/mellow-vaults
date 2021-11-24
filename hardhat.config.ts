@@ -70,6 +70,9 @@ const config: HardhatUserConfig = {
             // temporary
             default: "0xe3317d016914c7c985284654B01c7C265377B668",
         },
+        test: {
+            default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
+        },
         wbtc: {
             default: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
             kovan: "0xd1b98b6607330172f1d991521145a22bce793277",

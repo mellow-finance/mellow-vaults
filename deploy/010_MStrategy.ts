@@ -50,7 +50,7 @@ const setupVault = async (
             await execute(
                 contractName,
                 {
-                    from: admin,
+                    from: deployer,
                     log: true,
                     autoMine: true,
                 },
@@ -77,7 +77,7 @@ const setupVault = async (
         await execute(
             contractName,
             {
-                from: admin,
+                from: deployer,
                 log: true,
                 autoMine: true,
             },
@@ -88,7 +88,7 @@ const setupVault = async (
         await execute(
             contractName,
             {
-                from: admin,
+                from: deployer,
                 log: true,
                 autoMine: true,
             },
