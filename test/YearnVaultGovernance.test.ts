@@ -626,7 +626,7 @@ describe("YearnVaultGovernance", () => {
         });
 
         describe("when called by VaultRegistry ERC721 owner", () => {
-            it("reverts", async () => {
+            it("succeeds", async () => {
                 const owner = randomAddress();
                 await deployments.execute(
                     "VaultRegistry",
@@ -636,15 +636,18 @@ describe("YearnVaultGovernance", () => {
                     owner,
                     nft
                 );
-                await expect(
-                    deployments.execute(
-                        "YearnVaultGovernance",
-                        { from: owner, autoMine: true },
-                        "stageDelayedStrategyParams",
-                        nft,
-                        paramsToStage
-                    )
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                await withSigner(owner, async (s) => {
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(s);
+                    await g.stageDelayedStrategyParams(nft, paramsToStage);
+                });
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
             });
         });
 
@@ -678,17 +681,15 @@ describe("YearnVaultGovernance", () => {
 
         describe("when called not by protocol admin or not by strategy", () => {
             it("reverts", async () => {
-                for (const actor of [deployer, stranger]) {
-                    await expect(
-                        deployments.execute(
-                            "YearnVaultGovernance",
-                            { from: actor, autoMine: true },
-                            "stageDelayedStrategyParams",
-                            nft,
-                            paramsToStage
-                        )
-                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
-                }
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: stranger, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        paramsToStage
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
             });
         });
     });
@@ -879,7 +880,7 @@ describe("YearnVaultGovernance", () => {
         });
 
         describe("when called by VaultRegistry ERC721 owner", () => {
-            it("reverts", async () => {
+            it("succeeds", async () => {
                 await deployments.execute(
                     "YearnVaultGovernance",
                     { from: admin, autoMine: true },
@@ -903,14 +904,18 @@ describe("YearnVaultGovernance", () => {
                     owner,
                     nft
                 );
-                await expect(
-                    deployments.execute(
-                        "YearnVaultGovernance",
-                        { from: owner, autoMine: true },
-                        "commitDelayedStrategyParams",
-                        nft
-                    )
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                await withSigner(owner, async (s) => {
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(s);
+                    await g.commitDelayedStrategyParams(nft);
+                });
+                const params = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql(paramsToCommit);
             });
         });
 
@@ -964,16 +969,14 @@ describe("YearnVaultGovernance", () => {
                 );
                 await sleep(governanceDelay);
 
-                for (const actor of [deployer, stranger]) {
-                    await expect(
-                        deployments.execute(
-                            "YearnVaultGovernance",
-                            { from: actor, autoMine: true },
-                            "commitDelayedStrategyParams",
-                            nft
-                        )
-                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
-                }
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: stranger, autoMine: true },
+                        "commitDelayedStrategyParams",
+                        nft
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
             });
         });
     });
