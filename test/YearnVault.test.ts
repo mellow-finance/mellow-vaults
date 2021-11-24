@@ -47,9 +47,9 @@ describe("YearnVault", () => {
             protocolGovernance = (await get("ProtocolGovernance")).address;
             vaultRegistry = (await get("VaultRegistry")).address;
             yearnVaultGovernance = (await get("YearnVaultGovernance")).address;
-            const { weth, usdc, test } = await getNamedAccounts();
+            const { weth, usdc, wbtc, test } = await getNamedAccounts();
             vaultOwner = test;
-            tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
+            tokens = [weth, usdc, wbtc].map((t) => t.toLowerCase()).sort();
             await execute(
                 "YearnVaultGovernance",
                 {
@@ -64,62 +64,46 @@ describe("YearnVault", () => {
             nft = (await read("VaultRegistry", "vaultsCount")).toNumber();
             const address = await read("VaultRegistry", "vaultForNft", nft);
 
-            const usdcContract = await getExternalContract("usdc");
-            const wethContract = await getExternalContract("weth");
+            const contracts: Contract[] = [];
+            for (const token of tokens) {
+                contracts.push(await getExternalContract(token));
+            }
             yearnVault = await ethers.getContractAt("YearnVault", address);
 
             await withSigner(vaultOwner, async (s) => {
-                await usdcContract
-                    .connect(s)
-                    .approve(yearnVault.address, ethers.constants.MaxUint256);
-                await wethContract
-                    .connect(s)
-                    .approve(yearnVault.address, ethers.constants.MaxUint256);
+                for (const contract of contracts) {
+                    await contract
+                        .connect(s)
+                        .approve(
+                            yearnVault.address,
+                            ethers.constants.MaxUint256
+                        );
+                }
             });
         });
     });
 
     beforeEach(async () => {
         await deploymentFixture();
-        startTimestamp = now();
+        startTimestamp =
+            (await ethers.provider.getBlock("latest")).timestamp + 1000;
         await sleepTo(startTimestamp);
     });
 
     describe("tvl", () => {
         it("retuns cached tvl", async () => {
-            const amounts = [1000, 2000];
-            const usdcContract = await getExternalContract("usdc");
-            const wethContract = await getExternalContract("weth");
-            console.log(vaultOwner, tokens);
-
-            console.log(
-                "---",
-                (await usdcContract.balanceOf(vaultOwner)).toString()
-            );
-            console.log(
-                "+++",
-                (await wethContract.balanceOf(vaultOwner)).toString()
-            );
-            console.log(
-                "---",
-                (
-                    await usdcContract.allowance(vaultOwner, yearnVault.address)
-                ).toString()
-            );
-            console.log(
-                "+++",
-                (
-                    await wethContract.allowance(vaultOwner, yearnVault.address)
-                ).toString()
-            );
-
+            const amounts = [1000, 2000, 3000];
             await withSigner(vaultOwner, async (s) => {
                 await yearnVault
                     .connect(s)
                     .transferAndPush(vaultOwner, tokens, amounts, []);
             });
 
-            expect(await yearnVault.tvl()).to.eql(amounts);
+            expect(
+                (await yearnVault.tvl())
+                    .map((x: BigNumber) => x.toNumber())
+                    .map((x: number) => x + 1)
+            ).to.eql(amounts);
         });
     });
 });

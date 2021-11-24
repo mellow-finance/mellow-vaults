@@ -46,8 +46,8 @@ contract YearnVault is Vault {
             }
 
             address token = tokens[i];
-            _allowTokenIfNecessary(token);
             IYearnVault yToken = IYearnVault(_yTokens[i]);
+            _allowTokenIfNecessary(token, address(yToken));
             yToken.deposit(tokenAmounts[i], address(this));
         }
         actualTokenAmounts = tokenAmounts;
@@ -58,15 +58,12 @@ contract YearnVault is Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultTokens;
         uint256 maxLoss = abi.decode(options, (uint256));
         for (uint256 i = 0; i < _yTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
 
-            address token = tokens[i];
-            _allowTokenIfNecessary(token);
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             uint256 yTokenAmount = (tokenAmounts[i] / yToken.pricePerShare()) * (10**yToken.decimals());
             require(yTokenAmount < yToken.balanceOf(address(this)), "INSY");
@@ -76,9 +73,9 @@ contract YearnVault is Vault {
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(this), address(_yearnVaultRegistry())) < type(uint256).max / 2) {
-            IERC20(token).approve(address(_yearnVaultRegistry()), type(uint256).max);
+    function _allowTokenIfNecessary(address token, address yToken) internal {
+        if (IERC20(token).allowance(address(this), yToken) < type(uint256).max / 2) {
+            IERC20(token).approve(yToken, type(uint256).max);
         }
     }
 

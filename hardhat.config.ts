@@ -78,7 +78,7 @@ const config: HardhatUserConfig = {
             kovan: "0xd1b98b6607330172f1d991521145a22bce793277",
         },
         yearnVaultRegistry: {
-            default: "0xe15461b18ee31b7379019dc523231c57d1cbc18c",
+            default: "0x50c1a2eA0a861A967D9d0FFE2AE4012c2E053804",
         },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
