@@ -31,5 +31,6 @@ export default class Exceptions {
     static readonly SUB_VAULT_INITIALIZED: string = "SBIN";
     static readonly SUB_VAULT_LENGTH: string = "SBL";
     static readonly NFT_ZERO: string = "NFT0";
+    static readonly YEARN_VAULTS: string = "YV";
 }
 // TODO: Remove outdated exceptions

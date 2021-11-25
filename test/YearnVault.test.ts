@@ -5,10 +5,11 @@ import {
     getNamedAccounts,
     getExternalContract,
 } from "hardhat";
-import { now, sleepTo, withSigner } from "./library/Helpers";
+import { now, randomAddress, sleepTo, withSigner } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Contract } from "@ethersproject/contracts";
 import { equals } from "ramda";
+import Exceptions from "./library/Exceptions";
 
 describe("YearnVault", () => {
     let deploymentFixture: Function;
@@ -82,6 +83,36 @@ describe("YearnVault", () => {
         startTimestamp =
             (await ethers.provider.getBlock("latest")).timestamp + 1000;
         await sleepTo(startTimestamp);
+    });
+
+    describe("constructor", () => {
+        it("creates a new contract", async () => {
+            const { deploy, get } = deployments;
+            const { deployer } = await getNamedAccounts();
+            const vaultGovernance = await get("YearnVaultGovernance");
+            await deploy("YearnVault", {
+                from: deployer,
+                autoMine: true,
+                args: [vaultGovernance.address, tokens],
+            });
+        });
+        describe("when one of tokens is missing in Yearn", () => {
+            it("reverts", async () => {
+                const { deploy, get } = deployments;
+                const { deployer } = await getNamedAccounts();
+                const vaultGovernance = await get("YearnVaultGovernance");
+                const newTokens = [...tokens, randomAddress()]
+                    .map((x) => x.toLowerCase())
+                    .sort();
+                await expect(
+                    deploy("YearnVault", {
+                        from: deployer,
+                        autoMine: true,
+                        args: [vaultGovernance.address, newTokens],
+                    })
+                ).to.be.revertedWith(Exceptions.YEARN_VAULTS);
+            });
+        });
     });
 
     describe("tvl", () => {
