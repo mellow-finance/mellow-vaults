@@ -18,7 +18,7 @@ contract YearnVault is Vault {
     {
         _yTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            _yTokens[i] = _yearnVaultRegistry().latestVault(_vaultTokens[i]);
+            _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);
             require(_yTokens[i] != address(0), "VDE");
         }
     }
