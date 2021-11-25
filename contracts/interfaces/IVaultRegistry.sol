@@ -47,7 +47,7 @@ interface IVaultRegistry is IERC721 {
 
     /// @notice Approve nft to new address
     /// @dev This can be called only by the Protocol Governance. It is used to disable the strategy for a vault
-    /// @param nft for re-approval
     /// @param newAddress address that will be approved
-    function adminApprove(uint256 nft, address newAddress) external;
+    /// @param nft for re-approval
+    function adminApprove(address newAddress, uint256 nft) external;
 }

@@ -26,8 +26,6 @@ abstract contract Vault is IVault {
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
         }
-        IVaultRegistry registry = vaultGovernance_.internalParams().registry;
-        registry.setApprovalForAll(address(registry), true);
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -55,6 +53,8 @@ abstract contract Vault is IVault {
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------

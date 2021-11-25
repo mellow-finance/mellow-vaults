@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./libraries/CommonLibrary.sol";
-
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuerGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
+import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
-contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
+contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
@@ -45,6 +45,18 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
     }
 
+    /// @notice Required for intermediate vault token transfer in deploy
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external view returns (bytes4) {
+        IVaultRegistry registry = _internalParams.registry;
+        require(msg.sender == address(registry), "NFTVR");
+        return this.onERC721Received.selector;
+    }
+
     /// @notice Deploy a new vault.
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault
@@ -59,11 +71,12 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
             options,
             (uint256, string, string)
         );
-        (vault, nft) = super.deployVault(vaultTokens, abi.encode(name, symbol), msg.sender);
+        (vault, nft) = super.deployVault(vaultTokens, abi.encode(name, symbol), address(0));
         // TODO - add IERC165 check of the subvault interface == gateway vault interface
         IVaultRegistry registry = _internalParams.registry;
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
         registry.safeTransferFrom(msg.sender, address(vault), subvaultNft);
+        // registry.approve(address(vault), nft);
     }
 
     /// @notice Emitted when new StrategyParams are set.

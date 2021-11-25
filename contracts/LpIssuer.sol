@@ -57,10 +57,11 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         return _nft;
     }
 
-    /// @inheritdoc ILpIssuer
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     /// @notice Deposit tokens into LpIssuer
@@ -157,7 +158,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         address,
         uint256,
         bytes calldata
-    ) external returns (bytes4) {
+    ) external view returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         require(msg.sender == address(registry), "NFTVR");
         return this.onERC721Received.selector;
