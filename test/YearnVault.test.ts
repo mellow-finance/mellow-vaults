@@ -195,4 +195,148 @@ describe("YearnVault", () => {
             });
         });
     });
+
+    describe("pull", () => {
+        let yTokenContracts: Contract[];
+        let setup: Function;
+        let amounts: number[];
+
+        before(async () => {
+            setup = deployments.createFixture(async () => {
+                assert(
+                    equals(
+                        (await yearnVault.tvl()).map((x: any) => x.toNumber()),
+                        [0, 0, 0]
+                    ),
+                    "Zero TVL"
+                );
+                const yTokens = await yearnVault.yTokens();
+                yTokenContracts = [];
+                for (const yToken of yTokens) {
+                    const contract = await ethers.getContractAt(
+                        "LpIssuer",
+                        yToken
+                    ); // just using ERC20 interface here
+                    yTokenContracts.push(contract);
+                    assert(
+                        (
+                            await contract.balanceOf(yearnVault.address)
+                        ).toNumber() === 0,
+                        "Zero balance"
+                    );
+                }
+                amounts = [1000000, 2000000, 3000000];
+                await withSigner(vaultOwner, async (s) => {
+                    await yearnVault
+                        .connect(s)
+                        .transferAndPush(vaultOwner, tokens, amounts, []);
+                });
+            });
+        });
+
+        beforeEach(async () => {
+            await setup();
+        });
+
+        it("pulls the fund to address", async () => {
+            const { stranger } = await getNamedAccounts();
+            for (const token of tokens) {
+                const contract = await getExternalContract(token);
+                assert(
+                    (await contract.balanceOf(stranger)) == 0,
+                    "Zero balance for stranger"
+                );
+            }
+            await withSigner(vaultOwner, async (s) => {
+                await yearnVault
+                    .connect(s)
+                    .pull(
+                        stranger,
+                        tokens,
+                        amounts,
+                        "0x0000000000000000000000000000000000000000000000000000000000001001"
+                    );
+            });
+            const balances = [];
+            for (const token of tokens) {
+                const contract = await getExternalContract(token);
+                balances.push((await contract.balanceOf(stranger)).toNumber());
+            }
+            expect(balances).to.eql(amounts.map((x) => x - 1));
+        });
+
+        describe("when the pull amounts are greater than balances", () => {
+            it("pulls all tokens from balance", async () => {
+                const { stranger } = await getNamedAccounts();
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    assert(
+                        (await contract.balanceOf(stranger)) == 0,
+                        "Zero balance for stranger"
+                    );
+                }
+                await withSigner(vaultOwner, async (s) => {
+                    await yearnVault.connect(s).pull(
+                        stranger,
+                        tokens,
+                        amounts.map((x) => x * 10),
+                        "0x0000000000000000000000000000000000000000000000000000000000001001"
+                    );
+                });
+                const balances = [];
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    balances.push(
+                        (await contract.balanceOf(stranger)).toNumber()
+                    );
+                }
+                expect(balances).to.eql(amounts.map((x) => x - 1));
+                const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
+                    x.toNumber()
+                );
+                expect(tvls).to.eql([0, 0, 0]);
+            });
+        });
+
+        describe("when pulled twice", () => {
+            it("succeeds", async () => {
+                const { stranger } = await getNamedAccounts();
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    assert(
+                        (await contract.balanceOf(stranger)) == 0,
+                        "Zero balance for stranger"
+                    );
+                }
+                await withSigner(vaultOwner, async (s) => {
+                    await yearnVault.connect(s).pull(
+                        stranger,
+                        tokens,
+                        amounts.map((x) => x / 2),
+                        "0x0000000000000000000000000000000000000000000000000000000000001001"
+                    );
+                    await yearnVault.connect(s).pull(
+                        stranger,
+                        tokens,
+                        amounts.map((x) => x / 2 + 1),
+                        "0x0000000000000000000000000000000000000000000000000000000000001001"
+                    );
+                });
+                const balances = [];
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    balances.push(
+                        (await contract.balanceOf(stranger)).toNumber()
+                    );
+                }
+                for (let i = 0; i < balances.length; i++) {
+                    expect(balances[i]).to.gte(amounts[i] - 2);
+                }
+                const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
+                    x.toNumber()
+                );
+                expect(tvls).to.eql([0, 0, 0]);
+            });
+        });
+    });
 });

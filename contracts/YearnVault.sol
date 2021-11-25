@@ -70,8 +70,14 @@ contract YearnVault is Vault {
             }
 
             IYearnVault yToken = IYearnVault(_yTokens[i]);
-            uint256 yTokenAmount = (tokenAmounts[i] / yToken.pricePerShare()) * (10**yToken.decimals());
-            require(yTokenAmount < yToken.balanceOf(address(this)), "INSY");
+            uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
+            uint256 balance = yToken.balanceOf(address(this));
+            if (yTokenAmount > balance) {
+                yTokenAmount = balance;
+            }
+            if (yTokenAmount == 0) {
+                continue;
+            }
             yToken.withdraw(yTokenAmount, to, maxLoss);
             (tokenAmounts[i], address(this));
         }
