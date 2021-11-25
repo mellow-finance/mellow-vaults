@@ -338,5 +338,73 @@ describe("YearnVault", () => {
                 expect(tvls).to.eql([0, 0, 0]);
             });
         });
+
+        describe("when 0 is pulled", () => {
+            it("nothing is pulled", async () => {
+                const { stranger } = await getNamedAccounts();
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    assert(
+                        (await contract.balanceOf(stranger)) == 0,
+                        "Zero balance for stranger"
+                    );
+                }
+                await withSigner(vaultOwner, async (s) => {
+                    await yearnVault.connect(s).pull(
+                        stranger,
+                        tokens,
+                        amounts.map((x) => 0),
+                        "0x0000000000000000000000000000000000000000000000000000000000001001"
+                    );
+                });
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    expect(await contract.balanceOf(stranger)).to.eq(0);
+                }
+            });
+        });
+
+        describe("when contract has 0 balance", () => {
+            it("nothing is pulled", async () => {
+                const { stranger } = await getNamedAccounts();
+                for (const token of tokens) {
+                    const contract = await getExternalContract(token);
+                    assert(
+                        (await contract.balanceOf(stranger)) == 0,
+                        "Zero balance for stranger"
+                    );
+                }
+                await withSigner(vaultOwner, async (s) => {
+                    // pull everything
+                    await yearnVault
+                        .connect(s)
+                        .pull(
+                            stranger,
+                            tokens,
+                            amounts,
+                            "0x0000000000000000000000000000000000000000000000000000000000001001"
+                        );
+                });
+                const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
+                    x.toNumber()
+                );
+                assert(equals(tvls, [0, 0, 0]));
+                await withSigner(vaultOwner, async (s) => {
+                    // pull everything
+                    await yearnVault
+                        .connect(s)
+                        .pull(
+                            stranger,
+                            tokens,
+                            amounts,
+                            "0x0000000000000000000000000000000000000000000000000000000000001001"
+                        );
+                });
+                const tvlsAfter = (await yearnVault.tvl()).map((x: BigNumber) =>
+                    x.toNumber()
+                );
+                assert(equals(tvlsAfter, [0, 0, 0]));
+            });
+        });
     });
 });
