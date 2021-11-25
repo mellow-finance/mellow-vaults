@@ -32,7 +32,7 @@ async function resolveName(
     }
     const namedAccs = await hre.getNamedAccounts();
     for (const name in namedAccs) {
-        if (namedAccs[name] === nameOrAddress) {
+        if (namedAccs[name].toLowerCase() === nameOrAddress.toLowerCase()) {
             return name as ExternalContractName;
         }
     }

@@ -70,12 +70,15 @@ const config: HardhatUserConfig = {
             // temporary
             default: "0xe3317d016914c7c985284654B01c7C265377B668",
         },
+        test: {
+            default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
+        },
         wbtc: {
             default: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
             kovan: "0xd1b98b6607330172f1d991521145a22bce793277",
         },
         yearnVaultRegistry: {
-            default: "0xe15461b18ee31b7379019dc523231c57d1cbc18c",
+            default: "0x50c1a2eA0a861A967D9d0FFE2AE4012c2E053804",
         },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
