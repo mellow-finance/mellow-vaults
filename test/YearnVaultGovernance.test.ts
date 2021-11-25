@@ -980,4 +980,86 @@ describe("YearnVaultGovernance", () => {
             });
         });
     });
+    describe("#yTokenForToken", () => {
+        const YEARN_WETH_POOL =
+            "0xa258C4606Ca8206D8aA700cE2143D7db854D168c".toLowerCase();
+        it("returns a corresponding yVault for token", async () => {
+            const { read } = deployments;
+            const { weth } = await getNamedAccounts();
+            const yToken = await read(
+                "YearnVaultGovernance",
+                "yTokenForToken",
+                weth
+            );
+            expect(yToken.toLowerCase()).to.eq(YEARN_WETH_POOL);
+        });
+
+        describe("when overriden by setYTokenForToken", () => {
+            it("returns overriden yToken", async () => {
+                const { read } = deployments;
+                const { weth, admin } = await getNamedAccounts();
+                const newYToken = randomAddress();
+                await withSigner(admin, async (s) => {
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(s);
+                    await g.setYTokenForToken(weth, newYToken);
+                });
+                const yToken = await read(
+                    "YearnVaultGovernance",
+                    "yTokenForToken",
+                    weth
+                );
+                expect(yToken.toLowerCase()).to.eq(newYToken.toLowerCase());
+            });
+        });
+
+        describe("when yToken doesn't exist in overrides or yearnRegistry", () => {
+            it("returns 0 address", async () => {
+                const { read } = deployments;
+                const yToken = await read(
+                    "YearnVaultGovernance",
+                    "yTokenForToken",
+                    randomAddress()
+                );
+                expect(yToken).to.eq(ethers.constants.AddressZero);
+            });
+        });
+    });
+
+    describe("setYTokenForToken", () => {
+        it("sets a yToken override for a token", async () => {
+            const { read } = deployments;
+            const { weth, admin } = await getNamedAccounts();
+            const newYToken = randomAddress();
+            await withSigner(admin, async (s) => {
+                const g = (
+                    await ethers.getContract("YearnVaultGovernance")
+                ).connect(s);
+                await g.setYTokenForToken(weth, newYToken);
+            });
+            const yToken = await read(
+                "YearnVaultGovernance",
+                "yTokenForToken",
+                weth
+            );
+            expect(yToken.toLowerCase()).to.eq(newYToken.toLowerCase());
+        });
+
+        describe("when called not by admin", () => {
+            it("reverts", async () => {
+                const { weth, stranger, deployer } = await getNamedAccounts();
+                for (const actor of [stranger, deployer]) {
+                    await withSigner(actor, async (s) => {
+                        const g = (
+                            await ethers.getContract("YearnVaultGovernance")
+                        ).connect(s);
+                        await expect(
+                            g.setYTokenForToken(weth, randomAddress())
+                        ).to.be.revertedWith(Exceptions.ADMIN);
+                    });
+                }
+            });
+        });
+    });
 });
