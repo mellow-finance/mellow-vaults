@@ -17,6 +17,11 @@ interface IVaultRegistry is IERC721 {
     /// @return nftId NFT ID
     function nftForVault(address vault) external view returns (uint256 nftId);
 
+    /// @notice Checks if the nft is locked for all transfers
+    /// @param nft NFT to check for lock
+    /// @return `true` if locked, false otherwise
+    function isLocked(uint256 nft) external view returns (bool);
+
     /// @notice Register new Vault and mint NFT.
     /// @param vault address of the vault
     /// @param owner owner of the NFT
@@ -42,6 +47,11 @@ interface IVaultRegistry is IERC721 {
     /// @param newProtocolGovernance new ProtocolGovernance
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external;
 
-    /// @notice Comit new ProtocolGovernance.
+    /// @notice Commit new ProtocolGovernance.
     function commitStagedProtocolGovernance() external;
+
+    /// @notice Lock NFT for transfers
+    /// @dev Use this method when vault structure is set up and should become immutable. Can be called by owner.
+    /// @param nft - NFT to lock
+    function lockNft(uint256 nft) external;
 }
