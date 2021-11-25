@@ -26,6 +26,8 @@ abstract contract Vault is IVault {
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
         }
+        IVaultRegistry registry = vaultGovernance_.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -172,8 +174,8 @@ abstract contract Vault is IVault {
             return false;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-         // make sure that this vault is a registered vault
-        if(_nft == 0) {
+        // make sure that this vault is a registered vault
+        if (_nft == 0) {
             return false;
         }
         address thisOwner = registry.ownerOf(_nft);

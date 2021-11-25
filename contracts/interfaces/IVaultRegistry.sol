@@ -42,6 +42,12 @@ interface IVaultRegistry is IERC721 {
     /// @param newProtocolGovernance new ProtocolGovernance
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external;
 
-    /// @notice Comit new ProtocolGovernance.
+    /// @notice Commit new ProtocolGovernance.
     function commitStagedProtocolGovernance() external;
+
+    /// @notice Approve nft to new address
+    /// @dev This can be called only by the Protocol Governance. It is used to disable the strategy for a vault
+    /// @param nft for re-approval
+    /// @param newAddress address that will be approved
+    function adminApprove(uint256 nft, address newAddress) external;
 }

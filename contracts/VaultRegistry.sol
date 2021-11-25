@@ -100,6 +100,12 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
     }
 
+    /// @inheritdoc IVaultRegistry
+    function adminApprove(uint256 nft, address newAddress) external {
+        require(_isProtocolAdmin(_msgSender()), PROTOCOL_ADMIN);
+        approve(newAddress, nft);
+    }
+
     function _isProtocolAdmin(address sender) internal view returns (bool) {
         return _protocolGovernance.isAdmin(sender);
     }
