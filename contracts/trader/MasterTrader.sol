@@ -72,6 +72,7 @@ contract MasterTrader is ERC165, IMasterTrader {
     ) external returns (uint256) {
         _requireVault();
         _requireVaultTokenOutput(output);
+        
         address traderAddress = traderAddressById[traderId];
         require(traderAddress != address(0), TraderLibrary.TRADER_NOT_FOUND_EXCEPTION);
         address recipient = msg.sender;
@@ -100,5 +101,16 @@ contract MasterTrader is ERC165, IMasterTrader {
 
     function _requireVaultTokenOutput(address tokenOutputAddress) internal view {
         require(IVault(msg.sender).isVaultToken(tokenOutputAddress), TraderLibrary.VAULT_TOKEN_REQUIRED_EXCEPTION);
+    }
+
+    function _requireAtLeastStrategy(uint256 nft_) internal view {
+        require(
+            IProtocolGovernance(protocolGovernance).isAdmin(msg.sender) ||
+            (
+                IVaultRegistry(vaultRegistry).getApproved(nft_) == msg.sender ||
+                IVaultRegistry(vaultRegistry).ownerOf(nft_) == msg.sender
+            ),
+            TraderLibrary.AT_LEAST_STRATEGY_REQUIRED_EXCEPTION
+        );
     }
 }

@@ -21,6 +21,8 @@ contract ERC20Vault is Vault {
         }
     }
 
+    function trade() external {}
+
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
         pure
@@ -46,5 +48,14 @@ contract ERC20Vault is Vault {
         for (uint256 i = 0; i < tokens.length; i++) {
             require(!isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
         }
+    }
+
+    function _requireAtLeastStrategy(uint256 nft_) internal view {
+        require(
+            (_vaultGovernance.internalParams().protocolGovernance.isAdmin(msg.sender) ||
+                _vaultGovernance.internalParams().registry.getApproved(nft_) == msg.sender ||
+                (_vaultGovernance.internalParams().registry.ownerOf(nft_) == msg.sender)),
+            "RST"
+        );
     }
 }

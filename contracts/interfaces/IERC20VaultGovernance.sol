@@ -9,6 +9,7 @@ interface IERC20VaultGovernance is IVaultGovernance {
     /// @param redirects Redirects[i] is the number of subvault that will receive deposit to i-th subvault. If the array is empty it is ignored.
     struct DelayedStrategyParams {
         address strategyTreasury;
+        address trader;
     }
 
     /// @notice Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.

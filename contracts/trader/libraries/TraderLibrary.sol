@@ -11,6 +11,7 @@ library TraderLibrary {
     string constant TRADE_FAILED_EXCEPTION = "TF";
     string constant VAULT_NOT_FOUND_EXCEPTION = "VF";
     string constant VAULT_TOKEN_REQUIRED_EXCEPTION = "VT";
+    string constant AT_LEAST_STRATEGY_REQUIRED_EXCEPTION = "SR";
 
     bytes4 constant TRADER_INTERFACE_ID = (
         ITrader.masterTrader.selector ^
