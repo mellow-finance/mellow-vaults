@@ -10,6 +10,12 @@ interface ILpIssuerGovernance is IVaultGovernance {
         uint256 tokenLimitPerAddress;
     }
 
+    /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param protocolFee Share of managements fees entitled to protocol, multiplied by CommonLibrary.DENOMINATOR
+    struct DelayedProtocolPerVaultParams {
+        uint256 protocolFee;
+    }
+
     /// @notice Strategy Params.
     /// @param nft VaultRegistry NFT of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory);
@@ -18,4 +24,14 @@ interface ILpIssuerGovernance is IVaultGovernance {
     /// @param nft Nft of the vault
     /// @param params New params
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external;
+
+    /// @notice Stage Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params
+    function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external;
+
+    /// @notice Commit Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @dev Can only be called after delayedProtocolPerVaultParamsTimestamp
+    /// @param nft VaultRegistry NFT of the vault
+    function commitDelayedProtocolPerVaultParams(uint256 nft) external;
 }

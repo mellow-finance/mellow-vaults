@@ -19,8 +19,7 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         return address(0);
     }
 
-    /// @notice Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.
-    /// @param nft Nft of the vault
+    /// @inheritdoc ILpIssuerGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
             return StrategyParams({tokenLimitPerAddress: 0});
@@ -28,16 +27,27 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
-    /// @notice Stage Strategy Params.
-    /// @param nft Nft of the vault
-    /// @param params New params
-    function stageDelayedStrategyParams(uint256 nft, StrategyParams calldata params) external {
-        _stageDelayedStrategyParams(nft, abi.encode(params));
-        emit SetStrategyParams(tx.origin, msg.sender, nft, params);
+    /// @inheritdoc ILpIssuerGovernance
+    function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
+        _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
+        emit StageDelayedProtocolPerVaultParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            params,
+            _delayedStrategyParamsTimestamp[nft]
+        );
     }
 
-    function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft);
+    /// @inheritdoc ILpIssuerGovernance
+    function commitDelayedProtocolPerVaultParams(uint256 nft) external {
+        _commitDelayedProtocolPerVaultParams(nft);
+        emit CommitDelayedProtocolPerVaultParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams))
+        );
     }
 
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
@@ -77,6 +87,32 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
         registry.safeTransferFrom(msg.sender, address(vault), subvaultNft);
     }
+
+    /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedProtocolPerVaultParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedProtocolPerVaultParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedProtocolPerVaultParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedProtocolPerVaultParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedProtocolPerVaultParams params
+    );
 
     /// @notice Emitted when new StrategyParams are set.
     /// @param origin Origin of the transaction

@@ -9,10 +9,12 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
+    /// @param protocolTreasury Protocol treasury address for collecting management fees
     struct Params {
         bool permissionless;
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
+        address protocolTreasury;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
