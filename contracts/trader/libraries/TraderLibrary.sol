@@ -12,9 +12,9 @@ library TraderLibrary {
 
     bytes4 constant TRADER_INTERFACE_ID = (
         ITrader.masterTrader.selector ^
-        ITrader.swapExactInputMultihop.selector ^
-        ITrader.swapExactOutputMultihop.selector ^
         ITrader.swapExactInputSingle.selector ^
-        ITrader.swapExactOutputSingle.selector
+        ITrader.swapExactOutputSingle.selector ^
+        ITrader.swapExactInputMultihop.selector ^
+        ITrader.swapExactOutputMultihop.selector
     );
 }

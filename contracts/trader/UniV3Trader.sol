@@ -20,14 +20,14 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
         uint24 fee;
         uint160 sqrtPriceLimitX96;
         uint256 deadline;
-        uint256 minAmount;
+        uint256 limitAmount;
     }
 
     // @dev no need to define `In` and `Out` due to their symmetry
     struct SwapMultihopOptions {
         bytes path;
         uint256 deadline;
-        uint256 maxAmount;
+        uint256 limitAmount;
     }
 
     address public masterTrader;
@@ -55,7 +55,7 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
             recipient: recipient,
             deadline: swapOptions.deadline,
             amountIn: amount,
-            amountOutMinimum: swapOptions.minAmount,
+            amountOutMinimum: swapOptions.limitAmount,
             sqrtPriceLimitX96: swapOptions.sqrtPriceLimitX96
         });
         TransferHelper.safeTransferFrom(input, msg.sender, address(this), amount);
@@ -69,7 +69,24 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
         uint256 amount,
         address recipient,
         bytes calldata options
-    ) external returns (uint256) {}
+    ) external returns (uint256 amountIn) {
+        _requireMasterTrader();
+        SwapSingleOptions memory swapOptions = abi.decode(options, (SwapSingleOptions));
+        ISwapRouter swapRouter = underlyingProtocolOptions.swapRouter;
+        ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
+            tokenIn: input,
+            tokenOut: output,
+            fee: swapOptions.fee,
+            recipient: recipient,
+            deadline: swapOptions.deadline,
+            amountOut: amount,
+            amountInMaximum: swapOptions.limitAmount,
+            sqrtPriceLimitX96: swapOptions.sqrtPriceLimitX96
+        });
+        TransferHelper.safeTransferFrom(input, msg.sender, address(this), amount);
+        _safeApproveERC20TokenIfNecessary(input, address(swapRouter));
+        amountIn = swapRouter.exactOutputSingle(params);
+    }
 
     function swapExactInputMultihop(
         address input,
