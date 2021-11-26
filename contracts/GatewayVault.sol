@@ -102,7 +102,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         address,
         uint256,
         bytes calldata
-    ) external returns (bytes4) {
+    ) external view returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         require(msg.sender == address(registry), "NFTVR");
         return this.onERC721Received.selector;

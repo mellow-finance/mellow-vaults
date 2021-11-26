@@ -34,7 +34,7 @@ contract MasterTrader is ERC165, IMasterTrader {
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
         require(traderIdByAddress[traderAddress] == 0, TraderLibrary.TRADER_ALREADY_REGISTERED_EXCEPTION);
-        require(ERC165(traderAddress).supportsInterface(TraderLibrary.TRADER_SELECTOR));
+        require(ERC165(traderAddress).supportsInterface(TraderLibrary.TRADER_INTERFACE_ID));
         traderIdByAddress[traderAddress] = ++_topTraderId;
         traderAddressById[_topTraderId] = traderAddress;
         _traders.add(_topTraderId);
