@@ -5,10 +5,6 @@ pragma solidity ^0.8.9;
 // access to an external price source is required. Without this, trades can be frontrun for considerable loss.
 
 interface ITrader {
-    /// @notice Link to the parent ITrader-compatible contract
-    /// @return Address of the ITrader-compatible contract
-    function chiefTrader() external returns (address);
-
     /// @notice Swap exact amount of input tokens for output tokens (single-path)
     /// @param input Address of the input token
     /// @param output Address of the output token

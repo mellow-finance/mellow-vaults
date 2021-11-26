@@ -15,12 +15,10 @@ abstract contract Trader is ERC165 {
         return (interfaceId == this.supportsInterface.selector || interfaceId == type(ITrader).interfaceId);
     }
 
-    // TODO: move to base class
     function _requireChiefTrader() internal view {
         require(msg.sender == chiefTrader, Exceptions.CHIEF_REQUIRED_EXCEPTION);
     }
 
-    // TODO: move to base class
     function _safeApproveERC20TokenIfNecessary(address token, address to) internal {
         if (IERC20(token).allowance(to, address(this)) < type(uint256).max / 2)
             TransferHelper.safeApprove(token, to, type(uint256).max);

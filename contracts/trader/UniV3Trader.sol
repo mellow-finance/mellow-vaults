@@ -7,7 +7,7 @@ import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "./libraries/Exceptions.sol";
 import "./Trader.sol";
 
-contract UniV3Trader is Trader {
+contract UniV3Trader is Trader, ITrader {
     struct UnderlyingProtocolOptions {
         ISwapRouter swapRouter;
     }
