@@ -9,11 +9,13 @@ import "./interfaces/IVaultRegistry.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IVaultRegistry, ERC721 {
-    string public constant INDEX_OUT_OF_BOUNDS = "ID";
-    string public constant PROTOCOL_ADMIN = "ADM";
-    string public constant UNIQUE_CONSTRAINT = "UX";
-    string public constant INVALID_TIMESTAMP = "TS";
-    string public constant NULL_OR_NOT_INITIALIZED = "NA";
+    string private constant INDEX_OUT_OF_BOUNDS = "ID";
+    string private constant PROTOCOL_ADMIN = "ADM";
+    string private constant TOKEN_OWNER = "TO";
+    string private constant LOCKED = "LCKD";
+    string private constant UNIQUE_CONSTRAINT = "UX";
+    string private constant INVALID_TIMESTAMP = "TS";
+    string private constant NULL_OR_NOT_INITIALIZED = "NA";
 
     uint256 private _stagedProtocolGovernanceTimestamp;
     IProtocolGovernance private _protocolGovernance;
@@ -22,6 +24,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     address[] private _vaults;
     mapping(address => uint256) private _nftIndex;
     mapping(uint256 => address) private _vaultIndex;
+    mapping(uint256 => bool) private _locks;
     uint256 private _topNft = 1;
 
     /// @notice Creates a new contract.
@@ -48,6 +51,11 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function nftForVault(address vault) external view returns (uint256) {
         return _nftIndex[vault];
+    }
+
+    /// @inheritdoc IVaultRegistry
+    function isLocked(uint256 nft) external view returns (bool) {
+        return _locks[nft];
     }
 
     /// @inheritdoc IVaultRegistry
@@ -100,9 +108,30 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
     }
 
+    /// @inheritdoc IVaultRegistry
+    function lockNft(uint256 nft) external {
+        require(ownerOf(nft) == msg.sender, TOKEN_OWNER);
+        _locks[nft] = true;
+        emit TokenLocked(tx.origin, msg.sender, nft);
+    }
+
     function _isProtocolAdmin(address sender) internal view returns (bool) {
         return _protocolGovernance.isAdmin(sender);
     }
+
+    function _beforeTokenTransfer(
+        address,
+        address,
+        uint256 tokenId
+    ) internal view override {
+        require(!_locks[tokenId], LOCKED);
+    }
+
+    /// @notice Emitted when token is locked for transfers
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft NFT to be locked
+    event TokenLocked(address indexed origin, address indexed sender, uint256 indexed nft);
 
     /// @notice Emitted when new Vault is registered in VaultRegistry
     /// @param origin Origin of the transaction

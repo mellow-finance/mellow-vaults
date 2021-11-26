@@ -1,12 +1,13 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "ethers";
 import Exceptions from "./library/Exceptions";
 import { ERC20, LpIssuerGovernance } from "./library/Types";
 import { LpIssuer, ProtocolGovernance, VaultRegistry } from "./library/Types";
 import { deploySystem } from "./library/Deployments";
 import { comparator } from "ramda";
+import { randomAddress, withSigner } from "./library/Helpers";
 
 describe("LpIssuer", () => {
     let deployer: SignerWithAddress;
@@ -204,6 +205,48 @@ describe("LpIssuer", () => {
                 ).to.be.revertedWith(
                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
                 );
+            });
+        });
+    });
+
+    describe("onERC721Received", () => {
+        it("locks the token for transfer", async () => {
+            const { execute, read, get, deploy } = deployments;
+            const { stranger, stranger2, weth, deployer } =
+                await getNamedAccounts();
+            const vault = randomAddress();
+            const vaultGovernance = await get("ERC20VaultGovernance");
+            await withSigner(vaultGovernance.address, async (s) => {
+                const vaultRegistry = await ethers.getContract("VaultRegistry");
+                await vaultRegistry.connect(s).registerVault(vault, stranger);
+            });
+            const nft = await read("VaultRegistry", "vaultsCount");
+            const lpGovernance = await get("LpIssuerGovernance");
+            const lp = await deploy("LpIssuer", {
+                from: deployer,
+                args: [lpGovernance.address, [weth], "test", "test"],
+            });
+            expect(await read("VaultRegistry", "isLocked", nft)).to.be.false;
+            await execute(
+                "VaultRegistry",
+                { from: stranger, autoMine: true },
+                "safeTransferFrom(address,address,uint256)",
+                stranger,
+                lp.address,
+                nft
+            );
+            expect(await read("VaultRegistry", "isLocked", nft)).to.be.true;
+        });
+        describe("when called not by vault registry", async () => {
+            it("reverts", async () => {
+                await expect(
+                    LpIssuer.onERC721Received(
+                        ethers.constants.AddressZero,
+                        ethers.constants.AddressZero,
+                        1,
+                        []
+                    )
+                ).to.be.revertedWith("NFTVR");
             });
         });
     });

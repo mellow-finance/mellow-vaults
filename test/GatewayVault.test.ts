@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import {
     ERC20,
@@ -11,7 +11,12 @@ import {
 } from "./library/Types";
 import Exceptions from "./library/Exceptions";
 import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
-import { encodeToBytes, sleep, withSigner } from "./library/Helpers";
+import {
+    encodeToBytes,
+    randomAddress,
+    sleep,
+    withSigner,
+} from "./library/Helpers";
 
 describe("GatewayVault", () => {
     let deployer: Signer;
@@ -111,6 +116,33 @@ describe("GatewayVault", () => {
     });
 
     describe("onERC721Received", () => {
+        it("locks the token for transfer", async () => {
+            const { execute, read, get, deploy } = deployments;
+            const { stranger, stranger2, weth, deployer } =
+                await getNamedAccounts();
+            const vault = randomAddress();
+            const vaultGovernance = await get("ERC20VaultGovernance");
+            await withSigner(vaultGovernance.address, async (s) => {
+                const vaultRegistry = await ethers.getContract("VaultRegistry");
+                await vaultRegistry.connect(s).registerVault(vault, stranger);
+            });
+            const nft = await read("VaultRegistry", "vaultsCount");
+            const gwGovernance = await get("GatewayVaultGovernance");
+            const gw = await deploy("GatewayVault", {
+                from: deployer,
+                args: [gwGovernance.address, [weth]],
+            });
+            expect(await read("VaultRegistry", "isLocked", nft)).to.be.false;
+            await execute(
+                "VaultRegistry",
+                { from: stranger, autoMine: true },
+                "safeTransferFrom(address,address,uint256)",
+                stranger,
+                gw.address,
+                nft
+            );
+            expect(await read("VaultRegistry", "isLocked", nft)).to.be.true;
+        });
         describe("when called not by vault registry", async () => {
             it("reverts", async () => {
                 await expect(
