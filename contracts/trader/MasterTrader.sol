@@ -3,6 +3,8 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../interfaces/IVault.sol";
+import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "./interfaces/ITrader.sol";
 import "./interfaces/IMasterTrader.sol";
@@ -12,6 +14,7 @@ contract MasterTrader is ERC165, IMasterTrader {
     using EnumerableSet for EnumerableSet.UintSet;
 
     address public immutable protocolGovernance;
+    address public immutable vaultRegistry;
     mapping(address => uint256) public traderIdByAddress;
     mapping(uint256 => address) public traderAddressById;
 
@@ -19,8 +22,9 @@ contract MasterTrader is ERC165, IMasterTrader {
     EnumerableSet.UintSet internal _traders;
     mapping(SwapType => bytes4) internal _swapTypeToSelector;
 
-    constructor(address _protocolGovernance) {
+    constructor(address _protocolGovernance, address _vaultRegistry) {
         protocolGovernance = _protocolGovernance;
+        vaultRegistry = _vaultRegistry;
         _swapTypeToSelector[SwapType.EXACT_INPUT_SINGLE] = ITrader.swapExactInputSingle.selector;
         _swapTypeToSelector[SwapType.EXACT_OUTPUT_SINGLE] = ITrader.swapExactOutputSingle.selector;
         _swapTypeToSelector[SwapType.EXACT_INPUT_MULTIHOP] = ITrader.swapExactInputMultihop.selector;
@@ -66,6 +70,8 @@ contract MasterTrader is ERC165, IMasterTrader {
         SwapType swapType,
         bytes calldata options
     ) external returns (uint256) {
+        _requireVault();
+        _requireVaultTokenOutput(output);
         address traderAddress = traderAddressById[traderId];
         require(traderAddress != address(0), TraderLibrary.TRADER_NOT_FOUND_EXCEPTION);
         address recipient = msg.sender;
@@ -86,5 +92,13 @@ contract MasterTrader is ERC165, IMasterTrader {
             IProtocolGovernance(protocolGovernance).isAdmin(msg.sender),
             TraderLibrary.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
         );
+    }
+
+    function _requireVault() internal view {
+        require(IVaultRegistry(vaultRegistry).nftForVault(msg.sender) != 0, TraderLibrary.VAULT_NOT_FOUND_EXCEPTION);
+    }
+
+    function _requireVaultTokenOutput(address tokenOutputAddress) internal view {
+        require(IVault(msg.sender).isVaultToken(tokenOutputAddress), TraderLibrary.VAULT_TOKEN_REQUIRED_EXCEPTION);
     }
 }

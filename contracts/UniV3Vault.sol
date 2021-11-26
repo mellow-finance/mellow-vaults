@@ -188,7 +188,7 @@ contract UniV3Vault is Vault {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!_isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
         }
     }
 

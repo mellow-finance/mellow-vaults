@@ -149,6 +149,12 @@ abstract contract Vault is IVault {
         }
     }
 
+    // -------------------  PUBLIC, VIEW   -------------------\
+
+    function isVaultToken(address token) public view returns (bool) {
+        return _vaultTokensIndex[token];
+    }
+
     // -------------------  PRIVATE, VIEW  -------------------
 
     function _validateAndProjectTokens(address[] memory tokens, uint256[] memory tokenAmounts)
@@ -198,10 +204,6 @@ abstract contract Vault is IVault {
             return false;
         }
         return registry.getApproved(nft_) == sender || registry.ownerOf(nft_) == sender;
-    }
-
-    function _isVaultToken(address token) internal view returns (bool) {
-        return _vaultTokensIndex[token];
     }
 
     // -------------------  PRIVATE, MUTATING  -------------------
