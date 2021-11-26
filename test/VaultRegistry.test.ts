@@ -15,7 +15,11 @@ import {
     VaultFactory,
     VaultGovernance,
 } from "./library/Types";
-import { randomAddress, sortContractsByAddresses } from "./library/Helpers";
+import {
+    randomAddress,
+    sortContractsByAddresses,
+    withSigner,
+} from "./library/Helpers";
 import { now, sleep, sleepTo } from "./library/Helpers";
 
 describe("VaultRegistry", () => {
@@ -316,5 +320,112 @@ describe("VaultRegistry", () => {
         });
 
         describe("when called not by", () => {});
+    });
+
+    describe("isLocked", () => {
+        it("checks if token is locked", async () => {
+            const { execute, read, get } = deployments;
+            const { stranger, stranger2 } = await getNamedAccounts();
+            const vault = randomAddress();
+            const vaultGovernance = await get("ERC20VaultGovernance");
+            await withSigner(vaultGovernance.address, async (s) => {
+                const vaultRegistry = await ethers.getContract("VaultRegistry");
+                await vaultRegistry.connect(s).registerVault(vault, stranger);
+            });
+            const nft = await read("VaultRegistry", "vaultsCount");
+            expect(await read("VaultRegistry", "isLocked", nft)).to.be.false;
+            await execute(
+                "VaultRegistry",
+                { from: stranger, autoMine: true },
+                "lockNft",
+                nft
+            );
+            expect(await read("VaultRegistry", "isLocked", nft)).to.be.true;
+        });
+    });
+
+    describe("lockNft", () => {
+        it("locks nft for any transfer", async () => {
+            const { execute, read, get } = deployments;
+            const { stranger, stranger2 } = await getNamedAccounts();
+            const vault = randomAddress();
+            const vaultGovernance = await get("ERC20VaultGovernance");
+            await withSigner(vaultGovernance.address, async (s) => {
+                const vaultRegistry = await ethers.getContract("VaultRegistry");
+                await vaultRegistry.connect(s).registerVault(vault, stranger);
+            });
+            const nft = await read("VaultRegistry", "vaultsCount");
+            await execute(
+                "VaultRegistry",
+                { from: stranger, autoMine: true },
+                "lockNft",
+                nft
+            );
+            await execute(
+                "VaultRegistry",
+                { from: stranger, autoMine: true },
+                "approve",
+                stranger2,
+                nft
+            );
+
+            await expect(
+                execute(
+                    "VaultRegistry",
+                    { from: stranger, autoMine: true },
+                    "transferFrom",
+                    stranger,
+                    randomAddress(),
+                    nft
+                )
+            ).to.be.revertedWith(Exceptions.LOCKED_NFT);
+            await expect(
+                execute(
+                    "VaultRegistry",
+                    { from: stranger2, autoMine: true },
+                    "transferFrom",
+                    stranger,
+                    randomAddress(),
+                    nft
+                )
+            ).to.be.revertedWith(Exceptions.LOCKED_NFT);
+        });
+
+        describe("when called not by owner", () => {
+            it("reverts", async () => {
+                const { execute, read, get } = deployments;
+                const { stranger, stranger2, deployer } =
+                    await getNamedAccounts();
+                const vault = randomAddress();
+                const vaultGovernance = await get("ERC20VaultGovernance");
+                await withSigner(vaultGovernance.address, async (s) => {
+                    const vaultRegistry = await ethers.getContract(
+                        "VaultRegistry"
+                    );
+                    await vaultRegistry
+                        .connect(s)
+                        .registerVault(vault, stranger);
+                });
+                const nft = await read("VaultRegistry", "vaultsCount");
+                await execute(
+                    "VaultRegistry",
+                    { from: stranger, autoMine: true },
+                    "approve",
+                    stranger2,
+                    nft
+                );
+
+                for (const actor of [stranger2, deployer]) {
+                    await expect(
+                        execute(
+                            "VaultRegistry",
+                            { from: actor, autoMine: true },
+                            "lockNft",
+                            nft
+                        )
+                    ).to.be.revertedWith(Exceptions.TOKEN_OWNER);
+                }
+            });
+        });
     });
 });
