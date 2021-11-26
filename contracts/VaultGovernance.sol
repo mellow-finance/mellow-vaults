@@ -84,9 +84,6 @@ abstract contract VaultGovernance is IVaultGovernance {
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), "POA");
         vault = factory.deployVault(vaultTokens, options);
         address nftOwner = owner;
-        if (owner == address(0)) {
-            nftOwner = address(vault);
-        }
         nft = _internalParams.registry.registerVault(address(vault), nftOwner);
         vault.initialize(nft);
         emit DeployedVault(tx.origin, msg.sender, vaultTokens, options, nftOwner, address(vault), nft);
