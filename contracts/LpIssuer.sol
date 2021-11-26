@@ -60,6 +60,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
+
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         registry.setApprovalForAll(address(registry), true);
     }
