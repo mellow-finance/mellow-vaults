@@ -282,6 +282,50 @@ describe("VaultRegistry", () => {
         });
     });
 
+    describe("adminApprove", () => {
+        it("approves token to new address", async () => {
+            const { admin } = await getNamedAccounts();
+            const { execute, read, get } = deployments;
+            const vaultCount = await read("VaultRegistry", "vaultsCount");
+            for (let nft = 1; nft <= vaultCount; nft++) {
+                const newAddress = randomAddress();
+                await execute(
+                    "VaultRegistry",
+                    { from: admin, autoMine: true },
+                    "adminApprove",
+                    newAddress,
+                    nft
+                );
+
+                expect(await read("VaultRegistry", "getApproved", nft)).to.eq(
+                    newAddress
+                );
+            }
+        });
+
+        describe("when called not by admin", () => {
+            it("reverts", async () => {
+                const { deployer, stranger } = await getNamedAccounts();
+                const { execute, read } = deployments;
+                const vaultCount = await read("VaultRegistry", "vaultsCount");
+                for (let nft = 1; nft <= vaultCount; nft++) {
+                    for (const actor of [deployer, stranger]) {
+                        const newAddress = randomAddress();
+                        await expect(
+                            execute(
+                                "VaultRegistry",
+                                { from: actor, autoMine: true },
+                                "adminApprove",
+                                newAddress,
+                                nft
+                            )
+                        ).to.be.revertedWith(Exceptions.ADMIN);
+                    }
+                }
+            });
+        });
+    });
+
     describe("isLocked", () => {
         it("checks if token is locked", async () => {
             const { execute, read, get } = deployments;

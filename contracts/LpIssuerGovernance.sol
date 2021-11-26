@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./libraries/CommonLibrary.sol";
-
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuerGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
+import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
-contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
+contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
@@ -43,6 +43,18 @@ contract LpIssuerGovernance is ILpIssuerGovernance, VaultGovernance {
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
+    }
+
+    /// @notice Required for intermediate vault token transfer in deploy
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external view returns (bytes4) {
+        IVaultRegistry registry = _internalParams.registry;
+        require(msg.sender == address(registry), "NFTVR");
+        return this.onERC721Received.selector;
     }
 
     /// @notice Deploy a new vault.

@@ -50,6 +50,12 @@ interface IVaultRegistry is IERC721 {
     /// @notice Commit new ProtocolGovernance.
     function commitStagedProtocolGovernance() external;
 
+    /// @notice Approve nft to new address
+    /// @dev This can be called only by the Protocol Governance. It is used to disable the strategy for a vault
+    /// @param newAddress address that will be approved
+    /// @param nft for re-approval
+    function adminApprove(address newAddress, uint256 nft) external;
+
     /// @notice Lock NFT for transfers
     /// @dev Use this method when vault structure is set up and should become immutable. Can be called by owner.
     /// @param nft - NFT to lock

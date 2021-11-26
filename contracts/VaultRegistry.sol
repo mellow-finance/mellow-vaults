@@ -109,6 +109,11 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     }
 
     /// @inheritdoc IVaultRegistry
+    function adminApprove(address newAddress, uint256 nft) external {
+        require(_isProtocolAdmin(_msgSender()), PROTOCOL_ADMIN);
+        IERC721(address(this)).approve(newAddress, nft);
+    }
+
     function lockNft(uint256 nft) external {
         require(ownerOf(nft) == msg.sender, TOKEN_OWNER);
         _locks[nft] = true;
