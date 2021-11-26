@@ -34,7 +34,7 @@ contract MasterTrader is ERC165, IMasterTrader {
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
         require(traderIdByAddress[traderAddress] == 0, TraderLibrary.TRADER_ALREADY_REGISTERED_EXCEPTION);
-        // TODO: ERC165 interface check
+        require(ERC165(traderAddress).supportsInterface(TraderLibrary.TRADER_SELECTOR));
         traderIdByAddress[traderAddress] = ++_topTraderId;
         traderAddressById[_topTraderId] = traderAddress;
         _traders.add(_topTraderId);
@@ -78,7 +78,6 @@ contract MasterTrader is ERC165, IMasterTrader {
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        // TODO: use supportsInterface from the base class
         return interfaceId == this.supportsInterface.selector;
     }
 

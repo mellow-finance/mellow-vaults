@@ -88,8 +88,10 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
     ) external returns (uint256) {}
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        // TODO: use supportsInterface from the base class
-        return interfaceId == this.supportsInterface.selector;
+        return (
+            interfaceId == this.supportsInterface.selector ||
+            interfaceId == TraderLibrary.TRADER_INTERFACE_ID
+        );
     }
 
     // TODO: move to base class
