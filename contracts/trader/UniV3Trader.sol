@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-import "./ITrader.sol";
+import "./interfaces/ITrader.sol";
+import "./libraries/TraderLibrary.sol";
 import "./Trader.sol";
-import "./TraderLibrary.sol";
 
 contract UniV3Trader is ITrader, Trader, ERC165 {
     struct UnderlyingProtocolOptions {

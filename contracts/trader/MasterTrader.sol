@@ -4,9 +4,9 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "./ITrader.sol";
-import "./IMasterTrader.sol";
-import "./TraderLibrary.sol";
+import "./interfaces/ITrader.sol";
+import "./interfaces/IMasterTrader.sol";
+import "./libraries/TraderLibrary.sol";
 
 contract MasterTrader is ERC165, IMasterTrader {
     using EnumerableSet for EnumerableSet.UintSet;
