@@ -7,7 +7,7 @@ import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import "./interfaces/ITrader.sol";
-import "./libraries/TraderLibrary.sol";
+import "./libraries/Exceptions.sol";
 import "./Trader.sol";
 
 contract UniV3Trader is ITrader, Trader, ERC165 {
@@ -30,11 +30,11 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
         uint256 limitAmount;
     }
 
-    address public masterTrader;
+    address public chiefTrader;
     UnderlyingProtocolOptions public underlyingProtocolOptions;
 
-    constructor(address _masterTrader, bytes memory _underlyingProtocolOptions) {
-        masterTrader = _masterTrader;
+    constructor(address _chiefTrader, bytes memory _underlyingProtocolOptions) {
+        chiefTrader = _chiefTrader;
         underlyingProtocolOptions = abi.decode(_underlyingProtocolOptions, (UnderlyingProtocolOptions));
     }
 
@@ -45,7 +45,7 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
         address recipient,
         bytes calldata options
     ) external returns (uint256 amountOut) {
-        _requireMasterTrader();
+        _requireChiefTrader();
         SwapSingleOptions memory swapOptions = abi.decode(options, (SwapSingleOptions));
         ISwapRouter swapRouter = underlyingProtocolOptions.swapRouter;
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
@@ -70,7 +70,7 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
         address recipient,
         bytes calldata options
     ) external returns (uint256 amountIn) {
-        _requireMasterTrader();
+        _requireChiefTrader();
         SwapSingleOptions memory swapOptions = abi.decode(options, (SwapSingleOptions));
         ISwapRouter swapRouter = underlyingProtocolOptions.swapRouter;
         ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
@@ -105,12 +105,12 @@ contract UniV3Trader is ITrader, Trader, ERC165 {
     ) external returns (uint256) {}
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        return (interfaceId == this.supportsInterface.selector || interfaceId == TraderLibrary.TRADER_INTERFACE_ID);
+        return (interfaceId == this.supportsInterface.selector || interfaceId == type(ITrader).interfaceId);
     }
 
     // TODO: move to base class
-    function _requireMasterTrader() internal view {
-        require(msg.sender == masterTrader, TraderLibrary.MASTER_REQUIRED_EXCEPTION);
+    function _requireChiefTrader() internal view {
+        require(msg.sender == chiefTrader, Exceptions.CHIEF_REQUIRED_EXCEPTION);
     }
 
     // TODO: move to base class

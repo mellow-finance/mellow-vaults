@@ -7,10 +7,10 @@ import "../interfaces/IVault.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "./interfaces/ITrader.sol";
-import "./interfaces/IMasterTrader.sol";
-import "./libraries/TraderLibrary.sol";
+import "./interfaces/IChiefTrader.sol";
+import "./libraries/Exceptions.sol";
 
-contract MasterTrader is ERC165, IMasterTrader {
+contract ChiefTrader is ERC165, IChiefTrader {
     using EnumerableSet for EnumerableSet.UintSet;
 
     address public immutable protocolGovernance;
@@ -37,8 +37,8 @@ contract MasterTrader is ERC165, IMasterTrader {
 
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
-        require(traderIdByAddress[traderAddress] == 0, TraderLibrary.TRADER_ALREADY_REGISTERED_EXCEPTION);
-        require(ERC165(traderAddress).supportsInterface(TraderLibrary.TRADER_INTERFACE_ID));
+        require(traderIdByAddress[traderAddress] == 0, Exceptions.TRADER_ALREADY_REGISTERED_EXCEPTION);
+        require(ERC165(traderAddress).supportsInterface(type(ITrader).interfaceId));
         traderIdByAddress[traderAddress] = ++_topTraderId;
         traderAddressById[_topTraderId] = traderAddress;
         _traders.add(_topTraderId);
@@ -47,7 +47,7 @@ contract MasterTrader is ERC165, IMasterTrader {
     function removeTraderByAddress(address traderAddress) external {
         _requireProtocolAdmin();
         uint256 traderIdToRemove = traderIdByAddress[traderAddress];
-        require(traderIdToRemove != 0, TraderLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderIdToRemove != 0, Exceptions.TRADER_NOT_FOUND_EXCEPTION);
         delete traderIdByAddress[traderAddress];
         delete traderAddressById[traderIdToRemove];
         _traders.remove(traderIdToRemove);
@@ -56,7 +56,7 @@ contract MasterTrader is ERC165, IMasterTrader {
     function removeTraderById(uint256 traderId) external {
         _requireProtocolAdmin();
         address traderAddressToRemove = traderAddressById[traderId];
-        require(traderAddressToRemove != address(0), TraderLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderAddressToRemove != address(0), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
         delete traderIdByAddress[traderAddressToRemove];
         delete traderAddressById[traderId];
         _traders.remove(traderId);
@@ -74,13 +74,13 @@ contract MasterTrader is ERC165, IMasterTrader {
         _requireVaultTokenOutput(output);
 
         address traderAddress = traderAddressById[traderId];
-        require(traderAddress != address(0), TraderLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderAddress != address(0), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
         address recipient = msg.sender;
 
         (bool success, bytes memory returndata) = traderAddress.call(
             abi.encodeWithSelector(_swapTypeToSelector[swapType], input, output, amount, recipient, options)
         );
-        require(success, TraderLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        require(success, Exceptions.TRADER_NOT_FOUND_EXCEPTION);
         return abi.decode(returndata, (uint256));
     }
 
@@ -91,16 +91,16 @@ contract MasterTrader is ERC165, IMasterTrader {
     function _requireProtocolAdmin() internal view {
         require(
             IProtocolGovernance(protocolGovernance).isAdmin(msg.sender),
-            TraderLibrary.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
+            Exceptions.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
         );
     }
 
     function _requireVault() internal view {
-        require(IVaultRegistry(vaultRegistry).nftForVault(msg.sender) != 0, TraderLibrary.VAULT_NOT_FOUND_EXCEPTION);
+        require(IVaultRegistry(vaultRegistry).nftForVault(msg.sender) != 0, Exceptions.VAULT_NOT_FOUND_EXCEPTION);
     }
 
     function _requireVaultTokenOutput(address tokenOutputAddress) internal view {
-        require(IVault(msg.sender).isVaultToken(tokenOutputAddress), TraderLibrary.VAULT_TOKEN_REQUIRED_EXCEPTION);
+        require(IVault(msg.sender).isVaultToken(tokenOutputAddress), Exceptions.VAULT_TOKEN_REQUIRED_EXCEPTION);
     }
 
     function _requireAtLeastStrategy(uint256 nft_) internal view {
@@ -108,7 +108,7 @@ contract MasterTrader is ERC165, IMasterTrader {
             IProtocolGovernance(protocolGovernance).isAdmin(msg.sender) ||
                 (IVaultRegistry(vaultRegistry).getApproved(nft_) == msg.sender ||
                     IVaultRegistry(vaultRegistry).ownerOf(nft_) == msg.sender),
-            TraderLibrary.AT_LEAST_STRATEGY_REQUIRED_EXCEPTION
+            Exceptions.AT_LEAST_STRATEGY_REQUIRED_EXCEPTION
         );
     }
 }

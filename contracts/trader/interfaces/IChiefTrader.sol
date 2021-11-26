@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import "../../interfaces/IProtocolGovernance.sol";
 
-interface IMasterTrader {
+interface IChiefTrader {
     /// @notice Swap type
     enum SwapType {
         EXACT_INPUT_SINGLE,

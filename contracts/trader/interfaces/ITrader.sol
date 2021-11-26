@@ -7,7 +7,7 @@ pragma solidity ^0.8.9;
 interface ITrader {
     /// @notice Link to the parent ITrader-compatible contract
     /// @return Address of the ITrader-compatible contract
-    function masterTrader() external returns (address);
+    function chiefTrader() external returns (address);
 
     /// @notice Swap exact amount of input tokens for output tokens (single-path)
     /// @param input Address of the input token
