@@ -223,6 +223,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         },
         { tokenLimitPerAddress: hre.ethers.constants.MaxUint256 }
     );
+    const lpIssuer = await read("VaultRegistry", "vaultForNft", lpIssuerNft);
+    await execute(
+        "VaultRegistry",
+        { from: deployer, autoMine: true },
+        "safeTransferFrom(address,address,uint256)",
+        deployer,
+        lpIssuer,
+        lpIssuerNft
+    );
 };
 
 export default func;
