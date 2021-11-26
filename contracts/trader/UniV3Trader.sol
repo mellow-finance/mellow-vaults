@@ -6,9 +6,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
+import "./ITrader.sol";
+import "./Trader.sol";
 import "./TraderLibrary.sol";
 
-contract UniV3Trader is ERC165 {
+contract UniV3Trader is ITrader, Trader, ERC165 {
     struct UnderlyingProtocolOptions {
         ISwapRouter swapRouter;
     }
@@ -61,13 +63,13 @@ contract UniV3Trader is ERC165 {
         amountOut = swapRouter.exactInputSingle(params);
     }
 
-    function swapExcactOutputSingle(
+    function swapExactOutputSingle(
         address input,
         address output,
         uint256 amount,
         address recipient,
         bytes calldata options
-    ) external {}
+    ) external returns (uint256) {}
 
     function swapExactInputMultihop(
         address input,
@@ -75,15 +77,15 @@ contract UniV3Trader is ERC165 {
         uint256 amount,
         address recipient,
         bytes calldata options
-    ) external {}
+    ) external returns (uint256) {}
 
-    function swapExcactOutputMultihop(
+    function swapExactOutputMultihop(
         address input,
         address output,
         uint256 amount,
         address recipient,
         bytes calldata options
-    ) external {}
+    ) external returns (uint256) {}
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
         // TODO: use supportsInterface from the base class
@@ -92,7 +94,7 @@ contract UniV3Trader is ERC165 {
 
     // TODO: move to base class
     function _requireMasterTrader() internal view {
-        require(msg.sender == masterTrader, TraderLibrary.MASTER_UNAUTHORIZED_EXCEPTION);
+        require(msg.sender == masterTrader, TraderLibrary.MASTER_REQUIRED_EXCEPTION);
     }
 
     // TODO: move to base class
