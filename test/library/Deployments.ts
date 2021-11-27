@@ -842,11 +842,11 @@ export async function deploySystem(options: {
     );
     await LpIssuerGovernance.connect(
         options.adminSigner
-    ).stageDelayedStrategyParams(lpIssuerNft, [options.treasury, []]);
+    ).stageDelayedProtocolPerVaultParams(lpIssuerNft, [options.treasury]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await LpIssuerGovernance.connect(
         options.adminSigner
-    ).commitDelayedStrategyParams(lpIssuerNft);
+    ).commitDelayedProtocolPerVaultParams(lpIssuerNft);
     await LpIssuerGovernance.connect(options.adminSigner).setStrategyParams(
         lpIssuerNft,
         [BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9))]

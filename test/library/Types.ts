@@ -41,6 +41,7 @@ export type ProtocolGovernance_Params = {
     permissionless: boolean;
     maxTokensPerVault: BigNumberish;
     governanceDelay: BigNumberish;
+    protocolTreasury: Address;
 };
 export type ProtocolGovernance_constructor = {
     admin: Address;
