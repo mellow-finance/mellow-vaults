@@ -40,6 +40,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
         }
+        lastFeeCharge = block.timestamp;
     }
 
     function vaultGovernance() external view returns (IVaultGovernance) {
@@ -187,12 +188,15 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     function _chargeFees() internal {
         ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
         uint256 thisNft = _nft;
-        uint256 elapsed = lastFeeCharge - block.timestamp;
+        uint256 elapsed = block.timestamp - lastFeeCharge;
         if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) {
             return;
         }
         lastFeeCharge = block.timestamp;
         uint256 supply = totalSupply();
+        if (supply == 0) {
+            return;
+        }
 
         ILpIssuerGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         if (strategyParams.managementFee > 0) {

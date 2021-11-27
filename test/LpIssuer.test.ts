@@ -7,7 +7,7 @@ import { ERC20, LpIssuerGovernance } from "./library/Types";
 import { LpIssuer, ProtocolGovernance, VaultRegistry } from "./library/Types";
 import { deploySystem } from "./library/Deployments";
 import { comparator } from "ramda";
-import { randomAddress, withSigner } from "./library/Helpers";
+import { now, randomAddress, sleepTo, withSigner } from "./library/Helpers";
 
 describe("LpIssuer", () => {
     let deployer: SignerWithAddress;
@@ -47,6 +47,8 @@ describe("LpIssuer", () => {
 
     beforeEach(async () => {
         await reset();
+        const startTimestamp = now();
+        await sleepTo(startTimestamp);
     });
 
     describe("::constructor", () => {
