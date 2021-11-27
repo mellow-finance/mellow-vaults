@@ -10,82 +10,71 @@ import "./interfaces/ITrader.sol";
 import "./interfaces/IChiefTrader.sol";
 import "./libraries/Exceptions.sol";
 
-contract ChiefTrader is ERC165, IChiefTrader {
-    using EnumerableSet for EnumerableSet.UintSet;
+contract ChiefTrader is ERC165, IChiefTrader, ITrader {
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     address public immutable protocolGovernance;
     address public immutable vaultRegistry;
-    mapping(address => uint256) public traderIdByAddress;
-    mapping(uint256 => address) public traderAddressById;
-
-    uint256 internal _topTraderId;
-    EnumerableSet.UintSet internal _traders;
-    mapping(SwapType => bytes4) internal _swapTypeToSelector;
+    EnumerableSet.AddressSet internal _traders;
 
     constructor(address _protocolGovernance, address _vaultRegistry) {
         protocolGovernance = _protocolGovernance;
         vaultRegistry = _vaultRegistry;
-        _swapTypeToSelector[SwapType.EXACT_INPUT_SINGLE] = ITrader.swapExactInputSingle.selector;
-        _swapTypeToSelector[SwapType.EXACT_OUTPUT_SINGLE] = ITrader.swapExactOutputSingle.selector;
-        _swapTypeToSelector[SwapType.EXACT_INPUT_MULTIHOP] = ITrader.swapExactInputMultihop.selector;
-        _swapTypeToSelector[SwapType.EXACT_OUTPUT_MULTIHOP] = ITrader.swapExactOutputMultihop.selector;
     }
 
-    function traders() external view returns (uint256[] memory) {
+    function tradersCount() external view returns (uint256) {
+        return _traders.length();
+    }
+
+    function traders() external view returns (address[] memory) {
         return _traders.values();
     }
 
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
-        require(traderIdByAddress[traderAddress] == 0, Exceptions.TRADER_ALREADY_REGISTERED_EXCEPTION);
+        require(!_traders.contains(traderAddress));
         require(ERC165(traderAddress).supportsInterface(type(ITrader).interfaceId));
-        traderIdByAddress[traderAddress] = ++_topTraderId;
-        traderAddressById[_topTraderId] = traderAddress;
-        _traders.add(_topTraderId);
+        _traders.add(traderAddress);
     }
 
-    function removeTraderByAddress(address traderAddress) external {
-        _requireProtocolAdmin();
-        uint256 traderIdToRemove = traderIdByAddress[traderAddress];
-        require(traderIdToRemove != 0, Exceptions.TRADER_NOT_FOUND_EXCEPTION);
-        delete traderIdByAddress[traderAddress];
-        delete traderAddressById[traderIdToRemove];
-        _traders.remove(traderIdToRemove);
-    }
-
-    function removeTraderById(uint256 traderId) external {
-        _requireProtocolAdmin();
-        address traderAddressToRemove = traderAddressById[traderId];
-        require(traderAddressToRemove != address(0), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
-        delete traderIdByAddress[traderAddressToRemove];
-        delete traderAddressById[traderId];
-        _traders.remove(traderId);
-    }
-
-    function trade(
+    function swapExactInput(
         uint256 traderId,
         address input,
         address output,
         uint256 amount,
-        SwapType swapType,
+        address,
+        PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256) {
         _requireVault();
         _requireVaultTokenOutput(output);
-
-        address traderAddress = traderAddressById[traderId];
-        require(traderAddress != address(0), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderId < _traders.length(), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
+        address traderAddress = _traders.at(traderId);
         address recipient = msg.sender;
+        return ITrader(traderAddress).swapExactInput(0, input, output, amount, recipient, path, options);
+    }
 
-        (bool success, bytes memory returndata) = traderAddress.call(
-            abi.encodeWithSelector(_swapTypeToSelector[swapType], input, output, amount, recipient, options)
-        );
-        require(success, Exceptions.TRADER_NOT_FOUND_EXCEPTION);
-        return abi.decode(returndata, (uint256));
+    function swapExactOutput(
+        uint256 traderId,
+        address input,
+        address output,
+        uint256 amount,
+        address,
+        PathItem[] calldata path,
+        bytes calldata options
+    ) external returns (uint256) {
+        _requireVault();
+        _requireVaultTokenOutput(output);
+        require(traderId < _traders.length(), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
+        address traderAddress = _traders.at(traderId);
+        address recipient = msg.sender;
+        return ITrader(traderAddress).swapExactOutput(0, input, output, amount, recipient, path, options);
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        return interfaceId == this.supportsInterface.selector;
+        return (interfaceId == this.supportsInterface.selector ||
+            interfaceId == type(ITrader).interfaceId ||
+            interfaceId == type(IChiefTrader).interfaceId);
     }
 
     function _requireProtocolAdmin() internal view {
