@@ -203,7 +203,9 @@ export async function deployVaultGovernanceSystem(options: {
         params,
         additionalParamsForUniV3
     );
-    LpIssuerGovernance = await contractFactoryLpIssuer.deploy(params);
+    LpIssuerGovernance = await contractFactoryLpIssuer.deploy(params, {
+        managementFeeChargeDelay: 86400,
+    });
     await ERC20VaultGovernance.deployed();
     await AaveVaultGovernance.deployed();
     await UniV3VaultGovernance.deployed();
@@ -370,17 +372,22 @@ export const deployLpIssuerGovernance = async (options: {
     });
 
     const constructorArgs: LpIssuerGovernance_constructor =
-        options.constructorArgs ?? {
-            registry: vaultRegistry.address,
-            protocolGovernance: protocolGovernance.address,
-            factory: ERC20VaultFactory.address,
-        };
+        options.constructorArgs ?? [
+            {
+                registry: vaultRegistry.address,
+                protocolGovernance: protocolGovernance.address,
+                factory: ERC20VaultFactory.address,
+            },
+            { managementFeeChargeDelay: 86400 },
+        ];
     // />
     const Contract: ContractFactory = await ethers.getContractFactory(
         "LpIssuerGovernance"
     );
 
-    let contract: LpIssuerGovernance = await Contract.deploy(constructorArgs);
+    let contract: LpIssuerGovernance = await Contract.deploy(
+        ...constructorArgs
+    );
     await contract.deployed();
     return {
         LpIssuerGovernance: contract,
@@ -842,7 +849,7 @@ export async function deploySystem(options: {
     );
     await LpIssuerGovernance.connect(
         options.adminSigner
-    ).stageDelayedProtocolPerVaultParams(lpIssuerNft, [10 ** 9]);
+    ).stageDelayedProtocolPerVaultParams(lpIssuerNft, [1 * 10 ** 9]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await LpIssuerGovernance.connect(
         options.adminSigner

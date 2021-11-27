@@ -47,11 +47,14 @@ export type ProtocolGovernance_constructor = {
     admin: Address;
 };
 
-export type LpIssuerGovernance_constructor = {
-    registry: IVaultRegistry;
-    protocolGovernance: IProtocolGovernance;
-    factory: IVaultFactory;
-};
+export type LpIssuerGovernance_constructor = [
+    {
+        registry: IVaultRegistry;
+        protocolGovernance: IProtocolGovernance;
+        factory: IVaultFactory;
+    },
+    { managementFeeChargeDelay: number }
+];
 
 export type VaultFactory_deployVault = {
     vaultGovernance: IVaultGovernance;

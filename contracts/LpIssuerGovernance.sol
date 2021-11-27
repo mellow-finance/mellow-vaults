@@ -13,9 +13,15 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
 
+    uint256 public lastManagementFeeCharge;
+
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
-    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {
+    /// @param delayedProtocolParams_ Initial Protocol Params
+    constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
+        VaultGovernance(internalParams_)
+    {
+        _delayedProtocolParams = abi.encode(delayedProtocolParams_);
         MAX_PROTOCOL_FEE = 5 * CommonLibrary.DENOMINATOR;
         MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
     }
@@ -23,6 +29,22 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     /// @inheritdoc IVaultGovernance
     function strategyTreasury(uint256) external pure override(IVaultGovernance, VaultGovernance) returns (address) {
         return address(0);
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
+        if (_delayedProtocolParams.length == 0) {
+            return DelayedProtocolParams({managementFeeChargeDelay: 0});
+        }
+        return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
+        if (_stagedDelayedProtocolParams.length == 0) {
+            return DelayedProtocolParams({managementFeeChargeDelay: 0});
+        }
+        return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
     /// @inheritdoc ILpIssuerGovernance
@@ -85,6 +107,22 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        _stageDelayedProtocolParams(abi.encode(params));
+        emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function commitDelayedProtocolParams() external {
+        _commitDelayedProtocolParams();
+        emit CommitDelayedProtocolParams(
+            tx.origin,
+            msg.sender,
+            abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
+        );
     }
 
     /// @notice Required for intermediate vault token transfer in deploy
@@ -178,4 +216,22 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that are set
     event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
+
+    /// @notice Emitted when new DelayedProtocolParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedProtocolParams(
+        address indexed origin,
+        address indexed sender,
+        DelayedProtocolParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedProtocolParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param params New params that are committed
+    event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

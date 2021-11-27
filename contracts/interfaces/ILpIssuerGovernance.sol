@@ -12,6 +12,12 @@ interface ILpIssuerGovernance is IVaultGovernance {
         uint256 managementFee;
     }
 
+    /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param managementFeeChargeDelay The minimal interval between management fee charges
+    struct DelayedProtocolParams {
+        uint256 managementFeeChargeDelay;
+    }
+
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param tokenLimitPerAddress Reference to address that will collect strategy fees
     struct StrategyParams {
@@ -23,6 +29,12 @@ interface ILpIssuerGovernance is IVaultGovernance {
     struct DelayedProtocolPerVaultParams {
         uint256 protocolFee;
     }
+
+    /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    /// @notice Delayed Protocol Params staged for commit after delay.
+    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
     /// @notice Strategy Params.
     /// @param nft VaultRegistry NFT of the vault
@@ -56,4 +68,12 @@ interface ILpIssuerGovernance is IVaultGovernance {
     /// @dev Can only be called after delayedStrategyParamsTimestamp
     /// @param nft VaultRegistry NFT of the vault
     function commitDelayedStrategyParams(uint256 nft) external;
+
+    /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @dev Can only be called after delayedProtocolParamsTimestamp.
+    /// @param params New params
+    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external;
+
+    /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    function commitDelayedProtocolParams() external;
 }
