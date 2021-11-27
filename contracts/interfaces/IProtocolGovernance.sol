@@ -46,6 +46,9 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice The delay for committing any governance params.
     function governanceDelay() external view returns (uint256);
 
+    /// @notice The address of the protocol treasury.
+    function protocolTreasury() external view returns (address);
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @notice Set new pending params.

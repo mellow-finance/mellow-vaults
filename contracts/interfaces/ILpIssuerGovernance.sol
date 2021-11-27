@@ -6,7 +6,7 @@ import "./IVaultGovernance.sol";
 interface ILpIssuerGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param strategyTreasury Reference to address that will collect strategy fees
-    /// @param managementFee Management fee for Strategist denominated in CommonLibrary.DENOMINATOR
+    /// @param managementFee Management fee for Strategist denominated in 10 ** 9
     struct DelayedStrategyParams {
         address strategyTreasury;
         uint256 managementFee;
@@ -25,7 +25,7 @@ interface ILpIssuerGovernance is IVaultGovernance {
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
-    /// @param protocolFee Management fee for Protocol denominated in CommonLibrary.DENOMINATOR
+    /// @param protocolFee Management fee for Protocol denominated in 10 ** 9
     struct DelayedProtocolPerVaultParams {
         uint256 protocolFee;
     }
@@ -36,9 +36,24 @@ interface ILpIssuerGovernance is IVaultGovernance {
     /// @notice Delayed Protocol Params staged for commit after delay.
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
+    /// @notice Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param nft VaultRegistry NFT of the vault
+    function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory);
+
+    /// @notice Delayed Protocol Per Vault Params staged for commit after delay.
+    /// @param nft VaultRegistry NFT of the vault
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory);
+
     /// @notice Strategy Params.
     /// @param nft VaultRegistry NFT of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory);
+
+    /// @notice Delayed Strategy Params
+    /// @param nft VaultRegistry NFT of the vault
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
 
     /// @notice Delayed Strategy Params staged for commit after delay.
     /// @param nft VaultRegistry NFT of the vault

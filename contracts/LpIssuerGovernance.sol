@@ -13,8 +13,6 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
 
-    uint256 public lastManagementFeeCharge;
-
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
@@ -48,11 +46,23 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     }
 
     /// @inheritdoc ILpIssuerGovernance
-    function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
-        if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0});
+    function delayedProtocolPerVaultParams(uint256 nft) external view returns (DelayedProtocolPerVaultParams memory) {
+        if (_delayedProtocolPerVaultParams[nft].length == 0) {
+            return DelayedProtocolPerVaultParams({protocolFee: 0});
         }
-        return abi.decode(_strategyParams[nft], (StrategyParams));
+        return abi.decode(_delayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function stagedDelayedProtocolPerVaultParams(uint256 nft)
+        external
+        view
+        returns (DelayedProtocolPerVaultParams memory)
+    {
+        if (_stagedDelayedProtocolPerVaultParams[nft].length == 0) {
+            return DelayedProtocolPerVaultParams({protocolFee: 0});
+        }
+        return abi.decode(_stagedDelayedProtocolPerVaultParams[nft], (DelayedProtocolPerVaultParams));
     }
 
     /// @inheritdoc ILpIssuerGovernance
@@ -61,6 +71,22 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
             return DelayedStrategyParams({strategyTreasury: address(0), managementFee: 0});
         }
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_strategyParams[nft].length == 0) {
+            return DelayedStrategyParams({strategyTreasury: address(0), managementFee: 0});
+        }
+        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
+        if (_strategyParams[nft].length == 0) {
+            return StrategyParams({tokenLimitPerAddress: 0});
+        }
+        return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
     /// @inheritdoc ILpIssuerGovernance
