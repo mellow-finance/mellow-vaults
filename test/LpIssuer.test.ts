@@ -22,12 +22,12 @@ describe("LpIssuer", () => {
     let lpIssuerNft: number;
     let gatewayNft: number;
     let tokens: ERC20[];
-    let revert: Function;
+    let reset: Function;
 
     before(async () => {
         [deployer, admin, stranger, treasury, strategy] =
             await ethers.getSigners();
-        revert = deployments.createFixture(async () => {
+        reset = deployments.createFixture(async () => {
             await deployments.fixture();
             ({
                 protocolGovernance,
@@ -46,7 +46,7 @@ describe("LpIssuer", () => {
     });
 
     beforeEach(async () => {
-        await revert();
+        await reset();
     });
 
     describe("::constructor", () => {

@@ -5,13 +5,21 @@ import "./IVaultGovernance.sol";
 
 interface ILpIssuerGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
+    /// @param strategyTreasury Reference to address that will collect strategy fees
+    /// @param managementFee Management fee for Strategist denominated in CommonLibrary.DENOMINATOR
+    struct DelayedStrategyParams {
+        address strategyTreasury;
+        uint256 managementFee;
+    }
+
+    /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param tokenLimitPerAddress Reference to address that will collect strategy fees
     struct StrategyParams {
         uint256 tokenLimitPerAddress;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
-    /// @param protocolFee Share of managements fees entitled to protocol, multiplied by CommonLibrary.DENOMINATOR
+    /// @param protocolFee Management fee for Protocol denominated in CommonLibrary.DENOMINATOR
     struct DelayedProtocolPerVaultParams {
         uint256 protocolFee;
     }
@@ -19,6 +27,10 @@ interface ILpIssuerGovernance is IVaultGovernance {
     /// @notice Strategy Params.
     /// @param nft VaultRegistry NFT of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory);
+
+    /// @notice Delayed Strategy Params staged for commit after delay.
+    /// @param nft VaultRegistry NFT of the vault
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
 
     /// @notice Set Strategy params, i.e. Params that could be changed by Strategy or Protocol Governance immediately.
     /// @param nft Nft of the vault
@@ -34,4 +46,14 @@ interface ILpIssuerGovernance is IVaultGovernance {
     /// @dev Can only be called after delayedProtocolPerVaultParamsTimestamp
     /// @param nft VaultRegistry NFT of the vault
     function commitDelayedProtocolPerVaultParams(uint256 nft) external;
+
+    /// @notice Stage Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external;
+
+    /// @notice Commit Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
+    /// @dev Can only be called after delayedStrategyParamsTimestamp
+    /// @param nft VaultRegistry NFT of the vault
+    function commitDelayedStrategyParams(uint256 nft) external;
 }

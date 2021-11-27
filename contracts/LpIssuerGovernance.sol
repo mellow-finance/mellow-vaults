@@ -10,9 +10,15 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovernance {
+    uint256 public immutable MAX_PROTOCOL_FEE;
+    uint256 public immutable MAX_MANAGEMENT_FEE;
+
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
-    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
+    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {
+        MAX_PROTOCOL_FEE = 5 * CommonLibrary.DENOMINATOR;
+        MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
+    }
 
     /// @inheritdoc IVaultGovernance
     function strategyTreasury(uint256) external pure override(IVaultGovernance, VaultGovernance) returns (address) {
@@ -28,7 +34,33 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     }
 
     /// @inheritdoc ILpIssuerGovernance
+    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
+        if (_stagedDelayedStrategyParams[nft].length == 0) {
+            return DelayedStrategyParams({strategyTreasury: address(0), managementFee: 0});
+        }
+        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        _stageDelayedStrategyParams(nft, abi.encode(params));
+        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
+    function commitDelayedStrategyParams(uint256 nft) external {
+        _commitDelayedStrategyParams(nft);
+        emit CommitDelayedStrategyParams(
+            tx.origin,
+            msg.sender,
+            nft,
+            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
+        );
+    }
+
+    /// @inheritdoc ILpIssuerGovernance
     function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
+        require(params.protocolFee <= MAX_PROTOCOL_FEE, "MPF");
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
             tx.origin,
@@ -112,6 +144,32 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         address indexed sender,
         uint256 indexed nft,
         DelayedProtocolPerVaultParams params
+    );
+
+    /// @notice Emitted when new DelayedStrategyParams are staged for commit
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedStrategyParams are committed
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param nft VaultRegistry NFT of the vault
+    /// @param params New params that are committed
+    event CommitDelayedStrategyParams(
+        address indexed origin,
+        address indexed sender,
+        uint256 indexed nft,
+        DelayedStrategyParams params
     );
 
     /// @notice Emitted when new StrategyParams are set.

@@ -842,7 +842,7 @@ export async function deploySystem(options: {
     );
     await LpIssuerGovernance.connect(
         options.adminSigner
-    ).stageDelayedProtocolPerVaultParams(lpIssuerNft, [options.treasury]);
+    ).stageDelayedProtocolPerVaultParams(lpIssuerNft, [10 ** 9]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await LpIssuerGovernance.connect(
         options.adminSigner
