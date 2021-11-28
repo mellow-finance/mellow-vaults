@@ -150,8 +150,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             }
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
-        _chargeFees();
         _burn(msg.sender, lpTokenAmount);
+        _chargeFees();
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -185,6 +185,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         return IVault(_vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft));
     }
 
+    /// @dev We don't charge on any deposit / withdraw to save gas.
+    /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
+    /// So the error results in slightly lower management fees than in exact case
     function _chargeFees() internal {
         ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
         uint256 thisNft = _nft;

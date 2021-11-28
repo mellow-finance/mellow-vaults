@@ -75,7 +75,7 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
 
     /// @inheritdoc ILpIssuerGovernance
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
-        if (_strategyParams[nft].length == 0) {
+        if (_delayedStrategyParams[nft].length == 0) {
             return DelayedStrategyParams({strategyTreasury: address(0), managementFee: 0});
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
