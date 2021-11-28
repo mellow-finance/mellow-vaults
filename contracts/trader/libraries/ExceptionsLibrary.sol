@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-library Exceptions {
+library ExceptionsLibrary {
     string constant CHIEF_REQUIRED_EXCEPTION = "MS";
     string constant PROTOCOL_ADMIN_REQUIRED_EXCEPTION = "PA";
     string constant TRADER_ALREADY_REGISTERED_EXCEPTION = "TE";

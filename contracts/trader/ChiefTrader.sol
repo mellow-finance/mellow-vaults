@@ -8,7 +8,7 @@ import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "./interfaces/ITrader.sol";
 import "./interfaces/IChiefTrader.sol";
-import "./libraries/Exceptions.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -48,7 +48,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     ) external returns (uint256) {
         _requireVault();
         _requireVaultTokenOutput(output);
-        require(traderId < _traders.length(), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderId < _traders.length(), ExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
         address traderAddress = _traders.at(traderId);
         address recipient = msg.sender;
         return ITrader(traderAddress).swapExactInput(0, input, output, amount, recipient, path, options);
@@ -65,7 +65,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     ) external returns (uint256) {
         _requireVault();
         _requireVaultTokenOutput(output);
-        require(traderId < _traders.length(), Exceptions.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderId < _traders.length(), ExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
         address traderAddress = _traders.at(traderId);
         address recipient = msg.sender;
         return ITrader(traderAddress).swapExactOutput(0, input, output, amount, recipient, path, options);
@@ -80,16 +80,19 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     function _requireProtocolAdmin() internal view {
         require(
             IProtocolGovernance(protocolGovernance).isAdmin(msg.sender),
-            Exceptions.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
+            ExceptionsLibrary.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
         );
     }
 
     function _requireVault() internal view {
-        require(IVaultRegistry(vaultRegistry).nftForVault(msg.sender) != 0, Exceptions.VAULT_NOT_FOUND_EXCEPTION);
+        require(
+            IVaultRegistry(vaultRegistry).nftForVault(msg.sender) != 0,
+            ExceptionsLibrary.VAULT_NOT_FOUND_EXCEPTION
+        );
     }
 
     function _requireVaultTokenOutput(address tokenOutputAddress) internal view {
-        require(IVault(msg.sender).isVaultToken(tokenOutputAddress), Exceptions.VAULT_TOKEN_REQUIRED_EXCEPTION);
+        require(IVault(msg.sender).isVaultToken(tokenOutputAddress), ExceptionsLibrary.VAULT_TOKEN_REQUIRED_EXCEPTION);
     }
 
     function _requireAtLeastStrategy(uint256 nft_) internal view {
@@ -97,7 +100,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
             IProtocolGovernance(protocolGovernance).isAdmin(msg.sender) ||
                 (IVaultRegistry(vaultRegistry).getApproved(nft_) == msg.sender ||
                     IVaultRegistry(vaultRegistry).ownerOf(nft_) == msg.sender),
-            Exceptions.AT_LEAST_STRATEGY_REQUIRED_EXCEPTION
+            ExceptionsLibrary.AT_LEAST_STRATEGY_REQUIRED_EXCEPTION
         );
     }
 }

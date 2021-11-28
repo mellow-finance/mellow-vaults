@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-import "./libraries/Exceptions.sol";
+import "./libraries/ExceptionsLibrary.sol";
 import "./Trader.sol";
 
 contract UniV3Trader is Trader, ITrader {
@@ -43,7 +43,7 @@ contract UniV3Trader is Trader, ITrader {
         if (path.length == 0) {
             return _swapExactInputSingle(input, output, amount, recipient, options_);
         } else {
-            require(_validatePathLinked(input, output, path), Exceptions.INVALID_TRADE_PATH_EXCEPTION);
+            require(_validatePathLinked(input, output, path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             // TODO: implement multihop swap
         }
     }
@@ -61,7 +61,7 @@ contract UniV3Trader is Trader, ITrader {
         if (path.length == 0) {
             return _swapExactOutputSingle(input, output, amount, recipient, options_);
         } else {
-            require(_validatePathLinked(input, output, path), Exceptions.INVALID_TRADE_PATH_EXCEPTION);
+            require(_validatePathLinked(input, output, path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             // TODO: implement multihop swap
         }
     }

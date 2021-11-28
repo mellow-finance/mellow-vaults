@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 
 import "./interfaces/ITrader.sol";
-import "./libraries/Exceptions.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 abstract contract Trader is ERC165 {
     address public chiefTrader;
@@ -16,7 +16,7 @@ abstract contract Trader is ERC165 {
     }
 
     function _requireChiefTrader() internal view {
-        require(msg.sender == chiefTrader, Exceptions.CHIEF_REQUIRED_EXCEPTION);
+        require(msg.sender == chiefTrader, ExceptionsLibrary.CHIEF_REQUIRED_EXCEPTION);
     }
 
     function _safeApproveERC20TokenIfNecessary(address token, address to) internal {
