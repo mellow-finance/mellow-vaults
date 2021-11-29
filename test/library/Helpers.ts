@@ -69,10 +69,7 @@ export const decodeFromBytes = (types: string[], bytesToDecode: string) => {
     return fromBytes.decode(types, bytesToDecode);
 };
 
-export const withSigner = async (
-    address: string,
-    f: (signer: SignerWithAddress) => Promise<void>
-) => {
+const addSigner = async (address: string): Promise<SignerWithAddress> => {
     await network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [address],
@@ -81,8 +78,10 @@ export const withSigner = async (
         address,
         "0x1000000000000000000",
     ]);
-    const signer = await ethers.getSigner(address);
-    await f(signer);
+    return await ethers.getSigner(address);
+};
+
+const removeSigner = async (address: string) => {
     await network.provider.request({
         method: "hardhat_stopImpersonatingAccount",
         params: [address],
@@ -98,3 +97,12 @@ export async function depositW9(receiver: string, amount: BigNumberish) {
         await w9.connect(signer).transfer(receiver, amount);
     });
 }
+
+export const withSigner = async (
+    address: string,
+    f: (signer: SignerWithAddress) => Promise<void>
+) => {
+    const signer = await addSigner(address);
+    await f(signer);
+    await removeSigner(address);
+};

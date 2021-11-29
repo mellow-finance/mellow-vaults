@@ -18,9 +18,14 @@ contract YearnVault is Vault {
     {
         _yTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            _yTokens[i] = _yearnVaultRegistry().latestVault(_vaultTokens[i]);
-            require(_yTokens[i] != address(0), "VDE");
+            _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);
+            require(_yTokens[i] != address(0), "YV");
         }
+    }
+
+    /// @notice Returns Yearn protocol vaults used by this contract
+    function yTokens() external view returns (address[] memory) {
+        return _yTokens;
     }
 
     /// @inheritdoc Vault
@@ -46,8 +51,8 @@ contract YearnVault is Vault {
             }
 
             address token = tokens[i];
-            _allowTokenIfNecessary(token);
             IYearnVault yToken = IYearnVault(_yTokens[i]);
+            _allowTokenIfNecessary(token, address(yToken));
             yToken.deposit(tokenAmounts[i], address(this));
         }
         actualTokenAmounts = tokenAmounts;
@@ -58,31 +63,30 @@ contract YearnVault is Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        address[] memory tokens = _vaultTokens;
         uint256 maxLoss = abi.decode(options, (uint256));
         for (uint256 i = 0; i < _yTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
 
-            address token = tokens[i];
-            _allowTokenIfNecessary(token);
             IYearnVault yToken = IYearnVault(_yTokens[i]);
-            uint256 yTokenAmount = (tokenAmounts[i] / yToken.pricePerShare()) * (10**yToken.decimals());
-            require(yTokenAmount < yToken.balanceOf(address(this)), "INSY");
+            uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
+            uint256 balance = yToken.balanceOf(address(this));
+            if (yTokenAmount > balance) {
+                yTokenAmount = balance;
+            }
+            if (yTokenAmount == 0) {
+                continue;
+            }
             yToken.withdraw(yTokenAmount, to, maxLoss);
             (tokenAmounts[i], address(this));
         }
         actualTokenAmounts = tokenAmounts;
     }
 
-    function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(_yearnVaultRegistry()), address(this)) < type(uint256).max / 2) {
-            IERC20(token).approve(address(_yearnVaultRegistry()), type(uint256).max);
+    function _allowTokenIfNecessary(address token, address yToken) internal {
+        if (IERC20(token).allowance(address(this), yToken) < type(uint256).max / 2) {
+            IERC20(token).approve(yToken, type(uint256).max);
         }
-    }
-
-    function _yearnVaultRegistry() internal view returns (IYearnVaultRegistry) {
-        return IYearnVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().yearnVaultRegistry;
     }
 }

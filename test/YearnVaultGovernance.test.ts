@@ -626,7 +626,7 @@ describe("YearnVaultGovernance", () => {
         });
 
         describe("when called by VaultRegistry ERC721 owner", () => {
-            it("reverts", async () => {
+            it("succeeds", async () => {
                 const owner = randomAddress();
                 await deployments.execute(
                     "VaultRegistry",
@@ -636,15 +636,18 @@ describe("YearnVaultGovernance", () => {
                     owner,
                     nft
                 );
-                await expect(
-                    deployments.execute(
-                        "YearnVaultGovernance",
-                        { from: owner, autoMine: true },
-                        "stageDelayedStrategyParams",
-                        nft,
-                        paramsToStage
-                    )
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                await withSigner(owner, async (s) => {
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(s);
+                    await g.stageDelayedStrategyParams(nft, paramsToStage);
+                });
+                const stagedParams = await deployments.read(
+                    "YearnVaultGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
             });
         });
 
@@ -678,17 +681,15 @@ describe("YearnVaultGovernance", () => {
 
         describe("when called not by protocol admin or not by strategy", () => {
             it("reverts", async () => {
-                for (const actor of [deployer, stranger]) {
-                    await expect(
-                        deployments.execute(
-                            "YearnVaultGovernance",
-                            { from: actor, autoMine: true },
-                            "stageDelayedStrategyParams",
-                            nft,
-                            paramsToStage
-                        )
-                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
-                }
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: stranger, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        paramsToStage
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
             });
         });
     });
@@ -879,7 +880,7 @@ describe("YearnVaultGovernance", () => {
         });
 
         describe("when called by VaultRegistry ERC721 owner", () => {
-            it("reverts", async () => {
+            it("succeeds", async () => {
                 await deployments.execute(
                     "YearnVaultGovernance",
                     { from: admin, autoMine: true },
@@ -903,14 +904,18 @@ describe("YearnVaultGovernance", () => {
                     owner,
                     nft
                 );
-                await expect(
-                    deployments.execute(
-                        "YearnVaultGovernance",
-                        { from: owner, autoMine: true },
-                        "commitDelayedStrategyParams",
-                        nft
-                    )
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                await withSigner(owner, async (s) => {
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(s);
+                    await g.commitDelayedStrategyParams(nft);
+                });
+                const params = await deployments.read(
+                    "YearnVaultGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql(paramsToCommit);
             });
         });
 
@@ -964,15 +969,95 @@ describe("YearnVaultGovernance", () => {
                 );
                 await sleep(governanceDelay);
 
-                for (const actor of [deployer, stranger]) {
-                    await expect(
-                        deployments.execute(
-                            "YearnVaultGovernance",
-                            { from: actor, autoMine: true },
-                            "commitDelayedStrategyParams",
-                            nft
-                        )
-                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                await expect(
+                    deployments.execute(
+                        "YearnVaultGovernance",
+                        { from: stranger, autoMine: true },
+                        "commitDelayedStrategyParams",
+                        nft
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+            });
+        });
+    });
+    describe("#yTokenForToken", () => {
+        const YEARN_WETH_POOL =
+            "0xa258C4606Ca8206D8aA700cE2143D7db854D168c".toLowerCase();
+        it("returns a corresponding yVault for token", async () => {
+            const { read } = deployments;
+            const { weth } = await getNamedAccounts();
+            const yToken = await read(
+                "YearnVaultGovernance",
+                "yTokenForToken",
+                weth
+            );
+            expect(yToken.toLowerCase()).to.eq(YEARN_WETH_POOL);
+        });
+
+        describe("when overriden by setYTokenForToken", () => {
+            it("returns overriden yToken", async () => {
+                const { read } = deployments;
+                const { weth, admin } = await getNamedAccounts();
+                const newYToken = randomAddress();
+                await withSigner(admin, async (s) => {
+                    const g = await (
+                        await ethers.getContract("YearnVaultGovernance")
+                    ).connect(s);
+                    await g.setYTokenForToken(weth, newYToken);
+                });
+                const yToken = await read(
+                    "YearnVaultGovernance",
+                    "yTokenForToken",
+                    weth
+                );
+                expect(yToken.toLowerCase()).to.eq(newYToken.toLowerCase());
+            });
+        });
+
+        describe("when yToken doesn't exist in overrides or yearnRegistry", () => {
+            it("returns 0 address", async () => {
+                const { read } = deployments;
+                const yToken = await read(
+                    "YearnVaultGovernance",
+                    "yTokenForToken",
+                    randomAddress()
+                );
+                expect(yToken).to.eq(ethers.constants.AddressZero);
+            });
+        });
+    });
+
+    describe("setYTokenForToken", () => {
+        it("sets a yToken override for a token", async () => {
+            const { read } = deployments;
+            const { weth, admin } = await getNamedAccounts();
+            const newYToken = randomAddress();
+            await withSigner(admin, async (s) => {
+                const g = (
+                    await ethers.getContract("YearnVaultGovernance")
+                ).connect(s);
+                await g.setYTokenForToken(weth, newYToken);
+            });
+            const yToken = await read(
+                "YearnVaultGovernance",
+                "yTokenForToken",
+                weth
+            );
+            expect(yToken.toLowerCase()).to.eq(newYToken.toLowerCase());
+        });
+
+        describe("when called not by admin", () => {
+            it("reverts", async () => {
+                const { weth, stranger, deployer } = await getNamedAccounts();
+                for (const actor of [stranger, deployer]) {
+                    await withSigner(actor, async (s) => {
+                        const g = (
+                            await ethers.getContract("YearnVaultGovernance")
+                        ).connect(s);
+                        await expect(
+                            g.setYTokenForToken(weth, randomAddress())
+                        ).to.be.revertedWith(Exceptions.ADMIN);
+                    });
                 }
             });
         });

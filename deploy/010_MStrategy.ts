@@ -50,7 +50,7 @@ const setupVault = async (
             await execute(
                 contractName,
                 {
-                    from: admin,
+                    from: deployer,
                     log: true,
                     autoMine: true,
                 },
@@ -77,7 +77,7 @@ const setupVault = async (
         await execute(
             contractName,
             {
-                from: admin,
+                from: deployer,
                 log: true,
                 autoMine: true,
             },
@@ -88,7 +88,7 @@ const setupVault = async (
         await execute(
             contractName,
             {
-                from: admin,
+                from: deployer,
                 log: true,
                 autoMine: true,
             },
@@ -222,6 +222,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             strategyTreasury: mStrategyTreasury,
         },
         { tokenLimitPerAddress: hre.ethers.constants.MaxUint256 }
+    );
+    const lpIssuer = await read("VaultRegistry", "vaultForNft", lpIssuerNft);
+    await execute(
+        "VaultRegistry",
+        { from: deployer, autoMine: true },
+        "safeTransferFrom(address,address,uint256)",
+        deployer,
+        lpIssuer,
+        lpIssuerNft
     );
 };
 

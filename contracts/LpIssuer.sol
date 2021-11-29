@@ -57,16 +57,22 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         return _nft;
     }
 
-    /// @inheritdoc ILpIssuer
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     /// @notice Deposit tokens into LpIssuer
     /// @param tokenAmounts Amounts of tokens to push
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(_nft > 0, "INIT");
+        require(_subvaultNft > 0, "INITSV");
+        require(registry.ownerOf(_nft) == address(this), "INITOWN");
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
@@ -155,11 +161,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     function onERC721Received(
         address,
         address,
-        uint256,
+        uint256 tokenId,
         bytes calldata
     ) external returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         require(msg.sender == address(registry), "NFTVR");
+        registry.lockNft(tokenId);
         return this.onERC721Received.selector;
     }
 
