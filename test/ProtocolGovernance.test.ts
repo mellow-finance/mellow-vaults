@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import Exceptions from "./library/Exceptions";
@@ -57,36 +57,42 @@ describe("ProtocolGovernance", () => {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(20),
                 governanceDelay: BigNumber.from(100),
+                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             initialParams = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(SECONDS_PER_DAY), // 1 day
+                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             paramsZero = {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(0),
+                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             paramsEmpty = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
+                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             paramsDefault = {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
+                protocolTreasury: ethers.constants.AddressZero,
             };
 
             paramsTimeout = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(timeout),
+                protocolTreasury: await protocolTreasury.getAddress(),
             };
 
             tokens = await deployERC20Tokens(3);

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import Exceptions from "./library/Exceptions";
 import {
@@ -69,6 +69,7 @@ describe("TestVaultGovernance", () => {
 
     beforeEach(async () => {
         testVaultGovernanceSystem = await deploymentFixture();
+        const { protocolTreasury } = await getNamedAccounts();
 
         contract = testVaultGovernanceSystem.vaultGovernance;
         vaultRegistry = testVaultGovernanceSystem.vaultRegistry;
@@ -104,6 +105,7 @@ describe("TestVaultGovernance", () => {
             permissionless: true,
             maxTokensPerVault: BigNumber.from(2),
             governanceDelay: BigNumber.from(1),
+            protocolTreasury,
         };
 
         encodedParams = encodeToBytes(

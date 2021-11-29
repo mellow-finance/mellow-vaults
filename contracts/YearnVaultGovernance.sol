@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
+    mapping(address => address) private _yTokens;
+
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
@@ -14,6 +17,20 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         VaultGovernance(internalParams_)
     {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
+    }
+
+    /// @inheritdoc IYearnVaultGovernance
+    function yTokenForToken(address token) external view returns (address) {
+        address yToken = _yTokens[token];
+        if (yToken != address(0)) {
+            return yToken;
+        }
+        IYearnVaultRegistry yearnRegistry = delayedProtocolParams().yearnVaultRegistry;
+        try yearnRegistry.latestVault(token) returns (address _vault) {
+            return _vault;
+        } catch (bytes memory) {
+            return address(0);
+        }
     }
 
     function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
@@ -81,6 +98,20 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
         );
     }
+
+    /// @inheritdoc IYearnVaultGovernance
+    function setYTokenForToken(address token, address yToken) external {
+        _requireProtocolAdmin();
+        _yTokens[token] = yToken;
+        emit SetYToken(tx.origin, msg.sender, token, yToken);
+    }
+
+    /// @notice Emitted when new yToken is set
+    /// @param origin Origin of the transaction
+    /// @param sender Sender of the transaction
+    /// @param token ERC-20 token for the yToken
+    /// @param yToken yToken for ERC-20 token
+    event SetYToken(address indexed origin, address indexed sender, address indexed token, address yToken);
 
     /// @notice Emitted when new DelayedStrategyParams are staged for commit
     /// @param origin Origin of the transaction

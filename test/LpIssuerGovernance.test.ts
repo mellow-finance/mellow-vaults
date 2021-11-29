@@ -15,7 +15,6 @@ import {
  */
 describe("LpIssuerGovernance", () => {
     let contract: LpIssuerGovernance;
-    let constructorArgs: LpIssuerGovernance_constructor;
     let deploymentFixture: Function;
     let deployer: Signer;
     let protocolTreasury: Signer;
@@ -26,7 +25,6 @@ describe("LpIssuerGovernance", () => {
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
             return await deployLpIssuerGovernance({
-                constructorArgs: constructorArgs,
                 adminSigner: deployer,
                 treasury: await protocolTreasury.getAddress(),
             });

@@ -24,6 +24,9 @@ const config: HardhatUserConfig = {
     },
     namedAccounts: {
         ...defaultConfig.namedAccounts,
+        admin: {
+            default: 4,
+        },
         stranger: {
             default: 5,
         },
@@ -35,6 +38,9 @@ const config: HardhatUserConfig = {
         },
         stranger2: {
             default: 9,
+        },
+        wbtcRichGuy: {
+            default: "0x000af223187a63f3b0bf6fe5a76ddc79e03ccb55",
         },
     },
     solidity: {

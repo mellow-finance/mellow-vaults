@@ -20,6 +20,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 private _nft;
 
+    uint256 public lastFeeCharge;
+
     /// @notice Creates a new contract.
     /// @dev All subvault nfts must be owned by this vault before.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
@@ -38,6 +40,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
         }
+        lastFeeCharge = block.timestamp;
     }
 
     function vaultGovernance() external view returns (IVaultGovernance) {
@@ -57,16 +60,22 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         return _nft;
     }
 
-    /// @inheritdoc ILpIssuer
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
+
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     /// @notice Deposit tokens into LpIssuer
     /// @param tokenAmounts Amounts of tokens to push
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        require(_nft > 0, "INIT");
+        require(_subvaultNft > 0, "INITSV");
+        require(registry.ownerOf(_nft) == address(this), "INITOWN");
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
@@ -110,6 +119,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
                 ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_nft).tokenLimitPerAddress,
             "LPA"
         );
+        _chargeFees();
         if (amountToMint > 0) {
             _mint(msg.sender, amountToMint);
         }
@@ -141,6 +151,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
+        _chargeFees();
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -155,11 +166,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     function onERC721Received(
         address,
         address,
-        uint256,
+        uint256 tokenId,
         bytes calldata
     ) external returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         require(msg.sender == address(registry), "NFTVR");
+        registry.lockNft(tokenId);
         return this.onERC721Received.selector;
     }
 
@@ -172,6 +184,50 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     function _subvault() internal view returns (IVault) {
         return IVault(_vaultGovernance.internalParams().registry.vaultForNft(_subvaultNft));
     }
+
+    /// @dev We don't charge on any deposit / withdraw to save gas.
+    /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
+    /// So the error results in slightly lower management fees than in exact case
+    function _chargeFees() internal {
+        ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
+        uint256 thisNft = _nft;
+        uint256 elapsed = block.timestamp - lastFeeCharge;
+        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) {
+            return;
+        }
+        lastFeeCharge = block.timestamp;
+        uint256 supply = totalSupply();
+        if (supply == 0) {
+            return;
+        }
+
+        ILpIssuerGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
+        if (strategyParams.managementFee > 0) {
+            uint256 toMint = (strategyParams.managementFee * supply * elapsed) /
+                (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            _mint(strategyParams.strategyTreasury, toMint);
+            emit ManagementFeesCharged(strategyParams.strategyTreasury, strategyParams.managementFee, toMint);
+        }
+        uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
+        if (protocolFee > 0) {
+            address treasury = vg.internalParams().protocolGovernance.protocolTreasury();
+            uint256 toMint = (protocolFee * supply * elapsed) / (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            _mint(treasury, toMint);
+            emit ProtocolFeesCharged(treasury, protocolFee, toMint);
+        }
+    }
+
+    /// @notice Emitted when management fees are charged
+    /// @param treasury Treasury receiver of the fee
+    /// @param feeRate Fee percent applied denominated in 10 ** 9
+    /// @param amount Amount of lp token minted
+    event ManagementFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
+
+    /// @notice Emitted when protocol fees are charged
+    /// @param treasury Treasury receiver of the fee
+    /// @param feeRate Fee percent applied denominated in 10 ** 9
+    /// @param amount Amount of lp token minted
+    event ProtocolFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
 
     /// @notice Emitted when liquidity is deposited
     /// @param from The source address for the liquidity
