@@ -39,6 +39,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         require(!_traders.contains(traderAddress));
         require(ERC165(traderAddress).supportsInterface(type(ITrader).interfaceId));
         _traders.add(traderAddress);
+        emit AddedTrader(_traders.length(), traderAddress);
     }
 
     /// @inheritdoc ITrader
@@ -109,4 +110,6 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
             ExceptionsLibrary.AT_LEAST_STRATEGY_REQUIRED_EXCEPTION
         );
     }
+
+    event AddedTrader(uint256 indexed traderId, address traderAddress);
 }
