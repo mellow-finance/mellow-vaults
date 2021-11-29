@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "./interfaces/external/univ3/IUniswapV3PoolState.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
@@ -11,9 +12,7 @@ import "./libraries/external/LiquidityAmounts.sol";
 import "./Vault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
-contract UniV3Vault is Vault {
-    using EnumerableSet for EnumerableSet.UintSet;
-
+contract UniV3Vault is IERC721Receiver, Vault {
     struct Options {
         uint256 amount0Min;
         uint256 amount1Min;
@@ -25,8 +24,7 @@ contract UniV3Vault is Vault {
         uint256 a1;
     }
 
-    EnumerableSet.UintSet private _nfts;
-    EnumerableSet.UintSet private _cachedNfts;
+    uint256 public uniV3Nft;
     IUniswapV3PoolState public pool;
 
     /// @notice Creates a new contract.
@@ -44,20 +42,34 @@ contract UniV3Vault is Vault {
         );
     }
 
-    /// @inheritdoc Vault
-    function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](2);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            uint256 nft = _nfts.at(i);
-            uint256[] memory nftTokenAmounts = nftTvl(nft);
-            tokenAmounts[0] += nftTokenAmounts[0];
-            tokenAmounts[1] += nftTokenAmounts[1];
-        }
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
+        require(msg.sender == address(_positionManager()), "SNFT");
+        require(_isStrategy(operator), "STR");
+        (, , address token0, address token1, , , , , , , , ) = _positionManager().positions(tokenId);
+        require(
+            (token0 == _vaultTokens[0] && token1 == _vaultTokens[1]) ||
+            (token0 == _vaultTokens[1] && token1 == _vaultTokens[0]),
+            "VT"
+        );
+        uint256[] memory tvls = tvl();
+        // tvl should be zero for new position to be acquired
+        require(
+            tvls[0] == 0 && tvls[1] == 0, 
+            "TVL"
+        );
+        if (uniV3Nft != 0)
+            // return previous uni v3 position nft
+            _positionManager().transferFrom(address(this), from, uniV3Nft);
+        uniV3Nft = tokenId;
+        return this.onERC721Received.selector;
     }
 
-    function nftTvl(uint256 nft) public view returns (uint256[] memory tokenAmounts) {
+    /// @inheritdoc Vault
+    function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultTokens.length);
-        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(nft);
+        if (uniV3Nft == 0)
+            return tokenAmounts;
+        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -71,14 +83,6 @@ contract UniV3Vault is Vault {
         tokenAmounts[1] = amount1;
     }
 
-    function nftTvls() public view returns (uint256[][] memory tokenAmounts) {
-        tokenAmounts = new uint256[][](_nfts.length());
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            uint256 nft = _nfts.at(i);
-            tokenAmounts[i] = nftTvl(nft);
-        }
-    }
-
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
         override
@@ -88,38 +92,29 @@ contract UniV3Vault is Vault {
         for (uint256 i = 0; i < tokens.length; i++) {
             _allowTokenIfNecessary(tokens[i]);
         }
-        uint256[][] memory tvls = nftTvls();
-        uint256[] memory totalTVL = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            for (uint256 j = 0; j < tokens.length; j++) {
-                totalTVL[j] += tvls[i][j];
-            }
-        }
+        uint256[] memory totalTVL = tvl();
         actualTokenAmounts = new uint256[](2);
         Options memory opts = _parseOptions(options);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            uint256 nft = _nfts.at(i);
-            Pair memory amounts = Pair({
-                a0: (tokenAmounts[0] * tvls[i][0]) / totalTVL[0],
-                a1: (tokenAmounts[1] * tvls[i][1]) / totalTVL[1]
-            });
-            Pair memory minAmounts = Pair({
-                a0: (opts.amount0Min * tvls[i][0]) / totalTVL[0],
-                a1: (opts.amount1Min * tvls[i][1]) / totalTVL[1]
-            });
-            (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
-                INonfungiblePositionManager.IncreaseLiquidityParams({
-                    tokenId: nft,
-                    amount0Desired: amounts.a0,
-                    amount1Desired: amounts.a1,
-                    amount0Min: minAmounts.a0,
-                    amount1Min: minAmounts.a1,
-                    deadline: opts.deadline
-                })
-            );
-            actualTokenAmounts[0] += amount0;
-            actualTokenAmounts[1] += amount1;
-        }
+        Pair memory amounts = Pair({
+            a0: tokenAmounts[0] / totalTVL[0],
+            a1: tokenAmounts[1] / totalTVL[1]
+        });
+        Pair memory minAmounts = Pair({
+            a0: opts.amount0Min / totalTVL[0],
+            a1: opts.amount1Min / totalTVL[1]
+        });
+        (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
+            INonfungiblePositionManager.IncreaseLiquidityParams({
+                tokenId: uniV3Nft,
+                amount0Desired: amounts.a0,
+                amount1Desired: amounts.a1,
+                amount0Min: minAmounts.a0,
+                amount1Min: minAmounts.a1,
+                deadline: opts.deadline
+            })
+        );
+        actualTokenAmounts[0] = amount0;
+        actualTokenAmounts[1] = amount1;
     }
 
     function _pull(
@@ -128,47 +123,35 @@ contract UniV3Vault is Vault {
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](2);
-        uint256[][] memory tvls = nftTvls();
-        address[] memory tokens = _vaultTokens;
-        uint256[] memory totalTVL = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            for (uint256 j = 0; j < tokens.length; j++) {
-                totalTVL[j] += tvls[i][j];
-            }
-        }
+        uint256[] memory totalTVL = tvl();
         Options memory opts = _parseOptions(options);
-        for (uint256 i = 0; i < _nfts.length(); i++) {
-            Pair memory amounts = _pullForOneNft(i, tokenAmounts, tvls, totalTVL, to, opts);
-            actualTokenAmounts[0] += amounts.a0;
-            actualTokenAmounts[1] += amounts.a1;
-        }
+        Pair memory amounts = _pullUniV3Nft(tokenAmounts, totalTVL, to, opts);
+        actualTokenAmounts[0] = amounts.a0;
+        actualTokenAmounts[1] = amounts.a1;
     }
 
-    function _pullForOneNft(
-        uint256 i,
+    function _pullUniV3Nft(
         uint256[] memory tokenAmounts,
-        uint256[][] memory tvls,
         uint256[] memory totalTVL,
         address to,
         Options memory opts
     ) internal returns (Pair memory) {
-        uint256 nft = _nfts.at(i);
         Pair memory amounts = Pair({
-            a0: (tokenAmounts[0] * tvls[i][0]) / totalTVL[0],
-            a1: (tokenAmounts[1] * tvls[i][1]) / totalTVL[1]
+            a0: tokenAmounts[0] / totalTVL[0],
+            a1: tokenAmounts[1] / totalTVL[1]
         });
         Pair memory minAmounts = Pair({
-            a0: (opts.amount0Min * tvls[i][0]) / totalTVL[0],
-            a1: (opts.amount1Min * tvls[i][1]) / totalTVL[1]
+            a0: opts.amount0Min / totalTVL[0],
+            a1: opts.amount1Min / totalTVL[1]
         });
 
-        uint256 liquidity = _getWithdrawLiquidity(nft, amounts, totalTVL);
+        uint256 liquidity = _getWithdrawLiquidity(amounts, totalTVL);
         if (liquidity == 0) {
             return Pair({a0: 0, a1: 0});
         }
         (uint256 amount0, uint256 amount1) = _positionManager().decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
-                tokenId: nft,
+                tokenId: uniV3Nft,
                 liquidity: uint128(liquidity),
                 amount0Min: minAmounts.a0,
                 amount1Min: minAmounts.a1,
@@ -177,7 +160,7 @@ contract UniV3Vault is Vault {
         );
         (amount0, amount1) = _positionManager().collect(
             INonfungiblePositionManager.CollectParams({
-                tokenId: nft,
+                tokenId: uniV3Nft,
                 recipient: to,
                 amount0Max: uint128(amount0),
                 amount1Max: uint128(amount1)
@@ -198,11 +181,10 @@ contract UniV3Vault is Vault {
     }
 
     function _getWithdrawLiquidity(
-        uint256 nft,
         Pair memory amounts,
         uint256[] memory totalAmounts
     ) internal view returns (uint256) {
-        (, , , , , , , uint128 totalLiquidity, , , , ) = _positionManager().positions(nft);
+        (, , , , , , , uint128 totalLiquidity, , , , ) = _positionManager().positions(uniV3Nft);
         if (totalAmounts[0] == 0) {
             if (amounts.a0 == 0) {
                 return (totalLiquidity * amounts.a1) / totalAmounts[1]; // liquidity1
@@ -234,5 +216,9 @@ contract UniV3Vault is Vault {
         }
         require(options.length == 32 * 3, "IOL");
         return abi.decode(options, (Options));
+    }
+
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 }
