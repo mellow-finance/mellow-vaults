@@ -19,7 +19,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 private _nft;
-    uint256[] private _lpHighWaterMarks;
+    uint256[] private _lpPriceHighWaterMarks;
 
     uint256 public lastFeeCharge;
 
@@ -40,7 +40,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
-            _lpHighWaterMarks.push(0);
+            _lpPriceHighWaterMarks.push(0);
         }
         lastFeeCharge = block.timestamp;
     }
@@ -75,14 +75,16 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(_nft > 0, "INIT");
+        uint256 thisNft = _nft;
+        require(thisNft > 0, "INIT");
         require(_subvaultNft > 0, "INITSV");
-        require(registry.ownerOf(_nft) == address(this), "INITOWN");
+        require(registry.ownerOf(thisNft) == address(this), "INITOWN");
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), tokenAmounts[i]);
         }
+        uint256[] memory tvl = subvault.tvl(); //pre-money
         uint256[] memory actualTokenAmounts = subvault.transferAndPush(
             address(this),
             _vaultTokens,
@@ -90,7 +92,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             options
         );
         // TODO: Think if it's better to make pre-money valuation
-        uint256[] memory tvl = subvault.tvl(); //post-money
         uint256 amountToMint = 0;
         uint256 supply = totalSupply();
         if (supply == 0) {
@@ -104,7 +105,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             if (tvl[i] > 0) {
                 // TODO: Check price manipulation here for yearn / aave (cached tvls)
-                // TODO: Should be (actualTokenAmounts[i] * totalSupply()) / (tvl[i] - actualTokenAmounts[i]) for consistent post-money valuation
                 // However care needs to be taken in terms of rounding, etc.
                 uint256 newMint = (actualTokenAmounts[i] * supply) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
@@ -119,10 +119,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         }
         require(
             amountToMint + balanceOf(msg.sender) <=
-                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_nft).tokenLimitPerAddress,
+                ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
             "LPA"
         );
-        _chargeFees(tvl, supply + amountToMint);
+
+        _chargeFees(thisNft, tvl, supply, actualTokenAmounts, amountToMint, false);
+
         if (amountToMint > 0) {
             _mint(msg.sender, amountToMint);
         }
@@ -154,8 +156,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             }
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
+        _chargeFees(_nft, tvl, supply, actualTokenAmounts, lpTokenAmount, true);
         _burn(msg.sender, lpTokenAmount);
-        _chargeFees(tvl, supply - lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -192,21 +194,44 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     /// @dev We don't charge on any deposit / withdraw to save gas.
     /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
     /// So the error results in slightly lower management fees than in exact case
-    function _chargeFees(uint256[] memory tvls, uint256 supply) internal {
+    function _chargeFees(
+        uint256 thisNft,
+        uint256[] memory tvls,
+        uint256 supply,
+        uint256[] memory deltaTvls,
+        uint256 deltaSupply,
+        bool isWithdraw
+    ) internal {
         ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
-        uint256 thisNft = _nft;
         uint256 elapsed = block.timestamp - lastFeeCharge;
         if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) {
             return;
         }
         lastFeeCharge = block.timestamp;
-        if (supply == 0) {
+        uint256 baseSupply = supply;
+        if (isWithdraw) {
+            baseSupply = supply - deltaSupply;
+        }
+
+        if (baseSupply == 0) {
+            for (uint256 i = 0; i < tvls.length; i++) {
+                _lpPriceHighWaterMarks[i] = (deltaTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / deltaSupply;
+            }
             return;
+        }
+
+        uint256[] memory baseTvls = new uint256[](tvls.length);
+        for (uint256 i = 0; i < baseTvls.length; i++) {
+            if (isWithdraw) {
+                baseTvls[i] = tvls[i] - deltaTvls[i];
+            } else {
+                baseTvls[i] = tvls[i];
+            }
         }
 
         ILpIssuerGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         if (strategyParams.managementFee > 0) {
-            uint256 toMint = (strategyParams.managementFee * supply * elapsed) /
+            uint256 toMint = (strategyParams.managementFee * baseSupply * elapsed) /
                 (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
             _mint(strategyParams.strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyParams.strategyTreasury, strategyParams.managementFee, toMint);
@@ -214,21 +239,21 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         if (protocolFee > 0) {
             address treasury = vg.internalParams().protocolGovernance.protocolTreasury();
-            uint256 toMint = (protocolFee * supply * elapsed) / (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            uint256 toMint = (protocolFee * baseSupply * elapsed) / (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
             _mint(treasury, toMint);
             emit ProtocolFeesCharged(treasury, protocolFee, toMint);
         }
         uint256 performanceFee = strategyParams.performanceFee;
-        uint256[] memory hwms = _lpHighWaterMarks;
+        uint256[] memory hwms = _lpPriceHighWaterMarks;
         if (performanceFee > 0) {
-            uint256 minLpDelta = type(uint256).max;
-            for (uint256 i = 0; i < tvls.length; i++) {
+            uint256 minLpPriceFactor = type(uint256).max;
+            for (uint256 i = 0; i < baseTvls.length; i++) {
                 uint256 hwm = hwms[i];
-                uint256 lpPrice = (tvls[i] * CommonLibrary.DENOMINATOR) / supply;
+                uint256 lpPrice = (baseTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / baseSupply;
                 if (lpPrice > hwm) {
-                    uint256 delta = lpPrice - hwm;
-                    if (delta < minLpDelta) {
-                        minLpDelta = delta;
+                    uint256 delta = (lpPrice * CommonLibrary.DENOMINATOR) / hwm;
+                    if (delta < minLpPriceFactor) {
+                        minLpPriceFactor = delta;
                     }
                 } else {
                     // not eligible for performance fees
@@ -236,11 +261,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
                 }
             }
             for (uint256 i = 0; i < tvls.length; i++) {
-                _lpHighWaterMarks[i] += minLpDelta * hwms[i];
+                _lpPriceHighWaterMarks[i] += (hwms[i] * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
             }
             address treasury = strategyParams.strategyPerformanceTreasury;
-            _mint(treasury, minLpDelta);
-            emit PerformanceFeesCharged(treasury, performanceFee, minLpDelta);
+            uint256 toMint = (baseSupply * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
+            _mint(treasury, toMint);
+            emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
     }
 

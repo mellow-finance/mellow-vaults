@@ -12,6 +12,7 @@ import {
     randomAddress,
     sleep,
     sleepTo,
+    toObject,
     withSigner,
 } from "./library/Helpers";
 import { read } from "fs";
@@ -130,7 +131,6 @@ describe("LpIssuer", () => {
             const { execute, read, get } = deployments;
             const { test, mStrategyTreasury, protocolTreasury, admin } =
                 await getNamedAccounts();
-            const vaultGovernance = await get("LpIssuerGovernance");
             const nft = 5; // LpIssuer nft in initial deployment
             const address = await read("VaultRegistry", "vaultForNft", nft);
             const lpIssuer = await ethers.getContractAt("LpIssuer", address);
@@ -149,6 +149,33 @@ describe("LpIssuer", () => {
                 "commitDelayedProtocolPerVaultParams",
                 nft
             );
+            const strategyParams = await read(
+                "LpIssuerGovernance",
+                "delayedStrategyParams",
+                nft
+            );
+            const strategyPerformanceTreasury = randomAddress();
+            const updatedParams = {
+                ...toObject(strategyParams),
+                strategyTreasury: mStrategyTreasury,
+                strategyPerformanceTreasury,
+            };
+            await execute(
+                "LpIssuerGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedStrategyParams",
+                nft,
+                updatedParams
+            );
+            await sleep(86401);
+            await execute(
+                "LpIssuerGovernance",
+                { from: admin, autoMine: true },
+                "commitDelayedStrategyParams",
+                nft
+            );
+
+            // strategyPerformanceTreasury
             await withSigner(test, async (s) => {
                 for (const token of tokens) {
                     const t = await ethers.getContractAt("LpIssuer", token);
@@ -275,8 +302,8 @@ describe("LpIssuer", () => {
                 expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(0);
                 await sleep(401);
                 await lpIssuer.connect(s).withdraw(test, 10 ** 4 / 5, []);
-                // charge post-withdraw
                 const balance = await lpIssuer.balanceOf(test);
+                // charge post-withdraw
                 expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(
                     balance
                         .mul(managementFee)
