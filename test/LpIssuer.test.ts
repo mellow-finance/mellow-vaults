@@ -204,18 +204,22 @@ describe("LpIssuer", () => {
                 // charge pre-deposit
                 const balance = await lpIssuer.balanceOf(test);
                 await lpIssuer.connect(s).deposit([10 ** 4, 10 ** 4], []);
-                expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(
-                    balance
-                        .mul(managementFee)
-                        .div(10 ** 9)
-                        .div(365)
-                );
-                expect(await lpIssuer.balanceOf(protocolTreasury)).to.eq(
+                let diff = (await lpIssuer.balanceOf(strategyTreasury))
+                    .add(1)
+                    .sub(
+                        balance
+                            .mul(managementFee)
+                            .div(10 ** 9)
+                            .div(365)
+                    );
+                expect(diff.toNumber()).to.lte(2);
+                diff = (await lpIssuer.balanceOf(protocolTreasury)).add(1).sub(
                     balance
                         .mul(protocolFee)
                         .div(10 ** 9)
                         .div(365)
                 );
+                expect(diff.toNumber()).to.lte(2);
 
                 expect(
                     await lpIssuer.balanceOf(strategyPerformanceTreasury)
