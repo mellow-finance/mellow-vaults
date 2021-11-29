@@ -92,7 +92,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         // TODO: Think if it's better to make pre-money valuation
         uint256[] memory tvl = subvault.tvl(); //post-money
         uint256 amountToMint = 0;
-        if (totalSupply() == 0) {
+        uint256 supply = totalSupply();
+        if (supply == 0) {
             for (uint256 i = 0; i < _vaultTokens.length; i++) {
                 // TODO: check if there could be smth better
                 if (actualTokenAmounts[i] > amountToMint) {
@@ -105,7 +106,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
                 // TODO: Check price manipulation here for yearn / aave (cached tvls)
                 // TODO: Should be (actualTokenAmounts[i] * totalSupply()) / (tvl[i] - actualTokenAmounts[i]) for consistent post-money valuation
                 // However care needs to be taken in terms of rounding, etc.
-                uint256 newMint = (actualTokenAmounts[i] * totalSupply()) / tvl[i];
+                uint256 newMint = (actualTokenAmounts[i] * supply) / tvl[i];
                 // TODO: check this algo. The assumption is that everything is rounded down.
                 // So that max token has the least error. Think about the case when one token is dust.
                 if (newMint > amountToMint) {
@@ -121,7 +122,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
                 ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(_nft).tokenLimitPerAddress,
             "LPA"
         );
-        _chargeFees();
+        _chargeFees(tvl, supply + amountToMint);
         if (amountToMint > 0) {
             _mint(msg.sender, amountToMint);
         }
@@ -138,12 +139,13 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         uint256 lpTokenAmount,
         bytes memory options
     ) external {
-        require(totalSupply() > 0, "TS0");
+        uint256 supply = totalSupply();
+        require(supply > 0, "TS0");
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         // TODO: Check price manipulation here
         uint256[] memory tvl = _subvault().tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            tokenAmounts[i] = (lpTokenAmount * tvl[i]) / totalSupply();
+            tokenAmounts[i] = (lpTokenAmount * tvl[i]) / supply;
         }
         uint256[] memory actualTokenAmounts = _subvault().pull(address(this), _vaultTokens, tokenAmounts, options);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
@@ -153,7 +155,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _burn(msg.sender, lpTokenAmount);
-        _chargeFees();
+        _chargeFees(tvl, supply - lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -190,7 +192,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     /// @dev We don't charge on any deposit / withdraw to save gas.
     /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
     /// So the error results in slightly lower management fees than in exact case
-    function _chargeFees() internal {
+    function _chargeFees(uint256[] memory tvls, uint256 supply) internal {
         ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
         uint256 thisNft = _nft;
         uint256 elapsed = block.timestamp - lastFeeCharge;
@@ -198,7 +200,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             return;
         }
         lastFeeCharge = block.timestamp;
-        uint256 supply = totalSupply();
         if (supply == 0) {
             return;
         }
@@ -217,6 +218,30 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             _mint(treasury, toMint);
             emit ProtocolFeesCharged(treasury, protocolFee, toMint);
         }
+        uint256 performanceFee = strategyParams.performanceFee;
+        uint256[] memory hwms = _lpHighWaterMarks;
+        if (performanceFee > 0) {
+            uint256 minLpDelta = type(uint256).max;
+            for (uint256 i = 0; i < tvls.length; i++) {
+                uint256 hwm = hwms[i];
+                uint256 lpPrice = (tvls[i] * CommonLibrary.DENOMINATOR) / supply;
+                if (lpPrice > hwm) {
+                    uint256 delta = lpPrice - hwm;
+                    if (delta < minLpDelta) {
+                        minLpDelta = delta;
+                    }
+                } else {
+                    // not eligible for performance fees
+                    return;
+                }
+            }
+            for (uint256 i = 0; i < tvls.length; i++) {
+                _lpHighWaterMarks[i] += minLpDelta * hwms[i];
+            }
+            address treasury = strategyParams.strategyPerformanceTreasury;
+            _mint(treasury, minLpDelta);
+            emit PerformanceFeesCharged(treasury, performanceFee, minLpDelta);
+        }
     }
 
     /// @notice Emitted when management fees are charged
@@ -230,6 +255,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     /// @param feeRate Fee percent applied denominated in 10 ** 9
     /// @param amount Amount of lp token minted
     event ProtocolFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
+
+    /// @notice Emitted when performance fees are charged
+    /// @param treasury Treasury receiver of the fee
+    /// @param feeRate Fee percent applied denominated in 10 ** 9
+    /// @param amount Amount of lp token minted
+    event PerformanceFeesCharged(address indexed treasury, uint256 feeRate, uint256 amount);
 
     /// @notice Emitted when liquidity is deposited
     /// @param from The source address for the liquidity
