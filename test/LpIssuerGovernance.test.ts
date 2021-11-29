@@ -44,15 +44,6 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    describe("strategyTreasury", () => {
-        it("treasury == 0x0", async () => {
-            let nft = Math.random() * 2 ** 52;
-            expect(await contract.strategyTreasury(nft)).to.be.equal(
-                ethers.constants.AddressZero
-            );
-        });
-    });
-
     describe("setStrategyParams", () => {
         it("sets strategy params and emits SetStrategyParams event", async () => {
             let nft = Math.random() * 2 ** 52;

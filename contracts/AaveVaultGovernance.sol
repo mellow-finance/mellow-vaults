@@ -16,10 +16,6 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
-    }
-
     /// @inheritdoc IAaveVaultGovernance
     function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {

@@ -33,10 +33,6 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         }
     }
 
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
-    }
-
     /// @inheritdoc IYearnVaultGovernance
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_stagedDelayedStrategyParams[nft].length == 0) {

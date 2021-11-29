@@ -159,14 +159,6 @@ describe("AaveVaultGovernance", () => {
         });
     });
 
-    describe("strategyTreasury", () => {
-        it("returns correct strategy treasury", async () => {
-            expect(
-                await AaveVaultGovernance.strategyTreasury(nftAave)
-            ).to.be.equal(await treasury.getAddress());
-        });
-    });
-
     describe("commitDelayedStrategyParams", () => {
         it("commits delayed strategy params", async () => {
             await AaveVaultGovernance.connect(admin).stageDelayedStrategyParams(
@@ -178,7 +170,8 @@ describe("AaveVaultGovernance", () => {
                 admin
             ).commitDelayedStrategyParams(nftAave);
             expect(
-                await AaveVaultGovernance.strategyTreasury(nftAave)
+                (await AaveVaultGovernance.delayedStrategyParams(nftAave))
+                    .strategyTreasury
             ).to.be.equal(await anotherTreasury.getAddress());
         });
 

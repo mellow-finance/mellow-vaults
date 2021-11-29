@@ -6,10 +6,6 @@ import "../VaultGovernance.sol";
 contract TestVaultGovernance is VaultGovernance {
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
 
-    function strategyTreasury(uint256) external pure override returns (address) {
-        return address(0);
-    }
-
     function stageDelayedStrategyParams(uint256 nft, bytes memory params) public {
         _stageDelayedStrategyParams(nft, params);
     }

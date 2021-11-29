@@ -24,11 +24,6 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
     }
 
-    /// @inheritdoc IVaultGovernance
-    function strategyTreasury(uint256) external pure override(IVaultGovernance, VaultGovernance) returns (address) {
-        return address(0);
-    }
-
     /// @inheritdoc ILpIssuerGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         if (_delayedProtocolParams.length == 0) {
