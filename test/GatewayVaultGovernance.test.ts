@@ -14,8 +14,6 @@ import {
     toObject,
 } from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
-import { Address } from "hardhat-deploy/dist/types";
-import { dec } from "ramda";
 
 describe("GatewayVaultGovernance", () => {
     let deployer: Signer;
