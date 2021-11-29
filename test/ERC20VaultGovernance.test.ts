@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import { VaultGovernance, ProtocolGovernance } from "./library/Types";
+import { ChiefTrader } from "./types/ChiefTrader";
 import { deploySubVaultSystem } from "./library/Deployments";
 import { sleep } from "./library/Helpers";
 
@@ -13,6 +14,7 @@ describe("ERC20VaultGovernance", () => {
     let anotherTreasury: Signer;
     let ERC20VaultGovernance: VaultGovernance;
     let protocolGovernance: ProtocolGovernance;
+    let chiefTrader: ChiefTrader;
     let nftERC20: number;
     let deployment: Function;
 
@@ -28,6 +30,12 @@ describe("ERC20VaultGovernance", () => {
                     treasury: await treasury.getAddress(),
                     vaultOwner: await deployer.getAddress(),
                 }));
+            chiefTrader = await ethers.getContractAt(
+                "ChiefTrader",
+                (
+                    await deployments.get("ChiefTrader")
+                ).address
+            );
         });
     });
 
@@ -47,7 +55,10 @@ describe("ERC20VaultGovernance", () => {
         it("returns correct params", async () => {
             expect(
                 await ERC20VaultGovernance.delayedStrategyParams(nftERC20)
-            ).to.be.deep.equal([await treasury.getAddress()]);
+            ).to.be.deep.equal([
+                await treasury.getAddress(),
+                chiefTrader.address,
+            ]);
         });
 
         describe("when passed unknown nft", () => {
@@ -56,7 +67,10 @@ describe("ERC20VaultGovernance", () => {
                     await ERC20VaultGovernance.delayedStrategyParams(
                         nftERC20 + 1
                     )
-                ).to.be.deep.equal([ethers.constants.AddressZero]);
+                ).to.be.deep.equal([
+                    ethers.constants.AddressZero,
+                    ethers.constants.AddressZero,
+                ]);
             });
         });
     });
@@ -68,11 +82,12 @@ describe("ERC20VaultGovernance", () => {
                 admin
             ).stageDelayedStrategyParams(nftERC20, {
                 strategyTreasury: address,
+                trader: chiefTrader.address,
             });
 
             expect(
                 await ERC20VaultGovernance.stagedDelayedStrategyParams(nftERC20)
-            ).to.be.deep.equal([address]);
+            ).to.be.deep.equal([address, chiefTrader.address]);
         });
 
         describe("when passed unknown nft", () => {
@@ -81,7 +96,10 @@ describe("ERC20VaultGovernance", () => {
                     await ERC20VaultGovernance.stagedDelayedStrategyParams(
                         nftERC20 + 1
                     )
-                ).to.be.deep.equal([ethers.constants.AddressZero]);
+                ).to.be.deep.equal([
+                    ethers.constants.AddressZero,
+                    ethers.constants.AddressZero,
+                ]);
             });
         });
     });
@@ -92,19 +110,23 @@ describe("ERC20VaultGovernance", () => {
                 admin
             ).stageDelayedStrategyParams(nftERC20, [
                 await anotherTreasury.getAddress(),
+                chiefTrader.address,
             ]);
             expect(
                 await ERC20VaultGovernance.connect(
                     admin
                 ).stagedDelayedStrategyParams(nftERC20)
-            ).to.be.deep.equal([await anotherTreasury.getAddress()]);
+            ).to.be.deep.equal([
+                await anotherTreasury.getAddress(),
+                chiefTrader.address,
+            ]);
         });
 
         it("emits", async () => {
             await expect(
                 ERC20VaultGovernance.connect(admin).stageDelayedStrategyParams(
                     nftERC20,
-                    [await anotherTreasury.getAddress()]
+                    [await anotherTreasury.getAddress(), chiefTrader.address]
                 )
             ).to.emit(ERC20VaultGovernance, "StageDelayedStrategyParams");
         });
@@ -118,12 +140,21 @@ describe("ERC20VaultGovernance", () => {
         });
     });
 
+    describe("trader", () => {
+        it("returns correct trader address", async () => {
+            expect(await ERC20VaultGovernance.trader(nftERC20)).to.be.equal(
+                chiefTrader.address
+            );
+        });
+    });
+
     describe("commitDelayedStrategyParams", () => {
         it("commits delayed strategy params", async () => {
             await ERC20VaultGovernance.connect(
                 admin
             ).stageDelayedStrategyParams(nftERC20, [
                 await anotherTreasury.getAddress(),
+                chiefTrader.address,
             ]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
             await ERC20VaultGovernance.connect(
@@ -139,6 +170,7 @@ describe("ERC20VaultGovernance", () => {
                 admin
             ).stageDelayedStrategyParams(nftERC20, [
                 await anotherTreasury.getAddress(),
+                chiefTrader.address,
             ]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
             await expect(

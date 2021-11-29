@@ -9,7 +9,7 @@ import "./Trader.sol";
 
 contract UniV3Trader is Trader, ITrader {
     struct UnderlyingProtocolOptions {
-        ISwapRouter swapRouter;
+        address swapRouter;
     }
 
     struct Options {
@@ -93,7 +93,7 @@ contract UniV3Trader is Trader, ITrader {
         Options memory options
     ) internal returns (uint256 amountOut) {
         _requireChiefTrader();
-        ISwapRouter swapRouter = underlyingProtocolOptions.swapRouter;
+        ISwapRouter swapRouter = ISwapRouter(underlyingProtocolOptions.swapRouter);
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
             tokenIn: input,
             tokenOut: output,
@@ -117,7 +117,7 @@ contract UniV3Trader is Trader, ITrader {
         Options memory options
     ) internal returns (uint256 amountIn) {
         _requireChiefTrader();
-        ISwapRouter swapRouter = underlyingProtocolOptions.swapRouter;
+        ISwapRouter swapRouter = ISwapRouter(underlyingProtocolOptions.swapRouter);
         ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
             tokenIn: input,
             tokenOut: output,

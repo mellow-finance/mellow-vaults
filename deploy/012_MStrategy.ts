@@ -105,6 +105,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await getNamedAccounts();
     const gatewayVaultGovernance = await get("GatewayVaultGovernance");
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
+    const chiefTrader = await get("ChiefTrader");
 
     const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
     const startNft =
@@ -137,7 +138,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         startNft,
         "ERC20VaultGovernance",
         [tokens, [], deployer],
-        { strategyTreasury: mStrategyTreasury }
+        { strategyTreasury: mStrategyTreasury, trader: chiefTrader.address }
     );
 
     const approvedGw = await read(

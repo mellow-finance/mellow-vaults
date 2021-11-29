@@ -50,11 +50,11 @@ contract ERC20Vault is Vault {
         }
     }
 
-    function _requireAtLeastStrategy(uint256 nft_) internal view {
+    function _requireAtLeastStrategy() internal view {
         require(
             (_vaultGovernance.internalParams().protocolGovernance.isAdmin(msg.sender) ||
-                _vaultGovernance.internalParams().registry.getApproved(nft_) == msg.sender ||
-                (_vaultGovernance.internalParams().registry.ownerOf(nft_) == msg.sender)),
+                _vaultGovernance.internalParams().registry.getApproved(_nft) == msg.sender ||
+                (_vaultGovernance.internalParams().registry.ownerOf(_nft) == msg.sender)),
             "RST"
         );
     }

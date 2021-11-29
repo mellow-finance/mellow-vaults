@@ -29,6 +29,36 @@ import {
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
 
+export async function deployTraders(options: {
+    protocolGovernance: ProtocolGovernance;
+    vaultRegistry: VaultRegistry;
+}): Promise<{
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
+}> {
+    const { uniswapV3Router } = await getNamedAccounts();
+    const chiefTrader: Contract = await (
+        await ethers.getContractFactory("ChiefTrader")
+    ).deploy(options.protocolGovernance.address, options.vaultRegistry.address);
+    const uniV3Trader: Contract = await (
+        await ethers.getContractFactory("UniV3Trader")
+    ).deploy(
+        chiefTrader.address,
+        encodeToBytes(
+            ["tuple(address swapRouter)"],
+            [
+                {
+                    swapRouter: uniswapV3Router,
+                },
+            ]
+        )
+    );
+    return {
+        chiefTrader,
+        uniV3Trader,
+    };
+}
+
 export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
     let tokens: ERC20[] = [];
     let token_constructorArgs: ERC20Test_constructorArgs[] = [];
@@ -520,9 +550,17 @@ export async function deploySubVaultSystem(options: {
         );
     }
 
+    const { chiefTrader } = await deployTraders({
+        protocolGovernance: protocolGovernance,
+        vaultRegistry: vaultRegistry,
+    });
+
     await ERC20VaultGovernance.connect(
         options.adminSigner
-    ).stageDelayedStrategyParams(nftERC20, [options.treasury]);
+    ).stageDelayedStrategyParams(nftERC20, [
+        options.treasury,
+        chiefTrader.address,
+    ]);
     await AaveVaultGovernance.connect(
         options.adminSigner
     ).stageDelayedStrategyParams(nftAave, [options.treasury]);
