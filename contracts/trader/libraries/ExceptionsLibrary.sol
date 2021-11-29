@@ -11,4 +11,5 @@ library ExceptionsLibrary {
     string constant VAULT_TOKEN_REQUIRED_EXCEPTION = "VT";
     string constant AT_LEAST_STRATEGY_REQUIRED_EXCEPTION = "SR";
     string constant INVALID_TRADE_PATH_EXCEPTION = "TP";
+    string constant RECURRENCE_EXCEPTION = "RE";
 }

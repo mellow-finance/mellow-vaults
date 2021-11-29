@@ -35,6 +35,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     /// @inheritdoc IChiefTrader
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
+        require(traderAddress != address(this), ExceptionsLibrary.RECURRENCE_EXCEPTION);
         require(!_traders.contains(traderAddress));
         require(ERC165(traderAddress).supportsInterface(type(ITrader).interfaceId));
         _traders.add(traderAddress);
