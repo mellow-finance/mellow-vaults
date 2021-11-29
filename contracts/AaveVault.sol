@@ -18,8 +18,9 @@ contract AaveVault is Vault {
     {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            // TODO: check if token doesn't exist
-            _aTokens[i] = _getAToken(_vaultTokens[i]);
+            address aToken = _getAToken(_vaultTokens[i]);
+            require(aToken != address(0), "ZT");
+            _aTokens[i] = aToken;
             _tvls.push(0);
         }
     }
