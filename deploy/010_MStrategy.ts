@@ -3,7 +3,6 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { equals } from "ramda";
-import { sleep } from "../test/library/Helpers";
 import { toObject } from "./000_utils";
 
 const setupVault = async (
@@ -154,6 +153,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let erc20VaultNft = 3;
     let gatewayVaultNft = 4;
     let lpIssuerNft = 5;
+    
     await setupVault(hre, aaveVaultNft, startNft, "AaveVaultGovernance", {
         deployOptions: [tokens, [], deployer],
         delayedStrategyParams: { strategyTreasury: mStrategyTreasury },
@@ -206,31 +206,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             true
         );
     }
-    // registring tokens in protocol governance
-    await execute(
-        "ProtocolGovernance",
-        {
-            from: admin,
-            log: true,
-            autoMine: true,
-        },
-        "setPendingTokenWhitelistAdd",
-        tokens
-    );
-    let delay: number = await read(
-        "ProtocolGovernance",
-        "governanceDelay"
-    );
-    await sleep(Number(delay));
-    await execute(
-        "ProtocolGovernance",
-        {
-            from: admin,
-            log: true,
-            autoMine: true,
-        },
-        "commitTokenWhiteListAdd"
-    );
+    
     await setupVault(hre, gatewayVaultNft, startNft, "GatewayVaultGovernance", {
         deployOptions: [
             tokens,

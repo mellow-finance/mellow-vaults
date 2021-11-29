@@ -15,6 +15,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     EnumerableSet.AddressSet private _tokenWhitelist;
     address[] private _pendingTokenWhitelistAdd;
+    mapping(address => bool) _tokensAllowed;
     uint256 public pendingTokenWhitelistAddTimestamp;
 
     EnumerableSet.AddressSet private _vaultGovernances;
@@ -44,12 +45,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function tokenWhitelist() external view returns (address[] memory) {
-        uint256 l = _tokenWhitelist.length();
-        address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; i++) {
-            res[i] = _tokenWhitelist.at(i);
-        }
-        return res;
+        return _tokenWhitelist.values();
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -85,7 +81,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function isAllowedToken(address addr) external view returns (bool) {
-        return _tokenWhitelist.contains(addr);
+        return _tokenWhitelist.contains(addr) && _tokensAllowed[addr];
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -144,7 +140,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         if (!_tokenWhitelist.contains(addr)) {
             return;
         }
-        _tokenWhitelist.remove(addr);
+        _tokensAllowed[addr] = false;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -187,13 +183,14 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitTokenWhiteListAdd() external {
+    function commitTokenWhitelistAdd() external {
         require(isAdmin(msg.sender), "ADM");
         require(
             (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp > 0),
             "TS"
         );
         for (uint256 i = 0; i < _pendingTokenWhitelistAdd.length; i++) {
+            _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
             _tokenWhitelist.add(_pendingTokenWhitelistAdd[i]);
         }
         delete _pendingTokenWhitelistAdd;

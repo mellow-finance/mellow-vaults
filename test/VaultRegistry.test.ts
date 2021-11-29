@@ -19,6 +19,7 @@ import {
     randomAddress,
     sortContractsByAddresses,
     withSigner,
+    setTokenWhitelist,
 } from "./library/Helpers";
 import { now, sleep, sleepTo } from "./library/Helpers";
 
@@ -118,6 +119,11 @@ describe("VaultRegistry", () => {
             it("registers ERC20Vault", async () => {
                 const anotherTokens = sortContractsByAddresses(
                     await deployERC20Tokens(5)
+                );
+                await setTokenWhitelist(
+                    protocolGovernance,
+                    anotherTokens,
+                    deployer
                 );
                 const [newVaultAddress, _] =
                     await ERC20VaultGovernance.callStatic.deployVault(

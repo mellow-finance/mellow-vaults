@@ -103,7 +103,7 @@ export const setTokenWhitelist = async (
         .connect(admin)
         .setPendingTokenWhitelistAdd(allowedAddresses);
     await sleep(Number(await protocolGovernance.governanceDelay()));
-    await protocolGovernance.connect(admin).commitTokenWhiteListAdd();
+    await protocolGovernance.connect(admin).commitTokenWhitelistAdd();
 };
 
 export async function depositW9(

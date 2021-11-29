@@ -85,7 +85,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     function commitClaimAllowlistAdd() external;
 
     /// @notice Commit pending tokenWhitelistAdd params.
-    function commitTokenWhiteListAdd() external;
+    function commitTokenWhitelistAdd() external;
 
     /// @notice Commit pending VaultGovernancesAdd params.
     function commitVaultGovernancesAdd() external;

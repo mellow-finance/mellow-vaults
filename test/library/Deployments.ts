@@ -454,7 +454,7 @@ export async function deploySubVaultSystem(options: {
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance
         .connect(options.adminSigner)
-        .commitTokenWhiteListAdd();
+        .commitTokenWhitelistAdd();
     await protocolGovernance
         .connect(options.adminSigner)
         .setPendingVaultGovernancesAdd([

@@ -977,7 +977,7 @@ describe("ProtocolGovernance", () => {
         });
     });
 
-    describe("commitTokenWhiteListAdd", () => {
+    describe("commitTokenWhitelistAdd", () => {
         it("commits pending token whitelist", async () => {
             timestamp += timeout;
             sleepTo(timestamp);
@@ -989,7 +989,7 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance.pendingTokenWhitelistAdd()
             ).to.deep.equal([tokens[0].address, tokens[1].address]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
-            await protocolGovernance.commitTokenWhiteListAdd();
+            await protocolGovernance.commitTokenWhitelistAdd();
             expect(
                 await protocolGovernance.pendingTokenWhitelistAddTimestamp()
             ).to.be.equal(BigNumber.from(0));
@@ -1002,7 +1002,7 @@ describe("ProtocolGovernance", () => {
                 await expect(
                     protocolGovernance
                         .connect(stranger)
-                        .commitTokenWhiteListAdd()
+                        .commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
@@ -1010,7 +1010,7 @@ describe("ProtocolGovernance", () => {
         describe("when setPendingTokenWhitelistAdd has not been called", () => {
             it("reverts", async () => {
                 await expect(
-                    protocolGovernance.commitTokenWhiteListAdd()
+                    protocolGovernance.commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
@@ -1022,13 +1022,13 @@ describe("ProtocolGovernance", () => {
                     tokens[1].address,
                 ]);
                 await expect(
-                    protocolGovernance.commitTokenWhiteListAdd()
+                    protocolGovernance.commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 await sleep(
                     Number(await protocolGovernance.governanceDelay()) - 5
                 );
                 await expect(
-                    protocolGovernance.commitTokenWhiteListAdd()
+                    protocolGovernance.commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
@@ -1041,7 +1041,7 @@ describe("ProtocolGovernance", () => {
                     tokens[0].address,
                 ]);
                 await sleep(Number(await protocolGovernance.governanceDelay()));
-                await protocolGovernance.commitTokenWhiteListAdd();
+                await protocolGovernance.commitTokenWhitelistAdd();
                 expect(await protocolGovernance.tokenWhitelist()).to.deep.equal(
                     [tokens[0].address, tokens[1].address]
                 );
@@ -1067,7 +1067,7 @@ describe("ProtocolGovernance", () => {
                     tokens[1].address,
                 ]);
                 await sleep(Number(await protocolGovernance.governanceDelay()));
-                await protocolGovernance.commitTokenWhiteListAdd();
+                await protocolGovernance.commitTokenWhitelistAdd();
                 await protocolGovernance.removeFromTokenWhitelist(
                     tokens[2].address
                 );
@@ -1086,7 +1086,7 @@ describe("ProtocolGovernance", () => {
                 tokens[1].address,
             ]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
-            await protocolGovernance.commitTokenWhiteListAdd();
+            await protocolGovernance.commitTokenWhitelistAdd();
             await protocolGovernance.removeFromTokenWhitelist(
                 tokens[0].address
             );
