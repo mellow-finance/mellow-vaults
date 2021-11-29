@@ -15,7 +15,10 @@ import {
     LpIssuerGovernance,
     LpIssuerGovernance_constructor,
 } from "./library/Types";
-import { DelayedStrategyParamsStruct } from "./types/ILpIssuerGovernance";
+import {
+    DelayedProtocolPerVaultParamsStruct,
+    DelayedStrategyParamsStruct,
+} from "./types/ILpIssuerGovernance";
 import Exceptions from "./library/Exceptions";
 
 /**
@@ -561,8 +564,6 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    // -------------------------------------
-
     describe("#commitDelayedStrategyParams", () => {
         const paramsToCommit: DelayedStrategyParamsStruct = {
             strategyTreasury: randomAddress(),
@@ -883,6 +884,125 @@ describe("LpIssuerGovernance", () => {
                         nft
                     )
                 ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+            });
+        });
+    });
+
+    describe("#stageDelayedProtocolPerVaultParams", () => {
+        const paramsToStage: DelayedProtocolPerVaultParamsStruct = {
+            protocolFee: BigNumber.from(1000),
+        };
+        let nft: number;
+        let deploy: Function;
+        let admin: string;
+        let deployer: string;
+        let stranger: string;
+        let startTimestamp: number;
+
+        before(async () => {
+            const {
+                weth,
+                wbtc,
+                admin: a,
+                deployer: d,
+                stranger: s,
+            } = await getNamedAccounts();
+            [admin, deployer, stranger] = [a, d, s];
+            deploy = deployments.createFixture(async () => {
+                const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    [],
+                    deployer
+                );
+                const yearnNft = (
+                    await deployments.read("VaultRegistry", "vaultsCount")
+                ).toNumber();
+                const coder = ethers.utils.defaultAbiCoder;
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    coder.encode(
+                        ["uint256", "string", "string"],
+                        [yearnNft, "Test token", "Test token"]
+                    ),
+                    deployer
+                );
+            });
+        });
+
+        beforeEach(async () => {
+            await deploy();
+            nft = (
+                await deployments.read("VaultRegistry", "vaultsCount")
+            ).toNumber();
+            startTimestamp = now();
+            await sleepTo(startTimestamp);
+        });
+
+        describe("when called by protocol admin", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedProtocolPerVaultParams",
+                    nft,
+                    paramsToStage
+                );
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedProtocolPerVaultParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+        });
+
+        describe("when management fees is greater than MAX_PROTOCOL_FEE", () => {
+            it("reverts", async () => {
+                const maxProtocolFee = await deployments.read(
+                    "LpIssuerGovernance",
+                    "MAX_PROTOCOL_FEE"
+                );
+
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedProtocolPerVaultParams",
+                    nft,
+                    { ...paramsToStage, protocolFee: maxProtocolFee }
+                );
+                await expect(
+                    deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: admin, autoMine: true },
+                        "stageDelayedProtocolPerVaultParams",
+                        nft,
+                        {
+                            ...paramsToStage,
+                            protocolFee: maxProtocolFee.add(1),
+                        }
+                    )
+                ).to.be.revertedWith(Exceptions.MAX_PROTOCOL_FEE);
+            });
+        });
+
+        describe("when called not by protocol admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: stranger, autoMine: true },
+                        "stageDelayedProtocolPerVaultParams",
+                        nft,
+                        paramsToStage
+                    )
+                ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
     });
