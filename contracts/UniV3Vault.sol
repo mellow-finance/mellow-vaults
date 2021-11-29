@@ -25,7 +25,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     IUniswapV3Pool public immutable pool;
-    bool public immutable shouldSwapVaultTokens;
 
     uint256 public uniV3Nft;
 
@@ -42,7 +41,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );
-        shouldSwapVaultTokens = pool.token0() == _vaultTokens[1] ? true : false;
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
@@ -201,7 +199,11 @@ contract UniV3Vault is IERC721Receiver, Vault {
         );
         amount0 += amount0Collected;
         amount1 += amount1Collected;
-        return shouldSwapVaultTokens ? Pair({a0: amount1, a1: amount0}) : Pair({a0: amount0, a1: amount1});
+        return (
+            (pool.token0() == _vaultTokens[1]) 
+            ? Pair({a0: amount1, a1: amount0}) 
+            : Pair({a0: amount0, a1: amount1})
+        );
     }
 
     /// TODO: make a virtual function here? Or other better approach
@@ -228,7 +230,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     function _swapTokenAmountsIfNessecary(uint256[] memory tokenAmounts) internal view {
-        if (shouldSwapVaultTokens)
+        if (pool.token0() == _vaultTokens[1])
             (tokenAmounts[0], tokenAmounts[1]) = (tokenAmounts[1], tokenAmounts[0]);
     }
 }
