@@ -93,7 +93,7 @@ const removeSigner = async (address: string) => {
 export const setTokenWhitelist = async (
     protocolGovernance: ProtocolGovernance,
     tokens: ERC20[],
-    admin: Signer
+    admin: SignerWithAddress | Signer
 ) => {
     let allowedAddresses = new Array<Address>(tokens.length);
     for (var i = 0; i < tokens.length; ++i) {
