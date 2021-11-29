@@ -204,23 +204,22 @@ describe("LpIssuer", () => {
                 // charge pre-deposit
                 const balance = await lpIssuer.balanceOf(test);
                 await lpIssuer.connect(s).deposit([10 ** 4, 10 ** 4], []);
-                let diff = (await lpIssuer.balanceOf(strategyTreasury))
-                    .add(1)
-                    .sub(
-                        balance
-                            .mul(managementFee)
-                            .div(10 ** 3)
-                            .div(365)
-                    );
-                expect(diff.toNumber()).to.lte(2);
-                diff = (await lpIssuer.balanceOf(protocolTreasury)).add(1).sub(
+                let diff =
+                    (await lpIssuer.balanceOf(strategyTreasury)).toNumber() -
+                    balance
+                        .mul(managementFee)
+                        .div(10 ** 9)
+                        .div(365)
+                        .toNumber();
+                expect(Math.abs(diff)).to.lte(2);
+                diff =
+                    (await lpIssuer.balanceOf(protocolTreasury)).toNumber() -
                     balance
                         .mul(protocolFee)
-                        .div(10 ** 3)
+                        .div(10 ** 9)
                         .div(365)
-                );
-                expect(diff.toNumber()).to.lte(2);
-
+                        .toNumber();
+                expect(Math.abs(diff)).to.lte(2);
                 expect(
                     await lpIssuer.balanceOf(strategyPerformanceTreasury)
                 ).to.eq(0);
@@ -371,13 +370,13 @@ describe("LpIssuer", () => {
                 expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(
                     balance
                         .mul(managementFee)
-                        .div(10 ** 3)
+                        .div(10 ** 9)
                         .div(365)
                 );
                 expect(await lpIssuer.balanceOf(protocolTreasury)).to.eq(
                     balance
                         .mul(protocolFee)
-                        .div(10 ** 3)
+                        .div(10 ** 9)
                         .div(365)
                 );
 
