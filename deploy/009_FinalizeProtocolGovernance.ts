@@ -8,7 +8,7 @@ import { sendTx } from "./000_utils";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, admin } = await getNamedAccounts();
+    const { deployer, admin, protocolTreasury } = await getNamedAccounts();
     const governances = [];
     for (const name of [
         "AaveVaultGovernance",
@@ -56,6 +56,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             permissionless: true,
             maxTokensPerVault: 10,
             governanceDelay: 86400,
+            protocolTreasury,
         };
         log(`Setting ProtocolGovernance params`);
         log(JSON.stringify(params, null, 2));

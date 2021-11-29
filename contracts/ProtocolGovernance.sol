@@ -84,6 +84,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.governanceDelay;
     }
 
+    /// @inheritdoc IProtocolGovernance
+    function protocolTreasury() external view returns (address) {
+        return params.protocolTreasury;
+    }
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @inheritdoc IProtocolGovernance

@@ -17,6 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
             },
+            { managementFeeChargeDelay: 86400 },
         ],
         log: true,
         autoMine: true,
