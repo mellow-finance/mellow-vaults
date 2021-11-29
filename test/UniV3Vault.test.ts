@@ -1,14 +1,26 @@
 import { expect } from "chai";
+import { BigNumber } from "@ethersproject/bignumber";
 import { deployments, getNamedAccounts, ethers } from "hardhat";
 import { UniV3Vault } from "./types/UniV3Vault";
 import { WERC20Test } from "./types/WERC20Test";
-import { withSigner, depositW9, sortAddresses } from "./library/Helpers";
+import {
+    withSigner,
+    depositW9,
+    sortAddresses,
+    encodeToBytes,
+    now,
+    depositWBTC,
+} from "./library/Helpers";
 
 describe("UniV3Vault", () => {
     const aaveVaultNft: number = 1;
     const uniV3VaultNft: number = 2;
     const erc20VaultNft: number = 3;
     const gatewayVaultNft: number = 4;
+    const uniV3Fee: number = 3000;
+    const amountWBTC = BigNumber.from(10).pow(9);
+    const amount = BigNumber.from(ethers.utils.parseEther("1"));
+
     let deploymentFixture: Function;
     let aaveVault: string;
     let erc20Vault: string;
@@ -16,6 +28,9 @@ describe("UniV3Vault", () => {
     let gatewayVault: string;
     let uniV3VaultGovernance: string;
     let uniV3VaultContract: UniV3Vault;
+    let wbtc: string;
+    let weth: string;
+    let startTimestamp: number;
 
     before(async () => {
         deploymentFixture = deployments.createFixture(async () => {
@@ -46,6 +61,10 @@ describe("UniV3Vault", () => {
                 "UniV3Vault",
                 uniV3Vault
             );
+            ({ wbtc, weth } = await getNamedAccounts());
+            await depositW9(uniV3Vault, amount);
+            await depositWBTC(uniV3Vault, amountWBTC);
+            startTimestamp = now();
         });
     });
 
@@ -62,7 +81,7 @@ describe("UniV3Vault", () => {
                     factory.deploy(
                         uniV3VaultGovernance,
                         sortAddresses([weth, wbtc, usdc]),
-                        3000
+                        uniV3Fee
                     )
                 ).to.be.revertedWith("TL");
             });
@@ -81,6 +100,36 @@ describe("UniV3Vault", () => {
 
         describe("when has assets", () => {
             it("returns correct tvl", async () => {});
+        });
+    });
+
+    describe("#push", () => {
+        describe("when has not uniV3 position open", () => {
+            it("reverts", async () => {
+                const options = encodeToBytes(
+                    [
+                        "tuple(uint256 amount0Min, uint256 amount1Min, uint256 deadline)",
+                    ],
+                    [
+                        {
+                            amount0Min: 10,
+                            amount1Min: 10,
+                            deadline: startTimestamp + 1000,
+                        },
+                    ]
+                );
+                await withSigner(gatewayVault, async (signer) => {
+                    await expect(
+                        uniV3VaultContract
+                            .connect(signer)
+                            .push([wbtc, weth], [amountWBTC, amount], options)
+                    ).to.not.be.reverted;
+                    expect(await uniV3VaultContract.tvl()).to.deep.equal([
+                        ethers.constants.Zero,
+                        ethers.constants.Zero,
+                    ]);
+                });
+            });
         });
     });
 });

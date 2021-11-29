@@ -113,6 +113,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
             _allowTokenIfNecessary(tokens[i]);
 
         actualTokenAmounts = new uint256[](2);
+        if (uniV3Nft == 0)
+            return actualTokenAmounts;
+
         Options memory opts = _parseOptions(options);
         Pair memory amounts = Pair({
             a0: tokenAmounts[0],
@@ -144,6 +147,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         _swapTokenAmountsIfNessecary(tokenAmounts);
         actualTokenAmounts = new uint256[](2);
+        if (uniV3Nft == 0)
+            return actualTokenAmounts;
+
         Options memory opts = _parseOptions(options);
         Pair memory amounts = _pullUniV3Nft(tokenAmounts, to, opts);
         actualTokenAmounts[0] = amounts.a0;
@@ -157,6 +163,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         Options memory opts
     ) internal returns (Pair memory) {
         uint128 liquidityToPull;
+        // scope the code below to avoid stack-too-deep exception
         {
             (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(uniV3Nft);
             (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
@@ -199,28 +206,22 @@ contract UniV3Vault is IERC721Receiver, Vault {
         );
         amount0 += amount0Collected;
         amount1 += amount1Collected;
-        return (
-            (pool.token0() == _vaultTokens[1]) 
-            ? Pair({a0: amount1, a1: amount0}) 
-            : Pair({a0: amount0, a1: amount1})
-        );
+        return Pair({a0: amount0, a1: amount1});
     }
 
-    /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
         return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
     }
 
     function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(_positionManager()), address(this)) < type(uint256).max / 2) {
+        if (IERC20(token).allowance(address(_positionManager()), address(this)) < type(uint256).max / 2)
             IERC20(token).approve(address(_positionManager()), type(uint256).max);
-        }
     }
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
-        if (options.length == 0) {
+        if (options.length == 0)
             return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
-        }
+
         require(options.length == 32 * 3, "IOL");
         return abi.decode(options, (Options));
     }
@@ -230,6 +231,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     function _swapTokenAmountsIfNessecary(uint256[] memory tokenAmounts) internal view {
+        // swap tokenAmounts if necessary
         if (pool.token0() == _vaultTokens[1])
             (tokenAmounts[0], tokenAmounts[1]) = (tokenAmounts[1], tokenAmounts[0]);
     }
