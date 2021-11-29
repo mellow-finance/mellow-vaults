@@ -88,13 +88,22 @@ const removeSigner = async (address: string) => {
     });
 };
 
-export async function depositW9(receiver: string, amount: BigNumberish) {
+export async function depositW9(receiver: string, amount: BigNumberish): Promise<void> {
     const { weth } = await getNamedAccounts();
     const w9 = await ethers.getContractAt("WERC20Test", weth);
     const sender = randomAddress();
     await withSigner(sender, async (signer) => {
         await w9.connect(signer).deposit({ value: amount });
         await w9.connect(signer).transfer(receiver, amount);
+    });
+}
+
+
+export async function depositWBTC(receiver: string, amount: BigNumberish): Promise<void> {
+    const { wbtcRichGuy, wbtc } = await getNamedAccounts();
+    const wbtcContract = await ethers.getContractAt("WERC20Test", wbtc);
+    await withSigner(wbtcRichGuy, async (signer) => {
+        await wbtcContract.connect(signer).transfer(receiver, amount);
     });
 }
 

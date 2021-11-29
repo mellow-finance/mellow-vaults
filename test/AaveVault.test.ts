@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { deployments, getNamedAccounts, ethers } from "hardhat";
 import { AaveVault } from "./types/AaveVault";
-import { WERC20Test } from "./types/WERC20Test";
-import { withSigner, depositW9 } from "./library/Helpers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { withSigner, depositW9, depositWBTC, sleep } from "./library/Helpers";
 
 describe("AaveVault", () => {
     const aaveVaultNft: number = 1;
@@ -93,13 +93,15 @@ describe("AaveVault", () => {
         });
 
         describe("when pushed smth", () => {
+            const amountWBTC = BigNumber.from(10).pow(9);
+            const amount = BigNumber.from(ethers.utils.parseEther("1"));
             beforeEach(async () => {
-                await depositW9(aaveVault, ethers.utils.parseEther("10"));
+                await depositW9(aaveVault, amount);
+                await depositWBTC(aaveVault, amountWBTC.toString());
             });
 
-            describe("when called once", () => {
+            describe("happy case", () => {
                 it("approves deposits to lendingPool and updates tvl", async () => {
-                    const amount = ethers.utils.parseEther("1");
                     await withSigner(gatewayVault, async (signer) => {
                         const { weth, wbtc } = await getNamedAccounts();
                         await expect(
@@ -111,6 +113,21 @@ describe("AaveVault", () => {
                             ethers.constants.Zero,
                             amount,
                         ]);
+                    });
+                });
+
+                it("tvl raises with time", async () => {
+                    await withSigner(gatewayVault, async (signer) => {
+                        const { weth, wbtc } = await getNamedAccounts();
+                        await aaveVaultContract
+                                .connect(signer)
+                                .push([wbtc, weth], [amountWBTC, amount], []);
+                        await sleep(1000 * 1000 * 1000);
+                        // update tvl
+                        await aaveVaultContract.connect(signer).updateTvls();
+                        const [tvlWBTC, tvlWeth] = await aaveVaultContract.tvl();
+                        expect(tvlWeth.gt(amount)).to.be.true;
+                        expect(tvlWBTC.gt(amountWBTC)).to.be.true;
                     });
                 });
             });
@@ -138,7 +155,6 @@ describe("AaveVault", () => {
 
     describe("#pull", () => {
         const w9Amount = ethers.utils.parseEther("10");
-        let wethContract: WERC20Test;
 
         beforeEach(async () => {
             await deployments.fixture();
