@@ -22,14 +22,17 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         vaultRegistry = _vaultRegistry;
     }
 
+    /// @inheritdoc IChiefTrader
     function tradersCount() external view returns (uint256) {
         return _traders.length();
     }
 
+    /// @inheritdoc IChiefTrader
     function traders() external view returns (address[] memory) {
         return _traders.values();
     }
 
+    /// @inheritdoc IChiefTrader
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
         require(!_traders.contains(traderAddress));
@@ -37,6 +40,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         _traders.add(traderAddress);
     }
 
+    /// @inheritdoc ITrader
     function swapExactInput(
         uint256 traderId,
         address input,
@@ -54,6 +58,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         return ITrader(traderAddress).swapExactInput(0, input, output, amount, recipient, path, options);
     }
 
+    /// @inheritdoc ITrader
     function swapExactOutput(
         uint256 traderId,
         address input,

@@ -30,6 +30,7 @@ contract UniV3Trader is Trader, ITrader {
         underlyingProtocolOptions = abi.decode(_underlyingProtocolOptions, (UnderlyingProtocolOptions));
     }
 
+    /// @inheritdoc ITrader
     function swapExactInput(
         uint256,
         address input,
@@ -48,6 +49,7 @@ contract UniV3Trader is Trader, ITrader {
         }
     }
 
+    /// @inheritdoc ITrader
     function swapExactOutput(
         uint256,
         address input,
