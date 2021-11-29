@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "./interfaces/external/univ3/IUniswapV3PoolState.sol";
+import "./interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
 import "./interfaces/IUniV3VaultGovernance.sol";
 import "./libraries/external/TickMath.sol";
@@ -24,8 +24,10 @@ contract UniV3Vault is IERC721Receiver, Vault {
         uint256 a1;
     }
 
+    IUniswapV3Pool public immutable pool;
+    bool public immutable shouldSwapVaultTokens;
+
     uint256 public uniV3Nft;
-    IUniswapV3PoolState public pool;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
@@ -37,29 +39,30 @@ contract UniV3Vault is IERC721Receiver, Vault {
         uint24 fee
     ) Vault(vaultGovernance_, vaultTokens_) {
         require(_vaultTokens.length == 2, "TL");
-        pool = IUniswapV3PoolState(
+        pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );
+        shouldSwapVaultTokens = pool.token0() == _vaultTokens[1] ? true : false;
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         require(msg.sender == address(_positionManager()), "SNFT");
         require(_isStrategy(operator), "STR");
-        (, , address token0, address token1, , , , , , , , ) = _positionManager().positions(tokenId);
+        (, , address token0, address token1, , , , uint128 liquidity, , , , ) = _positionManager().positions(tokenId);
+
+        // new position should have vault tokens
         require(
             (token0 == _vaultTokens[0] && token1 == _vaultTokens[1]) ||
             (token0 == _vaultTokens[1] && token1 == _vaultTokens[0]),
             "VT"
         );
-        uint256[] memory tvls = tvl();
-        // tvl should be zero for new position to be acquired
-        require(
-            tvls[0] == 0 && tvls[1] == 0, 
-            "TVL"
-        );
+
+        // liquidity should be zero for new position to be acquired
+        require(liquidity == 0, "TVL");
         if (uniV3Nft != 0)
             // return previous uni v3 position nft
             _positionManager().transferFrom(address(this), from, uniV3Nft);
+
         uniV3Nft = tokenId;
         return this.onERC721Received.selector;
     }
@@ -69,7 +72,15 @@ contract UniV3Vault is IERC721Receiver, Vault {
         tokenAmounts = new uint256[](_vaultTokens.length);
         if (uniV3Nft == 0)
             return tokenAmounts;
-        (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(uniV3Nft);
+        (
+            , , , , , 
+            int24 tickLower, 
+            int24 tickUpper, 
+            uint128 liquidity,
+            , , 
+            uint128 tokensOwed0, 
+            uint128 tokensOwed1
+        ) = _positionManager().positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -79,8 +90,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
             sqrtPriceBX96,
             liquidity
         );
-        tokenAmounts[0] = amount0;
-        tokenAmounts[1] = amount1;
+        tokenAmounts[0] = amount0 + uint256(tokensOwed0);
+        tokenAmounts[1] = amount1 + uint256(tokensOwed1);
+        _swapTokenAmountsIfNessecary(tokenAmounts);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -88,20 +100,20 @@ contract UniV3Vault is IERC721Receiver, Vault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
+        _swapTokenAmountsIfNessecary(tokenAmounts);
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < tokens.length; i++)
             _allowTokenIfNecessary(tokens[i]);
-        }
-        uint256[] memory totalTVL = tvl();
+
         actualTokenAmounts = new uint256[](2);
         Options memory opts = _parseOptions(options);
         Pair memory amounts = Pair({
-            a0: tokenAmounts[0] / totalTVL[0],
-            a1: tokenAmounts[1] / totalTVL[1]
+            a0: tokenAmounts[0],
+            a1: tokenAmounts[1]
         });
         Pair memory minAmounts = Pair({
-            a0: opts.amount0Min / totalTVL[0],
-            a1: opts.amount1Min / totalTVL[1]
+            a0: opts.amount0Min,
+            a1: opts.amount1Min
         });
         (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
             INonfungiblePositionManager.IncreaseLiquidityParams({
@@ -115,6 +127,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         );
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
+        _swapTokenAmountsIfNessecary(actualTokenAmounts);
     }
 
     function _pull(
@@ -122,80 +135,69 @@ contract UniV3Vault is IERC721Receiver, Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        _swapTokenAmountsIfNessecary(tokenAmounts);
         actualTokenAmounts = new uint256[](2);
-        uint256[] memory totalTVL = tvl();
         Options memory opts = _parseOptions(options);
-        Pair memory amounts = _pullUniV3Nft(tokenAmounts, totalTVL, to, opts);
+        Pair memory amounts = _pullUniV3Nft(tokenAmounts, to, opts);
         actualTokenAmounts[0] = amounts.a0;
         actualTokenAmounts[1] = amounts.a1;
+        _swapTokenAmountsIfNessecary(actualTokenAmounts);
     }
 
     function _pullUniV3Nft(
         uint256[] memory tokenAmounts,
-        uint256[] memory totalTVL,
         address to,
         Options memory opts
     ) internal returns (Pair memory) {
+        uint128 liquidityToPull;
+        {
+            (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(uniV3Nft);
+            (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+            uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+            uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+            liquidityToPull = LiquidityAmounts.getLiquidityForAmounts(
+                sqrtPriceX96, sqrtPriceAX96, sqrtPriceBX96, tokenAmounts[0], tokenAmounts[1]
+            );
+            liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
+            if (liquidityToPull == 0) {
+                return Pair({a0: 0, a1: 0});
+            }
+        }
         Pair memory amounts = Pair({
-            a0: tokenAmounts[0] / totalTVL[0],
-            a1: tokenAmounts[1] / totalTVL[1]
+            a0: tokenAmounts[0],
+            a1: tokenAmounts[1]
         });
         Pair memory minAmounts = Pair({
-            a0: opts.amount0Min / totalTVL[0],
-            a1: opts.amount1Min / totalTVL[1]
+            a0: opts.amount0Min,
+            a1: opts.amount1Min
         });
-
-        uint256 liquidity = _getWithdrawLiquidity(amounts, totalTVL);
-        if (liquidity == 0) {
-            return Pair({a0: 0, a1: 0});
-        }
         (uint256 amount0, uint256 amount1) = _positionManager().decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: uniV3Nft,
-                liquidity: uint128(liquidity),
+                liquidity: liquidityToPull,
                 amount0Min: minAmounts.a0,
                 amount1Min: minAmounts.a1,
                 deadline: opts.deadline
             })
         );
-        (amount0, amount1) = _positionManager().collect(
+        uint256 amount0Max = amounts.a0 > amount0 ? amounts.a0 - amount0 : 0;
+        uint256 amount1Max = amounts.a1 > amount1 ? amounts.a1 - amount1 : 0;
+        (uint256 amount0Collected, uint256 amount1Collected) = _positionManager().collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: uniV3Nft,
                 recipient: to,
-                amount0Max: uint128(amount0),
-                amount1Max: uint128(amount1)
+                amount0Max: uint128(amount0Max),
+                amount1Max: uint128(amount1Max)
             })
         );
-        return Pair({a0: amount0, a1: amount1});
+        amount0 += amount0Collected;
+        amount1 += amount1Collected;
+        return shouldSwapVaultTokens ? Pair({a0: amount1, a1: amount0}) : Pair({a0: amount0, a1: amount1});
     }
 
     /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
         return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
-    }
-
-    function _getWithdrawLiquidity(
-        Pair memory amounts,
-        uint256[] memory totalAmounts
-    ) internal view returns (uint256) {
-        (, , , , , , , uint128 totalLiquidity, , , , ) = _positionManager().positions(uniV3Nft);
-        if (totalAmounts[0] == 0) {
-            if (amounts.a0 == 0) {
-                return (totalLiquidity * amounts.a1) / totalAmounts[1]; // liquidity1
-            } else {
-                return 0;
-            }
-        }
-        if (totalAmounts[1] == 0) {
-            if (amounts.a1 == 0) {
-                return (totalLiquidity * amounts.a0) / totalAmounts[0]; // liquidity0
-            } else {
-                return 0;
-            }
-        }
-        uint256 liquidity0 = (totalLiquidity * amounts.a0) / totalAmounts[0];
-        uint256 liquidity1 = (totalLiquidity * amounts.a1) / totalAmounts[1];
-        return liquidity0 < liquidity1 ? liquidity0 : liquidity1;
     }
 
     function _allowTokenIfNecessary(address token) internal {
@@ -214,5 +216,10 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    function _swapTokenAmountsIfNessecary(uint256[] memory tokenAmounts) internal view {
+        if (shouldSwapVaultTokens)
+            (tokenAmounts[0], tokenAmounts[1]) = (tokenAmounts[1], tokenAmounts[0]);
     }
 }
