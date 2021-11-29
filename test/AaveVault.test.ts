@@ -9,6 +9,7 @@ import {
     sleep,
     randomAddress,
 } from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
 
 describe("AaveVault", () => {
     const aaveVaultNft: number = 1;
@@ -78,7 +79,7 @@ describe("AaveVault", () => {
                             [randomAddress(), randomAddress()],
                         ],
                     })
-                ).to.be.reverted;
+                ).to.be.revertedWith(Exceptions.TOKEN_NOT_ALLOWED);
             });
         });
     });
