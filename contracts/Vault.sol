@@ -53,6 +53,8 @@ abstract contract Vault is IVault {
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
@@ -178,8 +180,8 @@ abstract contract Vault is IVault {
             return false;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-         // make sure that this vault is a registered vault
-        if(_nft == 0) {
+        // make sure that this vault is a registered vault
+        if (_nft == 0) {
             return false;
         }
         address thisOwner = registry.ownerOf(_nft);

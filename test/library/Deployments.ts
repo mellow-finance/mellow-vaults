@@ -28,6 +28,7 @@ import {
 } from "./Types";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
 export async function deployTraders(options: {
     protocolGovernance: ProtocolGovernance;
@@ -786,7 +787,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
 
 export async function deploySystem(options: {
     adminSigner: Signer;
-    vaultOwnerSigner: Signer;
+    vaultOwnerSigner: SignerWithAddress;
     treasury: Address;
     strategy: Address;
     enableAaveVault?: boolean;
@@ -851,7 +852,7 @@ export async function deploySystem(options: {
             ["uint256", "string", "string"],
             [gatewayNft, "MellowProtocol", "MELLOW"]
         ),
-        ethers.constants.AddressZero,
+        options.vaultOwnerSigner.address,
     ];
     await protocolGovernance
         .connect(options.adminSigner)
@@ -876,6 +877,13 @@ export async function deploySystem(options: {
     const lpIssuerAddress = response.vault;
     const lpIssuerNft = response.nft;
     await LpIssuerGovernance.deployVault(...lpIssuerDeployArgs);
+    await vaultRegistry
+        .connect(options.vaultOwnerSigner)
+        .functions["safeTransferFrom(address,address,uint256)"](
+            options.vaultOwnerSigner.address,
+            lpIssuerAddress,
+            lpIssuerNft
+        );
     const LpIssuer: Vault = await ethers.getContractAt(
         `LpIssuer`,
         lpIssuerAddress

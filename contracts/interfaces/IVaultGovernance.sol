@@ -57,7 +57,7 @@ interface IVaultGovernance {
     /// @notice Deploy a new vault.
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Reserved additional deploy options. Should be 0x0.
-    /// @param owner Owner of the registry vault nft
+    /// @param owner Owner of the registry vault nft. If it is address(0) then vault will own his own nft
     /// @return vault Address of the new vault
     /// @return nft Nft of the vault in the vault registry
     function deployVault(
