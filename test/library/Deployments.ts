@@ -446,6 +446,8 @@ export async function deploySubVaultSystem(options: {
     UniV3Vault: Vault;
     nftUniV3: number;
     aTokens: ERC20[];
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
 }> {
     const {
         vaultRegistry,
@@ -550,7 +552,7 @@ export async function deploySubVaultSystem(options: {
         );
     }
 
-    const { chiefTrader } = await deployTraders({
+    const { chiefTrader, uniV3Trader } = await deployTraders({
         protocolGovernance: protocolGovernance,
         vaultRegistry: vaultRegistry,
     });
@@ -598,6 +600,8 @@ export async function deploySubVaultSystem(options: {
         aTokens: aTokens,
         LpIssuerFactory: LpIssuerFactory,
         LpIssuerGovernance: LpIssuerGovernance,
+        chiefTrader: chiefTrader,
+        uniV3Trader: uniV3Trader,
     };
 }
 
@@ -633,6 +637,8 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     gatewayNft: number;
     LpIssuerFactory: VaultFactory;
     LpIssuerGovernance: VaultGovernance;
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
 }> {
     const {
         ERC20VaultFactory,
@@ -654,6 +660,8 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         anotherNftERC20,
         LpIssuerGovernance,
         LpIssuerFactory,
+        chiefTrader,
+        uniV3Trader,
     } = await deploySubVaultSystem({
         tokensCount: 2,
         adminSigner: options.adminSigner,
@@ -771,6 +779,8 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         gatewayNft,
         LpIssuerGovernance,
         LpIssuerFactory,
+        chiefTrader,
+        uniV3Trader,
     };
 }
 
