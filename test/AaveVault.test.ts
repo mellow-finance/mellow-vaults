@@ -122,13 +122,23 @@ describe("AaveVault", () => {
                         await aaveVaultContract
                             .connect(signer)
                             .push([wbtc, weth], [amountWBTC, amount], []);
+                        const [tvlWBTC, tvlWeth] =
+                            await aaveVaultContract.tvl();
+                        // check initial tvls
+                        expect(tvlWBTC.toString()).to.be.equal(
+                            amountWBTC.toString()
+                        );
+                        expect(tvlWeth.toString()).to.be.equal(
+                            amount.toString()
+                        );
+                        // wait
                         await sleep(1000 * 1000 * 1000);
                         // update tvl
                         await aaveVaultContract.connect(signer).updateTvls();
-                        const [tvlWBTC, tvlWeth] =
+                        const [newTvlWBTC, newTvlWeth] =
                             await aaveVaultContract.tvl();
-                        expect(tvlWeth.gt(amount)).to.be.true;
-                        expect(tvlWBTC.gt(amountWBTC)).to.be.true;
+                        expect(newTvlWeth.gt(amount)).to.be.true;
+                        expect(newTvlWBTC.gt(amountWBTC)).to.be.true;
                     });
                 });
             });
@@ -143,6 +153,20 @@ describe("AaveVault", () => {
                                 .connect(signer)
                                 .push([wbtc, weth], [0, amount], [])
                         ).to.not.be.reverted;
+                        const { aaveLendingPool } = await getNamedAccounts();
+                        const wethContract = await ethers.getContractAt(
+                            "WERC20Test",
+                            weth
+                        );
+                        // allowance increased
+                        expect(
+                            await wethContract.allowance(
+                                aaveVault,
+                                aaveLendingPool
+                            )
+                        ).to.be.equal(ethers.constants.MaxUint256);
+                        // insure coverage of _approveIfNessesary
+                        await depositW9(aaveVault, amount);
                         await expect(
                             aaveVaultContract
                                 .connect(signer)
@@ -183,25 +207,27 @@ describe("AaveVault", () => {
         });
 
         describe("when pushed smth", () => {
-            it("smth pulled", async () => {
-                const amount = ethers.utils.parseEther("1");
+            const amount = ethers.utils.parseEther("1");
+
+            beforeEach(async () => {
+                await deployments.fixture();
+                const { weth, wbtc } = await getNamedAccounts();
+                await depositW9(aaveVault, amount);
                 await withSigner(gatewayVault, async (signer) => {
-                    const { weth, wbtc } = await getNamedAccounts();
                     await expect(
                         aaveVaultContract
                             .connect(signer)
                             .push([wbtc, weth], [0, amount], [])
                     ).to.not.be.reverted;
-                    expect(await aaveVaultContract.tvl()).to.eql([
-                        ethers.constants.Zero,
-                        amount,
-                    ]);
-                    const tokens = [weth, wbtc]
-                        .map((t) => t.toLowerCase())
-                        .sort();
+                });
+            });
+
+            it("smth pulled", async () => {
+                await withSigner(gatewayVault, async (signer) => {
+                    const { weth, wbtc } = await getNamedAccounts();
                     await aaveVaultContract
                         .connect(signer)
-                        .pull(erc20Vault, tokens, [0, amount], []);
+                        .pull(erc20Vault, [wbtc, weth], [0, amount], []);
                     const wethContract = await ethers.getContractAt(
                         "WERC20Test",
                         weth
@@ -209,6 +235,24 @@ describe("AaveVault", () => {
                     expect(await wethContract.balanceOf(erc20Vault)).to.eql(
                         amount
                     );
+                });
+            });
+
+            describe("when pull amount is greater then actual balance", () => {
+                it("executes", async () => {
+                    await withSigner(gatewayVault, async (signer) => {
+                        const { weth, wbtc } = await getNamedAccounts();
+                        await expect(
+                            aaveVaultContract
+                                .connect(signer)
+                                .pull(
+                                    erc20Vault,
+                                    [wbtc, weth],
+                                    [0, amount.mul(2)],
+                                    []
+                                )
+                        ).to.be.revertedWith("5"); // aave lending pool: insufficient balance
+                    });
                 });
             });
         });
