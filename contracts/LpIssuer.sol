@@ -19,6 +19,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 private _nft;
+    uint256[] private _lpHighWaterMarks;
 
     uint256 public lastFeeCharge;
 
@@ -39,6 +40,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
+            _lpHighWaterMarks.push(0);
         }
         lastFeeCharge = block.timestamp;
     }
