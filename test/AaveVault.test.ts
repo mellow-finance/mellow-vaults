@@ -120,12 +120,13 @@ describe("AaveVault", () => {
                     await withSigner(gatewayVault, async (signer) => {
                         const { weth, wbtc } = await getNamedAccounts();
                         await aaveVaultContract
-                                .connect(signer)
-                                .push([wbtc, weth], [amountWBTC, amount], []);
+                            .connect(signer)
+                            .push([wbtc, weth], [amountWBTC, amount], []);
                         await sleep(1000 * 1000 * 1000);
                         // update tvl
                         await aaveVaultContract.connect(signer).updateTvls();
-                        const [tvlWBTC, tvlWeth] = await aaveVaultContract.tvl();
+                        const [tvlWBTC, tvlWeth] =
+                            await aaveVaultContract.tvl();
                         expect(tvlWeth.gt(amount)).to.be.true;
                         expect(tvlWBTC.gt(amountWBTC)).to.be.true;
                     });
