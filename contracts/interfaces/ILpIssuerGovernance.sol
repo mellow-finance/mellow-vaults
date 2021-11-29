@@ -5,11 +5,15 @@ import "./IVaultGovernance.sol";
 
 interface ILpIssuerGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
-    /// @param strategyTreasury Reference to address that will collect strategy fees
+    /// @param strategyTreasury Reference to address that will collect strategy management fees
+    /// @param strategyPerformanceTreasury Reference to address that will collect strategy performance fees
     /// @param managementFee Management fee for Strategist denominated in 10 ** 9
+    /// @param performanceFee Performance fee for Strategist denominated in 10 ** 9
     struct DelayedStrategyParams {
         address strategyTreasury;
+        address strategyPerformanceTreasury;
         uint256 managementFee;
+        uint256 performanceFee;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.

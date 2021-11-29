@@ -33,10 +33,6 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
 
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
-    }
-
     /// @inheritdoc IERC20VaultGovernance
     function commitDelayedStrategyParams(uint256 nft) external {
         _commitDelayedStrategyParams(nft);

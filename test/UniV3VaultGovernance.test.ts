@@ -152,14 +152,6 @@ describe("UniV3VaultGovernance", () => {
         });
     });
 
-    describe("strategyTreasury", () => {
-        it("returns correct strategy treasury", async () => {
-            expect(
-                await UniV3VaultGovernance.strategyTreasury(nftUniV3)
-            ).to.be.equal(await treasury.getAddress());
-        });
-    });
-
     describe("commitDelayedStrategyParams", () => {
         it("commits delayed strategy params", async () => {
             await UniV3VaultGovernance.connect(
@@ -172,7 +164,8 @@ describe("UniV3VaultGovernance", () => {
                 admin
             ).commitDelayedStrategyParams(nftUniV3);
             expect(
-                await UniV3VaultGovernance.strategyTreasury(nftUniV3)
+                (await UniV3VaultGovernance.delayedStrategyParams(nftUniV3))
+                    .strategyTreasury
             ).to.be.equal(await anotherTreasury.getAddress());
         });
 

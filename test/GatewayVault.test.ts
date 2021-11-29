@@ -68,9 +68,9 @@ describe("GatewayVault", () => {
             for (let i: number = 0; i < tokens.length; ++i) {
                 await tokens[i].connect(deployer).approve(
                     gatewayVault.address,
-                    BigNumber.from(10 ** 9)
-                        .mul(BigNumber.from(10 ** 9))
-                        .mul(BigNumber.from(10 ** 9))
+                    BigNumber.from(10 ** 3)
+                        .mul(BigNumber.from(10 ** 3))
+                        .mul(BigNumber.from(10 ** 3))
                 );
             }
             await vaultRegistry.approve(
@@ -162,7 +162,7 @@ describe("GatewayVault", () => {
             await expect(
                 gatewayVault
                     .connect(stranger)
-                    .push([tokens[0].address], [BigNumber.from(10 ** 9)], [])
+                    .push([tokens[0].address], [BigNumber.from(10 ** 3)], [])
             ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
         });
 
@@ -171,11 +171,11 @@ describe("GatewayVault", () => {
                 await gatewayVault.setSubvaultNfts([]);
                 await tokens[0]
                     .connect(deployer)
-                    .approve(gatewayVault.address, BigNumber.from(10 ** 10));
+                    .approve(gatewayVault.address, BigNumber.from(10 ** 4));
                 await expect(
                     gatewayVault.push(
                         [tokens[0].address],
-                        [BigNumber.from(10 ** 9)],
+                        [BigNumber.from(10 ** 3)],
                         []
                     )
                 ).to.be.revertedWith("INIT");
@@ -184,9 +184,11 @@ describe("GatewayVault", () => {
 
         describe("when trying to push the limits", () => {
             it("reverts", async () => {
-                const amount = BigNumber.from(2 * 10 ** 9).mul(
-                    BigNumber.from(10 ** 9)
-                );
+                const limits = (
+                    await gatewayVaultGovernance.strategyParams(gatewayNft)
+                ).limits;
+
+                const amount = limits.map((x: BigNumber) => x.add(1))[0];
                 await tokens[0]
                     .connect(deployer)
                     .transfer(gatewayVault.address, amount);
@@ -198,7 +200,7 @@ describe("GatewayVault", () => {
 
         describe("when leftovers happen", () => {
             it("returns them!", async () => {
-                const amount = BigNumber.from(10 ** 9);
+                const amount = BigNumber.from(10 ** 3);
                 expect(
                     BigNumber.from(
                         await tokens[0].balanceOf(await deployer.getAddress())
@@ -277,11 +279,11 @@ describe("GatewayVault", () => {
         it("emits Push", async () => {
             await tokens[0]
                 .connect(deployer)
-                .transfer(gatewayVault.address, BigNumber.from(10 ** 10));
+                .transfer(gatewayVault.address, BigNumber.from(10 ** 4));
             await expect(
                 gatewayVault
                     .connect(deployer)
-                    .push([tokens[0].address], [BigNumber.from(10 ** 9)], [])
+                    .push([tokens[0].address], [BigNumber.from(10 ** 3)], [])
             ).to.emit(gatewayVault, "Push");
         });
     });
@@ -291,10 +293,10 @@ describe("GatewayVault", () => {
             it("passes", async () => {
                 await tokens[0]
                     .connect(deployer)
-                    .transfer(gatewayVault.address, BigNumber.from(10 ** 10));
+                    .transfer(gatewayVault.address, BigNumber.from(10 ** 4));
                 await gatewayVault
                     .connect(deployer)
-                    .push([tokens[0].address], [BigNumber.from(10 ** 9)], []);
+                    .push([tokens[0].address], [BigNumber.from(10 ** 3)], []);
                 await gatewayVaultGovernance
                     .connect(admin)
                     .stageDelayedStrategyParams(gatewayNft, {
@@ -317,7 +319,7 @@ describe("GatewayVault", () => {
                         .pull(
                             await deployer.getAddress(),
                             [tokens[0].address],
-                            [BigNumber.from(10 ** 9)],
+                            [BigNumber.from(10 ** 3)],
                             encodeToBytes(["bool", "bytes[]"], [true, [[], []]])
                         )
                 ).to.emit(gatewayVault, "Pull");
@@ -327,17 +329,17 @@ describe("GatewayVault", () => {
         it("emits Pull", async () => {
             await tokens[0]
                 .connect(deployer)
-                .transfer(gatewayVault.address, BigNumber.from(10 ** 10));
+                .transfer(gatewayVault.address, BigNumber.from(10 ** 4));
             await gatewayVault
                 .connect(deployer)
-                .push([tokens[0].address], [BigNumber.from(10 ** 9)], []);
+                .push([tokens[0].address], [BigNumber.from(10 ** 3)], []);
             expect(
                 await gatewayVault
                     .connect(deployer)
                     .pull(
                         await deployer.getAddress(),
                         [tokens[0].address],
-                        [BigNumber.from(10 ** 9)],
+                        [BigNumber.from(10 ** 3)],
                         []
                     )
             ).to.emit(gatewayVault, "Pull");

@@ -70,13 +70,13 @@ describe("AaveVault", () => {
                 const { deploy, get } = deployments;
                 const { deployer } = await getNamedAccounts();
                 const vaultGovernance = await get("AaveVaultGovernance");
+                const tokens = [randomAddress(), randomAddress()]
+                    .map((x) => x.toLowerCase())
+                    .sort();
                 await expect(
                     deploy("AaveVault", {
                         from: deployer,
-                        args: [
-                            vaultGovernance.address,
-                            [randomAddress(), randomAddress()],
-                        ],
+                        args: [vaultGovernance.address, tokens],
                     })
                 ).to.be.reverted;
             });

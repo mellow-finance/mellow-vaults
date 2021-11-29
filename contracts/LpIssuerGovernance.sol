@@ -12,6 +12,7 @@ import "./VaultGovernance.sol";
 contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovernance {
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
+    uint256 public immutable MAX_PERFORMANCE_FEE;
 
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
@@ -22,11 +23,7 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
         MAX_PROTOCOL_FEE = 5 * CommonLibrary.DENOMINATOR;
         MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
-    }
-
-    /// @inheritdoc IVaultGovernance
-    function strategyTreasury(uint256) external pure override(IVaultGovernance, VaultGovernance) returns (address) {
-        return address(0);
+        MAX_PERFORMANCE_FEE = 50 * CommonLibrary.DENOMINATOR;
     }
 
     /// @inheritdoc ILpIssuerGovernance
@@ -68,7 +65,13 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     /// @inheritdoc ILpIssuerGovernance
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_stagedDelayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0), managementFee: 0});
+            return
+                DelayedStrategyParams({
+                    strategyTreasury: address(0),
+                    strategyPerformanceTreasury: address(0),
+                    managementFee: 0,
+                    performanceFee: 0
+                });
         }
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
     }
@@ -76,7 +79,13 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
     /// @inheritdoc ILpIssuerGovernance
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0), managementFee: 0});
+            return
+                DelayedStrategyParams({
+                    strategyTreasury: address(0),
+                    strategyPerformanceTreasury: address(0),
+                    managementFee: 0,
+                    performanceFee: 0
+                });
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
@@ -91,6 +100,8 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
 
     /// @inheritdoc ILpIssuerGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
+        require(params.managementFee <= MAX_MANAGEMENT_FEE, "MMF");
+        require(params.performanceFee <= MAX_PERFORMANCE_FEE, "MPFF");
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
