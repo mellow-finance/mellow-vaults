@@ -34,5 +34,7 @@ export default class Exceptions {
     static readonly YEARN_VAULTS: string = "YV";
     static readonly LOCKED_NFT: string = "LCKD";
     static readonly TOKEN_OWNER: string = "TO";
+    static readonly MAX_MANAGEMENT_FEE: string = "MMF";
+    static readonly MAX_PERFORMANCE_FEE: string = "MPFF";
 }
 // TODO: Remove outdated exceptions

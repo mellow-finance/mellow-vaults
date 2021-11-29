@@ -331,6 +331,64 @@ describe("LpIssuerGovernance", () => {
             await sleepTo(startTimestamp);
         });
 
+        describe("when management fees is greater than MAX_MANAGEMENT_FEE", () => {
+            it("reverts", async () => {
+                const maxManagementFee = await deployments.read(
+                    "LpIssuerGovernance",
+                    "MAX_MANAGEMENT_FEE"
+                );
+
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    { ...paramsToStage, managementFee: maxManagementFee }
+                );
+                await expect(
+                    deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: admin, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        {
+                            ...paramsToStage,
+                            managementFee: maxManagementFee.add(1),
+                        }
+                    )
+                ).to.be.revertedWith(Exceptions.MAX_MANAGEMENT_FEE);
+            });
+        });
+
+        describe("when performance fees is greater than MAX_PERFORMANCE_FEE", () => {
+            it("reverts", async () => {
+                const maxPerformanceFee = await deployments.read(
+                    "LpIssuerGovernance",
+                    "MAX_PERFORMANCE_FEE"
+                );
+
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    { ...paramsToStage, performanceFee: maxPerformanceFee }
+                );
+                await expect(
+                    deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: admin, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        {
+                            ...paramsToStage,
+                            performanceFee: maxPerformanceFee.add(1),
+                        }
+                    )
+                ).to.be.revertedWith(Exceptions.MAX_PERFORMANCE_FEE);
+            });
+        });
+
         describe("on first call (params are not initialized)", () => {
             beforeEach(async () => {
                 await deployments.execute(
