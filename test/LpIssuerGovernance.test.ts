@@ -2,13 +2,21 @@ import { expect } from "chai";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber, Signer } from "ethers";
 import { before } from "mocha";
-import { randomAddress, sleep, toObject } from "./library/Helpers";
+import {
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    toObject,
+    withSigner,
+} from "./library/Helpers";
 import { deployLpIssuerGovernance } from "./library/Deployments";
 import {
     LpIssuerGovernance,
     LpIssuerGovernance_constructor,
 } from "./library/Types";
 import { DelayedStrategyParamsStruct } from "./types/ILpIssuerGovernance";
+import Exceptions from "./library/Exceptions";
 
 /**
  * TODO: Define some sort of default params for a series of tests
@@ -259,6 +267,564 @@ describe("LpIssuerGovernance", () => {
                     nft
                 );
                 expect(toObject(params)).to.eql(expectedParams);
+            });
+        });
+    });
+
+    describe("#stageDelayedStrategyParams", () => {
+        const paramsToStage: DelayedStrategyParamsStruct = {
+            strategyTreasury: randomAddress(),
+            strategyPerformanceTreasury: randomAddress(),
+            managementFee: BigNumber.from(1000),
+            performanceFee: BigNumber.from(2000),
+        };
+        let nft: number;
+        let deploy: Function;
+        let admin: string;
+        let deployer: string;
+        let stranger: string;
+        let startTimestamp: number;
+
+        before(async () => {
+            const {
+                weth,
+                wbtc,
+                admin: a,
+                deployer: d,
+                stranger: s,
+            } = await getNamedAccounts();
+            [admin, deployer, stranger] = [a, d, s];
+            deploy = deployments.createFixture(async () => {
+                const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    [],
+                    deployer
+                );
+                const yearnNft = (
+                    await deployments.read("VaultRegistry", "vaultsCount")
+                ).toNumber();
+                const coder = ethers.utils.defaultAbiCoder;
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    coder.encode(
+                        ["uint256", "string", "string"],
+                        [yearnNft, "Test token", "Test token"]
+                    ),
+                    deployer
+                );
+            });
+        });
+
+        beforeEach(async () => {
+            await deploy();
+            nft = (
+                await deployments.read("VaultRegistry", "vaultsCount")
+            ).toNumber();
+            startTimestamp = now();
+            await sleepTo(startTimestamp);
+        });
+
+        describe("on first call (params are not initialized)", () => {
+            beforeEach(async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToStage
+                );
+            });
+            it("stages new delayed protocol params", async () => {
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+
+            it("sets the delay = 0 for commit to enable instant init", async () => {
+                const timestamp = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParamsTimestamp",
+                    nft
+                );
+                expect(timestamp).to.eq(startTimestamp + 1);
+            });
+        });
+
+        describe("on subsequent calls (params are initialized)", () => {
+            beforeEach(async () => {
+                const otherParams: DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                    strategyPerformanceTreasury: randomAddress(),
+                    managementFee: BigNumber.from(1000),
+                    performanceFee: BigNumber.from(2000),
+                };
+                // init params
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    otherParams
+                );
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+                // call stage again
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToStage
+                );
+            });
+            it("stages new delayed protocol params", async () => {
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+
+            it("sets the delay for commit", async () => {
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                const timestamp = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParamsTimestamp",
+                    nft
+                );
+                expect(timestamp).to.eq(
+                    governanceDelay.add(startTimestamp).add(5)
+                );
+            });
+        });
+
+        describe("when called by protocol admin", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToStage
+                );
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 owner", () => {
+            it("succeeds", async () => {
+                const owner = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "transferFrom",
+                    deployer,
+                    owner,
+                    nft
+                );
+                await withSigner(owner, async (s) => {
+                    const g = await (
+                        await ethers.getContract("LpIssuerGovernance")
+                    ).connect(s);
+                    await g.stageDelayedStrategyParams(nft, paramsToStage);
+                });
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 approved actor", () => {
+            it("succeeds", async () => {
+                const approved = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "approve",
+                    approved,
+                    nft
+                );
+                await withSigner(approved, async (signer) => {
+                    // default deployment commands don't work with unknown signer :(
+                    // https://github.com/nomiclabs/hardhat/issues/1226
+                    // so need to use ethers here
+                    const g = await (
+                        await ethers.getContract("LpIssuerGovernance")
+                    ).connect(signer);
+                    await g.stageDelayedStrategyParams(nft, paramsToStage);
+                });
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToStage);
+            });
+        });
+
+        describe("when called not by protocol admin or not by strategy", () => {
+            it("reverts", async () => {
+                await expect(
+                    deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: stranger, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        paramsToStage
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+            });
+        });
+    });
+
+    // -------------------------------------
+
+    describe("#commitDelayedStrategyParams", () => {
+        const paramsToCommit: DelayedStrategyParamsStruct = {
+            strategyTreasury: randomAddress(),
+            strategyPerformanceTreasury: randomAddress(),
+            managementFee: BigNumber.from(1000),
+            performanceFee: BigNumber.from(2000),
+        };
+        let nft: number;
+        let deploy: Function;
+        let admin: string;
+        let deployer: string;
+        let stranger: string;
+        let startTimestamp: number;
+
+        before(async () => {
+            const {
+                weth,
+                wbtc,
+                admin: a,
+                deployer: d,
+                stranger: s,
+            } = await getNamedAccounts();
+            [admin, deployer, stranger] = [a, d, s];
+            deploy = deployments.createFixture(async () => {
+                const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
+                await deployments.execute(
+                    "YearnVaultGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    [],
+                    deployer
+                );
+                const yearnNft = (
+                    await deployments.read("VaultRegistry", "vaultsCount")
+                ).toNumber();
+                const coder = ethers.utils.defaultAbiCoder;
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: deployer, autoMine: true },
+                    "deployVault",
+                    tokens,
+                    coder.encode(
+                        ["uint256", "string", "string"],
+                        [yearnNft, "Test token", "Test token"]
+                    ),
+                    deployer
+                );
+            });
+        });
+
+        beforeEach(async () => {
+            await deploy();
+            nft = (
+                await deployments.read("VaultRegistry", "vaultsCount")
+            ).toNumber();
+            startTimestamp = now();
+            await sleepTo(startTimestamp);
+        });
+
+        describe("on first call (params are not initialized)", () => {
+            beforeEach(async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+            });
+            it("commits new delayed protocol params immediately", async () => {
+                const params = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql(paramsToCommit);
+            });
+
+            it("resets staged strategy params", async () => {
+                const params = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql({
+                    strategyTreasury: ethers.constants.AddressZero,
+                    strategyPerformanceTreasury: ethers.constants.AddressZero,
+                    managementFee: BigNumber.from(0),
+                    performanceFee: BigNumber.from(0),
+                });
+            });
+
+            it("resets staged strategy params timestamp", async () => {
+                const timestamp = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParamsTimestamp",
+                    nft
+                );
+                expect(timestamp).to.eq(0);
+            });
+        });
+
+        describe("on subsequent calls (params are initialized)", () => {
+            beforeEach(async () => {
+                const otherParams: DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                    strategyPerformanceTreasury: randomAddress(),
+                    managementFee: BigNumber.from(1000),
+                    performanceFee: BigNumber.from(2000),
+                };
+                // init params
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    otherParams
+                );
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+                // call stage again
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+            });
+            it("commits new delayed protocol params", async () => {
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "stagedDelayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToCommit);
+            });
+
+            describe("when time before delay has not elapsed", () => {
+                it("reverts", async () => {
+                    await deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: admin, autoMine: true },
+                        "stageDelayedStrategyParams",
+                        nft,
+                        paramsToCommit
+                    );
+
+                    // immediate execution
+                    await expect(
+                        deployments.execute(
+                            "LpIssuerGovernance",
+                            { from: admin, autoMine: true },
+                            "commitDelayedStrategyParams",
+                            nft
+                        )
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
+
+                    const governanceDelay = await deployments.read(
+                        "ProtocolGovernance",
+                        "governanceDelay"
+                    );
+                    await sleep(governanceDelay.sub(150));
+                    // execution 15 seconds before the deadline
+                    await expect(
+                        deployments.execute(
+                            "LpIssuerGovernance",
+                            { from: admin, autoMine: true },
+                            "commitDelayedStrategyParams",
+                            nft
+                        )
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                });
+            });
+        });
+
+        describe("when called by protocol admin", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "commitDelayedStrategyParams",
+                    nft
+                );
+                const strategyParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(strategyParams)).to.eql(paramsToCommit);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 owner", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                const owner = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "transferFrom",
+                    deployer,
+                    owner,
+                    nft
+                );
+                await withSigner(owner, async (s) => {
+                    const g = await (
+                        await ethers.getContract("LpIssuerGovernance")
+                    ).connect(s);
+                    await g.commitDelayedStrategyParams(nft);
+                });
+                const params = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(params)).to.eql(paramsToCommit);
+            });
+        });
+
+        describe("when called by VaultRegistry ERC721 approved actor", () => {
+            it("succeeds", async () => {
+                await deployments.execute(
+                    "LpIssuerGovernance",
+                    { from: admin, autoMine: true },
+                    "stageDelayedStrategyParams",
+                    nft,
+                    paramsToCommit
+                );
+
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                const approved = randomAddress();
+                await deployments.execute(
+                    "VaultRegistry",
+                    { from: deployer, autoMine: true },
+                    "approve",
+                    approved,
+                    nft
+                );
+                await withSigner(approved, async (signer) => {
+                    // default deployment commands don't work with unknown signer :(
+                    // https://github.com/nomiclabs/hardhat/issues/1226
+                    // so need to use ethers here
+                    const g = await (
+                        await ethers.getContract("LpIssuerGovernance")
+                    ).connect(signer);
+                    await g.commitDelayedStrategyParams(nft);
+                });
+                const stagedParams = await deployments.read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                expect(toObject(stagedParams)).to.eql(paramsToCommit);
+            });
+        });
+
+        describe("when called not by protocol admin or not by strategy", () => {
+            it("reverts", async () => {
+                const governanceDelay = await deployments.read(
+                    "ProtocolGovernance",
+                    "governanceDelay"
+                );
+                await sleep(governanceDelay);
+
+                await expect(
+                    deployments.execute(
+                        "LpIssuerGovernance",
+                        { from: stranger, autoMine: true },
+                        "commitDelayedStrategyParams",
+                        nft
+                    )
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
             });
         });
     });
