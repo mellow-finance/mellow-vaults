@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "./trader/interfaces/ITrader.sol";
+import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
 
 /// @notice Vault that stores ERC20 tokens.
-contract ERC20Vault is Vault {
+contract ERC20Vault is Vault, ITrader {
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
@@ -21,7 +23,35 @@ contract ERC20Vault is Vault {
         }
     }
 
-    function trade() external {}
+    function swapExactInput(
+        uint256 traderId,
+        address input,
+        address output,
+        uint256 amount,
+        address recipient,
+        PathItem[] calldata path,
+        bytes calldata options
+    ) external returns (uint256 amountOut) {
+        require(_isStrategy(msg.sender), "ST");
+        IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
+        ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
+        return trader.swapExactInput(traderId, input, output, amount, recipient, path, options);
+    }
+
+    function swapExactOutput(
+        uint256 traderId,
+        address input,
+        address output,
+        uint256 amount,
+        address recipient,
+        ITrader.PathItem[] calldata path,
+        bytes calldata options
+    ) external returns (uint256 amountOut) {
+        require(_isStrategy(msg.sender), "ST");
+        IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
+        ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
+        return trader.swapExactOutput(traderId, input, output, amount, recipient, path, options);
+    }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
@@ -50,12 +80,7 @@ contract ERC20Vault is Vault {
         }
     }
 
-    function _requireAtLeastStrategy() internal view {
-        require(
-            (_vaultGovernance.internalParams().protocolGovernance.isAdmin(msg.sender) ||
-                _vaultGovernance.internalParams().registry.getApproved(_nft) == msg.sender ||
-                (_vaultGovernance.internalParams().registry.ownerOf(_nft) == msg.sender)),
-            "RST"
-        );
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 }
