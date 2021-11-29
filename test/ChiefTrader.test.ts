@@ -1,14 +1,17 @@
 import { expect } from "chai";
 import { deployments, getNamedAccounts, ethers } from "hardhat";
 import { ChiefTrader } from "./types/ChiefTrader";
-import { withSigner, sleep, encodeToBytes } from "./library/Helpers";
+import { UniV3Trader } from "./types/UniV3Trader";
+import { ProtocolGovernance } from "./types/ProtocolGovernance";
+import { withSigner, encodeToBytes } from "./library/Helpers";
 
 describe("ChiefTrader", () => {
     let admin: string;
     let deployer: string;
     let stranger: string;
     let chiefTrader: ChiefTrader;
-    let uniV3Trader: ChiefTrader;
+    let uniV3Trader: UniV3Trader;
+    let protocolGovernance: ProtocolGovernance;
     let deploymentFixture: Function;
 
     before(async () => {
@@ -28,11 +31,25 @@ describe("ChiefTrader", () => {
                     await get("UniV3Trader")
                 ).address
             );
+            protocolGovernance = await ethers.getContractAt(
+                "ProtocolGovernance",
+                (
+                    await get("ProtocolGovernance")
+                ).address
+            );
         });
     });
 
     beforeEach(async () => {
         await deploymentFixture();
+    });
+
+    describe("#protocolGovernance", () => {
+        it("returns correct initial protocol governance address", async () => {
+            expect(await chiefTrader.protocolGovernance()).to.equal(
+                protocolGovernance.address
+            );
+        });
     });
 
     describe("#traders", () => {

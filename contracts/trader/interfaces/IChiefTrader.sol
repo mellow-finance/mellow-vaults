@@ -8,10 +8,6 @@ interface IChiefTrader {
     /// @return the address of the protocol governance contract
     function protocolGovernance() external view returns (address);
 
-    /// @notice VaultRegistry
-    /// @return registry the address of the vault registry contract
-    function vaultRegistry() external view returns (address registry);
-
     /// @return The list of trader ids
     function traders() external view returns (address[] memory);
 

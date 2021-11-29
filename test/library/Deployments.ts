@@ -32,7 +32,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
 export async function deployTraders(options: {
     protocolGovernance: ProtocolGovernance;
-    vaultRegistry: VaultRegistry;
 }): Promise<{
     chiefTrader: Contract;
     uniV3Trader: Contract;
@@ -40,7 +39,7 @@ export async function deployTraders(options: {
     const { uniswapV3Router } = await getNamedAccounts();
     const chiefTrader: Contract = await (
         await ethers.getContractFactory("ChiefTrader")
-    ).deploy(options.protocolGovernance.address, options.vaultRegistry.address);
+    ).deploy(options.protocolGovernance.address);
     const uniV3Trader: Contract = await (
         await ethers.getContractFactory("UniV3Trader")
     ).deploy(
@@ -555,7 +554,6 @@ export async function deploySubVaultSystem(options: {
 
     const { chiefTrader, uniV3Trader } = await deployTraders({
         protocolGovernance: protocolGovernance,
-        vaultRegistry: vaultRegistry,
     });
 
     await ERC20VaultGovernance.connect(

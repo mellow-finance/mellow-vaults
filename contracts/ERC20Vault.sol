@@ -28,14 +28,15 @@ contract ERC20Vault is Vault, ITrader {
         address input,
         address output,
         uint256 amount,
-        address recipient,
+        address,
         PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256 amountOut) {
+        require(isVaultToken(output), "VT");
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
-        return trader.swapExactInput(traderId, input, output, amount, recipient, path, options);
+        return trader.swapExactInput(traderId, input, output, amount, address(0), path, options);
     }
 
     function swapExactOutput(
@@ -43,14 +44,15 @@ contract ERC20Vault is Vault, ITrader {
         address input,
         address output,
         uint256 amount,
-        address recipient,
+        address,
         ITrader.PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256 amountOut) {
+        require(isVaultToken(output), "VT");
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
-        return trader.swapExactOutput(traderId, input, output, amount, recipient, path, options);
+        return trader.swapExactOutput(traderId, input, output, amount, address(0), path, options);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)

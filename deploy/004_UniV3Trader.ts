@@ -7,7 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, execute } = deployments;
     const chiefTrader = await get("ChiefTrader");
-    const { deployer, uniswapV3Router, admin } = await getNamedAccounts();
+    const { deployer, uniswapV3Router } = await getNamedAccounts();
     const options = encodeToBytes(["tuple(address swapRouter)"], [{
         swapRouter: uniswapV3Router,
     }]);
