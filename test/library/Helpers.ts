@@ -93,7 +93,7 @@ const removeSigner = async (address: string) => {
 export const setTokenWhitelist = async (
     protocolGovernance: ProtocolGovernance,
     tokens: ERC20[],
-    admin: Signer
+    admin: SignerWithAddress
 ) => {
     let allowedAddresses = new Array<Address>(tokens.length);
     for (var i = 0; i < tokens.length; ++i) {
@@ -104,7 +104,8 @@ export const setTokenWhitelist = async (
         .setPendingTokenWhitelistAdd(allowedAddresses);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance.connect(admin).commitTokenWhiteListAdd();
- 
+};
+
 export async function depositW9(
     receiver: string,
     amount: BigNumberish
