@@ -7,7 +7,14 @@ import { ERC20, LpIssuerGovernance } from "./library/Types";
 import { LpIssuer, ProtocolGovernance, VaultRegistry } from "./library/Types";
 import { deploySystem } from "./library/Deployments";
 import { comparator } from "ramda";
-import { randomAddress, withSigner } from "./library/Helpers";
+import {
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    withSigner,
+} from "./library/Helpers";
+import { read } from "fs";
 
 describe("LpIssuer", () => {
     let deployer: SignerWithAddress;
@@ -22,12 +29,12 @@ describe("LpIssuer", () => {
     let lpIssuerNft: number;
     let gatewayNft: number;
     let tokens: ERC20[];
-    let revert: Function;
+    let reset: Function;
 
     before(async () => {
         [deployer, admin, stranger, treasury, strategy] =
             await ethers.getSigners();
-        revert = deployments.createFixture(async () => {
+        reset = deployments.createFixture(async () => {
             await deployments.fixture();
             ({
                 protocolGovernance,
@@ -46,7 +53,9 @@ describe("LpIssuer", () => {
     });
 
     beforeEach(async () => {
-        await revert();
+        await reset();
+        const startTimestamp = now();
+        await sleepTo(startTimestamp);
     });
 
     describe("::constructor", () => {
@@ -117,6 +126,68 @@ describe("LpIssuer", () => {
             }
         });
 
+        it("charges management and protocol fees", async () => {
+            const { execute, read, get } = deployments;
+            const { test, mStrategyTreasury, protocolTreasury, admin } =
+                await getNamedAccounts();
+            const vaultGovernance = await get("LpIssuerGovernance");
+            const nft = 5; // LpIssuer nft in initial deployment
+            const address = await read("VaultRegistry", "vaultForNft", nft);
+            const lpIssuer = await ethers.getContractAt("LpIssuer", address);
+            const tokens = await lpIssuer.vaultTokens();
+            const protocolFee = 3 * 10 ** 9;
+            await execute(
+                "LpIssuerGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedProtocolPerVaultParams",
+                nft,
+                { protocolFee }
+            );
+            await execute(
+                "LpIssuerGovernance",
+                { from: admin, autoMine: true },
+                "commitDelayedProtocolPerVaultParams",
+                nft
+            );
+            await withSigner(test, async (s) => {
+                for (const token of tokens) {
+                    const t = await ethers.getContractAt("LpIssuer", token);
+
+                    t.connect(s).approve(
+                        lpIssuer.address,
+                        ethers.constants.MaxUint256
+                    );
+                }
+
+                const { managementFee, strategyTreasury } = await read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                await lpIssuer.connect(s).deposit([10 ** 5, 10 ** 5], []);
+                await sleep(86000);
+                await lpIssuer.connect(s).deposit([10 ** 5, 10 ** 5], []);
+                // doesn't charge fees before delay
+                expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(0);
+                await sleep(401);
+                // charge pre-deposit
+                const balance = await lpIssuer.balanceOf(test);
+                await lpIssuer.connect(s).deposit([10 ** 4, 10 ** 4], []);
+                expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(
+                    balance
+                        .mul(managementFee)
+                        .div(10 ** 9)
+                        .div(365)
+                );
+                expect(await lpIssuer.balanceOf(protocolTreasury)).to.eq(
+                    balance
+                        .mul(protocolFee)
+                        .div(10 ** 9)
+                        .div(365)
+                );
+            });
+        });
+
         describe("when not initialized", () => {
             it("passes", async () => {
                 await expect(LpIssuer.deposit([10 ** 9, 10 ** 9], [])).to.not.be
@@ -157,6 +228,68 @@ describe("LpIssuer", () => {
                     ethers.constants.MaxUint256
                 );
             }
+        });
+
+        it("charges management and protocol fees", async () => {
+            const { execute, read, get } = deployments;
+            const { test, mStrategyTreasury, protocolTreasury, admin } =
+                await getNamedAccounts();
+            const vaultGovernance = await get("LpIssuerGovernance");
+            const nft = 5; // LpIssuer nft in initial deployment
+            const address = await read("VaultRegistry", "vaultForNft", nft);
+            const lpIssuer = await ethers.getContractAt("LpIssuer", address);
+            const tokens = await lpIssuer.vaultTokens();
+            const protocolFee = 3 * 10 ** 9;
+            await execute(
+                "LpIssuerGovernance",
+                { from: admin, autoMine: true },
+                "stageDelayedProtocolPerVaultParams",
+                nft,
+                { protocolFee }
+            );
+            await execute(
+                "LpIssuerGovernance",
+                { from: admin, autoMine: true },
+                "commitDelayedProtocolPerVaultParams",
+                nft
+            );
+            await withSigner(test, async (s) => {
+                for (const token of tokens) {
+                    const t = await ethers.getContractAt("LpIssuer", token);
+
+                    t.connect(s).approve(
+                        lpIssuer.address,
+                        ethers.constants.MaxUint256
+                    );
+                }
+
+                const { managementFee, strategyTreasury } = await read(
+                    "LpIssuerGovernance",
+                    "delayedStrategyParams",
+                    nft
+                );
+                await lpIssuer.connect(s).deposit([10 ** 5, 10 ** 5], []);
+                await sleep(86000);
+                await lpIssuer.connect(s).withdraw(test, 10 ** 4 / 5, []);
+                // doesn't charge fees before delay
+                expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(0);
+                await sleep(401);
+                await lpIssuer.connect(s).withdraw(test, 10 ** 4 / 5, []);
+                // charge post-withdraw
+                const balance = await lpIssuer.balanceOf(test);
+                expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(
+                    balance
+                        .mul(managementFee)
+                        .div(10 ** 9)
+                        .div(365)
+                );
+                expect(await lpIssuer.balanceOf(protocolTreasury)).to.eq(
+                    balance
+                        .mul(protocolFee)
+                        .div(10 ** 9)
+                        .div(365)
+                );
+            });
         });
 
         describe("when totalSupply is 0", () => {
