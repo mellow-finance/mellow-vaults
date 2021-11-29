@@ -4,8 +4,12 @@ import { Contract, Signer } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import Exceptions from "./library/Exceptions";
 import { ProtocolGovernance_Params } from "./library/Types";
-import { deployVaultRegistryAndProtocolGovernance } from "./library/Deployments";
+import {
+    deployVaultRegistryAndProtocolGovernance,
+    deployERC20Tokens,
+} from "./library/Deployments";
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
+import { ERC20 } from "./library/Types";
 
 describe("ProtocolGovernance", () => {
     const SECONDS_PER_DAY = 60 * 60 * 24;
@@ -28,6 +32,7 @@ describe("ProtocolGovernance", () => {
     let paramsDefault: ProtocolGovernance_Params;
     let defaultGovernanceDelay: number;
     let deploymentFixture: Function;
+    let tokens: ERC20[];
 
     before(async () => {
         [deployer, stranger, user1, user2, user3, protocolTreasury] =
@@ -84,6 +89,8 @@ describe("ProtocolGovernance", () => {
                 governanceDelay: BigNumber.from(timeout),
             };
 
+            tokens = await deployERC20Tokens(3);
+
             return {
                 protocolGovernance: protocolGovernance,
                 vaultRegistry: vaultRegistry,
@@ -106,8 +113,17 @@ describe("ProtocolGovernance", () => {
             expect(await protocolGovernance.vaultGovernances()).to.be.empty;
         });
 
+        it("has no allowed tokens", async () => {
+            expect(await protocolGovernance.tokenWhitelist()).to.be.empty;
+        });
+
         it("has empty pending claim allow list add", async () => {
             expect(await protocolGovernance.pendingClaimAllowlistAdd()).to.be
+                .empty;
+        });
+
+        it("has empty pending token whitelist add", async () => {
+            expect(await protocolGovernance.pendingTokenWhitelistAdd()).to.be
                 .empty;
         });
 
@@ -145,6 +161,15 @@ describe("ProtocolGovernance", () => {
         it("does not allow stranger to claim", async () => {
             expect(
                 await protocolGovernance.isAllowedToClaim(stranger.getAddress())
+            ).to.be.equal(false);
+        });
+
+        it("all tokens are not in whitelist by default", async () => {
+            expect(
+                await protocolGovernance.isAllowedToken(tokens[0].address)
+            ).to.be.equal(false);
+            expect(
+                await protocolGovernance.isAllowedToken(tokens[1].address)
             ).to.be.equal(false);
         });
 
@@ -914,6 +939,157 @@ describe("ProtocolGovernance", () => {
                     ).to.be.equal(true);
                 });
             });
+        });
+    });
+
+    describe("setPendingTokenWhitelistAdd", () => {
+        it("does not allow stranger to set pending token whitelist", async () => {
+            await expect(
+                protocolGovernance
+                    .connect(stranger)
+                    .setPendingTokenWhitelistAdd([])
+            ).to.be.revertedWith(Exceptions.ADMIN);
+        });
+
+        it("sets pending token whitelist add and timestamp", async () => {
+            timestamp += timeout;
+            sleepTo(timestamp);
+            await protocolGovernance.setPendingTokenWhitelistAdd([
+                tokens[0].address,
+                tokens[1].address,
+            ]);
+            expect(
+                await protocolGovernance.pendingTokenWhitelistAdd()
+            ).to.deep.equal([tokens[0].address, tokens[1].address]);
+            expect(
+                Math.abs(
+                    (await protocolGovernance.pendingTokenWhitelistAddTimestamp()) -
+                        (await protocolGovernance.governanceDelay()) -
+                        timestamp
+                )
+            ).to.be.lessThanOrEqual(10);
+        });
+    });
+
+    describe("commitTokenWhiteListAdd", () => {
+        it("commits pending token whitelist", async () => {
+            timestamp += timeout;
+            sleepTo(timestamp);
+            await protocolGovernance.setPendingTokenWhitelistAdd([
+                tokens[0].address,
+                tokens[1].address,
+            ]);
+            expect(
+                await protocolGovernance.pendingTokenWhitelistAdd()
+            ).to.deep.equal([tokens[0].address, tokens[1].address]);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await protocolGovernance.commitTokenWhiteListAdd();
+            expect(
+                await protocolGovernance.pendingTokenWhitelistAddTimestamp()
+            ).to.be.equal(BigNumber.from(0));
+            expect(await protocolGovernance.pendingTokenWhitelistAdd()).to.be
+                .empty;
+        });
+
+        describe("when called noy by admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    protocolGovernance
+                        .connect(stranger)
+                        .commitTokenWhiteListAdd()
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+        });
+
+        describe("when setPendingTokenWhitelistAdd has not been called", () => {
+            it("reverts", async () => {
+                await expect(
+                    protocolGovernance.commitTokenWhiteListAdd()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+
+        describe("when governance delay has not passed or has almost passed", () => {
+            it("reverts", async () => {
+                await protocolGovernance.setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
+                await expect(
+                    protocolGovernance.commitTokenWhiteListAdd()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                await sleep(
+                    Number(await protocolGovernance.governanceDelay()) - 5
+                );
+                await expect(
+                    protocolGovernance.commitTokenWhiteListAdd()
+                ).to.be.revertedWith(Exceptions.TIMESTAMP);
+            });
+        });
+
+        describe("when setting to identic addresses", () => {
+            it("passes", async () => {
+                await protocolGovernance.setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                    tokens[0].address,
+                ]);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await protocolGovernance.commitTokenWhiteListAdd();
+                expect(await protocolGovernance.tokenWhitelist()).to.deep.equal(
+                    [tokens[0].address, tokens[1].address]
+                );
+            });
+        });
+    });
+
+    describe("removeFromTokenWhitelist", () => {
+        describe("when called not by admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    protocolGovernance
+                        .connect(stranger)
+                        .removeFromTokenWhitelist(tokens[0].address)
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+        });
+
+        describe("when passed an address which is not in token whitelist", () => {
+            it("passes", async () => {
+                await protocolGovernance.setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await protocolGovernance.commitTokenWhiteListAdd();
+                await protocolGovernance.removeFromTokenWhitelist(
+                    tokens[2].address
+                );
+                expect(
+                    await protocolGovernance.isAllowedToken(tokens[1].address)
+                ).to.be.equal(true);
+                expect(
+                    await protocolGovernance.isAllowedToken(tokens[0].address)
+                ).to.be.equal(true);
+            });
+        });
+
+        it("removes", async () => {
+            await protocolGovernance.setPendingTokenWhitelistAdd([
+                tokens[0].address,
+                tokens[1].address,
+            ]);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
+            await protocolGovernance.commitTokenWhiteListAdd();
+            await protocolGovernance.removeFromTokenWhitelist(
+                tokens[0].address
+            );
+            expect(
+                await protocolGovernance.isAllowedToken(tokens[1].address)
+            ).to.be.equal(true);
+            expect(
+                await protocolGovernance.isAllowedToken(tokens[0].address)
+            ).to.be.equal(false);
         });
     });
 });

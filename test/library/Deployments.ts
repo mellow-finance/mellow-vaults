@@ -436,6 +436,17 @@ export async function deploySubVaultSystem(options: {
     const vaultTokens: ERC20[] = sortContractsByAddresses(
         await deployERC20Tokens(options.tokensCount)
     );
+    let allowedTokens: Address[] = new Array<Address>(options.tokensCount);
+    for (var i = 0; i < options.tokensCount; ++i) {
+        allowedTokens[i] = vaultTokens[i].address;
+    }
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .setPendingTokenWhitelistAdd(allowedTokens);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .commitTokenWhiteListAdd();
     await protocolGovernance
         .connect(options.adminSigner)
         .setPendingVaultGovernancesAdd([

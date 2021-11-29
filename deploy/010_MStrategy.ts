@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { equals } from "ramda";
+import { sleep } from "../test/library/Helpers";
 
 const setupVault = async (
     hre: HardhatRuntimeEnvironment,
@@ -37,7 +38,6 @@ const setupVault = async (
             )} with nft = ${vaultNft} already deployed`
         );
     }
-
     if (strategyParams) {
         const currentParams = await read(
             contractName,
@@ -101,7 +101,7 @@ const setupVault = async (
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury, mStrategy, weth, wbtc } =
+    const { deployer, admin, mStrategyTreasury, mStrategy, weth, wbtc } =
         await getNamedAccounts();
     const gatewayVaultGovernance = await get("GatewayVaultGovernance");
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
@@ -139,7 +139,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         [tokens, [], deployer],
         { strategyTreasury: mStrategyTreasury }
     );
-
     const approvedGw = await read(
         "VaultRegistry",
         "isApprovedForAll",
@@ -180,6 +179,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             true
         );
     }
+    // registring tokens in protocol governance
+    await execute(
+        "ProtocolGovernance",
+        {
+            from: admin,
+            log: true,
+            autoMine: true,
+        },
+        "setPendingTokenWhitelistAdd",
+        tokens
+    );
+    let delay: number = await read(
+        "ProtocolGovernance",
+        "governanceDelay"
+    );
+    await sleep(Number(delay));
+    await execute(
+        "ProtocolGovernance",
+        {
+            from: admin,
+            log: true,
+            autoMine: true,
+        },
+        "commitTokenWhiteListAdd"
+    );
     await setupVault(
         hre,
         gatewayVaultNft,
@@ -204,7 +228,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             ],
         }
     );
-
     await setupVault(
         hre,
         lpIssuerNft,

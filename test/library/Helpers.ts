@@ -1,9 +1,11 @@
-import { Contract } from "ethers";
+import { Contract, Signer } from "ethers";
 import { network, ethers } from "hardhat";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomBytes } from "crypto";
+import { ProtocolGovernance, ERC20 } from "./Types";
+import { Address } from "hardhat-deploy/dist/types";
 
 export const randomAddress = () => {
     const id = randomBytes(32).toString("hex");
@@ -80,4 +82,20 @@ export const withSigner = async (
         method: "hardhat_stopImpersonatingAccount",
         params: [address],
     });
+};
+
+export const setTokenWhitelist = async (
+    protocolGovernance: ProtocolGovernance,
+    tokens: ERC20[],
+    admin: Signer
+) => {
+    let allowedAddresses = new Array<Address>(tokens.length);
+    for (var i = 0; i < tokens.length; ++i) {
+        allowedAddresses[i] = tokens[i].address;
+    }
+    await protocolGovernance
+        .connect(admin)
+        .setPendingTokenWhitelistAdd(allowedAddresses);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await protocolGovernance.connect(admin).commitTokenWhiteListAdd();
 };
