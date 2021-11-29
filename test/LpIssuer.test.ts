@@ -135,7 +135,7 @@ describe("LpIssuer", () => {
             const address = await read("VaultRegistry", "vaultForNft", nft);
             const lpIssuer = await ethers.getContractAt("LpIssuer", address);
             const tokens = await lpIssuer.vaultTokens();
-            const protocolFee = 3 * 10 ** 9;
+            const protocolFee = 3 * 10 ** 3;
             await execute(
                 "LpIssuerGovernance",
                 { from: admin, autoMine: true },
@@ -209,14 +209,14 @@ describe("LpIssuer", () => {
                     .sub(
                         balance
                             .mul(managementFee)
-                            .div(10 ** 9)
+                            .div(10 ** 3)
                             .div(365)
                     );
                 expect(diff.toNumber()).to.lte(2);
                 diff = (await lpIssuer.balanceOf(protocolTreasury)).add(1).sub(
                     balance
                         .mul(protocolFee)
-                        .div(10 ** 9)
+                        .div(10 ** 3)
                         .div(365)
                 );
                 expect(diff.toNumber()).to.lte(2);
@@ -250,11 +250,11 @@ describe("LpIssuer", () => {
 
         describe("when not initialized", () => {
             it("passes", async () => {
-                await expect(LpIssuer.deposit([10 ** 9, 10 ** 9], [])).to.not.be
+                await expect(LpIssuer.deposit([10 ** 3, 10 ** 3], [])).to.not.be
                     .reverted;
                 expect(
                     await LpIssuer.balanceOf(await deployer.getAddress())
-                ).to.equal(10 ** 9);
+                ).to.equal(10 ** 3);
             });
         });
 
@@ -266,16 +266,16 @@ describe("LpIssuer", () => {
                 const token1initialBalance = BigNumber.from(
                     await tokens[1].balanceOf(await deployer.getAddress())
                 );
-                await LpIssuer.deposit([10 ** 9 + 1, 10 ** 9 + 1], []);
+                await LpIssuer.deposit([10 ** 3 + 1, 10 ** 3 + 1], []);
                 expect(
                     await LpIssuer.balanceOf(await deployer.getAddress())
-                ).to.equal(10 ** 9);
+                ).to.equal(10 ** 3);
                 expect(
                     await tokens[0].balanceOf(await deployer.getAddress())
-                ).to.equal(token0initialBalance.sub(10 ** 9));
+                ).to.equal(token0initialBalance.sub(10 ** 3));
                 expect(
                     await tokens[1].balanceOf(await deployer.getAddress())
-                ).to.equal(token1initialBalance.sub(10 ** 9));
+                ).to.equal(token1initialBalance.sub(10 ** 3));
             });
         });
     });
@@ -299,7 +299,7 @@ describe("LpIssuer", () => {
             const address = await read("VaultRegistry", "vaultForNft", nft);
             const lpIssuer = await ethers.getContractAt("LpIssuer", address);
             const tokens = await lpIssuer.vaultTokens();
-            const protocolFee = 3 * 10 ** 9;
+            const protocolFee = 3 * 10 ** 3;
             await execute(
                 "LpIssuerGovernance",
                 { from: admin, autoMine: true },
@@ -371,13 +371,13 @@ describe("LpIssuer", () => {
                 expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(
                     balance
                         .mul(managementFee)
-                        .div(10 ** 9)
+                        .div(10 ** 3)
                         .div(365)
                 );
                 expect(await lpIssuer.balanceOf(protocolTreasury)).to.eq(
                     balance
                         .mul(protocolFee)
-                        .div(10 ** 9)
+                        .div(10 ** 3)
                         .div(365)
                 );
 
@@ -418,18 +418,18 @@ describe("LpIssuer", () => {
 
         describe("when totalSupply is greater then 0", () => {
             it("passes", async () => {
-                await LpIssuer.deposit([10 ** 9, 10 ** 9], []);
+                await LpIssuer.deposit([10 ** 3, 10 ** 3], []);
                 await expect(
                     LpIssuer.withdraw(await deployer.getAddress(), 1, [])
                 ).to.not.be.reverted;
                 expect(
                     await LpIssuer.balanceOf(await deployer.getAddress())
-                ).to.equal(10 ** 9 - 1);
+                ).to.equal(10 ** 3 - 1);
 
                 await expect(
                     LpIssuer.withdraw(
                         await deployer.getAddress(),
-                        10 ** 9 - 1,
+                        10 ** 3 - 1,
                         []
                     )
                 ).to.not.be.reverted;

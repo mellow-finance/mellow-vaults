@@ -13,6 +13,7 @@ export default class Exceptions {
     static readonly SORTED_AND_UNIQUE: string = "SAU";
     static readonly ERC20_INSUFFICIENT_BALANCE: string =
         "ERC20: transfer amount exceeds balance";
+    static readonly SAFE_ERC20: string = "SafeERC20: low-level call failed";
     static readonly VALID_PULL_DESTINATION: string = "INTRA";
     static readonly CONTRACT_REQUIRED: string = "C";
     static readonly SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE = "VG";
