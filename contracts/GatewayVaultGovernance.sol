@@ -5,6 +5,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./VaultGovernance.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all Gateway Vaults params and can deploy a new Gateway Vault.
 contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
@@ -39,7 +40,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     /// @inheritdoc IGatewayVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
         IGatewayVault vault = IGatewayVault(_internalParams.registry.vaultForNft(nft));
-        require((params.redirects.length == 0) || (params.redirects.length == vault.subvaultNfts().length), "RL");
+        require((params.redirects.length == 0) || (params.redirects.length == vault.subvaultNfts().length), Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH);
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }

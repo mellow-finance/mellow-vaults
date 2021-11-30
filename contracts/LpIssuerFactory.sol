@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./interfaces/IVaultFactory.sol";
 import "./LpIssuer.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for LpIssuerGovernance that can create new LpIssuers.
 contract LpIssuerFactory is IVaultFactory {
@@ -16,7 +17,7 @@ contract LpIssuerFactory is IVaultFactory {
 
     /// @inheritdoc IVaultFactory
     function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
-        require(msg.sender == address(vaultGovernance), "VG");
+        require(msg.sender == address(vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         (string memory name, string memory symbol) = abi.decode(options, (string, string));
         LpIssuer vault = new LpIssuer(vaultGovernance, vaultTokens, name, symbol);
         return IVault(address(vault));

@@ -8,6 +8,7 @@ import "./trader/interfaces/IChiefTrader.sol";
 import "./trader/interfaces/ITrader.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is Vault, ITrader {
@@ -90,7 +91,7 @@ contract ERC20Vault is Vault, ITrader {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!isVaultToken(tokens[i]), Exceptions.OTHER_VAULT_TOKENS); // vault token is part of TVL
         }
     }
 

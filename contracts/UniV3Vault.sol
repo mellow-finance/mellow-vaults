@@ -10,6 +10,7 @@ import "./interfaces/IUniV3VaultGovernance.sol";
 import "./libraries/external/TickMath.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IERC721Receiver, Vault {
@@ -37,7 +38,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         address[] memory vaultTokens_,
         uint24 fee
     ) Vault(vaultGovernance_, vaultTokens_) {
-        require(_vaultTokens.length == 2, "TL");
+        require(_vaultTokens.length == 2, Exceptions.TOKEN_LENGTH);
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );
@@ -217,7 +218,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         if (options.length == 0)
             return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
 
-        require(options.length == 32 * 3, "IOL");
+        require(options.length == 32 * 3, Exceptions.IO_LENGTH);
         return abi.decode(options, (Options));
     }
 

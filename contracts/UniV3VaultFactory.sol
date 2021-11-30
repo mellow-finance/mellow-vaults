@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./interfaces/IVaultFactory.sol";
 import "./UniV3Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for UniV3VaultGovernance that can create new UniV3 Vaults.
 contract UniV3VaultFactory is IVaultFactory {
@@ -18,7 +19,7 @@ contract UniV3VaultFactory is IVaultFactory {
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Should equal UniV3 pool fee
     function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
-        require(msg.sender == address(vaultGovernance), "VG");
+        require(msg.sender == address(vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         uint256 fee = abi.decode(options, (uint256));
         UniV3Vault vault = new UniV3Vault(vaultGovernance, vaultTokens, uint24(fee));
         return IVault(vault);

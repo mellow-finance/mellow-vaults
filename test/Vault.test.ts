@@ -239,7 +239,7 @@ describe("Vault", () => {
                     gatewayVault
                         .connect(stranger)
                         .claimRewards(ERC20Vault.address, [])
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
             });
         });
         describe("when from Vault is not registered", () => {
