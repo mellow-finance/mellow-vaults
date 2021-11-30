@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is Vault {
@@ -44,7 +45,7 @@ contract ERC20Vault is Vault {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
-            require(!_isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
+            require(!_isVaultToken(tokens[i]), Exceptions.OTHER_VAULT_TOKENS); // vault token is part of TVL
         }
     }
 }

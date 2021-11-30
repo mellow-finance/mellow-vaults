@@ -10,6 +10,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./DefaultAccessControl.sol";
 import "./LpIssuerGovernance.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
@@ -35,7 +36,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         string memory name_,
         string memory symbol_
     ) ERC20(name_, symbol_) {
-        require(CommonLibrary.isSortedAndUnique(vaultTokens_), "SAU");
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), Exceptions.SORTED_AND_UNIQUE);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
@@ -63,7 +64,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     }
 
     function initialize(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), "VG");
+        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         _nft = nft_;
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -76,9 +77,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 thisNft = _nft;
-        require(thisNft > 0, "INIT");
-        require(_subvaultNft > 0, "INITSV");
-        require(registry.ownerOf(thisNft) == address(this), "INITOWN");
+        require(thisNft > 0, Exceptions.INITIALIZED_ALREADY);
+        require(_subvaultNft > 0, Exceptions.INITIALIZE_SUB_VAULT);
+        require(registry.ownerOf(thisNft) == address(this), Exceptions.INITIALIZE_OWNER);
         IVault subvault = _subvault();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
@@ -120,7 +121,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         require(
             amountToMint + balanceOf(msg.sender) <=
                 ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
-            "LPA"
+            Exceptions.LIMIT_PER_ADDRESS
         );
 
         _chargeFees(thisNft, tvl, supply, actualTokenAmounts, amountToMint, false);
@@ -142,7 +143,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         bytes memory options
     ) external {
         uint256 supply = totalSupply();
-        require(supply > 0, "TS0");
+        require(supply > 0, Exceptions.TOTAL_SUPPLY_IS_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         // TODO: Check price manipulation here
         uint256[] memory tvl = _subvault().tvl();
@@ -163,9 +164,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
 
     /// @inheritdoc ILpIssuer
     function addSubvault(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), "RVG");
-        require(_subvaultNft == 0, "SBIN");
-        require(nft_ > 0, "NFT0");
+        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(_subvaultNft == 0, Exceptions.SUB_VAULT_INITIALIZED);
+        require(nft_ > 0, Exceptions.NFT_ZERO);
         _subvaultNft = nft_;
     }
 
@@ -176,7 +177,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         bytes calldata
     ) external returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(msg.sender == address(registry), "NFTVR");
+        require(msg.sender == address(registry), Exceptions.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
         return this.onERC721Received.selector;
     }

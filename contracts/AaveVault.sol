@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
 import "./Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 contract AaveVault is Vault {
@@ -19,7 +20,7 @@ contract AaveVault is Vault {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             address aToken = _getAToken(_vaultTokens[i]);
-            require(aToken != address(0), "ZT");
+            require(aToken != address(0), Exceptions.ZERO_TOKEN);
             _aTokens[i] = aToken;
             _tvls.push(0);
         }

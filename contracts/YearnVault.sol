@@ -5,6 +5,7 @@ import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/external/yearn/IYearnVault.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
 import "./Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
 contract YearnVault is Vault {
