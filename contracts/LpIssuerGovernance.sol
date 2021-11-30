@@ -189,7 +189,6 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
             (uint256, string, string)
         );
         (vault, nft) = super.deployVault(vaultTokens, abi.encode(name, symbol), msg.sender);
-        // TODO - add IERC165 check of the subvault interface == gateway vault interface
         IVaultRegistry registry = _internalParams.registry;
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
         registry.safeTransferFrom(msg.sender, address(vault), subvaultNft);

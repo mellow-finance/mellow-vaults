@@ -71,7 +71,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
 
     /// @inheritdoc IGatewayVault
     function addSubvaults(uint256[] memory nfts) external {
-        require(msg.sender == address(_vaultGovernance), "RVG"); // TODO: rename to "VG"
+        require(msg.sender == address(_vaultGovernance), "RVG");
         require(_subvaultNfts.length == 0, "SBIN");
         require(nfts.length > 0, "SBL");
         address[] memory selfTokens = _vaultTokens;

@@ -49,10 +49,8 @@ contract AaveVault is Vault {
             }
             address token = tokens[i];
             _allowTokenIfNecessary(token);
-            // TODO: Check what is 0
             _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), referralCode);
         }
-        // TODO: Check price manipulation here for LPIssuer
         updateTvls();
         actualTokenAmounts = tokenAmounts;
     }
