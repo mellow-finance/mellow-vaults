@@ -10,7 +10,6 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { Contract } from "@ethersproject/contracts";
 import { equals } from "ramda";
 import Exceptions from "./library/Exceptions";
-import { TASK_ETHERSCAN_VERIFY } from "hardhat-deploy";
 
 describe("YearnVault", () => {
     let deploymentFixture: Function;
