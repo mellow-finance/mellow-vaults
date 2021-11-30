@@ -217,7 +217,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
         if (options.length == 0)
             return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
-        }
+
         require(options.length == 32 * 3, Exceptions.IO_LENGTH);
         return abi.decode(options, (Options));
     }
