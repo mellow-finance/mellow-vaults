@@ -758,7 +758,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     );
     await gatewayVaultGovernance
         .connect(options.adminSigner)
-        .stageDelayedStrategyParams(gatewayNft, [options.treasury, nfts]);
+        .stageDelayedStrategyParams(gatewayNft, [nfts]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await gatewayVaultGovernance
         .connect(options.adminSigner)

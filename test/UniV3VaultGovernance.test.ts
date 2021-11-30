@@ -55,24 +55,6 @@ describe("UniV3VaultGovernance", () => {
         });
     });
 
-    describe("delayedStrategyParams", () => {
-        it("returns correct params", async () => {
-            expect(
-                await UniV3VaultGovernance.delayedStrategyParams(nftUniV3)
-            ).to.be.deep.equal([await treasury.getAddress()]);
-        });
-
-        describe("when passed unknown nft", () => {
-            it("returns empty struct", async () => {
-                expect(
-                    await UniV3VaultGovernance.delayedStrategyParams(
-                        nftUniV3 + 42
-                    )
-                ).to.be.deep.equal([ethers.constants.AddressZero]);
-            });
-        });
-    });
-
     describe("delayedProtocolParams", () => {
         it("returns correct params", async () => {
             expect(
@@ -100,87 +82,6 @@ describe("UniV3VaultGovernance", () => {
                     positionManager: ethers.constants.AddressZero,
                 });
             });
-        });
-    });
-
-    describe("stagedDelayedStrategyParams", () => {
-        it("returns params", async () => {
-            const address = await treasury.getAddress();
-            await UniV3VaultGovernance.connect(
-                admin
-            ).stageDelayedStrategyParams(nftUniV3, {
-                strategyTreasury: address,
-            });
-
-            expect(
-                await UniV3VaultGovernance.stagedDelayedStrategyParams(nftUniV3)
-            ).to.be.deep.equal([address]);
-        });
-
-        describe("when passed unknown nft", () => {
-            it("returns empty struct", async () => {
-                expect(
-                    await UniV3VaultGovernance.stagedDelayedStrategyParams(
-                        nftUniV3 + 42
-                    )
-                ).to.be.deep.equal([ethers.constants.AddressZero]);
-            });
-        });
-    });
-
-    describe("stageDelayedStrategyParams", () => {
-        it("stages DelayedStrategyParams", async () => {
-            await UniV3VaultGovernance.connect(
-                admin
-            ).stageDelayedStrategyParams(nftUniV3, [
-                await anotherTreasury.getAddress(),
-            ]);
-            expect(
-                await UniV3VaultGovernance.connect(
-                    admin
-                ).stagedDelayedStrategyParams(nftUniV3)
-            ).to.be.deep.equal([await anotherTreasury.getAddress()]);
-        });
-
-        it("emits StageDelayedStrategyParams event", async () => {
-            await expect(
-                UniV3VaultGovernance.connect(admin).stageDelayedStrategyParams(
-                    nftUniV3,
-                    [await anotherTreasury.getAddress()]
-                )
-            ).to.emit(UniV3VaultGovernance, "StageDelayedStrategyParams");
-        });
-    });
-
-    describe("commitDelayedStrategyParams", () => {
-        it("commits delayed strategy params", async () => {
-            await UniV3VaultGovernance.connect(
-                admin
-            ).stageDelayedStrategyParams(nftUniV3, [
-                await anotherTreasury.getAddress(),
-            ]);
-            await sleep(Number(await protocolGovernance.governanceDelay()));
-            await UniV3VaultGovernance.connect(
-                admin
-            ).commitDelayedStrategyParams(nftUniV3);
-            expect(
-                (await UniV3VaultGovernance.delayedStrategyParams(nftUniV3))
-                    .strategyTreasury
-            ).to.be.equal(await anotherTreasury.getAddress());
-        });
-
-        it("emits CommitDelayedStrategyParams event", async () => {
-            await UniV3VaultGovernance.connect(
-                admin
-            ).stageDelayedStrategyParams(nftUniV3, [
-                await anotherTreasury.getAddress(),
-            ]);
-            await sleep(Number(await protocolGovernance.governanceDelay()));
-            await expect(
-                UniV3VaultGovernance.connect(admin).commitDelayedStrategyParams(
-                    nftUniV3
-                )
-            ).to.emit(UniV3VaultGovernance, "CommitDelayedStrategyParams");
         });
     });
 
