@@ -2,13 +2,14 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./libraries/CommonLibrary.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
-abstract contract Vault is IVault {
+abstract contract Vault is IVault, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IVaultGovernance internal _vaultGovernance;
@@ -50,7 +51,7 @@ abstract contract Vault is IVault {
 
     // -------------------  PUBLIC, MUTATING, VaultGovernance  -------------------
 
-    function initialize(uint256 nft_) external {
+    function initialize(uint256 nft_) external nonReentrant {
         require(msg.sender == address(_vaultGovernance), "VG");
         _nft = nft_;
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
@@ -64,7 +65,7 @@ abstract contract Vault is IVault {
         address[] memory tokens,
         uint256[] memory tokenAmounts,
         bytes memory options
-    ) public returns (uint256[] memory actualTokenAmounts) {
+    ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(_nft > 0, "INIT");
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
@@ -100,7 +101,7 @@ abstract contract Vault is IVault {
         address[] memory tokens,
         uint256[] memory tokenAmounts,
         bytes memory options
-    ) external returns (uint256[] memory actualTokenAmounts) {
+    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
@@ -113,7 +114,7 @@ abstract contract Vault is IVault {
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
-    function reclaimTokens(address to, address[] memory tokens) external {
+    function reclaimTokens(address to, address[] memory tokens) external nonReentrant {
         require(_nft > 0, "INIT");
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
@@ -136,7 +137,7 @@ abstract contract Vault is IVault {
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     /// @inheritdoc IVault
-    function claimRewards(address from, bytes memory data) external override {
+    function claimRewards(address from, bytes memory data) external override nonReentrant {
         require(_nft > 0, "INIT");
         require(_isApprovedOrOwner(msg.sender), "ADM");
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
