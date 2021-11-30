@@ -568,12 +568,6 @@ export async function deploySubVaultSystem(options: {
         const [deployer] = await ethers.getSigners();
         await vaultRegistry
             .connect(signer)
-            .registerVault(
-                await deployer.getAddress(),
-                await deployer.getAddress()
-            );
-        await vaultRegistry
-            .connect(signer)
             .registerVault(options.vaultOwner, options.vaultOwner);
     });
     // />
