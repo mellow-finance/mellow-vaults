@@ -34,12 +34,4 @@ contract CommonTest {
     function isContractTest(address addr) external view returns (bool) {
         return CommonLibrary.isContract(addr);
     }
-
-    function isSubsetOfTest(
-        address[] memory tokens,
-        address[] memory tokensToCheck,
-        address[] memory amountsToCheck
-    ) external {
-        CommonLibrary._isSubsetOf(tokens, tokensToCheck, amountsToCheck);
-    }
 }
