@@ -91,4 +91,6 @@ interface IVault {
     /// @param from Address of the reward pool
     /// @param data Abi encoded call to the `from` address
     function claimRewards(address from, bytes memory data) external;
+
+    function isVaultToken(address token) external view returns (bool);
 }

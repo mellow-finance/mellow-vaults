@@ -35,6 +35,29 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
+export async function deployTraders(options: {
+    protocolGovernance: ProtocolGovernance;
+    adminSigner: SignerWithAddress | Signer;
+}): Promise<{
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
+}> {
+    const { uniswapV3Router } = await getNamedAccounts();
+    const chiefTrader: Contract = await (
+        await ethers.getContractFactory("ChiefTrader")
+    ).deploy(options.protocolGovernance.address);
+    const uniV3Trader: Contract = await (
+        await ethers.getContractFactory("UniV3Trader")
+    ).deploy(uniswapV3Router);
+    await chiefTrader
+        .connect(options.adminSigner)
+        .addTrader(uniV3Trader.address);
+    return {
+        chiefTrader,
+        uniV3Trader,
+    };
+}
+
 export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
     let tokens: ERC20[] = [];
     let token_constructorArgs: ERC20Test_constructorArgs[] = [];
@@ -166,6 +189,8 @@ export async function deployVaultGovernanceSystem(options: {
     AaveVaultGovernance: VaultGovernance;
     UniV3VaultGovernance: VaultGovernance;
     LpIssuerGovernance: LpIssuerGovernance;
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
 }> {
     const { vaultRegistry, protocolGovernance } =
         await deployVaultRegistryAndProtocolGovernance({
@@ -174,6 +199,11 @@ export async function deployVaultGovernanceSystem(options: {
             adminSigner: options.adminSigner,
             treasury: options.treasury,
         });
+
+    const { chiefTrader, uniV3Trader } = await deployTraders({
+        protocolGovernance: protocolGovernance,
+        adminSigner: options.adminSigner,
+    });
 
     let params: VaultGovernance_InternalParams = {
         protocolGovernance: protocolGovernance.address,
@@ -199,7 +229,13 @@ export async function deployVaultGovernanceSystem(options: {
     const additionalParamsForUniV3 = {
         positionManager: uniswapV3PositionManager,
     };
-    ERC20VaultGovernance = await contractFactoryERC20.deploy(params, []);
+    const additionalParamsForERC20 = {
+        trader: chiefTrader.address,
+    };
+    ERC20VaultGovernance = await contractFactoryERC20.deploy(
+        params,
+        additionalParamsForERC20
+    );
     AaveVaultGovernance = await contractFactoryAave.deploy(
         params,
         additionalParamsForAave
@@ -271,6 +307,8 @@ export async function deployVaultGovernanceSystem(options: {
         AaveVaultGovernance,
         UniV3VaultGovernance,
         LpIssuerGovernance,
+        chiefTrader,
+        uniV3Trader,
     };
 }
 
@@ -429,6 +467,8 @@ export async function deploySubVaultSystem(options: {
     UniV3Vault: Vault;
     nftUniV3: number;
     aTokens: ERC20[];
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
 }> {
     const {
         vaultRegistry,
@@ -441,6 +481,8 @@ export async function deploySubVaultSystem(options: {
         AaveVaultGovernance,
         UniV3VaultGovernance,
         LpIssuerGovernance,
+        chiefTrader,
+        uniV3Trader,
     } = await deployVaultGovernanceSystem({
         adminSigner: options.adminSigner,
         treasury: options.treasury,
@@ -584,6 +626,8 @@ export async function deploySubVaultSystem(options: {
         aTokens: aTokens,
         LpIssuerFactory: LpIssuerFactory,
         LpIssuerGovernance: LpIssuerGovernance,
+        chiefTrader: chiefTrader,
+        uniV3Trader: uniV3Trader,
     };
 }
 
@@ -619,6 +663,8 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     gatewayNft: number;
     LpIssuerFactory: VaultFactory;
     LpIssuerGovernance: VaultGovernance;
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
 }> {
     const {
         ERC20VaultFactory,
@@ -640,6 +686,8 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         anotherNftERC20,
         LpIssuerGovernance,
         LpIssuerFactory,
+        chiefTrader,
+        uniV3Trader,
     } = await deploySubVaultSystem({
         tokensCount: 2,
         adminSigner: options.adminSigner,
@@ -754,6 +802,8 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
         gatewayNft,
         LpIssuerGovernance,
         LpIssuerFactory,
+        chiefTrader,
+        uniV3Trader,
     };
 }
 
