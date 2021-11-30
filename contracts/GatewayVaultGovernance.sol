@@ -16,7 +16,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     /// @inheritdoc IGatewayVaultGovernance
     function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0), redirects: new uint256[](0)});
+            return DelayedStrategyParams({redirects: new uint256[](0)});
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
     }
@@ -24,7 +24,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     /// @inheritdoc IGatewayVaultGovernance
     function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_stagedDelayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0), redirects: new uint256[](0)});
+            return DelayedStrategyParams({redirects: new uint256[](0)});
         }
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
     }
@@ -40,7 +40,10 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     /// @inheritdoc IGatewayVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
         IGatewayVault vault = IGatewayVault(_internalParams.registry.vaultForNft(nft));
-        require((params.redirects.length == 0) || (params.redirects.length == vault.subvaultNfts().length), Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH);
+        require(
+            (params.redirects.length == 0) || (params.redirects.length == vault.subvaultNfts().length),
+            Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH
+        );
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }

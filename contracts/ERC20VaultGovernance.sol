@@ -11,64 +11,22 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
-    constructor(
-        InternalParams memory internalParams_,
-        DelayedProtocolParams memory delayedProtocolParams_
-    ) 
-        VaultGovernance(internalParams_) 
+    constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
+        VaultGovernance(internalParams_)
     {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
     /// @inheritdoc IERC20VaultGovernance
-    function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
-        if (_delayedStrategyParams[nft].length == 0)
-            return DelayedStrategyParams({
-                strategyTreasury: address(0)
-            });
-
-        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
-    }
-
-    /// @inheritdoc IERC20VaultGovernance
-    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
-        if (_stagedDelayedStrategyParams[nft].length == 0)
-            return DelayedStrategyParams({
-                strategyTreasury: address(0)
-            });
-
-        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
-    }
-
-    /// @inheritdoc IERC20VaultGovernance
-    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        _stageDelayedStrategyParams(nft, abi.encode(params));
-        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
-    }
-
-    /// @inheritdoc IERC20VaultGovernance
-    function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft);
-        emit CommitDelayedStrategyParams(
-            tx.origin,
-            msg.sender,
-            nft,
-            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
-        );
-    }
-
-    /// @inheritdoc IERC20VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) 
-            return DelayedProtocolParams({trader: ITrader(address(0))});
+        if (_delayedProtocolParams.length == 0) return DelayedProtocolParams({trader: ITrader(address(0))});
 
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
     /// @inheritdoc IERC20VaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
-        if (_stagedDelayedProtocolParams.length == 0)
-            return DelayedProtocolParams({trader: ITrader(address(0))});
+        if (_stagedDelayedProtocolParams.length == 0) return DelayedProtocolParams({trader: ITrader(address(0))});
 
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -88,32 +46,6 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
         );
     }
-
-    /// @notice Emitted when new DelayedStrategyParams are staged for commit
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param nft VaultRegistry NFT of the vault
-    /// @param params New params that were staged for commit
-    /// @param when When the params could be committed
-    event StageDelayedStrategyParams(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        DelayedStrategyParams params,
-        uint256 when
-    );
-
-    /// @notice Emitted when new DelayedStrategyParams are committed
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param nft VaultRegistry NFT of the vault
-    /// @param params New params that are committed
-    event CommitDelayedStrategyParams(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        DelayedStrategyParams params
-    );
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction
