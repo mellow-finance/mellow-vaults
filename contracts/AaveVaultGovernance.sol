@@ -17,39 +17,6 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     }
 
     /// @inheritdoc IAaveVaultGovernance
-    function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {
-        if (_delayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0)});
-        }
-        return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
-    }
-
-    /// @inheritdoc IAaveVaultGovernance
-    function stagedDelayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
-        if (_stagedDelayedStrategyParams[nft].length == 0) {
-            return DelayedStrategyParams({strategyTreasury: address(0)});
-        }
-        return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
-    }
-
-    /// @inheritdoc IAaveVaultGovernance
-    function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        _stageDelayedStrategyParams(nft, abi.encode(params));
-        emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
-    }
-
-    /// @inheritdoc IAaveVaultGovernance
-    function commitDelayedStrategyParams(uint256 nft) external {
-        _commitDelayedStrategyParams(nft);
-        emit CommitDelayedStrategyParams(
-            tx.origin,
-            msg.sender,
-            nft,
-            abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams))
-        );
-    }
-
-    /// @inheritdoc IAaveVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         if (_delayedProtocolParams.length == 0) {
             return DelayedProtocolParams({lendingPool: ILendingPool(address(0))});
@@ -80,32 +47,6 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
         );
     }
-
-    /// @notice Emitted when new DelayedStrategyParams are staged for commit
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param nft VaultRegistry NFT of the vault
-    /// @param params New params that were staged for commit
-    /// @param when When the params could be committed
-    event StageDelayedStrategyParams(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        DelayedStrategyParams params,
-        uint256 when
-    );
-
-    /// @notice Emitted when new DelayedStrategyParams are committed
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
-    /// @param nft VaultRegistry NFT of the vault
-    /// @param params New params that are committed
-    event CommitDelayedStrategyParams(
-        address indexed origin,
-        address indexed sender,
-        uint256 indexed nft,
-        DelayedStrategyParams params
-    );
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction
