@@ -53,7 +53,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(_protocolGovernance.isVaultGovernance(msg.sender), Exceptions.ADMIN);
+        require(_protocolGovernance.isVaultGovernance(msg.sender), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
