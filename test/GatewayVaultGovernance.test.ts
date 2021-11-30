@@ -147,9 +147,8 @@ describe("GatewayVaultGovernance", () => {
                 strategyTreasury: await treasury.getAddress(),
             });
             expect(
-                await gatewayVaultGovernance
-                    .connect(admin)
-                    .strategyTreasury(gatewayNft)
+                (await gatewayVaultGovernance.delayedStrategyParams(gatewayNft))
+                    .strategyTreasury
             ).to.be.equal(await treasury.getAddress());
         });
     });

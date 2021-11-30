@@ -240,7 +240,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         delayedStrategyParams: {
             strategyTreasury: mStrategyTreasury,
+            strategyPerformanceTreasury: mStrategyTreasury,
             managementFee: 2 * 10 ** 9,
+            performanceFee: 20 * 10 ** 9,
         },
         strategyParams: {
             tokenLimitPerAddress: hre.ethers.constants.MaxUint256,

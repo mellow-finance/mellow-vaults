@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "./interfaces/IProtocolGovernance.sol";
@@ -42,11 +42,6 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         require((params.redirects.length == 0) || (params.redirects.length == vault.subvaultNfts().length), "RL");
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
-    }
-
-    /// @inheritdoc IVaultGovernance
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
     }
 
     /// @notice Deploy a new vault

@@ -46,10 +46,6 @@ interface IVaultGovernance {
     /// @dev The Internal Params could be committed after internalParamsTimestamp
     function stagedInternalParams() external view returns (InternalParams memory);
 
-    /// @notice Reference to Strategy Treasury address.
-    /// @param nft Nft of the vault
-    function strategyTreasury(uint256 nft) external view returns (address);
-
     // -------------------  PUBLIC, MUTATING  -------------------
 
     /// @notice Instantly initialize governance with factory.

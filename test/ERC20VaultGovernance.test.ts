@@ -110,14 +110,6 @@ describe("ERC20VaultGovernance", () => {
         });
     });
 
-    describe("strategyTreasury", () => {
-        it("returns correct strategy treasury", async () => {
-            expect(
-                await ERC20VaultGovernance.strategyTreasury(nftERC20)
-            ).to.be.equal(await treasury.getAddress());
-        });
-    });
-
     describe("commitDelayedStrategyParams", () => {
         it("commits delayed strategy params", async () => {
             await ERC20VaultGovernance.connect(
@@ -130,7 +122,8 @@ describe("ERC20VaultGovernance", () => {
                 admin
             ).commitDelayedStrategyParams(nftERC20);
             expect(
-                await ERC20VaultGovernance.strategyTreasury(nftERC20)
+                (await ERC20VaultGovernance.delayedStrategyParams(nftERC20))
+                    .strategyTreasury
             ).to.be.equal(await anotherTreasury.getAddress());
         });
 

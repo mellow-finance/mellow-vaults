@@ -13,6 +13,7 @@ export default class Exceptions {
     static readonly SORTED_AND_UNIQUE: string = "SAU";
     static readonly ERC20_INSUFFICIENT_BALANCE: string =
         "ERC20: transfer amount exceeds balance";
+    static readonly SAFE_ERC20: string = "SafeERC20: low-level call failed";
     static readonly VALID_PULL_DESTINATION: string = "INTRA";
     static readonly CONTRACT_REQUIRED: string = "C";
     static readonly SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE = "VG";
@@ -35,5 +36,8 @@ export default class Exceptions {
     static readonly YEARN_VAULTS: string = "YV";
     static readonly LOCKED_NFT: string = "LCKD";
     static readonly TOKEN_OWNER: string = "TO";
+    static readonly MAX_MANAGEMENT_FEE: string = "MMF";
+    static readonly MAX_PERFORMANCE_FEE: string = "MPFF";
+    static readonly MAX_PROTOCOL_FEE: string = "MPF";
 }
 // TODO: Remove outdated exceptions
