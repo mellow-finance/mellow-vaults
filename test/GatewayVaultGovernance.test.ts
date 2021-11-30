@@ -56,7 +56,6 @@ describe("GatewayVaultGovernance", () => {
                         gatewayNft,
                         {
                             redirects: [1, 2, 3],
-                            strategyTreasury: await treasury.getAddress(),
                         }
                     )
                 ).to.be.revertedWith(
@@ -71,7 +70,6 @@ describe("GatewayVaultGovernance", () => {
                     .connect(admin)
                     .stageDelayedStrategyParams(gatewayNft, {
                         redirects: [],
-                        strategyTreasury: await treasury.getAddress(),
                     })
             ).to.emit(gatewayVaultGovernance, "StageDelayedStrategyParams");
 
@@ -83,7 +81,6 @@ describe("GatewayVaultGovernance", () => {
                 )
             ).to.deep.equal({
                 redirects: [],
-                strategyTreasury: await treasury.getAddress(),
             });
         });
     });
@@ -120,7 +117,6 @@ describe("GatewayVaultGovernance", () => {
                 .connect(admin)
                 .stageDelayedStrategyParams(gatewayNft, {
                     redirects: [],
-                    strategyTreasury: await treasury.getAddress(),
                 });
             await sleep(Number(await protocolGovernance.governanceDelay()));
             await expect(
@@ -136,12 +132,7 @@ describe("GatewayVaultGovernance", () => {
                 )
             ).to.deep.equal({
                 redirects: [],
-                strategyTreasury: await treasury.getAddress(),
             });
-            expect(
-                (await gatewayVaultGovernance.delayedStrategyParams(gatewayNft))
-                    .strategyTreasury
-            ).to.be.equal(await treasury.getAddress());
         });
     });
 
@@ -152,35 +143,34 @@ describe("GatewayVaultGovernance", () => {
                     await gatewayVaultGovernance.delayedStrategyParams(
                         gatewayNft + 42
                     )
-                ).to.be.deep.equal([ethers.constants.AddressZero, []]);
+                ).to.be.deep.equal([[]]);
             });
         });
     });
 
     describe("stagedDelayedStrategyParams", () => {
         it("returns params", async () => {
-            const address = randomAddress();
-
             await gatewayVaultGovernance
                 .connect(admin)
                 .stageDelayedStrategyParams(gatewayNft, {
-                    strategyTreasury: address,
                     redirects: [],
                 });
             expect(
                 await gatewayVaultGovernance.stagedDelayedStrategyParams(
                     gatewayNft
                 )
-            ).to.be.deep.equal([address, []]);
+            ).to.be.deep.equal([[]]);
         });
 
         describe("when passed unknown nft", () => {
             it("returns empty struct", async () => {
                 expect(
-                    await gatewayVaultGovernance.stagedDelayedStrategyParams(
-                        gatewayNft + 42
+                    toObject(
+                        await gatewayVaultGovernance.stagedDelayedStrategyParams(
+                            gatewayNft + 42
+                        )
                     )
-                ).to.be.deep.equal([ethers.constants.AddressZero, []]);
+                ).to.be.deep.equal({ redirects: [] });
             });
         });
     });

@@ -586,25 +586,7 @@ export async function deploySubVaultSystem(options: {
         );
     }
 
-    await ERC20VaultGovernance.connect(
-        options.adminSigner
-    ).stageDelayedStrategyParams(nftERC20, [options.treasury]);
-    await AaveVaultGovernance.connect(
-        options.adminSigner
-    ).stageDelayedStrategyParams(nftAave, [options.treasury]);
-    await UniV3VaultGovernance.connect(
-        options.adminSigner
-    ).stageDelayedStrategyParams(nftUniV3, [options.treasury]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
-    await ERC20VaultGovernance.connect(
-        options.adminSigner
-    ).commitDelayedStrategyParams(BigNumber.from(nftERC20));
-    await AaveVaultGovernance.connect(
-        options.adminSigner
-    ).commitDelayedStrategyParams(BigNumber.from(nftAave));
-    await UniV3VaultGovernance.connect(
-        options.adminSigner
-    ).commitDelayedStrategyParams(BigNumber.from(nftUniV3));
     // FIXME: remove this hack <
     await withSigner(ERC20VaultGovernance.address, async (signer) => {
         const [deployer] = await ethers.getSigners();
@@ -776,7 +758,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     );
     await gatewayVaultGovernance
         .connect(options.adminSigner)
-        .stageDelayedStrategyParams(gatewayNft, [options.treasury, nfts]);
+        .stageDelayedStrategyParams(gatewayNft, [nfts]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await gatewayVaultGovernance
         .connect(options.adminSigner)
