@@ -201,11 +201,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         return Pair({a0: amount0, a1: amount1});
     }
 
-    function _postReclaimTokens(address, address[] memory tokens) internal view override {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            require(!isVaultToken(tokens[i]), "OWT"); // vault token is part of TVL
-        }
-    }
+    function _postReclaimTokens(address, address[] memory tokens) internal view override {}
 
     /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
