@@ -20,6 +20,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 private _nft;
     uint256[] private _lpPriceHighWaterMarks;
+    uint256[] private _existentials;
 
     uint256 public lastFeeCharge;
 
@@ -39,8 +40,10 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
-            _vaultTokensIndex[vaultTokens_[i]] = true;
+            address token = vaultTokens_[i];
+            _vaultTokensIndex[token] = true;
             _lpPriceHighWaterMarks.push(0);
+            _existentials.push(10**(ERC20(token).decimals() / 2));
         }
         lastFeeCharge = block.timestamp;
     }
@@ -51,6 +54,10 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
 
     function vaultTokens() external view returns (address[] memory) {
         return _vaultTokens;
+    }
+
+    function existentials() external view returns (uint256[] memory) {
+        return _existentials;
     }
 
     /// @inheritdoc ILpIssuer
@@ -80,43 +87,33 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         require(_subvaultNft > 0, "INITSV");
         require(registry.ownerOf(thisNft) == address(this), "INITOWN");
         IVault subvault = _subvault();
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
-            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), tokenAmounts[i]);
-        }
+        uint256[] memory existentials_ = _existentials;
         uint256[] memory tvl = subvault.tvl(); //pre-money
+        uint256 supply = totalSupply();
+        uint256 balanceFactor = CommonLibrary.PRICE_DENOMINATOR;
+        if (supply > 0) {
+            // This is lpTokens if total supply == CommonLibrary.PRICE_DENOMINATOR
+            balanceFactor = _getLpAmount(tvl, tokenAmounts, existentials_, CommonLibrary.PRICE_DENOMINATOR);
+        }
+        // If with that big supply we don't reveive any lps then it doesn't make sense to continue
+        require(balanceFactor > 0, "BF");
+        uint256[] memory balancedAmounts = new uint256[](tokenAmounts.length);
+
+        // Making sure the proportion between tokenAmounts and tvl are the same
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            balancedAmounts[i] = _getBalancedAmount(tvl[i], tokenAmounts[i], existentials_[i], balanceFactor);
+            _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
+            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), balancedAmounts[i]);
+        }
+
         uint256[] memory actualTokenAmounts = subvault.transferAndPush(
             address(this),
             _vaultTokens,
-            tokenAmounts,
+            balancedAmounts,
             options
         );
-        // TODO: Think if it's better to make pre-money valuation
-        uint256 amountToMint = 0;
-        uint256 supply = totalSupply();
-        if (supply == 0) {
-            for (uint256 i = 0; i < _vaultTokens.length; i++) {
-                // TODO: check if there could be smth better
-                if (actualTokenAmounts[i] > amountToMint) {
-                    amountToMint = actualTokenAmounts[i]; // some number correlated to invested assets volume
-                }
-            }
-        }
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            if (tvl[i] > 0) {
-                // TODO: Check price manipulation here for yearn / aave (cached tvls)
-                // However care needs to be taken in terms of rounding, etc.
-                uint256 newMint = (actualTokenAmounts[i] * supply) / tvl[i];
-                // TODO: check this algo. The assumption is that everything is rounded down.
-                // So that max token has the least error. Think about the case when one token is dust.
-                if (newMint > amountToMint) {
-                    amountToMint = newMint;
-                }
-            }
-            if (tokenAmounts[i] > actualTokenAmounts[i]) {
-                IERC20(_vaultTokens[i]).safeTransfer(msg.sender, tokenAmounts[i] - actualTokenAmounts[i]);
-            }
-        }
+        uint256 amountToMint = _getLpAmount(tvl, actualTokenAmounts, existentials_, supply);
+        require(amountToMint > 0, "ZLP");
         require(
             amountToMint + balanceOf(msg.sender) <=
                 ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
@@ -124,9 +121,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         );
 
         _chargeFees(thisNft, tvl, supply, actualTokenAmounts, amountToMint, false);
+        _mint(msg.sender, amountToMint);
 
-        if (amountToMint > 0) {
-            _mint(msg.sender, amountToMint);
+        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+            if (balancedAmounts[i] > actualTokenAmounts[i]) {
+                IERC20(_vaultTokens[i]).safeTransfer(msg.sender, balancedAmounts[i] - actualTokenAmounts[i]);
+            }
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, amountToMint);
@@ -268,6 +268,50 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
+    }
+
+    function _getLpAmount(
+        uint256[] memory tvl,
+        uint256[] memory amounts,
+        uint256[] memory existentials_,
+        uint256 supply
+    ) internal pure returns (uint256 lpAmount) {
+        lpAmount = 0;
+        if (supply == 0) {
+            // On init lpToken = max(tokenAmounts)
+            for (uint256 i = 0; i < tvl.length; i++) {
+                if (amounts[i] > lpAmount) {
+                    lpAmount = amounts[i];
+                }
+            }
+            return lpAmount;
+        }
+        for (uint256 i = 0; i < tvl.length; i++) {
+            if (amounts[i] <= existentials_[i]) {
+                // skip existential deposits for lp share calculation
+                continue;
+            }
+            uint256 tokenLpAmount = (amounts[i] * supply) / tvl[i];
+            // take min of meaningful tokenLp amounts
+            if ((tokenLpAmount < lpAmount) || (lpAmount == 0)) {
+                lpAmount = tokenLpAmount;
+            }
+        }
+    }
+
+    function _getBalancedAmount(
+        uint256 tvl,
+        uint256 amount,
+        uint256 existential,
+        uint256 balanceFactor
+    ) internal pure returns (uint256) {
+        if (amount < existential) {
+            // avoid putting small amounts as it can introduce unnecessary harsh errors
+            // one should provide amount > existential deposit each time tvl is not 0
+            require(tvl == 0, "PN");
+            return 0;
+        }
+        return (amount * balanceFactor) / CommonLibrary.PRICE_DENOMINATOR;
     }
 
     /// @notice Emitted when management fees are charged
