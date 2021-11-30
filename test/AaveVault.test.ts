@@ -79,7 +79,7 @@ describe("AaveVault", () => {
                         from: deployer,
                         args: [vaultGovernance.address, tokens],
                     })
-                ).to.be.revertedWith(Exceptions.TOKEN_NOT_ALLOWED);
+                ).to.be.reverted;
             });
         });
     });
