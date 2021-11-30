@@ -9,6 +9,7 @@ import "./libraries/ExceptionsLibrary.sol";
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
+    uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
 
     EnumerableSet.AddressSet private _claimAllowlist;
     address[] private _pendingClaimAllowlistAdd;
@@ -127,6 +128,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
         require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, Exceptions.MAX_GOVERNANCE_DELAY);
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
