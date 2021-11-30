@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.9;
+pragma solidity =0.8.9;
 
 import "./trader/interfaces/ITrader.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
@@ -25,34 +25,36 @@ contract ERC20Vault is Vault, ITrader {
 
     function swapExactInput(
         uint256 traderId,
-        address input,
-        address output,
         uint256 amount,
         address,
-        PathItem[] calldata path,
-        bytes calldata options
+        PathItem[] memory path,
+        bytes memory options
     ) external returns (uint256 amountOut) {
-        require(isVaultToken(output), "VT");
+        require(
+            path.length > 0  && isVaultToken(path[path.length - 1].token1), 
+            "VT"
+        );
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
-        return trader.swapExactInput(traderId, input, output, amount, address(0), path, options);
+        return trader.swapExactInput(traderId, amount, address(0), path, options);
     }
 
     function swapExactOutput(
         uint256 traderId,
-        address input,
-        address output,
         uint256 amount,
         address,
-        ITrader.PathItem[] calldata path,
+        PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256 amountOut) {
-        require(isVaultToken(output), "VT");
+        require(
+            path.length > 0  && isVaultToken(path[path.length - 1].token1), 
+            "VT"
+        );
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
-        return trader.swapExactOutput(traderId, input, output, amount, address(0), path, options);
+        return trader.swapExactOutput(traderId, amount, address(0), path, options);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
