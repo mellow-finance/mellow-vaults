@@ -21,3 +21,4 @@ test/types
 .vscode
 docs
 .DS_store
+.mailmap
