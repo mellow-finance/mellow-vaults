@@ -51,4 +51,5 @@ library Exceptions {
     string constant TOKEN_LENGTH = "TL";
     string constant IO_LENGTH = "IOL";
     string constant YEARN_VAULT = "YV";
+    string constant MAX_GOVERNANCE_DELAY = "MD";
 }
