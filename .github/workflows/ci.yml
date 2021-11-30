@@ -89,4 +89,4 @@ jobs:
         run: cd test_brownie && brownie test --network=dev & cd ..
 
       - name: Count LOC
-        run: wc -l contracts/**/*.sol
+        run: find contracts -name "*.sol" | xargs wc -l
