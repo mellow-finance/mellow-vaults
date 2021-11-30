@@ -502,6 +502,17 @@ export async function deploySubVaultSystem(options: {
         0,
         options.tokensCount
     );
+    let allowedTokens: Address[] = new Array<Address>(options.tokensCount);
+    for (var i = 0; i < options.tokensCount; ++i) {
+        allowedTokens[i] = vaultTokens[i].address;
+    }
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .setPendingTokenWhitelistAdd(allowedTokens);
+    await sleep(Number(await protocolGovernance.governanceDelay()));
+    await protocolGovernance
+        .connect(options.adminSigner)
+        .commitTokenWhitelistAdd();
     await protocolGovernance
         .connect(options.adminSigner)
         .setPendingVaultGovernancesAdd([

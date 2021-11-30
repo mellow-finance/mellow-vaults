@@ -25,6 +25,12 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Pending addresses to be added to claimAllowlist.
     function pendingClaimAllowlistAdd() external view returns (address[] memory);
 
+    /// @notice Addresses of tokens allowed for vaults.
+    function tokenWhitelist() external view returns (address[] memory);
+
+    /// @notice Pending addresses to be added to tokenWhitelist.
+    function pendingTokenWhitelistAdd() external view returns (address[] memory);
+
     /// @notice Addresses allowed to claim liquidity mining rewards from.
     function vaultGovernances() external view returns (address[] memory);
 
@@ -33,6 +39,9 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     /// @notice Check if address is allowed to claim.
     function isAllowedToClaim(address addr) external view returns (bool);
+
+    /// @notice Check if address is an approved token.
+    function isAllowedToken(address addr) external view returns (bool);
 
     /// @notice Check if address is a registered vault governance.
     function isVaultGovernance(address addr) external view returns (bool);
@@ -59,6 +68,10 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param addresses Addresses to add
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external;
 
+    /// @notice Stage addresses for token whitelist.
+    /// @param addresses Addresses to add
+    function setPendingTokenWhitelistAdd(address[] calldata addresses) external;
+
     /// @notice Stage addresses for vault governances.
     /// @param addresses Addresses to add
     function setPendingVaultGovernancesAdd(address[] calldata addresses) external;
@@ -71,11 +84,17 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Commit pending ClaimAllowlistAdd params.
     function commitClaimAllowlistAdd() external;
 
+    /// @notice Commit pending tokenWhitelistAdd params.
+    function commitTokenWhitelistAdd() external;
+
     /// @notice Commit pending VaultGovernancesAdd params.
     function commitVaultGovernancesAdd() external;
 
     /// @notice Remove from claim allow list immediately.
     function removeFromClaimAllowlist(address addr) external;
+
+    /// @notice Remove from token whitelist immediately.
+    function removeFromTokenWhitelist(address addr) external;
 
     /// @notice Remove from vault governances immediately.
     function removeFromVaultGovernances(address addr) external;

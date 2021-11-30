@@ -46,7 +46,6 @@ const setupVault = async (
             )} with nft = ${vaultNft} already deployed`
         );
     }
-
     if (strategyParams) {
         const currentParams = await read(
             contractName,
@@ -140,7 +139,7 @@ const setupVault = async (
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury, mStrategy, weth, wbtc } =
+    const { deployer, admin, mStrategyTreasury, mStrategy, weth, wbtc } =
         await getNamedAccounts();
     const gatewayVaultGovernance = await get("GatewayVaultGovernance");
     const lpIssuerVaultGovernance = await get("LpIssuerGovernance");
@@ -154,6 +153,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let erc20VaultNft = 3;
     let gatewayVaultNft = 4;
     let lpIssuerNft = 5;
+    
     await setupVault(hre, aaveVaultNft, startNft, "AaveVaultGovernance", {
         deployOptions: [tokens, [], deployer],
         delayedStrategyParams: { strategyTreasury: mStrategyTreasury },
@@ -166,7 +166,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deployOptions: [tokens, [], deployer],
         delayedStrategyParams: { strategyTreasury: mStrategyTreasury },
     });
-
     const approvedGw = await read(
         "VaultRegistry",
         "isApprovedForAll",
@@ -207,6 +206,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             true
         );
     }
+    
     await setupVault(hre, gatewayVaultNft, startNft, "GatewayVaultGovernance", {
         deployOptions: [
             tokens,

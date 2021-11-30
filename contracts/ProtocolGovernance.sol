@@ -15,6 +15,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     address[] private _pendingClaimAllowlistAdd;
     uint256 public pendingClaimAllowlistAddTimestamp;
 
+    address[] private _tokenWhitelist;
+    address[] private _pendingTokenWhitelistAdd;
+    uint256 private _numberOfValidTokens;
+    mapping(address => bool) _tokensAllowed;
+    mapping(address => bool) _tokenEverAdded;
+    uint256 public pendingTokenWhitelistAddTimestamp;
+
     EnumerableSet.AddressSet private _vaultGovernances;
     address[] private _pendingVaultGovernancesAdd;
     uint256 public pendingVaultGovernancesAddTimestamp;
@@ -26,7 +33,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
-    constructor(address admin) DefaultAccessControl(admin) {}
+    constructor(address admin) DefaultAccessControl(admin) {
+        _tokenWhitelist = new address[](0);
+        _numberOfValidTokens = 0;
+    }
 
     // -------------------  PUBLIC, VIEW  -------------------
 
@@ -36,6 +46,21 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         address[] memory res = new address[](l);
         for (uint256 i = 0; i < l; i++) {
             res[i] = _claimAllowlist.at(i);
+        }
+        return res;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function tokenWhitelist() external view returns (address[] memory) {
+        uint256 l = _tokenWhitelist.length;
+        address[] memory res = new address[](_numberOfValidTokens);
+        uint256 j = 0;
+        for (uint256 i = 0; i < l; i++) {
+            if (!_tokensAllowed[_tokenWhitelist[i]] && _tokenEverAdded[_tokenWhitelist[i]]) {
+                continue;
+            }
+            res[j] = _tokenWhitelist[i];
+            j += 1;
         }
         return res;
     }
@@ -56,6 +81,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
+    function pendingTokenWhitelistAdd() external view returns (address[] memory) {
+        return _pendingTokenWhitelistAdd;
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function pendingVaultGovernancesAdd() external view returns (address[] memory) {
         return _pendingVaultGovernancesAdd;
     }
@@ -63,6 +93,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function isAllowedToClaim(address addr) external view returns (bool) {
         return _claimAllowlist.contains(addr);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function isAllowedToken(address addr) external view returns (bool) {
+        return _tokenEverAdded[addr] && _tokensAllowed[addr];
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -109,6 +144,22 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
+    function setPendingTokenWhitelistAdd(address[] calldata addresses) external {
+        require(isAdmin(msg.sender), "ADM");
+        _pendingTokenWhitelistAdd = addresses;
+        pendingTokenWhitelistAddTimestamp = block.timestamp + params.governanceDelay;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function removeFromTokenWhitelist(address addr) external {
+        require(isAdmin(msg.sender), "ADM");
+        _tokensAllowed[addr] = false;
+        if (_tokenEverAdded[addr]) {
+            --_numberOfValidTokens;
+        }
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function setPendingVaultGovernancesAdd(address[] calldata addresses) external {
         require(isAdmin(msg.sender), Exceptions.ADMIN);
         _pendingVaultGovernancesAdd = addresses;
@@ -146,6 +197,30 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         }
         delete _pendingClaimAllowlistAdd;
         delete pendingClaimAllowlistAddTimestamp;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitTokenWhitelistAdd() external {
+        require(isAdmin(msg.sender), "ADM");
+        require(
+            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp > 0),
+            "TS"
+        );
+        for (uint256 i = 0; i < _pendingTokenWhitelistAdd.length; i++) {
+            if (!_tokenEverAdded[_pendingTokenWhitelistAdd[i]]) {
+                _numberOfValidTokens += 1;
+                _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
+                _tokenWhitelist.push(_pendingTokenWhitelistAdd[i]);
+                _tokenEverAdded[_pendingTokenWhitelistAdd[i]] = true;
+            } else {
+                if (!_tokensAllowed[_pendingTokenWhitelistAdd[i]]) {
+                    _numberOfValidTokens += 1;
+                    _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
+                }
+            }
+        }
+        delete _pendingTokenWhitelistAdd;
+        delete pendingTokenWhitelistAddTimestamp;
     }
 
     /// @inheritdoc IProtocolGovernance

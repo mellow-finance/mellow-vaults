@@ -2,9 +2,17 @@ import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import { Signer } from "ethers";
 import { VaultGovernance, ProtocolGovernance } from "./library/Types";
-import { deploySubVaultsXGatewayVaultSystem } from "./library/Deployments";
+import {
+    deployERC20Tokens,
+    deploySubVaultsXGatewayVaultSystem,
+} from "./library/Deployments";
 import Exceptions from "./library/Exceptions";
-import { randomAddress, sleep, toObject } from "./library/Helpers";
+import {
+    randomAddress,
+    setTokenWhitelist,
+    sleep,
+    toObject,
+} from "./library/Helpers";
 import { BigNumber } from "@ethersproject/bignumber";
 
 describe("GatewayVaultGovernance", () => {
@@ -181,6 +189,45 @@ describe("GatewayVaultGovernance", () => {
                 expect(
                     await gatewayVaultGovernance.strategyParams(gatewayNft + 42)
                 ).to.be.deep.equal([[]]);
+            });
+        });
+    });
+
+    describe("deployVault", async () => {
+        describe("when try to deploy sub vault with not valid tokens", () => {
+            it("reverts", async () => {
+                let disapprovedToken = (await deployERC20Tokens(1))[0];
+                await expect(
+                    gatewayVaultGovernance.deployVault(
+                        [disapprovedToken.address],
+                        [],
+                        ethers.constants.AddressZero
+                    )
+                ).to.be.revertedWith(Exceptions.TOKEN_NOT_ALLOWED);
+            });
+        });
+
+        describe("when only one token is disapproved", () => {
+            it("reverts", async () => {
+                let approvedTokens = await deployERC20Tokens(3);
+                await setTokenWhitelist(
+                    protocolGovernance,
+                    approvedTokens,
+                    admin
+                );
+                let disapprovedToken = (await deployERC20Tokens(1))[0];
+                await expect(
+                    gatewayVaultGovernance.deployVault(
+                        [
+                            approvedTokens[0].address,
+                            approvedTokens[1].address,
+                            disapprovedToken.address,
+                            approvedTokens[2].address,
+                        ],
+                        [],
+                        ethers.constants.AddressZero
+                    )
+                ).to.be.revertedWith(Exceptions.TOKEN_NOT_ALLOWED);
             });
         });
     });

@@ -9,6 +9,7 @@ import {
     sleep,
     randomAddress,
 } from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
 
 describe("AaveVault", () => {
     const aaveVaultNft: number = 1;

@@ -2,13 +2,13 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
-import { ethers } from "ethers";
-import { sendTx } from "./000_utils";
+import { sleep } from "../test/library/Helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, admin, protocolTreasury } = await getNamedAccounts();
+    const { deployer, admin, protocolTreasury, weth, wbtc, usdc } = await getNamedAccounts();
+    const tokens = [weth, wbtc, usdc].map((t) => t.toLowerCase()).sort();
     const governances = [];
     for (const name of [
         "AaveVaultGovernance",
@@ -103,6 +103,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             deployer
         );
     }
+    // registring tokens in protocol governance
+    await execute(
+        "ProtocolGovernance",
+        {
+            from: admin,
+            log: true,
+            autoMine: true,
+        },
+        "setPendingTokenWhitelistAdd",
+        tokens
+    );
+    let delayTokens: number = await read(
+        "ProtocolGovernance",
+        "governanceDelay"
+    );
+    await sleep(Number(delayTokens));
+    await execute(
+        "ProtocolGovernance",
+        {
+            from: admin,
+            log: true,
+            autoMine: true,
+        },
+        "commitTokenWhitelistAdd"
+    );
 };
 export default func;
 func.tags = ["ProtocolGovernance", "Vaults"];
