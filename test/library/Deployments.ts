@@ -563,6 +563,20 @@ export async function deploySubVaultSystem(options: {
     await UniV3VaultGovernance.connect(
         options.adminSigner
     ).commitDelayedStrategyParams(BigNumber.from(nftUniV3));
+    // FIXME: remove this hack <
+    await withSigner(ERC20VaultGovernance.address, async (signer) => {
+        const [deployer] = await ethers.getSigners();
+        await vaultRegistry
+            .connect(signer)
+            .registerVault(
+                await deployer.getAddress(),
+                await deployer.getAddress()
+            );
+        await vaultRegistry
+            .connect(signer)
+            .registerVault(options.vaultOwner, options.vaultOwner);
+    });
+    // />
     return {
         ERC20VaultFactory: ERC20VaultFactory,
         AaveVaultFactory: AaveVaultFactory,
