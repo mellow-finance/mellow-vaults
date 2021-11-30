@@ -52,4 +52,5 @@ library Exceptions {
     string constant IO_LENGTH = "IOL";
     string constant YEARN_VAULT = "YV";
     string constant MAX_GOVERNANCE_DELAY = "MD";
+    string constant OWNER_VAULT_NFT = "OWV";
 }

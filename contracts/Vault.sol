@@ -69,8 +69,13 @@ abstract contract Vault is IVault, ReentrancyGuard {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        require(_nft > 0, Exceptions.INITIALIZATION);
+        uint256 nft_ = _nft;
+        require(nft_ > 0, Exceptions.INITIALIZATION);
         require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER); // Also checks that the token exists
+        IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
+        IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_));
+        uint256 ownerNft = vaultRegistry.nftForVault(address(ownerVault));
+        require(ownerNft > 0, Exceptions.OWNER_VAULT_NFT); // require deposits only through Vault
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
