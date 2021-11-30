@@ -59,8 +59,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
         // new position should have vault tokens
         require(
-            (token0 == _vaultTokens[0] && token1 == _vaultTokens[1]) ||
-            (token0 == _vaultTokens[1] && token1 == _vaultTokens[0]),
+            token0 == _vaultTokens[0] && token1 == _vaultTokens[1],
             "VT"
         );
 
@@ -84,9 +83,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
             int24 tickLower, 
             int24 tickUpper, 
             uint128 liquidity,
-            , , 
-            uint128 tokensOwed0, 
-            uint128 tokensOwed1
+            , , ,
         ) = _positionManager().positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
@@ -97,9 +94,8 @@ contract UniV3Vault is IERC721Receiver, Vault {
             sqrtPriceBX96,
             liquidity
         );
-        tokenAmounts[0] = amount0 + uint256(tokensOwed0);
-        tokenAmounts[1] = amount1 + uint256(tokensOwed1);
-        _swapTokenAmountsIfNessecary(tokenAmounts);
+        tokenAmounts[0] = amount0;
+        tokenAmounts[1] = amount1;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -107,7 +103,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-        _swapTokenAmountsIfNessecary(tokenAmounts);
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; i++)
             _allowTokenIfNecessary(tokens[i]);
@@ -137,7 +132,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
         );
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
-        _swapTokenAmountsIfNessecary(actualTokenAmounts);
     }
 
     function _pull(
@@ -145,7 +139,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        _swapTokenAmountsIfNessecary(tokenAmounts);
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0)
             return actualTokenAmounts;
@@ -154,7 +147,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
         Pair memory amounts = _pullUniV3Nft(tokenAmounts, to, opts);
         actualTokenAmounts[0] = amounts.a0;
         actualTokenAmounts[1] = amounts.a1;
-        _swapTokenAmountsIfNessecary(actualTokenAmounts);
     }
 
     function _pullUniV3Nft(
@@ -228,11 +220,5 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
-    }
-
-    function _swapTokenAmountsIfNessecary(uint256[] memory tokenAmounts) internal view {
-        // swap tokenAmounts if necessary
-        if (pool.token0() == _vaultTokens[1])
-            (tokenAmounts[0], tokenAmounts[1]) = (tokenAmounts[1], tokenAmounts[0]);
     }
 }
