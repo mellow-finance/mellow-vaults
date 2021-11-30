@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
