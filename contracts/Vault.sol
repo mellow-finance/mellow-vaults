@@ -143,7 +143,6 @@ abstract contract Vault is IVault, ReentrancyGuard {
         emit ReclaimTokens(to, tokens, tokenAmounts);
     }
 
-    // TODO: Add to governance specific bytes for each contract that shows withdraw address
     /// @inheritdoc IVault
     function claimRewards(address from, bytes memory data) external override nonReentrant {
         require(_nft > 0, Exceptions.INITIALIZATION);

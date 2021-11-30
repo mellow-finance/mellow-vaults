@@ -42,7 +42,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function vaultGovernances() external view returns (address[] memory) {
-        // TODO: use iterable set
         uint256 l = _vaultGovernances.length();
         address[] memory res = new address[](l);
         for (uint256 i = 0; i < l; i++) {

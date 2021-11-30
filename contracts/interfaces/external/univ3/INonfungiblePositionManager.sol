@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// TODO: Check the license
 pragma solidity 0.8.9;
 pragma abicoder v2;
 
-import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IPeripheryImmutableState.sol";
 
 /// @title Non-fungible token for positions

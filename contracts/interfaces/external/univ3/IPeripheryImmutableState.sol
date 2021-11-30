@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// TODO: Check the license
 pragma solidity =0.8.9;
 
 /// @title Immutable state

@@ -79,7 +79,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         for (uint256 i = 0; i < nfts.length; i++) {
             uint256 nft_ = nfts[i];
-            require(nft_ > 0, "NFT0");
+            require(nft_ > 0, Exceptions.NFT_ZERO);
             IVault vault = IVault(registry.vaultForNft(nft_));
             address[] memory vTokens = vault.vaultTokens();
             require(selfTokens.length == vTokens.length, Exceptions.INCONSISTENT_LENGTH);
