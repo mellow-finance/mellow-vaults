@@ -35,13 +35,13 @@ contract UniV3Trader is Trader, ITrader {
         address recipient,
         PathItem[] memory path,
         bytes memory options
-    ) external returns (uint256 outputAmount) {
+    ) external returns (uint256) {
         Options memory options_ = abi.decode(options, (Options));
         if (path.length == 1) {
             return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
             require(_validatePathLinked(path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
-            // TODO: implement multihop swap
+            return _swapExactInputMultihop(amount, recipient, path, options_);
         }
     }
 
@@ -52,22 +52,19 @@ contract UniV3Trader is Trader, ITrader {
         address recipient,
         PathItem[] memory path,
         bytes memory options
-    ) external returns (uint256 outputAmount) {
+    ) external returns (uint256) {
         Options memory options_ = abi.decode(options, (Options));
         if (path.length == 0) {
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
             require(_validatePathLinked(path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
-            // TODO: implement multihop swap
+            return _swapExactOutputMultihop(amount, recipient, path, options_);
         }
     }
 
     function _validatePathLinked(PathItem[] memory path) internal pure returns (bool result) {
-        if (path.length == 0)
-            return false;
-        for (uint256 i = 0; i < path.length - 1; ++i)
-            if (path[0].token1 != path[i + 1].token0)
-                return false;
+        if (path.length == 0) return false;
+        for (uint256 i = 0; i < path.length - 1; ++i) if (path[0].token1 != path[i + 1].token0) return false;
         return true;
     }
 
@@ -158,18 +155,14 @@ contract UniV3Trader is Trader, ITrader {
     }
 
     function _reverseBytes(bytes memory input) internal pure returns (bytes memory output) {
-        for (uint256 i = 0; i < input.length; ++i)
-            output[i] = input[input.length - 1 - i];
+        for (uint256 i = 0; i < input.length; ++i) output[i] = input[input.length - 1 - i];
     }
 
     function _makeMultihopPath(PathItem[] memory path) internal pure returns (bytes memory) {
         bytes memory result;
         for (uint256 i = 0; i < path.length; ++i) {
             PathItemOptions memory pathItemOptions = abi.decode(path[i].options, (PathItemOptions));
-            result = bytes.concat(
-                result,
-                abi.encodePacked(path[i].token0, abi.encodePacked(pathItemOptions.fee))
-            );
+            result = bytes.concat(result, abi.encodePacked(path[i].token0, abi.encodePacked(pathItemOptions.fee)));
         }
         result = bytes.concat(result, abi.encodePacked(path[path.length - 1].token1));
         return result;

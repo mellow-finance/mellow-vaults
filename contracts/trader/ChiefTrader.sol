@@ -62,11 +62,9 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        return (
-            interfaceId == this.supportsInterface.selector ||
+        return (interfaceId == this.supportsInterface.selector ||
             interfaceId == type(ITrader).interfaceId ||
-            interfaceId == type(IChiefTrader).interfaceId
-        );
+            interfaceId == type(IChiefTrader).interfaceId);
     }
 
     function _requireProtocolAdmin() internal view {
