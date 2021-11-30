@@ -36,12 +36,13 @@ contract AaveVault is Vault {
         }
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory)
+    function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
         override
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
+        uint16 referralCode = abi.decode(options, (uint16));
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
@@ -49,7 +50,7 @@ contract AaveVault is Vault {
             address token = tokens[i];
             _allowTokenIfNecessary(token);
             // TODO: Check what is 0
-            _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), 0);
+            _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), referralCode);
         }
         // TODO: Check price manipulation here for LPIssuer
         updateTvls();
