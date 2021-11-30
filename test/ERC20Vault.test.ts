@@ -52,9 +52,9 @@ describe("ERC20Vault", function () {
             for (let i: number = 0; i < tokens.length; ++i) {
                 await tokens[i].connect(deployer).approve(
                     ERC20Vault.address,
-                    BigNumber.from(10 ** 9)
-                        .mul(BigNumber.from(10 ** 9))
-                        .mul(BigNumber.from(10 ** 9))
+                    BigNumber.from(10 ** 4)
+                        .mul(BigNumber.from(10 ** 4))
+                        .mul(BigNumber.from(10 ** 4))
                 );
             }
             await vaultRegistry
@@ -176,26 +176,26 @@ describe("ERC20Vault", function () {
             it("passes when no tokens transferred", async () => {
                 const amounts = await ERC20Vault.callStatic.push(
                     [tokens[0].address],
-                    [BigNumber.from(10 ** 9)],
+                    [BigNumber.from(10 ** 4)],
                     []
                 );
-                expect(amounts).to.deep.equal([BigNumber.from(10 ** 9)]);
+                expect(amounts).to.deep.equal([BigNumber.from(10 ** 4)]);
             });
 
             it("passes when tokens transferred", async () => {
                 await tokens[1].transfer(
                     ERC20Vault.address,
-                    BigNumber.from(100 * 10 ** 9)
+                    BigNumber.from(100 * 10 ** 4)
                 );
                 const args = [
                     [tokens[1].address],
-                    [BigNumber.from(100 * 10 ** 9)],
+                    [BigNumber.from(100 * 10 ** 4)],
                     [],
                 ];
                 const amounts = await ERC20Vault.callStatic.push(...args);
                 const tx = await ERC20Vault.push(...args);
                 await tx.wait();
-                expect(amounts).to.deep.equal([BigNumber.from(100 * 10 ** 9)]);
+                expect(amounts).to.deep.equal([BigNumber.from(100 * 10 ** 4)]);
             });
         });
 
@@ -279,10 +279,10 @@ describe("ERC20Vault", function () {
                         await ERC20Vault.callStatic.transferAndPush(
                             await deployer.getAddress(),
                             [tokens[0].address],
-                            [BigNumber.from(10 ** 9)],
+                            [BigNumber.from(10 ** 4)],
                             []
                         )
-                    ).to.deep.equal([BigNumber.from(10 ** 9)]);
+                    ).to.deep.equal([BigNumber.from(10 ** 4)]);
                 });
             });
 
@@ -292,11 +292,11 @@ describe("ERC20Vault", function () {
                         await ERC20Vault.callStatic.transferAndPush(
                             await deployer.getAddress(),
                             [tokens[0].address, tokens[1].address],
-                            [BigNumber.from(10 ** 9), BigNumber.from(0)],
+                            [BigNumber.from(10 ** 4), BigNumber.from(0)],
                             []
                         )
                     ).to.deep.equal([
-                        BigNumber.from(10 ** 9),
+                        BigNumber.from(10 ** 4),
                         BigNumber.from(0),
                     ]);
                 });
@@ -315,10 +315,10 @@ describe("ERC20Vault", function () {
                         ERC20Vault.transferAndPush(
                             await user.getAddress(),
                             [tokens[0].address],
-                            [BigNumber.from(10 ** 9)],
+                            [BigNumber.from(10 ** 4)],
                             []
                         )
-                    ).to.be.revertedWith(Exceptions.ERC20_INSUFFICIENT_BALANCE);
+                    ).to.be.revertedWith(Exceptions.SAFE_ERC20);
                 });
             });
         });
@@ -328,9 +328,9 @@ describe("ERC20Vault", function () {
                 for (let i: number = 0; i < tokens.length; ++i) {
                     await tokens[i].connect(deployer).approve(
                         ERC20Vault.address,
-                        BigNumber.from(10 ** 9)
-                            .mul(BigNumber.from(10 ** 9))
-                            .mul(BigNumber.from(10 ** 9))
+                        BigNumber.from(10 ** 4)
+                            .mul(BigNumber.from(10 ** 4))
+                            .mul(BigNumber.from(10 ** 4))
                     );
                 }
             });
@@ -339,12 +339,12 @@ describe("ERC20Vault", function () {
                 await ERC20Vault.transferAndPush(
                     await deployer.getAddress(),
                     [tokens[0].address],
-                    [BigNumber.from(10 ** 9)],
+                    [BigNumber.from(10 ** 4)],
                     []
                 );
 
                 expect(await ERC20Vault.tvl()).to.deep.equal([
-                    BigNumber.from(10 ** 9),
+                    BigNumber.from(10 ** 4),
                     BigNumber.from(0),
                 ]);
             });
@@ -357,7 +357,7 @@ describe("ERC20Vault", function () {
                 anotherToken = (await deployERC20Tokens(1))[0];
                 await anotherToken
                     .connect(deployer)
-                    .transfer(ERC20Vault.address, BigNumber.from(10 ** 9));
+                    .transfer(ERC20Vault.address, BigNumber.from(10 ** 4));
             });
         });
 

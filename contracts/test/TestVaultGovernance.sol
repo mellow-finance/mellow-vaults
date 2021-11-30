@@ -1,14 +1,10 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "../VaultGovernance.sol";
 
 contract TestVaultGovernance is VaultGovernance {
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
-
-    function strategyTreasury(uint256) external pure override returns (address) {
-        return address(0);
-    }
 
     function stageDelayedStrategyParams(uint256 nft, bytes memory params) public {
         _stageDelayedStrategyParams(nft, params);

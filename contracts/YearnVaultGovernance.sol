@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -31,10 +31,6 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         } catch (bytes memory) {
             return address(0);
         }
-    }
-
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
     }
 
     /// @inheritdoc IYearnVaultGovernance

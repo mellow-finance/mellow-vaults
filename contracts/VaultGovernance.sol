@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -69,9 +69,6 @@ abstract contract VaultGovernance is IVaultGovernance {
     function stagedInternalParams() external view returns (InternalParams memory) {
         return _stagedInternalParams;
     }
-
-    /// @inheritdoc IVaultGovernance
-    function strategyTreasury(uint256 nft) external view virtual returns (address);
 
     // -------------------  PUBLIC, MUTATING  -------------------
 

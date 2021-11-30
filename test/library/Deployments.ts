@@ -4,7 +4,12 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 
-import { sleep, sortContractsByAddresses, encodeToBytes } from "./Helpers";
+import {
+    sleep,
+    sortContractsByAddresses,
+    encodeToBytes,
+    withSigner,
+} from "./Helpers";
 import {
     ERC20,
     ERC20Vault,
@@ -441,8 +446,19 @@ export async function deploySubVaultSystem(options: {
         treasury: options.treasury,
         dontUseTestSetup: options.dontUseTestSetup,
     });
-    const vaultTokens: ERC20[] = sortContractsByAddresses(
-        await deployERC20Tokens(options.tokensCount)
+    const { wbtc, usdc, weth, test, deployer } = await getNamedAccounts();
+    const contracts = [];
+    for (const token of [wbtc, usdc, weth]) {
+        const contract = await ethers.getContractAt("LpIssuer", token);
+        contracts.push(contract);
+        const balance = await contract.balanceOf(test);
+        await withSigner(test, async (s) => {
+            await contract.connect(s).transfer(deployer, balance.div(10));
+        });
+    }
+    const vaultTokens: ERC20[] = sortContractsByAddresses(contracts).slice(
+        0,
+        options.tokensCount
     );
     await protocolGovernance
         .connect(options.adminSigner)
@@ -712,10 +728,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     await gatewayVaultGovernance
         .connect(options.adminSigner)
         .setStrategyParams(gatewayNft, [
-            [
-                BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
-                BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
-            ],
+            [BigNumber.from(10 ** 4), BigNumber.from(10 ** 4)],
         ]);
     return {
         ERC20VaultFactory,

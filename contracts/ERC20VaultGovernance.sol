@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "./interfaces/IProtocolGovernance.sol";
@@ -31,10 +31,6 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
-    }
-
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
     }
 
     /// @inheritdoc IERC20VaultGovernance
