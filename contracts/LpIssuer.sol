@@ -95,13 +95,20 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             // This is lpTokens if total supply == CommonLibrary.PRICE_DENOMINATOR
             balanceFactor = _getLpAmount(tvl, tokenAmounts, existentials_, CommonLibrary.PRICE_DENOMINATOR);
         }
+        // console.log("tvl0", tvl[0]);
+        // console.log("tvl1", tvl[1]);
+        // console.log("tokenAmounts0", tokenAmounts[0]);
+        // console.log("tokenAmounts1", tokenAmounts[1]);
+        // console.log("existentials0", existentials_[0]);
+        // console.log("existentials1", existentials_[1]);
+
         // If with that big supply we don't reveive any lps then it doesn't make sense to continue
         require(balanceFactor > 0, "BF");
         uint256[] memory balancedAmounts = new uint256[](tokenAmounts.length);
 
         // Making sure the proportion between tokenAmounts and tvl are the same
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            balancedAmounts[i] = _getBalancedAmount(tvl[i], tokenAmounts[i], existentials_[i], balanceFactor);
+            balancedAmounts[i] = _getBalancedAmount(tvl[i], tokenAmounts[i], existentials_[i], balanceFactor, supply);
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), balancedAmounts[i]);
         }
@@ -113,7 +120,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             options
         );
         uint256 amountToMint = _getLpAmount(tvl, actualTokenAmounts, existentials_, supply);
+
         require(amountToMint > 0, "ZLP");
+
         require(
             amountToMint + balanceOf(msg.sender) <=
                 ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
@@ -210,7 +219,10 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         lastFeeCharge = block.timestamp;
         uint256 baseSupply = supply;
         if (isWithdraw) {
-            baseSupply = supply - deltaSupply;
+            baseSupply = 0;
+            if (supply > deltaSupply) {
+                baseSupply = supply - deltaSupply;
+            }
         }
 
         if (baseSupply == 0) {
@@ -303,15 +315,25 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
         uint256 tvl,
         uint256 amount,
         uint256 existential,
-        uint256 balanceFactor
+        uint256 balanceFactor,
+        uint256 supply
     ) internal pure returns (uint256) {
+        if (supply == 0) {
+            // skip normalization on init
+            return amount;
+        }
         if (amount < existential) {
             // avoid putting small amounts as it can introduce unnecessary harsh errors
             // one should provide amount > existential deposit each time tvl is not 0
             require(tvl == 0, "PN");
             return 0;
         }
-        return (amount * balanceFactor) / CommonLibrary.PRICE_DENOMINATOR;
+        // normalize amount
+        uint256 res = (tvl * balanceFactor) / CommonLibrary.PRICE_DENOMINATOR;
+        if (res > amount) {
+            res = amount;
+        }
+        return res;
     }
 
     /// @notice Emitted when management fees are charged

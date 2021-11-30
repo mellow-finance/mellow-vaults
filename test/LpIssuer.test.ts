@@ -135,7 +135,7 @@ describe("LpIssuer", () => {
             const address = await read("VaultRegistry", "vaultForNft", nft);
             const lpIssuer = await ethers.getContractAt("LpIssuer", address);
             const tokens = await lpIssuer.vaultTokens();
-            const protocolFee = 3 * 10 ** 3;
+            const protocolFee = 3 * 10 ** 9;
             await execute(
                 "LpIssuerGovernance",
                 { from: admin, autoMine: true },
@@ -191,9 +191,17 @@ describe("LpIssuer", () => {
                     "delayedStrategyParams",
                     nft
                 );
-                await lpIssuer.connect(s).deposit([10 ** 5, 10 ** 5], []);
+
+                const deposits = [];
+                for (const token of tokens) {
+                    const c = await ethers.getContractAt("LpIssuer", token);
+                    const decimals = await c.decimals();
+                    deposits.push(10 ** (decimals / 2 + 1));
+                }
+
+                await lpIssuer.connect(s).deposit(deposits, []);
                 await sleep(86000);
-                await lpIssuer.connect(s).deposit([10 ** 5, 10 ** 5], []);
+                await lpIssuer.connect(s).deposit(deposits, []);
                 // doesn't charge fees before delay
                 expect(await lpIssuer.balanceOf(strategyTreasury)).to.eq(0);
                 expect(await lpIssuer.balanceOf(protocolTreasury)).to.eq(0);
@@ -203,23 +211,37 @@ describe("LpIssuer", () => {
                 await sleep(401);
                 // charge pre-deposit
                 const balance = await lpIssuer.balanceOf(test);
-                await lpIssuer.connect(s).deposit([10 ** 4, 10 ** 4], []);
+                await lpIssuer.connect(s).deposit(
+                    deposits.map((x) => x / 5),
+                    []
+                );
+                console.log(
+                    "----",
+                    balance.toString(),
+                    managementFee.toString()
+                );
+                let expected = (
+                    await lpIssuer.balanceOf(strategyTreasury)
+                ).toNumber();
                 let diff =
-                    (await lpIssuer.balanceOf(strategyTreasury)).toNumber() -
+                    expected -
                     balance
                         .mul(managementFee)
                         .div(10 ** 9)
                         .div(365)
                         .toNumber();
-                expect(Math.abs(diff)).to.lte(2);
+                expect(Math.abs(diff / expected)).to.lte(0.001);
+                expected = (
+                    await lpIssuer.balanceOf(protocolTreasury)
+                ).toNumber();
                 diff =
-                    (await lpIssuer.balanceOf(protocolTreasury)).toNumber() -
+                    expected -
                     balance
                         .mul(protocolFee)
                         .div(10 ** 9)
                         .div(365)
                         .toNumber();
-                expect(Math.abs(diff)).to.lte(2);
+                expect(Math.abs(diff) / expected).to.lte(0.001);
                 expect(
                     await lpIssuer.balanceOf(strategyPerformanceTreasury)
                 ).to.eq(0);
@@ -230,15 +252,21 @@ describe("LpIssuer", () => {
                     "vaultForNft",
                     erc20VaultNft
                 );
-                for (const token of tokens) {
+                for (let i = 0; i < tokens.length; i++) {
                     const contract = await ethers.getContractAt(
                         "LpIssuer",
-                        token
+                        tokens[i]
                     );
-                    await contract.connect(s).transfer(address, 10 ** 5);
+                    await contract
+                        .connect(s)
+                        .transfer(address, deposits[i] / 10);
                 }
-                await sleep(86400);
-                await lpIssuer.connect(s).deposit([10 ** 4, 10 ** 4], []);
+                await sleep(86401);
+                await lpIssuer.connect(s).deposit(
+                    deposits.map((x) => x / 8),
+                    []
+                );
+
                 expect(
                     (
                         await lpIssuer.balanceOf(strategyPerformanceTreasury)
