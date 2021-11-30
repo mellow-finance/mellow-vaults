@@ -215,11 +215,6 @@ describe("LpIssuer", () => {
                     deposits.map((x) => x / 5),
                     []
                 );
-                console.log(
-                    "----",
-                    balance.toString(),
-                    managementFee.toString()
-                );
                 let expected = (
                     await lpIssuer.balanceOf(strategyTreasury)
                 ).toNumber();
