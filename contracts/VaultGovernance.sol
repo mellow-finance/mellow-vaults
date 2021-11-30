@@ -75,7 +75,7 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     /// @inheritdoc IVaultGovernance
     function initialize(IVaultFactory factory_) external {
-        require(!initialized, Exceptions.INITIALIZED_ALREADY);
+        require(!initialized, Exceptions.INITIALIZATION);
         factory = factory_;
         initialized = true;
     }
@@ -86,7 +86,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         bytes memory options,
         address owner
     ) public virtual returns (IVault vault, uint256 nft) {
-        require(initialized, Exceptions.INITIALIZED_ALREADY);
+        require(initialized, Exceptions.INITIALIZATION);
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
         require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), Exceptions.PERMISSIONLESS_OR_ADMIN);
         vault = factory.deployVault(vaultTokens, options);

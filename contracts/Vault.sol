@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./libraries/CommonLibrary.sol";
 import "./interfaces/IVault.sol";
@@ -9,7 +10,7 @@ import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
-abstract contract Vault is IVault {
+abstract contract Vault is IVault, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IVaultGovernance internal _vaultGovernance;
@@ -53,8 +54,8 @@ abstract contract Vault is IVault {
 
     function initialize(uint256 nft_) external {
         require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(nft_ > 0, "NFT0");
-        require(_nft == 0, "INIT");
+        require(nft_ > 0, Exceptions.NFT_ZERO);
+        require(_nft == 0, Exceptions.INITIALIZATION);
         _nft = nft_;
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         registry.setApprovalForAll(address(registry), true);
@@ -67,8 +68,8 @@ abstract contract Vault is IVault {
         address[] memory tokens,
         uint256[] memory tokenAmounts,
         bytes memory options
-    ) public returns (uint256[] memory actualTokenAmounts) {
-        require(_nft > 0, Exceptions.INITIALIZED_ALREADY);
+    ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
+        require(_nft > 0, Exceptions.INITIALIZATION);
         require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER); // Also checks that the token exists
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
@@ -103,8 +104,8 @@ abstract contract Vault is IVault {
         address[] memory tokens,
         uint256[] memory tokenAmounts,
         bytes memory options
-    ) external returns (uint256[] memory actualTokenAmounts) {
-        require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER); // Also checks that the token exists
+    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
+        require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
         require(owner == msg.sender || _isValidPullDestination(to), Exceptions.VALID_PULL_DESTINATION); // approved can only pull to whitelisted contracts
@@ -116,8 +117,8 @@ abstract contract Vault is IVault {
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
-    function reclaimTokens(address to, address[] memory tokens) external {
-        require(_nft > 0, Exceptions.INITIALIZED_ALREADY);
+    function reclaimTokens(address to, address[] memory tokens) external nonReentrant {
+        require(_nft > 0, Exceptions.INITIALIZATION);
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), Exceptions.ADMIN);
@@ -139,9 +140,9 @@ abstract contract Vault is IVault {
 
     // TODO: Add to governance specific bytes for each contract that shows withdraw address
     /// @inheritdoc IVault
-    function claimRewards(address from, bytes memory data) external override {
-        require(_nft > 0, Exceptions.INITIALIZED_ALREADY);
-        require(_isApprovedOrOwner(msg.sender), Exceptions.ADMIN);
+    function claimRewards(address from, bytes memory data) external override nonReentrant {
+        require(_nft > 0, Exceptions.INITIALIZATION);
+        require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
         require(protocolGovernance.isAllowedToClaim(from), Exceptions.ALLOWED_TO_CLAIM);
         (bool res, bytes memory returndata) = from.call(data);

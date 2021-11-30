@@ -103,7 +103,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         address,
         uint256 tokenId,
         bytes calldata
-    ) external returns (bytes4) {
+    ) external nonReentrant returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         require(msg.sender == address(registry), Exceptions.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
@@ -115,7 +115,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-        require(_subvaultNfts.length > 0, Exceptions.INITIALIZED_ALREADY);
+        require(_subvaultNfts.length > 0, Exceptions.INITIALIZATION);
         bool optimized;
         bytes[] memory vaultsOptions;
         (optimized, vaultsOptions) = _parseOptions(options);
@@ -174,7 +174,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         (bool optimized, bytes[] memory vaultsOptions) = _parseOptions(options);
 
-        require(_subvaultNfts.length > 0, Exceptions.INITIALIZED_ALREADY);
+        require(_subvaultNfts.length > 0, Exceptions.INITIALIZATION);
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[][] memory amountsByVault = CommonLibrary.splitAmounts(tokenAmounts, tvls);

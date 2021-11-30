@@ -22,7 +22,7 @@ library Exceptions {
     string constant REQUIRE_AT_LEAST_ADMIN = "RST";
     string constant NULL_OR_NOT_INITIALIZED = "NA";
     string constant REDIRECTS_AND_VAULT_TOKENS_LENGTH = "RL";
-    string constant INITIALIZED_ALREADY = "INIT";
+    string constant INITIALIZATION = "INIT";
     string constant PERMISSIONLESS_OR_ADMIN = "POA";
     string constant TOKEN_NOT_IN_PROJECT = "TPS";
     string constant WEIGHTS_LENGTH_IS_ZERO = "KGT0";
