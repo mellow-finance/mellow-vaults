@@ -95,12 +95,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20 {
             // This is lpTokens if total supply == CommonLibrary.PRICE_DENOMINATOR
             balanceFactor = _getLpAmount(tvl, tokenAmounts, existentials_, CommonLibrary.PRICE_DENOMINATOR);
         }
-        // console.log("tvl0", tvl[0]);
-        // console.log("tvl1", tvl[1]);
-        // console.log("tokenAmounts0", tokenAmounts[0]);
-        // console.log("tokenAmounts1", tokenAmounts[1]);
-        // console.log("existentials0", existentials_[0]);
-        // console.log("existentials1", existentials_[1]);
 
         // If with that big supply we don't reveive any lps then it doesn't make sense to continue
         require(balanceFactor > 0, "BF");
