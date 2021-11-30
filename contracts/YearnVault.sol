@@ -5,6 +5,7 @@ import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/external/yearn/IYearnVault.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
 import "./Vault.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
 contract YearnVault is Vault {
@@ -34,7 +35,6 @@ contract YearnVault is Vault {
         tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _yTokens.length; i++) {
             IYearnVault yToken = IYearnVault(_yTokens[i]);
-            /// TODO: Verify it's not subject to manipulation like in Cream hack
             tokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
     }

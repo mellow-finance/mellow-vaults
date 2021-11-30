@@ -82,6 +82,7 @@ describe("VaultRegistry", () => {
                 AnotherERC20Vault.address,
                 AaveVault.address,
                 UniV3Vault.address,
+                await deployer.getAddress(), // hack for testing
             ]);
         });
     });
@@ -141,6 +142,7 @@ describe("VaultRegistry", () => {
                     AnotherERC20Vault.address,
                     AaveVault.address,
                     UniV3Vault.address,
+                    await deployer.getAddress(), // hack for testing
                     newVaultAddress,
                 ]);
             });
@@ -153,7 +155,9 @@ describe("VaultRegistry", () => {
                         ERC20VaultFactory.address,
                         await stranger.getAddress()
                     )
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(
+                    Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+                );
             });
         });
     });
@@ -217,7 +221,7 @@ describe("VaultRegistry", () => {
 
     describe("vaultsCount", () => {
         it("returns correct vaults count", async () => {
-            expect(await vaultRegistry.vaultsCount()).to.equal(4);
+            expect(await vaultRegistry.vaultsCount()).to.equal(4 + 1); // 4 vaults + 1 for hack
         });
     });
 

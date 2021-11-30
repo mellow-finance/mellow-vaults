@@ -345,11 +345,4 @@ describe("CommonLibrary", () => {
             });
         });
     });
-
-    describe("isSubsetOf", () => {
-        // todo
-        it("is callable", async () => {
-            await commonTest.isSubsetOfTest([], [], []);
-        });
-    });
 });

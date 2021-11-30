@@ -7,6 +7,7 @@ import "./interfaces/ILpIssuerGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovernance {
@@ -100,8 +101,8 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
 
     /// @inheritdoc ILpIssuerGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        require(params.managementFee <= MAX_MANAGEMENT_FEE, "MMF");
-        require(params.performanceFee <= MAX_PERFORMANCE_FEE, "MPFF");
+        require(params.managementFee <= MAX_MANAGEMENT_FEE, Exceptions.MAX_MANAGEMENT_FEE);
+        require(params.performanceFee <= MAX_PERFORMANCE_FEE, Exceptions.MAX_PERFORMANCE_FEE);
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
@@ -119,7 +120,7 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
 
     /// @inheritdoc ILpIssuerGovernance
     function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
-        require(params.protocolFee <= MAX_PROTOCOL_FEE, "MPF");
+        require(params.protocolFee <= MAX_PROTOCOL_FEE, Exceptions.MAX_PROTOCOL_FEE);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
             tx.origin,
@@ -170,7 +171,7 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
         bytes calldata
     ) external view returns (bytes4) {
         IVaultRegistry registry = _internalParams.registry;
-        require(msg.sender == address(registry), "NFTVR");
+        require(msg.sender == address(registry), Exceptions.NFT_VAULT_REGISTRY);
         return this.onERC721Received.selector;
     }
 
@@ -189,7 +190,6 @@ contract LpIssuerGovernance is IERC721Receiver, ILpIssuerGovernance, VaultGovern
             (uint256, string, string)
         );
         (vault, nft) = super.deployVault(vaultTokens, abi.encode(name, symbol), msg.sender);
-        // TODO - add IERC165 check of the subvault interface == gateway vault interface
         IVaultRegistry registry = _internalParams.registry;
         ILpIssuer(address(vault)).addSubvault(subvaultNft);
         registry.safeTransferFrom(msg.sender, address(vault), subvaultNft);

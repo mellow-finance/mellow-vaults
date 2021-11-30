@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
 import "./VaultGovernance.sol";
+import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
