@@ -9,7 +9,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     address public immutable protocolGovernance;
-    address[] public traders;
+    address[] internal _traders;
     mapping(address => bool) public addedTraders;
 
     constructor(address _protocolGovernance) {
@@ -18,11 +18,15 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
 
     /// @inheritdoc IChiefTrader
     function tradersCount() external view returns (uint256) {
-        return traders.length;
+        return _traders.length;
     }
 
     function getTrader(uint256 _index) external view returns (address) {
-        return traders[_index];
+        return _traders[_index];
+    }
+
+    function traders() external view returns (address[] memory) {
+        return _traders;
     }
 
     /// @inheritdoc IChiefTrader
@@ -32,9 +36,9 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         require(!addedTraders[traderAddress], ExceptionsLibrary.TRADER_ALREADY_REGISTERED_EXCEPTION);
         require(ERC165(traderAddress).supportsInterface(type(ITrader).interfaceId));
         require(!ERC165(traderAddress).supportsInterface(type(IChiefTrader).interfaceId));
-        traders.push(traderAddress);
+        _traders.push(traderAddress);
         addedTraders[traderAddress] = true;
-        emit AddedTrader(traders.length - 1, traderAddress);
+        emit AddedTrader(_traders.length - 1, traderAddress);
     }
 
     /// @inheritdoc ITrader
@@ -45,8 +49,8 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256) {
-        require(traderId < traders.length, ExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
-        address traderAddress = traders[traderId];
+        require(traderId < _traders.length, ExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        address traderAddress = _traders[traderId];
         address recipient = msg.sender;
         return ITrader(traderAddress).swapExactInput(0, amount, recipient, path, options);
     }
@@ -59,8 +63,8 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256) {
-        require(traderId < traders.length, ExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
-        address traderAddress = traders[traderId];
+        require(traderId < _traders.length, ExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        address traderAddress = _traders[traderId];
         address recipient = msg.sender;
         return ITrader(traderAddress).swapExactOutput(0, amount, recipient, path, options);
     }

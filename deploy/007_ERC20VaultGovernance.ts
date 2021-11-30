@@ -9,7 +9,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, log, execute, read } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, uniswapV3PositionManager } = await getNamedAccounts();
+    const chiefTrader = await get("ChiefTrader");
+    const { deployer } = await getNamedAccounts();
     await deploy("ERC20VaultGovernance", {
         from: deployer,
         args: [
@@ -17,6 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
             },
+            { trader: chiefTrader.address },
         ],
         log: true,
         autoMine: true,

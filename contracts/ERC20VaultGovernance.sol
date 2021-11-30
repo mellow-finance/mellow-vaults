@@ -10,7 +10,15 @@ import "./VaultGovernance.sol";
 contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
-    constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}
+    /// @param delayedProtocolParams_ Initial Protocol Params
+    constructor(
+        InternalParams memory internalParams_,
+        DelayedProtocolParams memory delayedProtocolParams_
+    ) 
+        VaultGovernance(internalParams_) 
+    {
+        _delayedProtocolParams = abi.encode(delayedProtocolParams_);
+    }
 
     /// @inheritdoc IERC20VaultGovernance
     function delayedStrategyParams(uint256 nft) public view returns (DelayedStrategyParams memory) {

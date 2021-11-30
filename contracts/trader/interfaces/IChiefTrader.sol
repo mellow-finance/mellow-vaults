@@ -13,6 +13,8 @@ interface IChiefTrader {
 
     function getTrader(uint256 _index) external view returns (address);
 
+    function traders() external view returns (address[] memory);
+
     /// @notice Add new trader
     /// @param traderAddress the address of the trader
     function addTrader(address traderAddress) external;
