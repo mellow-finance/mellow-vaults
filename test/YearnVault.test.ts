@@ -57,6 +57,18 @@ describe("YearnVault", () => {
                 vaultOwner
             );
             nft = (await read("VaultRegistry", "vaultsCount")).toNumber();
+            await withSigner(yearnVaultGovernance, async (s) => {
+                // this is a hack to avoid checking that the owner of vault NFT is a Vault
+                // we're saying here that vaultOwner is a legal registered vault
+                const vaultRegistryContract = await ethers.getContractAt(
+                    "VaultRegistry",
+                    vaultRegistry
+                );
+                await vaultRegistryContract
+                    .connect(s)
+                    .registerVault(vaultOwner, vaultOwner);
+            });
+
             const address = await read("VaultRegistry", "vaultForNft", nft);
 
             const contracts: Contract[] = [];

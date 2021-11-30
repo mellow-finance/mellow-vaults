@@ -11,6 +11,7 @@ import "./interfaces/IVaultRegistry.sol";
 contract VaultRegistry is IVaultRegistry, ERC721 {
     string private constant INDEX_OUT_OF_BOUNDS = "ID";
     string private constant PROTOCOL_ADMIN = "ADM";
+    string private constant VAULT_GOVERNANCE = "VG";
     string private constant TOKEN_OWNER = "TO";
     string private constant LOCKED = "LCKD";
     string private constant UNIQUE_CONSTRAINT = "UX";
@@ -60,7 +61,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(_protocolGovernance.isVaultGovernance(msg.sender), PROTOCOL_ADMIN);
+        require(_protocolGovernance.isVaultGovernance(msg.sender), VAULT_GOVERNANCE);
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
