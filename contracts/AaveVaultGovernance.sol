@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "./interfaces/IProtocolGovernance.sol";
@@ -14,10 +14,6 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         VaultGovernance(internalParams_)
     {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
-    }
-
-    function strategyTreasury(uint256 nft) external view override(IVaultGovernance, VaultGovernance) returns (address) {
-        return delayedStrategyParams(nft).strategyTreasury;
     }
 
     /// @inheritdoc IAaveVaultGovernance

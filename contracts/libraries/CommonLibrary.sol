@@ -4,6 +4,8 @@ pragma solidity 0.8.9;
 /// @notice CommonLibrary shared utilities
 library CommonLibrary {
     uint256 constant DENOMINATOR = 10**9;
+    uint256 constant PRICE_DENOMINATOR = 10**18;
+    uint256 constant YEAR = 365 * 24 * 3600;
 
     /// @notice Sort addresses using bubble sort. The sorting is done in-place.
     /// @param arr Array of addresses

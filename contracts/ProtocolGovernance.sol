@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -82,6 +82,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function governanceDelay() external view returns (uint256) {
         return params.governanceDelay;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function protocolTreasury() external view returns (address) {
+        return params.protocolTreasury;
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------

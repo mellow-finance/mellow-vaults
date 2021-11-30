@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -17,6 +17,10 @@ abstract contract VaultGovernance is IVaultGovernance {
     mapping(uint256 => bytes) internal _delayedStrategyParams;
     mapping(uint256 => bytes) internal _stagedDelayedStrategyParams;
     mapping(uint256 => uint256) internal _delayedStrategyParamsTimestamp;
+
+    mapping(uint256 => bytes) internal _delayedProtocolPerVaultParams;
+    mapping(uint256 => bytes) internal _stagedDelayedProtocolPerVaultParams;
+    mapping(uint256 => uint256) internal _delayedProtocolPerVaultParamsTimestamp;
 
     bytes internal _delayedProtocolParams;
     bytes internal _stagedDelayedProtocolParams;
@@ -42,6 +46,11 @@ abstract contract VaultGovernance is IVaultGovernance {
     }
 
     /// @inheritdoc IVaultGovernance
+    function delayedProtocolPerVaultParamsTimestamp(uint256 nft) external view returns (uint256) {
+        return _delayedProtocolPerVaultParamsTimestamp[nft];
+    }
+
+    /// @inheritdoc IVaultGovernance
     function delayedProtocolParamsTimestamp() external view returns (uint256) {
         return _delayedProtocolParamsTimestamp;
     }
@@ -60,9 +69,6 @@ abstract contract VaultGovernance is IVaultGovernance {
     function stagedInternalParams() external view returns (InternalParams memory) {
         return _stagedInternalParams;
     }
-
-    /// @inheritdoc IVaultGovernance
-    function strategyTreasury(uint256 nft) external view virtual returns (address);
 
     // -------------------  PUBLIC, MUTATING  -------------------
 
@@ -130,6 +136,29 @@ abstract contract VaultGovernance is IVaultGovernance {
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
         delete _stagedDelayedStrategyParams[nft];
         delete _delayedStrategyParamsTimestamp[nft];
+    }
+
+    /// @notice Set Delayed Protocol Per Vault Params
+    /// @param nft Nft of the vault
+    /// @param params New params
+    function _stageDelayedProtocolPerVaultParams(uint256 nft, bytes memory params) internal {
+        _requireProtocolAdmin();
+        _stagedDelayedProtocolPerVaultParams[nft] = params;
+        uint256 delayFactor = _delayedProtocolPerVaultParams[nft].length == 0 ? 0 : 1;
+        _delayedProtocolPerVaultParamsTimestamp[nft] =
+            block.timestamp +
+            _internalParams.protocolGovernance.governanceDelay() *
+            delayFactor;
+    }
+
+    /// @notice Commit Delayed Protocol Per Vault Params
+    function _commitDelayedProtocolPerVaultParams(uint256 nft) internal {
+        _requireProtocolAdmin();
+        require(_delayedProtocolPerVaultParamsTimestamp[nft] > 0, "NULL");
+        require(block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], "TS");
+        _delayedProtocolPerVaultParams[nft] = _stagedDelayedProtocolPerVaultParams[nft];
+        delete _stagedDelayedProtocolPerVaultParams[nft];
+        delete _delayedProtocolPerVaultParamsTimestamp[nft];
     }
 
     /// @notice Set Delayed Protocol Params

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
 import "./interfaces/external/aave/ILendingPool.sol";
@@ -18,8 +18,9 @@ contract AaveVault is Vault {
     {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            // TODO: check if token doesn't exist
-            _aTokens[i] = _getAToken(_vaultTokens[i]);
+            address aToken = _getAToken(_vaultTokens[i]);
+            require(aToken != address(0), "ZT");
+            _aTokens[i] = aToken;
             _tvls.push(0);
         }
     }
@@ -77,7 +78,7 @@ contract AaveVault is Vault {
     }
 
     function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(_lendingPool()), address(this)) < type(uint256).max / 2) {
+        if (IERC20(token).allowance(address(this), address(_lendingPool())) < type(uint256).max / 2) {
             IERC20(token).approve(address(_lendingPool()), type(uint256).max);
         }
     }

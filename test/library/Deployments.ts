@@ -4,7 +4,12 @@ import { ethers, getNamedAccounts } from "hardhat";
 import { Contract, ContractFactory } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 
-import { sleep, sortContractsByAddresses, encodeToBytes } from "./Helpers";
+import {
+    sleep,
+    sortContractsByAddresses,
+    encodeToBytes,
+    withSigner,
+} from "./Helpers";
 import {
     ERC20,
     ERC20Vault,
@@ -232,7 +237,9 @@ export async function deployVaultGovernanceSystem(options: {
         params,
         additionalParamsForUniV3
     );
-    LpIssuerGovernance = await contractFactoryLpIssuer.deploy(params);
+    LpIssuerGovernance = await contractFactoryLpIssuer.deploy(params, {
+        managementFeeChargeDelay: 86400,
+    });
     await ERC20VaultGovernance.deployed();
     await AaveVaultGovernance.deployed();
     await UniV3VaultGovernance.deployed();
@@ -399,17 +406,22 @@ export const deployLpIssuerGovernance = async (options: {
     });
 
     const constructorArgs: LpIssuerGovernance_constructor =
-        options.constructorArgs ?? {
-            registry: vaultRegistry.address,
-            protocolGovernance: protocolGovernance.address,
-            factory: ERC20VaultFactory.address,
-        };
+        options.constructorArgs ?? [
+            {
+                registry: vaultRegistry.address,
+                protocolGovernance: protocolGovernance.address,
+                factory: ERC20VaultFactory.address,
+            },
+            { managementFeeChargeDelay: 86400 },
+        ];
     // />
     const Contract: ContractFactory = await ethers.getContractFactory(
         "LpIssuerGovernance"
     );
 
-    let contract: LpIssuerGovernance = await Contract.deploy(constructorArgs);
+    let contract: LpIssuerGovernance = await Contract.deploy(
+        ...constructorArgs
+    );
     await contract.deployed();
     return {
         LpIssuerGovernance: contract,
@@ -465,8 +477,19 @@ export async function deploySubVaultSystem(options: {
         treasury: options.treasury,
         dontUseTestSetup: options.dontUseTestSetup,
     });
-    const vaultTokens: ERC20[] = sortContractsByAddresses(
-        await deployERC20Tokens(options.tokensCount)
+    const { wbtc, usdc, weth, test, deployer } = await getNamedAccounts();
+    const contracts = [];
+    for (const token of [wbtc, usdc, weth]) {
+        const contract = await ethers.getContractAt("LpIssuer", token);
+        contracts.push(contract);
+        const balance = await contract.balanceOf(test);
+        await withSigner(test, async (s) => {
+            await contract.connect(s).transfer(deployer, balance.div(10));
+        });
+    }
+    const vaultTokens: ERC20[] = sortContractsByAddresses(contracts).slice(
+        0,
+        options.tokensCount
     );
     await protocolGovernance
         .connect(options.adminSigner)
@@ -749,10 +772,7 @@ export async function deploySubVaultsXGatewayVaultSystem(options: {
     await gatewayVaultGovernance
         .connect(options.adminSigner)
         .setStrategyParams(gatewayNft, [
-            [
-                BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
-                BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9)),
-            ],
+            [BigNumber.from(10 ** 4), BigNumber.from(10 ** 4)],
         ]);
     return {
         ERC20VaultFactory,
@@ -888,11 +908,11 @@ export async function deploySystem(options: {
     );
     await LpIssuerGovernance.connect(
         options.adminSigner
-    ).stageDelayedStrategyParams(lpIssuerNft, [options.treasury, []]);
+    ).stageDelayedProtocolPerVaultParams(lpIssuerNft, [1 * 10 ** 9]);
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await LpIssuerGovernance.connect(
         options.adminSigner
-    ).commitDelayedStrategyParams(lpIssuerNft);
+    ).commitDelayedProtocolPerVaultParams(lpIssuerNft);
     await LpIssuerGovernance.connect(options.adminSigner).setStrategyParams(
         lpIssuerNft,
         [BigNumber.from(10 ** 9).mul(BigNumber.from(10 ** 9))]
