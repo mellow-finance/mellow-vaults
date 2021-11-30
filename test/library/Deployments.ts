@@ -37,6 +37,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
 export async function deployTraders(options: {
     protocolGovernance: ProtocolGovernance;
+    adminSigner: SignerWithAddress | Signer;
 }): Promise<{
     chiefTrader: Contract;
     uniV3Trader: Contract;
@@ -47,17 +48,10 @@ export async function deployTraders(options: {
     ).deploy(options.protocolGovernance.address);
     const uniV3Trader: Contract = await (
         await ethers.getContractFactory("UniV3Trader")
-    ).deploy(
-        chiefTrader.address,
-        encodeToBytes(
-            ["tuple(address swapRouter)"],
-            [
-                {
-                    swapRouter: uniswapV3Router,
-                },
-            ]
-        )
-    );
+    ).deploy(uniswapV3Router);
+    await chiefTrader
+        .connect(options.adminSigner)
+        .addTrader(uniV3Trader.address);
     return {
         chiefTrader,
         uniV3Trader,
@@ -195,6 +189,8 @@ export async function deployVaultGovernanceSystem(options: {
     AaveVaultGovernance: VaultGovernance;
     UniV3VaultGovernance: VaultGovernance;
     LpIssuerGovernance: LpIssuerGovernance;
+    chiefTrader: Contract;
+    uniV3Trader: Contract;
 }> {
     const { vaultRegistry, protocolGovernance } =
         await deployVaultRegistryAndProtocolGovernance({
@@ -203,6 +199,11 @@ export async function deployVaultGovernanceSystem(options: {
             adminSigner: options.adminSigner,
             treasury: options.treasury,
         });
+
+    const { chiefTrader, uniV3Trader } = await deployTraders({
+        protocolGovernance: protocolGovernance,
+        adminSigner: options.adminSigner,
+    });
 
     let params: VaultGovernance_InternalParams = {
         protocolGovernance: protocolGovernance.address,
@@ -228,7 +229,13 @@ export async function deployVaultGovernanceSystem(options: {
     const additionalParamsForUniV3 = {
         positionManager: uniswapV3PositionManager,
     };
-    ERC20VaultGovernance = await contractFactoryERC20.deploy(params, []);
+    const additionalParamsForERC20 = {
+        trader: chiefTrader.address,
+    };
+    ERC20VaultGovernance = await contractFactoryERC20.deploy(
+        params,
+        additionalParamsForERC20
+    );
     AaveVaultGovernance = await contractFactoryAave.deploy(
         params,
         additionalParamsForAave
@@ -300,6 +307,8 @@ export async function deployVaultGovernanceSystem(options: {
         AaveVaultGovernance,
         UniV3VaultGovernance,
         LpIssuerGovernance,
+        chiefTrader,
+        uniV3Trader,
     };
 }
 
@@ -472,6 +481,8 @@ export async function deploySubVaultSystem(options: {
         AaveVaultGovernance,
         UniV3VaultGovernance,
         LpIssuerGovernance,
+        chiefTrader,
+        uniV3Trader,
     } = await deployVaultGovernanceSystem({
         adminSigner: options.adminSigner,
         treasury: options.treasury,
@@ -575,16 +586,9 @@ export async function deploySubVaultSystem(options: {
         );
     }
 
-    const { chiefTrader, uniV3Trader } = await deployTraders({
-        protocolGovernance: protocolGovernance,
-    });
-
     await ERC20VaultGovernance.connect(
         options.adminSigner
-    ).stageDelayedStrategyParams(nftERC20, [
-        options.treasury,
-        chiefTrader.address,
-    ]);
+    ).stageDelayedStrategyParams(nftERC20, [options.treasury]);
     await AaveVaultGovernance.connect(
         options.adminSigner
     ).stageDelayedStrategyParams(nftAave, [options.treasury]);

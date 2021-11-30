@@ -107,20 +107,9 @@ describe("ChiefTrader", () => {
             it("adds new trader", async () => {
                 withSigner(admin, async (signer) => {
                     const { uniswapV3Router } = await getNamedAccounts();
-                    const options = encodeToBytes(
-                        ["tuple(address swapRouter)"],
-                        [
-                            {
-                                swapRouter: uniswapV3Router,
-                            },
-                        ]
-                    );
-                    let newTrader = await deployments.deploy("UniV3Trader", {
-                        from: deployer,
-                        args: [chiefTrader.address, options],
-                        log: true,
-                        autoMine: true,
-                    });
+                    let newTrader = await (
+                        await ethers.getContractFactory("UniV3Trader")
+                    ).deploy(uniswapV3Router);
                     await chiefTrader
                         .connect(signer)
                         .addTrader(newTrader.address);
