@@ -27,6 +27,7 @@ contract ERC20Vault is Vault, ITrader {
         }
     }
 
+    /// @inheritdoc ITrader
     function swapExactInput(
         uint256 traderId,
         uint256 amount,
@@ -40,12 +41,13 @@ contract ERC20Vault is Vault, ITrader {
         );
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
-        ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
+        ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
         _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
         return trader.swapExactInput(traderId, amount, address(0), path, options);
     }
 
+    /// @inheritdoc ITrader
     function swapExactOutput(
         uint256 traderId,
         uint256 amount,
@@ -59,7 +61,7 @@ contract ERC20Vault is Vault, ITrader {
         );
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
-        ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
+        ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
         _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
         return trader.swapExactOutput(traderId, amount, address(0), path, options);

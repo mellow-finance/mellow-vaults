@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "../trader/interfaces/ITrader.sol";
 import "./IVaultGovernance.sol";
 
 interface IERC20VaultGovernance is IVaultGovernance {
@@ -9,7 +10,12 @@ interface IERC20VaultGovernance is IVaultGovernance {
     /// @param redirects Redirects[i] is the number of subvault that will receive deposit to i-th subvault. If the array is empty it is ignored.
     struct DelayedStrategyParams {
         address strategyTreasury;
-        address trader;
+    }
+
+    /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param trader Reference to internal Trader contract
+    struct DelayedProtocolParams {
+        ITrader trader;
     }
 
     /// @notice Delayed Strategy Params, i.e. Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
@@ -29,4 +35,18 @@ interface IERC20VaultGovernance is IVaultGovernance {
     /// @dev Can only be called after delayedStrategyParamsTimestamp
     /// @param nft VaultRegistry NFT of the vault
     function commitDelayedStrategyParams(uint256 nft) external;
+
+    /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    /// @notice Delayed Protocol Params staged for commit after delay.
+    function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @dev Can only be called after delayedProtocolParamsTimestamp.
+    /// @param params New params
+    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external;
+
+    /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
+    function commitDelayedProtocolParams() external;
 }
