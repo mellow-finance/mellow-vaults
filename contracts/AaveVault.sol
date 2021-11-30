@@ -42,14 +42,18 @@ contract AaveVault is Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        uint16 referralCode = abi.decode(options, (uint16));
+        uint256 referralCode = 0;
+        if (options.length > 0) {
+            referralCode = abi.decode(options, (uint256));
+        }
+
         for (uint256 i = 0; i < _aTokens.length; i++) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
             address token = tokens[i];
             _allowTokenIfNecessary(token);
-            _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), referralCode);
+            _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
         }
         updateTvls();
         actualTokenAmounts = tokenAmounts;
