@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./trader/interfaces/ITrader.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
@@ -37,6 +40,7 @@ contract ERC20Vault is Vault, ITrader {
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
+        _approveERC20TokenIfNecessary(path[0].token0, address(trader));
         return trader.swapExactInput(traderId, amount, address(0), path, options);
     }
 
@@ -54,6 +58,7 @@ contract ERC20Vault is Vault, ITrader {
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
+        _approveERC20TokenIfNecessary(path[0].token0, address(trader));
         return trader.swapExactOutput(traderId, amount, address(0), path, options);
     }
 
@@ -86,5 +91,10 @@ contract ERC20Vault is Vault, ITrader {
 
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    function _approveERC20TokenIfNecessary(address token, address to) internal {
+        if (IERC20(token).allowance(to, address(this)) < type(uint256).max / 2)
+            IERC20(token).approve(to, type(uint256).max);
     }
 }

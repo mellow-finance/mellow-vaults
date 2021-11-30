@@ -29,8 +29,4 @@ interface IERC20VaultGovernance is IVaultGovernance {
     /// @dev Can only be called after delayedStrategyParamsTimestamp
     /// @param nft VaultRegistry NFT of the vault
     function commitDelayedStrategyParams(uint256 nft) external;
-
-    /// @notice Trader contract address
-    /// @param nft VaultRegistry NFT of the vault
-    function trader(uint256 nft) external view returns (address);
 }
