@@ -4,6 +4,7 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "./trader/interfaces/IChiefTrader.sol";
 import "./trader/interfaces/ITrader.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
@@ -40,7 +41,8 @@ contract ERC20Vault is Vault, ITrader {
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
-        _approveERC20TokenIfNecessary(path[0].token0, address(trader));
+        IChiefTrader chiefTrader = IChiefTrader(address(trader));
+        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
         return trader.swapExactInput(traderId, amount, address(0), path, options);
     }
 
@@ -58,7 +60,8 @@ contract ERC20Vault is Vault, ITrader {
         require(_isStrategy(msg.sender), "ST");
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedStrategyParams(_nft).trader);
-        _approveERC20TokenIfNecessary(path[0].token0, address(trader));
+        IChiefTrader chiefTrader = IChiefTrader(address(trader));
+        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
         return trader.swapExactOutput(traderId, amount, address(0), path, options);
     }
 
