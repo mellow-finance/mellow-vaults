@@ -1096,6 +1096,35 @@ describe("ProtocolGovernance", () => {
             expect(
                 await protocolGovernance.isAllowedToken(tokens[0].address)
             ).to.be.equal(false);
+            expect(await protocolGovernance.tokenWhitelist()).to.deep.equal([
+                tokens[1].address,
+            ]);
+        });
+
+        describe("when call commit on removed token", () => {
+            it("passes", async () => {
+                await protocolGovernance.setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await protocolGovernance.commitTokenWhitelistAdd();
+                await protocolGovernance.removeFromTokenWhitelist(
+                    tokens[0].address
+                );
+                await protocolGovernance.setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+                await protocolGovernance.commitTokenWhitelistAdd();
+                expect(
+                    await protocolGovernance.isAllowedToken(tokens[1].address)
+                ).to.be.equal(true);
+                expect(
+                    await protocolGovernance.isAllowedToken(tokens[0].address)
+                ).to.be.equal(true);
+            });
         });
     });
 });
