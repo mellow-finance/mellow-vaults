@@ -4,7 +4,7 @@ import "hardhat-deploy";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, get, execute } = deployments;
+    const { deploy, get, read, execute } = deployments;
     const { deployer, uniswapV3Router } = await getNamedAccounts();
     await deploy("UniV3Trader", {
         from: deployer,
@@ -12,13 +12,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
     });
-    const uniV3Trader = await get("UniV3Trader");
-    await execute(
-        "ChiefTrader",
-        { from: deployer, log: true, autoMine: true },
-        "addTrader",
-        uniV3Trader.address
-    );
+    const tradersCount = await read("ChiefTrader", "tradersCount");
+    if (tradersCount === 0) {
+        const uniV3Trader = await get("UniV3Trader");
+        await execute(
+            "ChiefTrader",
+            { from: deployer, log: true, autoMine: true },
+            "addTrader",
+            uniV3Trader.address
+        );
+    }
 };
 export default func;
 func.tags = ["UniV3Trader", "Vaults", "Traders"];

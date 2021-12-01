@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
-import { sleep } from "../test/library/Helpers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -48,6 +47,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             "commitVaultGovernancesAdd"
         );
         log("Done");
+    }
+
+    const tokenWhitelist = await read("ProtocolGovernance", "tokenWhitelist");
+    if (tokenWhitelist.length === 0) {
+        await execute(
+            "ProtocolGovernance",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "setPendingTokenWhitelistAdd",
+            tokens
+        );
+        await execute(
+            "ProtocolGovernance",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "commitTokenWhitelistAdd"
+        );
     }
 
     const delay = await read("ProtocolGovernance", "governanceDelay");
@@ -103,31 +125,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             deployer
         );
     }
-    // registring tokens in protocol governance
-    await execute(
-        "ProtocolGovernance",
-        {
-            from: admin,
-            log: true,
-            autoMine: true,
-        },
-        "setPendingTokenWhitelistAdd",
-        tokens
-    );
-    let delayTokens: number = await read(
-        "ProtocolGovernance",
-        "governanceDelay"
-    );
-    await sleep(Number(delayTokens));
-    await execute(
-        "ProtocolGovernance",
-        {
-            from: admin,
-            log: true,
-            autoMine: true,
-        },
-        "commitTokenWhitelistAdd"
-    );
 };
 export default func;
 func.tags = ["ProtocolGovernance", "Vaults"];
