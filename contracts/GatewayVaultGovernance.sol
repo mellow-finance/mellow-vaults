@@ -70,7 +70,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
             registry.safeTransferFrom(msg.sender, address(vault), subvaultNfts[i]);
         }
         IGatewayVault gw = IGatewayVault(address(vault));
-        gw.setApprovalForAll(strategy);
+        gw.setApprovalsForStrategy(strategy, subvaultNfts);
     }
 
     /// @inheritdoc IGatewayVaultGovernance
