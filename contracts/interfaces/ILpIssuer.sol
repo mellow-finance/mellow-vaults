@@ -18,4 +18,19 @@ interface ILpIssuer {
     /// @notice Initialize contract with vault nft
     /// @param nft VaultRegistry NFT for this vault
     function initialize(uint256 nft) external;
+
+    /// @notice Deposit tokens into LpIssuer
+    /// @param tokenAmounts Amounts of tokens to push
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    function deposit(uint256[] calldata tokenAmounts, bytes memory options) external;
+
+    /// @notice Withdraw tokens from LpIssuer
+    /// @param to Address to withdraw to
+    /// @param lpTokenAmount Amount of token to withdraw
+    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    function withdraw(
+        address to,
+        uint256 lpTokenAmount,
+        bytes memory options
+    ) external;
 }

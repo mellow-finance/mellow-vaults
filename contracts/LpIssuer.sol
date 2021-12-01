@@ -80,9 +80,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         registry.setApprovalForAll(address(registry), true);
     }
 
-    /// @notice Deposit tokens into LpIssuer
-    /// @param tokenAmounts Amounts of tokens to push
-    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    /// @inheritdoc ILpIssuer
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external nonReentrant {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 thisNft = _nft;
@@ -138,10 +136,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, amountToMint);
     }
 
-    /// @notice Withdraw tokens from LpIssuer
-    /// @param to Address to withdraw to
-    /// @param lpTokenAmount Amount of token to withdraw
-    /// @param options Additional options that could be needed for some vaults. E.g. for Uniswap this could be `deadline` param.
+    /// @inheritdoc ILpIssuer
     function withdraw(
         address to,
         uint256 lpTokenAmount,
