@@ -8,6 +8,7 @@ import "../interfaces/external/univ3/ISwapRouter.sol";
 import "./libraries/TraderExceptionsLibrary.sol";
 import "./Trader.sol";
 
+/// @notice Contract that can execute ERC20 swaps on Uniswap V3
 contract UniV3Trader is Trader, ITrader {
     using SafeERC20 for IERC20;
 
