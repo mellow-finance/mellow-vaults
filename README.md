@@ -2,6 +2,8 @@
 
 ![](images/bg.png)
 
+![CI](https://github.com/mellow-finance/mellow-vaults/actions/workflows/ci.yml/badge.svg)
+
 **We're buliding permissionless vaults ecosystem for trustless automatic DeFi strategies.
 The protocol is designed for implementing multi-token cross-protocol liquidity rebalancing.**
 
