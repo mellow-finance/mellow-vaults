@@ -214,7 +214,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 ["uint256[]"],
                 [[uniV3VaultNft, aaveVaultNft, erc20VaultNft]]
             ),
-            mStrategy,
+            deployer,  // mStrategy
         ],
 
         delayedStrategyParams: {

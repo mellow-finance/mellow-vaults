@@ -53,6 +53,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         bytes calldata options
     ) external returns (uint256) {
         require(traderId < _traders.length, TraderExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        _requireAllowedTokens(path);
         address traderAddress = _traders[traderId];
         address recipient = msg.sender;
         return ITrader(traderAddress).swapExactInput(0, amount, recipient, path, options);
@@ -67,6 +68,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         bytes calldata options
     ) external returns (uint256) {
         require(traderId < _traders.length, TraderExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        _requireAllowedTokens(path);
         address traderAddress = _traders[traderId];
         address recipient = msg.sender;
         return ITrader(traderAddress).swapExactOutput(0, amount, recipient, path, options);
@@ -76,6 +78,17 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         return (interfaceId == this.supportsInterface.selector ||
             interfaceId == type(ITrader).interfaceId ||
             interfaceId == type(IChiefTrader).interfaceId);
+    }
+
+    function _requireAllowedTokens(PathItem[] memory path) internal view {
+        IProtocolGovernance pg = IProtocolGovernance(protocolGovernance);
+        for (uint256 i = 1; i < path.length; ++i)
+            require(
+                pg.isAllowedToken(path[i].token0) && pg.isAllowedToken(path[i].token1),
+                TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
+            );
+        if (path.length > 0)
+            require(pg.isAllowedToken(path[0].token1), TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION);
     }
 
     function _requireProtocolAdmin() internal view {

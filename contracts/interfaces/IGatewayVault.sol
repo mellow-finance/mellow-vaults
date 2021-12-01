@@ -29,5 +29,6 @@ interface IGatewayVault is IVault {
     /// @notice Approves all NFTs to given address.
     /// @dev Can be called only once by GatewayVaultGovernance
     /// @param strategy The address to which all NFTs will be approved (strategy)
-    function setApprovalForAll(address strategy) external;
+    /// @param nfts Subvault NFTs to add
+    function setApprovalsForStrategy(address strategy, uint256[] memory nfts) external;
 }

@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "./interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
@@ -51,27 +52,48 @@ contract UniV3Vault is IERC721Receiver, Vault {
             , ,
             address token0,
             address token1,
-            , , ,
-            uint128 liquidity,
-            , ,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
+            , , , , , , ,
         ) = _positionManager().positions(tokenId);
-
         // new position should have vault tokens
         require(
             token0 == _vaultTokens[0] && token1 == _vaultTokens[1],
             "VT"
         );
 
-        // liquidity and owed tokens should be zero for new position to be acquired
-        require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, "TVL");
-        if (uniV3Nft != 0)
+        if (uniV3Nft != 0) {
+            (
+                , , , , , , ,
+                uint128 liquidity,
+                , ,
+                uint128 tokensOwed0,
+                uint128 tokensOwed1
+            ) = _positionManager().positions(uniV3Nft);
+            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, "TVL");
             // return previous uni v3 position nft
             _positionManager().transferFrom(address(this), from, uniV3Nft);
+        }
 
         uniV3Nft = tokenId;
         return this.onERC721Received.selector;
+    }
+
+    function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        address owner = registry.ownerOf(_nft);
+        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
+        collectedEarnings = new uint256[](2);
+        (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: uniV3Nft,
+                recipient: to,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+        collectedEarnings[0] = collectedEarnings0;
+        collectedEarnings[1] = collectedEarnings1;
+        emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
     }
 
     /// @inheritdoc Vault
@@ -170,10 +192,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
                 return Pair({a0: 0, a1: 0});
             }
         }
-        Pair memory amounts = Pair({
-            a0: tokenAmounts[0],
-            a1: tokenAmounts[1]
-        });
         Pair memory minAmounts = Pair({
             a0: opts.amount0Min,
             a1: opts.amount1Min
@@ -187,19 +205,15 @@ contract UniV3Vault is IERC721Receiver, Vault {
                 deadline: opts.deadline
             })
         );
-        uint256 amount0Max = amounts.a0 > amount0 ? amounts.a0 - amount0 : 0;
-        uint256 amount1Max = amounts.a1 > amount1 ? amounts.a1 - amount1 : 0;
         (uint256 amount0Collected, uint256 amount1Collected) = _positionManager().collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: uniV3Nft,
                 recipient: to,
-                amount0Max: uint128(amount0Max),
-                amount1Max: uint128(amount1Max)
+                amount0Max: uint128(amount0),
+                amount1Max: uint128(amount1)
             })
         );
-        amount0 += amount0Collected;
-        amount1 += amount1Collected;
-        return Pair({a0: amount0, a1: amount1});
+        return Pair({a0: amount0Collected, a1: amount1Collected});
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {}
@@ -225,4 +239,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
+
+    event CollectedEarnings(address indexed origin, address indexed to, uint256 amount0, uint256 amount1);
 }

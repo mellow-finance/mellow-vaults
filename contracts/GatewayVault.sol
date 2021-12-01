@@ -91,11 +91,12 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         }
     }
 
-    function setApprovalForAll(address strategy) external {
+    function setApprovalsForStrategy(address strategy, uint256[] memory nfts) external {
         require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         require(strategy != address(0), ExceptionsLibrary.ZERO_STRATEGY_ADDRESS);
         IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
-        vaultRegistry.setApprovalForAll(strategy, true);
+        for (uint i = 0; i < nfts.length; ++i)
+            vaultRegistry.approve(strategy, nfts[i]);
     }
 
     function onERC721Received(

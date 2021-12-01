@@ -11,4 +11,5 @@ library TraderExceptionsLibrary {
     string constant AT_LEAST_STRATEGY_REQUIRED_EXCEPTION = "SR";
     string constant INVALID_TRADE_PATH_EXCEPTION = "TP";
     string constant RECURRENCE_EXCEPTION = "RE";
+    string constant TOKEN_NOT_ALLOWED_EXCEPTION = "TA";
 }
