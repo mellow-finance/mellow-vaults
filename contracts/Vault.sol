@@ -10,6 +10,22 @@ import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
+/// @dev Notes:
+/// ### ERC-721
+///
+/// Each Vault should be registered in VaultRegistry and get corresponding VaultRegistry NFT.
+///
+/// ### Access control
+///
+/// `push` and `pull` methods are only allowed for owner / approved person of the NFT. However,
+/// `pull` for approved person also checks that pull destination is another vault of the Vault System.
+/// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
+/// ApprovedForAll person cannot do anything except ERC-721 token transfers.
+///
+/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+///
+/// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
+/// the protocol admin
 abstract contract Vault is IVault, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
