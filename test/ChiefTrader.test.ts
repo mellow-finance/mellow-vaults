@@ -104,7 +104,7 @@ describe("ChiefTrader", () => {
         });
 
         describe("happy case", () => {
-            it("adds new trader", async () => {
+            xit("adds new trader", async () => {
                 withSigner(admin, async (signer) => {
                     const { uniswapV3Router } = await getNamedAccounts();
                     let newTrader = await (
