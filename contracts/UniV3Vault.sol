@@ -78,10 +78,10 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
-        require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER);
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER);
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
-        require(owner == msg.sender || _isValidPullDestination(to), Exceptions.VALID_PULL_DESTINATION);
+        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
         collectedEarnings = new uint256[](2);
         (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
             INonfungiblePositionManager.CollectParams({

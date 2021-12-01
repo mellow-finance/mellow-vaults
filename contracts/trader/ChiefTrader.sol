@@ -85,9 +85,10 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         for (uint256 i = 1; i < path.length; ++i)
             require(
                 pg.isAllowedToken(path[i].token0) && pg.isAllowedToken(path[i].token1),
-                ExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
+                TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
             );
-        if (path.length > 0) require(pg.isAllowedToken(path[0].token1), ExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION);
+        if (path.length > 0)
+            require(pg.isAllowedToken(path[0].token1), TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION);
     }
 
     function _requireProtocolAdmin() internal view {
