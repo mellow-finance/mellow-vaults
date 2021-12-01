@@ -153,7 +153,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let erc20VaultNft = 3;
     let gatewayVaultNft = 4;
     let lpIssuerNft = 5;
-    let yearnVaultNft = 6;
     
     await setupVault(hre, aaveVaultNft, startNft, "AaveVaultGovernance", {
         deployOptions: [tokens, [], deployer],
@@ -213,14 +212,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             tokens,
             coder.encode(
                 ["uint256[]"],
-                [[uniV3VaultNft, aaveVaultNft, erc20VaultNft, yearnVaultNft]]
+                [[uniV3VaultNft, aaveVaultNft, erc20VaultNft]]
             ),
-            mStrategy,
+            deployer,  // mStrategy
         ],
 
         delayedStrategyParams: {
             strategyTreasury: mStrategyTreasury,
-            redirects: [uniV3VaultNft, erc20VaultNft, erc20VaultNft, yearnVaultNft],
+            redirects: [uniV3VaultNft, erc20VaultNft, erc20VaultNft],
         },
         strategyParams: {
             limits: [
