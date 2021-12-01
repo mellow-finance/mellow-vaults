@@ -56,7 +56,7 @@ open coverage/index.html
 
 ## Deploy
 
-Required env variables (could be addred to `.env` file):
+Required env variables (could be added to `.env` file):
 
 ```
 MAINNET_DEPLOYER_PK=0x.... # for mainnet deploy
