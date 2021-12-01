@@ -76,6 +76,24 @@ contract UniV3Vault is IERC721Receiver, Vault {
         return this.onERC721Received.selector;
     }
 
+    function collectEarnings(address to) external returns (uint256[] memory collectedEarnings) {
+        require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        address owner = registry.ownerOf(_nft);
+        require(owner == msg.sender || _isValidPullDestination(to), Exceptions.VALID_PULL_DESTINATION);
+        collectedEarnings = new uint256[](2);
+        (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: uniV3Nft,
+                recipient: to,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+        collectedEarnings[0] = collectedEarnings0;
+        collectedEarnings[1] = collectedEarnings1;
+    }
+
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultTokens.length);
@@ -172,10 +190,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
                 return Pair({a0: 0, a1: 0});
             }
         }
-        Pair memory amounts = Pair({
-            a0: tokenAmounts[0],
-            a1: tokenAmounts[1]
-        });
         Pair memory minAmounts = Pair({
             a0: opts.amount0Min,
             a1: opts.amount1Min
@@ -189,19 +203,15 @@ contract UniV3Vault is IERC721Receiver, Vault {
                 deadline: opts.deadline
             })
         );
-        uint256 amount0Max = amounts.a0 > amount0 ? amounts.a0 - amount0 : 0;
-        uint256 amount1Max = amounts.a1 > amount1 ? amounts.a1 - amount1 : 0;
         (uint256 amount0Collected, uint256 amount1Collected) = _positionManager().collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: uniV3Nft,
                 recipient: to,
-                amount0Max: uint128(amount0Max),
-                amount1Max: uint128(amount1Max)
+                amount0Max: uint128(amount0),
+                amount1Max: uint128(amount1)
             })
         );
-        amount0 += amount0Collected;
-        amount1 += amount1Collected;
-        return Pair({a0: amount0, a1: amount1});
+        return Pair({a0: amount0Collected, a1: amount1Collected});
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {}
