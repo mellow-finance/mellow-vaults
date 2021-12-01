@@ -28,6 +28,7 @@ Required env variables (could be addred to `.env` file):
 
 ```
 MAINNET_RPC=<ethereum rpc endpoint>
+KOVAN_RPC=<ethereum rpc endpoint>
 ```
 
 ```bash
@@ -57,6 +58,8 @@ open coverage/index.html
 Required env variables (could be addred to `.env` file):
 
 ```
+MAINNET_RPC=<ethereum rpc endpoint>
+KOVAN_RPC=<ethereum rpc endpoint>
 MAINNET_DEPLOYER_PK=0x.... # for mainnet deploy
 KOVAN_DEPLOYER_PK=0x.... # for kovan deploy
 ```
