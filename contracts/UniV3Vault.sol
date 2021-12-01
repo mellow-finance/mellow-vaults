@@ -51,24 +51,26 @@ contract UniV3Vault is IERC721Receiver, Vault {
             , ,
             address token0,
             address token1,
-            , , ,
-            uint128 liquidity,
-            , ,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
+            , , , , , , ,
         ) = _positionManager().positions(tokenId);
-
         // new position should have vault tokens
         require(
             token0 == _vaultTokens[0] && token1 == _vaultTokens[1],
             "VT"
         );
 
-        // liquidity and owed tokens should be zero for new position to be acquired
-        require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, "TVL");
-        if (uniV3Nft != 0)
+        if (uniV3Nft != 0) {
+            (
+                , , , , , , ,
+                uint128 liquidity,
+                , ,
+                uint128 tokensOwed0,
+                uint128 tokensOwed1
+            ) = _positionManager().positions(uniV3Nft);
+            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, "TVL");
             // return previous uni v3 position nft
             _positionManager().transferFrom(address(this), from, uniV3Nft);
+        }
 
         uniV3Nft = tokenId;
         return this.onERC721Received.selector;
