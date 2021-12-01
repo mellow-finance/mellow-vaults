@@ -21,7 +21,7 @@ import {
 import Exceptions from "./library/Exceptions";
 import { sleep } from "./library/Helpers";
 
-describe("Vault", () => {
+xdescribe("Vault", () => {
     let deployer: Signer;
     let user: Signer;
     let stranger: Signer;

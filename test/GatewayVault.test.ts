@@ -92,7 +92,7 @@ describe("GatewayVault", () => {
         });
     });
 
-    describe("setApprovalForAll", () => {
+    xdescribe("setApprovalForAll", () => {
         describe("when called not by vault governance", () => {
             it("reverts", async () => {
                 await expect(

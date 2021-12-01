@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "./interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
@@ -76,7 +77,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         return this.onERC721Received.selector;
     }
 
-    function collectEarnings(address to) external returns (uint256[] memory collectedEarnings) {
+    function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
         require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER);
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
