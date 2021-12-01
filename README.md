@@ -37,6 +37,12 @@ yarn
 yarn coverage
 ```
 
+**Tests coverage report**
+
+```bash
+open coverage/index.html
+```
+
 ## Run property tests (WIP)
 
 ```bash
@@ -46,12 +52,6 @@ python3 -m virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
 brownie test
-```
-
-**Property tests coverage report**
-
-```bash
-open coverage/index.html
 ```
 
 ## Deploy
