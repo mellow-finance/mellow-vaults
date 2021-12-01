@@ -129,14 +129,14 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         _pendingClaimAllowlistAdd = addresses;
         pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function removeFromClaimAllowlist(address addr) external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         if (!_claimAllowlist.contains(addr)) {
             return;
         }
@@ -161,14 +161,14 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function setPendingVaultGovernancesAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         _pendingVaultGovernancesAdd = addresses;
         pendingVaultGovernancesAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function removeFromVaultGovernances(address addr) external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         if (!_vaultGovernances.contains(addr)) {
             return;
         }
@@ -177,8 +177,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
-        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, Exceptions.MAX_GOVERNANCE_DELAY);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
@@ -187,10 +187,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitClaimAllowlistAdd() external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(
             (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0),
-            Exceptions.TIMESTAMP
+            ExceptionsLibrary.TIMESTAMP
         );
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
             _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
@@ -225,10 +225,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitVaultGovernancesAdd() external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(
             (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
-            Exceptions.TIMESTAMP
+            ExceptionsLibrary.TIMESTAMP
         );
         for (uint256 i = 0; i < _pendingVaultGovernancesAdd.length; i++) {
             _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
@@ -239,9 +239,9 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
-        require(isAdmin(msg.sender), Exceptions.ADMIN);
-        require(block.timestamp >= pendingParamsTimestamp, Exceptions.TIMESTAMP);
-        require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, Exceptions.EMPTY_PARAMS); // sanity check for empty params
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
+        require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, ExceptionsLibrary.EMPTY_PARAMS); // sanity check for empty params
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;

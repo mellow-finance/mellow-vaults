@@ -17,7 +17,7 @@ contract YearnVaultFactory is IVaultFactory {
 
     /// @inheritdoc IVaultFactory
     function deployVault(address[] memory vaultTokens, bytes memory) external returns (IVault) {
-        require(msg.sender == address(vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         YearnVault vault = new YearnVault(vaultGovernance, vaultTokens);
         return IVault(vault);
     }

@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../interfaces/external/univ3/ISwapRouter.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/TraderExceptionsLibrary.sol";
 import "./Trader.sol";
 
 /// @notice Contract that can execute ERC20 swaps on Uniswap V3
@@ -41,7 +41,7 @@ contract UniV3Trader is Trader, ITrader {
         if (path.length == 1) {
             return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
-            require(_validatePathLinked(path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+            require(_validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             return _swapExactInputMultihop(amount, recipient, path, options_);
         }
     }
@@ -58,7 +58,7 @@ contract UniV3Trader is Trader, ITrader {
         if (path.length == 0) {
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
-            require(_validatePathLinked(path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+            require(_validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             return _swapExactOutputMultihop(amount, recipient, path, options_);
         }
     }

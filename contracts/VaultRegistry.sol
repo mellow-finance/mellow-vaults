@@ -53,7 +53,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(_protocolGovernance.isVaultGovernance(msg.sender), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(_protocolGovernance.isVaultGovernance(msg.sender), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
@@ -85,7 +85,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
-        require(_isProtocolAdmin(_msgSender()), Exceptions.ADMIN);
+        require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
         _stagedProtocolGovernance = newProtocolGovernance;
         _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
         emit StagedProtocolGovernance(tx.origin, msg.sender, newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
@@ -93,9 +93,9 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function commitStagedProtocolGovernance() external {
-        require(_isProtocolAdmin(_msgSender()), Exceptions.ADMIN);
-        require(_stagedProtocolGovernanceTimestamp > 0, Exceptions.NULL_OR_NOT_INITIALIZED);
-        require(block.timestamp >= _stagedProtocolGovernanceTimestamp, Exceptions.TIMESTAMP);
+        require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
+        require(_stagedProtocolGovernanceTimestamp > 0, ExceptionsLibrary.NULL_OR_NOT_INITIALIZED);
+        require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
@@ -103,12 +103,12 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function adminApprove(address newAddress, uint256 nft) external {
-        require(_isProtocolAdmin(_msgSender()), Exceptions.ADMIN);
+        require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
         IERC721(address(this)).approve(newAddress, nft);
     }
 
     function lockNft(uint256 nft) external {
-        require(ownerOf(nft) == msg.sender, Exceptions.TOKEN_OWNER);
+        require(ownerOf(nft) == msg.sender, ExceptionsLibrary.TOKEN_OWNER);
         _locks[nft] = true;
         emit TokenLocked(tx.origin, msg.sender, nft);
     }
@@ -122,7 +122,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         address,
         uint256 tokenId
     ) internal view override {
-        require(!_locks[tokenId], Exceptions.LOCKED_NFT);
+        require(!_locks[tokenId], ExceptionsLibrary.LOCKED_NFT);
     }
 
     /// @notice Emitted when token is locked for transfers
