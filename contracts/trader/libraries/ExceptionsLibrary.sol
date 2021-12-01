@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
+/// @notice Exceptions for Trader contracts
 library ExceptionsLibrary {
     string constant PROTOCOL_ADMIN_REQUIRED_EXCEPTION = "PA";
     string constant TRADER_ALREADY_REGISTERED_EXCEPTION = "TE";

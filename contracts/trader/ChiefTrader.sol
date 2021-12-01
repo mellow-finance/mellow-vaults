@@ -7,6 +7,9 @@ import "./interfaces/ITrader.sol";
 import "./interfaces/IChiefTrader.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
+/// @notice Main contract that allows trading of ERC20 tokens on different Dexes
+/// @dev This contract contains several subtraders that can be used for trading ERC20 tokens.
+/// Examples of subtraders are UniswapV3, UniswapV2, SushiSwap, Curve, etc.
 contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     address public immutable protocolGovernance;
     address[] internal _traders;
