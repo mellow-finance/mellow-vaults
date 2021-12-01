@@ -38,7 +38,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         string memory name_,
         string memory symbol_
     ) ERC20(name_, symbol_) {
-        require(CommonLibrary.isSortedAndUnique(vaultTokens_), Exceptions.SORTED_AND_UNIQUE);
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
@@ -72,9 +72,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
     }
 
     function initialize(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(nft_> 0, Exceptions.NFT_ZERO);
-        require(_nft == 0, Exceptions.INITIALIZATION);
+        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(nft_> 0, ExceptionsLibrary.NFT_ZERO);
+        require(_nft == 0, ExceptionsLibrary.INITIALIZATION);
         _nft = nft_;
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         registry.setApprovalForAll(address(registry), true);
@@ -86,9 +86,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
     function deposit(uint256[] calldata tokenAmounts, bytes memory options) external nonReentrant {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 thisNft = _nft;
-        require(thisNft > 0, Exceptions.INITIALIZATION);
-        require(_subvaultNft > 0, Exceptions.INITIALIZE_SUB_VAULT);
-        require(registry.ownerOf(thisNft) == address(this), Exceptions.INITIALIZE_OWNER);
+        require(thisNft > 0, ExceptionsLibrary.INITIALIZATION);
+        require(_subvaultNft > 0, ExceptionsLibrary.INITIALIZE_SUB_VAULT);
+        require(registry.ownerOf(thisNft) == address(this), ExceptionsLibrary.INITIALIZE_OWNER);
         IVault subvault = _subvault();
         uint256[] memory existentials_ = _existentials;
         uint256[] memory tvl = subvault.tvl(); //pre-money
@@ -123,7 +123,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(
             amountToMint + balanceOf(msg.sender) <=
                 ILpIssuerGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
-            Exceptions.LIMIT_PER_ADDRESS
+            ExceptionsLibrary.LIMIT_PER_ADDRESS
         );
 
         _chargeFees(thisNft, tvl, supply, actualTokenAmounts, amountToMint, false);
@@ -148,7 +148,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         bytes memory options
     ) external nonReentrant {
         uint256 supply = totalSupply();
-        require(supply > 0, Exceptions.TOTAL_SUPPLY_IS_ZERO);
+        require(supply > 0, ExceptionsLibrary.TOTAL_SUPPLY_IS_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         uint256[] memory tvl = _subvault().tvl();
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
@@ -168,9 +168,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
 
     /// @inheritdoc ILpIssuer
     function addSubvault(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(_subvaultNft == 0, Exceptions.SUB_VAULT_INITIALIZED);
-        require(nft_ > 0, Exceptions.NFT_ZERO);
+        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(_subvaultNft == 0, ExceptionsLibrary.SUB_VAULT_INITIALIZED);
+        require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
         _subvaultNft = nft_;
     }
 
@@ -181,7 +181,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         bytes calldata
     ) external nonReentrant returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(msg.sender == address(registry), Exceptions.NFT_VAULT_REGISTRY);
+        require(msg.sender == address(registry), ExceptionsLibrary.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
         return this.onERC721Received.selector;
     }

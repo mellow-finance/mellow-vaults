@@ -72,19 +72,19 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
 
     /// @inheritdoc IGatewayVault
     function addSubvaults(uint256[] memory nfts) external {
-        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(_subvaultNfts.length == 0, Exceptions.SUB_VAULT_INITIALIZED);
-        require(nfts.length > 0, Exceptions.SUB_VAULT_LENGTH);
+        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(_subvaultNfts.length == 0, ExceptionsLibrary.SUB_VAULT_INITIALIZED);
+        require(nfts.length > 0, ExceptionsLibrary.SUB_VAULT_LENGTH);
         address[] memory selfTokens = _vaultTokens;
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         for (uint256 i = 0; i < nfts.length; i++) {
             uint256 nft_ = nfts[i];
-            require(nft_ > 0, Exceptions.NFT_ZERO);
+            require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
             IVault vault = IVault(registry.vaultForNft(nft_));
             address[] memory vTokens = vault.vaultTokens();
-            require(selfTokens.length == vTokens.length, Exceptions.INCONSISTENT_LENGTH);
+            require(selfTokens.length == vTokens.length, ExceptionsLibrary.INCONSISTENT_LENGTH);
             for (uint256 j = 0; j < selfTokens.length; j++) {
-                require(selfTokens[j] == vTokens[j], Exceptions.NOT_VAULT_TOKEN);
+                require(selfTokens[j] == vTokens[j], ExceptionsLibrary.NOT_VAULT_TOKEN);
             }
             _subvaultNfts.push(nft_);
             _subvaultNftsIndex[nft_] = i;
@@ -92,8 +92,8 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     }
 
     function setApprovalForAll(address strategy) external {
-        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(strategy != address(0), Exceptions.ZERO_STRATEGY_ADDRESS);
+        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(strategy != address(0), ExceptionsLibrary.ZERO_STRATEGY_ADDRESS);
         IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
         vaultRegistry.setApprovalForAll(strategy, true);
     }
@@ -105,7 +105,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         bytes calldata
     ) external nonReentrant returns (bytes4) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        require(msg.sender == address(registry), Exceptions.NFT_VAULT_REGISTRY);
+        require(msg.sender == address(registry), ExceptionsLibrary.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
         return this.onERC721Received.selector;
     }
@@ -115,7 +115,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-        require(_subvaultNfts.length > 0, Exceptions.INITIALIZATION);
+        require(_subvaultNfts.length > 0, ExceptionsLibrary.INITIALIZATION);
         bool optimized;
         bytes[] memory vaultsOptions;
         (optimized, vaultsOptions) = _parseOptions(options);
@@ -163,7 +163,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         }
         uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_nft).limits;
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], Exceptions.LIMIT_OVERFLOW);
+            require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], ExceptionsLibrary.LIMIT_OVERFLOW);
         }
     }
 
@@ -174,7 +174,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         (bool optimized, bytes[] memory vaultsOptions) = _parseOptions(options);
 
-        require(_subvaultNfts.length > 0, Exceptions.INITIALIZATION);
+        require(_subvaultNfts.length > 0, ExceptionsLibrary.INITIALIZATION);
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256[][] memory tvls = subvaultsTvl();
         uint256[][] memory amountsByVault = CommonLibrary.splitAmounts(tokenAmounts, tvls);

@@ -19,7 +19,7 @@ contract UniV3VaultFactory is IVaultFactory {
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Should equal UniV3 pool fee
     function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
-        require(msg.sender == address(vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         uint256 fee = abi.decode(options, (uint256));
         UniV3Vault vault = new UniV3Vault(vaultGovernance, vaultTokens, uint24(fee));
         return IVault(vault);

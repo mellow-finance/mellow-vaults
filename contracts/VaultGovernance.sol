@@ -75,7 +75,7 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     /// @inheritdoc IVaultGovernance
     function initialize(IVaultFactory factory_) external {
-        require(!initialized, Exceptions.INITIALIZATION);
+        require(!initialized, ExceptionsLibrary.INITIALIZATION);
         factory = factory_;
         initialized = true;
     }
@@ -86,9 +86,9 @@ abstract contract VaultGovernance is IVaultGovernance {
         bytes memory options,
         address owner
     ) public virtual returns (IVault vault, uint256 nft) {
-        require(initialized, Exceptions.INITIALIZATION);
+        require(initialized, ExceptionsLibrary.INITIALIZATION);
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
-        require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), Exceptions.PERMISSIONLESS_OR_ADMIN);
+        require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN);
         vault = factory.deployVault(vaultTokens, options);
         address nftOwner = owner;
         nft = _internalParams.registry.registerVault(address(vault), nftOwner);
@@ -107,8 +107,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @inheritdoc IVaultGovernance
     function commitInternalParams() external {
         _requireProtocolAdmin();
-        require(_internalParamsTimestamp > 0, Exceptions.NULL);
-        require(block.timestamp >= _internalParamsTimestamp, Exceptions.TIMESTAMP);
+        require(_internalParamsTimestamp > 0, ExceptionsLibrary.NULL);
+        require(block.timestamp >= _internalParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _internalParams = _stagedInternalParams;
         delete _internalParamsTimestamp;
         emit CommitedInternalParams(tx.origin, msg.sender, _internalParams);
@@ -132,8 +132,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Strategy Params
     function _commitDelayedStrategyParams(uint256 nft) internal {
         _requireAtLeastStrategy(nft);
-        require(_delayedStrategyParamsTimestamp[nft] > 0, Exceptions.NULL);
-        require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], Exceptions.TIMESTAMP);
+        require(_delayedStrategyParamsTimestamp[nft] > 0, ExceptionsLibrary.NULL);
+        require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP);
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
         delete _stagedDelayedStrategyParams[nft];
         delete _delayedStrategyParamsTimestamp[nft];
@@ -155,8 +155,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Protocol Per Vault Params
     function _commitDelayedProtocolPerVaultParams(uint256 nft) internal {
         _requireProtocolAdmin();
-        require(_delayedProtocolPerVaultParamsTimestamp[nft] > 0, Exceptions.NULL);
-        require(block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], Exceptions.TIMESTAMP);
+        require(_delayedProtocolPerVaultParamsTimestamp[nft] > 0, ExceptionsLibrary.NULL);
+        require(block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP);
         _delayedProtocolPerVaultParams[nft] = _stagedDelayedProtocolPerVaultParams[nft];
         delete _stagedDelayedProtocolPerVaultParams[nft];
         delete _delayedProtocolPerVaultParamsTimestamp[nft];
@@ -177,8 +177,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Protocol Params
     function _commitDelayedProtocolParams() internal {
         _requireProtocolAdmin();
-        require(_delayedProtocolParamsTimestamp > 0, Exceptions.NULL);
-        require(block.timestamp >= _delayedProtocolParamsTimestamp, Exceptions.TIMESTAMP);
+        require(_delayedProtocolParamsTimestamp > 0, ExceptionsLibrary.NULL);
+        require(block.timestamp >= _delayedProtocolParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _delayedProtocolParams = _stagedDelayedProtocolParams;
         delete _stagedDelayedProtocolParams;
         delete _delayedProtocolParamsTimestamp;
@@ -205,12 +205,12 @@ abstract contract VaultGovernance is IVaultGovernance {
             (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
                 _internalParams.registry.getApproved(nft) == msg.sender ||
                 (_internalParams.registry.ownerOf(nft) == msg.sender)),
-            Exceptions.REQUIRE_AT_LEAST_ADMIN
+            ExceptionsLibrary.REQUIRE_AT_LEAST_ADMIN
         );
     }
 
     function _requireProtocolAdmin() internal view {
-        require(_internalParams.protocolGovernance.isAdmin(msg.sender), Exceptions.ADMIN);
+        require(_internalParams.protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
     }
 
     /// @notice Emitted when InternalParams are staged for commit
