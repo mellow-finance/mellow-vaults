@@ -17,7 +17,7 @@ contract LpIssuerFactory is IVaultFactory {
 
     /// @inheritdoc IVaultFactory
     function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
-        require(msg.sender == address(vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         (string memory name, string memory symbol) = abi.decode(options, (string, string));
         LpIssuer vault = new LpIssuer(vaultGovernance, vaultTokens, name, symbol);
         return IVault(address(vault));

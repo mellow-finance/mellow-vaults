@@ -14,7 +14,7 @@ contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable 
     /// @notice Creates a new contract.
     /// @param admin Admin of the contract
     constructor(address admin) {
-        require(admin != address(0), Exceptions.ADMIN_ADDRESS_ZERO);
+        require(admin != address(0), ExceptionsLibrary.ADMIN_ADDRESS_ZERO);
         _setupRole(ADMIN_ROLE, admin);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(ADMIN_DELEGATE_ROLE, ADMIN_ROLE);

@@ -7,11 +7,27 @@ import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
+/// @dev Notes:
+/// ### TVL
+///
+/// The TVL of the vault is cached and updated after each deposit withdraw.
+/// So essentially `tvl` call doesn't take into account accrued interest / donations to Aave since the
+/// last `deposit` / `withdraw`
+///
+/// ### aTokens
+/// aTokens are fixed at the token creation and addresses are taken from Aave Lending Pool.
+/// So essentially each aToken is fixed for life of the AaveVault. If the aToken is missing for some vaultToken,
+/// the AaveVault cannot be created.
+///
+/// ### Push / Pull
+/// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
+/// The contract's vaultTokens are fully allowed to Aave Lending Pool.
 contract AaveVault is Vault {
     address[] internal _aTokens;
     uint256[] internal _tvls;
 
     /// @notice Creates a new contract.
+    /// @dev Requires that aToken exists for each vaultToken
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
@@ -20,7 +36,7 @@ contract AaveVault is Vault {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             address aToken = _getAToken(_vaultTokens[i]);
-            require(aToken != address(0), Exceptions.ZERO_TOKEN);
+            require(aToken != address(0), ExceptionsLibrary.ZERO_TOKEN);
             _aTokens[i] = aToken;
             _tvls.push(0);
         }
@@ -31,6 +47,7 @@ contract AaveVault is Vault {
         return _tvls;
     }
 
+    /// @notice Update all tvls to current aToken balances.
     function updateTvls() public {
         for (uint256 i = 0; i < _tvls.length; i++) {
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));

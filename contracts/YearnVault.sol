@@ -8,6 +8,23 @@ import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
+/// @dev Notes:
+/// ### TVL
+///
+/// The TVL of the vault is cached and updated after each deposit withdraw.
+/// So essentially `tvl` call doesn't take into account accrued interest / donations to Yearn since the
+/// last `deposit` / `withdraw`
+///
+/// ### yTokens
+/// yTokens are fixed at the token creation and addresses are taken from YearnVault governance and if missing there
+/// - in YearnVaultRegistry.
+/// So essentially each yToken is fixed for life of the YearnVault. If the yToken is missing for some vaultToken,
+/// the YearnVault cannot be created.
+///
+/// ### Push / Pull
+/// There are some deposit limits imposed by Yearn vaults.
+/// The contract's vaultTokens are fully allowed to corresponding yTokens.
+
 contract YearnVault is Vault {
     address[] private _yTokens;
 
@@ -24,7 +41,7 @@ contract YearnVault is Vault {
         }
     }
 
-    /// @notice Returns Yearn protocol vaults used by this contract
+    /// @notice Yearn protocol vaults used by this contract
     function yTokens() external view returns (address[] memory) {
         return _yTokens;
     }

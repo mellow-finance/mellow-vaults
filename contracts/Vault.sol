@@ -10,6 +10,23 @@ import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
+/// @dev Notes:
+/// ### ERC-721
+///
+/// Each Vault should be registered in VaultRegistry and get corresponding VaultRegistry NFT.
+///
+/// ### Access control
+///
+/// `push` and `pull` methods are only allowed for owner / approved person of the NFT. However,
+/// `pull` for approved person also checks that pull destination is another vault of the Vault System.
+///
+/// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
+/// ApprovedForAll person cannot do anything except ERC-721 token transfers.
+///
+/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+///
+/// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
+/// the protocol admin
 abstract contract Vault is IVault, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -22,7 +39,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
-        require(CommonLibrary.isSortedAndUnique(vaultTokens_), Exceptions.SORTED_AND_UNIQUE);
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
@@ -53,9 +70,9 @@ abstract contract Vault is IVault, ReentrancyGuard {
     // -------------------  PUBLIC, MUTATING, VaultGovernance  -------------------
 
     function initialize(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(nft_ > 0, Exceptions.NFT_ZERO);
-        require(_nft == 0, Exceptions.INITIALIZATION);
+        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
+        require(_nft == 0, ExceptionsLibrary.INITIALIZATION);
         _nft = nft_;
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         registry.setApprovalForAll(address(registry), true);
@@ -70,12 +87,12 @@ abstract contract Vault is IVault, ReentrancyGuard {
         bytes memory options
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 nft_ = _nft;
-        require(nft_ > 0, Exceptions.INITIALIZATION);
-        require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER); // Also checks that the token exists
+        require(nft_ > 0, ExceptionsLibrary.INITIALIZATION);
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER); // Also checks that the token exists
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
         IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_));
         uint256 ownerNft = vaultRegistry.nftForVault(address(ownerVault));
-        require(ownerNft > 0, Exceptions.OWNER_VAULT_NFT); // require deposits only through Vault
+        require(ownerNft > 0, ExceptionsLibrary.OWNER_VAULT_NFT); // require deposits only through Vault
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
@@ -113,7 +130,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
-        require(owner == msg.sender || _isValidPullDestination(to), Exceptions.VALID_PULL_DESTINATION); // approved can only pull to whitelisted contracts
+        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
@@ -123,12 +140,12 @@ abstract contract Vault is IVault, ReentrancyGuard {
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
     /// @inheritdoc IVault
     function reclaimTokens(address to, address[] memory tokens) external nonReentrant {
-        require(_nft > 0, Exceptions.INITIALIZATION);
+        require(_nft > 0, ExceptionsLibrary.INITIALIZATION);
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
-        require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), Exceptions.ADMIN);
+        require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), ExceptionsLibrary.ADMIN);
         if (!isProtocolAdmin) {
-            require(_isValidPullDestination(to), Exceptions.VALID_PULL_DESTINATION);
+            require(_isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
         }
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -145,10 +162,10 @@ abstract contract Vault is IVault, ReentrancyGuard {
 
     /// @inheritdoc IVault
     function claimRewards(address from, bytes memory data) external override nonReentrant {
-        require(_nft > 0, Exceptions.INITIALIZATION);
-        require(_isApprovedOrOwner(msg.sender), Exceptions.APPROVED_OR_OWNER);
+        require(_nft > 0, ExceptionsLibrary.INITIALIZATION);
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.isAllowedToClaim(from), Exceptions.ALLOWED_TO_CLAIM);
+        require(protocolGovernance.isAllowedToClaim(from), ExceptionsLibrary.ALLOWED_TO_CLAIM);
         (bool res, bytes memory returndata) = from.call(data);
         if (!res) {
             assembly {
@@ -172,8 +189,8 @@ abstract contract Vault is IVault, ReentrancyGuard {
         view
         returns (uint256[] memory pTokenAmounts)
     {
-        require(CommonLibrary.isSortedAndUnique(tokens), Exceptions.SORTED_AND_UNIQUE);
-        require(tokens.length == tokenAmounts.length, Exceptions.INCONSISTENT_LENGTH);
+        require(CommonLibrary.isSortedAndUnique(tokens), ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(tokens.length == tokenAmounts.length, ExceptionsLibrary.INCONSISTENT_LENGTH);
         pTokenAmounts = CommonLibrary.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
