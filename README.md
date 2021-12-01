@@ -36,6 +36,8 @@ yarn
 yarn coverage
 ```
 
+MAINNET_RPC should be able to serve acrhive node api. E.g. [Alchemy](https://www.alchemy.com/) can do that.
+
 ## Run property tests (WIP)
 
 ```bash
