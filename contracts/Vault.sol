@@ -19,6 +19,7 @@ import "./libraries/ExceptionsLibrary.sol";
 ///
 /// `push` and `pull` methods are only allowed for owner / approved person of the NFT. However,
 /// `pull` for approved person also checks that pull destination is another vault of the Vault System.
+///
 /// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
 /// ApprovedForAll person cannot do anything except ERC-721 token transfers.
 ///
