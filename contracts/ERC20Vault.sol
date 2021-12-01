@@ -58,9 +58,9 @@ contract ERC20Vault is Vault, ITrader {
     ) external returns (uint256 amountOut) {
         require(
             path.length > 0  && isVaultToken(path[path.length - 1].token1), 
-            "VT"
+            ExceptionsLibrary.NOT_VAULT_TOKEN
         );
-        require(_isStrategy(msg.sender), "ST");
+        require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
