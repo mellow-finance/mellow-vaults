@@ -6,7 +6,8 @@ import "./CommonLibrary.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {
-    function swapToTarget(
+    /// See https://www.notion.so/mellowprotocol/Swap-w-o-slippage-aa13edef527145deb3a0a8d705ed3701
+    function swapToTargetWithoutSlippage(
         uint256 targetRatioX96,
         uint256 sqrtPriceX96,
         uint256 token0Amount,
@@ -33,7 +34,7 @@ library StrategyLibrary {
         }
     }
 
-    /// See https://www.notion.so/mellowprotocol/Swap-calculation-f7a89a76b6094287a8d3c6f5068527bd
+    https://www.notion.so/mellowprotocol/Swap-With-Slippage-calculation-f7a89a76b6094287a8d3c6f5068527bd
     function swapToTargetWithSlippage(
         uint256 targetRatioX96,
         uint256 sqrtPriceX96,
