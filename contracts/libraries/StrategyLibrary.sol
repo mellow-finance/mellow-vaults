@@ -8,21 +8,39 @@ import "./CommonLibrary.sol";
 library StrategyLibrary {
     function swapToTarget(
         uint256 targetRatioX96,
+        uint256 sqrtPriceX96,
         uint256 token0Amount,
         uint256 token1Amount,
         uint256 fee
     ) internal pure returns (uint256 tokenIn, bool zeroForOne) {
-        zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, token1Amount) > CommonLibrary.Q96;
+        uint256 rx = FullMath.mulDiv(targetRatioX96, token0Amount, CommonLibrary.Q96);
+        uint256 pX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
+        zeroForOne = rx > token1Amount;
+        if (zeroForOne) {
+            uint256 numerator = rx - token1Amount;
+            uint256 denominatorX96 = targetRatioX96 +
+                FullMath.mulDiv(pX96, CommonLibrary.UNI_FEE_DENOMINATOR, CommonLibrary.UNI_FEE_DENOMINATOR - fee);
+            tokenIn = FullMath.mulDiv(numerator, CommonLibrary.Q96, denominatorX96);
+        } else {
+            uint256 numeratorX96 = FullMath.mulDiv(rx - token1Amount, pX96, 1);
+            uint256 denominatorX96 = pX96 +
+                FullMath.mulDiv(
+                    targetRatioX96,
+                    CommonLibrary.UNI_FEE_DENOMINATOR,
+                    CommonLibrary.UNI_FEE_DENOMINATOR - fee
+                );
+            tokenIn = FullMath.mulDiv(numeratorX96, 1, denominatorX96);
+        }
     }
 
     /// See https://www.notion.so/mellowprotocol/Swap-calculation-f7a89a76b6094287a8d3c6f5068527bd
     function swapToTargetWithSlippage(
         uint256 targetRatioX96,
+        uint256 sqrtPriceX96,
         uint256 token0Amount,
         uint256 token1Amount,
         uint256 fee,
-        uint256 liquidity,
-        uint256 sqrtPriceX96
+        uint256 liquidity
     ) internal pure returns (uint256 tokenIn, bool zeroForOne) {
         zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, token1Amount) > CommonLibrary.Q96;
 
