@@ -2,10 +2,33 @@
 pragma solidity 0.8.9;
 
 import "./external/FullMath.sol";
+import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./CommonLibrary.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {
+    function getUniV3ObservationIndex(IUniswapV3Pool pool, uint256 minTimespan) internal view returns (uint256) {
+        (, , uint16 observationIndex, uint16 observationCardinality, , , ) = pool.slot0();
+        uint256 left = 0;
+        uint256 right = observationCardinality;
+        uint256 current = block.timestamp;
+        while (right - left > 1) {
+            uint256 middle = (left + right) / 2;
+            // an array [observationIndex + 1, ..., observationIndex + observationCardinality] is sorted desc by timespan
+            uint256 midIdx = (uint256(observationIndex + 1) + middle) % observationCardinality;
+            (uint32 blockTimestamp, , , ) = pool.observations(midIdx);
+            uint256 timespan = current - blockTimestamp;
+            if (timespan >= minTimespan) {
+                // timespan >= minTimespan is ok for result so we assign it to left element
+                left = middle;
+            } else {
+                // timespan < minTimespan is not ok, so we assign it to right (which is exclusive)
+                right = middle;
+            }
+        }
+        return (uint256(observationIndex + 1) + left) % observationCardinality;
+    }
+
     /// See https://www.notion.so/mellowprotocol/Swap-w-o-slippage-aa13edef527145deb3a0a8d705ed3701
     function swapToTargetWithoutSlippage(
         uint256 targetRatioX96,
