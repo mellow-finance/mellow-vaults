@@ -6,6 +6,7 @@ library CommonLibrary {
     uint256 constant DENOMINATOR = 10**9;
     uint256 constant PRICE_DENOMINATOR = 10**18;
     uint256 constant YEAR = 365 * 24 * 3600;
+    uint256 constant Q128 = 2**128;
     uint256 constant Q96 = 2**96;
     uint256 constant Q48 = 2**48;
     uint256 constant UNI_FEE_DENOMINATOR = 10**6;

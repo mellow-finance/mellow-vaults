@@ -1,17 +1,50 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
 import "./external/FullMath.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./CommonLibrary.sol";
+import "./external/TickMath.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {
-    function getUniV3ObservationIndex(IUniswapV3Pool pool, uint256 minTimespan) internal view returns (uint256) {
+    function getUniV3Averages(IUniswapV3Pool pool, uint256 minTimespan)
+        internal
+        view
+        returns (
+            uint256 sqrtPriceX96,
+            uint256 liquidity,
+            uint32 timespan
+        )
+    {
         (, , uint16 observationIndex, uint16 observationCardinality, , , ) = pool.slot0();
+        uint256 index = getUniV3ObservationIndex(pool, minTimespan, observationIndex, observationCardinality);
+        (uint32 blockTimestampLast, int56 tickCumulativeLast, uint160 secondsPerLiquidityCumulativeX128Last, ) = pool
+            .observations(index);
+        (
+            uint32 blockTimestampCurrent,
+            int56 tickCumulativeCurrent,
+            uint160 secondsPerLiquidityCumulativeX128Current,
+
+        ) = pool.observations(observationIndex);
+        timespan = blockTimestampCurrent - blockTimestampLast;
+        int256 tickAverage = (int256(tickCumulativeCurrent) - int256(tickCumulativeLast)) / int256(uint256(timespan));
+        sqrtPriceX96 = TickMath.getSqrtRatioAtTick(int24(tickAverage));
+
+        uint160 avgSecondsPerLiquidityX128 = (secondsPerLiquidityCumulativeX128Current -
+            secondsPerLiquidityCumulativeX128Last) / timespan;
+        liquidity = CommonLibrary.Q128 / avgSecondsPerLiquidityX128;
+    }
+
+    function getUniV3ObservationIndex(
+        IUniswapV3Pool pool,
+        uint256 minTimespan,
+        uint16 observationIndex,
+        uint16 observationCardinality
+    ) internal view returns (uint256) {
         uint256 left = 0;
         uint256 right = observationCardinality;
-        uint256 current = block.timestamp;
+        (uint256 current, , , ) = pool.observations(observationIndex);
         while (right - left > 1) {
             uint256 middle = (left + right) / 2;
             // an array [observationIndex + 1, ..., observationIndex + observationCardinality] is sorted desc by timespan
