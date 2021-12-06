@@ -189,7 +189,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitClaimAllowlistAdd() external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(
-            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0),
+            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp != 0),
             ExceptionsLibrary.TIMESTAMP
         );
         for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
@@ -203,7 +203,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitTokenWhitelistAdd() external {
         require(isAdmin(msg.sender), "ADM");
         require(
-            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp > 0),
+            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
             "TS"
         );
         for (uint256 i = 0; i < _pendingTokenWhitelistAdd.length; i++) {
@@ -241,7 +241,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitParams() external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
-        require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, ExceptionsLibrary.EMPTY_PARAMS); // sanity check for empty params
+        require(pendingParams.maxTokensPerVault != 0 || pendingParams.governanceDelay != 0, ExceptionsLibrary.EMPTY_PARAMS); // sanity check for empty params
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
