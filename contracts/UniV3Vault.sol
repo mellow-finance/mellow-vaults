@@ -217,7 +217,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {}
 
-    /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
         return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
     }
