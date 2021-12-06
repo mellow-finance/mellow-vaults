@@ -2,6 +2,7 @@
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./trader/interfaces/IChiefTrader.sol";
 import "./trader/interfaces/ITrader.sol";
@@ -11,6 +12,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is Vault, ITrader {
+    using SafeERC20 for IERC20;
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
@@ -82,9 +84,9 @@ contract ERC20Vault is Vault, ITrader {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            IERC20(_vaultTokens[i]).transfer(to, tokenAmounts[i]);
-        }
+        for (uint256 i = 0; i < tokenAmounts.length; i++)
+            IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
+
         actualTokenAmounts = tokenAmounts;
     }
 
