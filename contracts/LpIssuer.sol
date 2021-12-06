@@ -38,7 +38,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
-        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+        uint256 vaultTokensLength = _vaultTokens.length;
+        for (uint256 i = 0; i < vaultTokensLength; ++i) {
             address token = vaultTokens_[i];
             _vaultTokensIndex[token] = true;
             _lpPriceHighWaterMarks.push(0);
