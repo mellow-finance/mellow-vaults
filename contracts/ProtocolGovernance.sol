@@ -153,8 +153,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function removeFromTokenWhitelist(address addr) external {
         require(isAdmin(msg.sender), "ADM");
-        _tokensAllowed[addr] = false;
-        if (_tokenEverAdded[addr]) {
+        if (_tokenEverAdded[addr] && _tokensAllowed[addr]) {
+            _tokensAllowed[addr] = false;
             --_numberOfValidTokens;
         }
     }

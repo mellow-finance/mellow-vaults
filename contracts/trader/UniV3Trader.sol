@@ -55,7 +55,7 @@ contract UniV3Trader is Trader, ITrader {
         bytes memory options
     ) external returns (uint256) {
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 0) {
+        if (path.length == 1) {
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
             require(_validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
