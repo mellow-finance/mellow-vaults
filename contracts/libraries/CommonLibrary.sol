@@ -11,6 +11,13 @@ library CommonLibrary {
     uint256 constant Q48 = 2**48;
     uint256 constant UNI_FEE_DENOMINATOR = 10**6;
 
+    function deviationFactor(uint256 a, uint256 b) internal pure returns (uint256 deviationX96) {
+        if (a > b) {
+            (a, b) = (b, a);
+        }
+        deviationX96 = (b * Q96) / a;
+    }
+
     /// @notice Sort addresses using bubble sort. The sorting is done in-place.
     /// @param arr Array of addresses
     function bubbleSort(address[] memory arr) internal pure {
