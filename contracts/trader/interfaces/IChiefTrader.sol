@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
-import "../../interfaces/IProtocolGovernance.sol";
-
 interface IChiefTrader {
     /// @notice ProtocolGovernance
     /// @return the address of the protocol governance contract
