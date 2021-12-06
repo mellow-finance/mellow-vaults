@@ -95,7 +95,8 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         require(strategy != address(0), ExceptionsLibrary.ZERO_STRATEGY_ADDRESS);
         IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
-        for (uint i = 0; i < nfts.length; ++i)
+        uint256 len = nfts.length;
+        for (uint256 i = 0; i < len; ++i)
             vaultRegistry.approve(strategy, nfts[i]);
     }
 
@@ -116,7 +117,8 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-        require(_subvaultNfts.length > 0, ExceptionsLibrary.INITIALIZATION);
+        uint256 subvaultNftsLength = _subvaultNfts.length;
+        require(subvaultNftsLength != 0, ExceptionsLibrary.INITIALIZATION);
         bool optimized;
         bytes[] memory vaultsOptions;
         (optimized, vaultsOptions) = _parseOptions(options);
@@ -128,25 +130,25 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         IGatewayVaultGovernance.DelayedStrategyParams memory strategyParams = IGatewayVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(_nft);
+        uint256 vaultTokensLength = _vaultTokens.length;
         if (optimized && strategyParams.redirects.length > 0) {
-            for (uint256 i = 0; i < _subvaultNfts.length; i++) {
-                if (strategyParams.redirects[i] == 0) {
+            for (uint256 i = 0; i < subvaultNftsLength; ++i) {
+                if (strategyParams.redirects[i] == 0)
                     continue;
-                }
-                for (uint256 j = 0; j < _vaultTokens.length; j++) {
+                for (uint256 j = 0; j < vaultTokensLength; ++j) {
                     uint256 vaultIndex = _subvaultNftsIndex[strategyParams.redirects[i]];
                     amountsByVault[vaultIndex][j] += amountsByVault[i][j];
                     amountsByVault[i][j] = 0;
                 }
             }
         }
-        actualTokenAmounts = new uint256[](_vaultTokens.length);
-        for (uint256 i = 0; i < _subvaultNfts.length; i++) {
+        actualTokenAmounts = new uint256[](vaultTokensLength);
+        for (uint256 i = 0; i < subvaultNftsLength; ++i) {
             if (optimized && (strategyParams.redirects[i] != 0)) {
                 continue;
             }
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
-            for (uint256 j = 0; j < _vaultTokens.length; j++) {
+            for (uint256 j = 0; j < vaultTokensLength; ++j) {
                 if (amountsByVault[i][j] > 0) {
                     _allowTokenIfNecessary(_vaultTokens[j], address(vault));
                 }
@@ -157,15 +159,15 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
                 amountsByVault[i],
                 vaultsOptions[i]
             );
-            for (uint256 j = 0; j < _vaultTokens.length; j++) {
+            for (uint256 j = 0; j < vaultTokensLength; ++j) {
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
                 totalTvl[j] += tvls[i][j];
             }
         }
         uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_nft).limits;
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < vaultTokensLength; ++i)
             require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], ExceptionsLibrary.LIMIT_OVERFLOW);
-        }
+
     }
 
     function _pull(
@@ -173,30 +175,31 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        uint256 subvaultNftsLength = _subvaultNfts.length;
+        require(subvaultNftsLength != 0, ExceptionsLibrary.INITIALIZATION);
         (bool optimized, bytes[] memory vaultsOptions) = _parseOptions(options);
 
-        require(_subvaultNfts.length > 0, ExceptionsLibrary.INITIALIZATION);
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256[][] memory tvls = subvaultsTvl();
-        uint256[][] memory amountsByVault = CommonLibrary.splitAmounts(tokenAmounts, tvls);
+        uint256[][] memory amountsByVault = CommonLibrary.splitAmounts(tokenAmounts, subvaultsTvl());
         uint256[] memory _redirects = IGatewayVaultGovernance(address(_vaultGovernance))
             .delayedStrategyParams(_nft)
             .redirects;
 
+        uint256 vaultTokensLength = _vaultTokens.length;
         if (optimized && (_redirects.length > 0)) {
-            for (uint256 i = 0; i < _subvaultNfts.length; i++) {
-                if (_redirects[i] == 0) {
+            for (uint256 i = 0; i < subvaultNftsLength; ++i) {
+                if (_redirects[i] == 0)
                     continue;
-                }
-                for (uint256 j = 0; j < _vaultTokens.length; j++) {
+
+                for (uint256 j = 0; j < vaultTokensLength; ++j) {
                     uint256 vaultIndex = _subvaultNftsIndex[_redirects[i]];
                     amountsByVault[vaultIndex][j] += amountsByVault[i][j];
                     amountsByVault[i][j] = 0;
                 }
             }
         }
-        actualTokenAmounts = new uint256[](_vaultTokens.length);
-        for (uint256 i = 0; i < _subvaultNfts.length; i++) {
+        actualTokenAmounts = new uint256[](vaultTokensLength);
+        for (uint256 i = 0; i < subvaultNftsLength; ++i) {
             IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
             uint256[] memory actualVaultTokenAmounts = vault.pull(
                 to,
@@ -204,9 +207,8 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
                 amountsByVault[i],
                 vaultsOptions[i]
             );
-            for (uint256 j = 0; j < _vaultTokens.length; j++) {
+            for (uint256 j = 0; j < vaultTokensLength; ++j)
                 actualTokenAmounts[j] += actualVaultTokenAmounts[j];
-            }
         }
     }
 

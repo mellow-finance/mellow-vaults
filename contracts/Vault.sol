@@ -42,9 +42,10 @@ abstract contract Vault is IVault, ReentrancyGuard {
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
-        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+        uint256 len = _vaultTokens.length;
+        for (uint256 i = 0; i < len; i++)
             _vaultTokensIndex[vaultTokens_[i]] = true;
-        }
+
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -106,7 +107,8 @@ abstract contract Vault is IVault, ReentrancyGuard {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokens.length; i++)
+        uint256 len = tokens.length;
+        for (uint256 i = 0; i < len; i++)
             if (tokenAmounts[i] != 0)
                 IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
 
@@ -200,24 +202,24 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
-        if (!CommonLibrary.isContract(to)) {
+        if (!CommonLibrary.isContract(to))
             return false;
-        }
+
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         // make sure that this vault is a registered vault
-        if (_nft == 0) {
+        if (_nft == 0)
             return false;
-        }
+
         address thisOwner = registry.ownerOf(_nft);
         // make sure that vault has a registered owner
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-        if (thisOwnerNft == 0) {
+        if (thisOwnerNft == 0)
             return false;
-        }
+
         IGatewayVault gw = IGatewayVault(thisOwner);
-        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) {
+        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to))
             return false;
-        }
+
         return true;
     }
 

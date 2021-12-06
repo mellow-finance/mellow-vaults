@@ -192,7 +192,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp != 0),
             ExceptionsLibrary.TIMESTAMP
         );
-        for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
+        uint256 len = _pendingClaimAllowlistAdd.length;
+        for (uint256 i = 0; i < len; i++) {
             _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
         }
         delete _pendingClaimAllowlistAdd;
@@ -206,7 +207,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
             "TS"
         );
-        for (uint256 i = 0; i < _pendingTokenWhitelistAdd.length; i++) {
+        uint256 len = _pendingTokenWhitelistAdd.length;
+        for (uint256 i = 0; i < len; i++) {
             if (!_tokenEverAdded[_pendingTokenWhitelistAdd[i]]) {
                 _numberOfValidTokens += 1;
                 _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
@@ -230,7 +232,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
             ExceptionsLibrary.TIMESTAMP
         );
-        for (uint256 i = 0; i < _pendingVaultGovernancesAdd.length; i++) {
+        uint256 len = _pendingVaultGovernancesAdd.length;
+        for (uint256 i = 0; i < len; i++) {
             _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
         }
         delete _pendingVaultGovernancesAdd;

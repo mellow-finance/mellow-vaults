@@ -23,10 +23,10 @@ contract ERC20Vault is Vault, ITrader {
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultTokens;
-        tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
+        uint256 len = tokens.length;
+        tokenAmounts = new uint256[](len);
+        for (uint256 i = 0; i < len; ++i)
             tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
-        }
     }
 
     /// @inheritdoc ITrader

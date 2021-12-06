@@ -98,8 +98,10 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(balanceFactor > 0, "BF");
         uint256[] memory balancedAmounts = new uint256[](tokenAmounts.length);
 
+        uint256 vaultTokensLength = _vaultTokens.length;
+
         // Making sure the proportion between tokenAmounts and tvl are the same
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < vaultTokensLength; ++i) {
             balancedAmounts[i] = _getBalancedAmount(tvl[i], tokenAmounts[i], existentials_[i], balanceFactor, supply);
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), balancedAmounts[i]);
@@ -147,10 +149,11 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / supply;
         }
         uint256[] memory actualTokenAmounts = _subvault().pull(address(this), _vaultTokens, tokenAmounts, options);
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            if (actualTokenAmounts[i] == 0) {
+        uint256 vaultTokensLength = _vaultTokens.length;
+        for (uint256 i = 0; i < vaultTokensLength; ++i) {
+            if (actualTokenAmounts[i] == 0)
                 continue;
-            }
+
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _chargeFees(_nft, tvl, supply, actualTokenAmounts, lpTokenAmount, true);
