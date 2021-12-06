@@ -204,32 +204,31 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
     ) internal {
         ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - lastFeeCharge;
-        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) {
+        uint256 tvlsLength = tvls.length;
+        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay)
             return;
-        }
+
         lastFeeCharge = block.timestamp;
         uint256 baseSupply = supply;
         if (isWithdraw) {
             baseSupply = 0;
-            if (supply > deltaSupply) {
+            if (supply > deltaSupply)
                 baseSupply = supply - deltaSupply;
-            }
         }
 
         if (baseSupply == 0) {
-            for (uint256 i = 0; i < tvls.length; i++) {
+            for (uint256 i = 0; i < tvlsLength; ++i)
                 _lpPriceHighWaterMarks[i] = (deltaTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / deltaSupply;
-            }
+
             return;
         }
 
-        uint256[] memory baseTvls = new uint256[](tvls.length);
+        uint256[] memory baseTvls = new uint256[](tvlsLength);
         for (uint256 i = 0; i < baseTvls.length; i++) {
-            if (isWithdraw) {
+            if (isWithdraw)
                 baseTvls[i] = tvls[i] - deltaTvls[i];
-            } else {
+            else
                 baseTvls[i] = tvls[i];
-            }
         }
 
         ILpIssuerGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
@@ -250,7 +249,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         uint256[] memory hwms = _lpPriceHighWaterMarks;
         if (performanceFee > 0) {
             uint256 minLpPriceFactor = type(uint256).max;
-            for (uint256 i = 0; i < baseTvls.length; i++) {
+            for (uint256 i = 0; i < tvlsLength; ++i) {
                 uint256 hwm = hwms[i];
                 uint256 lpPrice = (baseTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / baseSupply;
                 if (lpPrice > hwm) {
@@ -263,9 +262,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
                     return;
                 }
             }
-            for (uint256 i = 0; i < tvls.length; i++) {
+            for (uint256 i = 0; i < tvlsLength; ++i)
                 _lpPriceHighWaterMarks[i] += (hwms[i] * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
-            }
+
             address treasury = strategyParams.strategyPerformanceTreasury;
             uint256 toMint = (baseSupply * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
             _mint(treasury, toMint);
@@ -280,6 +279,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         uint256 supply
     ) internal pure returns (uint256 lpAmount) {
         lpAmount = 0;
+        uint256 tvlsLength = 0;
         if (supply == 0) {
             // On init lpToken = max(tokenAmounts)
             for (uint256 i = 0; i < tvl.length; i++) {
@@ -289,7 +289,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
             }
             return lpAmount;
         }
-        for (uint256 i = 0; i < tvl.length; i++) {
+        for (uint256 i = 0; i < tvlsLength; ++i) {
             if (amounts[i] <= existentials_[i]) {
                 // skip existential deposits for lp share calculation
                 continue;
