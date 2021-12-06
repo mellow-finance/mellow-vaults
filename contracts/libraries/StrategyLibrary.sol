@@ -69,7 +69,7 @@ library StrategyLibrary {
         uint256 token0Amount,
         uint256 token1Amount,
         uint256 fee
-    ) internal pure returns (uint256 tokenIn, bool zeroForOne) {
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
         uint256 rx = FullMath.mulDiv(targetRatioX96, token0Amount, CommonLibrary.Q96);
         uint256 pX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
         zeroForOne = rx > token1Amount;
@@ -77,7 +77,7 @@ library StrategyLibrary {
             uint256 numerator = rx - token1Amount;
             uint256 denominatorX96 = targetRatioX96 +
                 FullMath.mulDiv(pX96, CommonLibrary.UNI_FEE_DENOMINATOR, CommonLibrary.UNI_FEE_DENOMINATOR - fee);
-            tokenIn = FullMath.mulDiv(numerator, CommonLibrary.Q96, denominatorX96);
+            amountIn = FullMath.mulDiv(numerator, CommonLibrary.Q96, denominatorX96);
         } else {
             uint256 numeratorX96 = FullMath.mulDiv(rx - token1Amount, pX96, 1);
             uint256 denominatorX96 = pX96 +
@@ -86,7 +86,7 @@ library StrategyLibrary {
                     CommonLibrary.UNI_FEE_DENOMINATOR,
                     CommonLibrary.UNI_FEE_DENOMINATOR - fee
                 );
-            tokenIn = FullMath.mulDiv(numeratorX96, 1, denominatorX96);
+            amountIn = FullMath.mulDiv(numeratorX96, 1, denominatorX96);
         }
     }
 
@@ -98,7 +98,7 @@ library StrategyLibrary {
         uint256 token1Amount,
         uint256 fee,
         uint256 liquidity
-    ) internal pure returns (uint256 tokenIn, bool zeroForOne) {
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
         zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, token1Amount) > CommonLibrary.Q96;
 
         uint256 l = liquidity;
@@ -122,9 +122,9 @@ library StrategyLibrary {
         uint256 sqrtPX96 = CommonLibrary.sqrtX96(d) - bX96;
         if (zeroForOne) {
             uint256 priceProductX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPX96, CommonLibrary.Q96);
-            tokenIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, priceProductX96);
+            amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, priceProductX96);
         } else {
-            tokenIn = FullMath.mulDiv(lHat, sqrtPriceX96 - sqrtPX96, CommonLibrary.Q96);
+            amountIn = FullMath.mulDiv(lHat, sqrtPriceX96 - sqrtPX96, CommonLibrary.Q96);
         }
     }
 }

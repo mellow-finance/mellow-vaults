@@ -2,8 +2,11 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IVault.sol";
+import "../interfaces/IERC20Vault.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
+import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
+import "../libraries/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../DefaultAccessControl.sol";
 
@@ -22,7 +25,8 @@ contract MStrategy is DefaultAccessControl {
         address token0;
         address token1;
         IUniswapV3Pool uniV3Pool;
-        IVault erc20Vault;
+        ISwapRouter uniV3Router;
+        IERC20Vault erc20Vault;
         IVault moneyVault;
     }
 
@@ -36,19 +40,36 @@ contract MStrategy is DefaultAccessControl {
 
     mapping(address => mapping(address => uint256)) public paramsIndex;
 
-    function rebalanceTokens(uint256 id, uint256 sqrtPriceX96)
-        external
-        returns (bool shouldRebalanceTokens, uint256 targetTokenRatioX96)
-    {
+    function rebalanceTokens(uint256 id) external returns (bool shouldRebalanceTokens, uint256 targetTokenRatioX96) {
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
+        IUniswapV3Pool pool = immutableParams.uniV3Pool;
+
+        (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
+            pool,
+            params.oraclePriceTimespan
+        );
+
         uint256[] memory erc20Tvl = immutableParams.erc20Vault.tvl();
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
         uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
         targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
         uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
-        if (deviation > params.tokenRebalanceThresholdX96) {}
+        if (deviation > params.tokenRebalanceThresholdX96) {
+            (uint256 amountIn, bool zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
+                targetTokenRatioX96,
+                sqrtPriceX96,
+                tvl[0],
+                tvl[1],
+                pool.fee(),
+                liquidity
+            );
+            (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
+            if (!zeroForOne) {
+                (tokenIn, tokenOut) = (tokenOut, tokenIn);
+            }
+        }
     }
 
     function targetRatioX96(
