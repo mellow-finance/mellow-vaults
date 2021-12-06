@@ -3,8 +3,6 @@ pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./IProtocolGovernance.sol";
-import "./IVaultFactory.sol";
-import "./IVaultGovernance.sol";
 
 interface IVaultRegistry is IERC721 {
     /// @notice Get Vault for the giver NFT ID.

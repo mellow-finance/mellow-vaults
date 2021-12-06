@@ -6,10 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./libraries/CommonLibrary.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
-import "./DefaultAccessControl.sol";
 import "./LpIssuerGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 

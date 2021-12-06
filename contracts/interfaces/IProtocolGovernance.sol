@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "./IDefaultAccessControl.sol";
-import "./IVaultRegistry.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice CommonLibrary protocol params.

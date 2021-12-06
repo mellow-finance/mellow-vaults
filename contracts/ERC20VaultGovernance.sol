@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "./trader/interfaces/ITrader.sol";
-import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./VaultGovernance.sol";
 
