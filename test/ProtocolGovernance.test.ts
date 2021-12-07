@@ -29,6 +29,7 @@ describe("ProtocolGovernance", () => {
     let paramsTimeout: ParamsStruct;
     let paramsEmpty: ParamsStruct;
     let paramsDefault: ParamsStruct;
+    let paramsTooLong: ParamsStruct;
     let defaultGovernanceDelay: number;
     let deploymentFixture: Function;
     let tokens: Contract[];
@@ -37,7 +38,7 @@ describe("ProtocolGovernance", () => {
     let usdc: string;
 
     before(async () => {
-        timeout = 10 ** 4;
+        timeout = 10 **4;
         defaultGovernanceDelay = 1;
         timeShift = 10 ** 10;
         timestamp = now() + timeShift;
@@ -114,6 +115,13 @@ describe("ProtocolGovernance", () => {
                 protocolTreasury: treasury,
             };
 
+            paramsTooLong = {
+                permissionless: true,
+                maxTokensPerVault: BigNumber.from(1),
+                governanceDelay: BigNumber.from(SECONDS_PER_DAY * 10),
+                protocolTreasury: treasury,
+            };
+
             tokens = await deployERC20Tokens(3);
 
             return {
@@ -137,7 +145,27 @@ describe("ProtocolGovernance", () => {
         });
     });
 
+    describe("maxTokensPerVault", () => {
+        it("returns correct vaulue", async () => {
+            expect(await protocolGovernance.maxTokensPerVault()).to.be.equal(
+                10
+            );
+        });
+    });
+
     describe("setPendingParams", () => {
+        describe("when governance delay is greater than max governance delay", () => {
+            it("reverts", async () => {
+                await withSigner(admin, async (signer) => {
+                    await protocolGovernance.connect(signer).setPendingParams(paramsTooLong);
+                    await sleep(await protocolGovernance.governanceDelay());
+                    await protocolGovernance.connect(signer).commitParams();
+                    await expect(
+                        protocolGovernance.connect(signer).setPendingParams(params)
+                    ).to.be.revertedWith(Exceptions.MAX_GOVERNANCE_DELAY);
+                });
+            });
+        });
         describe("when called once", () => {
             it("sets the params", async () => {
                 await withSigner(admin, async (signer) => {
