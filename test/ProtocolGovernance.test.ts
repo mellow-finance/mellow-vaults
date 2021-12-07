@@ -38,7 +38,7 @@ describe("ProtocolGovernance", () => {
     let usdc: string;
 
     before(async () => {
-        timeout = 10 **4;
+        timeout = 10 ** 4;
         defaultGovernanceDelay = 1;
         timeShift = 10 ** 10;
         timestamp = now() + timeShift;
@@ -157,11 +157,15 @@ describe("ProtocolGovernance", () => {
         describe("when governance delay is greater than max governance delay", () => {
             it("reverts", async () => {
                 await withSigner(admin, async (signer) => {
-                    await protocolGovernance.connect(signer).setPendingParams(paramsTooLong);
+                    await protocolGovernance
+                        .connect(signer)
+                        .setPendingParams(paramsTooLong);
                     await sleep(await protocolGovernance.governanceDelay());
                     await protocolGovernance.connect(signer).commitParams();
                     await expect(
-                        protocolGovernance.connect(signer).setPendingParams(params)
+                        protocolGovernance
+                            .connect(signer)
+                            .setPendingParams(params)
                     ).to.be.revertedWith(Exceptions.MAX_GOVERNANCE_DELAY);
                 });
             });
