@@ -18,7 +18,7 @@ contract MStrategy is DefaultAccessControl {
         uint256 sqrtPMinX96;
         uint256 sqrtPMaxX96;
         uint256 tokenRebalanceThresholdX96;
-        uint256 protocolRebalanceThresholdX96;
+        uint256 poolRebalanceThresholdX96;
     }
 
     struct ImmutableParams {
@@ -40,21 +40,64 @@ contract MStrategy is DefaultAccessControl {
 
     mapping(address => mapping(address => uint256)) public paramsIndex;
 
-    function rebalanceTokens(uint256 id) external returns (bool shouldRebalanceTokens, uint256 targetTokenRatioX96) {
+    function rebalance(uint256 id) external returns (bool shouldRebalanceTokens, uint256 targetTokenRatioX96) {
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
+        IERC20Vault erc20Vault = immutableParams.erc20Vault;
+        uint256[] memory erc20Tvl = erc20Vault.tvl();
+        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
+        uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
+        _rebalanceTokens(tvl, pool, erc20Vault, params);
+        // _rebalancePools(
+
+        // );
+    }
+
+    function _rebalancePools(
+        uint256 tvl0,
+        uint256 tvl1,
+        IVault vault0,
+        IVault vault1,
+        address[] memory tokens,
+        uint256 liquidToFixedRatioX96,
+        uint256 poolRebalanceThresholdX96,
+        uint256 i,
+        ImmutableParams storage params
+    ) internal {
+        uint256 currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
+        uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
+        if (deviation > poolRebalanceThresholdX96) {
+            (uint256 amountIn, bool zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
+                liquidToFixedRatioX96,
+                CommonLibrary.Q96,
+                tvl0,
+                tvl1,
+                0
+            );
+            if (zeroForOne) {
+                // vault0.pull(address(vault1), tokens)
+            } else {
+                // vault1.pull(address(vault0), tokens)
+            }
+        }
+    }
+
+    function _rebalanceTokens(
+        uint256[2] memory tvl,
+        IUniswapV3Pool pool,
+        IERC20Vault erc20Vault,
+        Params storage params
+    ) internal {
+        uint256 poolFee = pool.fee();
 
         (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
             pool,
             params.oraclePriceTimespan
         );
 
-        uint256[] memory erc20Tvl = immutableParams.erc20Vault.tvl();
-        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
-        uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
         uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-        targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+        uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
         uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
         if (deviation > params.tokenRebalanceThresholdX96) {
             (uint256 amountIn, bool zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
@@ -62,13 +105,20 @@ contract MStrategy is DefaultAccessControl {
                 sqrtPriceX96,
                 tvl[0],
                 tvl[1],
-                pool.fee(),
+                poolFee,
                 liquidity
             );
             (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
             if (!zeroForOne) {
                 (tokenIn, tokenOut) = (tokenOut, tokenIn);
             }
+            ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
+            bytes memory poolOptions = new bytes(32);
+            assembly {
+                mstore(add(poolOptions, 32), poolFee)
+            }
+            path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+            erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, "");
         }
     }
 
