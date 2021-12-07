@@ -45,41 +45,75 @@ contract MStrategy is DefaultAccessControl {
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
+        IVault moneyVault = immutableParams.moneyVault;
+        address[] memory tokens = erc20Vault.vaultTokens();
         uint256[] memory erc20Tvl = erc20Vault.tvl();
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
         _rebalanceTokens(tvl, pool, erc20Vault, params);
-        // _rebalancePools(
-
-        // );
+        _rebalancePools(
+            erc20Tvl,
+            moneyTvl,
+            tokens,
+            params.liquidToFixedRatioX96,
+            params.poolRebalanceThresholdX96,
+            erc20Vault,
+            moneyVault
+        );
     }
 
     function _rebalancePools(
-        uint256 tvl0,
-        uint256 tvl1,
-        IVault vault0,
-        IVault vault1,
+        uint256[] memory erc20Tvl,
+        uint256[] memory moneyTvl,
         address[] memory tokens,
         uint256 liquidToFixedRatioX96,
         uint256 poolRebalanceThresholdX96,
-        uint256 i,
-        ImmutableParams storage params
+        IVault erc20Vault,
+        IVault moneyVault
     ) internal {
+        uint256[] memory erc20Amounts = new uint256[](2);
+        uint256[] memory moneyAmounts = new uint256[](2);
+        bool[] memory zeroForOnes = new bool[](2);
+        for (uint256 i = 0; i < 2; i++) {
+            (uint256 amountIn, bool zeroForOne) = _calcRebalancePoolAmount(
+                erc20Tvl[i],
+                moneyTvl[i],
+                liquidToFixedRatioX96,
+                poolRebalanceThresholdX96
+            );
+            zeroForOnes[i] = zeroForOne;
+            if (zeroForOne) {
+                erc20Amounts[i] = amountIn;
+            } else {
+                moneyAmounts[i] = amountIn;
+            }
+        }
+        if (zeroForOnes[0] && zeroForOnes[1]) {
+            erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+        } else if (!zeroForOnes[0] && !zeroForOnes[1]) {
+            moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+        } else {
+            erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+            moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+        }
+    }
+
+    function _calcRebalancePoolAmount(
+        uint256 tvl0,
+        uint256 tvl1,
+        uint256 liquidToFixedRatioX96,
+        uint256 poolRebalanceThresholdX96
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
         uint256 currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
         uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
         if (deviation > poolRebalanceThresholdX96) {
-            (uint256 amountIn, bool zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
+            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
                 liquidToFixedRatioX96,
                 CommonLibrary.Q96,
                 tvl0,
                 tvl1,
                 0
             );
-            if (zeroForOne) {
-                // vault0.pull(address(vault1), tokens)
-            } else {
-                // vault1.pull(address(vault0), tokens)
-            }
         }
     }
 
