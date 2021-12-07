@@ -39,6 +39,15 @@ const config: HardhatUserConfig = {
         stranger2: {
             default: 9,
         },
+        user1: {
+            default: 10,
+        },
+        user2: {
+            default: 11,
+        },
+        user3: {
+            default: 12,
+        },
         wbtcRichGuy: {
             default: "0x000af223187a63f3b0bf6fe5a76ddc79e03ccb55",
         },

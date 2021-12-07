@@ -1,4 +1,4 @@
-import { Contract, Signer } from "ethers";
+import { Contract, Signer, ContractFactory } from "ethers";
 import { network, ethers, getNamedAccounts } from "hardhat";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
@@ -138,3 +138,33 @@ export const withSigner = async (
     await f(signer);
     await removeSigner(address);
 };
+
+export type ERC20Test_constructorArgs = {
+    name: string;
+    symbol: string;
+};
+
+export async function deployERC20Tokens(length: number): Promise<ERC20[]> {
+    let tokens: ERC20[] = [];
+    let token_constructorArgs: ERC20Test_constructorArgs[] = [];
+    const Contract: ContractFactory = await ethers.getContractFactory(
+        "ERC20Test"
+    );
+
+    for (let i = 0; i < length; ++i) {
+        token_constructorArgs.push({
+            name: "Test Token",
+            symbol: `TEST_${i}`,
+        });
+    }
+
+    for (let i: number = 0; i < length; ++i) {
+        const contract: ERC20 = await Contract.deploy(
+            token_constructorArgs[i].name + `_${i.toString()}`,
+            token_constructorArgs[i].symbol
+        );
+        await contract.deployed();
+        tokens.push(contract);
+    }
+    return tokens;
+}
