@@ -71,7 +71,9 @@ export const decodeFromBytes = (types: string[], bytesToDecode: string) => {
     return fromBytes.decode(types, bytesToDecode);
 };
 
-const addSigner = async (address: string): Promise<SignerWithAddress> => {
+export const addSigner = async (
+    address: string
+): Promise<SignerWithAddress> => {
     await network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [address],
@@ -137,4 +139,14 @@ export const withSigner = async (
     const signer = await addSigner(address);
     await f(signer);
     await removeSigner(address);
+};
+
+export const addSigners = async (signers: string[]): Promise<Signer[]> => {
+    let res: Signer[] = [];
+    for (var account in signers) {
+        console.log(account);
+        let signer = await addSigner(account);
+        res.push(signer);
+    }
+    return res;
 };

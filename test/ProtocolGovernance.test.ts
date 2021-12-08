@@ -1,42 +1,50 @@
 import { expect } from "chai";
-import { ethers, deployments, getNamedAccounts } from "hardhat";
+import { network, ethers, deployments, getNamedAccounts } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import Exceptions from "./library/Exceptions";
-import { ProtocolGovernance_Params } from "./library/Types";
+import { ParamsStruct, ProtocolGovernance } from "./types/ProtocolGovernance";
+import { deployERC20Tokens } from "./library/Deployments";
 import {
-    deployVaultRegistryAndProtocolGovernance,
-    deployERC20Tokens,
-} from "./library/Deployments";
-import { now, sleep, sleepTo, toObject } from "./library/Helpers";
-import { ERC20 } from "./library/Types";
+    now,
+    sleep,
+    sleepTo,
+    toObject,
+    addSigners,
+    addSigner,
+} from "./library/Helpers";
+import { VaultRegistry } from "./types";
 
 describe("ProtocolGovernance", () => {
     const SECONDS_PER_DAY = 60 * 60 * 24;
 
-    let protocolGovernance: Contract;
+    let protocolGovernance: ProtocolGovernance;
+    let vaultRegistry: VaultRegistry;
     let deployer: Signer;
+    let admin: Signer;
     let stranger: Signer;
-    let user1: Signer;
-    let user2: Signer;
-    let user3: Signer;
-    let protocolTreasury: Signer;
+    let stranger1: string;
+    let stranger2: string;
+    let stranger3: string;
+    let treasury: string;
     let timestamp: number;
     let timeout: number;
     let timeShift: number;
-    let params: ProtocolGovernance_Params;
-    let initialParams: ProtocolGovernance_Params;
-    let paramsZero: ProtocolGovernance_Params;
-    let paramsTimeout: ProtocolGovernance_Params;
-    let paramsEmpty: ProtocolGovernance_Params;
-    let paramsDefault: ProtocolGovernance_Params;
+    let params: ParamsStruct;
+    let initialParams: ParamsStruct;
+    let paramsZero: ParamsStruct;
+    let paramsTimeout: ParamsStruct;
+    let paramsEmpty: ParamsStruct;
+    let paramsDefault: ParamsStruct;
+    let paramsTooLong: ParamsStruct;
     let defaultGovernanceDelay: number;
     let deploymentFixture: Function;
-    let tokens: ERC20[];
+    let tokens: Contract[];
+    let wbtc: string;
+    let weth: string;
+    let usdc: string;
 
     before(async () => {
-        [deployer, stranger, user1, user2, user3, protocolTreasury] =
-            await ethers.getSigners();
         timeout = 10 ** 4;
         defaultGovernanceDelay = 1;
         timeShift = 10 ** 10;
@@ -44,41 +52,61 @@ describe("ProtocolGovernance", () => {
 
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
+            const {
+                deployer: d,
+                admin: a,
+                stranger: s,
+                stranger1: s1,
+                stranger2: s2,
+                stranger3: s3,
+                treasury: t,
+                weth: we,
+                wbtc: wb,
+                usdc: us,
+            } = await getNamedAccounts();
+            [treasury, stranger1, stranger2, stranger3, wbtc, weth, usdc] = [
+                t,
+                s1,
+                s2,
+                s3,
+                wb,
+                we,
+                us,
+            ];
 
-            const { vaultRegistry, protocolGovernance } =
-                await deployVaultRegistryAndProtocolGovernance({
-                    name: "VaultRegistry",
-                    symbol: "MVR",
-                    adminSigner: deployer,
-                    treasury: await protocolTreasury.getAddress(),
-                });
+            deployer = await addSigner(d);
+            admin = await addSigner(a);
+            stranger = await addSigner(s);
+
+            protocolGovernance = await ethers.getContract("ProtocolGovernance");
+            vaultRegistry = await ethers.getContract("VaultRegistry");
 
             params = {
                 permissionless: false,
-                maxTokensPerVault: BigNumber.from(20),
+                maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(100),
-                protocolTreasury: await protocolTreasury.getAddress(),
+                protocolTreasury: treasury,
             };
 
             initialParams = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(SECONDS_PER_DAY), // 1 day
-                protocolTreasury: await protocolTreasury.getAddress(),
+                protocolTreasury: treasury,
             };
 
             paramsZero = {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(0),
-                protocolTreasury: await protocolTreasury.getAddress(),
+                protocolTreasury: treasury,
             };
 
             paramsEmpty = {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
-                protocolTreasury: await protocolTreasury.getAddress(),
+                protocolTreasury: treasury,
             };
 
             paramsDefault = {
@@ -92,7 +120,14 @@ describe("ProtocolGovernance", () => {
                 permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(timeout),
-                protocolTreasury: await protocolTreasury.getAddress(),
+                protocolTreasury: treasury,
+            };
+
+            paramsTooLong = {
+                permissionless: true,
+                maxTokensPerVault: BigNumber.from(1),
+                governanceDelay: BigNumber.from(SECONDS_PER_DAY * 10),
+                protocolTreasury: treasury,
             };
 
             tokens = await deployERC20Tokens(3);
@@ -107,109 +142,51 @@ describe("ProtocolGovernance", () => {
     beforeEach(async () => {
         const protocolGovernanceSystem = await deploymentFixture();
         protocolGovernance = protocolGovernanceSystem.protocolGovernance;
-        sleep(defaultGovernanceDelay);
+        await sleep(Number(await protocolGovernance.governanceDelay()));
+    });
+
+    after(async () => {
+        await addSigner(await deployer.getAddress());
+        await addSigner(await admin.getAddress());
+        await addSigner(await stranger.getAddress());
     });
 
     describe("constructor", () => {
-        it("has empty pending claim allow list", async () => {
-            expect(await protocolGovernance.claimAllowlist()).to.be.empty;
+        it("creates GatewayVaultGovernance", async () => {
+            expect(protocolGovernance.address).not.to.be.equal(
+                ethers.constants.AddressZero
+            );
         });
+    });
 
-        it("has no vault governances", async () => {
-            expect(await protocolGovernance.vaultGovernances()).to.be.empty;
-        });
-
-        it("has no allowed tokens", async () => {
-            expect(await protocolGovernance.tokenWhitelist()).to.be.empty;
-        });
-
-        it("has empty pending claim allow list add", async () => {
-            expect(await protocolGovernance.pendingClaimAllowlistAdd()).to.be
-                .empty;
-        });
-
-        it("has empty pending token whitelist add", async () => {
-            expect(await protocolGovernance.pendingTokenWhitelistAdd()).to.be
-                .empty;
-        });
-
-        it("has empty pending vault governances add", async () => {
-            expect(await protocolGovernance.pendingVaultGovernancesAdd()).to.be
-                .empty;
-        });
-
-        it("has no pending params", async () => {
-            expect(
-                toObject(await protocolGovernance.pendingParams())
-            ).to.deep.equal(paramsDefault);
-        });
-
-        it("deployer and stranger are not vault governances", async () => {
-            expect(
-                await protocolGovernance.isVaultGovernance(
-                    await deployer.getAddress()
-                )
-            ).to.be.equal(false);
-
-            expect(
-                await protocolGovernance.isVaultGovernance(
-                    await stranger.getAddress()
-                )
-            ).to.be.equal(false);
-        });
-
-        it("does not allow deployer to claim", async () => {
-            expect(
-                await protocolGovernance.isAllowedToClaim(deployer.getAddress())
-            ).to.be.equal(false);
-        });
-
-        it("does not allow stranger to claim", async () => {
-            expect(
-                await protocolGovernance.isAllowedToClaim(stranger.getAddress())
-            ).to.be.equal(false);
-        });
-
-        it("all tokens are not in whitelist by default", async () => {
-            expect(
-                await protocolGovernance.isAllowedToken(tokens[0].address)
-            ).to.be.equal(false);
-            expect(
-                await protocolGovernance.isAllowedToken(tokens[1].address)
-            ).to.be.equal(false);
-        });
-
-        describe("initial params struct values", () => {
-            it("has initial params struct", async () => {
-                expect(
-                    toObject(await protocolGovernance.params())
-                ).to.deep.equal(initialParams);
-            });
-
-            it("by default permissionless == true", async () => {
-                expect(await protocolGovernance.permissionless()).to.be.equal(
-                    initialParams.permissionless
-                );
-            });
-
-            it("has max tokens per vault", async () => {
-                expect(
-                    await protocolGovernance.maxTokensPerVault()
-                ).to.be.equal(initialParams.maxTokensPerVault);
-            });
-
-            it("has governance delay", async () => {
-                expect(await protocolGovernance.governanceDelay()).to.be.equal(
-                    initialParams.governanceDelay
-                );
-            });
+    describe("maxTokensPerVault", () => {
+        it("returns correct vaulue", async () => {
+            expect(await protocolGovernance.maxTokensPerVault()).to.be.equal(
+                10
+            );
         });
     });
 
     describe("setPendingParams", () => {
+        describe("when governance delay is greater than max governance delay", () => {
+            it("reverts", async () => {
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsTooLong);
+                await sleep(await protocolGovernance.governanceDelay());
+                await protocolGovernance.connect(admin).commitParams();
+                await expect(
+                    protocolGovernance
+                        .connect(admin)
+                        .setPendingParams(params)
+                ).to.be.revertedWith(Exceptions.MAX_GOVERNANCE_DELAY);
+            });
+        });
         describe("when called once", () => {
             it("sets the params", async () => {
-                await protocolGovernance.setPendingParams(params);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(params);
 
                 expect(
                     toObject(await protocolGovernance.functions.pendingParams())
@@ -219,8 +196,12 @@ describe("ProtocolGovernance", () => {
 
         describe("when called twice", () => {
             it("sets the params", async () => {
-                await protocolGovernance.setPendingParams(paramsTimeout);
-                await protocolGovernance.setPendingParams(paramsZero);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsTimeout);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsZero);
 
                 expect(
                     toObject(await protocolGovernance.functions.pendingParams())
@@ -230,13 +211,23 @@ describe("ProtocolGovernance", () => {
     });
 
     it("sets governance delay", async () => {
-        sleepTo(timestamp);
-        await protocolGovernance.setPendingParams(params);
+        await sleepTo(timestamp);
+        await protocolGovernance.connect(admin).setPendingParams(params);
         expect(
             Math.abs(
-                (await protocolGovernance.pendingParamsTimestamp()) - timestamp
+                Number(
+                    await protocolGovernance
+                        .connect(admin)
+                        .pendingParamsTimestamp()
+                ) -
+                    timestamp -
+                    Number(
+                        await protocolGovernance
+                            .connect(admin)
+                            .governanceDelay()
+                    )
             )
-        ).to.be.equal(SECONDS_PER_DAY);
+        ).to.be.lessThanOrEqual(10);
     });
 
     describe("when callen by not admin", () => {
@@ -250,7 +241,9 @@ describe("ProtocolGovernance", () => {
     describe("commitParams", () => {
         describe("when callen by not admin", () => {
             it("reverts", async () => {
-                await protocolGovernance.setPendingParams(paramsZero);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsZero);
 
                 await expect(
                     protocolGovernance.connect(stranger).commitParams()
@@ -261,32 +254,40 @@ describe("ProtocolGovernance", () => {
         describe("when governance delay has not passed", () => {
             describe("when call immediately", () => {
                 it("reverts", async () => {
-                    await protocolGovernance.setPendingParams(paramsTimeout);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingParams(paramsTimeout);
 
-                    sleep(100 * 1000);
+                    await sleep(100 * 1000);
 
-                    await protocolGovernance.commitParams();
+                    await protocolGovernance.connect(admin).commitParams();
 
-                    await protocolGovernance.setPendingParams(paramsZero);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingParams(paramsZero);
                     await expect(
-                        protocolGovernance.commitParams()
+                        protocolGovernance.connect(admin).commitParams()
                     ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 });
             });
 
             describe("when delay has almost passed", () => {
                 it("reverts", async () => {
-                    await protocolGovernance.setPendingParams(paramsTimeout);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingParams(paramsTimeout);
 
-                    sleep(100 * 1000);
+                    await sleep(100 * 1000);
 
-                    await protocolGovernance.commitParams();
+                    await protocolGovernance.connect(admin).commitParams();
 
-                    sleep(timeout - 2);
+                    await sleep(timeout - 2);
 
-                    await protocolGovernance.setPendingParams(paramsZero);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingParams(paramsZero);
                     await expect(
-                        protocolGovernance.commitParams()
+                        protocolGovernance.connect(admin).commitParams()
                     ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 });
             });
@@ -294,48 +295,58 @@ describe("ProtocolGovernance", () => {
 
         describe("when governanceDelay is 0 and maxTokensPerVault is 0", () => {
             it("reverts", async () => {
-                await protocolGovernance.setPendingParams(paramsEmpty);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsEmpty);
 
                 sleep(100 * 1000);
 
                 await expect(
-                    protocolGovernance.commitParams()
+                    protocolGovernance.connect(admin).commitParams()
                 ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
             });
         });
 
         it("commits params", async () => {
-            await protocolGovernance.setPendingParams(paramsZero);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingParams(paramsZero);
 
-            sleep(100 * 1000);
+            await sleep(100 * 1000);
 
-            await protocolGovernance.commitParams();
+            await protocolGovernance.connect(admin).commitParams();
             expect(toObject(await protocolGovernance.params())).to.deep.equal(
                 paramsZero
             );
         });
 
         it("deletes pending params", async () => {
-            await protocolGovernance.setPendingParams(paramsZero);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingParams(paramsZero);
 
-            sleep(100 * 1000);
+            await sleep(100 * 1000);
 
-            await protocolGovernance.commitParams();
+            await protocolGovernance.connect(admin).commitParams();
             expect(
-                toObject(await protocolGovernance.pendingParams())
+                toObject(
+                    await protocolGovernance.connect(admin).pendingParams()
+                )
             ).to.deep.equal(paramsDefault);
         });
 
         describe("when commited twice", () => {
             it("reverts", async () => {
-                await protocolGovernance.setPendingParams(paramsZero);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsZero);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitParams();
+                await protocolGovernance.connect(admin).commitParams();
 
                 await expect(
-                    protocolGovernance.commitParams()
+                    protocolGovernance.connect(admin).commitParams()
                 ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
             });
         });
@@ -343,74 +354,81 @@ describe("ProtocolGovernance", () => {
         it("deletes pending params timestamp", async () => {
             timestamp += 10 ** 6;
 
-            sleepTo(timestamp);
+            await sleepTo(timestamp);
 
-            await protocolGovernance.setPendingParams(paramsTimeout);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingParams(paramsTimeout);
 
             timestamp += 10 ** 6;
-            sleepTo(timestamp);
-            await protocolGovernance.commitParams();
+            await sleepTo(timestamp);
+            await protocolGovernance.connect(admin).commitParams();
 
             expect(
-                await protocolGovernance.pendingParamsTimestamp()
+                await protocolGovernance.connect(admin).pendingParamsTimestamp()
             ).to.be.equal(BigNumber.from(0));
         });
     });
 
     describe("setPendingClaimAllowlistAdd", () => {
         it("sets pending list", async () => {
-            await protocolGovernance.setPendingClaimAllowlistAdd([
-                user1.getAddress(),
-                user2.getAddress(),
-            ]);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
             expect(
-                await protocolGovernance.pendingClaimAllowlistAdd()
-            ).to.deep.equal([
-                await user1.getAddress(),
-                await user2.getAddress(),
-            ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .pendingClaimAllowlistAdd()
+            ).to.deep.equal([stranger1, stranger2]);
         });
 
         it("sets correct pending timestamp with zero gonernance delay", async () => {
             timestamp += 10 ** 6;
-            sleepTo(timestamp);
-            await protocolGovernance.setPendingParams(paramsZero);
+            await sleepTo(timestamp);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingParams(paramsZero);
 
             timestamp += 10 ** 6;
-            sleepTo(timestamp);
-            await protocolGovernance.commitParams();
+            await sleepTo(timestamp);
+            await protocolGovernance.connect(admin).commitParams();
 
-            await protocolGovernance.setPendingClaimAllowlistAdd([
-                user1.getAddress(),
-                user2.getAddress(),
-            ]);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
             expect(
                 Math.abs(
-                    (await protocolGovernance.pendingClaimAllowlistAddTimestamp()) -
-                        timestamp
+                    Number(
+                        await protocolGovernance
+                            .connect(admin)
+                            .pendingClaimAllowlistAddTimestamp()
+                    ) - timestamp
                 )
             ).to.be.lessThanOrEqual(SECONDS_PER_DAY + 1);
         });
 
         it("sets correct pending timestamp with non-zero governance delay", async () => {
             timestamp += 10 ** 6;
-            sleepTo(timestamp);
-            await protocolGovernance.setPendingParams(paramsTimeout);
+            await sleepTo(timestamp);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingParams(paramsTimeout);
 
             timestamp += 10 ** 6;
-            sleepTo(timestamp);
-            await protocolGovernance.commitParams();
+            await sleepTo(timestamp);
+            await protocolGovernance.connect(admin).commitParams();
 
-            await protocolGovernance.setPendingClaimAllowlistAdd([
-                user1.getAddress(),
-                user2.getAddress(),
-            ]);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
             expect(
                 Math.abs(
-                    (await protocolGovernance.pendingClaimAllowlistAddTimestamp()) -
+                    Number(
+                        await protocolGovernance.pendingClaimAllowlistAddTimestamp()
+                    ) -
                         (timestamp + timeout)
                 )
             ).to.be.lessThanOrEqual(SECONDS_PER_DAY + 1);
@@ -431,53 +449,55 @@ describe("ProtocolGovernance", () => {
         describe("sets pending vault governances", () => {
             describe("when there are no repeating addresses", () => {
                 it("sets", async () => {
-                    await protocolGovernance.setPendingVaultGovernancesAdd([
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                    ]);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingVaultGovernancesAdd([stranger1, stranger2]);
 
                     expect(
-                        await protocolGovernance.pendingVaultGovernancesAdd()
-                    ).to.deep.equal([
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                    ]);
+                        await protocolGovernance
+                            .connect(admin)
+                            .pendingVaultGovernancesAdd()
+                    ).to.deep.equal([stranger1, stranger2]);
                 });
             });
 
             describe("when there are repeating addresses", () => {
                 it("sets", async () => {
-                    await protocolGovernance.setPendingVaultGovernancesAdd([
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                        await user2.getAddress(),
-                        await user1.getAddress(),
-                    ]);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingVaultGovernancesAdd([
+                            stranger1,
+                            stranger2,
+                            stranger2,
+                            stranger1,
+                        ]);
 
                     expect(
-                        await protocolGovernance.pendingVaultGovernancesAdd()
+                        await protocolGovernance
+                            .connect(admin)
+                            .pendingVaultGovernancesAdd()
                     ).to.deep.equal([
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                        await user2.getAddress(),
-                        await user1.getAddress(),
+                        stranger1,
+                        stranger2,
+                        stranger2,
+                        stranger1,
                     ]);
                 });
             });
 
             it("sets pendingVaultGovernancesAddTimestamp", async () => {
                 timestamp += timeShift;
-                sleepTo(timestamp);
+                await sleepTo(timestamp);
 
-                await protocolGovernance.setPendingVaultGovernancesAdd([
-                    await user1.getAddress(),
-                    await user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingVaultGovernancesAdd([stranger1, stranger2]);
 
                 expect(
                     Math.abs(
-                        (await protocolGovernance.pendingVaultGovernancesAddTimestamp()) -
-                            timestamp
+                        Number(
+                            await protocolGovernance.pendingVaultGovernancesAddTimestamp()
+                        ) - timestamp
                     )
                 ).to.be.lessThanOrEqual(SECONDS_PER_DAY + 1);
             });
@@ -488,10 +508,7 @@ describe("ProtocolGovernance", () => {
                 await expect(
                     protocolGovernance
                         .connect(stranger)
-                        .setPendingVaultGovernancesAdd([
-                            await user1.getAddress(),
-                            await user2.getAddress(),
-                        ])
+                        .setPendingVaultGovernancesAdd([stranger1, stranger2])
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
@@ -500,30 +517,28 @@ describe("ProtocolGovernance", () => {
     describe("commitVaultGovernancesAdd", () => {
         describe("when there are no repeating addresses", () => {
             it("sets vault governance add", async () => {
-                await protocolGovernance.setPendingVaultGovernancesAdd([
-                    await user1.getAddress(),
-                    await user2.getAddress(),
-                    await user3.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingVaultGovernancesAdd([
+                        stranger1,
+                        stranger2,
+                        stranger3,
+                    ]);
 
                 await sleep(SECONDS_PER_DAY);
 
-                await protocolGovernance.commitVaultGovernancesAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitVaultGovernancesAdd();
 
                 expect(
-                    await protocolGovernance.isVaultGovernance(
-                        await user1.getAddress()
-                    )
+                    await protocolGovernance.isVaultGovernance(stranger1)
                 ).to.be.equal(true);
                 expect(
-                    await protocolGovernance.isVaultGovernance(
-                        await user2.getAddress()
-                    )
+                    await protocolGovernance.isVaultGovernance(stranger2)
                 ).to.be.equal(true);
                 expect(
-                    await protocolGovernance.isVaultGovernance(
-                        await user3.getAddress()
-                    )
+                    await protocolGovernance.isVaultGovernance(stranger3)
                 ).to.be.equal(true);
                 expect(
                     await protocolGovernance.isVaultGovernance(
@@ -535,32 +550,30 @@ describe("ProtocolGovernance", () => {
 
         describe("when there are repeating addresses", () => {
             it("sets vault governance add", async () => {
-                await protocolGovernance.setPendingVaultGovernancesAdd([
-                    await user1.getAddress(),
-                    await user2.getAddress(),
-                    await user2.getAddress(),
-                    await user1.getAddress(),
-                    await user3.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingVaultGovernancesAdd([
+                        stranger1,
+                        stranger2,
+                        stranger2,
+                        stranger1,
+                        stranger3,
+                    ]);
 
                 await sleep(SECONDS_PER_DAY);
 
-                await protocolGovernance.commitVaultGovernancesAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitVaultGovernancesAdd();
 
                 expect(
-                    await protocolGovernance.isVaultGovernance(
-                        await user1.getAddress()
-                    )
+                    await protocolGovernance.isVaultGovernance(stranger1)
                 ).to.be.equal(true);
                 expect(
-                    await protocolGovernance.isVaultGovernance(
-                        await user2.getAddress()
-                    )
+                    await protocolGovernance.isVaultGovernance(stranger2)
                 ).to.be.equal(true);
                 expect(
-                    await protocolGovernance.isVaultGovernance(
-                        await user3.getAddress()
-                    )
+                    await protocolGovernance.isVaultGovernance(stranger3)
                 ).to.be.equal(true);
                 expect(
                     await protocolGovernance.isVaultGovernance(
@@ -572,10 +585,9 @@ describe("ProtocolGovernance", () => {
 
         describe("when callen by not admin", () => {
             it("reverts", async () => {
-                await protocolGovernance.setPendingVaultGovernancesAdd([
-                    await user1.getAddress(),
-                    await user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingVaultGovernancesAdd([stranger1, stranger2]);
 
                 await expect(
                     protocolGovernance
@@ -587,23 +599,28 @@ describe("ProtocolGovernance", () => {
 
         describe("when pendingVaultGovernancesAddTimestamp has not passed or has almost passed", () => {
             it("reverts", async () => {
-                await protocolGovernance.setPendingParams(params);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(params);
                 await sleep(SECONDS_PER_DAY + 1);
-                await protocolGovernance.commitParams();
+                await protocolGovernance.connect(admin).commitParams();
                 timestamp += timeShift;
                 await sleepTo(timestamp);
-                await protocolGovernance.setPendingVaultGovernancesAdd([
-                    await user1.getAddress(),
-                    await user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingVaultGovernancesAdd([stranger1, stranger2]);
 
                 await expect(
-                    protocolGovernance.commitVaultGovernancesAdd()
+                    protocolGovernance
+                        .connect(admin)
+                        .commitVaultGovernancesAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
 
                 await sleep(1);
                 await expect(
-                    protocolGovernance.commitVaultGovernancesAdd()
+                    protocolGovernance
+                        .connect(admin)
+                        .commitVaultGovernancesAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
@@ -611,7 +628,9 @@ describe("ProtocolGovernance", () => {
         describe("when pendingVaultGovernancesAddTimestamp has not been set", () => {
             it("reverts", async () => {
                 await expect(
-                    protocolGovernance.commitVaultGovernancesAdd()
+                    protocolGovernance
+                        .connect(admin)
+                        .commitVaultGovernancesAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
@@ -620,11 +639,15 @@ describe("ProtocolGovernance", () => {
     describe("commitClaimAllowlistAdd", () => {
         describe("appends zero address to list", () => {
             it("appends", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
                     []
                 );
@@ -633,44 +656,45 @@ describe("ProtocolGovernance", () => {
 
         describe("appends one address to list", () => {
             it("appends", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    user1.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([stranger1]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
-                    [await user1.getAddress()]
+                    [stranger1]
                 );
             });
         });
 
         describe("appends multiple addresses to list", () => {
             it("appends", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    deployer.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([await deployer.getAddress()]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
 
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    user1.getAddress(),
-                    user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
 
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
-                    [
-                        await deployer.getAddress(),
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                    ]
+                    [await deployer.getAddress(), stranger1, stranger2]
                 );
             });
         });
@@ -688,9 +712,9 @@ describe("ProtocolGovernance", () => {
         describe("when does not have pre-set claim allow list add timestamp", () => {
             it("reverts", async () => {
                 timestamp += 10 ** 6;
-                sleepTo(timestamp);
+                await sleepTo(timestamp);
                 await expect(
-                    protocolGovernance.commitClaimAllowlistAdd()
+                    protocolGovernance.connect(admin).commitClaimAllowlistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
@@ -698,20 +722,21 @@ describe("ProtocolGovernance", () => {
         describe("when governance delay has not passed", () => {
             it("reverts", async () => {
                 timestamp += 10 ** 6;
-                sleepTo(timestamp);
-                await protocolGovernance.setPendingParams(paramsTimeout);
+                await sleepTo(timestamp);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingParams(paramsTimeout);
 
                 timestamp += 10 ** 6;
-                sleepTo(timestamp);
-                await protocolGovernance.commitParams();
+                await sleepTo(timestamp);
+                await protocolGovernance.connect(admin).commitParams();
 
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    user1.getAddress(),
-                    user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
                 await expect(
-                    protocolGovernance.commitClaimAllowlistAdd()
+                    protocolGovernance.connect(admin).commitClaimAllowlistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
@@ -720,108 +745,109 @@ describe("ProtocolGovernance", () => {
     describe("removeFromClaimAllowlist", async () => {
         describe("when removing non-existing address", () => {
             it("does nothing", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    user1.getAddress(),
-                    user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
-                await protocolGovernance.removeFromClaimAllowlist(
-                    stranger.getAddress()
-                );
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromClaimAllowlist(await stranger.getAddress());
                 expect(await protocolGovernance.claimAllowlist()).to.deep.equal(
-                    [await user1.getAddress(), await user2.getAddress()]
+                    [stranger1, stranger2]
                 );
             });
         });
 
         describe("when remove called once", () => {
             it("removes the address", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    deployer.getAddress(),
-                    user1.getAddress(),
-                    user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([
+                        await deployer.getAddress(),
+                        stranger1,
+                        stranger2,
+                    ]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
-                await protocolGovernance.removeFromClaimAllowlist(
-                    user1.getAddress()
-                );
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromClaimAllowlist(stranger1);
                 expect([
                     (await protocolGovernance.isAllowedToClaim(
                         await deployer.getAddress()
                     )) &&
-                        (await protocolGovernance.isAllowedToClaim(
-                            await user2.getAddress()
-                        )),
-                    await protocolGovernance.isAllowedToClaim(
-                        await user1.getAddress()
-                    ),
+                        (await protocolGovernance.isAllowedToClaim(stranger2)),
+                    await protocolGovernance.isAllowedToClaim(stranger1),
                 ]).to.deep.equal([true, false]);
             });
         });
 
         describe("when remove called twice", () => {
             it("removes the addresses", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    deployer.getAddress(),
-                    user1.getAddress(),
-                    user2.getAddress(),
-                ]);
-                sleep(100 * 1000);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([
+                        await deployer.getAddress(),
+                        stranger1,
+                        stranger2,
+                    ]);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
-                await protocolGovernance.removeFromClaimAllowlist(
-                    user1.getAddress()
-                );
-                await protocolGovernance.removeFromClaimAllowlist(
-                    user2.getAddress()
-                );
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromClaimAllowlist(stranger1);
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromClaimAllowlist(stranger2);
                 expect([
                     await protocolGovernance.isAllowedToClaim(
                         await deployer.getAddress()
                     ),
-                    (await protocolGovernance.isAllowedToClaim(
-                        await user1.getAddress()
-                    )) &&
-                        (await protocolGovernance.isAllowedToClaim(
-                            await user2.getAddress()
-                        )),
+                    (await protocolGovernance.isAllowedToClaim(stranger1)) &&
+                        (await protocolGovernance.isAllowedToClaim(stranger2)),
                 ]).to.deep.equal([true, false]);
             });
         });
 
         describe("when remove called twice on the same address", () => {
             it("removes the address and does not fail then", async () => {
-                await protocolGovernance.setPendingClaimAllowlistAdd([
-                    deployer.getAddress(),
-                    user1.getAddress(),
-                    user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingClaimAllowlistAdd([
+                        await deployer.getAddress(),
+                        stranger1,
+                        stranger2,
+                    ]);
 
-                sleep(100 * 1000);
+                await sleep(100 * 1000);
 
-                await protocolGovernance.commitClaimAllowlistAdd();
-                await protocolGovernance.removeFromClaimAllowlist(
-                    user2.getAddress()
-                );
-                await protocolGovernance.removeFromClaimAllowlist(
-                    user2.getAddress()
-                );
+                await protocolGovernance
+                    .connect(admin)
+                    .commitClaimAllowlistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromClaimAllowlist(stranger2);
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromClaimAllowlist(stranger2);
                 expect([
                     (await protocolGovernance.isAllowedToClaim(
                         await deployer.getAddress()
                     )) &&
-                        (await protocolGovernance.isAllowedToClaim(
-                            await user1.getAddress()
-                        )),
-                    await protocolGovernance.isAllowedToClaim(
-                        await user2.getAddress()
-                    ),
+                        (await protocolGovernance.isAllowedToClaim(stranger1)),
+                    await protocolGovernance.isAllowedToClaim(stranger2),
                 ]).to.deep.equal([true, false]);
             });
         });
@@ -831,7 +857,7 @@ describe("ProtocolGovernance", () => {
                 await expect(
                     protocolGovernance
                         .connect(stranger)
-                        .removeFromClaimAllowlist(deployer.getAddress())
+                        .removeFromClaimAllowlist(await deployer.getAddress())
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
@@ -843,105 +869,102 @@ describe("ProtocolGovernance", () => {
                 await expect(
                     protocolGovernance
                         .connect(stranger)
-                        .removeFromVaultGovernances(await user1.getAddress())
+                        .removeFromVaultGovernances(stranger1)
                 ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
 
         describe("when address is not in vault governances", () => {
             it("does not fail", async () => {
-                await protocolGovernance.setPendingVaultGovernancesAdd([
-                    await user1.getAddress(),
-                    await user2.getAddress(),
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingVaultGovernancesAdd([stranger1, stranger2]);
                 await sleep(SECONDS_PER_DAY);
-                await protocolGovernance.commitVaultGovernancesAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitVaultGovernancesAdd();
 
                 await expect(
-                    protocolGovernance.removeFromVaultGovernances(
-                        await user3.getAddress()
-                    )
+                    protocolGovernance
+                        .connect(admin)
+                        .removeFromVaultGovernances(stranger3)
                 ).to.not.be.reverted;
 
                 expect(
                     (await protocolGovernance.vaultGovernances()).length
-                ).to.be.equal(2);
+                ).to.be.equal(8);
             });
         });
 
         describe("when address is a vault governance", () => {
             describe("when attempt to remove one address", () => {
                 it("removes", async () => {
-                    await protocolGovernance.setPendingVaultGovernancesAdd([
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                        await user3.getAddress(),
-                    ]);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingVaultGovernancesAdd([
+                            stranger1,
+                            stranger2,
+                            stranger3,
+                        ]);
                     await sleep(SECONDS_PER_DAY);
-                    await protocolGovernance.commitVaultGovernancesAdd();
+                    await protocolGovernance
+                        .connect(admin)
+                        .commitVaultGovernancesAdd();
 
                     await expect(
-                        protocolGovernance.removeFromVaultGovernances(
-                            await user3.getAddress()
-                        )
+                        protocolGovernance
+                            .connect(admin)
+                            .removeFromVaultGovernances(stranger3)
                     ).to.not.be.reverted;
                     expect(
-                        await protocolGovernance.isVaultGovernance(
-                            await user3.getAddress()
-                        )
+                        await protocolGovernance.isVaultGovernance(stranger3)
                     ).to.be.equal(false);
                     expect(
-                        await protocolGovernance.isVaultGovernance(
-                            await user2.getAddress()
-                        )
+                        await protocolGovernance.isVaultGovernance(stranger2)
                     ).to.be.equal(true);
                     expect(
-                        await protocolGovernance.isVaultGovernance(
-                            await user1.getAddress()
-                        )
+                        await protocolGovernance.isVaultGovernance(stranger1)
                     ).to.be.equal(true);
                 });
             });
             describe("when attempt to remove multiple addresses", () => {
                 it("removes", async () => {
-                    await protocolGovernance.setPendingVaultGovernancesAdd([
-                        await user1.getAddress(),
-                        await user2.getAddress(),
-                        await user3.getAddress(),
-                    ]);
+                    await protocolGovernance
+                        .connect(admin)
+                        .setPendingVaultGovernancesAdd([
+                            stranger1,
+                            stranger2,
+                            stranger3,
+                        ]);
                     await sleep(SECONDS_PER_DAY);
-                    await protocolGovernance.commitVaultGovernancesAdd();
+                    await protocolGovernance
+                        .connect(admin)
+                        .commitVaultGovernancesAdd();
 
                     await expect(
-                        protocolGovernance.removeFromVaultGovernances(
-                            await user3.getAddress()
-                        )
+                        protocolGovernance
+                            .connect(admin)
+                            .removeFromVaultGovernances(stranger3)
                     ).to.not.be.reverted;
                     await expect(
-                        protocolGovernance.removeFromVaultGovernances(
-                            await user2.getAddress()
-                        )
+                        protocolGovernance
+                            .connect(admin)
+                            .removeFromVaultGovernances(stranger2)
                     ).to.not.be.reverted;
                     await expect(
-                        protocolGovernance.removeFromVaultGovernances(
-                            await user3.getAddress()
-                        )
+                        protocolGovernance
+                            .connect(admin)
+                            .removeFromVaultGovernances(stranger3)
                     ).to.not.be.reverted;
 
                     expect(
-                        await protocolGovernance.isVaultGovernance(
-                            await user3.getAddress()
-                        )
+                        await protocolGovernance.isVaultGovernance(stranger3)
                     ).to.be.equal(false);
                     expect(
-                        await protocolGovernance.isVaultGovernance(
-                            await user2.getAddress()
-                        )
+                        await protocolGovernance.isVaultGovernance(stranger2)
                     ).to.be.equal(false);
                     expect(
-                        await protocolGovernance.isVaultGovernance(
-                            await user1.getAddress()
-                        )
+                        await protocolGovernance.isVaultGovernance(stranger1)
                     ).to.be.equal(true);
                 });
             });
@@ -959,18 +982,26 @@ describe("ProtocolGovernance", () => {
 
         it("sets pending token whitelist add and timestamp", async () => {
             timestamp += timeout;
-            sleepTo(timestamp);
-            await protocolGovernance.setPendingTokenWhitelistAdd([
-                tokens[0].address,
-                tokens[1].address,
-            ]);
+            await sleepTo(timestamp);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
             expect(
-                await protocolGovernance.pendingTokenWhitelistAdd()
+                await protocolGovernance
+                    .connect(admin)
+                    .pendingTokenWhitelistAdd()
             ).to.deep.equal([tokens[0].address, tokens[1].address]);
             expect(
                 Math.abs(
-                    (await protocolGovernance.pendingTokenWhitelistAddTimestamp()) -
-                        (await protocolGovernance.governanceDelay()) -
+                    Number(
+                        await protocolGovernance
+                            .connect(admin)
+                            .pendingTokenWhitelistAddTimestamp()
+                    ) -
+                        Number(await protocolGovernance.governanceDelay()) -
                         timestamp
                 )
             ).to.be.lessThanOrEqual(10);
@@ -980,16 +1011,20 @@ describe("ProtocolGovernance", () => {
     describe("commitTokenWhitelistAdd", () => {
         it("commits pending token whitelist", async () => {
             timestamp += timeout;
-            sleepTo(timestamp);
-            await protocolGovernance.setPendingTokenWhitelistAdd([
-                tokens[0].address,
-                tokens[1].address,
-            ]);
+            await sleepTo(timestamp);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
             expect(
-                await protocolGovernance.pendingTokenWhitelistAdd()
+                await protocolGovernance
+                    .connect(admin)
+                    .pendingTokenWhitelistAdd()
             ).to.deep.equal([tokens[0].address, tokens[1].address]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
-            await protocolGovernance.commitTokenWhitelistAdd();
+            await protocolGovernance.connect(admin).commitTokenWhitelistAdd();
             expect(
                 await protocolGovernance.pendingTokenWhitelistAddTimestamp()
             ).to.be.equal(BigNumber.from(0));
@@ -1010,40 +1045,46 @@ describe("ProtocolGovernance", () => {
         describe("when setPendingTokenWhitelistAdd has not been called", () => {
             it("reverts", async () => {
                 await expect(
-                    protocolGovernance.commitTokenWhitelistAdd()
+                    protocolGovernance.connect(admin).commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
 
         describe("when governance delay has not passed or has almost passed", () => {
             it("reverts", async () => {
-                await protocolGovernance.setPendingTokenWhitelistAdd([
-                    tokens[0].address,
-                    tokens[1].address,
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingTokenWhitelistAdd([
+                        tokens[0].address,
+                        tokens[1].address,
+                    ]);
                 await expect(
-                    protocolGovernance.commitTokenWhitelistAdd()
+                    protocolGovernance.connect(admin).commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 await sleep(
                     Number(await protocolGovernance.governanceDelay()) - 5
                 );
                 await expect(
-                    protocolGovernance.commitTokenWhitelistAdd()
+                    protocolGovernance.connect(admin).commitTokenWhitelistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
             });
         });
 
         describe("when setting to identic addresses", () => {
             it("passes", async () => {
-                await protocolGovernance.setPendingTokenWhitelistAdd([
-                    tokens[0].address,
-                    tokens[1].address,
-                    tokens[0].address,
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingTokenWhitelistAdd([
+                        tokens[0].address,
+                        tokens[1].address,
+                        tokens[0].address,
+                    ]);
                 await sleep(Number(await protocolGovernance.governanceDelay()));
-                await protocolGovernance.commitTokenWhitelistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitTokenWhitelistAdd();
                 expect(await protocolGovernance.tokenWhitelist()).to.deep.equal(
-                    [tokens[0].address, tokens[1].address]
+                    [wbtc, usdc, weth, tokens[0].address, tokens[1].address]
                 );
             });
         });
@@ -1062,15 +1103,19 @@ describe("ProtocolGovernance", () => {
 
         describe("when passed an address which is not in token whitelist", () => {
             it("passes", async () => {
-                await protocolGovernance.setPendingTokenWhitelistAdd([
-                    tokens[0].address,
-                    tokens[1].address,
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingTokenWhitelistAdd([
+                        tokens[0].address,
+                        tokens[1].address,
+                    ]);
                 await sleep(Number(await protocolGovernance.governanceDelay()));
-                await protocolGovernance.commitTokenWhitelistAdd();
-                await protocolGovernance.removeFromTokenWhitelist(
-                    tokens[2].address
-                );
+                await protocolGovernance
+                    .connect(admin)
+                    .commitTokenWhitelistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromTokenWhitelist(tokens[2].address);
                 expect(
                     await protocolGovernance.isAllowedToken(tokens[1].address)
                 ).to.be.equal(true);
@@ -1081,43 +1126,53 @@ describe("ProtocolGovernance", () => {
         });
 
         it("removes", async () => {
-            await protocolGovernance.setPendingTokenWhitelistAdd([
-                tokens[0].address,
-                tokens[1].address,
-            ]);
+            await protocolGovernance
+                .connect(admin)
+                .setPendingTokenWhitelistAdd([
+                    tokens[0].address,
+                    tokens[1].address,
+                ]);
             await sleep(Number(await protocolGovernance.governanceDelay()));
-            await protocolGovernance.commitTokenWhitelistAdd();
-            await protocolGovernance.removeFromTokenWhitelist(
-                tokens[0].address
-            );
+            await protocolGovernance.connect(admin).commitTokenWhitelistAdd();
+            await protocolGovernance
+                .connect(admin)
+                .removeFromTokenWhitelist(tokens[0].address);
             expect(
                 await protocolGovernance.isAllowedToken(tokens[1].address)
             ).to.be.equal(true);
             expect(
                 await protocolGovernance.isAllowedToken(tokens[0].address)
             ).to.be.equal(false);
-            expect(await protocolGovernance.tokenWhitelist()).to.deep.equal([
-                tokens[1].address,
-            ]);
+            expect(
+                await protocolGovernance.connect(admin).tokenWhitelist()
+            ).to.deep.equal([wbtc, usdc, weth, tokens[1].address]);
         });
 
         describe("when call commit on removed token", () => {
             it("passes", async () => {
-                await protocolGovernance.setPendingTokenWhitelistAdd([
-                    tokens[0].address,
-                    tokens[1].address,
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingTokenWhitelistAdd([
+                        tokens[0].address,
+                        tokens[1].address,
+                    ]);
                 await sleep(Number(await protocolGovernance.governanceDelay()));
-                await protocolGovernance.commitTokenWhitelistAdd();
-                await protocolGovernance.removeFromTokenWhitelist(
-                    tokens[0].address
-                );
-                await protocolGovernance.setPendingTokenWhitelistAdd([
-                    tokens[0].address,
-                    tokens[1].address,
-                ]);
+                await protocolGovernance
+                    .connect(admin)
+                    .commitTokenWhitelistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .removeFromTokenWhitelist(tokens[0].address);
+                await protocolGovernance
+                    .connect(admin)
+                    .setPendingTokenWhitelistAdd([
+                        tokens[0].address,
+                        tokens[1].address,
+                    ]);
                 await sleep(Number(await protocolGovernance.governanceDelay()));
-                await protocolGovernance.commitTokenWhitelistAdd();
+                await protocolGovernance
+                    .connect(admin)
+                    .commitTokenWhitelistAdd();
                 expect(
                     await protocolGovernance.isAllowedToken(tokens[1].address)
                 ).to.be.equal(true);
