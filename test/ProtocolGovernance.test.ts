@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { network, ethers, deployments, getNamedAccounts } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { Contract, Signer } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import Exceptions from "./library/Exceptions";
@@ -10,7 +10,6 @@ import {
     sleep,
     sleepTo,
     toObject,
-    addSigners,
     addSigner,
 } from "./library/Helpers";
 import { VaultRegistry } from "./types";

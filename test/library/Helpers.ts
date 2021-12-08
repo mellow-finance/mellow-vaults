@@ -140,13 +140,3 @@ export const withSigner = async (
     await f(signer);
     await removeSigner(address);
 };
-
-export const addSigners = async (signers: string[]): Promise<Signer[]> => {
-    let res: Signer[] = [];
-    for (var account in signers) {
-        console.log(account);
-        let signer = await addSigner(account);
-        res.push(signer);
-    }
-    return res;
-};
