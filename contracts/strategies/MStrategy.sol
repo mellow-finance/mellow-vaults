@@ -40,6 +40,35 @@ contract MStrategy is DefaultAccessControl {
 
     mapping(address => mapping(address => uint256)) public paramsIndex;
 
+    function shouldRebalance(uint256 id) external view returns (bool) {
+        Params storage params = vaultParams[id];
+        ImmutableParams storage immutableParams = vaultImmutableParams[id];
+        IUniswapV3Pool pool = immutableParams.uniV3Pool;
+        IERC20Vault erc20Vault = immutableParams.erc20Vault;
+        uint256[] memory erc20Tvl = erc20Vault.tvl();
+        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
+        uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
+
+        for (uint256 i = 0; i < 2; i++) {
+            uint256 currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
+            uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, params.liquidToFixedRatioX96);
+            if (deviation > params.poolRebalanceThresholdX96) {
+                return true;
+            }
+        }
+        {
+            (uint256 sqrtPriceX96, , ) = StrategyLibrary.getUniV3Averages(pool, params.oraclePriceTimespan);
+
+            uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+            uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
+            if (deviation > params.tokenRebalanceThresholdX96) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function rebalance(uint256 id) external returns (bool shouldRebalanceTokens, uint256 targetTokenRatioX96) {
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
@@ -89,12 +118,20 @@ contract MStrategy is DefaultAccessControl {
             }
         }
         if (zeroForOnes[0] && zeroForOnes[1]) {
-            erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+            if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
+                erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+            }
         } else if (!zeroForOnes[0] && !zeroForOnes[1]) {
-            moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+            if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
+                moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+            }
         } else {
-            erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
-            moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+            if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
+                erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+            }
+            if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
+                moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+            }
         }
     }
 
@@ -123,17 +160,19 @@ contract MStrategy is DefaultAccessControl {
         IERC20Vault erc20Vault,
         Params storage params
     ) internal {
-        uint256 poolFee = pool.fee();
-
         (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
             pool,
             params.oraclePriceTimespan
         );
-
-        uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+        uint256 deviation;
         uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-        uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
+        {
+            uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
+        }
+
         if (deviation > params.tokenRebalanceThresholdX96) {
+            uint256 poolFee = pool.fee();
             (uint256 amountIn, bool zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
                 targetTokenRatioX96,
                 sqrtPriceX96,
