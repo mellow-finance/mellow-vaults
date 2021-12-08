@@ -5,13 +5,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import Exceptions from "./library/Exceptions";
 import { ParamsStruct, ProtocolGovernance } from "./types/ProtocolGovernance";
 import { deployERC20Tokens } from "./library/Deployments";
-import {
-    now,
-    sleep,
-    sleepTo,
-    toObject,
-    addSigner,
-} from "./library/Helpers";
+import { now, sleep, sleepTo, toObject, addSigner } from "./library/Helpers";
 import { VaultRegistry } from "./types";
 
 describe("ProtocolGovernance", () => {
