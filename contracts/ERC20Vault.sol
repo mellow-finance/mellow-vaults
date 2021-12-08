@@ -85,14 +85,14 @@ contract ERC20Vault is Vault, ITrader {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokenAmounts.length; i++)
+        for (uint256 i = 0; i < tokenAmounts.length; ++i)
             IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
 
         actualTokenAmounts = tokenAmounts;
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
-        for (uint256 i = 0; i < tokens.length; i++) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             require(!isVaultToken(tokens[i]), ExceptionsLibrary.OTHER_VAULT_TOKENS); // vault token is part of TVL
             require(
                 _vaultGovernance.internalParams().protocolGovernance.isEverAllowedToken(tokens[i]),

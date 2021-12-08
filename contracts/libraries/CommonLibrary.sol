@@ -11,8 +11,8 @@ library CommonLibrary {
     /// @param arr Array of addresses
     function bubbleSort(address[] memory arr) internal pure {
         uint256 l = arr.length;
-        for (uint256 i = 0; i < l; i++) {
-            for (uint256 j = i + 1; j < l; j++) {
+        for (uint256 i = 0; i < l; ++i) {
+            for (uint256 j = i + 1; j < l; ++j) {
                 if (arr[i] > arr[j]) {
                     address temp = arr[i];
                     arr[i] = arr[j];
@@ -29,7 +29,7 @@ library CommonLibrary {
         if (tokens.length < 2) {
             return true;
         }
-        for (uint256 i = 0; i < tokens.length - 1; i++) {
+        for (uint256 i = 0; i < tokens.length - 1; ++i) {
             if (tokens[i] >= tokens[i + 1]) {
                 return false;
             }
@@ -90,19 +90,19 @@ library CommonLibrary {
         uint256 n = amounts.length;
         require(n > 0, "NGT0");
         uint256[] memory weightsNorm = new uint256[](n);
-        for (uint256 i = 0; i < k; i++) {
+        for (uint256 i = 0; i < k; ++i) {
             require(weights[i].length == n, "NV");
         }
-        for (uint256 j = 0; j < n; j++) {
+        for (uint256 j = 0; j < n; ++j) {
             weightsNorm[j] = 0;
-            for (uint256 i = 0; i < k; i++) {
+            for (uint256 i = 0; i < k; ++i) {
                 weightsNorm[j] += weights[i][j];
             }
         }
         uint256[][] memory res = new uint256[][](k);
-        for (uint256 i = 0; i < k; i++) {
+        for (uint256 i = 0; i < k; ++i) {
             res[i] = new uint256[](n);
-            for (uint256 j = 0; j < n; j++) {
+            for (uint256 j = 0; j < n; ++j) {
                 if (weightsNorm[j] == 0) {
                     res[i][j] = amounts[j] / k;
                 } else {

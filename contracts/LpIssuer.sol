@@ -129,7 +129,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         _chargeFees(thisNft, tvl, supply, actualTokenAmounts, amountToMint, false);
         _mint(msg.sender, amountToMint);
 
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             if (balancedAmounts[i] > actualTokenAmounts[i]) {
                 IERC20(_vaultTokens[i]).safeTransfer(msg.sender, balancedAmounts[i] - actualTokenAmounts[i]);
             }
@@ -148,7 +148,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         require(supply > 0, ExceptionsLibrary.TOTAL_SUPPLY_IS_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         uint256[] memory tvl = _subvault().tvl();
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / supply;
         }
         uint256[] memory actualTokenAmounts = _subvault().pull(address(this), _vaultTokens, tokenAmounts, options);
@@ -242,7 +242,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         }
 
         uint256[] memory baseTvls = new uint256[](tvlsLength);
-        for (uint256 i = 0; i < baseTvls.length; i++) {
+        for (uint256 i = 0; i < baseTvls.length; ++i) {
             if (isWithdraw)
                 baseTvls[i] = tvls[i] - deltaTvls[i];
             else
@@ -300,7 +300,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         uint256 tvlsLength = 0;
         if (supply == 0) {
             // On init lpToken = max(tokenAmounts)
-            for (uint256 i = 0; i < tvl.length; i++) {
+            for (uint256 i = 0; i < tvl.length; ++i) {
                 if (amounts[i] > lpAmount) {
                     lpAmount = amounts[i];
                 }

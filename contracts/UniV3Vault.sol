@@ -127,7 +127,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; i++)
+        for (uint256 i = 0; i < tokens.length; ++i)
             _allowTokenIfNecessary(tokens[i]);
 
         actualTokenAmounts = new uint256[](2);

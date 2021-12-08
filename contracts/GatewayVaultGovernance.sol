@@ -67,7 +67,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         IVaultRegistry registry = _internalParams.registry;
         IGatewayVault(address(vault)).addSubvaults(subvaultNfts);
         len = subvaultNfts.length;
-        for (uint256 i = 0; i < len; i++)
+        for (uint256 i = 0; i < len; ++i)
             registry.safeTransferFrom(msg.sender, address(vault), subvaultNfts[i]);
 
         IGatewayVault gw = IGatewayVault(address(vault));
