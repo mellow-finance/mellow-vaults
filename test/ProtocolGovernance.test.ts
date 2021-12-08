@@ -176,9 +176,7 @@ describe("ProtocolGovernance", () => {
                 await sleep(await protocolGovernance.governanceDelay());
                 await protocolGovernance.connect(admin).commitParams();
                 await expect(
-                    protocolGovernance
-                        .connect(admin)
-                        .setPendingParams(params)
+                    protocolGovernance.connect(admin).setPendingParams(params)
                 ).to.be.revertedWith(Exceptions.MAX_GOVERNANCE_DELAY);
             });
         });
