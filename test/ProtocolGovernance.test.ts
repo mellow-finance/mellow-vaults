@@ -24,13 +24,10 @@ describe("ProtocolGovernance", () => {
     let timeout: number;
     let timeShift: number;
     let params: ParamsStruct;
-    let initialParams: ParamsStruct;
     let paramsZero: ParamsStruct;
     let paramsTimeout: ParamsStruct;
     let paramsEmpty: ParamsStruct;
     let paramsDefault: ParamsStruct;
-    let paramsTooLong: ParamsStruct;
-    let defaultGovernanceDelay: number;
     let deploymentFixture: Function;
     let tokens: Contract[];
     let wbtc: string;
@@ -38,8 +35,7 @@ describe("ProtocolGovernance", () => {
     let usdc: string;
 
     before(async () => {
-        timeout = 10 ** 4;
-        defaultGovernanceDelay = 1;
+        timeout = SECONDS_PER_DAY / 2;
         timeShift = 10 ** 10;
         timestamp = now() + timeShift;
 
@@ -78,48 +74,6 @@ describe("ProtocolGovernance", () => {
                 permissionless: false,
                 maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(100),
-                protocolTreasury: treasury,
-            };
-
-            initialParams = {
-                permissionless: true,
-                maxTokensPerVault: BigNumber.from(10),
-                governanceDelay: BigNumber.from(SECONDS_PER_DAY), // 1 day
-                protocolTreasury: treasury,
-            };
-
-            paramsZero = {
-                permissionless: false,
-                maxTokensPerVault: BigNumber.from(1),
-                governanceDelay: BigNumber.from(0),
-                protocolTreasury: treasury,
-            };
-
-            paramsEmpty = {
-                permissionless: true,
-                maxTokensPerVault: BigNumber.from(0),
-                governanceDelay: BigNumber.from(0),
-                protocolTreasury: treasury,
-            };
-
-            paramsDefault = {
-                permissionless: false,
-                maxTokensPerVault: BigNumber.from(0),
-                governanceDelay: BigNumber.from(0),
-                protocolTreasury: ethers.constants.AddressZero,
-            };
-
-            paramsTimeout = {
-                permissionless: true,
-                maxTokensPerVault: BigNumber.from(1),
-                governanceDelay: BigNumber.from(timeout),
-                protocolTreasury: treasury,
-            };
-
-            paramsTooLong = {
-                permissionless: true,
-                maxTokensPerVault: BigNumber.from(1),
-                governanceDelay: BigNumber.from(SECONDS_PER_DAY * 10),
                 protocolTreasury: treasury,
             };
 
@@ -163,10 +117,13 @@ describe("ProtocolGovernance", () => {
     describe("setPendingParams", () => {
         describe("when governance delay is greater than max governance delay", () => {
             it("reverts", async () => {
-                await protocolGovernance
-                    .connect(admin)
-                    .setPendingParams(paramsTooLong);
-                await sleep(await protocolGovernance.governanceDelay());
+                await protocolGovernance.connect(admin).setPendingParams({
+                    permissionless: true,
+                    maxTokensPerVault: BigNumber.from(10),
+                    governanceDelay: BigNumber.from(SECONDS_PER_DAY * 10),
+                    protocolTreasury: treasury,
+                });
+                await sleep(Number(await protocolGovernance.governanceDelay()));
                 await protocolGovernance.connect(admin).commitParams();
                 await expect(
                     protocolGovernance.connect(admin).setPendingParams(params)
@@ -178,7 +135,6 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance
                     .connect(admin)
                     .setPendingParams(params);
-
                 expect(
                     toObject(await protocolGovernance.functions.pendingParams())
                 ).to.deep.equal(params);
@@ -187,6 +143,18 @@ describe("ProtocolGovernance", () => {
 
         describe("when called twice", () => {
             it("sets the params", async () => {
+                paramsZero = {
+                    permissionless: false,
+                    maxTokensPerVault: BigNumber.from(10),
+                    governanceDelay: BigNumber.from(0),
+                    protocolTreasury: treasury,
+                };
+                paramsTimeout = {
+                    permissionless: false,
+                    maxTokensPerVault: BigNumber.from(10),
+                    governanceDelay: BigNumber.from(timeout),
+                    protocolTreasury: treasury,
+                };
                 await protocolGovernance
                     .connect(admin)
                     .setPendingParams(paramsTimeout);
@@ -197,6 +165,16 @@ describe("ProtocolGovernance", () => {
                 expect(
                     toObject(await protocolGovernance.functions.pendingParams())
                 ).to.deep.equal(paramsZero);
+            });
+        });
+
+        describe("when callen by not admin", () => {
+            it("reverts", async () => {
+                await expect(
+                    protocolGovernance
+                        .connect(stranger)
+                        .setPendingParams(params)
+                ).to.be.revertedWith(Exceptions.ADMIN);
             });
         });
     });
@@ -221,15 +199,28 @@ describe("ProtocolGovernance", () => {
         ).to.be.lessThanOrEqual(10);
     });
 
-    describe("when callen by not admin", () => {
-        it("reverts", async () => {
-            await expect(
-                protocolGovernance.connect(stranger).setPendingParams(params)
-            ).to.be.revertedWith(Exceptions.ADMIN);
-        });
-    });
-
     describe("commitParams", () => {
+        paramsZero = {
+            permissionless: false,
+            maxTokensPerVault: BigNumber.from(1),
+            governanceDelay: BigNumber.from(0),
+            protocolTreasury: treasury,
+        };
+
+        paramsTimeout = {
+            permissionless: true,
+            maxTokensPerVault: BigNumber.from(1),
+            governanceDelay: BigNumber.from(SECONDS_PER_DAY),
+            protocolTreasury: treasury,
+        };
+
+        paramsDefault = {
+            permissionless: false,
+            maxTokensPerVault: BigNumber.from(0),
+            governanceDelay: BigNumber.from(0),
+            protocolTreasury: ethers.constants.AddressZero,
+        };
+
         describe("when callen by not admin", () => {
             it("reverts", async () => {
                 await protocolGovernance
@@ -286,6 +277,13 @@ describe("ProtocolGovernance", () => {
 
         describe("when governanceDelay is 0 and maxTokensPerVault is 0", () => {
             it("reverts", async () => {
+                paramsEmpty = {
+                    permissionless: true,
+                    maxTokensPerVault: BigNumber.from(0),
+                    governanceDelay: BigNumber.from(0),
+                    protocolTreasury: treasury,
+                };
+
                 await protocolGovernance
                     .connect(admin)
                     .setPendingParams(paramsEmpty);
@@ -362,6 +360,20 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("setPendingClaimAllowlistAdd", () => {
+        paramsZero = {
+            permissionless: false,
+            maxTokensPerVault: BigNumber.from(1),
+            governanceDelay: BigNumber.from(0),
+            protocolTreasury: treasury,
+        };
+
+        paramsTimeout = {
+            permissionless: true,
+            maxTokensPerVault: BigNumber.from(1),
+            governanceDelay: BigNumber.from(SECONDS_PER_DAY),
+            protocolTreasury: treasury,
+        };
+
         it("sets pending list", async () => {
             await protocolGovernance
                 .connect(admin)
@@ -628,6 +640,13 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("commitClaimAllowlistAdd", () => {
+        paramsTimeout = {
+            permissionless: true,
+            maxTokensPerVault: BigNumber.from(1),
+            governanceDelay: BigNumber.from(SECONDS_PER_DAY),
+            protocolTreasury: treasury,
+        };
+
         describe("appends zero address to list", () => {
             it("appends", async () => {
                 await protocolGovernance
