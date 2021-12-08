@@ -106,18 +106,21 @@ library StrategyLibrary {
         if (zeroForOne) {
             (l, lHat) = (lHat, l);
         }
-        uint256 cX96 = FullMath.mulDiv(targetRatioX96, l, lHat);
-        uint256 b1X96 = FullMath.mulDiv(cX96, CommonLibrary.Q96, sqrtPriceX96);
-        uint256 b2X96 = FullMath.mulDiv(targetRatioX96, token0Amount, lHat);
-        uint256 b3X96 = FullMath.mulDiv(CommonLibrary.Q96, token1Amount, lHat);
-        uint256 b4X96 = sqrtPriceX96;
         uint256 bX96;
-        if (b1X96 + b2X96 > b3X96 + b4X96) {
-            bX96 = b1X96 + b2X96 - b3X96 - b4X96;
-        } else {
-            bX96 = b3X96 + b4X96 - b1X96 - b2X96;
+        uint256 cX96 = FullMath.mulDiv(targetRatioX96, l, lHat);
+        {
+            uint256 b1X96 = FullMath.mulDiv(cX96, CommonLibrary.Q96, sqrtPriceX96);
+            uint256 b2X96 = FullMath.mulDiv(targetRatioX96, token0Amount, lHat);
+            uint256 b3X96 = FullMath.mulDiv(CommonLibrary.Q96, token1Amount, lHat);
+            uint256 b4X96 = sqrtPriceX96;
+
+            if (b1X96 + b2X96 > b3X96 + b4X96) {
+                bX96 = b1X96 + b2X96 - b3X96 - b4X96;
+            } else {
+                bX96 = b3X96 + b4X96 - b1X96 - b2X96;
+            }
+            bX96 = bX96 / 2;
         }
-        bX96 = bX96 / 2;
         uint256 d = FullMath.mulDiv(bX96, bX96, CommonLibrary.Q96) + cX96;
         uint256 sqrtPX96 = CommonLibrary.sqrtX96(d) - bX96;
         if (zeroForOne) {

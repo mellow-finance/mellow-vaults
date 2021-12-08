@@ -174,25 +174,30 @@ contract MStrategy is DefaultAccessControl {
         }
 
         if (deviation > params.tokenRebalanceThresholdX96) {
-            uint256 poolFee = pool.fee();
-            (uint256 amountIn, bool zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
-                targetTokenRatioX96,
-                sqrtPriceX96,
-                tvl[0],
-                tvl[1],
-                poolFee,
-                liquidity
-            );
-            (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
-            if (!zeroForOne) {
-                (tokenIn, tokenOut) = (tokenOut, tokenIn);
-            }
             ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
-            bytes memory poolOptions = new bytes(32);
-            assembly {
-                mstore(add(poolOptions, 32), poolFee)
+            uint256 amountIn;
+            {
+                bool zeroForOne;
+                uint256 poolFee = pool.fee();
+                (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
+                    targetTokenRatioX96,
+                    sqrtPriceX96,
+                    tvl[0],
+                    tvl[1],
+                    poolFee,
+                    liquidity
+                );
+                (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
+                if (!zeroForOne) {
+                    (tokenIn, tokenOut) = (tokenOut, tokenIn);
+                }
+
+                bytes memory poolOptions = new bytes(32);
+                assembly {
+                    mstore(add(poolOptions, 32), poolFee)
+                }
+                path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
             }
-            path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
             erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, "");
         }
     }
