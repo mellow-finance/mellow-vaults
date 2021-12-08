@@ -101,6 +101,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
+    function isEverAllowedToken(address addr) external view returns (bool) {
+        return _tokenEverAdded[addr];
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function isVaultGovernance(address addr) external view returns (bool) {
         return _vaultGovernances.contains(addr);
     }

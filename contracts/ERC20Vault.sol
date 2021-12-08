@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./trader/interfaces/IChiefTrader.sol";
 import "./trader/interfaces/ITrader.sol";
+import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
@@ -93,6 +94,10 @@ contract ERC20Vault is Vault, ITrader {
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
         for (uint256 i = 0; i < tokens.length; i++) {
             require(!isVaultToken(tokens[i]), ExceptionsLibrary.OTHER_VAULT_TOKENS); // vault token is part of TVL
+            require(
+                _vaultGovernance.internalParams().protocolGovernance.isEverAllowedToken(tokens[i]),
+                ExceptionsLibrary.EVER_ALLOWED_TOKEN
+            );
         }
     }
 

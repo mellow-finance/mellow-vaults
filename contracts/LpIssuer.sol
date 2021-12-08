@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./libraries/CommonLibrary.sol";
 import "./interfaces/ILpIssuer.sol";
+import "./interfaces/IGatewayVault.sol";
 import "./LpIssuerGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
+contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 {
     using SafeERC20 for IERC20;
     uint256 private _subvaultNft;
     IVaultGovernance internal immutable _vaultGovernance;
@@ -96,7 +98,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         }
 
         // If with that big supply we don't reveive any lps then it doesn't make sense to continue
-        require(balanceFactor > 0, "BF");
+        require(balanceFactor != 0, ExceptionsLibrary.BALANCE_FACTOR_ZERO);
         uint256[] memory balancedAmounts = new uint256[](tokenAmounts.length);
 
         uint256 vaultTokensLength = _vaultTokens.length;
@@ -116,7 +118,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         );
         uint256 amountToMint = _getLpAmount(tvl, actualTokenAmounts, existentials_, supply);
 
-        require(amountToMint > 0, "ZLP");
+        require(amountToMint != 0, ExceptionsLibrary.ZERO_LP_TOKENS);
 
         require(
             amountToMint + balanceOf(msg.sender) <=
@@ -167,6 +169,13 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         require(_subvaultNft == 0, ExceptionsLibrary.SUB_VAULT_INITIALIZED);
         require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
+        require(
+            ERC165(
+                _vaultGovernance.internalParams().registry.vaultForNft(nft_)
+            ).supportsInterface(
+                type(IGatewayVault).interfaceId
+            )
+        );
         _subvaultNft = nft_;
     }
 
@@ -180,6 +189,14 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(msg.sender == address(registry), ExceptionsLibrary.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
         return this.onERC721Received.selector;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+        return (
+            interfaceId == this.supportsInterface.selector ||
+            interfaceId == type(ILpIssuer).interfaceId || 
+            interfaceId == type(IERC20).interfaceId
+        );
     }
 
     function _allowTokenIfNecessary(address token, address to) internal {

@@ -39,8 +39,11 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Check if address is allowed to claim.
     function isAllowedToClaim(address addr) external view returns (bool);
 
-    /// @notice Check if address is an approved token.
+    /// @notice Check if address is an allowed (whitelisted) token.
     function isAllowedToken(address addr) external view returns (bool);
+
+    /// @notice Check if address has ever been allowed (whitelisted) token.
+    function isEverAllowedToken(address addr) external view returns (bool);
 
     /// @notice Check if address is a registered vault governance.
     function isVaultGovernance(address addr) external view returns (bool);

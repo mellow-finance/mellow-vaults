@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IVault.sol";
@@ -10,7 +11,7 @@ import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
-contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
+contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
     using SafeERC20 for IERC20;
     uint256[] internal _subvaultNfts;
     mapping(uint256 => uint256) internal _subvaultNftsIndex;
@@ -110,6 +111,14 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault {
         require(msg.sender == address(registry), ExceptionsLibrary.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
         return this.onERC721Received.selector;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+        return (
+            interfaceId == this.supportsInterface.selector ||
+            interfaceId == type(IGatewayVault).interfaceId || 
+            interfaceId == type(IVault).interfaceId
+        );
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
