@@ -5,7 +5,14 @@ import { BigNumber } from "@ethersproject/bignumber";
 import Exceptions from "./library/Exceptions";
 import { ParamsStruct, ProtocolGovernance } from "./types/ProtocolGovernance";
 import { deployERC20Tokens } from "./library/Deployments";
-import { now, sleep, sleepTo, toObject, addSigner } from "./library/Helpers";
+import {
+    now,
+    sleep,
+    sleepTo,
+    toObject,
+    addSigner,
+    removeSigner,
+} from "./library/Helpers";
 import { VaultRegistry } from "./types";
 
 describe("ProtocolGovernance", () => {
@@ -93,9 +100,9 @@ describe("ProtocolGovernance", () => {
     });
 
     after(async () => {
-        await addSigner(await deployer.getAddress());
-        await addSigner(await admin.getAddress());
-        await addSigner(await stranger.getAddress());
+        await removeSigner(await deployer.getAddress());
+        await removeSigner(await admin.getAddress());
+        await removeSigner(await stranger.getAddress());
     });
 
     describe("constructor", () => {
@@ -168,7 +175,7 @@ describe("ProtocolGovernance", () => {
             });
         });
 
-        describe("when callen by not admin", () => {
+        describe("when called by not admin", () => {
             it("reverts", async () => {
                 await expect(
                     protocolGovernance
@@ -180,6 +187,7 @@ describe("ProtocolGovernance", () => {
     });
 
     it("sets governance delay", async () => {
+        timestamp += timeShift;
         await sleepTo(timestamp);
         await protocolGovernance.connect(admin).setPendingParams(params);
         expect(
@@ -240,7 +248,9 @@ describe("ProtocolGovernance", () => {
                         .connect(admin)
                         .setPendingParams(paramsTimeout);
 
-                    await sleep(100 * 1000);
+                    await sleep(
+                        Number(await protocolGovernance.governanceDelay())
+                    );
 
                     await protocolGovernance.connect(admin).commitParams();
 
@@ -259,11 +269,15 @@ describe("ProtocolGovernance", () => {
                         .connect(admin)
                         .setPendingParams(paramsTimeout);
 
-                    await sleep(100 * 1000);
+                    await sleep(
+                        Number(await protocolGovernance.governanceDelay())
+                    );
 
                     await protocolGovernance.connect(admin).commitParams();
 
-                    await sleep(timeout - 2);
+                    await sleep(
+                        Number(await protocolGovernance.governanceDelay()) - 2
+                    );
 
                     await protocolGovernance
                         .connect(admin)
@@ -288,7 +302,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingParams(paramsEmpty);
 
-                sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await expect(
                     protocolGovernance.connect(admin).commitParams()
@@ -301,7 +315,7 @@ describe("ProtocolGovernance", () => {
                 .connect(admin)
                 .setPendingParams(paramsZero);
 
-            await sleep(100 * 1000);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
 
             await protocolGovernance.connect(admin).commitParams();
             expect(toObject(await protocolGovernance.params())).to.deep.equal(
@@ -314,7 +328,7 @@ describe("ProtocolGovernance", () => {
                 .connect(admin)
                 .setPendingParams(paramsZero);
 
-            await sleep(100 * 1000);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
 
             await protocolGovernance.connect(admin).commitParams();
             expect(
@@ -330,7 +344,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingParams(paramsZero);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance.connect(admin).commitParams();
 
@@ -341,16 +355,11 @@ describe("ProtocolGovernance", () => {
         });
 
         it("deletes pending params timestamp", async () => {
-            timestamp += 10 ** 6;
-
-            await sleepTo(timestamp);
-
             await protocolGovernance
                 .connect(admin)
                 .setPendingParams(paramsTimeout);
 
-            timestamp += 10 ** 6;
-            await sleepTo(timestamp);
+            await sleep(Number(await protocolGovernance.governanceDelay()));
             await protocolGovernance.connect(admin).commitParams();
 
             expect(
@@ -528,7 +537,7 @@ describe("ProtocolGovernance", () => {
                         stranger3,
                     ]);
 
-                await sleep(SECONDS_PER_DAY);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -563,7 +572,7 @@ describe("ProtocolGovernance", () => {
                         stranger3,
                     ]);
 
-                await sleep(SECONDS_PER_DAY);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -605,10 +614,12 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance
                     .connect(admin)
                     .setPendingParams(params);
-                await sleep(SECONDS_PER_DAY + 1);
+                await sleep(
+                    Number(await protocolGovernance.governanceDelay()) + 1
+                );
+
                 await protocolGovernance.connect(admin).commitParams();
-                timestamp += timeShift;
-                await sleepTo(timestamp);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
                 await protocolGovernance
                     .connect(admin)
                     .setPendingVaultGovernancesAdd([stranger1, stranger2]);
@@ -653,7 +664,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingClaimAllowlistAdd([]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -670,7 +681,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingClaimAllowlistAdd([stranger1]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -687,7 +698,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingClaimAllowlistAdd([await deployer.getAddress()]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -697,7 +708,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -721,8 +732,6 @@ describe("ProtocolGovernance", () => {
 
         describe("when does not have pre-set claim allow list add timestamp", () => {
             it("reverts", async () => {
-                timestamp += 10 ** 6;
-                await sleepTo(timestamp);
                 await expect(
                     protocolGovernance.connect(admin).commitClaimAllowlistAdd()
                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
@@ -731,14 +740,11 @@ describe("ProtocolGovernance", () => {
 
         describe("when governance delay has not passed", () => {
             it("reverts", async () => {
-                timestamp += 10 ** 6;
-                await sleepTo(timestamp);
                 await protocolGovernance
                     .connect(admin)
                     .setPendingParams(paramsTimeout);
 
-                timestamp += 10 ** 6;
-                await sleepTo(timestamp);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
                 await protocolGovernance.connect(admin).commitParams();
 
                 await protocolGovernance
@@ -759,7 +765,7 @@ describe("ProtocolGovernance", () => {
                     .connect(admin)
                     .setPendingClaimAllowlistAdd([stranger1, stranger2]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -783,7 +789,7 @@ describe("ProtocolGovernance", () => {
                         stranger2,
                     ]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -810,7 +816,7 @@ describe("ProtocolGovernance", () => {
                         stranger1,
                         stranger2,
                     ]);
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -841,7 +847,7 @@ describe("ProtocolGovernance", () => {
                         stranger2,
                     ]);
 
-                await sleep(100 * 1000);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
 
                 await protocolGovernance
                     .connect(admin)
@@ -889,7 +895,8 @@ describe("ProtocolGovernance", () => {
                 await protocolGovernance
                     .connect(admin)
                     .setPendingVaultGovernancesAdd([stranger1, stranger2]);
-                await sleep(SECONDS_PER_DAY);
+                await sleep(Number(await protocolGovernance.governanceDelay()));
+
                 await protocolGovernance
                     .connect(admin)
                     .commitVaultGovernancesAdd();
@@ -916,7 +923,10 @@ describe("ProtocolGovernance", () => {
                             stranger2,
                             stranger3,
                         ]);
-                    await sleep(SECONDS_PER_DAY);
+                    await sleep(
+                        Number(await protocolGovernance.governanceDelay())
+                    );
+
                     await protocolGovernance
                         .connect(admin)
                         .commitVaultGovernancesAdd();
@@ -946,7 +956,10 @@ describe("ProtocolGovernance", () => {
                             stranger2,
                             stranger3,
                         ]);
-                    await sleep(SECONDS_PER_DAY);
+                    await sleep(
+                        Number(await protocolGovernance.governanceDelay())
+                    );
+
                     await protocolGovernance
                         .connect(admin)
                         .commitVaultGovernancesAdd();
@@ -1020,8 +1033,6 @@ describe("ProtocolGovernance", () => {
 
     describe("commitTokenWhitelistAdd", () => {
         it("commits pending token whitelist", async () => {
-            timestamp += timeout;
-            await sleepTo(timestamp);
             await protocolGovernance
                 .connect(admin)
                 .setPendingTokenWhitelistAdd([

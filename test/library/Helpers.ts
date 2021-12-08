@@ -85,7 +85,7 @@ export const addSigner = async (
     return await ethers.getSigner(address);
 };
 
-const removeSigner = async (address: string) => {
+export const removeSigner = async (address: string) => {
     await network.provider.request({
         method: "hardhat_stopImpersonatingAccount",
         params: [address],
