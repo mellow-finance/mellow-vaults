@@ -34,7 +34,7 @@ contract MStrategy is DefaultAccessControl {
     ImmutableParams[] public vaultImmutableParams;
     mapping(address => mapping(address => uint256)) public vaultIndex;
     mapping(uint256 => bool) public disabled;
-    uint256 public lastRebalancePriceX96;
+    uint256 public vaultCount;
 
     constructor(address owner) DefaultAccessControl(owner) {}
 
@@ -69,7 +69,9 @@ contract MStrategy is DefaultAccessControl {
         return false;
     }
 
-    function rebalance(uint256 id) external returns (bool shouldRebalanceTokens, uint256 targetTokenRatioX96) {
+    function rebalance(uint256 id) external {
+        require(id < vaultCount, "VE");
+        require(!disabled[id], "DIS");
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
@@ -227,13 +229,23 @@ contract MStrategy is DefaultAccessControl {
         vaultImmutableParams.push(immutableParams_);
         paramsIndex[token0][token1] = num;
         paramsIndex[token1][token0] = num;
+        vaultCount += 1;
         emit VaultAdded(tx.origin, msg.sender, num, immutableParams_, params_);
     }
 
     function disableVault(uint256 id, bool disabled_) external {
         require(isAdmin(msg.sender), "ADM");
+        require(id < vaultCount, "VE");
         disabled[id] = disabled_;
         emit VaultDisabled(tx.origin, msg.sender, id, disabled_);
+    }
+
+    function updateVaultParams(uint256 id, Params memory params) external {
+        require(isAdmin(msg.sender), "ADM");
+        require(id < vaultCount, "VE");
+        require(!disabled[id], "DIS");
+        vaultParams[id] = params;
+        emit VaultParamsUpdated(tx.origin, msg.sender, id, params);
     }
 
     event VaultAdded(
@@ -245,4 +257,5 @@ contract MStrategy is DefaultAccessControl {
     );
 
     event VaultDisabled(address indexed origin, address indexed sender, uint256 num, bool disabled);
+    event VaultParamsUpdated(address indexed origin, address indexed sender, uint256 id, Params params);
 }
