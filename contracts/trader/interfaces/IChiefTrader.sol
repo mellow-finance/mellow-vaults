@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
+import "../../interfaces/IProtocolGovernance.sol";
+
 interface IChiefTrader {
     /// @notice ProtocolGovernance
     /// @return the address of the protocol governance contract
-    function protocolGovernance() external view returns (address);
+    function protocolGovernance() external view returns (IProtocolGovernance);
 
     /// @notice Count of traders
     function tradersCount() external view returns (uint256);

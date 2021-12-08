@@ -14,7 +14,7 @@ import "./libraries/ExceptionsLibrary.sol";
 contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
     using SafeERC20 for IERC20;
     uint256 private _subvaultNft;
-    IVaultGovernance internal _vaultGovernance;
+    IVaultGovernance internal immutable _vaultGovernance;
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 private _nft;

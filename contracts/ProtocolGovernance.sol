@@ -137,9 +137,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function removeFromClaimAllowlist(address addr) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        if (!_claimAllowlist.contains(addr)) {
-            return;
-        }
         _claimAllowlist.remove(addr);
     }
 
@@ -169,9 +166,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function removeFromVaultGovernances(address addr) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        if (!_vaultGovernances.contains(addr)) {
-            return;
-        }
         _vaultGovernances.remove(addr);
     }
 

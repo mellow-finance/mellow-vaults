@@ -54,4 +54,5 @@ library ExceptionsLibrary {
     string constant MAX_GOVERNANCE_DELAY = "MD";
     string constant OWNER_VAULT_NFT = "OWV";
     string constant ALLOWED_TOKEN = "AT";
+    string constant UNISWAP_POOL_NOT_FOUND = "UPNF";
 }

@@ -7,7 +7,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for ERC20VaultGovernance that can create new ERC20 Vaults.
 contract ERC20VaultFactory is IVaultFactory {
-    IVaultGovernance public vaultGovernance;
+    IVaultGovernance public immutable vaultGovernance;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind

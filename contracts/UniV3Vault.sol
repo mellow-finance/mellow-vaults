@@ -42,6 +42,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );
+        require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {

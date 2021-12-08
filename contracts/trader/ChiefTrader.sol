@@ -11,12 +11,12 @@ import "./libraries/TraderExceptionsLibrary.sol";
 /// @dev This contract contains several subtraders that can be used for trading ERC20 tokens.
 /// Examples of subtraders are UniswapV3, UniswapV2, SushiSwap, Curve, etc.
 contract ChiefTrader is ERC165, IChiefTrader, ITrader {
-    address public immutable protocolGovernance;
+    IProtocolGovernance public immutable protocolGovernance;
     address[] internal _traders;
     mapping(address => bool) public addedTraders;
 
     constructor(address _protocolGovernance) {
-        protocolGovernance = _protocolGovernance;
+        protocolGovernance = IProtocolGovernance(_protocolGovernance);
     }
 
     /// @inheritdoc IChiefTrader
@@ -81,7 +81,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     }
 
     function _requireAllowedTokens(PathItem[] memory path) internal view {
-        IProtocolGovernance pg = IProtocolGovernance(protocolGovernance);
+        IProtocolGovernance pg = protocolGovernance;
         for (uint256 i = 1; i < path.length; ++i)
             require(
                 pg.isAllowedToken(path[i].token0) && pg.isAllowedToken(path[i].token1),
@@ -92,10 +92,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     }
 
     function _requireProtocolAdmin() internal view {
-        require(
-            IProtocolGovernance(protocolGovernance).isAdmin(msg.sender),
-            TraderExceptionsLibrary.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
-        );
+        require(protocolGovernance.isAdmin(msg.sender), TraderExceptionsLibrary.PROTOCOL_ADMIN_REQUIRED_EXCEPTION);
     }
 
     event AddedTrader(uint256 indexed traderId, address traderAddress);
