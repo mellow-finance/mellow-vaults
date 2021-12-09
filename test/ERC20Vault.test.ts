@@ -1,23 +1,30 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
-import { BigNumber, Signer } from "ethers";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
+import { BigNumber, Signer, Contract } from "ethers";
 import {
     ERC20,
     ERC20Vault,
     VaultRegistry,
     ERC20VaultGovernance,
-} from "./library/Types";
-import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
+} from "./types";
+import {
+    deployERC20Tokens,
+    deploySubVaultSystem,
+    addSigner,
+    removeSigner,
+} from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 
 describe("ERC20Vault", function () {
     describe("when permissionless is set to true", () => {
         let deployer: Signer;
-        let user: Signer;
         let stranger: Signer;
-        let treasury: Signer;
-        let protocolGovernanceAdmin: Signer;
-
+        let treasury: string;
+        let admin: Signer;
+        let user: Signer;
+        let wbtc: string;
+        let weth: string;
+        let usdc: string;
         let tokens: ERC20[];
         let ERC20Vault: ERC20Vault;
         let ERC20VaultGovernance: ERC20VaultGovernance;
@@ -26,18 +33,39 @@ describe("ERC20Vault", function () {
         let deployment: Function;
 
         before(async () => {
-            [deployer, user, stranger, treasury, protocolGovernanceAdmin] =
-                await ethers.getSigners();
+            const {
+                deployer: d,
+                admin: a,
+                stranger: s,
+                treasury: t,
+                weth: we,
+                wbtc: wb,
+                usdc: us,
+                user: u,
+            } = await getNamedAccounts();
+            [treasury, wbtc, weth, usdc] = [t, wb, we, us];
+
+            deployer = await addSigner(d);
+            admin = await addSigner(a);
+            stranger = await addSigner(s);
+            user = await addSigner(u);
 
             deployment = deployments.createFixture(async () => {
                 await deployments.fixture();
                 return await deploySubVaultSystem({
                     tokensCount: 2,
-                    adminSigner: deployer,
-                    treasury: await treasury.getAddress(),
+                    adminSigner: admin,
+                    treasury: treasury,
                     vaultOwner: await deployer.getAddress(),
                 });
             });
+        });
+
+        after(async () => {
+            await removeSigner(await deployer.getAddress());
+            await removeSigner(await admin.getAddress());
+            await removeSigner(await stranger.getAddress());
+            await removeSigner(await user.getAddress());
         });
 
         beforeEach(async () => {
@@ -59,7 +87,7 @@ describe("ERC20Vault", function () {
             }
             await vaultRegistry
                 .connect(deployer)
-                .approve(await protocolGovernanceAdmin.getAddress(), nftERC20);
+                .approve(await admin.getAddress(), nftERC20);
         });
 
         describe("constructor", () => {
@@ -187,13 +215,21 @@ describe("ERC20Vault", function () {
                     ERC20Vault.address,
                     BigNumber.from(100 * 10 ** 4)
                 );
-                const args = [
-                    [tokens[1].address],
-                    [BigNumber.from(100 * 10 ** 4)],
-                    [],
-                ];
-                const amounts = await ERC20Vault.callStatic.push(...args);
-                const tx = await ERC20Vault.push(...args);
+                const args = {
+                    tokens: [tokens[1].address],
+                    tokenAmounts: [BigNumber.from(100 * 10 ** 4)],
+                    options: [],
+                };
+                const amounts = await ERC20Vault.callStatic.push(
+                    args.tokens,
+                    args.tokenAmounts,
+                    args.options
+                );
+                const tx = await ERC20Vault.push(
+                    args.tokens,
+                    args.tokenAmounts,
+                    args.options
+                );
                 await tx.wait();
                 expect(amounts).to.deep.equal([BigNumber.from(100 * 10 ** 4)]);
             });
@@ -351,7 +387,7 @@ describe("ERC20Vault", function () {
         });
 
         describe("reclaimTokens", () => {
-            let anotherToken: ERC20;
+            let anotherToken: Contract;
 
             before(async () => {
                 anotherToken = (await deployERC20Tokens(1))[0];
@@ -364,8 +400,15 @@ describe("ERC20Vault", function () {
         describe("_postReclaimTokens", () => {
             it("passes", async () => {
                 let anotherToken = (await deployERC20Tokens(1))[0];
+                let testERC20VaultFactory = await ethers.getContractFactory(
+                    "ERC20VaultTest"
+                );
+                let testERC20Vault = await testERC20VaultFactory.deploy(
+                    ERC20VaultGovernance.address,
+                    []
+                );
                 await expect(
-                    ERC20Vault.__postReclaimTokens(
+                    testERC20Vault.__postReclaimTokens(
                         ethers.constants.AddressZero,
                         [anotherToken.address]
                     )
@@ -375,10 +418,17 @@ describe("ERC20Vault", function () {
             describe("passed some not vault tokens", () => {
                 it("reverts", async () => {
                     let anotherToken = (await deployERC20Tokens(1))[0];
+                    let testERC20VaultFactory = await ethers.getContractFactory(
+                        "ERC20VaultTest"
+                    );
+                    let testERC20Vault = await testERC20VaultFactory.deploy(
+                        ethers.constants.AddressZero,
+                        [anotherToken.address]
+                    );
                     let arg = tokens.map((t) => t.address);
                     arg.push(anotherToken.address);
                     await expect(
-                        ERC20Vault.__postReclaimTokens(
+                        testERC20Vault.__postReclaimTokens(
                             ethers.constants.AddressZero,
                             arg
                         )
