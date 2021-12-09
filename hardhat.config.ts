@@ -62,7 +62,7 @@ const config: HardhatUserConfig = {
             default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
             kovan: "0xF7526b58c96BF3f81AF1Dc6aCa4224802C305F01",
         },
-        mStrategy: {
+        mStrategyAdmin: {
             // temporary
             default: "0xF2BF7baa673a5Ac03D64f999b449Cc7F3C9a0F3A",
         },
