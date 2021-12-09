@@ -10,43 +10,50 @@ import {
     randomAddress,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
+import {
+    AaveVaultGovernance,
+    ERC20,
+    GatewayVaultGovernance,
+    VaultRegistry,
+} from "./types";
 
 describe("AaveVault", () => {
-    const aaveVaultNft: number = 1;
-    const erc20VaultNft: number = 2;
-    const gatewayVaultNft: number = 4;
+    let aaveVaultNft: number;
+    let gatewayVaultNft: number;
     let deploymentFixture: Function;
     let aaveVault: string;
     let erc20Vault: string;
     let gatewayVault: string;
-    let wbtc: string;
-    let weth: string;
+    let tokens: string[];
     let aaveVaultContract: AaveVault;
 
     before(async () => {
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
-            const { read } = deployments;
-            aaveVault = await read(
-                "VaultRegistry",
-                "vaultForNft",
-                aaveVaultNft
+            const { deployer, weth, usdc } = await getNamedAccounts();
+            tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
+            const aaveVaultGovernance: AaveVaultGovernance =
+                await ethers.getContract("AaveVaultGovernance");
+            await aaveVaultGovernance.deployVault(tokens, [], deployer);
+            const vaultRegistry: VaultRegistry = await ethers.getContract(
+                "VaultRegistry"
             );
-            erc20Vault = await read(
-                "VaultRegistry",
-                "vaultForNft",
-                erc20VaultNft
-            );
-            gatewayVault = await read(
-                "VaultRegistry",
-                "vaultForNft",
-                gatewayVaultNft
-            );
+            aaveVaultNft = (await vaultRegistry.vaultsCount()).toNumber();
+            aaveVault = await vaultRegistry.vaultForNft(aaveVaultNft);
             aaveVaultContract = await ethers.getContractAt(
                 "AaveVault",
                 aaveVault
             );
-            ({ wbtc, weth } = await getNamedAccounts());
+            const coder = ethers.utils.defaultAbiCoder;
+            const gatewayVaultGovernance: GatewayVaultGovernance =
+                await ethers.getContract("GatewayVaultGovernance");
+            await gatewayVaultGovernance.deployVault(
+                tokens,
+                coder.encode(["uint256[]"], [[aaveVaultNft]]),
+                deployer
+            );
+            gatewayVaultNft = (await vaultRegistry.vaultsCount()).toNumber();
+            gatewayVault = await vaultRegistry.vaultForNft(gatewayVaultNft);
         });
     });
 
@@ -62,7 +69,7 @@ describe("AaveVault", () => {
             await deploy("AaveVault", {
                 from: deployer,
                 autoMine: true,
-                args: [vaultGovernance.address, [wbtc, weth]],
+                args: [vaultGovernance.address, tokens],
             });
         });
 
@@ -146,7 +153,7 @@ describe("AaveVault", () => {
                         await expect(
                             aaveVaultContract
                                 .connect(signer)
-                                .push([wbtc, weth], [0, amount], [])
+                                .push(tokens, [0, amount], [])
                         ).to.not.be.reverted;
                         expect(await aaveVaultContract.tvl()).to.eql([
                             ethers.constants.Zero,
@@ -156,27 +163,53 @@ describe("AaveVault", () => {
                 });
 
                 it("tvl raises with time", async () => {
+                    const { deployer, test } = await getNamedAccounts();
+                    const amounts: BigNumber[] = [];
+                    await withSigner(test, async (s) => {
+                        for (const token of tokens) {
+                            const contract: ERC20 = await ethers.getContractAt(
+                                "ERC20",
+                                token
+                            );
+                            const balance = await contract.balanceOf(test);
+                            await contract
+                                .connect(s)
+                                .transfer(gatewayVault, balance);
+                            amounts.push(balance);
+                        }
+                    });
                     await withSigner(gatewayVault, async (signer) => {
+                        for (const token of tokens) {
+                            const contract: ERC20 = await ethers.getContractAt(
+                                "ERC20",
+                                token
+                            );
+                            await contract
+                                .connect(signer)
+                                .approve(
+                                    aaveVault,
+                                    ethers.constants.MaxUint256
+                                );
+                        }
                         await aaveVaultContract
                             .connect(signer)
-                            .push([wbtc, weth], [amountWBTC, amount], []);
+                            .push(tokens, amounts, []);
                         const [tvlWBTC, tvlWeth] =
                             await aaveVaultContract.tvl();
                         // check initial tvls
                         expect(tvlWBTC.toString()).to.be.equal(
-                            amountWBTC.toString()
+                            amounts[0].toString()
                         );
                         expect(tvlWeth.toString()).to.be.equal(
-                            amount.toString()
+                            amounts[1].toString()
                         );
                         // wait
                         await sleep(1000 * 1000 * 1000);
                         // update tvl
                         await aaveVaultContract.connect(signer).updateTvls();
-                        const [newTvlWBTC, newTvlWeth] =
-                            await aaveVaultContract.tvl();
-                        expect(newTvlWeth.gt(amount)).to.be.true;
-                        expect(newTvlWBTC.gt(amountWBTC)).to.be.true;
+                        const newAmounts = await aaveVaultContract.tvl();
+                        expect(newAmounts[0].gt(amounts[0])).to.be.true;
+                        expect(newAmounts[1].gt(amounts[1])).to.be.true;
                     });
                 });
             });
@@ -188,12 +221,12 @@ describe("AaveVault", () => {
                         await expect(
                             aaveVaultContract
                                 .connect(signer)
-                                .push([wbtc, weth], [0, amount], [])
+                                .push(tokens, [0, amount], [])
                         ).to.not.be.reverted;
                         const { aaveLendingPool } = await getNamedAccounts();
-                        const wethContract = await ethers.getContractAt(
+                        const wethContract: ERC20 = await ethers.getContractAt(
                             "WERC20Test",
-                            weth
+                            tokens[1]
                         );
                         // allowance increased
                         expect(
@@ -207,7 +240,7 @@ describe("AaveVault", () => {
                         await expect(
                             aaveVaultContract
                                 .connect(signer)
-                                .push([wbtc, weth], [0, amount], [])
+                                .push(tokens, [0, amount], [])
                         ).to.not.be.reverted;
                     });
                 });
@@ -229,11 +262,11 @@ describe("AaveVault", () => {
                     await expect(
                         aaveVaultContract
                             .connect(signer)
-                            .pull(erc20Vault, [wbtc, weth], [0, 0], [])
+                            .pull(erc20Vault, tokens, [0, 0], [])
                     ).to.not.be.reverted;
                     const wethContract = await ethers.getContractAt(
                         "WERC20Test",
-                        weth
+                        tokens[1]
                     );
                     expect(await wethContract.balanceOf(aaveVault)).to.eql(
                         w9Amount
@@ -252,7 +285,7 @@ describe("AaveVault", () => {
                     await expect(
                         aaveVaultContract
                             .connect(signer)
-                            .push([wbtc, weth], [0, amount], [])
+                            .push(tokens, [0, amount], [])
                     ).to.not.be.reverted;
                 });
             });
@@ -261,10 +294,10 @@ describe("AaveVault", () => {
                 await withSigner(gatewayVault, async (signer) => {
                     await aaveVaultContract
                         .connect(signer)
-                        .pull(erc20Vault, [wbtc, weth], [0, amount], []);
+                        .pull(erc20Vault, tokens, [0, amount], []);
                     const wethContract = await ethers.getContractAt(
                         "WERC20Test",
-                        weth
+                        tokens[1]
                     );
                     expect(await wethContract.balanceOf(erc20Vault)).to.eql(
                         amount
@@ -280,7 +313,7 @@ describe("AaveVault", () => {
                                 .connect(signer)
                                 .pull(
                                     erc20Vault,
-                                    [wbtc, weth],
+                                    tokens,
                                     [0, amount.mul(2)],
                                     []
                                 )

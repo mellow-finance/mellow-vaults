@@ -2,27 +2,147 @@ import { PopulatedTransaction } from "@ethersproject/contracts";
 import { TransactionReceipt } from "@ethersproject/abstract-provider";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
+import {
+    equals,
+    filter,
+    fromPairs,
+    keys,
+    KeyValuePair,
+    map,
+    pipe,
+} from "ramda";
 
-export async function sendTx(
+export const setupVault = async (
     hre: HardhatRuntimeEnvironment,
-    tx: PopulatedTransaction
-): Promise<TransactionReceipt> {
-    console.log("Sending transaction to the pool...");
-    tx.type = 2;
-    const [operator] = await hre.ethers.getSigners();
-    const txResp = await operator.sendTransaction(tx);
-    console.log(
-        `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
-    );
-    const wait =
-        hre.network.name == "hardhat" || hre.network.name == "localhost"
-            ? undefined
-            : 2;
-    const receipt = await txResp.wait(wait);
-    console.log("Transaction confirmed");
-    return receipt;
-}
+    vaultNft: number,
+    startNft: number,
+    contractName: string,
+    {
+        deployOptions,
+        delayedStrategyParams,
+        strategyParams,
+        delayedProtocolPerVaultParams,
+    }: {
+        deployOptions: any[];
+        delayedStrategyParams?: { [key: string]: any };
+        strategyParams?: { [key: string]: any };
+        delayedProtocolPerVaultParams?: { [key: string]: any };
+    }
+) => {
+    delayedStrategyParams ||= {};
+    const { deployments, getNamedAccounts } = hre;
+    const { log, execute, read } = deployments;
+    const { deployer, admin } = await getNamedAccounts();
+    if (startNft <= vaultNft) {
+        log(`Deploying ${contractName.replace("Governance", "")}...`);
+        await execute(
+            contractName,
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "deployVault",
+            ...deployOptions
+        );
+        log(`Done, nft = ${vaultNft}`);
+    } else {
+        log(
+            `${contractName.replace(
+                "Governance",
+                ""
+            )} with nft = ${vaultNft} already deployed`
+        );
+    }
+    if (strategyParams) {
+        const currentParams = await read(
+            contractName,
+            "strategyParams",
+            vaultNft
+        );
+
+        if (!equals(strategyParams, currentParams)) {
+            log(`Setting Strategy params for ${contractName}`);
+            await execute(
+                contractName,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "setStrategyParams",
+                vaultNft,
+                strategyParams
+            );
+        }
+    }
+    let strategyTreasury;
+    try {
+        const data = await read(
+            contractName,
+            "delayedStrategyParams",
+            vaultNft
+        );
+        strategyTreasury = data.strategyTreasury;
+    } catch {
+        return;
+    }
+
+    if (strategyTreasury !== delayedStrategyParams.strategyTreasury) {
+        log(`Setting delayed strategy params for ${contractName}`);
+        await execute(
+            contractName,
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "stageDelayedStrategyParams",
+            vaultNft,
+            delayedStrategyParams
+        );
+        await execute(
+            contractName,
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "commitDelayedStrategyParams",
+            vaultNft
+        );
+    }
+    if (delayedProtocolPerVaultParams) {
+        const params = await read(
+            contractName,
+            "delayedProtocolPerVaultParams",
+            vaultNft
+        );
+        if (!equals(toObject(params), delayedProtocolPerVaultParams)) {
+            await execute(
+                contractName,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "stageDelayedProtocolPerVaultParams",
+                vaultNft,
+                delayedProtocolPerVaultParams
+            );
+            await execute(
+                contractName,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "commitDelayedProtocolPerVaultParams",
+                vaultNft
+            );
+        }
+    }
+};
 
 export const toObject = (obj: any) =>
     pipe(
