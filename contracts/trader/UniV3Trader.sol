@@ -41,7 +41,7 @@ contract UniV3Trader is Trader, ITrader {
         if (path.length == 1) {
             return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
-            require(_validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+            require(super._validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             return _swapExactInputMultihop(amount, recipient, path, options_);
         }
     }
@@ -58,20 +58,9 @@ contract UniV3Trader is Trader, ITrader {
         if (path.length == 1) {
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
-            require(_validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+            require(super._validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             return _swapExactOutputMultihop(amount, recipient, path, options_);
         }
-    }
-
-    function _validatePath(PathItem[] memory path) internal pure returns (bool result) {
-        uint256 pathLength = path.length;
-        if (pathLength == 0) return false;
-        for (uint256 i = 0; i < pathLength - 1; ++i) {
-            if (path[i].token1 != path[i + 1].token0) return false;
-            if (path[i].token0 == path[i].token1) return false;
-        }
-        if (path[pathLength - 1].token0 == path[pathLength - 1].token1) return false;
-        return true;
     }
 
     function _swapExactInputSingle(
