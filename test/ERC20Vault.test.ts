@@ -364,14 +364,15 @@ describe("ERC20Vault", function () {
                 it("reverts", async () => {
                     let anotherToken = (await deployERC20Tokens(1))[0];
                     await expect(
-                        ERC20Vault.reclaimTokens(await deployer.getAddress(), [anotherToken.address])
+                        ERC20Vault.reclaimTokens(await deployer.getAddress(), [
+                            anotherToken.address,
+                        ])
                     ).to.be.revertedWith("EAT");
                 });
             });
         });
 
         describe("_postReclaimTokens", () => {
-
             describe("passed some not vault tokens", () => {
                 it("reverts", async () => {
                     let anotherToken = (await deployERC20Tokens(1))[0];
