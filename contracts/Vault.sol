@@ -151,7 +151,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            require(governance.isEverAllowedToken(tokens[i]), ExceptionsLibrary.ALLOWED_TOKEN);
+            require(governance.isEverAllowedToken(tokens[i]), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));
             if (tokenAmounts[i] == 0)
