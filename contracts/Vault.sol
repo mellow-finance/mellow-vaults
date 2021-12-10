@@ -108,7 +108,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         address[] memory tokens,
         uint256[] memory tokenAmounts,
         bytes memory options
-    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
+    ) external returns (uint256[] memory actualTokenAmounts) {
         uint256 len = tokens.length;
         for (uint256 i = 0; i < len; ++i)
             if (tokenAmounts[i] != 0)
