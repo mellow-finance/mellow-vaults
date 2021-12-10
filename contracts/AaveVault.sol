@@ -49,9 +49,9 @@ contract AaveVault is Vault {
 
     /// @notice Update all tvls to current aToken balances.
     function updateTvls() public {
-        for (uint256 i = 0; i < _tvls.length; ++i) {
+        uint256 tvlsLength = _tvls.length;
+        for (uint256 i = 0; i < tvlsLength; ++i)
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
-        }
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
