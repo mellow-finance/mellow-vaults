@@ -90,7 +90,7 @@ describe("UniV3Vault", () => {
 
     describe("#tvl", () => {
         describe("when has not initial funds", () => {
-            it("returns zero tvl", async () => {
+            xit("returns zero tvl", async () => {
                 expect(await uniV3VaultContract.tvl()).to.eql([
                     ethers.constants.Zero,
                     ethers.constants.Zero,
@@ -105,7 +105,7 @@ describe("UniV3Vault", () => {
 
     describe("#push", () => {
         describe("when has not uniV3 position open", () => {
-            it("reverts", async () => {
+            xit("reverts", async () => {
                 const options = encodeToBytes(
                     [
                         "tuple(uint256 amount0Min, uint256 amount1Min, uint256 deadline)",

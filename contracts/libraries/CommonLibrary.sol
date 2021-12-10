@@ -6,6 +6,17 @@ library CommonLibrary {
     uint256 constant DENOMINATOR = 10**9;
     uint256 constant PRICE_DENOMINATOR = 10**18;
     uint256 constant YEAR = 365 * 24 * 3600;
+    uint256 constant Q128 = 2**128;
+    uint256 constant Q96 = 2**96;
+    uint256 constant Q48 = 2**48;
+    uint256 constant UNI_FEE_DENOMINATOR = 10**6;
+
+    function deviationFactor(uint256 a, uint256 b) internal pure returns (uint256 deviationX96) {
+        if (a > b) {
+            (a, b) = (b, a);
+        }
+        deviationX96 = (b * Q96) / a;
+    }
 
     /// @notice Sort addresses using bubble sort. The sorting is done in-place.
     /// @param arr Array of addresses
@@ -122,5 +133,52 @@ library CommonLibrary {
             size := extcodesize(addr)
         }
         return (size > 0);
+    }
+
+    function sqrtX96(uint256 xX96) internal pure returns (uint256) {
+        uint256 sqX96 = sqrt(xX96);
+        return sqX96 << 48;
+    }
+
+    function sqrt(uint256 x) internal pure returns (uint256) {
+        if (x == 0) return 0;
+        uint256 xx = x;
+        uint256 r = 1;
+        if (xx >= 0x100000000000000000000000000000000) {
+            xx >>= 128;
+            r <<= 64;
+        }
+        if (xx >= 0x10000000000000000) {
+            xx >>= 64;
+            r <<= 32;
+        }
+        if (xx >= 0x100000000) {
+            xx >>= 32;
+            r <<= 16;
+        }
+        if (xx >= 0x10000) {
+            xx >>= 16;
+            r <<= 8;
+        }
+        if (xx >= 0x100) {
+            xx >>= 8;
+            r <<= 4;
+        }
+        if (xx >= 0x10) {
+            xx >>= 4;
+            r <<= 2;
+        }
+        if (xx >= 0x8) {
+            r <<= 1;
+        }
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        r = (r + x / r) >> 1;
+        uint256 r1 = x / r;
+        return (r < r1 ? r : r1);
     }
 }
