@@ -107,11 +107,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         );
     }
 
+    const strategy = await get("MStrategyProxy");
+
     await setupVault(hre, gatewayVaultNft, startNft, "GatewayVaultGovernance", {
         deployOptions: [
             tokens,
             coder.encode(["uint256[]"], [[yearnVaultNft, erc20VaultNft]]),
-            deployer, // mStrategy
+            strategy.address, // mStrategy
         ],
 
         delayedStrategyParams: {
