@@ -1,4 +1,4 @@
-import { Contract, Signer } from "ethers";
+import { Contract, Signer, PopulatedTransaction } from "ethers";
 import { network, ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import {
@@ -13,7 +13,7 @@ import {
 } from "ramda";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomBytes } from "crypto";
-import { ProtocolGovernance, ERC20 } from "./Types";
+import { ProtocolGovernance } from "./Types";
 import { Address } from "hardhat-deploy/dist/types";
 import {
     IVault,
@@ -21,6 +21,7 @@ import {
     UniV3VaultGovernance,
     GatewayVaultGovernance,
     VaultRegistry,
+    ERC20,
 } from "../types";
 import {
     DelayedStrategyParamsStruct as GatewayDelayedStrategyParamsStruct,
@@ -252,4 +253,114 @@ export const deployVault = async (
             break;
     }
     return { nft, address };
+};
+
+export type MintableToken = "USDC" | "WETH" | "WBTC";
+
+export const mint = async (
+    token: MintableToken | string,
+    to: string,
+    amount: BigNumberish
+) => {
+    const { wbtc, weth, usdc } = await getNamedAccounts();
+    switch (token.toLowerCase()) {
+        case wbtc.toLowerCase():
+            token = "WBTC";
+            break;
+        case weth.toLowerCase():
+            token = "WETH";
+            break;
+        case usdc.toLowerCase():
+            token = "USDC";
+            break;
+
+        default:
+            break;
+    }
+    switch (token) {
+        case "USDC":
+            // masterMinter()
+            let minter = await ethers.provider.call({
+                to: usdc,
+                data: `0x35d99f35`,
+            });
+            minter = `0x${minter.substring(2 + 12 * 2)}`;
+            await withSigner(minter, async (s) => {
+                // function configureMinter(address minter, uint256 minterAllowedAmount)
+                let tx: PopulatedTransaction = {
+                    to: usdc,
+                    from: minter,
+                    data: `0x4e44d956${ethers.utils
+                        .hexZeroPad(s.address, 32)
+                        .substring(2)}${ethers.utils
+                        .hexZeroPad(BigNumber.from(amount).toHexString(), 32)
+                        .substring(2)}`,
+                    gasLimit: BigNumber.from(10 ** 6),
+                };
+
+                let resp = await s.sendTransaction(tx);
+                await resp.wait();
+
+                // function mint(address,uint256)
+                tx = {
+                    to: usdc,
+                    from: minter,
+                    data: `0x40c10f19${ethers.utils
+                        .hexZeroPad(to, 32)
+                        .substring(2)}${ethers.utils
+                        .hexZeroPad(BigNumber.from(amount).toHexString(), 32)
+                        .substring(2)}`,
+                    gasLimit: BigNumber.from(10 ** 6),
+                };
+
+                resp = await s.sendTransaction(tx);
+                await resp.wait();
+            });
+            break;
+
+        case "WETH":
+            const addr = randomAddress();
+            await withSigner(addr, async (s) => {
+                // deposit()
+                const tx: PopulatedTransaction = {
+                    to: weth,
+                    from: addr,
+                    data: `0xd0e30db0`,
+                    gasLimit: BigNumber.from(10 ** 6),
+                    value: BigNumber.from(amount),
+                };
+                const resp = await s.sendTransaction(tx);
+                await resp.wait();
+                const c: ERC20 = await ethers.getContractAt("ERC20", weth);
+                await c.connect(s).transfer(to, amount);
+            });
+            break;
+        case "WBTC":
+            // owner()
+            let owner = await ethers.provider.call({
+                to: wbtc,
+                data: `0x8da5cb5b`,
+            });
+            owner = `0x${owner.substring(2 + 12 * 2)}`;
+            await withSigner(owner, async (s) => {
+                // function mint(address,uint256)
+                const tx = {
+                    to: wbtc,
+                    from: owner,
+                    data: `0x40c10f19${ethers.utils
+                        .hexZeroPad(to, 32)
+                        .substring(2)}${ethers.utils
+                        .hexZeroPad(BigNumber.from(amount).toHexString(), 32)
+                        .substring(2)}`,
+                    gasLimit: BigNumber.from(10 ** 6),
+                };
+
+                const resp = await s.sendTransaction(tx);
+                await resp.wait();
+            });
+            break;
+
+        default:
+            throw `Unknown token: ${token}`;
+    }
 };
