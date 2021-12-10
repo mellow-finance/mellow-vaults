@@ -1,11 +1,37 @@
 import { Contract, Signer } from "ethers";
-import { network, ethers, getNamedAccounts } from "hardhat";
+import { network, ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { filter, fromPairs, keys, KeyValuePair, map, pipe } from "ramda";
+import {
+    equals,
+    filter,
+    fromPairs,
+    keys,
+    KeyValuePair,
+    map,
+    pipe,
+    prop,
+} from "ramda";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomBytes } from "crypto";
 import { ProtocolGovernance, ERC20 } from "./Types";
 import { Address } from "hardhat-deploy/dist/types";
+import {
+    IVault,
+    IVaultGovernance,
+    UniV3VaultGovernance,
+    GatewayVaultGovernance,
+    VaultRegistry,
+} from "../types";
+import {
+    DelayedStrategyParamsStruct as GatewayDelayedStrategyParamsStruct,
+    StrategyParamsStruct as GatewayStrategyParamsStruct,
+} from "../types/GatewayVaultGovernance";
+import {
+    DelayedProtocolPerVaultParamsStruct as LpIssuerDelayedProtocolPerVaultParamsStruct,
+    DelayedStrategyParamsStruct as LpIssuerDelayedStrategyParamsStruct,
+    StrategyParamsStruct as LpIssuerStrategyParamsStruct,
+    LpIssuerGovernance,
+} from "../types/LpIssuerGovernance";
 
 export const randomAddress = () => {
     const id = randomBytes(32).toString("hex");
@@ -137,4 +163,93 @@ export const withSigner = async (
     const signer = await addSigner(address);
     await f(signer);
     await removeSigner(address);
+};
+
+export type VaultParams =
+    | { name: "AaveVault" }
+    | { name: "YearnVault" }
+    | { name: "ERC20Vault" }
+    | { name: "UniV3Vault"; fee: BigNumberish }
+    | {
+          name: "GatewayVault";
+          subvaultNfts: BigNumberish[];
+          strategyParams: GatewayStrategyParamsStruct;
+          delayedStrategyParams: GatewayDelayedStrategyParamsStruct;
+      }
+    | {
+          name: "LpIssuer";
+          tokenName: string;
+          tokenSymbol: string;
+          strategyParams: LpIssuerStrategyParamsStruct;
+          delayedStrategyParams: LpIssuerDelayedStrategyParamsStruct;
+          delayedProtocolPerVaultParams: LpIssuerDelayedProtocolPerVaultParamsStruct;
+      };
+export type BaseDeployParams = {
+    vaultTokens: string[];
+    nftOwner: string;
+};
+
+export const deployVault = async (
+    params: VaultParams & BaseDeployParams
+): Promise<{ nft: number; address: string }> => {
+    const governance: IVaultGovernance = await ethers.getContract(
+        `${params.name}Governance`
+    );
+    const coder = ethers.utils.defaultAbiCoder;
+    let options;
+    switch (params.name) {
+        case "UniV3Vault":
+            options = coder.encode(["uint256"], [params.fee]);
+            break;
+        case "GatewayVault":
+            options = coder.encode(["uint256[]"], [params.subvaultNfts]);
+            break;
+        case "LpIssuer":
+            options = coder.encode(
+                ["string", "string"],
+                [params.tokenName, params.tokenSymbol]
+            );
+
+        default:
+            options = [];
+            break;
+    }
+    await governance.deployVault(params.vaultTokens, options, params.nftOwner);
+    const vaultRegistry: VaultRegistry = await ethers.getContract(
+        "VaultRegistry"
+    );
+    const nft = (await vaultRegistry.vaultsCount()).toNumber();
+    const address = await vaultRegistry.vaultForNft(nft);
+    switch (params.name) {
+        case "LpIssuer":
+            const gov: LpIssuerGovernance = await ethers.getContract(
+                "LpIssuerGovernance"
+            );
+            await gov.setStrategyParams(nft, params.strategyParams);
+            await gov.stageDelayedStrategyParams(
+                nft,
+                params.delayedStrategyParams
+            );
+            await gov.commitDelayedStrategyParams(nft);
+            await gov.stageDelayedProtocolPerVaultParams(
+                nft,
+                params.delayedProtocolPerVaultParams
+            );
+            await gov.commitDelayedProtocolPerVaultParams(nft);
+            break;
+        case "GatewayVault":
+            const ggov: GatewayVaultGovernance = await ethers.getContract(
+                "GatewayVaultGovernance"
+            );
+            await ggov.setStrategyParams(nft, params.strategyParams);
+            await ggov.stageDelayedStrategyParams(
+                nft,
+                params.delayedStrategyParams
+            );
+            await ggov.commitDelayedStrategyParams(nft);
+            break;
+        default:
+            break;
+    }
+    return { nft, address };
 };
