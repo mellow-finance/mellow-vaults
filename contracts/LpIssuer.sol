@@ -258,15 +258,18 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
 
         ILpIssuerGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         if (strategyParams.managementFee > 0) {
-            uint256 toMint = (strategyParams.managementFee * baseSupply * elapsed) /
-                (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            uint256 toMint = FullMath.mulDiv(
+                strategyParams.managementFee * elapsed,
+                baseSupply,
+                CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
+            );
             _mint(strategyParams.strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyParams.strategyTreasury, strategyParams.managementFee, toMint);
         }
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         if (protocolFee > 0) {
             address treasury = vg.internalParams().protocolGovernance.protocolTreasury();
-            uint256 toMint = (protocolFee * baseSupply * elapsed) / (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            uint256 toMint = FullMath.mulDiv(protocolFee * elapsed, baseSupply, CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
             _mint(treasury, toMint);
             emit ProtocolFeesCharged(treasury, protocolFee, toMint);
         }
@@ -288,14 +291,15 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
                 }
             }
             for (uint256 i = 0; i < tvlsLength; ++i)
-                _lpPriceHighWaterMarks[i] += (hwms[i] * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
+                _lpPriceHighWaterMarks[i] += FullMath.mulDiv(hwms[i], minLpPriceFactor, CommonLibrary.DENOMINATOR);
 
             address treasury = strategyParams.strategyPerformanceTreasury;
-            uint256 toMint = (
-                baseSupply * (minLpPriceFactor - CommonLibrary.DENOMINATOR) 
-                * performanceFee  
-                / CommonLibrary.DENOMINATOR
-            ) / CommonLibrary.DENOMINATOR;
+            uint256 toMint = FullMath.mulDiv(
+                baseSupply, 
+                (minLpPriceFactor - CommonLibrary.DENOMINATOR), 
+                CommonLibrary.DENOMINATOR
+            );
+            toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
@@ -349,7 +353,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
             return 0;
         }
         // normalize amount
-        uint256 res = (tvl * balanceFactor) / CommonLibrary.PRICE_DENOMINATOR;
+        uint256 res = FullMath.mulDiv(tvl, balanceFactor, CommonLibrary.PRICE_DENOMINATOR);
         if (res > amount) {
             res = amount;
         }
