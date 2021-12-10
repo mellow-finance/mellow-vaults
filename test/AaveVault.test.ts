@@ -8,6 +8,7 @@ import {
     depositWBTC,
     sleep,
     randomAddress,
+    deployVault,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 import {
@@ -21,50 +22,48 @@ import { CONTRACTS } from "../plugins/contracts/constants";
 
 describe("AaveVault", () => {
     let aaveVaultNft: number;
-    let gatewayVaultNft: number;
-    let deploymentFixture: Function;
     let aaveVault: string;
-    let erc20Vault: string;
+    let gatewayVaultNft: number;
     let gatewayVault: string;
+    let erc20Vault: string;
+    let erc20VaultNft: number;
     let tokens: string[];
     let aaveVaultContract: AaveVault;
+    let deploymentFixture: Function;
 
     before(async () => {
         deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
             const { deployer, weth, usdc } = await getNamedAccounts();
             tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
-            const vaultRegistry: VaultRegistry = await ethers.getContract(
-                "VaultRegistry"
-            );
-
-            const aaveVaultGovernance: AaveVaultGovernance =
-                await ethers.getContract("AaveVaultGovernance");
-            await aaveVaultGovernance.deployVault(tokens, [], deployer);
-            aaveVaultNft = (await vaultRegistry.vaultsCount()).toNumber();
-            aaveVault = await vaultRegistry.vaultForNft(aaveVaultNft);
+            ({ nft: aaveVaultNft, address: aaveVault } = await deployVault({
+                name: "AaveVault",
+                vaultTokens: tokens,
+                nftOwner: deployer,
+            }));
             aaveVaultContract = await ethers.getContractAt(
                 "AaveVault",
                 aaveVault
             );
-            const erc20VaultGovernance: ERC20VaultGovernance =
-                await ethers.getContract("ERC20VaultGovernance");
-            await erc20VaultGovernance.deployVault(tokens, [], deployer);
-            const erc20VaultNft = (
-                await vaultRegistry.vaultsCount()
-            ).toNumber();
-            erc20Vault = await vaultRegistry.vaultForNft(erc20VaultNft);
-
-            const coder = ethers.utils.defaultAbiCoder;
-            const gatewayVaultGovernance: GatewayVaultGovernance =
-                await ethers.getContract("GatewayVaultGovernance");
-            await gatewayVaultGovernance.deployVault(
-                tokens,
-                coder.encode(["uint256[]"], [[aaveVaultNft, erc20VaultNft]]),
-                deployer
-            );
-            gatewayVaultNft = (await vaultRegistry.vaultsCount()).toNumber();
-            gatewayVault = await vaultRegistry.vaultForNft(gatewayVaultNft);
+            ({ nft: erc20VaultNft, address: erc20Vault } = await deployVault({
+                name: "ERC20Vault",
+                vaultTokens: tokens,
+                nftOwner: deployer,
+            }));
+            ({ nft: gatewayVaultNft, address: gatewayVault } =
+                await deployVault({
+                    name: "GatewayVault",
+                    subvaultNfts: [aaveVaultNft, erc20VaultNft],
+                    strategyParams: {
+                        limits: [
+                            ethers.constants.MaxUint256,
+                            ethers.constants.MaxUint256,
+                        ],
+                    },
+                    delayedStrategyParams: { redirects: [] },
+                    vaultTokens: tokens,
+                    nftOwner: deployer,
+                }));
         });
     });
 
