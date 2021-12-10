@@ -222,6 +222,7 @@ contract MStrategy is DefaultAccessControl {
         address token1 = immutableParams_.token1;
         require(immutableParams_.uniV3Pool.token0() == token0, "T0");
         require(immutableParams_.uniV3Pool.token1() == token1, "T1");
+        require(paramsIndex[token0][token1] == 0, "EXST");
         IVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
         for (uint256 i = 0; i < vaults.length; i++) {
             IVault vault = vaults[i];
@@ -229,8 +230,8 @@ contract MStrategy is DefaultAccessControl {
             require(tokens[0] == token0, "VT0");
             require(tokens[1] == token1, "VT1");
         }
-        uint256 num = vaultParams.length;
         vaultParams.push(params_);
+        uint256 num = vaultParams.length;
         vaultImmutableParams.push(immutableParams_);
         paramsIndex[token0][token1] = num;
         paramsIndex[token1][token0] = num;
