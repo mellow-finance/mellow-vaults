@@ -119,18 +119,12 @@ contract MStrategy is DefaultAccessControl {
                 moneyAmounts[i] = amountIn;
             }
         }
-        if (zeroForOnes[0] && zeroForOnes[1]) {
+        if (zeroForOnes[0] || zeroForOnes[1]) {
             if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
                 erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
             }
-        } else if (!zeroForOnes[0] && !zeroForOnes[1]) {
-            if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
-                moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
-            }
-        } else {
-            if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
-                erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
-            }
+        }
+        if (!zeroForOnes[0] || !zeroForOnes[1]) {
             if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
                 moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
             }
