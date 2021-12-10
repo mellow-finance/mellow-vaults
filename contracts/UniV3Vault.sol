@@ -96,6 +96,8 @@ contract UniV3Vault is IERC721Receiver, Vault {
         emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
     }
 
+    function updateTvls() external override {}
+
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultTokens.length);
@@ -106,7 +108,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
             int24 tickLower, 
             int24 tickUpper, 
             uint128 liquidity,
-            , , ,
+            , ,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
         ) = _positionManager().positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
@@ -117,8 +121,8 @@ contract UniV3Vault is IERC721Receiver, Vault {
             sqrtPriceBX96,
             liquidity
         );
-        tokenAmounts[0] = amount0;
-        tokenAmounts[1] = amount1;
+        tokenAmounts[0] = amount0 + uint256(tokensOwed0);
+        tokenAmounts[1] = amount1 + uint256(tokensOwed1);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

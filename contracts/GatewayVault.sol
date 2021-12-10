@@ -113,6 +113,15 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
         return this.onERC721Received.selector;
     }
 
+    function updateTvls() external override (IVault, Vault) {
+        uint256 subvaultNftsLength = _subvaultNfts.length;
+        for (uint256 i = 0; i < subvaultNftsLength; ++i) {
+            IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+            IVault vault = IVault(registry.vaultForNft(_subvaultNfts[i]));
+            vault.updateTvls();
+        }
+    }
+
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
         return (
             interfaceId == this.supportsInterface.selector ||

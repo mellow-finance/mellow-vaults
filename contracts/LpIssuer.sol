@@ -6,11 +6,12 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./libraries/external/FullMath.sol";
 import "./libraries/CommonLibrary.sol";
+import "./libraries/ExceptionsLibrary.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./LpIssuerGovernance.sol";
-import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 {
@@ -89,13 +90,16 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         require(registry.ownerOf(thisNft) == address(this), ExceptionsLibrary.INITIALIZE_OWNER);
         IVault subvault = _subvault();
         uint256[] memory existentials_ = _existentials;
-        uint256[] memory tvl = subvault.tvl(); //pre-money
         uint256 supply = totalSupply();
         uint256 balanceFactor = CommonLibrary.PRICE_DENOMINATOR;
-        if (supply > 0) {
+        // update subvault tvls
+        subvault.updateTvls();
+        // get current tvl to calculate the proportion
+        uint256[] memory tvl = subvault.tvl();
+    
+        if (supply != 0)
             // This is lpTokens if total supply == CommonLibrary.PRICE_DENOMINATOR
             balanceFactor = _getLpAmount(tvl, tokenAmounts, existentials_, CommonLibrary.PRICE_DENOMINATOR);
-        }
 
         // If with that big supply we don't reveive any lps then it doesn't make sense to continue
         require(balanceFactor != 0, ExceptionsLibrary.BALANCE_FACTOR_ZERO);
@@ -116,6 +120,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
             balancedAmounts,
             options
         );
+
+        // get updated tvl to calculate new lp amount including the new deposit
+        tvl = subvault.tvl();
         uint256 amountToMint = _getLpAmount(tvl, actualTokenAmounts, existentials_, supply);
 
         require(amountToMint != 0, ExceptionsLibrary.ZERO_LP_TOKENS);
@@ -284,7 +291,11 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
                 _lpPriceHighWaterMarks[i] += (hwms[i] * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
 
             address treasury = strategyParams.strategyPerformanceTreasury;
-            uint256 toMint = (baseSupply * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
+            uint256 toMint = (
+                baseSupply * (minLpPriceFactor - CommonLibrary.DENOMINATOR) 
+                * performanceFee  
+                / CommonLibrary.DENOMINATOR
+            ) / CommonLibrary.DENOMINATOR;
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }

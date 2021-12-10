@@ -19,6 +19,8 @@ contract VaultTest is Vault {
         return res;
     }
 
+    function updateTvls() external override {}
+
     function _push(uint256[] memory, bytes memory) internal view override returns (uint256[] memory) {
         // no-op, tokens are already on balance
         return res;

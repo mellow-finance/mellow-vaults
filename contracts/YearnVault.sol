@@ -44,6 +44,8 @@ contract YearnVault is Vault {
         return _yTokens;
     }
 
+    function updateTvls() external override {}
+
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -78,25 +80,23 @@ contract YearnVault is Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        actualTokenAmounts = new uint256[](tokenAmounts.length);
         uint256 maxLoss = abi.decode(options, (uint256));
         for (uint256 i = 0; i < _yTokens.length; ++i) {
-            if (tokenAmounts[i] == 0) {
+            if (tokenAmounts[i] == 0)
                 continue;
-            }
 
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
-            if (yTokenAmount > balance) {
+            if (yTokenAmount > balance)
                 yTokenAmount = balance;
-            }
-            if (yTokenAmount == 0) {
+
+            if (yTokenAmount == 0)
                 continue;
-            }
-            yToken.withdraw(yTokenAmount, to, maxLoss);
-            (tokenAmounts[i], address(this));
+
+            actualTokenAmounts[i] = yToken.withdraw(yTokenAmount, to, maxLoss);
         }
-        actualTokenAmounts = tokenAmounts;
     }
 
     function _allowTokenIfNecessary(address token, address yToken) internal {

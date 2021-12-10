@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
+import "./interfaces/IVault.sol";
 import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
@@ -48,7 +49,11 @@ contract AaveVault is Vault {
     }
 
     /// @notice Update all tvls to current aToken balances.
-    function updateTvls() public {
+    function updateTvls() external override {
+        _updateTvls();
+    }
+
+    function _updateTvls() internal {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i)
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
@@ -73,7 +78,7 @@ contract AaveVault is Vault {
             _allowTokenIfNecessary(token);
             _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
         }
-        updateTvls();
+        _updateTvls();
         actualTokenAmounts = tokenAmounts;
     }
 
@@ -89,7 +94,7 @@ contract AaveVault is Vault {
             }
             _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
         }
-        updateTvls();
+        _updateTvls();
         actualTokenAmounts = tokenAmounts;
     }
 
