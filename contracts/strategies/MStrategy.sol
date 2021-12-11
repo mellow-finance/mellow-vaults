@@ -34,11 +34,14 @@ contract MStrategy is DefaultAccessControl {
     ImmutableParams[] public vaultImmutableParams;
     mapping(address => mapping(address => uint256)) public vaultIndex;
     mapping(uint256 => bool) public disabled;
-    uint256 public vaultCount;
 
     constructor(address owner) DefaultAccessControl(owner) {}
 
     mapping(address => mapping(address => uint256)) public paramsIndex;
+
+    function vaultCount() public view returns (uint256) {
+        return vaultImmutableParams.length;
+    }
 
     function shouldRebalance(uint256 id) external view returns (bool) {
         Params storage params = vaultParams[id];
@@ -70,7 +73,7 @@ contract MStrategy is DefaultAccessControl {
     }
 
     function rebalance(uint256 id) external {
-        require(id < vaultCount, "VE");
+        require(id < vaultCount(), "VE");
         require(!disabled[id], "DIS");
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
@@ -217,6 +220,9 @@ contract MStrategy is DefaultAccessControl {
         require(immutableParams_.uniV3Pool.token0() == token0, "T0");
         require(immutableParams_.uniV3Pool.token1() == token1, "T1");
         require(paramsIndex[token0][token1] == 0, "EXST");
+        if (vaultImmutableParams.length > 0) {
+            require(vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault, "EXST");
+        }
         IVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
         for (uint256 i = 0; i < vaults.length; i++) {
             IVault vault = vaults[i];
@@ -224,25 +230,24 @@ contract MStrategy is DefaultAccessControl {
             require(tokens[0] == token0, "VT0");
             require(tokens[1] == token1, "VT1");
         }
-        vaultParams.push(params_);
         uint256 num = vaultParams.length;
+        vaultParams.push(params_);
         vaultImmutableParams.push(immutableParams_);
         paramsIndex[token0][token1] = num;
         paramsIndex[token1][token0] = num;
-        vaultCount += 1;
         emit VaultAdded(tx.origin, msg.sender, num, immutableParams_, params_);
     }
 
     function disableVault(uint256 id, bool disabled_) external {
         require(isAdmin(msg.sender), "ADM");
-        require(id < vaultCount, "VE");
+        require(id < vaultCount(), "VE");
         disabled[id] = disabled_;
         emit VaultDisabled(tx.origin, msg.sender, id, disabled_);
     }
 
     function updateVaultParams(uint256 id, Params memory params) external {
         require(isAdmin(msg.sender), "ADM");
-        require(id < vaultCount, "VE");
+        require(id < vaultCount(), "VE");
         require(!disabled[id], "DIS");
         vaultParams[id] = params;
         emit VaultParamsUpdated(tx.origin, msg.sender, id, params);

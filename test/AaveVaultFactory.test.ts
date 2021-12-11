@@ -65,7 +65,11 @@ describe("AaveVaultFactory", () => {
     describe("deployVault", () => {
         describe("when called by stranger", () => {
             it("reverts", async () => {
-                await setTokenWhitelist(protocolGovernance, tokens, admin);
+                await setTokenWhitelist(
+                    protocolGovernance,
+                    tokens as any,
+                    admin
+                );
                 await expect(
                     vaultFactory.connect(stranger).deployVault(
                         tokens.map((token) => token.address),

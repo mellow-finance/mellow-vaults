@@ -14,7 +14,7 @@ describe("MStrategy", () => {
     let vaultId: number;
 
     before(async () => {
-        vaultId = 1;
+        vaultId = 0;
         deploymentFixture = await deployments.createFixture(async () => {
             await deployments.fixture();
 
@@ -62,6 +62,18 @@ describe("MStrategy", () => {
 
     describe("shouldRebalance", () => {
         it("checks if the tokens needs to be rebalanced", async () => {
+            const [d, a, b] = await ethers.getSigners();
+            console.log(
+                "+++",
+                await mStrategy.connect(b).vaultCount(),
+                mStrategy.address,
+                await deployments.read(
+                    "MStrategy",
+                    // { to: mStrategy.address },
+                    "vaultCount"
+                )
+            );
+
             expect(await mStrategy.shouldRebalance(vaultId)).to.be.true;
         });
     });

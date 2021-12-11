@@ -3,7 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { setupVault, toObject } from "./000_utils";
-import { BigNumber } from "ethers";
+import { BigNumber, ethers } from "ethers";
 import { map } from "ramda";
 
 const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
@@ -19,6 +19,13 @@ const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
         uniswapV3PositionManager,
     } = await getNamedAccounts();
 
+    const mStrategyDeployment = await deploy("MStrategy", {
+        from: deployer,
+        args: [deployer],
+        log: true,
+        autoMine: true,
+        proxy: true,
+    });
     const proxyAdminDeployment = await deploy("MStrategyProxyAdmin", {
         from: deployer,
         contract: "DefaultProxyAdmin",
@@ -36,24 +43,18 @@ const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
         "transferOwnership",
         mStrategyAdmin
     );
-    const mStrategyDeployment = await deploy("MStrategy", {
-        from: deployer,
-        args: [mStrategyAdmin],
-        log: true,
-        autoMine: true,
-    });
-    const proxyDeployment = await deploy("MStrategyProxy", {
-        from: deployer,
-        contract: "DefaultProxy",
-        args: [mStrategyDeployment.address, proxyAdminDeployment.address, []],
-        log: true,
-        autoMine: true,
-    });
+
+    // const proxyDeployment = await deploy("MStrategyProxy", {
+    //     from: deployer,
+    //     contract: "DefaultProxy",
+    //     args: [mStrategyDeployment.address, proxyAdminDeployment.address, []],
+    //     log: true,
+    //     autoMine: true,
+    // });
 };
 
 const setupStrategy = async (
     hre: HardhatRuntimeEnvironment,
-    mStrategy: string,
     erc20Vault: string,
     moneyVault: string
 ) => {
@@ -64,12 +65,7 @@ const setupStrategy = async (
         await getNamedAccounts();
 
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
-    const proxy = await get("MStrategyProxy");
-    const vaultCount = await read(
-        "MStrategy",
-        { to: proxy.address },
-        "vaultCount"
-    );
+    const vaultCount = await read("MStrategy", "vaultCount");
     if (vaultCount.toNumber() === 0) {
         log("Setting Strategy params");
         const uniFactory = await hre.ethers.getContractAt(
@@ -110,14 +106,12 @@ const setupStrategy = async (
             `Params:`,
             map((x) => x.toString(), params)
         );
-
         await execute(
             "MStrategy",
             {
                 from: deployer,
                 log: true,
                 autoMine: true,
-                to: mStrategy,
             },
             "addVault",
             immutableParams,
@@ -191,7 +185,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         );
     }
 
-    const strategy = await get("MStrategyProxy");
+    const strategy = await get("MStrategy");
 
     await setupVault(hre, gatewayVaultNft, startNft, "GatewayVaultGovernance", {
         deployOptions: [
@@ -250,8 +244,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "vaultForNft",
         yearnVaultNft
     );
-    const mStrategy = await get("MStrategyProxy");
-    await setupStrategy(hre, mStrategy.address, erc20Vault, moneyVault);
+    await setupStrategy(hre, erc20Vault, moneyVault);
 };
 
 export default func;
