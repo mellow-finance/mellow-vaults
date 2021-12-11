@@ -12,13 +12,14 @@ const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const {
         deployer,
         mStrategyAdmin,
+        mStrategyProxyAdmin,
         weth,
         usdc,
         uniswapV3Router,
         uniswapV3PositionManager,
     } = await getNamedAccounts();
 
-    await deploy("MStrategyProxyAdmin", {
+    const proxyAdminDeployment = await deploy("MStrategyProxyAdmin", {
         from: deployer,
         contract: "DefaultProxyAdmin",
         args: [],
@@ -44,7 +45,7 @@ const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const proxyDeployment = await deploy("MStrategyProxy", {
         from: deployer,
         contract: "DefaultProxy",
-        args: [mStrategyDeployment.address, mStrategyAdmin, []],
+        args: [mStrategyDeployment.address, proxyAdminDeployment.address, []],
         log: true,
         autoMine: true,
     });
@@ -70,7 +71,7 @@ const setupStrategy = async (
         "vaultCount"
     );
     if (vaultCount.toNumber() === 0) {
-        console.log("Setting Stragy params");
+        log("Setting Strategy params");
         const uniFactory = await hre.ethers.getContractAt(
             "IUniswapV3Factory",
             uniswapV3Factory
