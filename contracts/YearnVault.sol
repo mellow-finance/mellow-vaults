@@ -79,7 +79,7 @@ contract YearnVault is Vault {
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
-        uint256 maxLoss = options.length > 0 ? abi.decode(options, (uint256)) : 1;
+        uint256 maxLoss = options.length > 0 ? abi.decode(options, (uint256)) : 10000;  // 10000%%
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0)
                 continue;
