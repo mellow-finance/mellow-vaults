@@ -85,7 +85,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl = erc20Vault.tvl();
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
-        _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, params);
+        _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, moneyVault, params);
         erc20Tvl = erc20Vault.tvl();
         moneyTvl = immutableParams.moneyVault.tvl();
         console.log("erc20Tvl0", erc20Tvl[0]);
@@ -172,6 +172,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl,
         IUniswapV3Pool pool,
         IERC20Vault erc20Vault,
+        IVault moneyVault,
         Params storage params
     ) internal {
         (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
@@ -206,11 +207,32 @@ contract MStrategy is DefaultAccessControlLateInit {
         // If not enough tokens on ERC-20 balance
         if (zeroForOne) {
             if (amountIn > erc20Tvl[0]) {
-                amountIn = erc20Tvl[0];
+                address[] memory tokens = new address[](2);
+                tokens[0] = pool.token0();
+                tokens[1] = pool.token1();
+                uint256[] memory amounts = new uint256[](2);
+                amounts[0] = amountIn - erc20Tvl[0];
+                uint256[] memory actualAmounts = moneyVault.pull(address(erc20Vault), tokens, amounts, "");
+                uint256 newTvl = actualAmounts[0] + erc20Tvl[0];
+                // cut just in case
+                if (amountIn > newTvl) {
+                    amountIn = newTvl;
+                }
             }
         } else {
             if (amountIn > erc20Tvl[1]) {
-                amountIn = erc20Tvl[1];
+                address[] memory tokens = new address[](2);
+                tokens[0] = pool.token0();
+                tokens[1] = pool.token1();
+
+                uint256[] memory amounts = new uint256[](2);
+                amounts[1] = amountIn - erc20Tvl[1];
+                uint256[] memory actualAmounts = moneyVault.pull(address(erc20Vault), tokens, amounts, "");
+                uint256 newTvl = actualAmounts[1] + erc20Tvl[1];
+                // cut just in case
+                if (amountIn > newTvl) {
+                    amountIn = newTvl;
+                }
             }
         }
         ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
