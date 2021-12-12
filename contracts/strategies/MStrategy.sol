@@ -86,6 +86,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
         _rebalanceTokens(tvl, pool, erc20Vault, params);
+        erc20Tvl = erc20Vault.tvl();
+        moneyTvl = immutableParams.moneyVault.tvl();
         _rebalancePools(
             erc20Tvl,
             moneyTvl,
@@ -111,24 +113,24 @@ contract MStrategy is DefaultAccessControlLateInit {
         bool[] memory zeroForOnes = new bool[](2);
         for (uint256 i = 0; i < 2; i++) {
             (uint256 amountIn, bool zeroForOne) = _calcRebalancePoolAmount(
-                erc20Tvl[i],
                 moneyTvl[i],
+                erc20Tvl[i],
                 liquidToFixedRatioX96,
                 poolRebalanceThresholdX96
             );
             zeroForOnes[i] = zeroForOne;
-            if (zeroForOne) {
+            if (!zeroForOne) {
                 erc20Amounts[i] = amountIn;
             } else {
                 moneyAmounts[i] = amountIn;
             }
         }
-        if (zeroForOnes[0] || zeroForOnes[1]) {
+        if (!zeroForOnes[0] || !zeroForOnes[1]) {
             if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
                 erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
             }
         }
-        if (!zeroForOnes[0] || !zeroForOnes[1]) {
+        if (zeroForOnes[0] || zeroForOnes[1]) {
             if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
                 moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
             }
@@ -140,7 +142,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256 tvl1,
         uint256 liquidToFixedRatioX96,
         uint256 poolRebalanceThresholdX96
-    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
+    ) internal view returns (uint256 amountIn, bool zeroForOne) {
         uint256 currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
         uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
         if (deviation > poolRebalanceThresholdX96) {
