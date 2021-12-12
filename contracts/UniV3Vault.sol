@@ -96,8 +96,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
         emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
     }
 
-    function updateTvls() external override {}
-
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultTokens.length);

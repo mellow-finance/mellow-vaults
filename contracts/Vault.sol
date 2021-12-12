@@ -65,8 +65,6 @@ abstract contract Vault is IVault, ReentrancyGuard {
         return _nft;
     }
 
-    function updateTvls() external virtual;
-
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory tokenAmounts);
 

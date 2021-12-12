@@ -59,7 +59,7 @@ describe("LpIssuer", () => {
         await sleepTo(startTimestamp);
     });
 
-    describe("::constructor", () => {
+    describe("#constructor", () => {
         it("passes", async () => {
             expect(
                 await deployer.provider?.getCode(LpIssuer.address)
@@ -83,7 +83,7 @@ describe("LpIssuer", () => {
         });
     });
 
-    describe("::addSubvault", () => {
+    describe("#addSubvault", () => {
         describe("when called not by VaultGovernance", () => {
             it("reverts", async () => {
                 await expect(
@@ -95,7 +95,7 @@ describe("LpIssuer", () => {
         });
     });
 
-    describe("::vaultGovernance", () => {
+    describe("#vaultGovernance", () => {
         it("returns correct VaultGovernance", async () => {
             expect(await LpIssuer.vaultGovernance()).to.equal(
                 LpIssuerGovernance.address
@@ -103,7 +103,7 @@ describe("LpIssuer", () => {
         });
     });
 
-    describe("::vaultTokens", () => {
+    describe("#vaultTokens", () => {
         it("returns correct vaultTokens", async () => {
             expect(await LpIssuer.vaultTokens()).to.deep.equal(
                 tokens.map((token) => token.address)
@@ -111,13 +111,13 @@ describe("LpIssuer", () => {
         });
     });
 
-    describe("::subvaultNft", () => {
+    describe("#subvaultNft", () => {
         it("returns correct subvaultNft", async () => {
             expect(await LpIssuer.subvaultNft()).to.equal(gatewayNft);
         });
     });
 
-    describe("::deposit", () => {
+    describe("#deposit", () => {
         beforeEach(async () => {
             for (let i: number = 0; i < tokens.length; i++) {
                 await tokens[i].approve(
@@ -127,8 +127,8 @@ describe("LpIssuer", () => {
             }
         });
 
-        xit("charges management, protocol fees and performance fees", async () => {
-            const { execute, read, get } = deployments;
+        it("charges management, protocol fees and performance fees", async () => {
+            const { execute, read } = deployments;
             const { test, mStrategyTreasury, protocolTreasury, admin } =
                 await getNamedAccounts();
             const nft = 4; // LpIssuer nft in initial deployment
@@ -196,7 +196,7 @@ describe("LpIssuer", () => {
                 for (const token of tokens) {
                     const c = await ethers.getContractAt("LpIssuer", token);
                     const decimals = await c.decimals();
-                    deposits.push(10 ** (decimals / 2 + 1));
+                    deposits.push(BigNumber.from(10).pow(decimals / 2 + 1));
                 }
 
                 await lpIssuer.connect(s).deposit(deposits, []);
@@ -212,7 +212,7 @@ describe("LpIssuer", () => {
                 // charge pre-deposit
                 const balance = await lpIssuer.balanceOf(test);
                 await lpIssuer.connect(s).deposit(
-                    deposits.map((x) => x / 5),
+                    deposits.map((x) => x.div(5)),
                     []
                 );
                 let expected = (
@@ -239,7 +239,7 @@ describe("LpIssuer", () => {
                 expect(Math.abs(diff) / expected).to.lte(0.001);
                 expect(
                     await lpIssuer.balanceOf(strategyPerformanceTreasury)
-                ).to.eq(0);
+                ).to.eq(139879999800);
 
                 const erc20VaultNft = 3;
                 const address = await read(
@@ -254,11 +254,11 @@ describe("LpIssuer", () => {
                     );
                     await contract
                         .connect(s)
-                        .transfer(address, deposits[i] / 10);
+                        .transfer(address, deposits[i].div(10));
                 }
                 await sleep(86401);
                 await lpIssuer.connect(s).deposit(
-                    deposits.map((x) => x / 8),
+                    deposits.map((x) => x.div(8)),
                     []
                 );
 
@@ -302,7 +302,7 @@ describe("LpIssuer", () => {
         });
     });
 
-    describe("::withdraw", () => {
+    describe("#withdraw", () => {
         beforeEach(async () => {
             for (let i: number = 0; i < tokens.length; i++) {
                 await tokens[i].approve(
@@ -312,7 +312,7 @@ describe("LpIssuer", () => {
             }
         });
 
-        xit("charges management, protocol fees and performance fees", async () => {
+        it("charges management, protocol fees and performance fees", async () => {
             const { execute, read, get } = deployments;
             const { test, mStrategyTreasury, protocolTreasury, admin } =
                 await getNamedAccounts();
@@ -405,7 +405,7 @@ describe("LpIssuer", () => {
 
                 expect(
                     await lpIssuer.balanceOf(strategyPerformanceTreasury)
-                ).to.eq(0);
+                ).to.eq(60);
 
                 const erc20VaultNft = 3;
                 const address = await read(
@@ -462,13 +462,13 @@ describe("LpIssuer", () => {
         });
     });
 
-    describe("::nft", () => {
+    describe("#nft", () => {
         it("returns correct nft", async () => {
             expect(await LpIssuer.nft()).to.equal(lpIssuerNft);
         });
     });
 
-    describe("::initialize", () => {
+    describe("#initialize", () => {
         describe("when sender is not VaultGovernance", () => {
             it("reverts", async () => {
                 await expect(

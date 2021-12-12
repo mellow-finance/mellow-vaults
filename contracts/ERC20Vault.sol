@@ -30,8 +30,6 @@ contract ERC20Vault is Vault, ITrader {
             tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
     }
 
-    function updateTvls() external override {}
-
     /// @inheritdoc ITrader
     function swapExactInput(
         uint256 traderId,

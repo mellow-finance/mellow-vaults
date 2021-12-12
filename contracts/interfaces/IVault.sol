@@ -93,6 +93,4 @@ interface IVault {
     function claimRewards(address from, bytes memory data) external;
 
     function isVaultToken(address token) external view returns (bool);
-
-    function updateTvls() external;
 }
