@@ -53,7 +53,7 @@ describe("ChiefTrader", () => {
     });
 
     describe("#traders", () => {
-        xit("returns correct initial registered traders", async () => {
+        it("returns correct initial registered traders", async () => {
             expect(await chiefTrader.traders()).to.deep.equal([
                 uniV3Trader.address,
             ]);
@@ -61,8 +61,28 @@ describe("ChiefTrader", () => {
     });
 
     describe("#tradersCount", () => {
-        xit("returns correct initial traders count", async () => {
+        it("returns correct initial traders count", async () => {
             expect(await chiefTrader.tradersCount()).to.equal(1);
+        });
+    });
+
+    describe("#supportsInterface", () => {
+        it("returns `true` on chief trader interface", async () => {
+            expect(await chiefTrader.supportsInterface("0x698afc85")).to.eql(
+                true
+            );
+        });
+
+        it("returns `true` on trader interface", async () => {
+            expect(await chiefTrader.supportsInterface("0xdf1e4f02")).to.eql(
+                true
+            );
+        });
+
+        it("returns `true` on ERC165", async () => {
+            expect(await chiefTrader.supportsInterface("0x01ffc9a7")).to.eql(
+                true
+            );
         });
     });
 
@@ -104,7 +124,7 @@ describe("ChiefTrader", () => {
         });
 
         describe("happy case", () => {
-            xit("adds new trader", async () => {
+            it("adds new trader", async () => {
                 withSigner(admin, async (signer) => {
                     const { uniswapV3Router } = await getNamedAccounts();
                     let newTrader = await (
