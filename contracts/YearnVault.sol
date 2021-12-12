@@ -25,6 +25,7 @@ import "./Vault.sol";
 
 contract YearnVault is Vault {
     address[] private _yTokens;
+    uint256 public constant DEFAULT_MAX_LOSS = 10000;  // 10000%%
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
@@ -43,8 +44,6 @@ contract YearnVault is Vault {
     function yTokens() external view returns (address[] memory) {
         return _yTokens;
     }
-
-    function updateTvls() external override {}
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
@@ -81,7 +80,7 @@ contract YearnVault is Vault {
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
-        uint256 maxLoss = abi.decode(options, (uint256));
+        uint256 maxLoss = options.length > 0 ? abi.decode(options, (uint256)) : DEFAULT_MAX_LOSS;
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0)
                 continue;

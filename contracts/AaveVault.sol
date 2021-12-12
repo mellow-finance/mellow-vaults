@@ -49,7 +49,7 @@ contract AaveVault is Vault {
     }
 
     /// @notice Update all tvls to current aToken balances.
-    function updateTvls() external override {
+    function updateTvls() external {
         _updateTvls();
     }
 

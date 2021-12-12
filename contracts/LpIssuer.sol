@@ -30,8 +30,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
     /// @dev All subvault nfts must be owned by this vault before.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
-    /// @param name_ Name of the ERC-721 token
-    /// @param symbol_ Symbol of the ERC-721 token
+    /// @param name_ Name of the ERC20 token
+    /// @param symbol_ Symbol of the ERC20 token
     constructor(
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
@@ -92,8 +92,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         uint256[] memory existentials_ = _existentials;
         uint256 supply = totalSupply();
         uint256 balanceFactor = CommonLibrary.PRICE_DENOMINATOR;
-        // update subvault tvls
-        subvault.updateTvls();
+
         // get current tvl to calculate the proportion
         uint256[] memory tvl = subvault.tvl();
     
@@ -311,27 +310,24 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         uint256[] memory existentials_,
         uint256 supply
     ) internal pure returns (uint256 lpAmount) {
-        lpAmount = 0;
-        uint256 tvlsLength = 0;
+        uint256 tvlsLength = tvl.length;
         if (supply == 0) {
             // On init lpToken = max(tokenAmounts)
-            for (uint256 i = 0; i < tvl.length; ++i) {
-                if (amounts[i] > lpAmount) {
+            for (uint256 i = 0; i < tvl.length; ++i)
+                if (amounts[i] > lpAmount)
                     lpAmount = amounts[i];
-                }
-            }
+
             return lpAmount;
         }
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            if (amounts[i] <= existentials_[i]) {
+            if (amounts[i] <= existentials_[i])
                 // skip existential deposits for lp share calculation
                 continue;
-            }
+
             uint256 tokenLpAmount = (amounts[i] * supply) / tvl[i];
             // take min of meaningful tokenLp amounts
-            if ((tokenLpAmount < lpAmount) || (lpAmount == 0)) {
+            if ((tokenLpAmount < lpAmount) || (lpAmount == 0))
                 lpAmount = tokenLpAmount;
-            }
         }
     }
 
@@ -342,10 +338,10 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         uint256 balanceFactor,
         uint256 supply
     ) internal pure returns (uint256) {
-        if (supply == 0) {
+        if (supply == 0)
             // skip normalization on init
             return amount;
-        }
+
         if (amount < existential) {
             // avoid putting small amounts as it can introduce unnecessary harsh errors
             // one should provide amount > existential deposit each time tvl is not 0
@@ -354,9 +350,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         }
         // normalize amount
         uint256 res = FullMath.mulDiv(tvl, balanceFactor, CommonLibrary.PRICE_DENOMINATOR);
-        if (res > amount) {
+        if (res > amount)
             res = amount;
-        }
+
         return res;
     }
 
