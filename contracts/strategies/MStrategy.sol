@@ -55,8 +55,6 @@ contract MStrategy is DefaultAccessControlLateInit {
         for (uint256 i = 0; i < 2; i++) {
             uint256 currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
             uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, params.liquidToFixedRatioX96);
-            console.log("currentRatioX96", currentRatioX96);
-            console.log("deviation", deviation);
             if (deviation > params.poolRebalanceThresholdX96) {
                 return true;
             }
@@ -68,8 +66,6 @@ contract MStrategy is DefaultAccessControlLateInit {
             uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, sqrtPriceX96, CommonLibrary.Q96);
             uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
             uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
-            console.log("currentTokenRatioX96", currentTokenRatioX96);
-            console.log("deviation", deviation);
             if (deviation > params.tokenRebalanceThresholdX96) {
                 return true;
             }
@@ -92,6 +88,13 @@ contract MStrategy is DefaultAccessControlLateInit {
         _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, params);
         erc20Tvl = erc20Vault.tvl();
         moneyTvl = immutableParams.moneyVault.tvl();
+        console.log("erc20Tvl0", erc20Tvl[0]);
+        console.log("erc20Tvl1", erc20Tvl[1]);
+        console.log("moneyTvl0", moneyTvl[0]);
+        console.log("moneyTvl1", moneyTvl[1]);
+        console.log("tvl0", erc20Tvl[0] + moneyTvl[0]);
+        console.log("tvl1", erc20Tvl[1] + moneyTvl[1]);
+
         _rebalancePools(
             erc20Tvl,
             moneyTvl,
@@ -112,8 +115,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         IVault erc20Vault,
         IVault moneyVault
     ) internal {
-        uint256[] memory erc20Amounts = new uint256[](2);
-        uint256[] memory moneyAmounts = new uint256[](2);
+        uint256[] memory erc20PullAmounts = new uint256[](2);
+        uint256[] memory moneyPullAmounts = new uint256[](2);
         bool[] memory zeroForOnes = new bool[](2);
         for (uint256 i = 0; i < 2; i++) {
             (uint256 amountIn, bool zeroForOne) = _calcRebalancePoolAmount(
@@ -123,20 +126,24 @@ contract MStrategy is DefaultAccessControlLateInit {
                 poolRebalanceThresholdX96
             );
             zeroForOnes[i] = zeroForOne;
-            if (!zeroForOne) {
-                erc20Amounts[i] = amountIn;
+            if (zeroForOne) {
+                moneyPullAmounts[i] = amountIn;
             } else {
-                moneyAmounts[i] = amountIn;
+                erc20PullAmounts[i] = amountIn;
             }
         }
+        console.log("erc20PullAmounts[0]", erc20PullAmounts[0]);
+        console.log("erc20PullAmounts[1]", erc20PullAmounts[1]);
+        console.log("moneyPullAmounts[0]", moneyPullAmounts[0]);
+        console.log("moneyPullAmounts[1]", moneyPullAmounts[1]);
         if (!zeroForOnes[0] || !zeroForOnes[1]) {
-            if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
-                erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+            if ((erc20PullAmounts[0] > 0) || (erc20PullAmounts[1] > 0)) {
+                erc20Vault.pull(address(moneyVault), tokens, erc20PullAmounts, "");
             }
         }
         if (zeroForOnes[0] || zeroForOnes[1]) {
-            if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
-                moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+            if ((moneyPullAmounts[0] > 0) || (moneyPullAmounts[1] > 0)) {
+                moneyVault.pull(address(erc20Vault), tokens, moneyPullAmounts, "");
             }
         }
     }

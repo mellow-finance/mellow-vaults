@@ -144,19 +144,11 @@ library StrategyLibrary {
             }
         }
 
-        console.log("token0Amount", token0Amount);
-        console.log("token1Amount", token1Amount);
-        console.log("sqrtPX96", sqrtPX96);
-        console.log("sqrtPriceX96", sqrtPriceX96);
-        console.log("zeroForOne", zeroForOne);
-
         if (zeroForOne) {
             uint256 priceProductX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPX96, CommonLibrary.Q96);
             amountIn = FullMath.mulDiv(l, sqrtPriceX96 - sqrtPX96, priceProductX96);
-            console.log("amountIn", amountIn);
         } else {
             amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, CommonLibrary.Q96);
-            console.log("amountIn", amountIn);
         }
     }
 }
