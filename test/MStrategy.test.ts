@@ -45,10 +45,12 @@ describe("MStrategy", () => {
                         .connect(s)
                         .approve(lpIssuer.address, ethers.constants.MaxUint256);
                 }
-                await lpIssuer.connect(s).deposit(
-                    balances.map((x: BigNumber) => x.div(2)),
-                    []
-                );
+                await lpIssuer
+                    .connect(s)
+                    .deposit(
+                        [balances[0].div(3), balances[1].div(3).mul(2)],
+                        []
+                    );
             });
         });
     });
@@ -61,7 +63,7 @@ describe("MStrategy", () => {
             expect(await mStrategy.shouldRebalance(vaultId)).to.be.true;
         });
         describe("after rebalance", () => {
-            xit("returns false", async () => {
+            it("returns false", async () => {
                 await mStrategy.rebalance(vaultId);
                 expect(await mStrategy.shouldRebalance(vaultId)).to.be.false;
             });

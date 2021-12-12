@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interfaces/IVault.sol";
 import "../interfaces/IERC20Vault.sol";
 import "../trader/interfaces/IUniV3Trader.sol";
@@ -60,9 +61,12 @@ contract MStrategy is DefaultAccessControlLateInit {
         {
             (uint256 sqrtPriceX96, , ) = StrategyLibrary.getUniV3Averages(pool, params.oraclePriceTimespan);
 
-            uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-            uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-            uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
+            uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
+            uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
+            uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
+
             if (deviation > params.tokenRebalanceThresholdX96) {
                 return true;
             }
@@ -82,7 +86,10 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl = erc20Vault.tvl();
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
-        _rebalanceTokens(tvl, pool, erc20Vault, params);
+        _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, moneyVault, params);
+        erc20Tvl = erc20Vault.tvl();
+        moneyTvl = immutableParams.moneyVault.tvl();
+
         _rebalancePools(
             erc20Tvl,
             moneyTvl,
@@ -103,31 +110,37 @@ contract MStrategy is DefaultAccessControlLateInit {
         IVault erc20Vault,
         IVault moneyVault
     ) internal {
-        uint256[] memory erc20Amounts = new uint256[](2);
-        uint256[] memory moneyAmounts = new uint256[](2);
+        uint256[] memory erc20PullAmounts = new uint256[](2);
+        uint256[] memory moneyPullAmounts = new uint256[](2);
         bool[] memory zeroForOnes = new bool[](2);
         for (uint256 i = 0; i < 2; i++) {
             (uint256 amountIn, bool zeroForOne) = _calcRebalancePoolAmount(
-                erc20Tvl[i],
                 moneyTvl[i],
+                erc20Tvl[i],
                 liquidToFixedRatioX96,
                 poolRebalanceThresholdX96
             );
             zeroForOnes[i] = zeroForOne;
             if (zeroForOne) {
-                erc20Amounts[i] = amountIn;
+                moneyPullAmounts[i] = amountIn;
             } else {
-                moneyAmounts[i] = amountIn;
-            }
-        }
-        if (zeroForOnes[0] || zeroForOnes[1]) {
-            if ((erc20Amounts[0] > 0) || (erc20Amounts[1] > 0)) {
-                erc20Vault.pull(address(moneyVault), tokens, erc20Amounts, "");
+                erc20PullAmounts[i] = amountIn;
             }
         }
         if (!zeroForOnes[0] || !zeroForOnes[1]) {
-            if ((moneyAmounts[0] > 0) || (moneyAmounts[1] > 0)) {
-                moneyVault.pull(address(erc20Vault), tokens, moneyAmounts, "");
+            if ((erc20PullAmounts[0] > 0) || (erc20PullAmounts[1] > 0)) {
+                uint256[] memory actualTokenAmounts = erc20Vault.pull(
+                    address(moneyVault),
+                    tokens,
+                    erc20PullAmounts,
+                    ""
+                );
+                moneyVault.push(tokens, actualTokenAmounts, "");
+            }
+        }
+        if (zeroForOnes[0] || zeroForOnes[1]) {
+            if ((moneyPullAmounts[0] > 0) || (moneyPullAmounts[1] > 0)) {
+                moneyVault.pull(address(erc20Vault), tokens, moneyPullAmounts, "");
             }
         }
     }
@@ -153,71 +166,111 @@ contract MStrategy is DefaultAccessControlLateInit {
 
     function _rebalanceTokens(
         uint256[2] memory tvl,
+        uint256[] memory erc20Tvl,
         IUniswapV3Pool pool,
         IERC20Vault erc20Vault,
+        IVault moneyVault,
         Params storage params
     ) internal {
         (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
             pool,
             params.oraclePriceTimespan
         );
-        uint256 deviation;
-        uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+        uint256 targetTokenRatioX96;
         {
-            uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-            deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
-        }
-
-        if (deviation > params.tokenRebalanceThresholdX96) {
-            ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
-            uint256 amountIn;
-            uint256 poolFee = pool.fee();
-            {
-                bool zeroForOne;
-
-                (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
-                    targetTokenRatioX96,
-                    sqrtPriceX96,
-                    tvl[0],
-                    tvl[1],
-                    poolFee,
-                    liquidity
-                );
-                (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
-                if (!zeroForOne) {
-                    (tokenIn, tokenOut) = (tokenOut, tokenIn);
-                }
-
-                bytes memory poolOptions = new bytes(32);
-                assembly {
-                    mstore(add(poolOptions, 32), poolFee)
-                }
-                path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+            uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
+            targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
+            uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
+            if (deviation < params.tokenRebalanceThresholdX96) {
+                return;
             }
-            bytes memory bytesOptions = abi.encode(
-                IUniV3Trader.Options({
-                    fee: uint24(poolFee),
-                    sqrtPriceLimitX96: 0,
-                    deadline: block.timestamp + 1800,
-                    limitAmount: 0
-                })
-            );
-            erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
         }
+        uint256 amountIn;
+        uint256 poolFee = pool.fee();
+        bool zeroForOne;
+        {
+            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
+                targetTokenRatioX96,
+                sqrtPriceX96,
+                tvl[0],
+                tvl[1],
+                poolFee,
+                liquidity
+            );
+        }
+        // If not enough tokens on ERC-20 balance
+        if (zeroForOne) {
+            if (amountIn > erc20Tvl[0]) {
+                address[] memory tokens = new address[](2);
+                tokens[0] = pool.token0();
+                tokens[1] = pool.token1();
+                uint256[] memory amounts = new uint256[](2);
+                amounts[0] = amountIn - erc20Tvl[0];
+                uint256[] memory actualAmounts = moneyVault.pull(address(erc20Vault), tokens, amounts, "");
+                uint256 newTvl = actualAmounts[0] + erc20Tvl[0];
+                // cut just in case
+                if (amountIn > newTvl) {
+                    amountIn = newTvl;
+                }
+            }
+        } else {
+            if (amountIn > erc20Tvl[1]) {
+                address[] memory tokens = new address[](2);
+                tokens[0] = pool.token0();
+                tokens[1] = pool.token1();
+
+                uint256[] memory amounts = new uint256[](2);
+                amounts[1] = amountIn - erc20Tvl[1];
+                uint256[] memory actualAmounts = moneyVault.pull(address(erc20Vault), tokens, amounts, "");
+                uint256 newTvl = actualAmounts[1] + erc20Tvl[1];
+                // cut just in case
+                if (amountIn > newTvl) {
+                    amountIn = newTvl;
+                }
+            }
+        }
+        ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
+        {
+            bytes memory poolOptions = new bytes(32);
+            assembly {
+                mstore(add(poolOptions, 32), poolFee)
+            }
+            (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
+            if (!zeroForOne) {
+                (tokenIn, tokenOut) = (tokenOut, tokenIn);
+            }
+
+            path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+        }
+        bytes memory bytesOptions = abi.encode(
+            IUniV3Trader.Options({
+                fee: uint24(poolFee),
+                sqrtPriceLimitX96: 0,
+                deadline: block.timestamp + 1800,
+                limitAmount: 0
+            })
+        );
+        erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
     }
 
-    function targetRatioX96(
+    // [0, 1]
+    function targetValueRatioX96(
         uint256 sqrtPriceX96,
         uint256 sqrtPMinX96,
         uint256 sqrtPMaxX96
     ) public pure returns (uint256) {
+        if (sqrtPMinX96 > sqrtPMaxX96) {
+            (sqrtPMinX96, sqrtPMaxX96) = (sqrtPMaxX96, sqrtPMinX96);
+        }
         if (sqrtPriceX96 <= sqrtPMinX96) {
             return 0;
         }
         if (sqrtPriceX96 >= sqrtPMaxX96) {
             return CommonLibrary.Q96;
         }
-        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPMinX96);
+        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPriceX96);
     }
 
     function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {

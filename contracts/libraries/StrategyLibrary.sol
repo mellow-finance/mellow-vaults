@@ -5,7 +5,6 @@ import "./external/FullMath.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./CommonLibrary.sol";
 import "./external/TickMath.sol";
-import "hardhat/console.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {
@@ -76,17 +75,18 @@ library StrategyLibrary {
         zeroForOne = rx > token1Amount;
         if (zeroForOne) {
             uint256 numerator = rx - token1Amount;
-            uint256 denominatorX96 = targetRatioX96 +
-                FullMath.mulDiv(pX96, CommonLibrary.UNI_FEE_DENOMINATOR, CommonLibrary.UNI_FEE_DENOMINATOR - fee);
-            amountIn = FullMath.mulDiv(numerator, CommonLibrary.Q96, denominatorX96);
-        } else {
-            uint256 numeratorX96 = FullMath.mulDiv(rx - token1Amount, pX96, 1);
             uint256 denominatorX96 = pX96 +
                 FullMath.mulDiv(
                     targetRatioX96,
                     CommonLibrary.UNI_FEE_DENOMINATOR,
                     CommonLibrary.UNI_FEE_DENOMINATOR - fee
                 );
+            amountIn = FullMath.mulDiv(numerator, CommonLibrary.Q96, denominatorX96);
+        } else {
+            uint256 numeratorX96 = FullMath.mulDiv(token1Amount - rx, pX96, 1);
+            uint256 denominatorX96 = targetRatioX96 +
+                FullMath.mulDiv(pX96, CommonLibrary.UNI_FEE_DENOMINATOR, CommonLibrary.UNI_FEE_DENOMINATOR - fee);
+
             amountIn = FullMath.mulDiv(numeratorX96, 1, denominatorX96);
         }
     }
@@ -100,7 +100,7 @@ library StrategyLibrary {
         uint256 fee,
         uint256 liquidity
     ) internal pure returns (uint256 amountIn, bool zeroForOne) {
-        zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, token1Amount) > CommonLibrary.Q96;
+        zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, 1) > token1Amount;
 
         uint256 l = liquidity;
         uint256 lHat = FullMath.mulDiv(
@@ -108,7 +108,7 @@ library StrategyLibrary {
             CommonLibrary.UNI_FEE_DENOMINATOR,
             CommonLibrary.UNI_FEE_DENOMINATOR - fee
         );
-        if (zeroForOne) {
+        if (!zeroForOne) {
             (l, lHat) = (lHat, l);
         }
         uint256 bX96;
@@ -132,14 +132,15 @@ library StrategyLibrary {
             uint256 sqrtdX96 = CommonLibrary.sqrtX96(dX96);
             // Mathematically this should always be true but can be subject sqrt error
             if (sqrtdX96 > bX96) {
-                sqrtPX96 = CommonLibrary.sqrtX96(dX96) - bX96;
+                sqrtPX96 = sqrtdX96 - bX96;
             }
         }
+
         if (zeroForOne) {
             uint256 priceProductX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPX96, CommonLibrary.Q96);
-            amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, priceProductX96);
+            amountIn = FullMath.mulDiv(l, sqrtPriceX96 - sqrtPX96, priceProductX96);
         } else {
-            amountIn = FullMath.mulDiv(lHat, sqrtPriceX96 - sqrtPX96, CommonLibrary.Q96);
+            amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, CommonLibrary.Q96);
         }
     }
 }

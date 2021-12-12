@@ -82,7 +82,7 @@ const setupStrategy = async (
         const params = {
             oraclePriceTimespan: 1800,
             oracleLiquidityTimespan: 1800,
-            liquidToFixedRatioX96: BigNumber.from(2).pow(96 - 4),
+            liquidToFixedRatioX96: BigNumber.from(2).pow(96 - 2),
             sqrtPMinX96: BigNumber.from(
                 Math.round((1 / Math.sqrt(3000)) * 10 ** 6 * 2 ** 20)
             ).mul(BigNumber.from(2).pow(76)),
