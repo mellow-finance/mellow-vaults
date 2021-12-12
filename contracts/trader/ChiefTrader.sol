@@ -24,10 +24,12 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         return _traders.length;
     }
 
+    /// @inheritdoc IChiefTrader
     function getTrader(uint256 _index) external view returns (address) {
         return _traders[_index];
     }
 
+    /// @inheritdoc IChiefTrader
     function traders() external view returns (address[] memory) {
         return _traders;
     }
