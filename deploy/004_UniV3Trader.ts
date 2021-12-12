@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
     });
-    const tradersCount = await read("ChiefTrader", "tradersCount");
+    const tradersCount = (await read("ChiefTrader", "tradersCount")).toNumber();
     if (tradersCount === 0) {
         const uniV3Trader = await get("UniV3Trader");
         await execute(
