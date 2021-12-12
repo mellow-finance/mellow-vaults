@@ -5,7 +5,6 @@ import "./external/FullMath.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./CommonLibrary.sol";
 import "./external/TickMath.sol";
-import "hardhat/console.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {
@@ -70,15 +69,10 @@ library StrategyLibrary {
         uint256 token0Amount,
         uint256 token1Amount,
         uint256 fee
-    ) internal view returns (uint256 amountIn, bool zeroForOne) {
-        console.log("targetRatioX96", targetRatioX96);
-        console.log("sqrtPriceX96", sqrtPriceX96);
-        console.log("token0Amount", token0Amount);
-        console.log("token1Amount", token1Amount);
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
         uint256 rx = FullMath.mulDiv(targetRatioX96, token0Amount, CommonLibrary.Q96);
         uint256 pX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
         zeroForOne = rx > token1Amount;
-        console.log("rx", rx);
         if (zeroForOne) {
             uint256 numerator = rx - token1Amount;
             uint256 denominatorX96 = pX96 +
@@ -88,14 +82,12 @@ library StrategyLibrary {
                     CommonLibrary.UNI_FEE_DENOMINATOR - fee
                 );
             amountIn = FullMath.mulDiv(numerator, CommonLibrary.Q96, denominatorX96);
-            console.log("amountIn", amountIn);
         } else {
             uint256 numeratorX96 = FullMath.mulDiv(token1Amount - rx, pX96, 1);
             uint256 denominatorX96 = targetRatioX96 +
                 FullMath.mulDiv(pX96, CommonLibrary.UNI_FEE_DENOMINATOR, CommonLibrary.UNI_FEE_DENOMINATOR - fee);
 
             amountIn = FullMath.mulDiv(numeratorX96, 1, denominatorX96);
-            console.log("amountIn", amountIn);
         }
     }
 
@@ -107,7 +99,7 @@ library StrategyLibrary {
         uint256 token1Amount,
         uint256 fee,
         uint256 liquidity
-    ) internal view returns (uint256 amountIn, bool zeroForOne) {
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
         zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, 1) > token1Amount;
 
         uint256 l = liquidity;

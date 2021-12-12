@@ -11,7 +11,6 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../DefaultAccessControlLateInit.sol";
-import "hardhat/console.sol";
 
 contract MStrategy is DefaultAccessControlLateInit {
     struct Params {
@@ -63,9 +62,11 @@ contract MStrategy is DefaultAccessControlLateInit {
             (uint256 sqrtPriceX96, , ) = StrategyLibrary.getUniV3Averages(pool, params.oraclePriceTimespan);
 
             uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-            uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, sqrtPriceX96, CommonLibrary.Q96);
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
+            uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
             uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
             uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
+
             if (deviation > params.tokenRebalanceThresholdX96) {
                 return true;
             }
@@ -85,22 +86,9 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl = erc20Vault.tvl();
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
-        console.log("erc20Tvl0", erc20Tvl[0]);
-        console.log("erc20Tvl1", erc20Tvl[1]);
-        console.log("moneyTvl0", moneyTvl[0]);
-        console.log("moneyTvl1", moneyTvl[1]);
-        console.log("tvl0", erc20Tvl[0] + moneyTvl[0]);
-        console.log("tvl1", erc20Tvl[1] + moneyTvl[1]);
-
         _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, moneyVault, params);
         erc20Tvl = erc20Vault.tvl();
         moneyTvl = immutableParams.moneyVault.tvl();
-        console.log("erc20Tvl0", erc20Tvl[0]);
-        console.log("erc20Tvl1", erc20Tvl[1]);
-        console.log("moneyTvl0", moneyTvl[0]);
-        console.log("moneyTvl1", moneyTvl[1]);
-        console.log("tvl0", erc20Tvl[0] + moneyTvl[0]);
-        console.log("tvl1", erc20Tvl[1] + moneyTvl[1]);
 
         _rebalancePools(
             erc20Tvl,
@@ -111,15 +99,6 @@ contract MStrategy is DefaultAccessControlLateInit {
             erc20Vault,
             moneyVault
         );
-
-        erc20Tvl = erc20Vault.tvl();
-        moneyTvl = immutableParams.moneyVault.tvl();
-        console.log("erc20Tvl0", erc20Tvl[0]);
-        console.log("erc20Tvl1", erc20Tvl[1]);
-        console.log("moneyTvl0", moneyTvl[0]);
-        console.log("moneyTvl1", moneyTvl[1]);
-        console.log("tvl0", erc20Tvl[0] + moneyTvl[0]);
-        console.log("tvl1", erc20Tvl[1] + moneyTvl[1]);
     }
 
     function _rebalancePools(
@@ -148,10 +127,6 @@ contract MStrategy is DefaultAccessControlLateInit {
                 erc20PullAmounts[i] = amountIn;
             }
         }
-        console.log("erc20PullAmounts[0]", erc20PullAmounts[0]);
-        console.log("erc20PullAmounts[1]", erc20PullAmounts[1]);
-        console.log("moneyPullAmounts[0]", moneyPullAmounts[0]);
-        console.log("moneyPullAmounts[1]", moneyPullAmounts[1]);
         if (!zeroForOnes[0] || !zeroForOnes[1]) {
             if ((erc20PullAmounts[0] > 0) || (erc20PullAmounts[1] > 0)) {
                 uint256[] memory actualTokenAmounts = erc20Vault.pull(
@@ -204,7 +179,6 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256 targetTokenRatioX96;
         {
             uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-            console.log("valueRatioX96", valueRatioX96);
             uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
             targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
             uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
@@ -213,8 +187,6 @@ contract MStrategy is DefaultAccessControlLateInit {
                 return;
             }
         }
-        console.log("sqrtPriceX96", sqrtPriceX96);
-        console.log("targetTokenRatioX96", targetTokenRatioX96);
         uint256 amountIn;
         uint256 poolFee = pool.fee();
         bool zeroForOne;
