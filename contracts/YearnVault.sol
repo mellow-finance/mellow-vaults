@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
 import "./interfaces/external/yearn/IYearnVault.sol";
@@ -25,7 +25,7 @@ import "./Vault.sol";
 
 contract YearnVault is Vault {
     address[] private _yTokens;
-    uint256 public constant DEFAULT_MAX_LOSS = 10000;  // 10000%%
+    uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
@@ -82,17 +82,14 @@ contract YearnVault is Vault {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         uint256 maxLoss = options.length > 0 ? abi.decode(options, (uint256)) : DEFAULT_MAX_LOSS;
         for (uint256 i = 0; i < _yTokens.length; ++i) {
-            if (tokenAmounts[i] == 0)
-                continue;
+            if (tokenAmounts[i] == 0) continue;
 
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
-            if (yTokenAmount > balance)
-                yTokenAmount = balance;
+            if (yTokenAmount > balance) yTokenAmount = balance;
 
-            if (yTokenAmount == 0)
-                continue;
+            if (yTokenAmount == 0) continue;
 
             actualTokenAmounts[i] = yToken.withdraw(yTokenAmount, to, maxLoss);
         }
