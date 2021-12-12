@@ -74,7 +74,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
             amountOutMinimum: options.limitAmount,
             sqrtPriceLimitX96: options.sqrtPriceLimitX96
         });
-        IERC20(input).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(input).safeTransferFrom(recipient, address(this), amount);
         _approveERC20TokenIfNecessary(input, address(swapRouter));
         amountOut = swapRouter.exactInputSingle(params);
     }
@@ -96,7 +96,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
             amountInMaximum: options.limitAmount,
             sqrtPriceLimitX96: options.sqrtPriceLimitX96
         });
-        IERC20(input).safeTransferFrom(msg.sender, address(this), options.limitAmount);
+        IERC20(input).safeTransferFrom(recipient, address(this), options.limitAmount);
         _approveERC20TokenIfNecessary(input, address(swapRouter));
         amountIn = swapRouter.exactOutputSingle(params);
         if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
@@ -116,7 +116,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
             amountIn: amount,
             amountOutMinimum: options.limitAmount
         });
-        IERC20(input).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(input).safeTransferFrom(recipient, address(this), amount);
         _approveERC20TokenIfNecessary(input, address(swapRouter));
         amountOut = swapRouter.exactInput(params);
     }
@@ -135,7 +135,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
             amountOut: amount,
             amountInMaximum: options.limitAmount
         });
-        IERC20(input).safeTransferFrom(msg.sender, address(this), options.limitAmount);
+        IERC20(input).safeTransferFrom(recipient, address(this), options.limitAmount);
         _approveERC20TokenIfNecessary(input, address(swapRouter));
         amountIn = swapRouter.exactOutput(params);
         if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
