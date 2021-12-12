@@ -123,7 +123,7 @@ describe("VaultRegistry", () => {
                 );
                 await setTokenWhitelist(
                     protocolGovernance,
-                    anotherTokens,
+                    anotherTokens as any,
                     deployer
                 );
                 const [newVaultAddress, _] =
