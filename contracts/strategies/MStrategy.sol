@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/IVault.sol";
 import "../interfaces/IERC20Vault.sol";
+import "../trader/interfaces/IUniV3Trader.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
@@ -170,9 +171,10 @@ contract MStrategy is DefaultAccessControlLateInit {
         if (deviation > params.tokenRebalanceThresholdX96) {
             ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
             uint256 amountIn;
+            uint256 poolFee = pool.fee();
             {
                 bool zeroForOne;
-                uint256 poolFee = pool.fee();
+
                 (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
                     targetTokenRatioX96,
                     sqrtPriceX96,
@@ -192,7 +194,15 @@ contract MStrategy is DefaultAccessControlLateInit {
                 }
                 path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
             }
-            erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, "");
+            bytes memory bytesOptions = abi.encode(
+                IUniV3Trader.Options({
+                    fee: uint24(poolFee),
+                    sqrtPriceLimitX96: 0,
+                    deadline: block.timestamp + 1800,
+                    limitAmount: 0
+                })
+            );
+            erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
         }
     }
 
