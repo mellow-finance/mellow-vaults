@@ -5,19 +5,13 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../interfaces/external/univ3/ISwapRouter.sol";
+import "./interfaces/IUniV3Trader.sol";
 import "./libraries/TraderExceptionsLibrary.sol";
 import "./Trader.sol";
 
 /// @notice Contract that can execute ERC20 swaps on Uniswap V3
-contract UniV3Trader is Trader, ITrader {
+contract UniV3Trader is Trader, IUniV3Trader {
     using SafeERC20 for IERC20;
-
-    struct Options {
-        uint24 fee;
-        uint160 sqrtPriceLimitX96;
-        uint256 deadline;
-        uint256 limitAmount;
-    }
 
     struct PathItemOptions {
         uint24 fee;

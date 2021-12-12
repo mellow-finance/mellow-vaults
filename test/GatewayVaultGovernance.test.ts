@@ -212,7 +212,7 @@ describe("GatewayVaultGovernance", () => {
                 let approvedTokens = await deployERC20Tokens(3);
                 await setTokenWhitelist(
                     protocolGovernance,
-                    approvedTokens,
+                    approvedTokens as any,
                     admin
                 );
                 let disapprovedToken = (await deployERC20Tokens(1))[0];

@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 /// @notice Exceptions stores project`s smart-contracts exceptions
 library ExceptionsLibrary {
+    string constant INIT = "INIT";
     string constant GOVERNANCE_OR_DELEGATE = "GD";
     string constant NULL = "NULL";
     string constant TIMESTAMP = "TS";

@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
         },
         mStrategyAdmin: {
             // temporary
-            default: "0xF2BF7baa673a5Ac03D64f999b449Cc7F3C9a0F3A",
+            default: 0,
         },
         mStrategyTreasury: {
             // temporary
