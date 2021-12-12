@@ -9,29 +9,29 @@ import { map } from "ramda";
 const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get } = deployments;
-    const {
-        deployer,
-        mStrategyAdmin,
-        mStrategyProxyAdmin,
-        weth,
-        usdc,
-        uniswapV3Router,
-        uniswapV3PositionManager,
-    } = await getNamedAccounts();
+    const { deployer, mStrategyAdmin } = await getNamedAccounts();
 
-    const mStrategyDeployment = await deploy("MStrategy", {
-        from: deployer,
-        args: [deployer],
-        log: true,
-        autoMine: true,
-        proxy: true,
-    });
     const proxyAdminDeployment = await deploy("MStrategyProxyAdmin", {
         from: deployer,
         contract: "DefaultProxyAdmin",
         args: [],
         log: true,
         autoMine: true,
+    });
+
+    const mStrategyDeployment = await deploy("MStrategy", {
+        from: deployer,
+        args: [],
+        log: true,
+        autoMine: true,
+        proxy: {
+            execute: { init: { methodName: "init", args: [deployer] } },
+            proxyContract: "DefaultProxy",
+            viaAdminContract: {
+                name: "MStrategyProxyAdmin",
+                artifact: "DefaultProxyAdmin",
+            },
+        },
     });
     await execute(
         "MStrategyProxyAdmin",
@@ -43,14 +43,6 @@ const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
         "transferOwnership",
         mStrategyAdmin
     );
-
-    // const proxyDeployment = await deploy("MStrategyProxy", {
-    //     from: deployer,
-    //     contract: "DefaultProxy",
-    //     args: [mStrategyDeployment.address, proxyAdminDeployment.address, []],
-    //     log: true,
-    //     autoMine: true,
-    // });
 };
 
 const setupStrategy = async (

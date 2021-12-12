@@ -8,9 +8,9 @@ import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../DefaultAccessControl.sol";
+import "../DefaultAccessControlLateInit.sol";
 
-contract MStrategy is DefaultAccessControl {
+contract MStrategy is DefaultAccessControlLateInit {
     struct Params {
         uint256 oraclePriceTimespan;
         uint256 oracleLiquidityTimespan;
@@ -34,9 +34,6 @@ contract MStrategy is DefaultAccessControl {
     ImmutableParams[] public vaultImmutableParams;
     mapping(address => mapping(address => uint256)) public vaultIndex;
     mapping(uint256 => bool) public disabled;
-
-    constructor(address owner) DefaultAccessControl(owner) {}
-
     mapping(address => mapping(address => uint256)) public paramsIndex;
 
     function vaultCount() public view returns (uint256) {

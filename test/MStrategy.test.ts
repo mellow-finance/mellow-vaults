@@ -20,11 +20,7 @@ describe("MStrategy", () => {
 
             const { test } = await getNamedAccounts();
 
-            const mStrategyProxy = await ethers.getContract("MStrategyProxy");
-            mStrategy = await ethers.getContractAt(
-                "MStrategy",
-                mStrategyProxy.address
-            );
+            mStrategy = await ethers.getContract("MStrategy");
 
             await withSigner(test, async (s) => {
                 const vaultRegistry: VaultRegistry = await ethers.getContract(
