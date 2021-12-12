@@ -10,10 +10,12 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is Vault, ITrader {
     using SafeERC20 for IERC20;
+
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
@@ -26,8 +28,7 @@ contract ERC20Vault is Vault, ITrader {
         address[] memory tokens = _vaultTokens;
         uint256 len = tokens.length;
         tokenAmounts = new uint256[](len);
-        for (uint256 i = 0; i < len; ++i)
-            tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
+        for (uint256 i = 0; i < len; ++i) tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
     }
 
     /// @inheritdoc ITrader
@@ -38,15 +39,14 @@ contract ERC20Vault is Vault, ITrader {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256 amountOut) {
-        require(
-            path.length > 0  && isVaultToken(path[path.length - 1].token1), 
-            ExceptionsLibrary.NOT_VAULT_TOKEN
-        );
+        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
         require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
         _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
+        console.log("amount", amount);
+        console.log("balance", IERC20(path[0].token0).balanceOf(address(this)));
         return trader.swapExactInput(traderId, amount, address(0), path, options);
     }
 
@@ -58,10 +58,7 @@ contract ERC20Vault is Vault, ITrader {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256 amountOut) {
-        require(
-            path.length > 0  && isVaultToken(path[path.length - 1].token1), 
-            ExceptionsLibrary.NOT_VAULT_TOKEN
-        );
+        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
         require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
@@ -85,8 +82,7 @@ contract ERC20Vault is Vault, ITrader {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokenAmounts.length; ++i)
-            IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
+        for (uint256 i = 0; i < tokenAmounts.length; ++i) IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
 
         actualTokenAmounts = tokenAmounts;
     }

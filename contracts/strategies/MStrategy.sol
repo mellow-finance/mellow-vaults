@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interfaces/IVault.sol";
 import "../interfaces/IERC20Vault.sol";
 import "../trader/interfaces/IUniV3Trader.sol";
@@ -10,6 +11,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../DefaultAccessControlLateInit.sol";
+import "hardhat/console.sol";
 
 contract MStrategy is DefaultAccessControlLateInit {
     struct Params {
@@ -60,9 +62,10 @@ contract MStrategy is DefaultAccessControlLateInit {
         {
             (uint256 sqrtPriceX96, , ) = StrategyLibrary.getUniV3Averages(pool, params.oraclePriceTimespan);
 
-            uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-            uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-            uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
+            uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+            uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, sqrtPriceX96, CommonLibrary.Q96);
+            uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
             if (deviation > params.tokenRebalanceThresholdX96) {
                 return true;
             }
@@ -161,63 +164,85 @@ contract MStrategy is DefaultAccessControlLateInit {
             pool,
             params.oraclePriceTimespan
         );
-        uint256 deviation;
-        uint256 targetTokenRatioX96 = targetRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+        uint256 targetTokenRatioX96;
         {
-            uint256 currentRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-            deviation = CommonLibrary.deviationFactor(currentRatioX96, targetTokenRatioX96);
-        }
-
-        if (deviation > params.tokenRebalanceThresholdX96) {
-            ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
-            uint256 amountIn;
-            uint256 poolFee = pool.fee();
-            {
-                bool zeroForOne;
-
-                (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
-                    targetTokenRatioX96,
-                    sqrtPriceX96,
-                    tvl[0],
-                    tvl[1],
-                    poolFee,
-                    liquidity
-                );
-                (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
-                if (!zeroForOne) {
-                    (tokenIn, tokenOut) = (tokenOut, tokenIn);
-                }
-
-                bytes memory poolOptions = new bytes(32);
-                assembly {
-                    mstore(add(poolOptions, 32), poolFee)
-                }
-                path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+            uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
+            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
+            targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
+            console.log("valueRatioX96", valueRatioX96);
+            console.log("targetTokenRatioX96", targetTokenRatioX96);
+            uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
+            console.log("deviation", deviation);
+            if (deviation < params.tokenRebalanceThresholdX96) {
+                return;
             }
-            bytes memory bytesOptions = abi.encode(
-                IUniV3Trader.Options({
-                    fee: uint24(poolFee),
-                    sqrtPriceLimitX96: 0,
-                    deadline: block.timestamp + 1800,
-                    limitAmount: 0
-                })
-            );
-            erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
         }
+
+        uint256 amountIn;
+        uint256 poolFee = pool.fee();
+        bool zeroForOne;
+        {
+            console.log("sqrtPriceX96", sqrtPriceX96);
+            console.log("params.sqrtPMinX96", params.sqrtPMinX96);
+            console.log("params.sqrtPMaxX96", params.sqrtPMaxX96);
+            // console.log("targetTokenRatioX96", targetTokenRatioX96);
+            console.log("targetTokenRatioX96", targetTokenRatioX96);
+            console.log("sqrtPriceX96", sqrtPriceX96);
+            console.log("tvl[0]", tvl[0]);
+            console.log("tvl[1]", tvl[1]);
+            console.log("liquidity", liquidity);
+            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
+                targetTokenRatioX96,
+                sqrtPriceX96,
+                tvl[0],
+                tvl[1],
+                poolFee,
+                liquidity
+            );
+            console.log("amountIn", amountIn);
+            console.log("zeroForOne", zeroForOne);
+        }
+        ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
+        {
+            bytes memory poolOptions = new bytes(32);
+            assembly {
+                mstore(add(poolOptions, 32), poolFee)
+            }
+            (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
+            if (!zeroForOne) {
+                (tokenIn, tokenOut) = (tokenOut, tokenIn);
+            }
+
+            path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+        }
+        bytes memory bytesOptions = abi.encode(
+            IUniV3Trader.Options({
+                fee: uint24(poolFee),
+                sqrtPriceLimitX96: 0,
+                deadline: block.timestamp + 1800,
+                limitAmount: 0
+            })
+        );
+        erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
     }
 
-    function targetRatioX96(
+    // [0, 1]
+    function targetValueRatioX96(
         uint256 sqrtPriceX96,
         uint256 sqrtPMinX96,
         uint256 sqrtPMaxX96
     ) public pure returns (uint256) {
+        if (sqrtPMinX96 > sqrtPMaxX96) {
+            (sqrtPMinX96, sqrtPMaxX96) = (sqrtPMaxX96, sqrtPMinX96);
+        }
         if (sqrtPriceX96 <= sqrtPMinX96) {
             return 0;
         }
         if (sqrtPriceX96 >= sqrtPMaxX96) {
             return CommonLibrary.Q96;
         }
-        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPMinX96);
+        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPriceX96);
     }
 
     function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {
