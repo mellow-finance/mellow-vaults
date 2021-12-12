@@ -337,7 +337,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         uint256 existential,
         uint256 balanceFactor,
         uint256 supply
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         if (supply == 0)
             // skip normalization on init
             return amount;
