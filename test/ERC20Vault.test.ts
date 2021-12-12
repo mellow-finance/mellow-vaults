@@ -359,19 +359,20 @@ describe("ERC20Vault", function () {
                     .connect(deployer)
                     .transfer(ERC20Vault.address, BigNumber.from(10 ** 4));
             });
+
+            describe("when passed never allowed token", () => {
+                it("reverts", async () => {
+                    let anotherToken = (await deployERC20Tokens(1))[0];
+                    await expect(
+                        ERC20Vault.reclaimTokens(await deployer.getAddress(), [
+                            anotherToken.address,
+                        ])
+                    ).to.be.revertedWith("EAT");
+                });
+            });
         });
 
         describe("_postReclaimTokens", () => {
-            it("passes", async () => {
-                let anotherToken = (await deployERC20Tokens(1))[0];
-                await expect(
-                    ERC20Vault.__postReclaimTokens(
-                        ethers.constants.AddressZero,
-                        [anotherToken.address]
-                    )
-                ).to.not.be.reverted;
-            });
-
             describe("passed some not vault tokens", () => {
                 it("reverts", async () => {
                     let anotherToken = (await deployERC20Tokens(1))[0];

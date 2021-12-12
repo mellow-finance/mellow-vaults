@@ -44,7 +44,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function claimAllowlist() external view returns (address[] memory) {
         uint256 l = _claimAllowlist.length();
         address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; i++) {
+        for (uint256 i = 0; i < l; ++i) {
             res[i] = _claimAllowlist.at(i);
         }
         return res;
@@ -55,7 +55,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         uint256 l = _tokenWhitelist.length;
         address[] memory res = new address[](_numberOfValidTokens);
         uint256 j = 0;
-        for (uint256 i = 0; i < l; i++) {
+        for (uint256 i = 0; i < l; ++i) {
             if (!_tokensAllowed[_tokenWhitelist[i]] && _tokenEverAdded[_tokenWhitelist[i]]) {
                 continue;
             }
@@ -69,7 +69,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function vaultGovernances() external view returns (address[] memory) {
         uint256 l = _vaultGovernances.length();
         address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; i++) {
+        for (uint256 i = 0; i < l; ++i) {
             res[i] = _vaultGovernances.at(i);
         }
         return res;
@@ -98,6 +98,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function isAllowedToken(address addr) external view returns (bool) {
         return _tokenEverAdded[addr] && _tokensAllowed[addr];
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function isEverAllowedToken(address addr) external view returns (bool) {
+        return _tokenEverAdded[addr];
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -137,9 +142,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function removeFromClaimAllowlist(address addr) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        if (!_claimAllowlist.contains(addr)) {
-            return;
-        }
         _claimAllowlist.remove(addr);
     }
 
@@ -153,8 +155,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function removeFromTokenWhitelist(address addr) external {
         require(isAdmin(msg.sender), "ADM");
-        _tokensAllowed[addr] = false;
-        if (_tokenEverAdded[addr]) {
+        if (_tokenEverAdded[addr] && _tokensAllowed[addr]) {
+            _tokensAllowed[addr] = false;
             --_numberOfValidTokens;
         }
     }
@@ -169,9 +171,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function removeFromVaultGovernances(address addr) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        if (!_vaultGovernances.contains(addr)) {
-            return;
-        }
         _vaultGovernances.remove(addr);
     }
 
@@ -189,10 +188,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitClaimAllowlistAdd() external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(
-            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp > 0),
+            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp != 0),
             ExceptionsLibrary.TIMESTAMP
         );
-        for (uint256 i = 0; i < _pendingClaimAllowlistAdd.length; i++) {
+        uint256 len = _pendingClaimAllowlistAdd.length;
+        for (uint256 i = 0; i < len; ++i) {
             _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
         }
         delete _pendingClaimAllowlistAdd;
@@ -203,10 +203,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitTokenWhitelistAdd() external {
         require(isAdmin(msg.sender), "ADM");
         require(
-            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp > 0),
+            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
             "TS"
         );
-        for (uint256 i = 0; i < _pendingTokenWhitelistAdd.length; i++) {
+        uint256 len = _pendingTokenWhitelistAdd.length;
+        for (uint256 i = 0; i < len; ++i) {
             if (!_tokenEverAdded[_pendingTokenWhitelistAdd[i]]) {
                 _numberOfValidTokens += 1;
                 _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
@@ -230,7 +231,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
             ExceptionsLibrary.TIMESTAMP
         );
-        for (uint256 i = 0; i < _pendingVaultGovernancesAdd.length; i++) {
+        uint256 len = _pendingVaultGovernancesAdd.length;
+        for (uint256 i = 0; i < len; ++i) {
             _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
         }
         delete _pendingVaultGovernancesAdd;
@@ -241,7 +243,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function commitParams() external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
-        require(pendingParams.maxTokensPerVault > 0 || pendingParams.governanceDelay > 0, ExceptionsLibrary.EMPTY_PARAMS); // sanity check for empty params
+        require(pendingParams.maxTokensPerVault != 0 || pendingParams.governanceDelay != 0, ExceptionsLibrary.EMPTY_PARAMS); // sanity check for empty params
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;

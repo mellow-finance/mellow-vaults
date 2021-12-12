@@ -54,4 +54,9 @@ library ExceptionsLibrary {
     string constant YEARN_VAULT = "YV";
     string constant MAX_GOVERNANCE_DELAY = "MD";
     string constant OWNER_VAULT_NFT = "OWV";
+    string constant ALLOWED_TOKEN = "AT";
+    string constant EVER_ALLOWED_TOKEN = "EAT";
+    string constant UNISWAP_POOL_NOT_FOUND = "UPNF";
+    string constant BALANCE_FACTOR_ZERO = "BF";
+    string constant ZERO_LP_TOKENS = "ZLP";
 }

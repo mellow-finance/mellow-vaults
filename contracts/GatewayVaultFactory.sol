@@ -7,7 +7,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for GatewayVaultGovernance that can create new Gateway Vaults.
 contract GatewayVaultFactory is IVaultFactory {
-    IVaultGovernance public vaultGovernance;
+    IVaultGovernance public immutable vaultGovernance;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
@@ -107,7 +106,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @inheritdoc IVaultGovernance
     function commitInternalParams() external {
         _requireProtocolAdmin();
-        require(_internalParamsTimestamp > 0, ExceptionsLibrary.NULL);
+        require(_internalParamsTimestamp != 0, ExceptionsLibrary.NULL);
         require(block.timestamp >= _internalParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _internalParams = _stagedInternalParams;
         delete _internalParamsTimestamp;
@@ -132,7 +131,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Strategy Params
     function _commitDelayedStrategyParams(uint256 nft) internal {
         _requireAtLeastStrategy(nft);
-        require(_delayedStrategyParamsTimestamp[nft] > 0, ExceptionsLibrary.NULL);
+        require(_delayedStrategyParamsTimestamp[nft] != 0, ExceptionsLibrary.NULL);
         require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP);
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
         delete _stagedDelayedStrategyParams[nft];
@@ -155,7 +154,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Protocol Per Vault Params
     function _commitDelayedProtocolPerVaultParams(uint256 nft) internal {
         _requireProtocolAdmin();
-        require(_delayedProtocolPerVaultParamsTimestamp[nft] > 0, ExceptionsLibrary.NULL);
+        require(_delayedProtocolPerVaultParamsTimestamp[nft] != 0, ExceptionsLibrary.NULL);
         require(block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP);
         _delayedProtocolPerVaultParams[nft] = _stagedDelayedProtocolPerVaultParams[nft];
         delete _stagedDelayedProtocolPerVaultParams[nft];
@@ -177,7 +176,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Commit Delayed Protocol Params
     function _commitDelayedProtocolParams() internal {
         _requireProtocolAdmin();
-        require(_delayedProtocolParamsTimestamp > 0, ExceptionsLibrary.NULL);
+        require(_delayedProtocolParamsTimestamp != 0, ExceptionsLibrary.NULL);
         require(block.timestamp >= _delayedProtocolParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _delayedProtocolParams = _stagedDelayedProtocolParams;
         delete _stagedDelayedProtocolParams;

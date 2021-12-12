@@ -35,7 +35,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
         if (path.length == 1) {
             return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
-            require(_validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+            require(super._validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             return _swapExactInputMultihop(amount, recipient, path, options_);
         }
     }
@@ -49,18 +49,12 @@ contract UniV3Trader is Trader, IUniV3Trader {
         bytes memory options
     ) external returns (uint256) {
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 0) {
+        if (path.length == 1) {
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         } else {
-            require(_validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+            require(super._validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
             return _swapExactOutputMultihop(amount, recipient, path, options_);
         }
-    }
-
-    function _validatePathLinked(PathItem[] memory path) internal pure returns (bool result) {
-        if (path.length == 0) return false;
-        for (uint256 i = 0; i < path.length - 1; ++i) if (path[0].token1 != path[i + 1].token0) return false;
-        return true;
     }
 
     function _swapExactInputSingle(
@@ -105,8 +99,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
         IERC20(input).safeTransferFrom(msg.sender, address(this), options.limitAmount);
         _approveERC20TokenIfNecessary(input, address(swapRouter));
         amountIn = swapRouter.exactOutputSingle(params);
-        if (amountIn < options.limitAmount)
-            IERC20(input).safeTransferFrom(address(this), recipient, options.limitAmount - amountIn);
+        if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
     }
 
     function _swapExactInputMultihop(
@@ -145,8 +138,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
         IERC20(input).safeTransferFrom(msg.sender, address(this), options.limitAmount);
         _approveERC20TokenIfNecessary(input, address(swapRouter));
         amountIn = swapRouter.exactOutput(params);
-        if (amountIn < options.limitAmount)
-            IERC20(input).safeTransferFrom(address(this), recipient, options.limitAmount - amountIn);
+        if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
     }
 
     function _reverseBytes(bytes memory input) internal pure returns (bytes memory output) {

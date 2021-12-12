@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/ILpIssuerGovernance.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./libraries/CommonLibrary.sol";

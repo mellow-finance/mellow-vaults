@@ -7,7 +7,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for UniV3VaultGovernance that can create new UniV3 Vaults.
 contract UniV3VaultFactory is IVaultFactory {
-    IVaultGovernance public vaultGovernance;
+    IVaultGovernance public immutable vaultGovernance;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind

@@ -4,7 +4,6 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVault.sol";
-import "./interfaces/IVaultFactory.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
@@ -94,7 +93,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function commitStagedProtocolGovernance() external {
         require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
-        require(_stagedProtocolGovernanceTimestamp > 0, ExceptionsLibrary.NULL_OR_NOT_INITIALIZED);
+        require(_stagedProtocolGovernanceTimestamp != 0, ExceptionsLibrary.NULL_OR_NOT_INITIALIZED);
         require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;

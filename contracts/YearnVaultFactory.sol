@@ -7,7 +7,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for YearnVaultGovernance that can create new Yearn Vaults.
 contract YearnVaultFactory is IVaultFactory {
-    IVaultGovernance public vaultGovernance;
+    IVaultGovernance public immutable vaultGovernance;
 
     /// @notice Creates a new contract
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind

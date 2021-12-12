@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
@@ -43,6 +42,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );
+        require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
@@ -96,6 +96,8 @@ contract UniV3Vault is IERC721Receiver, Vault {
         emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
     }
 
+    function updateTvls() external override {}
+
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](_vaultTokens.length);
@@ -106,7 +108,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
             int24 tickLower, 
             int24 tickUpper, 
             uint128 liquidity,
-            , , ,
+            , ,
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
         ) = _positionManager().positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
@@ -117,8 +121,8 @@ contract UniV3Vault is IERC721Receiver, Vault {
             sqrtPriceBX96,
             liquidity
         );
-        tokenAmounts[0] = amount0;
-        tokenAmounts[1] = amount1;
+        tokenAmounts[0] = amount0 + uint256(tokensOwed0);
+        tokenAmounts[1] = amount1 + uint256(tokensOwed1);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -127,7 +131,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; i++)
+        for (uint256 i = 0; i < tokens.length; ++i)
             _allowTokenIfNecessary(tokens[i]);
 
         actualTokenAmounts = new uint256[](2);
@@ -218,7 +222,6 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {}
 
-    /// TODO: make a virtual function here? Or other better approach
     function _positionManager() internal view returns (INonfungiblePositionManager) {
         return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
     }

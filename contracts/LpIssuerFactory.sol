@@ -7,7 +7,7 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for LpIssuerGovernance that can create new LpIssuers.
 contract LpIssuerFactory is IVaultFactory {
-    IVaultGovernance public vaultGovernance;
+    IVaultGovernance public immutable vaultGovernance;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this VaultKind

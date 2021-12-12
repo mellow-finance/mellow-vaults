@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
-import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/external/yearn/IYearnVault.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
 import "./Vault.sol";
-import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
 /// @dev Notes:
@@ -35,7 +33,7 @@ contract YearnVault is Vault {
         Vault(vaultGovernance_, vaultTokens_)
     {
         _yTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);
             require(_yTokens[i] != address(0), "YV");
         }
@@ -46,11 +44,13 @@ contract YearnVault is Vault {
         return _yTokens;
     }
 
+    function updateTvls() external override {}
+
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _yTokens.length; i++) {
+        for (uint256 i = 0; i < _yTokens.length; ++i) {
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             tokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
@@ -62,7 +62,7 @@ contract YearnVault is Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < _yTokens.length; i++) {
+        for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
@@ -80,30 +80,27 @@ contract YearnVault is Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        actualTokenAmounts = new uint256[](tokenAmounts.length);
         uint256 maxLoss = abi.decode(options, (uint256));
-        for (uint256 i = 0; i < _yTokens.length; i++) {
-            if (tokenAmounts[i] == 0) {
+        for (uint256 i = 0; i < _yTokens.length; ++i) {
+            if (tokenAmounts[i] == 0)
                 continue;
-            }
 
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
-            if (yTokenAmount > balance) {
+            if (yTokenAmount > balance)
                 yTokenAmount = balance;
-            }
-            if (yTokenAmount == 0) {
+
+            if (yTokenAmount == 0)
                 continue;
-            }
-            yToken.withdraw(yTokenAmount, to, maxLoss);
-            (tokenAmounts[i], address(this));
+
+            actualTokenAmounts[i] = yToken.withdraw(yTokenAmount, to, maxLoss);
         }
-        actualTokenAmounts = tokenAmounts;
     }
 
     function _allowTokenIfNecessary(address token, address yToken) internal {
-        if (IERC20(token).allowance(address(this), yToken) < type(uint256).max / 2) {
+        if (IERC20(token).allowance(address(this), yToken) < type(uint256).max / 2)
             IERC20(token).approve(yToken, type(uint256).max);
-        }
     }
 }

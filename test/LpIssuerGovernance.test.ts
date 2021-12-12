@@ -81,7 +81,7 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    describe("stagedDelayedStrategyParams", () => {
+    xdescribe("stagedDelayedStrategyParams", () => {
         const paramsToStage: DelayedStrategyParamsStruct = {
             strategyTreasury: randomAddress(),
             strategyPerformanceTreasury: randomAddress(),
@@ -171,7 +171,7 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    describe("delayedStrategyParams", () => {
+    xdescribe("delayedStrategyParams", () => {
         const paramsToStage: DelayedStrategyParamsStruct = {
             strategyTreasury: randomAddress(),
             strategyPerformanceTreasury: randomAddress(),
@@ -274,7 +274,7 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    describe("#stageDelayedStrategyParams", () => {
+    xdescribe("#stageDelayedStrategyParams", () => {
         const paramsToStage: DelayedStrategyParamsStruct = {
             strategyTreasury: randomAddress(),
             strategyPerformanceTreasury: randomAddress(),
@@ -564,7 +564,7 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    describe("#commitDelayedStrategyParams", () => {
+    xdescribe("#commitDelayedStrategyParams", () => {
         const paramsToCommit: DelayedStrategyParamsStruct = {
             strategyTreasury: randomAddress(),
             strategyPerformanceTreasury: randomAddress(),
@@ -888,7 +888,7 @@ describe("LpIssuerGovernance", () => {
         });
     });
 
-    describe("#stageDelayedProtocolPerVaultParams", () => {
+    xdescribe("#stageDelayedProtocolPerVaultParams", () => {
         const paramsToStage: DelayedProtocolPerVaultParamsStruct = {
             protocolFee: BigNumber.from(1000),
         };

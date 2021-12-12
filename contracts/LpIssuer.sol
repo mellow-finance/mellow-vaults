@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./libraries/external/FullMath.sol";
 import "./libraries/CommonLibrary.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/ILpIssuer.sol";
-import "./DefaultAccessControl.sol";
-import "./LpIssuerGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./interfaces/ILpIssuer.sol";
+import "./interfaces/IGatewayVault.sol";
+import "./LpIssuerGovernance.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
+contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 {
     using SafeERC20 for IERC20;
     uint256 private _subvaultNft;
-    IVaultGovernance internal _vaultGovernance;
+    IVaultGovernance internal immutable _vaultGovernance;
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 private _nft;
@@ -41,7 +41,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
-        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+        uint256 vaultTokensLength = _vaultTokens.length;
+        for (uint256 i = 0; i < vaultTokensLength; ++i) {
             address token = vaultTokens_[i];
             _vaultTokensIndex[token] = true;
             _lpPriceHighWaterMarks.push(0);
@@ -89,20 +90,25 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(registry.ownerOf(thisNft) == address(this), ExceptionsLibrary.INITIALIZE_OWNER);
         IVault subvault = _subvault();
         uint256[] memory existentials_ = _existentials;
-        uint256[] memory tvl = subvault.tvl(); //pre-money
         uint256 supply = totalSupply();
         uint256 balanceFactor = CommonLibrary.PRICE_DENOMINATOR;
-        if (supply > 0) {
+        // update subvault tvls
+        subvault.updateTvls();
+        // get current tvl to calculate the proportion
+        uint256[] memory tvl = subvault.tvl();
+    
+        if (supply != 0)
             // This is lpTokens if total supply == CommonLibrary.PRICE_DENOMINATOR
             balanceFactor = _getLpAmount(tvl, tokenAmounts, existentials_, CommonLibrary.PRICE_DENOMINATOR);
-        }
 
         // If with that big supply we don't reveive any lps then it doesn't make sense to continue
-        require(balanceFactor > 0, "BF");
+        require(balanceFactor != 0, ExceptionsLibrary.BALANCE_FACTOR_ZERO);
         uint256[] memory balancedAmounts = new uint256[](tokenAmounts.length);
 
+        uint256 vaultTokensLength = _vaultTokens.length;
+
         // Making sure the proportion between tokenAmounts and tvl are the same
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < vaultTokensLength; ++i) {
             balancedAmounts[i] = _getBalancedAmount(tvl[i], tokenAmounts[i], existentials_[i], balanceFactor, supply);
             _allowTokenIfNecessary(_vaultTokens[i], address(subvault));
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), balancedAmounts[i]);
@@ -114,9 +120,12 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
             balancedAmounts,
             options
         );
+
+        // get updated tvl to calculate new lp amount including the new deposit
+        tvl = subvault.tvl();
         uint256 amountToMint = _getLpAmount(tvl, actualTokenAmounts, existentials_, supply);
 
-        require(amountToMint > 0, "ZLP");
+        require(amountToMint != 0, ExceptionsLibrary.ZERO_LP_TOKENS);
 
         require(
             amountToMint + balanceOf(msg.sender) <=
@@ -127,7 +136,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         _chargeFees(thisNft, tvl, supply, actualTokenAmounts, amountToMint, false);
         _mint(msg.sender, amountToMint);
 
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             if (balancedAmounts[i] > actualTokenAmounts[i]) {
                 IERC20(_vaultTokens[i]).safeTransfer(msg.sender, balancedAmounts[i] - actualTokenAmounts[i]);
             }
@@ -146,14 +155,15 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(supply > 0, ExceptionsLibrary.TOTAL_SUPPLY_IS_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         uint256[] memory tvl = _subvault().tvl();
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = (lpTokenAmount * tvl[i]) / supply;
         }
         uint256[] memory actualTokenAmounts = _subvault().pull(address(this), _vaultTokens, tokenAmounts, options);
-        for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            if (actualTokenAmounts[i] == 0) {
+        uint256 vaultTokensLength = _vaultTokens.length;
+        for (uint256 i = 0; i < vaultTokensLength; ++i) {
+            if (actualTokenAmounts[i] == 0)
                 continue;
-            }
+
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
         _chargeFees(_nft, tvl, supply, actualTokenAmounts, lpTokenAmount, true);
@@ -166,6 +176,13 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         require(_subvaultNft == 0, ExceptionsLibrary.SUB_VAULT_INITIALIZED);
         require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
+        require(
+            ERC165(
+                _vaultGovernance.internalParams().registry.vaultForNft(nft_)
+            ).supportsInterface(
+                type(IGatewayVault).interfaceId
+            )
+        );
         _subvaultNft = nft_;
     }
 
@@ -179,6 +196,14 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         require(msg.sender == address(registry), ExceptionsLibrary.NFT_VAULT_REGISTRY);
         registry.lockNft(tokenId);
         return this.onERC721Received.selector;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
+        return (
+            interfaceId == this.supportsInterface.selector ||
+            interfaceId == type(ILpIssuer).interfaceId || 
+            interfaceId == type(IERC20).interfaceId
+        );
     }
 
     function _allowTokenIfNecessary(address token, address to) internal {
@@ -204,45 +229,47 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
     ) internal {
         ILpIssuerGovernance vg = ILpIssuerGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - lastFeeCharge;
-        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) {
+        uint256 tvlsLength = tvls.length;
+        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay)
             return;
-        }
+
         lastFeeCharge = block.timestamp;
         uint256 baseSupply = supply;
         if (isWithdraw) {
             baseSupply = 0;
-            if (supply > deltaSupply) {
+            if (supply > deltaSupply)
                 baseSupply = supply - deltaSupply;
-            }
         }
 
         if (baseSupply == 0) {
-            for (uint256 i = 0; i < tvls.length; i++) {
+            for (uint256 i = 0; i < tvlsLength; ++i)
                 _lpPriceHighWaterMarks[i] = (deltaTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / deltaSupply;
-            }
+
             return;
         }
 
-        uint256[] memory baseTvls = new uint256[](tvls.length);
-        for (uint256 i = 0; i < baseTvls.length; i++) {
-            if (isWithdraw) {
+        uint256[] memory baseTvls = new uint256[](tvlsLength);
+        for (uint256 i = 0; i < baseTvls.length; ++i) {
+            if (isWithdraw)
                 baseTvls[i] = tvls[i] - deltaTvls[i];
-            } else {
+            else
                 baseTvls[i] = tvls[i];
-            }
         }
 
         ILpIssuerGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         if (strategyParams.managementFee > 0) {
-            uint256 toMint = (strategyParams.managementFee * baseSupply * elapsed) /
-                (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            uint256 toMint = FullMath.mulDiv(
+                strategyParams.managementFee * elapsed,
+                baseSupply,
+                CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
+            );
             _mint(strategyParams.strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyParams.strategyTreasury, strategyParams.managementFee, toMint);
         }
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         if (protocolFee > 0) {
             address treasury = vg.internalParams().protocolGovernance.protocolTreasury();
-            uint256 toMint = (protocolFee * baseSupply * elapsed) / (CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
+            uint256 toMint = FullMath.mulDiv(protocolFee * elapsed, baseSupply, CommonLibrary.DENOMINATOR * CommonLibrary.YEAR);
             _mint(treasury, toMint);
             emit ProtocolFeesCharged(treasury, protocolFee, toMint);
         }
@@ -250,7 +277,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         uint256[] memory hwms = _lpPriceHighWaterMarks;
         if (performanceFee > 0) {
             uint256 minLpPriceFactor = type(uint256).max;
-            for (uint256 i = 0; i < baseTvls.length; i++) {
+            for (uint256 i = 0; i < tvlsLength; ++i) {
                 uint256 hwm = hwms[i];
                 uint256 lpPrice = (baseTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / baseSupply;
                 if (lpPrice > hwm) {
@@ -263,11 +290,16 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
                     return;
                 }
             }
-            for (uint256 i = 0; i < tvls.length; i++) {
-                _lpPriceHighWaterMarks[i] += (hwms[i] * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
-            }
+            for (uint256 i = 0; i < tvlsLength; ++i)
+                _lpPriceHighWaterMarks[i] += FullMath.mulDiv(hwms[i], minLpPriceFactor, CommonLibrary.DENOMINATOR);
+
             address treasury = strategyParams.strategyPerformanceTreasury;
-            uint256 toMint = (baseSupply * minLpPriceFactor) / CommonLibrary.DENOMINATOR;
+            uint256 toMint = FullMath.mulDiv(
+                baseSupply, 
+                (minLpPriceFactor - CommonLibrary.DENOMINATOR), 
+                CommonLibrary.DENOMINATOR
+            );
+            toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
@@ -280,16 +312,17 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
         uint256 supply
     ) internal pure returns (uint256 lpAmount) {
         lpAmount = 0;
+        uint256 tvlsLength = 0;
         if (supply == 0) {
             // On init lpToken = max(tokenAmounts)
-            for (uint256 i = 0; i < tvl.length; i++) {
+            for (uint256 i = 0; i < tvl.length; ++i) {
                 if (amounts[i] > lpAmount) {
                     lpAmount = amounts[i];
                 }
             }
             return lpAmount;
         }
-        for (uint256 i = 0; i < tvl.length; i++) {
+        for (uint256 i = 0; i < tvlsLength; ++i) {
             if (amounts[i] <= existentials_[i]) {
                 // skip existential deposits for lp share calculation
                 continue;
@@ -320,7 +353,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard {
             return 0;
         }
         // normalize amount
-        uint256 res = (tvl * balanceFactor) / CommonLibrary.PRICE_DENOMINATOR;
+        uint256 res = FullMath.mulDiv(tvl, balanceFactor, CommonLibrary.PRICE_DENOMINATOR);
         if (res > amount) {
             res = amount;
         }
