@@ -5,6 +5,7 @@ import "./external/FullMath.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./CommonLibrary.sol";
 import "./external/TickMath.sol";
+import "hardhat/console.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {
@@ -102,7 +103,11 @@ library StrategyLibrary {
         zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, token1Amount) > CommonLibrary.Q96;
 
         uint256 l = liquidity;
-        uint256 lHat = (liquidity / (CommonLibrary.UNI_FEE_DENOMINATOR - fee)) * CommonLibrary.UNI_FEE_DENOMINATOR;
+        uint256 lHat = FullMath.mulDiv(
+            liquidity,
+            CommonLibrary.UNI_FEE_DENOMINATOR,
+            CommonLibrary.UNI_FEE_DENOMINATOR - fee
+        );
         if (zeroForOne) {
             (l, lHat) = (lHat, l);
         }
@@ -121,8 +126,15 @@ library StrategyLibrary {
             }
             bX96 = bX96 / 2;
         }
-        uint256 d = FullMath.mulDiv(bX96, bX96, CommonLibrary.Q96) + cX96;
-        uint256 sqrtPX96 = CommonLibrary.sqrtX96(d) - bX96;
+        uint256 sqrtPX96;
+        {
+            uint256 dX96 = FullMath.mulDiv(bX96, bX96, CommonLibrary.Q96) + cX96;
+            uint256 sqrtdX96 = CommonLibrary.sqrtX96(dX96);
+            // Mathematically this should always be true but can be subject sqrt error
+            if (sqrtdX96 > bX96) {
+                sqrtPX96 = CommonLibrary.sqrtX96(dX96) - bX96;
+            }
+        }
         if (zeroForOne) {
             uint256 priceProductX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPX96, CommonLibrary.Q96);
             amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, priceProductX96);

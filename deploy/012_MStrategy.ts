@@ -53,8 +53,14 @@ const setupStrategy = async (
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get } = deployments;
 
-    const { deployer, weth, usdc, uniswapV3Router, uniswapV3Factory } =
-        await getNamedAccounts();
+    const {
+        deployer,
+        weth,
+        usdc,
+        uniswapV3Router,
+        uniswapV3Factory,
+        mStrategyAdmin,
+    } = await getNamedAccounts();
 
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
     const vaultCount = await read("MStrategy", "vaultCount");
@@ -108,6 +114,32 @@ const setupStrategy = async (
             "addVault",
             immutableParams,
             params
+        );
+    }
+    const adminRole = await read("MStrategy", "ADMIN_ROLE");
+    const deployerIsAdmin = await read("MStrategy", "isAdmin", deployer);
+    if (deployerIsAdmin) {
+        await execute(
+            "MStrategy",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "grantRole",
+            adminRole,
+            mStrategyAdmin
+        );
+        await execute(
+            "MStrategy",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "renounceRole",
+            adminRole,
+            deployer
         );
     }
 };

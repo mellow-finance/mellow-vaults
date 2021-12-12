@@ -58,19 +58,13 @@ describe("MStrategy", () => {
 
     describe("shouldRebalance", () => {
         it("checks if the tokens needs to be rebalanced", async () => {
-            const [d, a, b] = await ethers.getSigners();
-            console.log(
-                "+++",
-                await mStrategy.connect(b).vaultCount(),
-                mStrategy.address,
-                await deployments.read(
-                    "MStrategy",
-                    // { to: mStrategy.address },
-                    "vaultCount"
-                )
-            );
-
             expect(await mStrategy.shouldRebalance(vaultId)).to.be.true;
+        });
+        describe("after rebalance", () => {
+            it("returns false", async () => {
+                await mStrategy.rebalance(vaultId);
+                expect(await mStrategy.shouldRebalance(vaultId)).to.be.false;
+            });
         });
     });
 });

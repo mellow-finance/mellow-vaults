@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "./external/FullMath.sol";
+
 /// @notice CommonLibrary shared utilities
 library CommonLibrary {
     uint256 constant DENOMINATOR = 10**9;
@@ -15,7 +17,11 @@ library CommonLibrary {
         if (a > b) {
             (a, b) = (b, a);
         }
-        deviationX96 = (b * Q96) / a;
+        if (a == 0) {
+            return type(uint256).max;
+        }
+
+        deviationX96 = FullMath.mulDiv(b, Q96, a);
     }
 
     /// @notice Sort addresses using bubble sort. The sorting is done in-place.
