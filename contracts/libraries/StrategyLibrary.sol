@@ -108,7 +108,7 @@ library StrategyLibrary {
         uint256 fee,
         uint256 liquidity
     ) internal view returns (uint256 amountIn, bool zeroForOne) {
-        zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, 1) < token1Amount;
+        zeroForOne = FullMath.mulDiv(token0Amount, targetRatioX96, 1) > token1Amount;
 
         uint256 l = liquidity;
         uint256 lHat = FullMath.mulDiv(
@@ -116,7 +116,7 @@ library StrategyLibrary {
             CommonLibrary.UNI_FEE_DENOMINATOR,
             CommonLibrary.UNI_FEE_DENOMINATOR - fee
         );
-        if (zeroForOne) {
+        if (!zeroForOne) {
             (l, lHat) = (lHat, l);
         }
         uint256 bX96;
@@ -126,10 +126,6 @@ library StrategyLibrary {
             uint256 b2X96 = FullMath.mulDiv(targetRatioX96, token0Amount, lHat);
             uint256 b3X96 = FullMath.mulDiv(CommonLibrary.Q96, token1Amount, lHat);
             uint256 b4X96 = sqrtPriceX96;
-            console.log("b1X96", b1X96);
-            console.log("b2X96", b2X96);
-            console.log("b3X96", b3X96);
-            console.log("b4X96", b4X96);
 
             if (b1X96 + b2X96 > b3X96 + b4X96) {
                 bX96 = b1X96 + b2X96 - b3X96 - b4X96;
@@ -142,27 +138,25 @@ library StrategyLibrary {
         {
             uint256 dX96 = FullMath.mulDiv(bX96, bX96, CommonLibrary.Q96) + cX96;
             uint256 sqrtdX96 = CommonLibrary.sqrtX96(dX96);
-            console.log("dX96", dX96);
-            console.log("sqrtdX96", sqrtdX96);
             // Mathematically this should always be true but can be subject sqrt error
             if (sqrtdX96 > bX96) {
                 sqrtPX96 = sqrtdX96 - bX96;
             }
         }
-        console.log("l", l);
-        console.log("lHat", lHat);
-        console.log("cX96", cX96);
-        console.log("bX96", bX96);
+
+        console.log("token0Amount", token0Amount);
+        console.log("token1Amount", token1Amount);
         console.log("sqrtPX96", sqrtPX96);
+        console.log("sqrtPriceX96", sqrtPriceX96);
+        console.log("zeroForOne", zeroForOne);
 
         if (zeroForOne) {
             uint256 priceProductX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPX96, CommonLibrary.Q96);
-            console.log("l", l);
-            console.log("sqrtPX96 - sqrtPriceX96", sqrtPX96 - sqrtPriceX96);
-            console.log("priceProductX96", priceProductX96);
-            amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, priceProductX96);
+            amountIn = FullMath.mulDiv(l, sqrtPriceX96 - sqrtPX96, priceProductX96);
+            console.log("amountIn", amountIn);
         } else {
-            amountIn = FullMath.mulDiv(lHat, sqrtPriceX96 - sqrtPX96, CommonLibrary.Q96);
+            amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, CommonLibrary.Q96);
+            console.log("amountIn", amountIn);
         }
     }
 }

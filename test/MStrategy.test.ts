@@ -65,6 +65,30 @@ describe("MStrategy", () => {
         describe("after rebalance", () => {
             it("returns false", async () => {
                 await mStrategy.rebalance(vaultId);
+                const { erc20Vault, moneyVault } =
+                    await mStrategy.vaultImmutableParams(vaultId);
+                const tvls = [];
+                for (const vault of [erc20Vault, moneyVault]) {
+                    const c = await ethers.getContractAt("IVault", vault);
+                    tvls.push(await c.tvl());
+                }
+                const tvlSum = [
+                    tvls[0][0].add(tvls[1][0]),
+                    tvls[0][1].add(tvls[1][1]),
+                ];
+                console.log(
+                    "ERC20",
+                    tvls[0].map((x: any) => x.toString())
+                );
+                console.log(
+                    "Money",
+                    tvls[1].map((x: any) => x.toString())
+                );
+                console.log(
+                    "Total",
+                    tvlSum.map((x: any) => x.toString())
+                );
+
                 expect(await mStrategy.shouldRebalance(vaultId)).to.be.false;
             });
         });

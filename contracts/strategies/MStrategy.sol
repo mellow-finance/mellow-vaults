@@ -55,6 +55,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         for (uint256 i = 0; i < 2; i++) {
             uint256 currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
             uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, params.liquidToFixedRatioX96);
+            console.log("currentRatioX96", currentRatioX96);
+            console.log("deviation", deviation);
             if (deviation > params.poolRebalanceThresholdX96) {
                 return true;
             }
@@ -66,6 +68,8 @@ contract MStrategy is DefaultAccessControlLateInit {
             uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, sqrtPriceX96, CommonLibrary.Q96);
             uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
             uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
+            console.log("currentTokenRatioX96", currentTokenRatioX96);
+            console.log("deviation", deviation);
             if (deviation > params.tokenRebalanceThresholdX96) {
                 return true;
             }
@@ -85,7 +89,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl = erc20Vault.tvl();
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
-        _rebalanceTokens(tvl, pool, erc20Vault, params);
+        _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, params);
         erc20Tvl = erc20Vault.tvl();
         moneyTvl = immutableParams.moneyVault.tvl();
         _rebalancePools(
@@ -158,6 +162,7 @@ contract MStrategy is DefaultAccessControlLateInit {
 
     function _rebalanceTokens(
         uint256[2] memory tvl,
+        uint256[] memory erc20Tvl,
         IUniswapV3Pool pool,
         IERC20Vault erc20Vault,
         Params storage params
@@ -171,11 +176,8 @@ contract MStrategy is DefaultAccessControlLateInit {
             uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
             uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
             targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
-            console.log("valueRatioX96", valueRatioX96);
-            console.log("targetTokenRatioX96", targetTokenRatioX96);
             uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
             uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
-            console.log("deviation", deviation);
             if (deviation < params.tokenRebalanceThresholdX96) {
                 return;
             }
@@ -185,15 +187,6 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256 poolFee = pool.fee();
         bool zeroForOne;
         {
-            console.log("sqrtPriceX96", sqrtPriceX96);
-            console.log("params.sqrtPMinX96", params.sqrtPMinX96);
-            console.log("params.sqrtPMaxX96", params.sqrtPMaxX96);
-            // console.log("targetTokenRatioX96", targetTokenRatioX96);
-            console.log("targetTokenRatioX96", targetTokenRatioX96);
-            console.log("sqrtPriceX96", sqrtPriceX96);
-            console.log("tvl[0]", tvl[0]);
-            console.log("tvl[1]", tvl[1]);
-            console.log("liquidity", liquidity);
             (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
                 targetTokenRatioX96,
                 sqrtPriceX96,
@@ -202,8 +195,16 @@ contract MStrategy is DefaultAccessControlLateInit {
                 poolFee,
                 liquidity
             );
-            console.log("amountIn", amountIn);
-            console.log("zeroForOne", zeroForOne);
+        }
+        // If not enough tokens on ERC-20 balance
+        if (zeroForOne) {
+            if (amountIn > erc20Tvl[0]) {
+                amountIn = erc20Tvl[0];
+            }
+        } else {
+            if (amountIn > erc20Tvl[1]) {
+                amountIn = erc20Tvl[1];
+            }
         }
         ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
         {
