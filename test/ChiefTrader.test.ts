@@ -66,6 +66,26 @@ describe("ChiefTrader", () => {
         });
     });
 
+    describe("#supportsInterface", () => {
+        it("returns `true` on chief trader interface", async () => {
+            expect(await chiefTrader.supportsInterface("0x698afc85")).to.eql(
+                true
+            );
+        });
+
+        it("returns `true` on trader interface", async () => {
+            expect(await chiefTrader.supportsInterface("0xdf1e4f02")).to.eql(
+                true
+            );
+        });
+
+        it("returns `true` on ERC165", async () => {
+            expect(await chiefTrader.supportsInterface("0x01ffc9a7")).to.eql(
+                true
+            );
+        });
+    });
+
     describe("#addTrader", () => {
         describe("when interfaces do not match", () => {
             it("reverts", async () => {
