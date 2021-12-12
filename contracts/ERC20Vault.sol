@@ -10,7 +10,6 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is Vault, ITrader {
@@ -45,8 +44,6 @@ contract ERC20Vault is Vault, ITrader {
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
         _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
-        console.log("amount", amount);
-        console.log("balance", IERC20(path[0].token0).balanceOf(address(this)));
         return trader.swapExactInput(traderId, amount, address(0), path, options);
     }
 
