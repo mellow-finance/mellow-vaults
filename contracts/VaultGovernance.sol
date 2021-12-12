@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
 import "./interfaces/IProtocolGovernance.sol";
@@ -87,7 +87,10 @@ abstract contract VaultGovernance is IVaultGovernance {
     ) public virtual returns (IVault vault, uint256 nft) {
         require(initialized, ExceptionsLibrary.INITIALIZATION);
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
-        require(protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN);
+        require(
+            protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
+            ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN
+        );
         vault = factory.deployVault(vaultTokens, options);
         address nftOwner = owner;
         nft = _internalParams.registry.registerVault(address(vault), nftOwner);

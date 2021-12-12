@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -43,9 +43,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         uint256 len = _vaultTokens.length;
-        for (uint256 i = 0; i < len; ++i)
-            _vaultTokensIndex[vaultTokens_[i]] = true;
-
+        for (uint256 i = 0; i < len; ++i) _vaultTokensIndex[vaultTokens_[i]] = true;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -109,14 +107,12 @@ abstract contract Vault is IVault, ReentrancyGuard {
     ) external returns (uint256[] memory actualTokenAmounts) {
         uint256 len = tokens.length;
         for (uint256 i = 0; i < len; ++i)
-            if (tokenAmounts[i] != 0)
-                IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
+            if (tokenAmounts[i] != 0) IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
 
         actualTokenAmounts = push(tokens, tokenAmounts, options);
         for (uint256 i = 0; i < tokens.length; ++i) {
             uint256 leftover = actualTokenAmounts[i] < tokenAmounts[i] ? tokenAmounts[i] - actualTokenAmounts[i] : 0;
-            if (leftover != 0)
-                IERC20(tokens[i]).safeTransfer(from, leftover);
+            if (leftover != 0) IERC20(tokens[i]).safeTransfer(from, leftover);
         }
     }
 
@@ -144,16 +140,14 @@ abstract contract Vault is IVault, ReentrancyGuard {
         IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
         bool isProtocolAdmin = governance.isAdmin(msg.sender);
         require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), ExceptionsLibrary.ADMIN);
-        if (!isProtocolAdmin)
-            require(_isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
+        if (!isProtocolAdmin) require(_isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             require(governance.isEverAllowedToken(tokens[i]), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));
-            if (tokenAmounts[i] == 0)
-                continue;
+            if (tokenAmounts[i] == 0) continue;
 
             token.safeTransfer(to, tokenAmounts[i]);
         }
@@ -202,23 +196,19 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
-        if (!CommonLibrary.isContract(to))
-            return false;
+        if (!CommonLibrary.isContract(to)) return false;
 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         // make sure that this vault is a registered vault
-        if (_nft == 0)
-            return false;
+        if (_nft == 0) return false;
 
         address thisOwner = registry.ownerOf(_nft);
         // make sure that vault has a registered owner
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-        if (thisOwnerNft == 0)
-            return false;
+        if (thisOwnerNft == 0) return false;
 
         IGatewayVault gw = IGatewayVault(thisOwner);
-        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to))
-            return false;
+        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) return false;
 
         return true;
     }

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -52,7 +52,10 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(_protocolGovernance.isVaultGovernance(msg.sender), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        require(
+            _protocolGovernance.isVaultGovernance(msg.sender),
+            ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+        );
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;

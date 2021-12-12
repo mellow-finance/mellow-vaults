@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -97,8 +97,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
         require(strategy != address(0), ExceptionsLibrary.ZERO_STRATEGY_ADDRESS);
         IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
         uint256 len = nfts.length;
-        for (uint256 i = 0; i < len; ++i)
-            vaultRegistry.approve(strategy, nfts[i]);
+        for (uint256 i = 0; i < len; ++i) vaultRegistry.approve(strategy, nfts[i]);
     }
 
     function onERC721Received(
@@ -114,11 +113,9 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
-        return (
-            interfaceId == this.supportsInterface.selector ||
-            interfaceId == type(IGatewayVault).interfaceId || 
-            interfaceId == type(IVault).interfaceId
-        );
+        return (interfaceId == this.supportsInterface.selector ||
+            interfaceId == type(IGatewayVault).interfaceId ||
+            interfaceId == type(IVault).interfaceId);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -142,8 +139,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
         uint256 vaultTokensLength = _vaultTokens.length;
         if (optimized && strategyParams.redirects.length > 0) {
             for (uint256 i = 0; i < subvaultNftsLength; ++i) {
-                if (strategyParams.redirects[i] == 0)
-                    continue;
+                if (strategyParams.redirects[i] == 0) continue;
                 for (uint256 j = 0; j < vaultTokensLength; ++j) {
                     uint256 vaultIndex = _subvaultNftsIndex[strategyParams.redirects[i]];
                     amountsByVault[vaultIndex][j] += amountsByVault[i][j];
@@ -176,7 +172,6 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
         uint256[] memory _limits = IGatewayVaultGovernance(address(_vaultGovernance)).strategyParams(_nft).limits;
         for (uint256 i = 0; i < vaultTokensLength; ++i)
             require(totalTvl[i] + actualTokenAmounts[i] < _limits[i], ExceptionsLibrary.LIMIT_OVERFLOW);
-
     }
 
     function _pull(
@@ -197,8 +192,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
         uint256 vaultTokensLength = _vaultTokens.length;
         if (optimized && (_redirects.length > 0)) {
             for (uint256 i = 0; i < subvaultNftsLength; ++i) {
-                if (_redirects[i] == 0)
-                    continue;
+                if (_redirects[i] == 0) continue;
 
                 for (uint256 j = 0; j < vaultTokensLength; ++j) {
                     uint256 vaultIndex = _subvaultNftsIndex[_redirects[i]];
@@ -216,8 +210,7 @@ contract GatewayVault is IERC721Receiver, IGatewayVault, Vault, ERC165 {
                 amountsByVault[i],
                 vaultsOptions[i]
             );
-            for (uint256 j = 0; j < vaultTokensLength; ++j)
-                actualTokenAmounts[j] += actualVaultTokenAmounts[j];
+            for (uint256 j = 0; j < vaultTokensLength; ++j) actualTokenAmounts[j] += actualVaultTokenAmounts[j];
         }
     }
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
 import "./interfaces/IGatewayVaultGovernance.sol";
@@ -67,8 +67,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
         IVaultRegistry registry = _internalParams.registry;
         IGatewayVault(address(vault)).addSubvaults(subvaultNfts);
         len = subvaultNfts.length;
-        for (uint256 i = 0; i < len; ++i)
-            registry.safeTransferFrom(msg.sender, address(vault), subvaultNfts[i]);
+        for (uint256 i = 0; i < len; ++i) registry.safeTransferFrom(msg.sender, address(vault), subvaultNfts[i]);
 
         IGatewayVault gw = IGatewayVault(address(vault));
         gw.setApprovalsForStrategy(strategy, subvaultNfts);
