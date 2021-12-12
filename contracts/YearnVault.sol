@@ -33,7 +33,7 @@ contract YearnVault is Vault {
         Vault(vaultGovernance_, vaultTokens_)
     {
         _yTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+        for (uint256 i; i < _vaultTokens.length; ++i) {
             _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);
             require(_yTokens[i] != address(0), "YV");
         }
@@ -50,7 +50,7 @@ contract YearnVault is Vault {
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         address[] memory tokens = _vaultTokens;
         tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < _yTokens.length; ++i) {
+        for (uint256 i; i < _yTokens.length; ++i) {
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             tokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
@@ -62,7 +62,7 @@ contract YearnVault is Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < _yTokens.length; ++i) {
+        for (uint256 i; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
@@ -82,7 +82,7 @@ contract YearnVault is Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         uint256 maxLoss = abi.decode(options, (uint256));
-        for (uint256 i = 0; i < _yTokens.length; ++i) {
+        for (uint256 i; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0)
                 continue;
 

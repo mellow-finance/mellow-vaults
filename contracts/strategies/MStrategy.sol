@@ -50,7 +50,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
 
-        for (uint256 i = 0; i < 2; i++) {
+        for (uint256 i; i < 2; i++) {
             uint256 currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
             uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, params.liquidToFixedRatioX96);
             if (deviation > params.poolRebalanceThresholdX96) {
@@ -106,7 +106,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Amounts = new uint256[](2);
         uint256[] memory moneyAmounts = new uint256[](2);
         bool[] memory zeroForOnes = new bool[](2);
-        for (uint256 i = 0; i < 2; i++) {
+        for (uint256 i; i < 2; i++) {
             (uint256 amountIn, bool zeroForOne) = _calcRebalancePoolAmount(
                 erc20Tvl[i],
                 moneyTvl[i],
@@ -231,7 +231,7 @@ contract MStrategy is DefaultAccessControlLateInit {
             require(vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault, "EXST");
         }
         IVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
-        for (uint256 i = 0; i < vaults.length; i++) {
+        for (uint256 i; i < vaults.length; i++) {
             IVault vault = vaults[i];
             address[] memory tokens = vault.vaultTokens();
             require(tokens[0] == token0, "VT0");

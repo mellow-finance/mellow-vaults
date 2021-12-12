@@ -142,12 +142,12 @@ contract UniV3Trader is Trader, IUniV3Trader {
     }
 
     function _reverseBytes(bytes memory input) internal pure returns (bytes memory output) {
-        for (uint256 i = 0; i < input.length; ++i) output[i] = input[input.length - 1 - i];
+        for (uint256 i; i < input.length; ++i) output[i] = input[input.length - 1 - i];
     }
 
     function _makeMultihopPath(PathItem[] memory path) internal pure returns (bytes memory) {
         bytes memory result;
-        for (uint256 i = 0; i < path.length; ++i) {
+        for (uint256 i; i < path.length; ++i) {
             PathItemOptions memory pathItemOptions = abi.decode(path[i].options, (PathItemOptions));
             result = bytes.concat(result, abi.encodePacked(path[i].token0, abi.encodePacked(pathItemOptions.fee)));
         }

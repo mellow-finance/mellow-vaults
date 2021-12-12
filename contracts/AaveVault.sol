@@ -35,7 +35,7 @@ contract AaveVault is Vault {
         Vault(vaultGovernance_, vaultTokens_)
     {
         _aTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+        for (uint256 i; i < _vaultTokens.length; ++i) {
             address aToken = _getAToken(_vaultTokens[i]);
             require(aToken != address(0), ExceptionsLibrary.ZERO_TOKEN);
             _aTokens[i] = aToken;
@@ -55,7 +55,7 @@ contract AaveVault is Vault {
 
     function _updateTvls() internal {
         uint256 tvlsLength = _tvls.length;
-        for (uint256 i = 0; i < tvlsLength; ++i)
+        for (uint256 i; i < tvlsLength; ++i)
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
     }
 
@@ -70,7 +70,7 @@ contract AaveVault is Vault {
             referralCode = abi.decode(options, (uint256));
         }
 
-        for (uint256 i = 0; i < _aTokens.length; ++i) {
+        for (uint256 i; i < _aTokens.length; ++i) {
             if (tokenAmounts[i] == 0) {
                 continue;
             }
@@ -88,7 +88,7 @@ contract AaveVault is Vault {
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < _aTokens.length; ++i) {
+        for (uint256 i; i < _aTokens.length; ++i) {
             if ((_tvls[i] == 0) || (tokenAmounts[i] == 0)) {
                 continue;
             }

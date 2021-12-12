@@ -20,7 +20,7 @@ abstract contract Trader is ERC165 {
     function _validatePath(ITrader.PathItem[] memory path) internal pure returns (bool result) {
         uint256 pathLength = path.length;
         if (pathLength == 0) return false;
-        for (uint256 i = 0; i < pathLength - 1; ++i) {
+        for (uint256 i; i < pathLength - 1; ++i) {
             if (path[i].token1 != path[i + 1].token0) return false;
             if (path[i].token0 == path[i].token1) return false;
         }

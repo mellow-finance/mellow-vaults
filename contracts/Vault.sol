@@ -43,7 +43,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         uint256 len = _vaultTokens.length;
-        for (uint256 i = 0; i < len; ++i)
+        for (uint256 i; i < len; ++i)
             _vaultTokensIndex[vaultTokens_[i]] = true;
 
     }
@@ -110,12 +110,12 @@ abstract contract Vault is IVault, ReentrancyGuard {
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts) {
         uint256 len = tokens.length;
-        for (uint256 i = 0; i < len; ++i)
+        for (uint256 i; i < len; ++i)
             if (tokenAmounts[i] != 0)
                 IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
 
         actualTokenAmounts = push(tokens, tokenAmounts, options);
-        for (uint256 i = 0; i < tokens.length; ++i) {
+        for (uint256 i; i < tokens.length; ++i) {
             uint256 leftover = actualTokenAmounts[i] < tokenAmounts[i] ? tokenAmounts[i] - actualTokenAmounts[i] : 0;
             if (leftover != 0)
                 IERC20(tokens[i]).safeTransfer(from, leftover);
@@ -150,7 +150,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
             require(_isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; ++i) {
+        for (uint256 i; i < tokens.length; ++i) {
             require(governance.isEverAllowedToken(tokens[i]), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));

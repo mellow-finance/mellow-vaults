@@ -44,7 +44,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function claimAllowlist() external view returns (address[] memory) {
         uint256 l = _claimAllowlist.length();
         address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; ++i) {
+        for (uint256 i; i < l; ++i) {
             res[i] = _claimAllowlist.at(i);
         }
         return res;
@@ -54,8 +54,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function tokenWhitelist() external view returns (address[] memory) {
         uint256 l = _tokenWhitelist.length;
         address[] memory res = new address[](_numberOfValidTokens);
-        uint256 j = 0;
-        for (uint256 i = 0; i < l; ++i) {
+        uint256 j;
+        for (uint256 i; i < l; ++i) {
             if (!_tokensAllowed[_tokenWhitelist[i]] && _tokenEverAdded[_tokenWhitelist[i]]) {
                 continue;
             }
@@ -69,7 +69,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function vaultGovernances() external view returns (address[] memory) {
         uint256 l = _vaultGovernances.length();
         address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; ++i) {
+        for (uint256 i; i < l; ++i) {
             res[i] = _vaultGovernances.at(i);
         }
         return res;
@@ -192,7 +192,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             ExceptionsLibrary.TIMESTAMP
         );
         uint256 len = _pendingClaimAllowlistAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
+        for (uint256 i; i < len; ++i) {
             _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
         }
         delete _pendingClaimAllowlistAdd;
@@ -207,7 +207,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             "TS"
         );
         uint256 len = _pendingTokenWhitelistAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
+        for (uint256 i; i < len; ++i) {
             if (!_tokenEverAdded[_pendingTokenWhitelistAdd[i]]) {
                 _numberOfValidTokens += 1;
                 _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
@@ -232,7 +232,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             ExceptionsLibrary.TIMESTAMP
         );
         uint256 len = _pendingVaultGovernancesAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
+        for (uint256 i; i < len; ++i) {
             _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
         }
         delete _pendingVaultGovernancesAdd;

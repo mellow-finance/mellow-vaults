@@ -26,7 +26,7 @@ contract ERC20Vault is Vault, ITrader {
         address[] memory tokens = _vaultTokens;
         uint256 len = tokens.length;
         tokenAmounts = new uint256[](len);
-        for (uint256 i = 0; i < len; ++i)
+        for (uint256 i; i < len; ++i)
             tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
     }
 
@@ -87,14 +87,14 @@ contract ERC20Vault is Vault, ITrader {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokenAmounts.length; ++i)
+        for (uint256 i; i < tokenAmounts.length; ++i)
             IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
 
         actualTokenAmounts = tokenAmounts;
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
-        for (uint256 i = 0; i < tokens.length; ++i)
+        for (uint256 i; i < tokens.length; ++i)
             require(!isVaultToken(tokens[i]), ExceptionsLibrary.OTHER_VAULT_TOKENS); // vault token is part of TVL
     }
 
