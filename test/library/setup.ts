@@ -16,7 +16,8 @@ import {
     YearnVaultGovernance,
 } from "../types";
 
-export type TestContext = Suite & {
+export type TestContext<T> = Suite & {
+    subject: T;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
     yearnVaultGovernance: YearnVaultGovernance;
@@ -38,7 +39,7 @@ export type TestContext = Suite & {
     [key: string]: any;
 };
 
-export async function setupDefaultContext(this: TestContext) {
+export async function setupDefaultContext<T>(this: TestContext<T>) {
     await deployments.fixture();
     this.vaultRegistry = await ethers.getContract("VaultRegistry");
     this.protocolGovernance = await ethers.getContract("ProtocolGovernance");

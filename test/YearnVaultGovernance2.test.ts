@@ -17,7 +17,7 @@ import { address, pit } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 
 // @ts-ignore
-describe("YearnVaultGovernance2", function (this: TestContext) {
+describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernance>) {
     before(async () => {
         await setupDefaultContext.call(this);
         const yearnVaultRegistryAddress = (await getNamedAccounts())
@@ -38,7 +38,7 @@ describe("YearnVaultGovernance2", function (this: TestContext) {
                     autoMine: true,
                 }
             );
-            this.yearnVaultGovernance = await ethers.getContractAt(
+            this.subject = await ethers.getContractAt(
                 "YearnVaultGovernance",
                 address
             );
@@ -68,44 +68,44 @@ describe("YearnVaultGovernance2", function (this: TestContext) {
                 const params: DelayedProtocolParamsStruct = {
                     yearnVaultRegistry: yearnVaultRegistryAddress,
                 };
-                await this.yearnVaultGovernance
+                await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolParams(params);
                 const actualParams =
-                    await this.yearnVaultGovernance.stagedDelayedProtocolParams();
+                    await this.subject.stagedDelayedProtocolParams();
 
                 return equals(toObject(actualParams), params);
             }
         );
 
         it("returns delayed protocol params staged for commit", async () => {
-            await this.yearnVaultGovernance
+            await this.subject
                 .connect(this.admin)
                 .stageDelayedProtocolParams(someParams);
             const actualParams =
-                await this.yearnVaultGovernance.stagedDelayedProtocolParams();
+                await this.subject.stagedDelayedProtocolParams();
             expect(actualParams).to.be.equivalent(someParams);
         });
 
         describe("when no params are staged for commit", () => {
             it("returns zero struct", async () => {
                 const actualParams =
-                    await this.yearnVaultGovernance.stagedDelayedProtocolParams();
+                    await this.subject.stagedDelayedProtocolParams();
                 expect(actualParams).to.equivalent(noneParams);
             });
         });
 
         describe("when params were just committed", () => {
             it("returns zero struct", async () => {
-                await this.yearnVaultGovernance
+                await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolParams(someParams);
                 await sleep(this.governanceDelay);
-                await this.yearnVaultGovernance
+                await this.subject
                     .connect(this.admin)
                     .commitDelayedProtocolParams();
                 const actualParams =
-                    await this.yearnVaultGovernance.stagedDelayedProtocolParams();
+                    await this.subject.stagedDelayedProtocolParams();
                 expect(actualParams).to.equivalent(noneParams);
             });
         });
@@ -128,33 +128,30 @@ describe("YearnVaultGovernance2", function (this: TestContext) {
                 const params: DelayedProtocolParamsStruct = {
                     yearnVaultRegistry: yearnVaultRegistryAddress,
                 };
-                await this.yearnVaultGovernance
+                await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolParams(params);
-                const actualParams =
-                    await this.yearnVaultGovernance.delayedProtocolParams();
+                const actualParams = await this.subject.delayedProtocolParams();
 
                 return !equals(toObject(actualParams), params);
             }
         );
 
         it("returns current delayed protocol params", async () => {
-            await this.yearnVaultGovernance
+            await this.subject
                 .connect(this.admin)
                 .stageDelayedProtocolParams(someParams);
             await sleep(this.governanceDelay);
-            await this.yearnVaultGovernance
+            await this.subject
                 .connect(this.admin)
                 .commitDelayedProtocolParams();
-            const actualParams =
-                await this.yearnVaultGovernance.delayedProtocolParams();
+            const actualParams = await this.subject.delayedProtocolParams();
             expect(actualParams).to.equivalent(someParams);
         });
 
         describe("when no params were committed", () => {
             it("returns non-zero params initialized in constructor", async () => {
-                const actualParams =
-                    await this.yearnVaultGovernance.delayedProtocolParams();
+                const actualParams = await this.subject.delayedProtocolParams();
                 expect(actualParams).to.not.be.equivalent(noneParams);
             });
         });
