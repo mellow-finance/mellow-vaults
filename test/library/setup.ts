@@ -3,7 +3,7 @@ import { Assertion } from "chai";
 import { deployments, ethers, getNamedAccounts } from "hardhat";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
-import { addSigner, toObject } from "./library/Helpers";
+import { addSigner, toObject } from "./Helpers";
 import {
     AaveVaultGovernance,
     ERC20,
@@ -14,7 +14,7 @@ import {
     UniV3VaultGovernance,
     VaultRegistry,
     YearnVaultGovernance,
-} from "./types";
+} from "../types";
 
 export type TestContext = Suite & {
     vaultRegistry: VaultRegistry;

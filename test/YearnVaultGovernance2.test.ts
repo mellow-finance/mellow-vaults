@@ -10,7 +10,7 @@ import {
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 import { DelayedProtocolParamsStruct } from "./types/YearnVaultGovernance";
-import { setupDefaultContext, TestContext } from "./setup";
+import { setupDefaultContext, TestContext } from "./library/setup";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
 import { address, pit } from "./library/property";
