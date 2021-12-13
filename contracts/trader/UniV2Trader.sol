@@ -8,6 +8,7 @@ import "./interfaces/IUniV2Trader.sol";
 import "./libraries/TraderExceptionsLibrary.sol";
 import "./Trader.sol";
 
+/// @notice Contract that executes swaps on Uniswap V2
 contract UniV2Trader is Trader, IUniV2Trader {
     using SafeERC20 for IERC20;
 

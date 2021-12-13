@@ -13,10 +13,6 @@ import "./Trader.sol";
 contract UniV3Trader is Trader, IUniV3Trader {
     using SafeERC20 for IERC20;
 
-    struct PathItemOptions {
-        uint24 fee;
-    }
-
     ISwapRouter public swapRouter;
 
     constructor(address _swapRouter) {
