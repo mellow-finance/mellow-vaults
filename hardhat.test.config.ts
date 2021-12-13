@@ -67,6 +67,9 @@ const config: HardhatUserConfig = {
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
     },
+    mocha: {
+        timeout: 800000,
+    },
 };
 
 export default config;
