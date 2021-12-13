@@ -26,7 +26,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256) {
-        _validatePathLinked(path);
+        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
         IERC20(path[0].token0).safeTransferFrom(recipient, address(this), amount);
         _approveERC20TokenIfNecessary(path[0].token0, address(router));
@@ -48,7 +48,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256) {
-        _validatePathLinked(path);
+        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
         IERC20(path[0].token0).safeTransferFrom(recipient, address(this), options_.limitAmount);
         uint256[] memory amounts = router.swapTokensForExactTokens(
