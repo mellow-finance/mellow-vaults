@@ -111,7 +111,7 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
         });
     });
 
-    describe("delayedProtocolParams", () => {
+    describe("#delayedProtocolParams", () => {
         const someParams: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: randomAddress(),
         };
