@@ -8,6 +8,7 @@ import {
     hexaString,
     Parameters,
 } from "fast-check";
+import { ethers } from "hardhat";
 
 export type PropertyOptions = Parameters & {
     beforeEach?: AsyncPropertyHookFunction;
@@ -18,9 +19,10 @@ export const uint256: Arbitrary<BigNumber> = bigUintN(256).map((x: bigint) =>
     BigNumber.from(x.toString())
 );
 
-export const address: Arbitrary<string> = hexaString({ maxLength: 40 }).map(
-    (x: string) => `0x${x}`
-);
+export const address: Arbitrary<string> = hexaString({
+    minLength: 40,
+    maxLength: 40,
+}).map((x: string) => ethers.utils.getAddress(`0x${x}`));
 
 export function pit(
     description: string,

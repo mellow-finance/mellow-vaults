@@ -13,6 +13,7 @@ import { DelayedProtocolParamsStruct } from "./types/YearnVaultGovernance";
 import { setupDefaultContext, TestContext } from "./setup";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
+import { address, pit } from "./library/property";
 
 // @ts-ignore
 describe("YearnVaultGovernance2", function (this: TestContext) {
@@ -57,6 +58,24 @@ describe("YearnVaultGovernance2", function (this: TestContext) {
         const noneParams: DelayedProtocolParamsStruct = {
             yearnVaultRegistry: ethers.constants.AddressZero,
         };
+
+        pit(
+            "always equals to params that were just staged",
+            { numRuns: 20 },
+            address,
+            async (yearnVaultRegistryAddress: string) => {
+                const params: DelayedProtocolParamsStruct = {
+                    yearnVaultRegistry: yearnVaultRegistryAddress,
+                };
+                await this.yearnVaultGovernance
+                    .connect(this.admin)
+                    .stageDelayedProtocolParams(params);
+                const actualParams =
+                    await this.yearnVaultGovernance.stagedDelayedProtocolParams();
+
+                return equals(toObject(actualParams), params);
+            }
+        );
 
         it("returns delayed protocol params staged for commit", async () => {
             await this.yearnVaultGovernance
