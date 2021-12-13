@@ -33,10 +33,8 @@ contract UniV3Trader is Trader, IUniV3Trader {
     ) external returns (uint256) {
         require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 1)
-            return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
-        else
-            return _swapExactInputMultihop(amount, recipient, path, options_);
+        if (path.length == 1) return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
+        else return _swapExactInputMultihop(amount, recipient, path, options_);
     }
 
     /// @inheritdoc ITrader
@@ -51,8 +49,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
         Options memory options_ = abi.decode(options, (Options));
         if (path.length == 1)
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
-        else
-            return _swapExactOutputMultihop(amount, recipient, path, options_);
+        else return _swapExactOutputMultihop(amount, recipient, path, options_);
     }
 
     function _swapExactInputSingle(
