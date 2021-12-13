@@ -16,12 +16,8 @@ import { equals } from "ramda";
 import { address, pit } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 
-type CustomContext = {
-    governanceDelay: BigNumber;
-};
-
 // @ts-ignore
-describe("YearnVaultGovernance2", function (this: TestContext & CustomContext) {
+describe("YearnVaultGovernance2", function (this: TestContext) {
     before(async () => {
         await setupDefaultContext.call(this);
         const yearnVaultRegistryAddress = (await getNamedAccounts())
@@ -47,7 +43,6 @@ describe("YearnVaultGovernance2", function (this: TestContext & CustomContext) {
                 address
             );
         });
-        this.governanceDelay = await this.protocolGovernance.governanceDelay();
     });
 
     beforeEach(async () => {

@@ -34,6 +34,7 @@ export type TestContext = Suite & {
     mStrategyAdmin: SignerWithAddress;
     startTimestamp: number;
     deploymentFixture: Function;
+    governanceDelay: number;
     [key: string]: any;
 };
 
@@ -69,7 +70,13 @@ export async function setupDefaultContext(this: TestContext) {
     this.usdc = await ethers.getContractAt("ERC20", usdc);
     this.weth = await ethers.getContractAt("ERC20", weth);
     this.wbtc = await ethers.getContractAt("ERC20", wbtc);
-    this.tokenAddresses = [usdc, weth, wbtc].map((x) => x.toLowerCase()).sort();
+    this.tokenAddresses = [usdc, weth, wbtc]
+        .map((x) => x.toLowerCase())
+        .sort()
+        .map((x) => ethers.utils.getAddress(x));
+    this.governanceDelay = (
+        await this.protocolGovernance.governanceDelay()
+    ).toNumber();
 }
 
 declare global {
