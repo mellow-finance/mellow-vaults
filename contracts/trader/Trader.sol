@@ -17,9 +17,10 @@ abstract contract Trader is ERC165 {
             IERC20(token).approve(to, type(uint256).max);
     }
 
-    function _validatePath(ITrader.PathItem[] memory path) internal pure returns (bool result) {
+    function _validatePathLinked(ITrader.PathItem[] memory path) internal pure returns (bool result) {
         uint256 pathLength = path.length;
         if (pathLength == 0) return false;
+        if (pathLength == 1) return path[0].token0 != path[0].token1;
         for (uint256 i = 0; i < pathLength - 1; ++i) {
             if (path[i].token1 != path[i + 1].token0) return false;
             if (path[i].token0 == path[i].token1) return false;
