@@ -144,7 +144,7 @@ describe("UniV2Trader", () => {
                                     token0: wbtc,
                                     token1: weth,
                                     options: [],
-                                }
+                                },
                             ],
                             []
                         )
@@ -222,19 +222,20 @@ describe("UniV2Trader", () => {
                             },
                         ]
                     );
-                    const amountIn = await uniV2Trader.callStatic.swapExactOutput(
-                        0,
-                        amount,
-                        deployer,
-                        [
-                            {
-                                token0: weth,
-                                token1: wbtc,
-                                options: [],
-                            },
-                        ],
-                        options
-                    );
+                    const amountIn =
+                        await uniV2Trader.callStatic.swapExactOutput(
+                            0,
+                            amount,
+                            deployer,
+                            [
+                                {
+                                    token0: weth,
+                                    token1: wbtc,
+                                    options: [],
+                                },
+                            ],
+                            options
+                        );
                     console.log("amountIn", amountIn);
                 });
             });
