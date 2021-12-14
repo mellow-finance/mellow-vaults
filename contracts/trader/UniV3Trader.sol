@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -12,10 +12,6 @@ import "./Trader.sol";
 /// @notice Contract that can execute ERC20 swaps on Uniswap V3
 contract UniV3Trader is Trader, IUniV3Trader {
     using SafeERC20 for IERC20;
-
-    struct PathItemOptions {
-        uint24 fee;
-    }
 
     ISwapRouter public swapRouter;
 
@@ -31,13 +27,10 @@ contract UniV3Trader is Trader, IUniV3Trader {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256) {
+        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 1) {
-            return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
-        } else {
-            require(super._validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
-            return _swapExactInputMultihop(amount, recipient, path, options_);
-        }
+        if (path.length == 1) return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
+        else return _swapExactInputMultihop(amount, recipient, path, options_);
     }
 
     /// @inheritdoc ITrader
@@ -48,13 +41,11 @@ contract UniV3Trader is Trader, IUniV3Trader {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256) {
+        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 1) {
+        if (path.length == 1)
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
-        } else {
-            require(super._validatePath(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
-            return _swapExactOutputMultihop(amount, recipient, path, options_);
-        }
+        else return _swapExactOutputMultihop(amount, recipient, path, options_);
     }
 
     function _swapExactInputSingle(

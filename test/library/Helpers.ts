@@ -157,6 +157,14 @@ export async function depositWBTC(
     });
 }
 
+export async function approveERC20(
+    token: string,
+    spender: string
+): Promise<void> {
+    const tokenContract = await ethers.getContractAt("IERC20", token);
+    await tokenContract.approve(spender, ethers.constants.MaxUint256);
+}
+
 export const withSigner = async (
     address: string,
     f: (signer: SignerWithAddress) => Promise<void>

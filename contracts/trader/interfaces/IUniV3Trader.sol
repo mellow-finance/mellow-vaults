@@ -10,4 +10,8 @@ interface IUniV3Trader is ITrader {
         uint256 deadline;
         uint256 limitAmount;
     }
+
+    struct PathItemOptions {
+        uint24 fee;
+    }
 }

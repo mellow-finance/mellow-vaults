@@ -30,7 +30,7 @@ interface ITrader {
         bytes memory options
     ) external returns (uint256 amountOut);
 
-    /// @notice Swap exact amount of input tokens for output tokens
+    /// @notice Swap input tokens for exact amount of output tokens
     /// @param traderId Trader ID (used only by Chief trader)
     /// @param amount Amount of the output tokens to receive
     /// @param recipient Address of the recipient (not used by Chief trader)
