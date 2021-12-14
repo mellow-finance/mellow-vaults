@@ -88,6 +88,10 @@ const config: HardhatUserConfig = {
             default: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
             kovan: "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
         },
+        dai: {
+            default: "0x6b175474e89094c44da98b954eedeac495271d0f",
+            kovan: "0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa",
+        },
         aaveLendingPool: {
             default: "0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9",
             kovan: "0xE0fBa4Fc209b4948668006B2bE61711b7f465bAe",
@@ -103,6 +107,10 @@ const config: HardhatUserConfig = {
         uniswapV3Router: {
             default: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
             kovan: "0x8a0B62Fbcb1B862BbF1ad31c26a72b7b746EdFC1",
+        },
+        uniswapV2Router02: {
+            default: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+            kovan: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
         },
     },
 

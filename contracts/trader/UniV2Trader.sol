@@ -12,9 +12,10 @@ import "./Trader.sol";
 contract UniV2Trader is Trader, IUniV2Trader {
     using SafeERC20 for IERC20;
 
-    IUniswapV2Router02 public router;
+    IUniswapV2Router02 public immutable router;
 
     constructor(address _router) {
+        require(_router != address(0), TraderExceptionsLibrary.ADDRESS_ZERO_EXCEPTION);
         router = IUniswapV2Router02(_router);
     }
 
