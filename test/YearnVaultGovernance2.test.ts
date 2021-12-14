@@ -1,6 +1,7 @@
 import { Assertion, expect } from "chai";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import {
+    addSigner,
     now,
     randomAddress,
     sleep,
@@ -9,7 +10,10 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
-import { DelayedProtocolParamsStruct } from "./types/YearnVaultGovernance";
+import {
+    DelayedProtocolParamsStruct,
+    YearnVaultGovernance,
+} from "./types/YearnVaultGovernance";
 import { setupDefaultContext, TestContext } from "./library/setup";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
@@ -17,9 +21,17 @@ import { address, pit } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 import { vaultGovernanceBehavior } from "./VaultGovernance2.test";
 import { Arbitrary } from "fast-check";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+
+type CustomContext = {
+    nft: number;
+    strategySigner: SignerWithAddress;
+    ownerSigner: SignerWithAddress;
+};
 
 // @ts-ignore
-describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernance>) {
+describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernance> &
+    CustomContext) {
     before(async () => {
         await setupDefaultContext.call(this);
         const yearnVaultRegistryAddress = (await getNamedAccounts())
@@ -44,6 +56,17 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
                 "YearnVaultGovernance",
                 address
             );
+            this.ownerSigner = await addSigner(randomAddress());
+            this.strategySigner = await addSigner(randomAddress());
+            await this.subject.deployVault(
+                this.tokens.map((x) => x.address),
+                [],
+                this.ownerSigner.address
+            );
+            this.nft = (await this.vaultRegistry.vaultsCount()).toNumber();
+            await this.vaultRegistry
+                .connect(this.ownerSigner)
+                .approve(this.strategySigner.address, this.nft);
         });
     });
 
@@ -56,7 +79,10 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
     const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
         address.map((yearnVaultRegistry) => ({ yearnVaultRegistry }));
 
-    vaultGovernanceBehavior.call(this, { delayedProtocolParams });
+    vaultGovernanceBehavior.call(this, {
+        delayedProtocolParams,
+        ...this,
+    });
 
     // describe("#stagedDelayedProtocolParams", () => {
     //     const someParams: DelayedProtocolParamsStruct = {

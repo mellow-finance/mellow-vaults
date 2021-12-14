@@ -1,4 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { Signer } from "ethers";
 import {
     Arbitrary,
     assert,
@@ -11,6 +13,7 @@ import {
 import { ethers } from "hardhat";
 
 export const RUNS = {
+    verylow: 10,
     low: 20,
     mid: 100,
     high: 500,
