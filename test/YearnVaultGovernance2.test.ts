@@ -135,83 +135,106 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
                 });
             });
         });
-        // it("returns a corresponding yVault for token", async () => {
-        //     const { read } = deployments;
-        //     const { weth } = await getNamedAccounts();
-        //     const yToken = await read(
-        //         "YearnVaultGovernance",
-        //         "yTokenForToken",
-        //         weth
-        //     );
-        //     expect(yToken.toLowerCase()).to.eq(YEARN_WETH_POOL);
-        // });
-
-        // describe("when overriden by setYTokenForToken", () => {
-        //     it("returns overriden yToken", async () => {
-        //         const { read } = deployments;
-        //         const { weth, admin } = await getNamedAccounts();
-        //         const newYToken = randomAddress();
-        //         await withSigner(admin, async (s) => {
-        //             const g = await (
-        //                 await ethers.getContract("YearnVaultGovernance")
-        //             ).connect(s);
-        //             await g.setYTokenForToken(weth, newYToken);
-        //         });
-        //         const yToken = await read(
-        //             "YearnVaultGovernance",
-        //             "yTokenForToken",
-        //             weth
-        //         );
-        //         expect(yToken.toLowerCase()).to.eq(newYToken.toLowerCase());
-        //     });
-        // });
-
-        // describe("when yToken doesn't exist in overrides or yearnRegistry", () => {
-        //     it("returns 0 address", async () => {
-        //         const { read } = deployments;
-        //         const yToken = await read(
-        //             "YearnVaultGovernance",
-        //             "yTokenForToken",
-        //             randomAddress()
-        //         );
-        //         expect(yToken).to.eq(ethers.constants.AddressZero);
-        //     });
-        // });
     });
 
-    // describe("setYTokenForToken", () => {
-    //     it("sets a yToken override for a token", async () => {
-    //         const { read } = deployments;
-    //         const { weth, admin } = await getNamedAccounts();
-    //         const newYToken = randomAddress();
-    //         await withSigner(admin, async (s) => {
-    //             const g = (
-    //                 await ethers.getContract("YearnVaultGovernance")
-    //             ).connect(s);
-    //             await g.setYTokenForToken(weth, newYToken);
-    //         });
-    //         const yToken = await read(
-    //             "YearnVaultGovernance",
-    //             "yTokenForToken",
-    //             weth
-    //         );
-    //         expect(yToken.toLowerCase()).to.eq(newYToken.toLowerCase());
-    //     });
+    describe("#setYTokenForToken", () => {
+        let yTokenAddress: string;
+        beforeEach(async () => {
+            yTokenAddress = randomAddress();
+        });
+        it("sets a yToken override for a ERC20 token", async () => {
+            await this.subject
+                .connect(this.admin)
+                .setYTokenForToken(this.weth.address, yTokenAddress);
+            expect(yTokenAddress).to.eq(
+                await this.subject.yTokenForToken(this.weth.address)
+            );
+        });
 
-    //     describe("when called not by admin", () => {
-    //         it("reverts", async () => {
-    //             const { weth, stranger, deployer } = await getNamedAccounts();
-    //             for (const actor of [stranger, deployer]) {
-    //                 await withSigner(actor, async (s) => {
-    //                     const g = (
-    //                         await ethers.getContract("YearnVaultGovernance")
-    //                     ).connect(s);
-    //                     await expect(
-    //                         g.setYTokenForToken(weth, randomAddress())
-    //                     ).to.be.revertedWith(Exceptions.ADMIN);
-    //                 });
-    //             }
-    //         });
-    //     });
-    // });
+        it("emits SetYToken event", async () => {
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .setYTokenForToken(this.weth.address, yTokenAddress)
+            ).to.emit(this.subject, "SetYToken");
+        });
+
+        describe("access list", () => {
+            it("allowed: ProtocolGovernance admin", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .setYTokenForToken(this.weth.address, yTokenAddress)
+                ).to.not.be.reverted;
+            });
+
+            it("denied: Vault NFT Owner (aka liquidity provider)", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.ownerSigner)
+                        .setYTokenForToken(this.weth.address, yTokenAddress)
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+            it("denied: Vault NFT Approved (aka strategy)", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.strategySigner)
+                        .setYTokenForToken(this.weth.address, yTokenAddress)
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+            it("denied: deployer", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .setYTokenForToken(this.weth.address, yTokenAddress)
+                ).to.be.revertedWith(Exceptions.ADMIN);
+            });
+
+            it("denied: random address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .setYTokenForToken(
+                                    this.weth.address,
+                                    yTokenAddress
+                                )
+                        ).to.be.revertedWith(Exceptions.ADMIN);
+                    });
+                });
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when yToken is 0", () => {
+                it("succeeds", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .setYTokenForToken(
+                                this.weth.address,
+                                ethers.constants.AddressZero
+                            )
+                    ).to.not.be.reverted;
+                });
+            });
+
+            describe("when called twice", () => {
+                it("succeeds", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .setYTokenForToken(this.weth.address, yTokenAddress);
+                    const otherAddress = randomAddress();
+                    await this.subject
+                        .connect(this.admin)
+                        .setYTokenForToken(this.weth.address, otherAddress);
+
+                    expect(otherAddress).to.eq(
+                        await this.subject.yTokenForToken(this.weth.address)
+                    );
+                });
+            });
+        });
+    });
 });

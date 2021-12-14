@@ -217,7 +217,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract>(
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
                         this.subject
-                            .connect(this.strategySigner)
+                            .connect(s)
                             .stageDelayedProtocolParams(someParams)
                     ).to.be.revertedWith(Exceptions.ADMIN);
                 });
@@ -385,9 +385,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract>(
             it("denied: random address", async () => {
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
-                        this.subject
-                            .connect(this.strategySigner)
-                            .commitDelayedProtocolParams()
+                        this.subject.connect(s).commitDelayedProtocolParams()
                     ).to.be.revertedWith(Exceptions.ADMIN);
                 });
             });
