@@ -25,6 +25,7 @@ abstract contract Trader is ERC165 {
         if (pathLength == 0) return false;
         if (pathLength == 1) return path[0].token0 != path[0].token1;
         for (uint256 i = 0; i < pathLength - 1; ++i) {
+            if (path[i].token0 == address(0) || path[i].token1 == address(0)) return false;
             if (path[i].token1 != path[i + 1].token0) return false;
             if (path[i].token0 == path[i].token1) return false;
         }

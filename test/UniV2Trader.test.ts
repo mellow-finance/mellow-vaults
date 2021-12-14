@@ -69,7 +69,7 @@ describe("UniV2Trader", () => {
         });
     });
 
-    describe("swaps", () => {
+    describe("swaps:", () => {
         let swapsDeploymentFixture: Function;
         let deployer: string;
 
@@ -128,7 +128,7 @@ describe("UniV2Trader", () => {
                 });
             });
 
-            xdescribe("happy case", () => {
+            describe("happy case", () => {
                 it("swaps exact input tokens for output", async () => {
                     const amount = BigNumber.from(10).pow(3);
                     const options = encodeToBytes(
@@ -140,10 +140,10 @@ describe("UniV2Trader", () => {
                             },
                         ]
                     );
-                    const initialAmountIn = await wethContract.balanceOf(
+                    const initialAmountIn = await wbtcContract.balanceOf(
                         deployer
                     );
-                    const initialAmountOut = await wbtcContract.balanceOf(
+                    const initialAmountOut = await wethContract.balanceOf(
                         deployer
                     );
                     const amountOut =
@@ -153,13 +153,14 @@ describe("UniV2Trader", () => {
                             deployer,
                             [
                                 {
-                                    token0: weth,
-                                    token1: wbtc,
+                                    token0: wbtc,
+                                    token1: weth,
                                     options: [],
                                 },
                             ] as PathItemStruct[],
                             options
                         );
+                    console.log("amountOut", amountOut);
                     await expect(
                         uniV2Trader.swapExactInput(
                             0,
@@ -167,8 +168,8 @@ describe("UniV2Trader", () => {
                             deployer,
                             [
                                 {
-                                    token0: weth,
-                                    token1: wbtc,
+                                    token0: wbtc,
+                                    token1: weth,
                                     options: [],
                                 },
                             ] as PathItemStruct[],
@@ -176,10 +177,10 @@ describe("UniV2Trader", () => {
                         )
                     ).to.not.be.reverted;
                     expect(await wbtcContract.balanceOf(deployer)).to.eql(
-                        amountOut.add(initialAmountOut)
+                        initialAmountIn.sub(amount)
                     );
                     expect(await wethContract.balanceOf(deployer)).to.eql(
-                        initialAmountIn.sub(amount)
+                        initialAmountOut.add(amountOut)
                     );
                 });
             });

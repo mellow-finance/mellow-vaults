@@ -72,6 +72,6 @@ contract UniV2Trader is Trader, IUniV2Trader {
     function _makePath(PathItem[] memory path) internal pure returns (address[] memory result) {
         result = new address[](path.length + 1);
         result[0] = path[0].token0;
-        for (uint256 i = 1; i < path.length; ++i) result[i + 1] = path[i].token1;
+        for (uint256 i = 0; i < path.length; ++i) result[i + 1] = path[i].token1;
     }
 }
