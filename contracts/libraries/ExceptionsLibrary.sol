@@ -11,6 +11,7 @@ library ExceptionsLibrary {
     string constant EMPTY_PARAMS = "P0";
     string constant ADMIN = "ADM";
     string constant ADMIN_ADDRESS_ZERO = "ZADM";
+    string constant YEARN_REGISTRY_ADDRESS_ZERO = "ZY";
     string constant VAULT_FACTORY_ADDRESS_ZERO = "ZVF";
     string constant APPROVED_OR_OWNER = "IO";
     string constant INCONSISTENT_LENGTH = "L";

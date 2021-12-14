@@ -79,9 +79,39 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
     const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
         address.map((yearnVaultRegistry) => ({ yearnVaultRegistry }));
 
-    vaultGovernanceBehavior.call(this, {
-        delayedProtocolParams,
-        ...this,
+    describe("#constructor", () => {
+        it("deploys a new contract", async () => {
+            expect(ethers.constants.AddressZero).to.not.eq(
+                this.subject.address
+            );
+        });
+
+        describe("edge cases", () => {
+            describe("when YearnVaultRegistry address is 0", () => {
+                it("reverts", async () => {
+                    await deployments.fixture();
+                    await expect(
+                        deployments.deploy("YearnVaultGovernance", {
+                            from: this.deployer.address,
+                            args: [
+                                {
+                                    protocolGovernance:
+                                        this.protocolGovernance.address,
+                                    registry: this.vaultRegistry.address,
+                                },
+                                {
+                                    yearnVaultRegistry:
+                                        ethers.constants.AddressZero,
+                                },
+                            ],
+                            autoMine: true,
+                        })
+                    ).to.be.revertedWith(
+                        Exceptions.YEARN_REGISTRY_ADDRESS_ZERO
+                    );
+                });
+            });
+        });
     });
 
     describe("#yTokenForToken", () => {
@@ -236,5 +266,10 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
                 });
             });
         });
+    });
+
+    vaultGovernanceBehavior.call(this, {
+        delayedProtocolParams,
+        ...this,
     });
 });
