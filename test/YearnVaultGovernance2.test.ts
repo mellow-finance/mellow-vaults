@@ -15,6 +15,8 @@ import { Context, Suite } from "mocha";
 import { equals } from "ramda";
 import { address, pit } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
+import { vaultGovernanceBehavior } from "./VaultGovernance2.test";
+import { Arbitrary } from "fast-check";
 
 // @ts-ignore
 describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernance>) {
@@ -51,111 +53,116 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
         await sleepTo(this.startTimestamp);
     });
 
-    describe("#stagedDelayedProtocolParams", () => {
-        const someParams: DelayedProtocolParamsStruct = {
-            yearnVaultRegistry: randomAddress(),
-        };
+    const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
+        address.map((yearnVaultRegistry) => ({ yearnVaultRegistry }));
 
-        const noneParams: DelayedProtocolParamsStruct = {
-            yearnVaultRegistry: ethers.constants.AddressZero,
-        };
+    vaultGovernanceBehavior.call(this, { delayedProtocolParams });
 
-        pit(
-            "always equals to params that were just staged",
-            { numRuns: 20 },
-            address,
-            async (yearnVaultRegistryAddress: string) => {
-                const params: DelayedProtocolParamsStruct = {
-                    yearnVaultRegistry: yearnVaultRegistryAddress,
-                };
-                await this.subject
-                    .connect(this.admin)
-                    .stageDelayedProtocolParams(params);
-                const actualParams =
-                    await this.subject.stagedDelayedProtocolParams();
+    // describe("#stagedDelayedProtocolParams", () => {
+    //     const someParams: DelayedProtocolParamsStruct = {
+    //         yearnVaultRegistry: randomAddress(),
+    //     };
 
-                return equals(toObject(actualParams), params);
-            }
-        );
+    //     const noneParams: DelayedProtocolParamsStruct = {
+    //         yearnVaultRegistry: ethers.constants.AddressZero,
+    //     };
 
-        it("returns delayed protocol params staged for commit", async () => {
-            await this.subject
-                .connect(this.admin)
-                .stageDelayedProtocolParams(someParams);
-            const actualParams =
-                await this.subject.stagedDelayedProtocolParams();
-            expect(actualParams).to.be.equivalent(someParams);
-        });
+    //     pit(
+    //         "always equals to params that were just staged",
+    //         { numRuns: 20 },
+    //         address,
+    //         async (yearnVaultRegistryAddress: string) => {
+    //             const params: DelayedProtocolParamsStruct = {
+    //                 yearnVaultRegistry: yearnVaultRegistryAddress,
+    //             };
+    //             await this.subject
+    //                 .connect(this.admin)
+    //                 .stageDelayedProtocolParams(params);
+    //             const actualParams =
+    //                 await this.subject.stagedDelayedProtocolParams();
 
-        describe("when no params are staged for commit", () => {
-            it("returns zero struct", async () => {
-                const actualParams =
-                    await this.subject.stagedDelayedProtocolParams();
-                expect(actualParams).to.equivalent(noneParams);
-            });
-        });
+    //             return equals(toObject(actualParams), params);
+    //         }
+    //     );
 
-        describe("when params were just committed", () => {
-            it("returns zero struct", async () => {
-                await this.subject
-                    .connect(this.admin)
-                    .stageDelayedProtocolParams(someParams);
-                await sleep(this.governanceDelay);
-                await this.subject
-                    .connect(this.admin)
-                    .commitDelayedProtocolParams();
-                const actualParams =
-                    await this.subject.stagedDelayedProtocolParams();
-                expect(actualParams).to.equivalent(noneParams);
-            });
-        });
-    });
+    //     it("returns delayed protocol params staged for commit", async () => {
+    //         await this.subject
+    //             .connect(this.admin)
+    //             .stageDelayedProtocolParams(someParams);
+    //         const actualParams =
+    //             await this.subject.stagedDelayedProtocolParams();
+    //         expect(actualParams).to.be.equivalent(someParams);
+    //     });
 
-    describe("#delayedProtocolParams", () => {
-        const someParams: DelayedProtocolParamsStruct = {
-            yearnVaultRegistry: randomAddress(),
-        };
+    //     describe("when no params are staged for commit", () => {
+    //         it("returns zero struct", async () => {
+    //             const actualParams =
+    //                 await this.subject.stagedDelayedProtocolParams();
+    //             expect(actualParams).to.equivalent(noneParams);
+    //         });
+    //     });
 
-        const noneParams: DelayedProtocolParamsStruct = {
-            yearnVaultRegistry: ethers.constants.AddressZero,
-        };
+    //     describe("when params were just committed", () => {
+    //         it("returns zero struct", async () => {
+    //             await this.subject
+    //                 .connect(this.admin)
+    //                 .stageDelayedProtocolParams(someParams);
+    //             await sleep(this.governanceDelay);
+    //             await this.subject
+    //                 .connect(this.admin)
+    //                 .commitDelayedProtocolParams();
+    //             const actualParams =
+    //                 await this.subject.stagedDelayedProtocolParams();
+    //             expect(actualParams).to.equivalent(noneParams);
+    //         });
+    //     });
+    // });
 
-        pit(
-            "just staging params doesn't affect delayedProtocolParams",
-            { numRuns: 20 },
-            address,
-            async (yearnVaultRegistryAddress: string) => {
-                const params: DelayedProtocolParamsStruct = {
-                    yearnVaultRegistry: yearnVaultRegistryAddress,
-                };
-                await this.subject
-                    .connect(this.admin)
-                    .stageDelayedProtocolParams(params);
-                const actualParams = await this.subject.delayedProtocolParams();
+    // describe("#delayedProtocolParams", () => {
+    //     const someParams: DelayedProtocolParamsStruct = {
+    //         yearnVaultRegistry: randomAddress(),
+    //     };
 
-                return !equals(toObject(actualParams), params);
-            }
-        );
+    //     const noneParams: DelayedProtocolParamsStruct = {
+    //         yearnVaultRegistry: ethers.constants.AddressZero,
+    //     };
 
-        it("returns current delayed protocol params", async () => {
-            await this.subject
-                .connect(this.admin)
-                .stageDelayedProtocolParams(someParams);
-            await sleep(this.governanceDelay);
-            await this.subject
-                .connect(this.admin)
-                .commitDelayedProtocolParams();
-            const actualParams = await this.subject.delayedProtocolParams();
-            expect(actualParams).to.equivalent(someParams);
-        });
+    //     pit(
+    //         "just staging params doesn't affect delayedProtocolParams",
+    //         { numRuns: 20 },
+    //         address,
+    //         async (yearnVaultRegistryAddress: string) => {
+    //             const params: DelayedProtocolParamsStruct = {
+    //                 yearnVaultRegistry: yearnVaultRegistryAddress,
+    //             };
+    //             await this.subject
+    //                 .connect(this.admin)
+    //                 .stageDelayedProtocolParams(params);
+    //             const actualParams = await this.subject.delayedProtocolParams();
 
-        describe("when no params were committed", () => {
-            it("returns non-zero params initialized in constructor", async () => {
-                const actualParams = await this.subject.delayedProtocolParams();
-                expect(actualParams).to.not.be.equivalent(noneParams);
-            });
-        });
-    });
+    //             return !equals(toObject(actualParams), params);
+    //         }
+    //     );
+
+    //     it("returns current delayed protocol params", async () => {
+    //         await this.subject
+    //             .connect(this.admin)
+    //             .stageDelayedProtocolParams(someParams);
+    //         await sleep(this.governanceDelay);
+    //         await this.subject
+    //             .connect(this.admin)
+    //             .commitDelayedProtocolParams();
+    //         const actualParams = await this.subject.delayedProtocolParams();
+    //         expect(actualParams).to.equivalent(someParams);
+    //     });
+
+    //     describe("when no params were committed", () => {
+    //         it("returns non-zero params initialized in constructor", async () => {
+    //             const actualParams = await this.subject.delayedProtocolParams();
+    //             expect(actualParams).to.not.be.equivalent(noneParams);
+    //         });
+    //     });
+    // });
 
     // describe("#stageDelayedProtocolParams", () => {
     //     const paramsToStage: DelayedProtocolParamsStruct = {
