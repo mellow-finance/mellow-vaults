@@ -15,6 +15,7 @@ import {
     approveERC20,
     randomAddress,
     encodeToBytes,
+    now,
 } from "./library/Helpers";
 
 describe("UniV2Trader", () => {
@@ -71,10 +72,8 @@ describe("UniV2Trader", () => {
 
     describe("swaps:", () => {
         let swapsDeploymentFixture: Function;
-        let deployer: string;
 
         before(async () => {
-            ({ deployer, weth, wbtc } = await getNamedAccounts());
             swapsDeploymentFixture = deployments.createFixture(async () => {
                 await deployments.fixture();
                 await depositW9(deployer, ethers.utils.parseEther("1")); // 1 WETH
@@ -128,6 +127,31 @@ describe("UniV2Trader", () => {
                 });
             });
 
+            describe("when passed a path that contains zero address", () => {
+                it("reverts with `INVALID_TRADE_PATH_EXCEPTION`", async () => {
+                    await expect(
+                        uniV2Trader.swapExactInput(
+                            0,
+                            BigNumber.from(10).pow(3),
+                            deployer,
+                            [
+                                {
+                                    token0: ethers.constants.AddressZero,
+                                    token1: wbtc,
+                                    options: [],
+                                },
+                                {
+                                    token0: wbtc,
+                                    token1: weth,
+                                    options: [],
+                                }
+                            ],
+                            []
+                        )
+                    ).to.be.revertedWith("TP");
+                });
+            });
+
             describe("happy case", () => {
                 it("swaps exact input tokens for output", async () => {
                     const amount = BigNumber.from(10).pow(3);
@@ -135,7 +159,7 @@ describe("UniV2Trader", () => {
                         ["tuple(uint256 deadline, uint256 limitAmount)"],
                         [
                             {
-                                deadline: BigNumber.from(600),
+                                deadline: now(),
                                 limitAmount: amount.mul(5),
                             },
                         ]
@@ -160,7 +184,6 @@ describe("UniV2Trader", () => {
                             ] as PathItemStruct[],
                             options
                         );
-                    console.log("amountOut", amountOut);
                     await expect(
                         uniV2Trader.swapExactInput(
                             0,
@@ -186,7 +209,36 @@ describe("UniV2Trader", () => {
             });
         });
 
-        describe("#swapExactOutput", () => {});
+        xdescribe("#swapExactOutput", () => {
+            describe("happy case", () => {
+                it("swaps input tokens for exact output tokens", async () => {
+                    const amount = BigNumber.from(1);
+                    const options = encodeToBytes(
+                        ["tuple(uint256 deadline, uint256 limitAmount)"],
+                        [
+                            {
+                                deadline: now(),
+                                limitAmount: BigNumber.from(10).pow(18),
+                            },
+                        ]
+                    );
+                    const amountIn = await uniV2Trader.callStatic.swapExactOutput(
+                        0,
+                        amount,
+                        deployer,
+                        [
+                            {
+                                token0: weth,
+                                token1: wbtc,
+                                options: [],
+                            },
+                        ],
+                        options
+                    );
+                    console.log("amountIn", amountIn);
+                });
+            });
+        });
     });
 
     describe("#supportsInterface", () => {
