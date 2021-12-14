@@ -3,7 +3,13 @@ import { deployments, getNamedAccounts, ethers } from "hardhat";
 import { ChiefTrader } from "./types/ChiefTrader";
 import { UniV3Trader } from "./types/UniV3Trader";
 import { ProtocolGovernance } from "./types/ProtocolGovernance";
-import { withSigner, encodeToBytes } from "./library/Helpers";
+import { withSigner } from "./library/Helpers";
+import {
+    ERC165_INTERFACE_ID,
+    CHIEF_TRADER_INTERFACE_ID,
+    TRADER_INTERFACE_ID,
+    ZERO_INTERFACE_ID,
+} from "./library/Constants";
 
 describe("ChiefTrader", () => {
     let admin: string;
@@ -68,21 +74,27 @@ describe("ChiefTrader", () => {
 
     describe("#supportsInterface", () => {
         it("returns `true` on chief trader interface", async () => {
-            expect(await chiefTrader.supportsInterface("0x698afc85")).to.eql(
-                true
-            );
+            expect(
+                await chiefTrader.supportsInterface(CHIEF_TRADER_INTERFACE_ID)
+            ).to.eql(true);
         });
 
         it("returns `true` on trader interface", async () => {
-            expect(await chiefTrader.supportsInterface("0xdf1e4f02")).to.eql(
-                true
-            );
+            expect(
+                await chiefTrader.supportsInterface(TRADER_INTERFACE_ID)
+            ).to.eql(true);
         });
 
         it("returns `true` on ERC165", async () => {
-            expect(await chiefTrader.supportsInterface("0x01ffc9a7")).to.eql(
-                true
-            );
+            expect(
+                await chiefTrader.supportsInterface(ERC165_INTERFACE_ID)
+            ).to.eql(true);
+        });
+
+        it("returns `false` on zero", async () => {
+            expect(
+                await chiefTrader.supportsInterface(ZERO_INTERFACE_ID)
+            ).to.eql(false);
         });
     });
 
