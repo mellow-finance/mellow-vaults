@@ -10,6 +10,12 @@ import {
 } from "fast-check";
 import { ethers } from "hardhat";
 
+export const RUNS = {
+    low: 20,
+    mid: 100,
+    high: 500,
+};
+
 export type PropertyOptions = Parameters & {
     beforeEach?: AsyncPropertyHookFunction;
     afterEach?: AsyncPropertyHookFunction;

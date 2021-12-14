@@ -2,7 +2,7 @@ import { BigNumber, Contract, ethers } from "ethers";
 import { Arbitrary, Random } from "fast-check";
 import { type } from "os";
 import { sleep, toObject, zeroify } from "./library/Helpers";
-import { address, pit } from "./library/property";
+import { address, pit, RUNS } from "./library/property";
 import { TestContext } from "./library/setup";
 import { mersenne } from "pure-rand";
 import { equals } from "ramda";
@@ -49,7 +49,7 @@ export function vaultGovernanceBehavior<
         describe("#stagedDelayedProtocolParams", () => {
             pit(
                 "always equals to params that were just staged",
-                { numRuns: 20 },
+                { numRuns: RUNS.low },
                 delayedProtocolParams,
                 async (params: DPP) => {
                     await this.subject
@@ -91,6 +91,43 @@ export function vaultGovernanceBehavior<
                     const actualParams =
                         await this.subject.stagedDelayedProtocolParams();
                     expect(actualParams).to.equivalent(noneParams);
+                });
+            });
+        });
+
+        describe("#delayedProtocolParams", () => {
+            pit(
+                "just staging params doesn't affect delayedProtocolParams",
+                { numRuns: RUNS.low },
+                delayedProtocolParams,
+                async (params: DPP) => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolParams(params);
+                    const actualParams =
+                        await this.subject.delayedProtocolParams();
+
+                    return !equals(toObject(actualParams), params);
+                }
+            );
+
+            it("returns current delayed protocol params", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolParams(someParams);
+                await sleep(this.governanceDelay);
+                await this.subject
+                    .connect(this.admin)
+                    .commitDelayedProtocolParams();
+                const actualParams = await this.subject.delayedProtocolParams();
+                expect(actualParams).to.equivalent(someParams);
+            });
+
+            describe("when no params were committed", () => {
+                it("returns non-zero params initialized in constructor", async () => {
+                    const actualParams =
+                        await this.subject.delayedProtocolParams();
+                    expect(actualParams).to.not.be.equivalent(noneParams);
                 });
             });
         });
