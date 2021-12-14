@@ -7,6 +7,7 @@ import { TestContext } from "./library/setup";
 import { mersenne } from "pure-rand";
 import { equals } from "ramda";
 import { expect } from "chai";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -43,98 +44,50 @@ export function vaultGovernanceBehavior<
     }
 ) {
     if (delayedProtocolParams) {
-        abstractParamsBehavior.call(this, delayedProtocolParams, {
-            delayed: true,
-            protocol: true,
-            perVault: false,
-        });
+        delayedProtocolParamsBehavior.call(this, delayedProtocolParams);
     }
 }
 
-export function abstractParamsBehavior<P, S extends Contract>(
+export function delayedProtocolParamsBehavior<P, S extends Contract>(
     this: TestContext<S>,
-    paramsArb: Arbitrary<P>,
-    {
-        delayed,
-        protocol,
-        perVault,
-    }: { delayed: boolean; protocol: boolean; perVault: boolean }
+    paramsArb: Arbitrary<P>
 ) {
-    if (delayed) {
-        const paramsName = protocol
-            ? "DelayedProtocolParams"
-            : "DelayedStrategyParams";
-        const camelParamsName = protocol
-            ? "delayedProtocolParams"
-            : "delayedStrategyParams";
-
-        const { someParams, noneParams } = generateParams(paramsArb);
-        describe(`#staged${paramsName}`, () => {
-            pit(
-                "always equals to params that were just staged",
-                { numRuns: RUNS.low },
-                paramsArb,
-                async (params: P) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stageDelayedProtocolParams(params);
-                    const actualParams =
-                        await this.subject.stagedDelayedProtocolParams();
-
-                    return equals(toObject(actualParams), params);
-                }
-            );
-
-            it(`returns ${paramsName} staged for commit`, async () => {
+    const { someParams, noneParams } = generateParams(paramsArb);
+    describe(`#stagedDelayedProtocolParams`, () => {
+        pit(
+            "always equals to params that were just staged",
+            { numRuns: RUNS.low },
+            paramsArb,
+            async (params: P) => {
                 await this.subject
                     .connect(this.admin)
-                    .stageDelayedProtocolParams(someParams);
+                    .stageDelayedProtocolParams(params);
                 const actualParams =
                     await this.subject.stagedDelayedProtocolParams();
-                expect(actualParams).to.be.equivalent(someParams);
-            });
 
-            describe("when no params are staged for commit", () => {
-                it("returns zero struct", async () => {
-                    const actualParams =
-                        await this.subject.stagedDelayedProtocolParams();
-                    expect(actualParams).to.equivalent(noneParams);
-                });
-            });
+                return equals(toObject(actualParams), params);
+            }
+        );
 
-            describe("when params were just committed", () => {
-                it("returns zero struct", async () => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stageDelayedProtocolParams(someParams);
-                    await sleep(this.governanceDelay);
-                    await this.subject
-                        .connect(this.admin)
-                        .commitDelayedProtocolParams();
-                    const actualParams =
-                        await this.subject.stagedDelayedProtocolParams();
-                    expect(actualParams).to.equivalent(noneParams);
-                });
+        it(`returns DelayedProtocolParams staged for commit`, async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageDelayedProtocolParams(someParams);
+            const actualParams =
+                await this.subject.stagedDelayedProtocolParams();
+            expect(actualParams).to.be.equivalent(someParams);
+        });
+
+        describe("when no params are staged for commit", () => {
+            it("returns zero struct", async () => {
+                const actualParams =
+                    await this.subject.stagedDelayedProtocolParams();
+                expect(actualParams).to.equivalent(noneParams);
             });
         });
 
-        describe(`#${camelParamsName}`, () => {
-            pit(
-                `just staging params doesn't affect ${paramsName}`,
-                { numRuns: RUNS.low },
-                paramsArb,
-                async (params: P) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stageDelayedProtocolParams(params);
-                    const actualParams =
-                        await this.subject.delayedProtocolParams();
-
-                    return !equals(toObject(actualParams), params);
-                }
-            );
-
-            it(`returns current ${paramsName}`, async () => {
+        describe("when params were just committed", () => {
+            it("returns zero struct", async () => {
                 await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolParams(someParams);
@@ -142,17 +95,45 @@ export function abstractParamsBehavior<P, S extends Contract>(
                 await this.subject
                     .connect(this.admin)
                     .commitDelayedProtocolParams();
-                const actualParams = await this.subject.delayedProtocolParams();
-                expect(actualParams).to.equivalent(someParams);
-            });
-
-            describe("when no params were committed", () => {
-                it("returns non-zero params initialized in constructor", async () => {
-                    const actualParams =
-                        await this.subject.delayedProtocolParams();
-                    expect(actualParams).to.not.be.equivalent(noneParams);
-                });
+                const actualParams =
+                    await this.subject.stagedDelayedProtocolParams();
+                expect(actualParams).to.equivalent(noneParams);
             });
         });
-    }
+    });
+
+    describe(`#delayedProtocolParams`, () => {
+        pit(
+            `just staging params doesn't affect DelayedProtocolParams`,
+            { numRuns: RUNS.low },
+            paramsArb,
+            async (params: P) => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolParams(params);
+                const actualParams = await this.subject.delayedProtocolParams();
+
+                return !equals(toObject(actualParams), params);
+            }
+        );
+
+        it(`returns current DelayedProtocolParams`, async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageDelayedProtocolParams(someParams);
+            await sleep(this.governanceDelay);
+            await this.subject
+                .connect(this.admin)
+                .commitDelayedProtocolParams();
+            const actualParams = await this.subject.delayedProtocolParams();
+            expect(actualParams).to.equivalent(someParams);
+        });
+
+        describe("when no params were committed", () => {
+            it("returns non-zero params initialized in constructor", async () => {
+                const actualParams = await this.subject.delayedProtocolParams();
+                expect(actualParams).to.not.be.equivalent(noneParams);
+            });
+        });
+    });
 }
