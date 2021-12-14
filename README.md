@@ -46,17 +46,6 @@ yarn coverage
 open coverage/index.html
 ```
 
-## Run property tests (WIP)
-
-```bash
-yarn global add ganache-cli
-cd test_brownie
-python3 -m virtualenv venv
-source venv/bin/activate
-pip install -r requirements.txt
-brownie test
-```
-
 ## Deploy
 
 Required env variables (could be added to `.env` file):
