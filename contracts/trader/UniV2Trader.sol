@@ -36,7 +36,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
             options_.limitAmount,
             _makePath(path),
             recipient,
-            options_.deadline
+            block.timestamp + options_.deadline
         );
         return amounts[amounts.length - 1];
     }
@@ -57,7 +57,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
             options_.limitAmount,
             _makePath(path),
             recipient,
-            options_.deadline
+            block.timestamp + options_.deadline
         );
         if (amounts[0] < options_.limitAmount) {
             uint256 change;
