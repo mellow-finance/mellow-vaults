@@ -43,15 +43,38 @@ export function vaultGovernanceBehavior<
     }
 ) {
     if (delayedProtocolParams) {
-        const { someParams, noneParams } = generateParams(
-            delayedProtocolParams
-        );
-        describe("#stagedDelayedProtocolParams", () => {
+        abstractParamsBehavior.call(this, delayedProtocolParams, {
+            delayed: true,
+            protocol: true,
+            perVault: false,
+        });
+    }
+}
+
+export function abstractParamsBehavior<P, S extends Contract>(
+    this: TestContext<S>,
+    paramsArb: Arbitrary<P>,
+    {
+        delayed,
+        protocol,
+        perVault,
+    }: { delayed: boolean; protocol: boolean; perVault: boolean }
+) {
+    if (delayed) {
+        const paramsName = protocol
+            ? "DelayedProtocolParams"
+            : "DelayedStrategyParams";
+        const camelParamsName = protocol
+            ? "delayedProtocolParams"
+            : "delayedStrategyParams";
+
+        const { someParams, noneParams } = generateParams(paramsArb);
+        describe(`#staged${paramsName}`, () => {
             pit(
                 "always equals to params that were just staged",
                 { numRuns: RUNS.low },
-                delayedProtocolParams,
-                async (params: DPP) => {
+                paramsArb,
+                async (params: P) => {
                     await this.subject
                         .connect(this.admin)
                         .stageDelayedProtocolParams(params);
@@ -62,7 +85,7 @@ export function vaultGovernanceBehavior<
                 }
             );
 
-            it("returns delayed protocol params staged for commit", async () => {
+            it(`returns ${paramsName} staged for commit`, async () => {
                 await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolParams(someParams);
@@ -95,12 +118,12 @@ export function vaultGovernanceBehavior<
             });
         });
 
-        describe("#delayedProtocolParams", () => {
+        describe(`#${camelParamsName}`, () => {
             pit(
-                "just staging params doesn't affect delayedProtocolParams",
+                `just staging params doesn't affect ${paramsName}`,
                 { numRuns: RUNS.low },
-                delayedProtocolParams,
-                async (params: DPP) => {
+                paramsArb,
+                async (params: P) => {
                     await this.subject
                         .connect(this.admin)
                         .stageDelayedProtocolParams(params);
@@ -111,7 +134,7 @@ export function vaultGovernanceBehavior<
                 }
             );
 
-            it("returns current delayed protocol params", async () => {
+            it(`returns current ${paramsName}`, async () => {
                 await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolParams(someParams);
