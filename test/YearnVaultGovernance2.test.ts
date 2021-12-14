@@ -19,9 +19,9 @@ import { Context, Suite } from "mocha";
 import { equals } from "ramda";
 import { address, pit } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
-import { vaultGovernanceBehavior } from "./VaultGovernance2.test";
 import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 
 type CustomContext = {
     nft: number;
