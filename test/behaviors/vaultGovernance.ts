@@ -16,6 +16,9 @@ import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import Exceptions from "../library/Exceptions";
 import { delayedProtocolParamsBehavior } from "./vaultGovernanceDelayedProtocolParams";
+import { InternalParamsStruct } from "../types/IVaultGovernance";
+import { VaultGovernance } from "../types";
+import { InternalParamsStructOutput } from "../types/VaultGovernance";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -29,7 +32,10 @@ export function generateParams<T extends Object>(
     return { someParams, noneParams };
 }
 
-export type VaultGovernanceContext<S extends Contract> = TestContext<S> & {
+export type VaultGovernanceContext<S extends Contract, F> = TestContext<
+    S,
+    F
+> & {
     nft: number;
     strategySigner: SignerWithAddress;
     ownerSigner: SignerWithAddress;
@@ -43,7 +49,13 @@ export function vaultGovernanceBehavior<
     DPPV,
     S extends Contract
 >(
-    this: VaultGovernanceContext<S>,
+    this: VaultGovernanceContext<
+        S,
+        {
+            skipInit?: boolean;
+            internalParams?: InternalParamsStructOutput;
+        }
+    >,
     {
         delayedStrategyParams,
         strategyParams,
@@ -57,7 +69,32 @@ export function vaultGovernanceBehavior<
         delayedProtocolPerVaultParams?: Arbitrary<DPPV>;
     }
 ) {
+    describe("#factory", () => {
+        it("is 0 after contract creation", async () => {
+            await this.deploymentFixture({ skipInit: true });
+            expect(ethers.constants.AddressZero).to.eq(
+                await this.subject.factory()
+            );
+        });
+        it("is initialized with address after #initialize is called", async () => {
+            const factoryAddress = randomAddress();
+            await this.deploymentFixture({ skipInit: true });
+            await this.subject.initialize(factoryAddress);
+            const actual = await this.subject.factory();
+            expect(factoryAddress).to.eq(actual);
+        });
+        describe("access control", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await this.deploymentFixture({ skipInit: true });
+                    await expect(this.subject.connect(s).factory()).to.not.be
+                        .reverted;
+                });
+            });
+        });
+    });
+
     if (delayedProtocolParams) {
-        delayedProtocolParamsBehavior.call(this, delayedProtocolParams);
+        delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
     }
 }

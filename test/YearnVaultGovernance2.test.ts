@@ -22,6 +22,10 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
+import {
+    InternalParamsStruct,
+    InternalParamsStructOutput,
+} from "./types/IVaultGovernance";
 
 type CustomContext = {
     nft: number;
@@ -36,38 +40,71 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
         await setupDefaultContext.call(this);
         const yearnVaultRegistryAddress = (await getNamedAccounts())
             .yearnVaultRegistry;
-        this.deploymentFixture = deployments.createFixture(async () => {
-            await deployments.fixture();
-            const { address } = await deployments.deploy(
-                "YearnVaultGovernance",
-                {
-                    from: this.deployer.address,
-                    args: [
-                        {
-                            protocolGovernance: this.protocolGovernance.address,
-                            registry: this.vaultRegistry.address,
-                        },
-                        { yearnVaultRegistry: yearnVaultRegistryAddress },
-                    ],
-                    autoMine: true,
+        this.deploymentFixture = deployments.createFixture(
+            async (
+                _,
+                options?: {
+                    internalParams?: InternalParamsStructOutput;
+                    yearnVaultRegistry?: string;
+                    skipInit?: boolean;
                 }
-            );
-            this.subject = await ethers.getContractAt(
-                "YearnVaultGovernance",
-                address
-            );
-            this.ownerSigner = await addSigner(randomAddress());
-            this.strategySigner = await addSigner(randomAddress());
-            await this.subject.deployVault(
-                this.tokens.map((x) => x.address),
-                [],
-                this.ownerSigner.address
-            );
-            this.nft = (await this.vaultRegistry.vaultsCount()).toNumber();
-            await this.vaultRegistry
-                .connect(this.ownerSigner)
-                .approve(this.strategySigner.address, this.nft);
-        });
+            ) => {
+                await deployments.fixture();
+                const {
+                    internalParams = {
+                        protocolGovernance: this.protocolGovernance.address,
+                        registry: this.vaultRegistry.address,
+                    },
+                    yearnVaultRegistry = yearnVaultRegistryAddress,
+                    skipInit = false,
+                } = options || {};
+                const { address } = await deployments.deploy(
+                    "YearnVaultGovernanceTest",
+                    {
+                        from: this.deployer.address,
+                        contract: "YearnVaultGovernance",
+                        args: [internalParams, { yearnVaultRegistry }],
+                        autoMine: true,
+                    }
+                );
+                this.subject = await ethers.getContractAt(
+                    "YearnVaultGovernance",
+                    address
+                );
+                this.ownerSigner = await addSigner(randomAddress());
+                this.strategySigner = await addSigner(randomAddress());
+
+                if (!skipInit) {
+                    const { address: factoryAddress } =
+                        await deployments.deploy("YearnVaultFactoryTest", {
+                            from: this.deployer.address,
+                            contract: "YearnVaultFactory",
+                            args: [this.subject.address],
+                            autoMine: true,
+                        });
+                    await this.subject.initialize(factoryAddress);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .setPendingVaultGovernancesAdd([this.subject.address]);
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitVaultGovernancesAdd();
+                    await this.subject.deployVault(
+                        this.tokens.map((x: any) => x.address),
+                        [],
+                        this.ownerSigner.address
+                    );
+                    this.nft = (
+                        await this.vaultRegistry.vaultsCount()
+                    ).toNumber();
+                    await this.vaultRegistry
+                        .connect(this.ownerSigner)
+                        .approve(this.strategySigner.address, this.nft);
+                }
+                return this.subject;
+            }
+        );
     });
 
     beforeEach(async () => {

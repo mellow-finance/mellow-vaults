@@ -5,18 +5,24 @@ import { Context, Suite } from "mocha";
 import { equals, sortBy } from "ramda";
 import { addSigner, toObject } from "./Helpers";
 import {
+    AaveVaultFactory,
     AaveVaultGovernance,
     ERC20,
+    ERC20VaultFactory,
     ERC20VaultGovernance,
+    GatewayVaultFactory,
     GatewayVaultGovernance,
+    LpIssuerFactory,
     LpIssuerGovernance,
     ProtocolGovernance,
+    UniV3VaultFactory,
     UniV3VaultGovernance,
     VaultRegistry,
+    YearnVaultFactory,
     YearnVaultGovernance,
 } from "../types";
 
-export type TestContext<T> = Suite & {
+export type TestContext<T, F> = Suite & {
     subject: T;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
@@ -26,6 +32,13 @@ export type TestContext<T> = Suite & {
     uniV3VaultGovernance: UniV3VaultGovernance;
     gatewayVaultGovernance: GatewayVaultGovernance;
     lpIssuerGovernance: LpIssuerGovernance;
+    yearnVaultFactory: YearnVaultFactory;
+    erc20VaultFactory: ERC20VaultFactory;
+    aaveVaultFactory: AaveVaultFactory;
+    uniV3VaultFactory: UniV3VaultFactory;
+    gatewayVaultFactory: GatewayVaultFactory;
+    lpIssuerFactory: LpIssuerFactory;
+
     usdc: ERC20;
     weth: ERC20;
     wbtc: ERC20;
@@ -34,12 +47,12 @@ export type TestContext<T> = Suite & {
     admin: SignerWithAddress;
     mStrategyAdmin: SignerWithAddress;
     startTimestamp: number;
-    deploymentFixture: Function;
+    deploymentFixture: (x?: F) => Promise<T>;
     governanceDelay: number;
     [key: string]: any;
 };
 
-export async function setupDefaultContext<T>(this: TestContext<T>) {
+export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     await deployments.fixture();
     this.vaultRegistry = await ethers.getContract("VaultRegistry");
     this.protocolGovernance = await ethers.getContract("ProtocolGovernance");
@@ -57,6 +70,13 @@ export async function setupDefaultContext<T>(this: TestContext<T>) {
         "GatewayVaultGovernance"
     );
     this.lpIssuerGovernance = await ethers.getContract("LpIssuerGovernance");
+    this.yearnVaultFactory = await ethers.getContract("YearnVaultFactory");
+    this.erc20VaultFactory = await ethers.getContract("ERC20VaultFactory");
+    this.aaveVaultFactory = await ethers.getContract("AaveVaultFactory");
+    this.uniV3VaultFactory = await ethers.getContract("UniV3VaultFactory");
+    this.gatewayVaultFactory = await ethers.getContract("GatewayVaultFactory");
+    this.lpIssuerFactory = await ethers.getContract("LpIssuerFactory");
+
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin"]) {
         const address = namedAccounts[name];

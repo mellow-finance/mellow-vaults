@@ -16,8 +16,8 @@ import Exceptions from "../library/Exceptions";
 import { generateParams, VaultGovernanceContext } from "./vaultGovernance";
 import { deployments } from "hardhat";
 
-export function delayedProtocolParamsBehavior<P, S extends Contract>(
-    this: VaultGovernanceContext<S>,
+export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
+    this: VaultGovernanceContext<S, F>,
     paramsArb: Arbitrary<P>
 ) {
     let someParams: P;
