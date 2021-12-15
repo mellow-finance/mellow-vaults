@@ -97,8 +97,8 @@ Assertion.addMethod(
             equals(expected, actual),
             "Expected #{exp} to be equal #{act}",
             "Expected #{exp} not to be equal #{act}",
-            this._obj,
-            that,
+            expected,
+            actual,
             true
         );
     }

@@ -374,3 +374,27 @@ export const mint = async (
             throw `Unknown token: ${token}`;
     }
 };
+
+export function zeroify<
+    T extends BigNumber | string | number | { [key: string]: any }
+>(x: T): T {
+    if (x instanceof BigNumber) {
+        return BigNumber.from(0) as T;
+    }
+    if (typeof x === "string") {
+        if (x.startsWith("0x")) {
+            return ethers.constants.AddressZero as T;
+        }
+    }
+    if (typeof x === "number") {
+        return 0 as T;
+    }
+    if (typeof x === "object") {
+        const res: { [key: string]: any } = {};
+        for (const key in x) {
+            res[key] = zeroify(x[key]);
+        }
+        return res as T;
+    }
+    throw `Unknown type for value ${x}`;
+}
