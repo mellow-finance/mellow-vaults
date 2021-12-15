@@ -1,4 +1,4 @@
-import { BigNumber, Contract, ethers, Signer } from "ethers";
+import { BigNumber, Contract, Signer } from "ethers";
 import { Arbitrary, Random } from "fast-check";
 import { type } from "os";
 import {
@@ -17,8 +17,9 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import Exceptions from "../library/Exceptions";
 import { delayedProtocolParamsBehavior } from "./vaultGovernanceDelayedProtocolParams";
 import { InternalParamsStruct } from "../types/IVaultGovernance";
-import { VaultGovernance } from "../types";
+import { ERC20, IVault, Vault, VaultGovernance } from "../types";
 import { InternalParamsStructOutput } from "../types/VaultGovernance";
+import { deployments, ethers } from "hardhat";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -197,6 +198,133 @@ export function vaultGovernanceBehavior<
                     await expect(
                         this.subject.initialize(factoryAddress)
                     ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
+                });
+            });
+        });
+    });
+
+    describe("#deployVault", () => {
+        let deployVaultFixture: Function;
+        let lastNft: number;
+        let nft: number;
+        before(async () => {
+            deployVaultFixture = deployments.createFixture(async () => {
+                await this.deploymentFixture();
+                lastNft = (await this.vaultRegistry.vaultsCount()).toNumber();
+                const tokenAddresses = this.tokens.map((x: ERC20) => x.address);
+                await expect(
+                    this.subject.deployVault(
+                        tokenAddresses,
+                        [],
+                        this.ownerSigner.address
+                    )
+                );
+                nft = (await this.vaultRegistry.vaultsCount()).toNumber();
+            });
+        });
+        beforeEach(async () => {
+            await deployVaultFixture();
+        });
+        it("deploys a new vault", async () => {
+            const address = await this.vaultRegistry.vaultForNft(nft);
+            const code = await ethers.provider.getCode(address);
+            expect(code.length).to.be.gt(2);
+        });
+
+        it("registers vault with vault registry and issues nft", async () => {
+            expect(nft).to.be.gt(lastNft);
+        });
+
+        it("the nft is owned by the owner from #deployVault arguments", async () => {
+            expect(this.ownerSigner.address).to.eq(
+                await this.vaultRegistry.ownerOf(nft)
+            );
+        });
+        it("vault is initialized with nft", async () => {
+            const address = await this.vaultRegistry.vaultForNft(nft);
+            const vault: IVault = await ethers.getContractAt("IVault", address);
+            expect(nft).to.eq(await vault.nft());
+        });
+        it("vault sets AprrovedForAll for VaultRegistry", async () => {
+            const address = await this.vaultRegistry.vaultForNft(nft);
+            expect(true).to.eq(
+                await this.vaultRegistry.isApprovedForAll(
+                    address,
+                    this.vaultRegistry.address
+                )
+            );
+        });
+
+        describe("access control", () => {
+            describe("when permissionless", () => {
+                it("allowed: any address", async () => {
+                    const params = await this.protocolGovernance.params();
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .setPendingParams({ ...params, permissionless: true });
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitParams();
+
+                    await withSigner(randomAddress(), async (s) => {
+                        const tokenAddresses = this.tokens.map(
+                            (x: ERC20) => x.address
+                        );
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .deployVault(
+                                    tokenAddresses,
+                                    [],
+                                    this.ownerSigner.address
+                                )
+                        ).to.not.be.reverted;
+                    });
+                });
+            });
+            describe("when not permissionless", () => {
+                beforeEach(async () => {
+                    const params = await this.protocolGovernance.params();
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .setPendingParams({ ...params, permissionless: false });
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitParams();
+                });
+                it("allowed: protocol governance admin", async () => {
+                    const tokenAddresses = this.tokens.map(
+                        (x: ERC20) => x.address
+                    );
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .deployVault(
+                                tokenAddresses,
+                                [],
+                                this.ownerSigner.address
+                            )
+                    ).to.not.be.reverted;
+                });
+                it("denied: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        const tokenAddresses = this.tokens.map(
+                            (x: ERC20) => x.address
+                        );
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .deployVault(
+                                    tokenAddresses,
+                                    [],
+                                    this.ownerSigner.address
+                                )
+                        ).to.be.revertedWith(
+                            Exceptions.PERMISSIONLESS_OR_ADMIN
+                        );
+                    });
                 });
             });
         });
