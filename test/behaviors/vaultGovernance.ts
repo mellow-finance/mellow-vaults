@@ -53,7 +53,7 @@ export function vaultGovernanceBehavior<
         S,
         {
             skipInit?: boolean;
-            internalParams?: InternalParamsStructOutput;
+            internalParams?: InternalParamsStruct;
         }
     >,
     {
@@ -69,6 +69,21 @@ export function vaultGovernanceBehavior<
         delayedProtocolPerVaultParams?: Arbitrary<DPPV>;
     }
 ) {
+    describe("#constructor", () => {
+        it("initializes internalParams", async () => {
+            const params: InternalParamsStruct = {
+                protocolGovernance: randomAddress(),
+                registry: randomAddress(),
+            };
+            await this.deploymentFixture({
+                skipInit: true,
+                internalParams: params,
+            });
+            expect(params).to.be.equivalent(
+                await this.subject.internalParams()
+            );
+        });
+    });
     describe("#factory", () => {
         it("is 0 after contract creation", async () => {
             await this.deploymentFixture({ skipInit: true });
@@ -112,6 +127,41 @@ export function vaultGovernanceBehavior<
                 await withSigner(randomAddress(), async (s) => {
                     await expect(this.subject.connect(s).initialized()).to.not
                         .be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#initialize", () => {
+        it("initializes factory reference", async () => {
+            const factoryAddress = randomAddress();
+            await this.deploymentFixture({ skipInit: true });
+            await this.subject.initialize(factoryAddress);
+            const actual = await this.subject.factory();
+            expect(factoryAddress).to.eq(actual);
+        });
+
+        describe("access control", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    const factoryAddress = randomAddress();
+                    await this.deploymentFixture({ skipInit: true });
+                    await expect(
+                        this.subject.connect(s).initialize(factoryAddress)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when called second time", () => {
+                it("reverts", async () => {
+                    const factoryAddress = randomAddress();
+                    await this.deploymentFixture({ skipInit: true });
+                    await this.subject.initialize(factoryAddress);
+                    await expect(
+                        this.subject.initialize(factoryAddress)
+                    ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
                 });
             });
         });
