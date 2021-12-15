@@ -15,6 +15,7 @@ library ExceptionsLibrary {
     string constant VAULT_FACTORY_ADDRESS_ZERO = "ZVF";
     string constant PROTOCOL_GOVERNANCE_ADDRESS_ZERO = "ZPG";
     string constant VAULT_REGISTRY_ADDRESS_ZERO = "ZVR";
+    string constant AAVE_LENDING_POOL_ADDRESS_ZERO = "ZALP";
     string constant APPROVED_OR_OWNER = "IO";
     string constant INCONSISTENT_LENGTH = "L";
     string constant LIMIT_OVERFLOW = "LIM";

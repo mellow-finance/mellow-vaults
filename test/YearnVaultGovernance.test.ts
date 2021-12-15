@@ -34,7 +34,7 @@ type CustomContext = {
 };
 
 // @ts-ignore
-describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernance> &
+describe("YearnVaultGovernance", function (this: TestContext<YearnVaultGovernance> &
     CustomContext) {
     before(async () => {
         await setupDefaultContext.call(this);
