@@ -67,6 +67,10 @@ const config: HardhatUserConfig = {
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
     },
+    gasReporter: {
+        outputFile: "gas.txt",
+        noColors: true,
+    },
     mocha: {
         timeout: 800000,
     },

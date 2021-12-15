@@ -122,7 +122,7 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
             expect(YEARN_WETH_POOL).to.eq(yToken);
         });
 
-        describe("access list", () => {
+        describe("access control", () => {
             it("allowed: any address", async () => {
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
@@ -189,7 +189,7 @@ describe("YearnVaultGovernance2", function (this: TestContext<YearnVaultGovernan
             ).to.emit(this.subject, "SetYToken");
         });
 
-        describe("access list", () => {
+        describe("access control", () => {
             it("allowed: ProtocolGovernance admin", async () => {
                 await expect(
                     this.subject

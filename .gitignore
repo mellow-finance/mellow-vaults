@@ -14,6 +14,8 @@ yarn.lock
 registry
 coverage
 coverage.json
+gas.txt
+tenderly.yaml
 deployments/kovan
 deployments/localhost
 deployments/contracts.json
@@ -22,3 +24,4 @@ test/types
 docs
 .DS_store
 .mailmap
+
