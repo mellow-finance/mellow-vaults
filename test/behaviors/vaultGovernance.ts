@@ -94,6 +94,29 @@ export function vaultGovernanceBehavior<
         });
     });
 
+    describe("#initialized", () => {
+        it("is false after contract creation", async () => {
+            await this.deploymentFixture({ skipInit: true });
+            expect(false).to.eq(await this.subject.initialized());
+        });
+        it("is initialized with address after #initialize is called", async () => {
+            const factoryAddress = randomAddress();
+            await this.deploymentFixture({ skipInit: true });
+            await this.subject.initialize(factoryAddress);
+            const actual = await this.subject.initialized();
+            expect(true).to.eq(actual);
+        });
+
+        describe("access control", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(this.subject.connect(s).initialized()).to.not
+                        .be.reverted;
+                });
+            });
+        });
+    });
+
     if (delayedProtocolParams) {
         delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
     }
