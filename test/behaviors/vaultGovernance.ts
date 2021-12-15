@@ -83,6 +83,41 @@ export function vaultGovernanceBehavior<
                 await this.subject.internalParams()
             );
         });
+
+        describe("edge cases", () => {
+            describe("when protocolGovernance address is 0", () => {
+                it("reverts", async () => {
+                    const params: InternalParamsStruct = {
+                        protocolGovernance: ethers.constants.AddressZero,
+                        registry: randomAddress(),
+                    };
+                    await expect(
+                        this.deploymentFixture({
+                            skipInit: true,
+                            internalParams: params,
+                        })
+                    ).to.be.revertedWith(
+                        Exceptions.PROTOCOL_GOVERNANCE_ADDRESS_ZERO
+                    );
+                });
+            });
+            describe("when vaultRegistry address is 0", () => {
+                it("reverts", async () => {
+                    const params: InternalParamsStruct = {
+                        protocolGovernance: randomAddress(),
+                        registry: ethers.constants.AddressZero,
+                    };
+                    await expect(
+                        this.deploymentFixture({
+                            skipInit: true,
+                            internalParams: params,
+                        })
+                    ).to.be.revertedWith(
+                        Exceptions.VAULT_REGISTRY_ADDRESS_ZERO
+                    );
+                });
+            });
+        });
     });
     describe("#factory", () => {
         it("is 0 after contract creation", async () => {
