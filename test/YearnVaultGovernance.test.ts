@@ -32,23 +32,25 @@ type CustomContext = {
     strategySigner: SignerWithAddress;
     ownerSigner: SignerWithAddress;
 };
+type DeployOptions = {
+    internalParams?: InternalParamsStructOutput;
+    yearnVaultRegistry?: string;
+    skipInit?: boolean;
+};
 
 // @ts-ignore
-describe("YearnVaultGovernance", function (this: TestContext<YearnVaultGovernance> &
+describe("YearnVaultGovernance", function (this: TestContext<
+    YearnVaultGovernance,
+    DeployOptions
+> &
     CustomContext) {
     before(async () => {
+        // @ts-ignore
         await setupDefaultContext.call(this);
         const yearnVaultRegistryAddress = (await getNamedAccounts())
             .yearnVaultRegistry;
         this.deploymentFixture = deployments.createFixture(
-            async (
-                _,
-                options?: {
-                    internalParams?: InternalParamsStructOutput;
-                    yearnVaultRegistry?: string;
-                    skipInit?: boolean;
-                }
-            ) => {
+            async (_, options?: DeployOptions) => {
                 await deployments.fixture();
                 const {
                     internalParams = {
@@ -305,6 +307,7 @@ describe("YearnVaultGovernance", function (this: TestContext<YearnVaultGovernanc
         });
     });
 
+    // @ts-ignore
     vaultGovernanceBehavior.call(this, {
         delayedProtocolParams,
         ...this,

@@ -33,21 +33,24 @@ type CustomContext = {
     ownerSigner: SignerWithAddress;
 };
 
+type DeployOptions = {
+    internalParams?: InternalParamsStructOutput;
+    lendingPool?: string;
+    skipInit?: boolean;
+};
+
 // @ts-ignore
-describe("AaveVaultGovernance", function (this: TestContext<AaveVaultGovernance> &
+describe("AaveVaultGovernance", function (this: TestContext<
+    AaveVaultGovernance,
+    DeployOptions
+> &
     CustomContext) {
     before(async () => {
+        // @ts-ignore
         await setupDefaultContext.call(this);
         const lendingPoolAddress = (await getNamedAccounts()).aaveLendingPool;
         this.deploymentFixture = deployments.createFixture(
-            async (
-                _,
-                options?: {
-                    internalParams?: InternalParamsStructOutput;
-                    lendingPool?: string;
-                    skipInit?: boolean;
-                }
-            ) => {
+            async (_, options?: DeployOptions) => {
                 await deployments.fixture();
                 const {
                     internalParams = {
@@ -149,6 +152,7 @@ describe("AaveVaultGovernance", function (this: TestContext<AaveVaultGovernance>
         });
     });
 
+    // @ts-ignore
     vaultGovernanceBehavior.call(this, {
         delayedProtocolParams,
         ...this,
