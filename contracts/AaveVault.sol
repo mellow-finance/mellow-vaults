@@ -92,7 +92,7 @@ contract AaveVault is Vault {
             if ((_tvls[i] == 0) || (tokenAmounts[i] == 0)) {
                 continue;
             }
-            _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
+            tokenAmounts[i] = _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
         }
         _updateTvls();
         actualTokenAmounts = tokenAmounts;
