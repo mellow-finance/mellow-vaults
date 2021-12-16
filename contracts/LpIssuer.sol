@@ -268,8 +268,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
             emit ProtocolFeesCharged(treasury, protocolFee, toMint);
         }
         uint256 performanceFee = strategyParams.performanceFee;
-        uint256[] memory hwms = _lpPriceHighWaterMarks;
         if (performanceFee > 0) {
+            uint256[] memory hwms = _lpPriceHighWaterMarks;
             uint256 minLpPriceFactor = type(uint256).max;
             for (uint256 i = 0; i < tvlsLength; ++i) {
                 uint256 hwm = hwms[i];
