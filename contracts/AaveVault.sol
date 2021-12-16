@@ -88,14 +88,14 @@ contract AaveVault is Vault {
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
+        actualTokenAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < _aTokens.length; ++i) {
             if ((_tvls[i] == 0) || (tokenAmounts[i] == 0)) {
                 continue;
             }
-            tokenAmounts[i] = _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
+            actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
         }
         _updateTvls();
-        actualTokenAmounts = tokenAmounts;
     }
 
     function _getAToken(address token) internal view returns (address) {
