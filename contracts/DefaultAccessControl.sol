@@ -8,8 +8,8 @@ import "./libraries/ExceptionsLibrary.sol";
 /// @notice This is a default access control with 2 roles -
 /// ADMIN and ADMIN_DELEGATE.
 contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable {
-    bytes32 public constant ADMIN_ROLE = keccak256("admin");
-    bytes32 public constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
+    bytes32 public immutable ADMIN_ROLE = keccak256("admin");
+    bytes32 public immutable ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
 
     /// @notice Creates a new contract.
     /// @param admin Admin of the contract
