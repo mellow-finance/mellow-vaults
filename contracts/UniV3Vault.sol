@@ -98,7 +98,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](_vaultTokens.length);
+        tokenAmounts = new uint256[](2);
         if (uniV3Nft == 0)
             return tokenAmounts;
         (
@@ -164,6 +164,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        // UniV3Vault should have strictly 2 vault tokens
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0)
             return actualTokenAmounts;
