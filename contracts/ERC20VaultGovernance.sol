@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./trader/interfaces/ITrader.sol";
+import "./libraries/ExceptionsLibrary.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
 import "./VaultGovernance.sol";
 
@@ -13,6 +14,7 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        require(address(delayedProtocolParams_.trader) != address(0), ExceptionsLibrary.TRADER_ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
