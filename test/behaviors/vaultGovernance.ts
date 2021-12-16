@@ -293,7 +293,7 @@ export function vaultGovernanceBehavior<
                                 this.ownerSigner.address
                             );
                         } else {
-                            this.subject
+                            await this.subject
                                 .connect(s)
                                 .deployVault(
                                     tokenAddresses,
@@ -326,7 +326,7 @@ export function vaultGovernanceBehavior<
                             this.ownerSigner.address
                         );
                     } else {
-                        this.subject
+                        await this.subject
                             .connect(this.admin)
                             .deployVault(
                                 tokenAddresses,
