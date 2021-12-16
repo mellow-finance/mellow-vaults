@@ -8,6 +8,11 @@ export default class Exceptions {
     static readonly ADMIN_ADDRESS_ZERO: string = "ZADM";
     static readonly VAULT_FACTORY_ADDRESS_ZERO: string = "ZVF";
     static readonly YEARN_REGISTRY_ADDRESS_ZERO: string = "ZY";
+    static readonly AAVE_LENDING_POOL_ADDRESS_ZERO: string = "ZALP";
+    static readonly POSITION_MANAGER_ADDRESS_ZERO: string = "ZPM";
+    static readonly TRADER_ADDRESS_ZERO: string = "ZTR";
+    static readonly INVALID_OPTIONS: string = "INVO";
+    static readonly UNISWAP_POOL_NOT_FOUND: string = "UPNF";
     static readonly PROTOCOL_GOVERNANCE_ADDRESS_ZERO: string = "ZPG";
     static readonly VAULT_REGISTRY_ADDRESS_ZERO: string = "ZVR";
     static readonly APPROVED_OR_OWNER: string = "IO";

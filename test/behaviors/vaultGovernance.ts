@@ -211,7 +211,9 @@ export function vaultGovernanceBehavior<
             deployVaultFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 lastNft = (await this.vaultRegistry.vaultsCount()).toNumber();
-                const tokenAddresses = this.tokens.map((x: ERC20) => x.address);
+                const tokenAddresses = this.tokens
+                    .slice(0, 2)
+                    .map((x: ERC20) => x.address);
                 await expect(
                     this.subject.deployVault(
                         tokenAddresses,
@@ -268,9 +270,9 @@ export function vaultGovernanceBehavior<
                         .commitParams();
 
                     await withSigner(randomAddress(), async (s) => {
-                        const tokenAddresses = this.tokens.map(
-                            (x: ERC20) => x.address
-                        );
+                        const tokenAddresses = this.tokens
+                            .slice(0, 2)
+                            .map((x: ERC20) => x.address);
                         await expect(
                             this.subject
                                 .connect(s)
@@ -295,9 +297,9 @@ export function vaultGovernanceBehavior<
                         .commitParams();
                 });
                 it("allowed: protocol governance admin", async () => {
-                    const tokenAddresses = this.tokens.map(
-                        (x: ERC20) => x.address
-                    );
+                    const tokenAddresses = this.tokens
+                        .slice(0, 2)
+                        .map((x: ERC20) => x.address);
                     await expect(
                         this.subject
                             .connect(this.admin)

@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IAaveVaultGovernance.sol";
+import "./libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
@@ -12,6 +13,10 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        require(
+            address(delayedProtocolParams_.lendingPool) != address(0),
+            ExceptionsLibrary.AAVE_LENDING_POOL_ADDRESS_ZERO
+        );
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 

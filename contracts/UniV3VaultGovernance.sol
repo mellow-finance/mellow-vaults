@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IUniV3VaultGovernance.sol";
+import "./libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
@@ -12,6 +13,10 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        require(
+            address(delayedProtocolParams_.positionManager) != address(0),
+            ExceptionsLibrary.POSITION_MANAGER_ADDRESS_ZERO
+        );
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
