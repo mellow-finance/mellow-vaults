@@ -70,27 +70,27 @@ function generateSpecContents(contract, method) {
   if (!specData || specData.general.length == 0) {
     return undefined;
   }
-  let res = "## Specs\n\n";
+  let res = "";
   for (const item of specData.general) {
     res += `- ✅ ${item}\n`;
   }
   res += "\n";
   if (specData.accessControl.length > 0) {
-    res += "### Access control\n";
+    res += "*Access control*\n";
     for (const item of specData.accessControl) {
       res += `- ✅ ${item}\n`;
     }
     res += "\n";
   }
   if (specData.properties.length > 0) {
-    res += "### Properties\n";
+    res += "*Properties*\n";
     for (const item of specData.properties) {
       res += `- ✅ ${item}\n`;
     }
     res += "\n";
   }
   if (specData.edgeCases.length > 0) {
-    res += "### Edge cases\n";
+    res += "*Edge cases*\n";
     for (const item of specData.edgeCases) {
       res += `- ✅ ${item}\n`;
     }

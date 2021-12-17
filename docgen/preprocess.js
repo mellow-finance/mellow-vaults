@@ -73,8 +73,9 @@ function enrichData(data) {
       if (gasData.avg) {
         lines[i] = addGas(lines[i], gasData);
       }
-      const specData = generateSpecContents(name, method);
+      let specData = generateSpecContents(name, method);
       if (specData) {
+        specData = `**Specs**\n\n${specData}`;
         i += 1;
         while (
           i < lines.length &&
@@ -91,15 +92,47 @@ function enrichData(data) {
   return lines.join("\n");
 }
 
+function gatherMethods(data) {
+  let name = "";
+  const methods = [];
+  const lines = data.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.startsWith("# ")) {
+      name = line.slice(2);
+    }
+    if (line.startsWith("### ")) {
+      const method = line.slice(4);
+      methods.push(method);
+    }
+  }
+  return { name, methods };
+}
+
 module.exports = {
   preprocess() {
     let res = "";
+    let methodsRes = {};
+    let specPage = "# Specs\n\n";
     getAllFiles(docsDir).forEach((file) => {
       let data = fs.readFileSync(file).toString();
+      const { name, methods } = gatherMethods(data);
+      methodsRes[name] = methods;
       data = enrichData(data);
       res += `${data}\n`;
     });
-
+    for (const key in methodsRes) {
+      specPage += `## ${key}\n\n`;
+      for (const method of methodsRes[key]) {
+        specPage += `### ${method}\n\n`;
+        const contents = generateSpecContents(key, method);
+        if (contents) {
+          specPage += `${contents}\n\n`;
+        }
+      }
+      specPage += "\n\n";
+    }
     fs.writeFileSync(path.resolve(path.join(docsDir, "api.md")), res);
+    fs.writeFileSync(path.resolve(path.join(docsDir, "spec.md")), specPage);
   },
 };
