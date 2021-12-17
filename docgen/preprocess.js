@@ -133,6 +133,9 @@ module.exports = {
       specPage += "\n\n";
     }
     fs.writeFileSync(path.resolve(path.join(docsDir, "api.md")), res);
-    fs.writeFileSync(path.resolve(path.join(docsDir, "spec.md")), specPage);
+    fs.writeFileSync(
+      path.resolve(path.join(docsDir, "contracts-specs.md")),
+      specPage
+    );
   },
 };
