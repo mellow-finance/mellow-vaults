@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { getGasData } = require("./gasData");
+const { generateSpecContents } = require("./specData");
 const EXCLUDE_FILE = "docgen/exclude.txt";
 const excludeList = lines(EXCLUDE_FILE);
 const OUTPUT_DIR = "docs";
@@ -71,6 +72,19 @@ function enrichData(data) {
       const gasData = getGasData(name, method);
       if (gasData.avg) {
         lines[i] = addGas(lines[i], gasData);
+      }
+      const specData = generateSpecContents(name, method);
+      if (specData) {
+        i += 1;
+        while (
+          i < lines.length &&
+          !lines[i].startsWith("# ") &&
+          !lines[i].startsWith("## ") &&
+          !lines[i].startsWith("### ")
+        ) {
+          i += 1;
+        }
+        lines[i - 1] += `\n\n${specData}`;
       }
     }
   }
