@@ -9,18 +9,18 @@ import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 /// @dev Notes:
-/// ### TVL
+/// **TVL**
 ///
 /// The TVL of the vault is cached and updated after each deposit withdraw.
 /// So essentially `tvl` call doesn't take into account accrued interest / donations to Aave since the
 /// last `deposit` / `withdraw`
 ///
-/// ### aTokens
+/// **aTokens**
 /// aTokens are fixed at the token creation and addresses are taken from Aave Lending Pool.
 /// So essentially each aToken is fixed for life of the AaveVault. If the aToken is missing for some vaultToken,
 /// the AaveVault cannot be created.
 ///
-/// ### Push / Pull
+/// **Push / Pull**
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
 contract AaveVault is Vault {
@@ -55,8 +55,7 @@ contract AaveVault is Vault {
 
     function _updateTvls() internal {
         uint256 tvlsLength = _tvls.length;
-        for (uint256 i = 0; i < tvlsLength; ++i)
-            _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
+        for (uint256 i = 0; i < tvlsLength; ++i) _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
