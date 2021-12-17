@@ -2,7 +2,6 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-etherscan";
-import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
@@ -67,12 +66,9 @@ const config: HardhatUserConfig = {
         target: "ethers-v5",
         alwaysGenerateOverloads: false,
     },
-    gasReporter: {
-        outputFile: "gas.txt",
-        noColors: true,
-    },
     mocha: {
         timeout: 800000,
+        reporter: process.env["REPORTER"],
     },
 };
 
