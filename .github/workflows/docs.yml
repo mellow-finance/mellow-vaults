@@ -39,7 +39,7 @@ jobs:
         run: rm -rf artifacts && rm -rf test/types && npx hardhat compile --config hardhat.test.config.ts && yarn gastest
 
       - name: Generate spec report
-        run: REPORTES=json yarn test > spec.json
+        run: REPORTER=json yarn test > spec.json
 
       - name: Autogen docs
         run: yarn docgen
