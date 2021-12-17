@@ -36,7 +36,7 @@ jobs:
         run: yarn
 
       - name: Generate gas usage report
-        run: yarn gastest
+        run: rm -rf artifacts && rm -rf test/types && hardhat compile --config hardhat.test.config.ts && yarn gastest
 
       - name: Generate spec report
         run: REPORTES=json yarn test > spec.json
