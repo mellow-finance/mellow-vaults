@@ -559,7 +559,7 @@ describe("LpIssuerGovernance", () => {
                         nft,
                         paramsToStage
                     )
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
             });
         });
     });
@@ -883,7 +883,7 @@ describe("LpIssuerGovernance", () => {
                         "commitDelayedStrategyParams",
                         nft
                     )
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_ADMIN);
+                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
             });
         });
     });

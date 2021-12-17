@@ -27,7 +27,7 @@ library ExceptionsLibrary {
     string constant VALID_PULL_DESTINATION = "INTRA";
     string constant CONTRACT_REQUIRED = "C";
     string constant SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE = "VG";
-    string constant REQUIRE_AT_LEAST_ADMIN = "RST";
+    string constant REQUIRE_AT_LEAST_STRATEGY = "RST";
     string constant NULL_OR_NOT_INITIALIZED = "NA";
     string constant REDIRECTS_AND_VAULT_TOKENS_LENGTH = "RL";
     string constant INITIALIZATION = "INIT";

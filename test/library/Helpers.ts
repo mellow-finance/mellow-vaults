@@ -381,6 +381,10 @@ export function zeroify<
     if (x instanceof BigNumber) {
         return BigNumber.from(0) as T;
     }
+    if (x instanceof Array) {
+        return [] as unknown as T;
+    }
+
     if (typeof x === "string") {
         if (x.startsWith("0x")) {
             return ethers.constants.AddressZero as T;

@@ -20,6 +20,7 @@ import { InternalParamsStruct } from "../types/IVaultGovernance";
 import { ERC20, IVault, Vault, VaultGovernance } from "../types";
 import { InternalParamsStructOutput } from "../types/VaultGovernance";
 import { deployments, ethers } from "hardhat";
+import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -62,12 +63,18 @@ export function vaultGovernanceBehavior<
         strategyParams,
         delayedProtocolParams,
         protocolParams,
+        deployVaultFunction,
     }: {
         delayedStrategyParams?: Arbitrary<DSP>;
         strategyParams?: Arbitrary<SP>;
         delayedProtocolParams?: Arbitrary<DPP>;
         protocolParams?: Arbitrary<PP>;
         delayedProtocolPerVaultParams?: Arbitrary<DPPV>;
+        deployVaultFunction?: (
+            deployer: Signer,
+            tokenAddresses: string[],
+            owner: string
+        ) => Promise<void>;
     }
 ) {
     describe("#constructor", () => {
@@ -214,13 +221,19 @@ export function vaultGovernanceBehavior<
                 const tokenAddresses = this.tokens
                     .slice(0, 2)
                     .map((x: ERC20) => x.address);
-                await expect(
-                    this.subject.deployVault(
+                if (deployVaultFunction) {
+                    await deployVaultFunction(
+                        this.deployer,
+                        tokenAddresses,
+                        this.ownerSigner.address
+                    );
+                } else {
+                    await this.subject.deployVault(
                         tokenAddresses,
                         [],
                         this.ownerSigner.address
-                    )
-                );
+                    );
+                }
                 nft = (await this.vaultRegistry.vaultsCount()).toNumber();
             });
         });
@@ -230,7 +243,7 @@ export function vaultGovernanceBehavior<
         it("deploys a new vault", async () => {
             const address = await this.vaultRegistry.vaultForNft(nft);
             const code = await ethers.provider.getCode(address);
-            expect(code.length).to.be.gt(2);
+            expect(code.length).to.be.gt(10);
         });
 
         it("registers vault with vault registry and issues nft", async () => {
@@ -273,15 +286,21 @@ export function vaultGovernanceBehavior<
                         const tokenAddresses = this.tokens
                             .slice(0, 2)
                             .map((x: ERC20) => x.address);
-                        await expect(
-                            this.subject
+                        if (deployVaultFunction) {
+                            await deployVaultFunction(
+                                s,
+                                tokenAddresses,
+                                this.ownerSigner.address
+                            );
+                        } else {
+                            await this.subject
                                 .connect(s)
                                 .deployVault(
                                     tokenAddresses,
                                     [],
                                     this.ownerSigner.address
-                                )
-                        ).to.not.be.reverted;
+                                );
+                        }
                     });
                 });
             });
@@ -300,32 +319,46 @@ export function vaultGovernanceBehavior<
                     const tokenAddresses = this.tokens
                         .slice(0, 2)
                         .map((x: ERC20) => x.address);
-                    await expect(
-                        this.subject
+                    if (deployVaultFunction) {
+                        await deployVaultFunction(
+                            this.admin,
+                            tokenAddresses,
+                            this.ownerSigner.address
+                        );
+                    } else {
+                        await this.subject
                             .connect(this.admin)
                             .deployVault(
                                 tokenAddresses,
                                 [],
                                 this.ownerSigner.address
-                            )
-                    ).to.not.be.reverted;
+                            );
+                    }
                 });
                 it("denied: any address", async () => {
                     await withSigner(randomAddress(), async (s) => {
                         const tokenAddresses = this.tokens.map(
                             (x: ERC20) => x.address
                         );
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .deployVault(
-                                    tokenAddresses,
-                                    [],
-                                    this.ownerSigner.address
-                                )
-                        ).to.be.revertedWith(
-                            Exceptions.PERMISSIONLESS_OR_ADMIN
-                        );
+                        if (deployVaultFunction) {
+                            await deployVaultFunction(
+                                this.admin,
+                                tokenAddresses,
+                                this.ownerSigner.address
+                            );
+                        } else {
+                            await expect(
+                                this.subject
+                                    .connect(s)
+                                    .deployVault(
+                                        tokenAddresses,
+                                        [],
+                                        this.ownerSigner.address
+                                    )
+                            ).to.be.revertedWith(
+                                Exceptions.PERMISSIONLESS_OR_ADMIN
+                            );
+                        }
                     });
                 });
             });
@@ -334,5 +367,8 @@ export function vaultGovernanceBehavior<
 
     if (delayedProtocolParams) {
         delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
+    }
+    if (delayedStrategyParams) {
+        delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
     }
 }
