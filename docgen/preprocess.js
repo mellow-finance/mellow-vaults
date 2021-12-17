@@ -124,6 +124,9 @@ module.exports = {
     for (const key in methodsRes) {
       specPage += `## ${key}\n\n`;
       for (const method of methodsRes[key]) {
+        if (method[0].toUpperCase() === method[0]) {
+          continue;
+        }
         specPage += `### ${method}\n\n`;
         const contents = generateSpecContents(key, method);
         if (contents) {
