@@ -35,6 +35,9 @@ jobs:
       - name: Generate gas usage report
         run: yarn gastest
 
+      - name: Generate spec report
+        run: REPORTES=json yarn test > spec.json
+
       - name: Autogen docs
         run: yarn docgen
 
