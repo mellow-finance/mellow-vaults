@@ -6,6 +6,9 @@ jobs:
   test:
     name: Build and Test
     runs-on: ubuntu-latest
+    concurrency:
+      group: test-${{ github.ref }}
+      cancel-in-progress: true
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       KOVAN_RPC: ${{ secrets.kovan_rpc }}

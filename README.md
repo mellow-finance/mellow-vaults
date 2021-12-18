@@ -2,7 +2,7 @@
 
 ![](images/bg.png)
 
-![CI](https://github.com/mellow-finance/mellow-vaults/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/mellow-finance/mellow-vaults/actions/workflows/ci.yml/badge.svg)](https://github.com/mellow-finance/mellow-vaults/tree/main/test)
 [![Docs](https://github.com/mellow-finance/mellow-vaults/actions/workflows/main.yml/badge.svg)](https://docs.mellow.finance)
 [![Coverage Status](https://coveralls.io/repos/github/mellow-finance/mellow-vaults/badge.svg?branch=main)](https://coveralls.io/github/mellow-finance/mellow-vaults?branch=main)
 
