@@ -45,7 +45,7 @@ jobs:
 
 
   push-docs:
-    name: Update doc
+    name: Update docs
     runs-on: ubuntu-latest
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
