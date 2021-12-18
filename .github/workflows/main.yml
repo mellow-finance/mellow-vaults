@@ -1,4 +1,4 @@
-name: Update docs and coverage
+name: Docs
 on:
   push:
     branches:
