@@ -6,7 +6,7 @@ on:
 
 jobs:
   push-docs:
-    name: Push doc
+    name: Push doc and coverage
     runs-on: ubuntu-latest
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
@@ -60,3 +60,11 @@ jobs:
           cd ./mellow-docs
           git add -A && git commit -m "Updated mellow permissionless vaults api docs" && git push origin main
           rm -rf /tmp/id_rsa
+
+      - name: Run coverage
+        run: yarn coverage
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
