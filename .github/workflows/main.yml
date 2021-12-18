@@ -8,7 +8,9 @@ jobs:
   push-coverage:
     name: Update coverage
     runs-on: ubuntu-latest
-    concurrency: push-coverage
+    concurrency:
+      group: push-coverage
+      cancel-in-progress: true
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       KOVAN_RPC: ${{ secrets.kovan_rpc }}
@@ -47,7 +49,9 @@ jobs:
   push-docs:
     name: Update docs
     runs-on: ubuntu-latest
-    concurrency: push-coverage
+    concurrency:
+      group: push-docs
+      cancel-in-progress: true
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       KOVAN_RPC: ${{ secrets.kovan_rpc }}
