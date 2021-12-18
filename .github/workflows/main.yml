@@ -7,7 +7,8 @@ on:
 jobs:
   push-coverage:
     name: Update coverage
-        runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
+    concurrency: push-coverage
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       KOVAN_RPC: ${{ secrets.kovan_rpc }}
@@ -43,10 +44,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-
   push-docs:
     name: Update docs
     runs-on: ubuntu-latest
+    concurrency: push-coverage
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
       KOVAN_RPC: ${{ secrets.kovan_rpc }}
