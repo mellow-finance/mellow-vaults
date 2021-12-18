@@ -85,7 +85,8 @@ function enrichData(data) {
         ) {
           i += 1;
         }
-        lines[i - 1] += `\n\n${specData}`;
+        i -= 1;
+        lines[i] += `\n\n${specData}`;
       }
     }
   }
