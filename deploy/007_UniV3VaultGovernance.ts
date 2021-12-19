@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { MAIN_NETWORKS } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -42,4 +43,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 };
 export default func;
-func.tags = ["UniV3VaultGovernance", "Vaults"];
+func.tags = [
+    "UniV3VaultGovernance",
+    "core",
+    ...MAIN_NETWORKS,
+    "arbitrum",
+    "optimism",
+];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

@@ -2,11 +2,13 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { ALL_NETWORKS } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute, read, get } = deployments;
-    const { deployer, admin, protocolTreasury, weth, wbtc, usdc } = await getNamedAccounts();
+    const { log, execute, read, getOrNull } = deployments;
+    const { deployer, admin, protocolTreasury, weth, wbtc, usdc } =
+        await getNamedAccounts();
     const tokens = [weth, wbtc, usdc].map((t) => t.toLowerCase()).sort();
     const governances = [];
     for (const name of [
@@ -17,7 +19,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "LpIssuerGovernance",
         "YearnVaultGovernance",
     ]) {
-        const governance = await get(name);
+        const governance = await getOrNull(name);
+        if (!governance) {
+            continue;
+        }
         if (
             await read(
                 "ProtocolGovernance",
@@ -127,4 +132,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 };
 export default func;
-func.tags = ["ProtocolGovernance", "Vaults"];
+func.tags = ["Finalize", "core", ...ALL_NETWORKS];
+func.dependencies = ["ProtocolGovernance"];

@@ -12,6 +12,20 @@ import {
     pipe,
 } from "ramda";
 
+export const ALL_NETWORKS = [
+    "hardhat",
+    "localhost",
+    "mainnet",
+    "kovan",
+    "arbitrum",
+    "optimism",
+    "bsc",
+    "avalance",
+    "polygon",
+    "fantom",
+];
+export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan"];
+
 export const setupVault = async (
     hre: HardhatRuntimeEnvironment,
     vaultNft: number,

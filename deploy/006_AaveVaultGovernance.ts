@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { ALL_NETWORKS, MAIN_NETWORKS } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -44,4 +45,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 };
 export default func;
-func.tags = ["AaveVaultGovernance", "Vaults"];
+func.tags = [
+    "AaveVaultGovernance",
+    "core",
+    ...MAIN_NETWORKS,
+    "avalanche",
+    "polygon",
+];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

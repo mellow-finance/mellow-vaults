@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
-import { setupVault, toObject } from "./000_utils";
+import { MAIN_NETWORKS, setupVault, toObject } from "./000_utils";
 import { BigNumber, ethers } from "ethers";
 import { map } from "ramda";
 
@@ -272,4 +272,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ["MStrategy"];
+func.tags = ["MStrategy", "hardhat", "localhost", "mainnet"];
+func.dependencies = [
+    "VaultRegistry",
+    "ERC20VaultGovernance",
+    "YearnVaultGovernance",
+    "GatewayVaultGovernance",
+    "LpIssuerGovernance",
+];
