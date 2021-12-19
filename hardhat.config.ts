@@ -48,6 +48,11 @@ const config: HardhatUserConfig = {
                 ? [process.env["MAINNET_DEPLOYER_PK"]]
                 : undefined,
         },
+        avalanche: {
+            url: "https://api.avax.network/ext/bc/C/rpc",
+            // gasPrice: 225000000000,
+            chainId: 43114,
+        },
     },
     namedAccounts: {
         deployer: {
