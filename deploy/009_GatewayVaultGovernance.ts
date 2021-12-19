@@ -40,6 +40,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             factory.address
         );
     }
+    const { address: gatewayVaultGovernanceAddress } = await get(
+        "GatewayVaultFactory"
+    );
+    const approvedGw = await read(
+        "VaultRegistry",
+        "isApprovedForAll",
+        deployer,
+        gatewayVaultGovernanceAddress
+    );
+    if (!approvedGw) {
+        log("Approving gateway vault governance");
+        await execute(
+            "VaultRegistry",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "setApprovalForAll",
+            gatewayVaultGovernanceAddress,
+            true
+        );
+    }
 };
 export default func;
 func.tags = ["GatewayVaultGovernance", "core", ...ALL_NETWORKS];

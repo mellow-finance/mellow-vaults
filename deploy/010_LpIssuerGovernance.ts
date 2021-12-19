@@ -41,6 +41,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             factory.address
         );
     }
+    const { address: lpIssuerVaultGovernanceAddress } = await get(
+        "LpIssuerGovernance"
+    );
+    const approvedIssuer = await read(
+        "VaultRegistry",
+        "isApprovedForAll",
+        deployer,
+        lpIssuerVaultGovernanceAddress
+    );
+    if (!approvedIssuer) {
+        log("Approving lp issuer governance");
+        await execute(
+            "VaultRegistry",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "setApprovalForAll",
+            lpIssuerVaultGovernanceAddress,
+            true
+        );
+    }
 };
 export default func;
 func.tags = ["LpIssuerGovernance", "core", ...ALL_NETWORKS];

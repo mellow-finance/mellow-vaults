@@ -53,6 +53,10 @@ const config: HardhatUserConfig = {
             // gasPrice: 225000000000,
             chainId: 43114,
         },
+        polygon: {
+            url: "https://api.avax.network/ext/bc/C/rpc",
+            chainId: 137,
+        },
     },
     namedAccounts: {
         deployer: {
