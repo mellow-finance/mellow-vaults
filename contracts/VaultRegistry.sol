@@ -106,7 +106,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function adminApprove(address newAddress, uint256 nft) external {
         require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        IERC721(address(this)).approve(newAddress, nft);
+        _approve(newAddress, nft);
     }
 
     function lockNft(uint256 nft) external {
