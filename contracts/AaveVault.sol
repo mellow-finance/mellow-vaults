@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
 import "./interfaces/IVault.sol";
@@ -24,6 +25,8 @@ import "./libraries/ExceptionsLibrary.sol";
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
 contract AaveVault is Vault {
+    using SafeERC20 for IERC20;
+
     address[] internal _aTokens;
     uint256[] internal _tvls;
 
@@ -103,8 +106,8 @@ contract AaveVault is Vault {
     }
 
     function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(this), address(_lendingPool())) < type(uint256).max / 2) {
-            IERC20(token).approve(address(_lendingPool()), type(uint256).max);
+        if (IERC20(token).allowance(address(this), address(_lendingPool())) == 0) {
+            IERC20(token).safeIncreaseAllowance(address(_lendingPool()), type(uint256).max);
         }
     }
 
