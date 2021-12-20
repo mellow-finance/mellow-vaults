@@ -20,7 +20,12 @@ contract UniV3VaultFactory is IVaultFactory {
     /// @param options Should equal UniV3 pool fee
     function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
         require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        uint256 fee = abi.decode(options, (uint256));
+        require(options.length == 0 || options.length == 32, ExceptionsLibrary.INVALID_OPTIONS);
+        uint256 fee = 3000;
+        if (options.length == 32) {
+            fee = abi.decode(options, (uint256));
+        }
+
         UniV3Vault vault = new UniV3Vault(vaultGovernance, vaultTokens, uint24(fee));
         return IVault(vault);
     }

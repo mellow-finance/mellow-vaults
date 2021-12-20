@@ -12,9 +12,13 @@ library ExceptionsLibrary {
     string constant ADMIN = "ADM";
     string constant ADMIN_ADDRESS_ZERO = "ZADM";
     string constant YEARN_REGISTRY_ADDRESS_ZERO = "ZY";
+    string constant POSITION_MANAGER_ADDRESS_ZERO = "ZPM";
     string constant VAULT_FACTORY_ADDRESS_ZERO = "ZVF";
     string constant PROTOCOL_GOVERNANCE_ADDRESS_ZERO = "ZPG";
     string constant VAULT_REGISTRY_ADDRESS_ZERO = "ZVR";
+    string constant AAVE_LENDING_POOL_ADDRESS_ZERO = "ZALP";
+    string constant TRADER_ADDRESS_ZERO = "ZTR";
+    string constant INVALID_OPTIONS = "INVO";
     string constant APPROVED_OR_OWNER = "IO";
     string constant INCONSISTENT_LENGTH = "L";
     string constant LIMIT_OVERFLOW = "LIM";
@@ -23,7 +27,7 @@ library ExceptionsLibrary {
     string constant VALID_PULL_DESTINATION = "INTRA";
     string constant CONTRACT_REQUIRED = "C";
     string constant SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE = "VG";
-    string constant REQUIRE_AT_LEAST_ADMIN = "RST";
+    string constant REQUIRE_AT_LEAST_STRATEGY = "RST";
     string constant NULL_OR_NOT_INITIALIZED = "NA";
     string constant REDIRECTS_AND_VAULT_TOKENS_LENGTH = "RL";
     string constant INITIALIZATION = "INIT";

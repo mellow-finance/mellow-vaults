@@ -1,234 +1,186 @@
-import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
-import { Signer } from "ethers";
-import { VaultGovernance, ProtocolGovernance } from "./library/Types";
+import { Assertion, expect } from "chai";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import {
-    deployERC20Tokens,
-    deploySubVaultsXGatewayVaultSystem,
-} from "./library/Deployments";
-import Exceptions from "./library/Exceptions";
-import {
+    addSigner,
+    now,
     randomAddress,
-    setTokenWhitelist,
     sleep,
+    sleepTo,
     toObject,
+    withSigner,
 } from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
+import { GatewayVaultGovernance } from "./types/GatewayVaultGovernance";
+import { setupDefaultContext, TestContext } from "./library/setup";
+import { Context, Suite } from "mocha";
+import { equals } from "ramda";
+import { address, pit } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
+import { Arbitrary, array, constant, nat } from "fast-check";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
+import {
+    InternalParamsStruct,
+    InternalParamsStructOutput,
+} from "./types/IVaultGovernance";
+import { DelayedStrategyParamsStruct } from "./types/IGatewayVaultGovernance";
+import { ERC20VaultGovernance } from "./types";
+import { Signer } from "ethers";
 
-describe("GatewayVaultGovernance", () => {
-    let deployer: Signer;
-    let admin: Signer;
-    let treasury: Signer;
-    let strategy: Signer;
-    let gatewayVaultGovernance: VaultGovernance;
-    let protocolGovernance: ProtocolGovernance;
-    let gatewayNft: number;
-    let deployment: Function;
-    let nftERC20: number;
+type CustomContext = {
+    nft: number;
+    erc20Nft: number;
+    strategySigner: SignerWithAddress;
+    ownerSigner: SignerWithAddress;
+};
 
+type DeployOptions = {
+    internalParams?: InternalParamsStructOutput;
+    skipInit?: boolean;
+};
+
+// @ts-ignore
+describe("GatewayVaultGovernance", function (this: TestContext<
+    GatewayVaultGovernance,
+    DeployOptions
+> &
+    CustomContext) {
     before(async () => {
-        [deployer, admin, treasury, strategy] = await ethers.getSigners();
-        deployment = deployments.createFixture(async () => {
-            await deployments.fixture();
-            ({
-                gatewayVaultGovernance,
-                gatewayNft,
-                protocolGovernance,
-                nftERC20,
-            } = await deploySubVaultsXGatewayVaultSystem({
-                adminSigner: admin,
-                treasury: await treasury.getAddress(),
-                vaultOwnerSigner: deployer,
-                strategy: await strategy.getAddress(),
-            }));
-        });
+        // @ts-ignore
+        await setupDefaultContext.call(this);
+        this.deploymentFixture = deployments.createFixture(
+            async (_, options?: DeployOptions) => {
+                await deployments.fixture();
+                const {
+                    internalParams = {
+                        protocolGovernance: this.protocolGovernance.address,
+                        registry: this.vaultRegistry.address,
+                    },
+                    skipInit = false,
+                } = options || {};
+                const { address } = await deployments.deploy(
+                    "GatewayVaultGovernanceTest",
+                    {
+                        from: this.deployer.address,
+                        contract: "GatewayVaultGovernance",
+                        args: [internalParams],
+                        autoMine: true,
+                    }
+                );
+                this.subject = await ethers.getContractAt(
+                    "GatewayVaultGovernance",
+                    address
+                );
+                this.ownerSigner = await addSigner(randomAddress());
+                this.strategySigner = await addSigner(randomAddress());
+                const erc20VaultGovernance: ERC20VaultGovernance =
+                    await ethers.getContract("ERC20VaultGovernance");
+                const tokenAddresses = this.tokens.map((x: any) => x.address);
+
+                await erc20VaultGovernance.deployVault(
+                    tokenAddresses,
+                    [],
+                    this.ownerSigner.address
+                );
+                this.erc20Nft = (
+                    await this.vaultRegistry.vaultsCount()
+                ).toNumber();
+
+                if (!skipInit) {
+                    const { address: factoryAddress } =
+                        await deployments.deploy("GatewayVaultFactoryTest", {
+                            from: this.deployer.address,
+                            contract: "GatewayVaultFactory",
+                            args: [this.subject.address],
+                            autoMine: true,
+                        });
+                    await this.subject.initialize(factoryAddress);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .setPendingVaultGovernancesAdd([this.subject.address]);
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitVaultGovernancesAdd();
+                    await this.vaultRegistry
+                        .connect(this.ownerSigner)
+                        .setApprovalForAll(this.subject.address, true);
+                    await this.subject
+                        .connect(this.ownerSigner)
+                        .deployVault(
+                            tokenAddresses,
+                            ethers.utils.defaultAbiCoder.encode(
+                                ["uint256[]"],
+                                [[this.erc20Nft]]
+                            ),
+                            this.ownerSigner.address
+                        );
+                    this.nft = (
+                        await this.vaultRegistry.vaultsCount()
+                    ).toNumber();
+                    await this.vaultRegistry
+                        .connect(this.ownerSigner)
+                        .approve(this.strategySigner.address, this.nft);
+                }
+                return this.subject;
+            }
+        );
     });
 
     beforeEach(async () => {
-        await deployment();
+        await this.deploymentFixture();
+        this.startTimestamp = now();
+        await sleepTo(this.startTimestamp);
     });
 
-    describe("constructor", () => {
-        it("creates GatewayVaultGovernance", async () => {
-            expect(
-                await deployer.provider?.getCode(gatewayVaultGovernance.address)
-            ).not.to.be.equal("0x");
+    const delayedStrategyParams: Arbitrary<DelayedStrategyParamsStruct> =
+        constant(this.erc20Nft).map((erc20nft) => ({
+            redirects: [BigNumber.from(this.erc20Nft)],
+        }));
+
+    describe("#constructor", () => {
+        it("deploys a new contract", async () => {
+            expect(ethers.constants.AddressZero).to.not.eq(
+                this.subject.address
+            );
         });
     });
 
-    describe("stageDelayedStrategyParams", () => {
-        describe("when redirects.length != vaultTokens.length and redirects.length > 0", () => {
-            it("reverts", async () => {
-                await expect(
-                    gatewayVaultGovernance.stageDelayedStrategyParams(
-                        gatewayNft,
-                        {
-                            redirects: [1, 2, 3],
-                        }
-                    )
-                ).to.be.revertedWith(
-                    Exceptions.REDIRECTS_AND_VAULT_TOKENS_LENGTH
+    // @ts-ignore
+    vaultGovernanceBehavior.call(this, {
+        delayedStrategyParams,
+        deployVaultFunction: async (
+            deployer: Signer,
+            tokenAddresses: string[],
+            owner: string
+        ) => {
+            const erc20VaultGovernance: ERC20VaultGovernance =
+                await ethers.getContract("ERC20VaultGovernance");
+            const deployerAddress = await deployer.getAddress();
+            await erc20VaultGovernance
+                .connect(deployer)
+                .deployVault(tokenAddresses, [], deployerAddress);
+            const erc20Nft = (
+                await this.vaultRegistry.vaultsCount()
+            ).toNumber();
+            await this.vaultRegistry
+                .connect(deployer)
+                .setApprovalForAll(this.subject.address, true);
+            await this.subject
+                .connect(deployer)
+                .deployVault(
+                    tokenAddresses,
+                    ethers.utils.defaultAbiCoder.encode(
+                        ["uint256[]"],
+                        [[erc20Nft]]
+                    ),
+                    owner
                 );
-            });
-        });
-
-        it("sets stageDelayedStrategyParams and emits StageDelayedStrategyParams event", async () => {
-            await expect(
-                await gatewayVaultGovernance
-                    .connect(admin)
-                    .stageDelayedStrategyParams(gatewayNft, {
-                        redirects: [],
-                    })
-            ).to.emit(gatewayVaultGovernance, "StageDelayedStrategyParams");
-
-            expect(
-                toObject(
-                    await gatewayVaultGovernance.stagedDelayedStrategyParams(
-                        gatewayNft
-                    )
-                )
-            ).to.deep.equal({
-                redirects: [],
-            });
-        });
-    });
-
-    describe("setStrategyParams", () => {
-        it("sets strategy params and emits SetStrategyParams event", async () => {
-            await expect(
-                gatewayVaultGovernance
-                    .connect(admin)
-                    .setStrategyParams(gatewayNft, {
-                        limits: [1, 2, 3],
-                    })
-            ).to.emit(gatewayVaultGovernance, "SetStrategyParams");
-
-            expect(
-                toObject(
-                    await gatewayVaultGovernance
-                        .connect(admin)
-                        .strategyParams(gatewayNft)
-                )
-            ).to.deep.equal({
-                limits: [
-                    BigNumber.from(1),
-                    BigNumber.from(2),
-                    BigNumber.from(3),
-                ],
-            });
-        });
-    });
-
-    describe("commitDelayedStrategyParams", () => {
-        it("commits delayed strategy params and emits CommitDelayedStrategyParams event", async () => {
-            await gatewayVaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(gatewayNft, {
-                    redirects: [],
-                });
-            await sleep(Number(await protocolGovernance.governanceDelay()));
-            await expect(
-                gatewayVaultGovernance
-                    .connect(admin)
-                    .commitDelayedStrategyParams(gatewayNft)
-            ).to.emit(gatewayVaultGovernance, "CommitDelayedStrategyParams");
-            expect(
-                toObject(
-                    await gatewayVaultGovernance
-                        .connect(admin)
-                        .delayedStrategyParams(gatewayNft)
-                )
-            ).to.deep.equal({
-                redirects: [],
-            });
-        });
-    });
-
-    describe("delayedStrategyParams", () => {
-        describe("when passed unknown nft", () => {
-            it("returns empty struct", async () => {
-                expect(
-                    await gatewayVaultGovernance.delayedStrategyParams(
-                        gatewayNft + 42
-                    )
-                ).to.be.deep.equal([[]]);
-            });
-        });
-    });
-
-    describe("stagedDelayedStrategyParams", () => {
-        it("returns params", async () => {
-            await gatewayVaultGovernance
-                .connect(admin)
-                .stageDelayedStrategyParams(gatewayNft, {
-                    redirects: [],
-                });
-            expect(
-                await gatewayVaultGovernance.stagedDelayedStrategyParams(
-                    gatewayNft
-                )
-            ).to.be.deep.equal([[]]);
-        });
-
-        describe("when passed unknown nft", () => {
-            it("returns empty struct", async () => {
-                expect(
-                    toObject(
-                        await gatewayVaultGovernance.stagedDelayedStrategyParams(
-                            gatewayNft + 42
-                        )
-                    )
-                ).to.be.deep.equal({ redirects: [] });
-            });
-        });
-    });
-
-    describe("strategyParams", () => {
-        describe("when passed unknown nft", () => {
-            it("returns empty struct", async () => {
-                expect(
-                    await gatewayVaultGovernance.strategyParams(gatewayNft + 42)
-                ).to.be.deep.equal([[]]);
-            });
-        });
-    });
-
-    describe("deployVault", async () => {
-        describe("when try to deploy sub vault with not valid tokens", () => {
-            it("reverts", async () => {
-                let disapprovedToken = (await deployERC20Tokens(1))[0];
-                await expect(
-                    gatewayVaultGovernance.deployVault(
-                        [disapprovedToken.address],
-                        [],
-                        ethers.constants.AddressZero
-                    )
-                ).to.be.revertedWith(Exceptions.TOKEN_NOT_ALLOWED);
-            });
-        });
-
-        describe("when only one token is disapproved", () => {
-            it("reverts", async () => {
-                let approvedTokens = await deployERC20Tokens(3);
-                await setTokenWhitelist(
-                    protocolGovernance,
-                    approvedTokens as any,
-                    admin
-                );
-                let disapprovedToken = (await deployERC20Tokens(1))[0];
-                await expect(
-                    gatewayVaultGovernance.deployVault(
-                        [
-                            approvedTokens[0].address,
-                            approvedTokens[1].address,
-                            disapprovedToken.address,
-                            approvedTokens[2].address,
-                        ],
-                        [],
-                        ethers.constants.AddressZero
-                    )
-                ).to.be.revertedWith(Exceptions.TOKEN_NOT_ALLOWED);
-            });
-        });
+            const nft = await this.vaultRegistry.vaultsCount();
+            await this.vaultRegistry
+                .connect(deployer)
+                .transferFrom(deployerAddress, owner, nft);
+        },
+        ...this,
     });
 });

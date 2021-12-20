@@ -212,7 +212,7 @@ abstract contract VaultGovernance is IVaultGovernance {
             (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
                 _internalParams.registry.getApproved(nft) == msg.sender ||
                 (_internalParams.registry.ownerOf(nft) == msg.sender)),
-            ExceptionsLibrary.REQUIRE_AT_LEAST_ADMIN
+            ExceptionsLibrary.REQUIRE_AT_LEAST_STRATEGY
         );
     }
 

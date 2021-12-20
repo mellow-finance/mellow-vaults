@@ -24,4 +24,4 @@ test/types
 docs
 .DS_store
 .mailmap
-
+spec.json

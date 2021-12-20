@@ -87,7 +87,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
-        require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
+        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         _stagedProtocolGovernance = newProtocolGovernance;
         _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
         emit StagedProtocolGovernance(tx.origin, msg.sender, newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
@@ -95,7 +95,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function commitStagedProtocolGovernance() external {
-        require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
+        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(_stagedProtocolGovernanceTimestamp != 0, ExceptionsLibrary.NULL_OR_NOT_INITIALIZED);
         require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
@@ -105,7 +105,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function adminApprove(address newAddress, uint256 nft) external {
-        require(_isProtocolAdmin(_msgSender()), ExceptionsLibrary.ADMIN);
+        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         _approve(newAddress, nft);
     }
 

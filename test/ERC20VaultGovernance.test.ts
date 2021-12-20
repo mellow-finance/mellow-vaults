@@ -1,51 +1,158 @@
-import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
-import { Signer } from "ethers";
-import { VaultGovernance, ProtocolGovernance } from "./library/Types";
-import { Contract } from "@ethersproject/contracts";
-import { deploySubVaultSystem } from "./library/Deployments";
-import { sleep } from "./library/Helpers";
+import { Assertion, expect } from "chai";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
+import {
+    addSigner,
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    toObject,
+    withSigner,
+} from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
+import {
+    DelayedProtocolParamsStruct,
+    ERC20VaultGovernance,
+} from "./types/ERC20VaultGovernance";
+import { setupDefaultContext, TestContext } from "./library/setup";
+import { Context, Suite } from "mocha";
+import { equals } from "ramda";
+import { address, pit } from "./library/property";
+import { BigNumber } from "@ethersproject/bignumber";
+import { Arbitrary } from "fast-check";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
+import {
+    InternalParamsStruct,
+    InternalParamsStructOutput,
+} from "./types/IVaultGovernance";
 
-describe("ERC20VaultGovernance", () => {
-    const tokensCount = 2;
-    let deployer: Signer;
-    let admin: Signer;
-    let treasury: Signer;
-    let anotherTreasury: Signer;
-    let ERC20VaultGovernance: VaultGovernance;
-    let protocolGovernance: ProtocolGovernance;
-    let chiefTrader: Contract;
-    let nftERC20: number;
-    let deployment: Function;
+type CustomContext = {
+    nft: number;
+    strategySigner: SignerWithAddress;
+    ownerSigner: SignerWithAddress;
+};
 
+type DeployOptions = {
+    internalParams?: InternalParamsStructOutput;
+    trader?: string;
+    skipInit?: boolean;
+};
+
+// @ts-ignore
+describe("ERC20VaultGovernance", function (this: TestContext<
+    ERC20VaultGovernance,
+    DeployOptions
+> &
+    CustomContext) {
     before(async () => {
-        [deployer, admin, treasury, anotherTreasury] =
-            await ethers.getSigners();
-        deployment = deployments.createFixture(async () => {
-            await deployments.fixture();
-            ({
-                protocolGovernance,
-                ERC20VaultGovernance,
-                nftERC20,
-                chiefTrader,
-            } = await deploySubVaultSystem({
-                tokensCount: tokensCount,
-                adminSigner: admin,
-                treasury: await treasury.getAddress(),
-                vaultOwner: await deployer.getAddress(),
-            }));
-        });
+        // @ts-ignore
+        await setupDefaultContext.call(this);
+        const traderAddress = (await getNamedAccounts()).aaveLendingPool;
+        this.deploymentFixture = deployments.createFixture(
+            async (_, options?: DeployOptions) => {
+                await deployments.fixture();
+                const {
+                    internalParams = {
+                        protocolGovernance: this.protocolGovernance.address,
+                        registry: this.vaultRegistry.address,
+                    },
+                    trader = traderAddress,
+                    skipInit = false,
+                } = options || {};
+                const { address } = await deployments.deploy(
+                    "ERC20VaultGovernanceTest",
+                    {
+                        from: this.deployer.address,
+                        contract: "ERC20VaultGovernance",
+                        args: [internalParams, { trader }],
+                        autoMine: true,
+                    }
+                );
+                this.subject = await ethers.getContractAt(
+                    "ERC20VaultGovernance",
+                    address
+                );
+                this.ownerSigner = await addSigner(randomAddress());
+                this.strategySigner = await addSigner(randomAddress());
+
+                if (!skipInit) {
+                    const { address: factoryAddress } =
+                        await deployments.deploy("ERC20VaultFactoryTest", {
+                            from: this.deployer.address,
+                            contract: "ERC20VaultFactory",
+                            args: [this.subject.address],
+                            autoMine: true,
+                        });
+                    await this.subject.initialize(factoryAddress);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .setPendingVaultGovernancesAdd([this.subject.address]);
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitVaultGovernancesAdd();
+                    await this.subject.deployVault(
+                        this.tokens.map((x: any) => x.address),
+                        [],
+                        this.ownerSigner.address
+                    );
+                    this.nft = (
+                        await this.vaultRegistry.vaultsCount()
+                    ).toNumber();
+                    await this.vaultRegistry
+                        .connect(this.ownerSigner)
+                        .approve(this.strategySigner.address, this.nft);
+                }
+                return this.subject;
+            }
+        );
     });
 
     beforeEach(async () => {
-        await deployment();
+        await this.deploymentFixture();
+        this.startTimestamp = now();
+        await sleepTo(this.startTimestamp);
     });
 
-    describe("constructor", () => {
-        it("creates ERC20VaultGovernance", async () => {
-            expect(
-                await deployer.provider?.getCode(ERC20VaultGovernance.address)
-            ).not.to.be.equal("0x");
+    const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
+        address.map((trader) => ({ trader }));
+
+    describe("#constructor", () => {
+        it("deploys a new contract", async () => {
+            expect(ethers.constants.AddressZero).to.not.eq(
+                this.subject.address
+            );
         });
+
+        describe("edge cases", () => {
+            describe("when trader address is 0", () => {
+                it("reverts", async () => {
+                    await deployments.fixture();
+                    await expect(
+                        deployments.deploy("ERC20VaultGovernance", {
+                            from: this.deployer.address,
+                            args: [
+                                {
+                                    protocolGovernance:
+                                        this.protocolGovernance.address,
+                                    registry: this.vaultRegistry.address,
+                                },
+                                {
+                                    trader: ethers.constants.AddressZero,
+                                },
+                            ],
+                            autoMine: true,
+                        })
+                    ).to.be.revertedWith(Exceptions.TRADER_ADDRESS_ZERO);
+                });
+            });
+        });
+    });
+
+    // @ts-ignore
+    vaultGovernanceBehavior.call(this, {
+        delayedProtocolParams,
+        ...this,
     });
 });
