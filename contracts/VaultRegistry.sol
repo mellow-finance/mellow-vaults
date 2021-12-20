@@ -15,8 +15,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     address[] private _vaults;
     mapping(address => uint256) private _nftIndex;
-    mapping(uint256 => address) private _vaultIndex;
-    mapping(uint256 => bool) private _locks;
+    bool[] private _locks;
     uint256 private _topNft = 1;
 
     /// @notice Creates a new contract.
@@ -37,7 +36,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function vaultForNft(uint256 nft) external view returns (address) {
-        return _vaultIndex[nft];
+        return _vaults[nft];
     }
 
     /// @inheritdoc IVaultRegistry
@@ -58,9 +57,9 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         );
         nft = _topNft;
         _safeMint(owner, nft);
-        _vaultIndex[nft] = vault;
         _nftIndex[vault] = nft;
         _vaults.push(vault);
+        _locks.push(false);
         _topNft += 1;
         emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
     }
