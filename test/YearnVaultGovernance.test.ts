@@ -1,4 +1,4 @@
-import { Assertion, expect } from "chai";
+import { expect } from "chai";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import {
     addSigner,
@@ -6,7 +6,6 @@ import {
     randomAddress,
     sleep,
     sleepTo,
-    toObject,
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
@@ -15,17 +14,11 @@ import {
     YearnVaultGovernance,
 } from "./types/YearnVaultGovernance";
 import { setupDefaultContext, TestContext } from "./library/setup";
-import { Context, Suite } from "mocha";
-import { equals } from "ramda";
 import { address, pit } from "./library/property";
-import { BigNumber } from "@ethersproject/bignumber";
 import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
-import {
-    InternalParamsStruct,
-    InternalParamsStructOutput,
-} from "./types/IVaultGovernance";
+import { InternalParamsStructOutput } from "./types/IVaultGovernance";
 
 type CustomContext = {
     nft: number;
@@ -154,11 +147,16 @@ describe("YearnVaultGovernance", function (this: TestContext<
     });
 
     describe("#yTokenForToken", () => {
-        const YEARN_WETH_POOL = "0xa258C4606Ca8206D8aA700cE2143D7db854D168c";
+        let yearnWethPool: string;
 
-        it("returns yToken (yVault) in yToken overrides (set by #setYTokenForToken) or corresponding to ERC20 token in YearnVaultRegistry", async () => {
+        before(async () => {
+            ({ yearnWethPool } = await getNamedAccounts());
+        });
+
+        it(`returns yToken (yVault) in yToken overrides (set by #setYTokenForToken) 
+            or corresponding to ERC20 token in YearnVaultRegistry`, async () => {
             const yToken = await this.subject.yTokenForToken(this.weth.address);
-            expect(YEARN_WETH_POOL).to.eq(yToken);
+            expect(yearnWethPool).to.eq(yToken);
         });
 
         describe("access control", () => {
@@ -188,7 +186,7 @@ describe("YearnVaultGovernance", function (this: TestContext<
                     const yToken = await this.subject.yTokenForToken(
                         this.weth.address
                     );
-                    expect(YEARN_WETH_POOL).to.eq(yToken);
+                    expect(yearnWethPool).to.eq(yToken);
                 });
             });
 
@@ -261,16 +259,11 @@ describe("YearnVaultGovernance", function (this: TestContext<
 
             it("denied: random address", async () => {
                 await withSigner(randomAddress(), async (s) => {
-                    await withSigner(randomAddress(), async (s) => {
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .setYTokenForToken(
-                                    this.weth.address,
-                                    yTokenAddress
-                                )
-                        ).to.be.revertedWith(Exceptions.ADMIN);
-                    });
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .setYTokenForToken(this.weth.address, yTokenAddress)
+                    ).to.be.revertedWith(Exceptions.ADMIN);
                 });
             });
         });

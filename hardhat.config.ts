@@ -79,6 +79,9 @@ const config: HardhatUserConfig = {
         yearnVaultRegistry: {
             default: "0x50c1a2eA0a861A967D9d0FFE2AE4012c2E053804",
         },
+        yearnWethPool: {
+            default: "0xa258C4606Ca8206D8aA700cE2143D7db854D168c",
+        },
         usdc: {
             default: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
             kovan: "0xe22da380ee6b445bb8273c81944adeb6e8450422",
