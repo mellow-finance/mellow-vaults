@@ -54,45 +54,45 @@ describe("ProtocolGovernance", () => {
                 });
 
             params = {
-                permissionless: false,
                 maxTokensPerVault: BigNumber.from(20),
                 governanceDelay: BigNumber.from(100),
                 protocolTreasury: await protocolTreasury.getAddress(),
+                permissionless: false,
             };
 
             initialParams = {
-                permissionless: true,
                 maxTokensPerVault: BigNumber.from(10),
                 governanceDelay: BigNumber.from(SECONDS_PER_DAY), // 1 day
                 protocolTreasury: await protocolTreasury.getAddress(),
+                permissionless: true,
             };
 
             paramsZero = {
-                permissionless: false,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(0),
                 protocolTreasury: await protocolTreasury.getAddress(),
+                permissionless: false,
             };
 
             paramsEmpty = {
-                permissionless: true,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
                 protocolTreasury: await protocolTreasury.getAddress(),
+                permissionless: true,
             };
 
             paramsDefault = {
-                permissionless: false,
                 maxTokensPerVault: BigNumber.from(0),
                 governanceDelay: BigNumber.from(0),
                 protocolTreasury: ethers.constants.AddressZero,
+                permissionless: false,
             };
 
             paramsTimeout = {
-                permissionless: true,
                 maxTokensPerVault: BigNumber.from(1),
                 governanceDelay: BigNumber.from(timeout),
                 protocolTreasury: await protocolTreasury.getAddress(),
+                permissionless: true,
             };
 
             tokens = await deployERC20Tokens(3);
