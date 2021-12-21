@@ -18,9 +18,7 @@ import { address, pit } from "./library/property";
 import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
-import {
-    InternalParamsStructOutput,
-} from "./types/IVaultGovernance";
+import { InternalParamsStructOutput } from "./types/IVaultGovernance";
 
 type CustomContext = {
     nft: number;
@@ -264,10 +262,7 @@ describe("YearnVaultGovernance", function (this: TestContext<
                     await expect(
                         this.subject
                             .connect(s)
-                            .setYTokenForToken(
-                                this.weth.address,
-                                yTokenAddress
-                            )
+                            .setYTokenForToken(this.weth.address, yTokenAddress)
                     ).to.be.revertedWith(Exceptions.ADMIN);
                 });
             });
