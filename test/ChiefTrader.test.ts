@@ -42,6 +42,8 @@ describe("ChiefTrader", () => {
     describe("#addTrader", () => {
         it("adds new trader", async () => {});
 
+        it("emits `AddedTrader` event", async () => {});
+
         describe("access control", () => {
             describe("denied: random address", () => {
 
@@ -59,13 +61,29 @@ describe("ChiefTrader", () => {
 
     describe("#swapExactInput", () => {
         describe("edge cases", () => {
+            describe("when passed unknown trader id", () => {
+                it("reverts", async () => {
 
+                });
+            });
+
+            describe("when a path contains not allowed token", () => {
+
+            });
         });
     });
 
     describe("#swapExactOutput", () => {
         describe("edge cases", () => {
+            describe("when passed unknown trader id", () => {
+                it("reverts", async () => {
 
+                });
+            });
+
+            describe("when a path contains not allowed token", () => {
+
+            });
         });
     });
 
