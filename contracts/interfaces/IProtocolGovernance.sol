@@ -10,10 +10,10 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
     /// @param protocolTreasury Protocol treasury address for collecting management fees
     struct Params {
-        bool permissionless;
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
         address protocolTreasury;
+        bool permissionless;
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
