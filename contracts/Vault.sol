@@ -196,8 +196,6 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// Since only gateway vault has hasSubvault function this will prove correctly that
     /// the vaults belong to the same vault system.
     function _isValidPullDestination(address to) internal view returns (bool) {
-        if (!CommonLibrary.isContract(to)) return false;
-
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         // make sure that this vault is a registered vault
         if (_nft == 0) return false;

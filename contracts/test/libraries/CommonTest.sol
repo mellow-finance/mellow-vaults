@@ -30,8 +30,4 @@ contract CommonTest {
     {
         return CommonLibrary.splitAmounts(amounts, weights);
     }
-
-    function isContractTest(address addr) external view returns (bool) {
-        return CommonLibrary.isContract(addr);
-    }
 }

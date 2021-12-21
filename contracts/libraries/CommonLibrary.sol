@@ -130,17 +130,6 @@ library CommonLibrary {
         return res;
     }
 
-    /// @notice Determines if a given address is a contract address
-    /// @param addr Address to check
-    /// @return `true` if the address is a contract address, `false` otherwise
-    function isContract(address addr) internal view returns (bool) {
-        uint32 size;
-        assembly {
-            size := extcodesize(addr)
-        }
-        return (size > 0);
-    }
-
     function sqrtX96(uint256 xX96) internal pure returns (uint256) {
         uint256 sqX96 = sqrt(xX96);
         return sqX96 << 48;
