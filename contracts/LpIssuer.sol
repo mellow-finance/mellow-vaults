@@ -201,8 +201,8 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
     }
 
     function _allowTokenIfNecessary(address token, address to) internal {
-        if (IERC20(token).allowance(address(to), address(this)) < type(uint256).max / 2) {
-            IERC20(token).approve(address(to), type(uint256).max);
+        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
+            IERC20(token).approve(to, type(uint256).max);
         }
     }
 

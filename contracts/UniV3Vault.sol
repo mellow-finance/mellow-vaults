@@ -226,8 +226,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(_positionManager()), address(this)) < type(uint256).max / 2)
+        if (IERC20(token).allowance(address(this), address(_positionManager())) < type(uint256).max / 2) {
             IERC20(token).approve(address(_positionManager()), type(uint256).max);
+        }
     }
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
