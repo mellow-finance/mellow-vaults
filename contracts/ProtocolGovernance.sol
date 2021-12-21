@@ -54,13 +54,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function tokenWhitelist() external view returns (address[] memory) {
         uint256 l = _tokenWhitelist.length;
         address[] memory res = new address[](_numberOfValidTokens);
-        uint256 j = 0;
+        uint256 j;
         for (uint256 i = 0; i < l; ++i) {
-            if (!_tokensAllowed[_tokenWhitelist[i]] && _tokenEverAdded[_tokenWhitelist[i]]) {
+            if (!_tokensAllowed[_tokenWhitelist[i]]) {
                 continue;
             }
             res[j] = _tokenWhitelist[i];
-            j += 1;
+            unchecked { ++j; }
         }
         return res;
     }
