@@ -79,6 +79,8 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     /// @inheritdoc IVaultGovernance
     function initialize(IVaultFactory factory_) external {
+        IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
+        require(protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(!initialized, ExceptionsLibrary.INITIALIZATION);
         factory = factory_;
         initialized = true;
