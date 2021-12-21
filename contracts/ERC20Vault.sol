@@ -94,7 +94,8 @@ contract ERC20Vault is Vault, ITrader {
     }
 
     function _approveERC20TokenIfNecessary(address token, address to) internal {
-        if (IERC20(token).allowance(to, address(this)) < type(uint256).max / 2)
+        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
             IERC20(token).approve(to, type(uint256).max);
+        }
     }
 }
