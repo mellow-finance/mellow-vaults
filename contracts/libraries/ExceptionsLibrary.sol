@@ -46,6 +46,7 @@ library ExceptionsLibrary {
     string constant LOCKED_NFT = "LCKD";
     string constant TOKEN_OWNER = "TO";
     string constant NOT_VAULT_TOKEN = "VT";
+    string constant REQUIRE_STRATEGY = "RS";
     string constant NOT_STRATEGY_TREASURY = "ST";
     string constant ZERO_STRATEGY_ADDRESS = "ZS";
     string constant NFT_VAULT_REGISTRY = "NFTVR";

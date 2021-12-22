@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IUniV2Trader.sol";
 import "./libraries/TraderExceptionsLibrary.sol";
@@ -22,40 +22,40 @@ contract UniV2Trader is Trader, IUniV2Trader {
     /// @inheritdoc ITrader
     function swapExactInput(
         uint256,
-        uint256 amount,
         address recipient,
-        PathItem[] memory path,
+        address token0,
+        address token1,
+        uint256 amount,
         bytes calldata options
     ) external returns (uint256) {
-        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
-        IERC20(path[0].token0).safeTransferFrom(recipient, address(this), amount);
-        _approveERC20TokenIfNecessary(path[0].token0, address(router));
+        IERC20(token0).safeTransferFrom(recipient, address(this), amount);
+        _approveERC20TokenIfNecessary(token0, address(router));
         uint256[] memory amounts = router.swapExactTokensForTokens(
             amount,
             options_.limitAmount,
-            _makePath(path),
+            _makePath(token0, token1),
             recipient,
             options_.deadline
         );
-        return amounts[amounts.length - 1];
+        return amounts[1];
     }
 
     /// @inheritdoc ITrader
     function swapExactOutput(
         uint256,
-        uint256 amount,
         address recipient,
-        PathItem[] memory path,
+        address token0,
+        address token1,
+        uint256 amount,
         bytes calldata options
     ) external returns (uint256) {
-        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
         Options memory options_ = abi.decode(options, (Options));
-        IERC20(path[0].token0).safeTransferFrom(recipient, address(this), options_.limitAmount);
+        IERC20(token0).safeTransferFrom(recipient, address(this), options_.limitAmount);
         uint256[] memory amounts = router.swapTokensForExactTokens(
             amount,
             options_.limitAmount,
-            _makePath(path),
+            _makePath(token0, token1),
             recipient,
             options_.deadline
         );
@@ -64,14 +64,14 @@ contract UniV2Trader is Trader, IUniV2Trader {
             unchecked {
                 change = options_.limitAmount - amounts[0];
             }
-            IERC20(path[0].token0).safeTransfer(recipient, change);
+            IERC20(token0).safeTransfer(recipient, change);
         }
         return amounts[0];
     }
 
-    function _makePath(PathItem[] memory path) internal pure returns (address[] memory result) {
-        result = new address[](path.length + 1);
-        result[0] = path[0].token0;
-        for (uint256 i = 0; i < path.length; ++i) result[i + 1] = path[i].token1;
+    function _makePath(address token0, address token1) internal pure returns (address[] memory result) {
+        result = new address[](2);
+        result[0] = token0;
+        result[1] = token1;
     }
 }

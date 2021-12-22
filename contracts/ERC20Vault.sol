@@ -33,35 +33,37 @@ contract ERC20Vault is Vault, ITrader {
     /// @inheritdoc ITrader
     function swapExactInput(
         uint256 traderId,
-        uint256 amount,
         address,
-        PathItem[] memory path,
+        address token0,
+        address token1,
+        uint256 amount,
         bytes memory options
     ) external returns (uint256 amountOut) {
-        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
-        require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
+        require(isVaultToken(token0) && isVaultToken(token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
+        require(_isStrategy(msg.sender), ExceptionsLibrary.REQUIRE_STRATEGY);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
-        return trader.swapExactInput(traderId, amount, address(0), path, options);
+        _approveERC20TokenIfNecessary(token0, chiefTrader.getTrader(traderId));
+        amountOut = trader.swapExactInput(traderId, address(this), token0, token1, amount, options);
     }
 
     /// @inheritdoc ITrader
     function swapExactOutput(
         uint256 traderId,
-        uint256 amount,
         address,
-        PathItem[] memory path,
-        bytes calldata options
-    ) external returns (uint256 amountOut) {
-        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
-        require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
+        address token0, 
+        address token1,
+        uint256 amount,
+        bytes memory options
+    ) external returns (uint256 amountIn) {
+        require(isVaultToken(token0) && isVaultToken(token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
+        require(_isStrategy(msg.sender), ExceptionsLibrary.REQUIRE_STRATEGY);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
-        return trader.swapExactOutput(traderId, amount, address(0), path, options);
+        _approveERC20TokenIfNecessary(token0, chiefTrader.getTrader(traderId));
+        amountIn = trader.swapExactOutput(traderId, address(this), token0, token1, amount, options);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)

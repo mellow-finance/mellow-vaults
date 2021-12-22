@@ -48,31 +48,31 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     /// @inheritdoc ITrader
     function swapExactInput(
         uint256 traderId,
+        address recipient,
+        address token0,
+        address token1,
         uint256 amount,
-        address,
-        PathItem[] calldata path,
         bytes calldata options
-    ) external returns (uint256) {
+    ) external returns (uint256 amountOut) {
         require(traderId < _traders.length, TraderExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
-        _requireAllowedTokens(path);
+        _requireAllowedTokens(token0, token1);
         address traderAddress = _traders[traderId];
-        address recipient = msg.sender;
-        return ITrader(traderAddress).swapExactInput(0, amount, recipient, path, options);
+        amountOut = ITrader(traderAddress).swapExactInput(0, recipient, token0, token1, amount, options);
     }
 
     /// @inheritdoc ITrader
     function swapExactOutput(
         uint256 traderId,
+        address recipient,
+        address token0,
+        address token1,
         uint256 amount,
-        address,
-        PathItem[] calldata path,
         bytes calldata options
-    ) external returns (uint256) {
+    ) external returns (uint256 amountIn) {
         require(traderId < _traders.length, TraderExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
-        _requireAllowedTokens(path);
+        _requireAllowedTokens(token0, token1);
         address traderAddress = _traders[traderId];
-        address recipient = msg.sender;
-        return ITrader(traderAddress).swapExactOutput(0, amount, recipient, path, options);
+        amountIn = ITrader(traderAddress).swapExactOutput(0, recipient, token0, token1, amount, options);
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
@@ -81,15 +81,13 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
             interfaceId == type(IChiefTrader).interfaceId);
     }
 
-    function _requireAllowedTokens(PathItem[] memory path) internal view {
-        IProtocolGovernance pg = protocolGovernance;
-        for (uint256 i = 1; i < path.length; ++i)
-            require(
-                pg.isAllowedToken(path[i].token0) && pg.isAllowedToken(path[i].token1),
-                TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
-            );
-        if (path.length > 0)
-            require(pg.isAllowedToken(path[0].token1), TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION);
+    function _requireAllowedTokens(address token0, address token1) internal view {
+        require(token0 != token1);
+        require(
+            protocolGovernance.isAllowedToken(token0) &&
+            protocolGovernance.isAllowedToken(token1),
+            TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
+        );
     }
 
     function _requireProtocolAdmin() internal view {

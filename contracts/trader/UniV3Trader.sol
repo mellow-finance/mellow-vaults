@@ -16,133 +16,64 @@ contract UniV3Trader is Trader, IUniV3Trader {
     ISwapRouter public immutable swapRouter;
 
     constructor(address _swapRouter) {
+        require(_swapRouter != address(0), TraderExceptionsLibrary.ADDRESS_ZERO_EXCEPTION);
         swapRouter = ISwapRouter(_swapRouter);
     }
 
     /// @inheritdoc ITrader
     function swapExactInput(
         uint256,
-        uint256 amount,
         address recipient,
-        PathItem[] memory path,
+        address token0,
+        address token1,
+        uint256 amount,
         bytes memory options
-    ) external returns (uint256) {
-        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+    ) external returns (uint256 amountOut) {
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 1) return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
-        else return _swapExactInputMultihop(amount, recipient, path, options_);
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: token0,
+            tokenOut: token1,
+            fee: options_.fee,
+            recipient: recipient,
+            deadline: options_.deadline,
+            amountIn: amount,
+            amountOutMinimum: options_.limitAmount,
+            sqrtPriceLimitX96: options_.sqrtPriceLimitX96
+        });
+        IERC20(token0).safeTransferFrom(recipient, address(this), amount);
+        _approveERC20TokenIfNecessary(token0, address(swapRouter));
+        amountOut = swapRouter.exactInputSingle(params);
     }
 
     /// @inheritdoc ITrader
     function swapExactOutput(
         uint256,
-        uint256 amount,
         address recipient,
-        PathItem[] memory path,
+        address token0,
+        address token1,
+        uint256 amount,
         bytes memory options
-    ) external returns (uint256) {
-        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+    ) external returns (uint256 amountIn) {
         Options memory options_ = abi.decode(options, (Options));
-        if (path.length == 1)
-            return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
-        else return _swapExactOutputMultihop(amount, recipient, path, options_);
-    }
-
-    function _swapExactInputSingle(
-        address input,
-        address output,
-        uint256 amount,
-        address recipient,
-        Options memory options
-    ) internal returns (uint256 amountOut) {
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: input,
-            tokenOut: output,
-            fee: options.fee,
-            recipient: recipient,
-            deadline: options.deadline,
-            amountIn: amount,
-            amountOutMinimum: options.limitAmount,
-            sqrtPriceLimitX96: options.sqrtPriceLimitX96
-        });
-        IERC20(input).safeTransferFrom(recipient, address(this), amount);
-        _approveERC20TokenIfNecessary(input, address(swapRouter));
-        amountOut = swapRouter.exactInputSingle(params);
-    }
-
-    function _swapExactOutputSingle(
-        address input,
-        address output,
-        uint256 amount,
-        address recipient,
-        Options memory options
-    ) internal returns (uint256 amountIn) {
         ISwapRouter.ExactOutputSingleParams memory params = ISwapRouter.ExactOutputSingleParams({
-            tokenIn: input,
-            tokenOut: output,
-            fee: options.fee,
+            tokenIn: token0,
+            tokenOut: token1,
+            fee: options_.fee,
             recipient: recipient,
-            deadline: options.deadline,
+            deadline: options_.deadline,
             amountOut: amount,
-            amountInMaximum: options.limitAmount,
-            sqrtPriceLimitX96: options.sqrtPriceLimitX96
+            amountInMaximum: options_.limitAmount,
+            sqrtPriceLimitX96: options_.sqrtPriceLimitX96
         });
-        IERC20(input).safeTransferFrom(recipient, address(this), options.limitAmount);
-        _approveERC20TokenIfNecessary(input, address(swapRouter));
+        IERC20(token0).safeTransferFrom(recipient, address(this), options_.limitAmount);
+        _approveERC20TokenIfNecessary(token0, address(swapRouter));
         amountIn = swapRouter.exactOutputSingle(params);
-        if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
-    }
-
-    function _swapExactInputMultihop(
-        uint256 amount,
-        address recipient,
-        PathItem[] memory path,
-        Options memory options
-    ) internal returns (uint256 amountOut) {
-        address input = path[0].token0;
-        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
-            path: _makeMultihopPath(path),
-            recipient: recipient,
-            deadline: options.deadline,
-            amountIn: amount,
-            amountOutMinimum: options.limitAmount
-        });
-        IERC20(input).safeTransferFrom(recipient, address(this), amount);
-        _approveERC20TokenIfNecessary(input, address(swapRouter));
-        amountOut = swapRouter.exactInput(params);
-    }
-
-    function _swapExactOutputMultihop(
-        uint256 amount,
-        address recipient,
-        PathItem[] memory path,
-        Options memory options
-    ) internal returns (uint256 amountIn) {
-        address input = path[0].token0;
-        ISwapRouter.ExactOutputParams memory params = ISwapRouter.ExactOutputParams({
-            path: _reverseBytes(_makeMultihopPath(path)),
-            recipient: recipient,
-            deadline: options.deadline,
-            amountOut: amount,
-            amountInMaximum: options.limitAmount
-        });
-        IERC20(input).safeTransferFrom(recipient, address(this), options.limitAmount);
-        _approveERC20TokenIfNecessary(input, address(swapRouter));
-        amountIn = swapRouter.exactOutput(params);
-        if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
-    }
-
-    function _reverseBytes(bytes memory input) internal pure returns (bytes memory output) {
-        for (uint256 i = 0; i < input.length; ++i) output[i] = input[input.length - 1 - i];
-    }
-
-    function _makeMultihopPath(PathItem[] memory path) internal pure returns (bytes memory) {
-        bytes memory result;
-        for (uint256 i = 0; i < path.length; ++i) {
-            PathItemOptions memory pathItemOptions = abi.decode(path[i].options, (PathItemOptions));
-            result = bytes.concat(result, abi.encodePacked(path[i].token0, abi.encodePacked(pathItemOptions.fee)));
+        if (amountIn < options_.limitAmount) {
+            uint256 change;
+            unchecked {
+                change = options_.limitAmount - amountIn;
+            }
+            IERC20(token0).safeTransfer(recipient, change);
         }
-        result = bytes.concat(result, abi.encodePacked(path[path.length - 1].token1));
-        return result;
     }
 }
