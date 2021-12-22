@@ -9,7 +9,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../DefaultAccessControl.sol";
 
-contract ChainlinkOracle is IOracle, DefaultAccessControl {
+contract ChainlinkOracle is DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _tokenAllowlist;
     mapping(address => address) chainlinkOracles;
@@ -32,24 +32,19 @@ contract ChainlinkOracle is IOracle, DefaultAccessControl {
         emit OracleAdded(tx.origin, msg.sender, token, oracle);
     }
 
-    function spotPrice(address token0, address token1)
-        external
-        view
-        returns (uint256 minPriceX96, uint256 maxPriceX96)
-    {
+    function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
         require(
             _tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1),
             ExceptionsLibrary.TOKEN_IS_NOT_WHITELISTED
         );
+        require(token1 > token0, ExceptionsLibrary.SORTED_AND_UNIQUE);
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(chainlinkOracles[token0]);
         IAggregatorV3 chainlinkOracle1 = IAggregatorV3(chainlinkOracles[token1]);
         require(
             (address(chainlinkOracle0) != address(0)) && (address(chainlinkOracle1) != address(0)),
             ExceptionsLibrary.ORACLE_NOT_FOUND
         );
-        uint256 chainlinkPriceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
-        minPriceX96 = chainlinkPriceX96;
-        maxPriceX96 = chainlinkPriceX96;
+        priceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
     }
 
     function _getChainlinkPrice(IAggregatorV3 chainlinkOracle0, IAggregatorV3 chainlinkOracle1)

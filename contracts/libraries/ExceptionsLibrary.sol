@@ -13,6 +13,8 @@ library ExceptionsLibrary {
     string constant ORACLE_NOT_FOUND = "ONF";
     string constant EMPTY_PARAMS = "P0";
     string constant ADMIN = "ADM";
+    string constant NOT_ENOUGH_CARDINALITY = "NEC";
+    string constant INVALID_BLOCKS_FOR_AVERAGE = "IBFA";
     string constant ADMIN_ADDRESS_ZERO = "ZADM";
     string constant YEARN_REGISTRY_ADDRESS_ZERO = "ZY";
     string constant POSITION_MANAGER_ADDRESS_ZERO = "ZPM";
