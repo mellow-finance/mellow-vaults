@@ -8,11 +8,11 @@ import {
     sleepTo,
     withSigner,
 } from "./library/Helpers";
+import { ChiefTrader } from "./types/ChiefTrader";
 import Exceptions from "./library/Exceptions";
 import { setupDefaultContext, TestContext } from "./library/setup";
 import { address, pit } from "./library/property";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { ProtocolGovernance } from "./types";
 
 type CustomContext = {
     ownerSigner: SignerWithAddress;
@@ -23,7 +23,7 @@ type DeployOptions = {
 
 // @ts-ignore
 describe("ChiefTrader", function (this: TestContext<
-    ProtocolGovernance,
+    ChiefTrader,
     DeployOptions
 > &
     CustomContext) {
@@ -71,20 +71,39 @@ describe("ChiefTrader", function (this: TestContext<
             );
         });
 
-        it("initializes `ProtocolGovernance` address", async () => {});
+        it("initializes `ProtocolGovernance` address", async () => {
+            expect(await this.subject.protocolGovernance()).to.eq(
+                this.protocolGovernance.address
+            );
+        });
 
         describe("edge cases", () => {
             describe("when `protocolGovernance` argument is `0`", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    await expect(
+                        deployments.deploy("ChiefTrader", {
+                            from: this.deployer.address,
+                            args: [ethers.constants.AddressZero],
+                            autoMine: true,
+                        })
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO_EXCEPTION);
+                });
             });
         });
     });
 
     describe("#tradersCount", () => {
-        it("returns the number of traders", async () => {});
+        it("returns the number of traders", async () => {
+            expect(await this.subject.tradersCount()).to.eq(2);
+        });
 
         describe("access control", () => {
-            it("allowed: any address", async () => {});
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).tradersCount()).to
+                        .not.be.reverted;
+                });
+            });
         });
 
         describe("edge cases", () => {
@@ -95,24 +114,47 @@ describe("ChiefTrader", function (this: TestContext<
     });
 
     describe("#getTrader", () => {
-        it("returns trader", async () => {});
+        it("returns trader", async () => {
+            expect(await this.subject.getTrader(1)).to.eq(
+                this.uniV2Trader.address
+            );
+        });
 
         describe("access control", () => {
-            it("allowed: any address", async () => {});
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).getTrader(1)).to
+                        .not.be.reverted;
+                });
+            });
         });
 
         describe("edge cases", () => {
             describe("when trader doesn't exist", () => {
-                it("returns zero address", async () => {});
+                xit("returns zero address", async () => {
+                    expect(await this.subject.getTrader(1e5)).to.eq(
+                        ethers.constants.AddressZero
+                    ).to.be.reverted;
+                });
             });
         });
     });
 
     describe("#traders", () => {
-        it("returns a list of registered trader addresses", async () => {});
+        it("returns a list of registered trader addresses", async () => {
+            expect(await this.subject.traders()).to.deep.eq([
+                this.uniV3Trader.address,
+                this.uniV2Trader.address,
+            ]);
+        });
 
         describe("access control", () => {
-            it("allowed: any address", async () => {});
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).traders()).to.not
+                        .be.reverted;
+                });
+            });
         });
 
         describe("edge cases", () => {

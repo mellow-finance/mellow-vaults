@@ -16,6 +16,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     mapping(address => bool) public addedTraders;
 
     constructor(address _protocolGovernance) {
+        require(_protocolGovernance != address(0), TraderExceptionsLibrary.ADDRESS_ZERO_EXCEPTION);
         protocolGovernance = IProtocolGovernance(_protocolGovernance);
     }
 

@@ -47,5 +47,6 @@ export default class Exceptions {
     static readonly MAX_MANAGEMENT_FEE: string = "MMF";
     static readonly MAX_PERFORMANCE_FEE: string = "MPFF";
     static readonly MAX_PROTOCOL_FEE: string = "MPF";
+    static readonly ADDRESS_ZERO_EXCEPTION: string = "AZ";
 }
 // TODO: Remove outdated exceptions
