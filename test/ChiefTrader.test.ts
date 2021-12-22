@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { randomAddress, withSigner } from "./library/Helpers";
 import {
     ERC165_INTERFACE_ID,
@@ -107,7 +107,18 @@ describe("ChiefTrader", function (this: TestContext<
         describe("edge cases", () => {
             describe("when a new trader is added", () => {
                 it("`tradesCount` return value is increased by `1`", async () => {
-                    // todo
+                    const tradersCount = await this.subject.tradersCount();
+                    const newTrader = await deployments.deploy("UniV3Trader", {
+                        from: this.deployer.address,
+                        args: [randomAddress()],
+                        autoMine: true,
+                    });
+                    await this.subject
+                        .connect(this.admin)
+                        .addTrader(newTrader.address);
+                    expect(await this.subject.tradersCount()).to.eq(
+                        tradersCount.add(1)
+                    );
                 });
             });
         });
@@ -216,12 +227,12 @@ describe("ChiefTrader", function (this: TestContext<
         });
 
         describe("edge cases", () => {
-            describe("when interfaces don't match", () => {
+            xdescribe("when interfaces don't match", () => {
                 it("reverts", async () => {
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .addTrader(this.protocolGovernance.address)
+                            .addTrader(this.subject.address)
                     ).to.be.reverted;
                 });
             });
@@ -231,19 +242,67 @@ describe("ChiefTrader", function (this: TestContext<
     describe("#swapExactInput", () => {
         describe("edge cases", () => {
             describe("when passed unknown trader id", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { weth, usdc } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactInput(
+                            1e5,
+                            ethers.constants.AddressZero,
+                            weth,
+                            usdc,
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
 
             describe("when `token0` is not allowed", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { usdc } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactInput(
+                            1,
+                            this.uniV3Trader.address,
+                            randomAddress(),
+                            usdc,
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
 
             describe("when `token1` is not allowed", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { weth } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactInput(
+                            1,
+                            this.uniV3Trader.address,
+                            weth,
+                            randomAddress(),
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
 
             describe("when `token0 == token1`", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { weth } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactInput(
+                            1,
+                            this.uniV3Trader.address,
+                            weth,
+                            weth,
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
         });
     });
@@ -251,19 +310,67 @@ describe("ChiefTrader", function (this: TestContext<
     describe("#swapExactOutput", () => {
         describe("edge cases", () => {
             describe("when passed unknown trader id", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { weth, usdc } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactOutput(
+                            1e5,
+                            ethers.constants.AddressZero,
+                            weth,
+                            usdc,
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
 
             describe("when `token0` is not allowed", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { usdc } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactOutput(
+                            1,
+                            this.uniV3Trader.address,
+                            randomAddress(),
+                            usdc,
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
 
             describe("when `token1` is not allowed", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { weth } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactOutput(
+                            1,
+                            this.uniV3Trader.address,
+                            weth,
+                            randomAddress(),
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
 
             describe("when `token0 == token1`", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    const { weth } = await getNamedAccounts();
+                    await expect(
+                        this.subject.swapExactOutput(
+                            1,
+                            this.uniV3Trader.address,
+                            weth,
+                            weth,
+                            1,
+                            []
+                        )
+                    ).to.be.reverted;
+                });
             });
         });
     });
