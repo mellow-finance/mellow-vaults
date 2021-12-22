@@ -8,6 +8,9 @@ library ExceptionsLibrary {
     string constant NULL = "NULL";
     string constant TIMESTAMP = "TS";
     string constant GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO = "ZMG";
+    string constant TOKEN_ALREADY_WHITELISTED = "TAW";
+    string constant TOKEN_IS_NOT_WHITELISTED = "TNW";
+    string constant ORACLE_NOT_FOUND = "ONF";
     string constant EMPTY_PARAMS = "P0";
     string constant ADMIN = "ADM";
     string constant ADMIN_ADDRESS_ZERO = "ZADM";
