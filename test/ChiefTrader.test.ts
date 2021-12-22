@@ -4,15 +4,27 @@ describe("ChiefTrader", () => {
     beforeEach(async () => {});
 
     describe("#constructor", () => {
+        it("deployes a new `ChiefTrader` contract", async () => {});
 
+        it("initializes `ProtocolGovernance` address", async () => {});
+
+        describe("edge cases", () => {
+            describe("when `protocolGovernance` argument is `0`", () => {
+                it("reverts", async () => {});
+            });
+        });
     });
 
     describe("#tradersCount", () => {
-        it("returns traders count", async () => {});
+        it("returns the number of traders", async () => {});
 
-        describe("when added new trader", () => {
-            it("returns updated traders count", async () => {
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
 
+        describe("edge cases", () => {
+            describe("when a new trader is added", () => {
+                it("`tradesCount` return value is increased by `1`", async () => {});
             });
         });
     });
@@ -20,41 +32,43 @@ describe("ChiefTrader", () => {
     describe("#getTrader", () => {
         it("returns trader", async () => {});
 
-        describe("edge cases", () => {
-            describe("when passed unknown trader id", () => {
-                it("returns zero address", async () => {
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
 
-                });
+        describe("edge cases", () => {
+            describe("when trader doesn't exist", () => {
+                it("returns zero address", async () => {});
             });
         });
     });
 
     describe("#traders", () => {
-        it("returns registered traders", async () => {});
+        it("returns a list of registered trader addresses", async () => {});
 
-        describe("when added a new trader", () => {
-            it("returns updated registered traders", async () => {
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
 
+        describe("edge cases", () => {
+            describe("when a new trader is added", () => {
+                it("new trader is included at the end of the list", async () => {});
             });
-        })
+        });
     });
 
     describe("#addTrader", () => {
-        it("adds new trader", async () => {});
+        it("adds a new trader", async () => {});
 
         it("emits `AddedTrader` event", async () => {});
 
         describe("access control", () => {
-            describe("denied: random address", () => {
-
-            });
+            describe("denied: random address", () => {});
         });
 
         describe("edge cases", () => {
             describe("when interfaces don't match", () => {
-                it("reverts", async () => {
-
-                });
+                it("reverts", async () => {});
             });
         });
     });
@@ -62,37 +76,29 @@ describe("ChiefTrader", () => {
     describe("#swapExactInput", () => {
         describe("edge cases", () => {
             describe("when passed unknown trader id", () => {
-                it("reverts", async () => {
-
-                });
+                it("reverts", async () => {});
             });
 
-            describe("when a path contains not allowed token", () => {
-
-            });
+            describe("when a path contains not allowed token", () => {});
         });
     });
 
     describe("#swapExactOutput", () => {
         describe("edge cases", () => {
             describe("when passed unknown trader id", () => {
-                it("reverts", async () => {
-
-                });
+                it("reverts", async () => {});
             });
 
-            describe("when a path contains not allowed token", () => {
-
-            });
+            describe("when a path contains not allowed token", () => {});
         });
     });
 
     describe("#supportsInterface", () => {
-        describe("returns `true` on chief trader interface", async () => {
+        describe("returns `true` on IChiefTrader", async () => {
             it("returns `true`", async () => {});
         });
 
-        it("returns `true` on trader interface", async () => {
+        it("returns `true` on ITrader", async () => {
             it("returns `true`", async () => {});
         });
 
@@ -100,7 +106,7 @@ describe("ChiefTrader", () => {
             it("returns `true`", async () => {});
         });
 
-        it("returns `false` on zero", async () => {
+        it("returns `false` on `0x`", async () => {
             it("returns `false`", async () => {});
         });
     });
