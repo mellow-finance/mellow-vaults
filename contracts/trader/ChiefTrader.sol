@@ -84,8 +84,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     function _requireAllowedTokens(address token0, address token1) internal view {
         require(token0 != token1);
         require(
-            protocolGovernance.isAllowedToken(token0) &&
-            protocolGovernance.isAllowedToken(token1),
+            protocolGovernance.isAllowedToken(token0) && protocolGovernance.isAllowedToken(token1),
             TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
         );
     }

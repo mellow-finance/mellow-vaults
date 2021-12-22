@@ -231,18 +231,9 @@ contract MStrategy is DefaultAccessControlLateInit {
                 }
             }
         }
-        ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
-        {
-            bytes memory poolOptions = new bytes(32);
-            assembly {
-                mstore(add(poolOptions, 32), poolFee)
-            }
-            (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
-            if (!zeroForOne) {
-                (tokenIn, tokenOut) = (tokenOut, tokenIn);
-            }
-
-            path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+        (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
+        if (!zeroForOne) {
+            (tokenIn, tokenOut) = (tokenOut, tokenIn);
         }
         bytes memory bytesOptions = abi.encode(
             IUniV3Trader.Options({
@@ -252,7 +243,7 @@ contract MStrategy is DefaultAccessControlLateInit {
                 limitAmount: 0
             })
         );
-        erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
+        erc20Vault.swapExactInput(0, address(0), tokenIn, tokenOut, amountIn, bytesOptions);
     }
 
     // [0, 1]
