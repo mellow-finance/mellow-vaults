@@ -270,25 +270,6 @@ describe("CommonLibrary", () => {
         });
     });
 
-    describe("isContract", () => {
-        describe("when address is contract", () => {
-            it("returns true", async () => {
-                expect(
-                    await commonTest.isContractTest(commonTest.address)
-                ).to.be.equal(true);
-            });
-        });
-        describe("when address is not contract", () => {
-            it("returns false", async () => {
-                expect(
-                    await commonTest.isContractTest(
-                        (await ethers.getSigners())[0].getAddress()
-                    )
-                ).to.be.equal(false);
-            });
-        });
-    });
-
     describe("splitAmounts", () => {
         // todo
         it("returns correct weighted and normalized matrix", async () => {
