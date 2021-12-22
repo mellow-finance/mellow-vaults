@@ -60,7 +60,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
         uint256 len = vaultTokens.length;
         for (uint256 i = 0; i < len; ++i)
-            require(_internalParams.protocolGovernance.isAllowedToken(vaultTokens[i]), "TNA");
+            require(_internalParams.protocolGovernance.isAllowedToken(vaultTokens[i]), ExceptionsLibrary.TOKEN_NOT_ALLOWED);
 
         (vault, nft) = super.deployVault(vaultTokens, "", msg.sender);
         uint256[] memory subvaultNfts = abi.decode(options, (uint256[]));
