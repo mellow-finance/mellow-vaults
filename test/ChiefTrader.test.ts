@@ -1,10 +1,75 @@
-describe("ChiefTrader", () => {
-    before(async () => {});
+import { expect } from "chai";
+import { ethers, getNamedAccounts, deployments } from "hardhat";
+import {
+    addSigner,
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    withSigner,
+} from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
+import { setupDefaultContext, TestContext } from "./library/setup";
+import { address, pit } from "./library/property";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { ProtocolGovernance } from "./types";
 
-    beforeEach(async () => {});
+type CustomContext = {
+    ownerSigner: SignerWithAddress;
+};
+type DeployOptions = {
+    skipInit?: boolean;
+};
+
+// @ts-ignore
+describe("ChiefTrader", function (this: TestContext<
+    ProtocolGovernance,
+    DeployOptions
+> &
+    CustomContext) {
+    before(async () => {
+        // @ts-ignore
+        await setupDefaultContext.call(this);
+        // @ts-ignore
+        this.deploymentFixture = deployments.createFixture(async () => {
+            await deployments.fixture();
+            this.subject = await ethers.getContractAt(
+                "ChiefTrader",
+                (
+                    await deployments.get("ChiefTrader")
+                ).address
+            );
+            this.uniV3Trader = await ethers.getContractAt(
+                "UniV3Trader",
+                (
+                    await deployments.get("UniV3Trader")
+                ).address
+            );
+            this.uniV2Trader = await ethers.getContractAt(
+                "UniV2Trader",
+                (
+                    await deployments.get("UniV2Trader")
+                ).address
+            );
+            this.protocolGovernance = await ethers.getContractAt(
+                "ProtocolGovernance",
+                (
+                    await deployments.get("ProtocolGovernance")
+                ).address
+            );
+        });
+    });
+
+    beforeEach(async () => {
+        await this.deploymentFixture();
+    });
 
     describe("#constructor", () => {
-        it("deployes a new `ChiefTrader` contract", async () => {});
+        it("deployes a new `ChiefTrader` contract", async () => {
+            expect(ethers.constants.AddressZero).to.not.eq(
+                this.subject.address
+            );
+        });
 
         it("initializes `ProtocolGovernance` address", async () => {});
 
