@@ -1,17 +1,15 @@
 import { expect } from "chai";
-import { ethers, getNamedAccounts, deployments } from "hardhat";
+import { ethers, deployments } from "hardhat";
+import { randomAddress, withSigner } from "./library/Helpers";
 import {
-    addSigner,
-    now,
-    randomAddress,
-    sleep,
-    sleepTo,
-    withSigner,
-} from "./library/Helpers";
+    ERC165_INTERFACE_ID,
+    ERC165_INVALID_INTERFACE_ID,
+    CHIEF_TRADER_INTERFACE_ID,
+    TRADER_INTERFACE_ID,
+} from "./library/constants";
 import { ChiefTrader } from "./types/ChiefTrader";
 import Exceptions from "./library/Exceptions";
 import { setupDefaultContext, TestContext } from "./library/setup";
-import { address, pit } from "./library/property";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 
 type CustomContext = {
@@ -108,7 +106,9 @@ describe("ChiefTrader", function (this: TestContext<
 
         describe("edge cases", () => {
             describe("when a new trader is added", () => {
-                it("`tradesCount` return value is increased by `1`", async () => {});
+                it("`tradesCount` return value is increased by `1`", async () => {
+                    // todo
+                });
             });
         });
     });
@@ -131,10 +131,8 @@ describe("ChiefTrader", function (this: TestContext<
 
         describe("edge cases", () => {
             describe("when trader doesn't exist", () => {
-                xit("returns zero address", async () => {
-                    expect(await this.subject.getTrader(1e5)).to.eq(
-                        ethers.constants.AddressZero
-                    ).to.be.reverted;
+                it("reverts", async () => {
+                    await expect(this.subject.getTrader(1e5)).to.be.reverted;
                 });
             });
         });
@@ -159,23 +157,73 @@ describe("ChiefTrader", function (this: TestContext<
 
         describe("edge cases", () => {
             describe("when a new trader is added", () => {
-                it("new trader is included at the end of the list", async () => {});
+                it("new trader is included at the end of the list", async () => {
+                    const newTrader = await deployments.deploy("UniV2Trader", {
+                        from: this.deployer.address,
+                        args: [randomAddress()],
+                        autoMine: true,
+                    });
+                    await this.subject
+                        .connect(this.admin)
+                        .addTrader(newTrader.address);
+                    expect(await this.subject.traders()).to.deep.eq([
+                        this.uniV3Trader.address,
+                        this.uniV2Trader.address,
+                        newTrader.address,
+                    ]);
+                });
             });
         });
     });
 
     describe("#addTrader", () => {
-        it("adds a new trader", async () => {});
+        it("adds a new trader", async () => {
+            const newTrader = await deployments.deploy("UniV2Trader", {
+                from: this.deployer.address,
+                args: [randomAddress()],
+                autoMine: true,
+            });
+            await expect(
+                this.subject.connect(this.admin).addTrader(newTrader.address)
+            ).to.not.be.reverted;
+        });
 
-        it("emits `AddedTrader` event", async () => {});
+        it("emits `AddedTrader` event", async () => {
+            const newTrader = await deployments.deploy("UniV2Trader", {
+                from: this.deployer.address,
+                args: [randomAddress()],
+                autoMine: true,
+            });
+            expect(
+                await this.subject
+                    .connect(this.admin)
+                    .addTrader(newTrader.address)
+            ).to.emit(this.subject, "AddedTrader");
+        });
 
         describe("access control", () => {
-            describe("denied: random address", () => {});
+            it("denied: random address", async () => {
+                withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .addTrader(this.uniV3Trader.address)
+                    ).to.be.revertedWith(
+                        Exceptions.PROTOCOL_ADMIN_REQUIRED_EXCEPTION
+                    );
+                });
+            });
         });
 
         describe("edge cases", () => {
             describe("when interfaces don't match", () => {
-                it("reverts", async () => {});
+                it("reverts", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .addTrader(this.protocolGovernance.address)
+                    ).to.be.reverted;
+                });
             });
         });
     });
@@ -186,7 +234,17 @@ describe("ChiefTrader", function (this: TestContext<
                 it("reverts", async () => {});
             });
 
-            describe("when a path contains not allowed token", () => {});
+            describe("when `token0` is not allowed", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when `token1` is not allowed", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when `token0 == token1`", () => {
+                it("reverts", async () => {});
+            });
         });
     });
 
@@ -196,25 +254,55 @@ describe("ChiefTrader", function (this: TestContext<
                 it("reverts", async () => {});
             });
 
-            describe("when a path contains not allowed token", () => {});
+            describe("when `token0` is not allowed", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when `token1` is not allowed", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when `token0 == token1`", () => {
+                it("reverts", async () => {});
+            });
         });
     });
 
     describe("#supportsInterface", () => {
         describe("returns `true` on IChiefTrader", async () => {
-            it("returns `true`", async () => {});
+            it("returns `true`", async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        CHIEF_TRADER_INTERFACE_ID
+                    )
+                ).to.be.true;
+            });
         });
 
         it("returns `true` on ITrader", async () => {
-            it("returns `true`", async () => {});
+            it("returns `true`", async () => {
+                expect(
+                    await this.subject.supportsInterface(TRADER_INTERFACE_ID)
+                ).to.be.true;
+            });
         });
 
         it("returns `true` on ERC165", async () => {
-            it("returns `true`", async () => {});
+            it("returns `true`", async () => {
+                expect(
+                    await this.subject.supportsInterface(ERC165_INTERFACE_ID)
+                ).to.be.true;
+            });
         });
 
-        it("returns `false` on `0x`", async () => {
-            it("returns `false`", async () => {});
+        it("returns `false` on `0xffffffff`", async () => {
+            it("returns `false`", async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        ERC165_INVALID_INTERFACE_ID
+                    )
+                ).to.be.false;
+            });
         });
     });
 });
