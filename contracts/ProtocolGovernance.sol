@@ -60,7 +60,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
                 continue;
             }
             res[j] = _tokenWhitelist[i];
-            unchecked { ++j; }
+            j += 1;
         }
         return res;
     }
