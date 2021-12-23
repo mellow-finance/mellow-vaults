@@ -39,7 +39,12 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
+        IProtocolGovernance governance = vaultGovernance_.internalParams().protocolGovernance;
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(
+            vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(), 
+            ExceptionsLibrary.IO_LENGTH
+        );
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         uint256 len = _vaultTokens.length;
