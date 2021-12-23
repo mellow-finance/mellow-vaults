@@ -4,6 +4,10 @@ describe("UniV3Vault", () => {
 
         it("initializes with correct NonfungiblePositionManager address", async () => {});
 
+        it("initializes uniV3Nft with zero", async () => {
+
+        });
+
         describe("edge cases", () => {
             describe("when uniswap v3 pool with given vaultTokens and fee not found", () => {
                 it("reverts", async () => {});
@@ -12,10 +16,14 @@ describe("UniV3Vault", () => {
     });
 
     describe("#tvl", () => {
-        it("returns initial tvl (0, 0)", async () => {});
+        it("returns initial tvl of (0, 0)", async () => {});
 
-        describe("when added liquidity", () => {
+        describe("when pushed some tokens", () => {
             it("increases tvl", async () => {});
+        });
+
+        describe("when trades performed in the position range", () => {
+            it("increases tokensOwed along with tvl", async () => {});
         });
 
         describe("access control", () => {
@@ -24,6 +32,10 @@ describe("UniV3Vault", () => {
     });
 
     describe("#onERC721Received", () => {
+        it("receives new uniswap v3 position", async () => {});
+
+        it("transfers back previous nft", async () => {});
+
         describe("access control", () => {
             it("allowed operator: strategy", async () => {});
 
@@ -39,9 +51,15 @@ describe("UniV3Vault", () => {
         });
 
         describe("edge cases", () => {
-            describe("when received position's token0 != _vaultTokens[0]", () => {});
+            describe("when token0 of the received position not equals _vaultTokens[0]", () => {});
 
-            describe("when received position's token1 != _vaultTokens[1]", () => {});
+            describe("when token1 of the received position not equals _vaultTokens[1]", () => {});
+
+            describe("when current position is not empty", () => {
+                it("reverts", async () => {
+
+                });
+            });
         });
     });
 
@@ -58,10 +76,58 @@ describe("UniV3Vault", () => {
             });
         });
 
-        describe("edge cases", () => {});
+        describe("edge cases", () => {
+            describe("when sender is approved and target destination is random address", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when sender is approved and target destination is subvault", () => {
+                it("passes", async () => {});
+            });
+
+            describe("when sender is owner and target destination is random address", () => {
+                it("passes", async () => {});
+            });
+
+            describe("when sender is owner and target destination is subvault", () => {
+                it("passes", async () => {});
+            });
+        });
     });
 
-    describe("#push", () => {});
+    describe("#push", () => {
+        it("emits Pushed event", async () => {});
 
-    describe("#pull", () => {});
+        describe("access control", () => {
+            it("allowed: strategy", async () => {});
+
+            it("allowed: owner", async () => {});
+
+            it("denied: random address", async function () {
+                this.retries(4);
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when not enough funds", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when amount0Min exceeds allowance", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when amount1Min exceeds allowance", () => {
+                it("reverts", async () => {});
+            });
+        });
+    });
+
+    describe("#transferAndPush", () => {
+
+    });
+
+    describe("#pull", () => {
+
+    });
 });

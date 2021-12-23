@@ -47,7 +47,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
         require(msg.sender == address(_positionManager()), "SNFT");
-        require(_isStrategy(operator), "STR");
+        require(_isApproved(operator), "STR");
         (
             , ,
             address token0,
@@ -99,8 +99,9 @@ contract UniV3Vault is IERC721Receiver, Vault {
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0)
+        if (uniV3Nft == 0) {
             return tokenAmounts;
+        }
         (
             , , , , , 
             int24 tickLower, 
@@ -129,12 +130,14 @@ contract UniV3Vault is IERC721Receiver, Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; ++i)
+        for (uint256 i = 0; i < tokens.length; ++i) {
             _allowTokenIfNecessary(tokens[i]);
+        }
 
         actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0)
+        if (uniV3Nft == 0) {
             return actualTokenAmounts;
+        }
 
         Options memory opts = _parseOptions(options);
         Pair memory amounts = Pair({
@@ -239,7 +242,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         return abi.decode(options, (Options));
     }
 
-    function _isStrategy(address addr) internal view returns (bool) {
+    function _isApproved(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
