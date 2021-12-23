@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/chainlink/IAggregatorV3.sol";
-import "../interfaces/IOracle.sol";
+import "../interfaces/IChainlinkOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
