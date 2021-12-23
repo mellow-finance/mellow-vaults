@@ -88,7 +88,7 @@ describe("ERC20Vault", function () {
                         "ERC20Vault"
                     );
                     await expect(
-                        factory.deploy(await stranger.getAddress(), [
+                        factory.deploy(ERC20Vault.vaultGovernance(), [
                             tokens[1].address,
                             tokens[0].address,
                         ])
