@@ -93,7 +93,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         );
         collectedEarnings[0] = collectedEarnings0;
         collectedEarnings[1] = collectedEarnings1;
-        emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
+        emit EarningsCollected(tx.origin, to, collectedEarnings0, collectedEarnings1);
     }
 
     /// @inheritdoc Vault
@@ -243,5 +243,5 @@ contract UniV3Vault is IERC721Receiver, Vault {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
-    event CollectedEarnings(address indexed origin, address indexed to, uint256 amount0, uint256 amount1);
+    event EarningsCollected(address indexed origin, address indexed to, uint256 amount0, uint256 amount1);
 }
