@@ -63,20 +63,20 @@ describe("ChiefTrader", function (this: TestContext<
     });
 
     describe("#constructor", () => {
-        it("deployes a new `ChiefTrader` contract", async () => {
+        it("deployes a new contract", async () => {
             expect(ethers.constants.AddressZero).to.not.eq(
                 this.subject.address
             );
         });
 
-        it("initializes `ProtocolGovernance` address", async () => {
+        it("initializes ProtocolGovernance address", async () => {
             expect(await this.subject.protocolGovernance()).to.eq(
                 this.protocolGovernance.address
             );
         });
 
         describe("edge cases", () => {
-            describe("when `protocolGovernance` argument is `0`", () => {
+            describe("when protocolGovernance argument is 0", () => {
                 it("reverts", async () => {
                     await expect(
                         deployments.deploy("ChiefTrader", {
@@ -106,7 +106,7 @@ describe("ChiefTrader", function (this: TestContext<
 
         describe("edge cases", () => {
             describe("when a new trader is added", () => {
-                it("`tradesCount` return value is increased by `1`", async () => {
+                it("tradesCount return value is increased by 1", async () => {
                     const tradersCount = await this.subject.tradersCount();
                     const newTrader = await deployments.deploy("UniV3Trader", {
                         from: this.deployer.address,
@@ -199,7 +199,7 @@ describe("ChiefTrader", function (this: TestContext<
             ).to.not.be.reverted;
         });
 
-        it("emits `AddedTrader` event", async () => {
+        it("emits AddedTrader event", async () => {
             const newTrader = await deployments.deploy("UniV2Trader", {
                 from: this.deployer.address,
                 args: [randomAddress()],
@@ -232,7 +232,7 @@ describe("ChiefTrader", function (this: TestContext<
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .addTrader(this.subject.address)
+                            .addTrader(this.protocolGovernance.address)
                     ).to.be.reverted;
                 });
             });
@@ -257,7 +257,7 @@ describe("ChiefTrader", function (this: TestContext<
                 });
             });
 
-            describe("when `token0` is not allowed", () => {
+            describe("when token0 is not allowed", () => {
                 it("reverts", async () => {
                     const { usdc } = await getNamedAccounts();
                     await expect(
@@ -273,7 +273,7 @@ describe("ChiefTrader", function (this: TestContext<
                 });
             });
 
-            describe("when `token1` is not allowed", () => {
+            describe("when token1 is not allowed", () => {
                 it("reverts", async () => {
                     const { weth } = await getNamedAccounts();
                     await expect(
@@ -289,7 +289,7 @@ describe("ChiefTrader", function (this: TestContext<
                 });
             });
 
-            describe("when `token0 == token1`", () => {
+            describe("when token0 equals token1", () => {
                 it("reverts", async () => {
                     const { weth } = await getNamedAccounts();
                     await expect(
@@ -325,7 +325,7 @@ describe("ChiefTrader", function (this: TestContext<
                 });
             });
 
-            describe("when `token0` is not allowed", () => {
+            describe("when token0 is not allowed", () => {
                 it("reverts", async () => {
                     const { usdc } = await getNamedAccounts();
                     await expect(
@@ -341,7 +341,7 @@ describe("ChiefTrader", function (this: TestContext<
                 });
             });
 
-            describe("when `token1` is not allowed", () => {
+            describe("when token1 is not allowed", () => {
                 it("reverts", async () => {
                     const { weth } = await getNamedAccounts();
                     await expect(
@@ -357,7 +357,7 @@ describe("ChiefTrader", function (this: TestContext<
                 });
             });
 
-            describe("when `token0 == token1`", () => {
+            describe("when token0 equals token1", () => {
                 it("reverts", async () => {
                     const { weth } = await getNamedAccounts();
                     await expect(
@@ -376,40 +376,30 @@ describe("ChiefTrader", function (this: TestContext<
     });
 
     describe("#supportsInterface", () => {
-        describe("returns `true` on IChiefTrader", async () => {
-            it("returns `true`", async () => {
-                expect(
-                    await this.subject.supportsInterface(
-                        CHIEF_TRADER_INTERFACE_ID
-                    )
-                ).to.be.true;
-            });
+        it("returns true on IChiefTrader", async () => {
+            expect(
+                await this.subject.supportsInterface(CHIEF_TRADER_INTERFACE_ID)
+            ).to.be.true;
         });
 
-        it("returns `true` on ITrader", async () => {
-            it("returns `true`", async () => {
-                expect(
-                    await this.subject.supportsInterface(TRADER_INTERFACE_ID)
-                ).to.be.true;
-            });
+        it("returns true on ITrader", async () => {
+            expect(await this.subject.supportsInterface(TRADER_INTERFACE_ID)).to
+                .be.true;
         });
 
-        it("returns `true` on ERC165", async () => {
-            it("returns `true`", async () => {
-                expect(
-                    await this.subject.supportsInterface(ERC165_INTERFACE_ID)
-                ).to.be.true;
-            });
+        it("returns true on ERC165", async () => {
+            expect(await this.subject.supportsInterface(ERC165_INTERFACE_ID)).to
+                .be.true;
         });
 
-        it("returns `false` on `0xffffffff`", async () => {
-            it("returns `false`", async () => {
-                expect(
-                    await this.subject.supportsInterface(
-                        ERC165_INVALID_INTERFACE_ID
-                    )
-                ).to.be.false;
-            });
+        it("returns false on 0xffffffff", async () => {
+            expect(
+                await this.subject.supportsInterface(
+                    ERC165_INVALID_INTERFACE_ID
+                )
+            ).to.be.false;
         });
+
+        it("returns false on random interfaceId", async () => {});
     });
 });
