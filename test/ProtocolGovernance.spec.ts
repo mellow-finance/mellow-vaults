@@ -1,9 +1,8 @@
 describe("ProtocolGovernance", () => {
-    
     describe("#constructor", () => {
         it("deploys a new contract", async () => {
-
-        })
+            
+        });
         
         describe("initial params struct values", () => {
             it("has initial params struct", async () => {
@@ -26,7 +25,7 @@ describe("ProtocolGovernance", () => {
 
     describe("#setPendingParams", () => {
         it("sets pending params", async () => {
-                
+            
         });
 
         describe("edge cases", () => {
@@ -36,7 +35,7 @@ describe("ProtocolGovernance", () => {
                 });
             });
     
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                    
                 });
@@ -50,7 +49,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("edge cases", () => {
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                    
                 });
@@ -96,7 +95,7 @@ describe("ProtocolGovernance", () => {
                 });
             });
     
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -116,7 +115,7 @@ describe("ProtocolGovernance", () => {
                 });
             });
     
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -135,7 +134,7 @@ describe("ProtocolGovernance", () => {
                 });
             });
     
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -175,7 +174,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("edge cases", () => {
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -219,7 +218,7 @@ describe("ProtocolGovernance", () => {
                 });
             });
     
-            describe("when callen by not admin", () => {
+            describe("when callen by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -233,7 +232,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("edge cases", () => {
-            describe("when called by not admin", () => {
+            describe("when called by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -271,7 +270,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("edge cases", () => {
-            describe("when called noy by admin", () => {
+            describe("when called by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -303,7 +302,7 @@ describe("ProtocolGovernance", () => {
         });
 
         describe("edge cases", () => {
-            describe("when called not by admin", () => {
+            describe("when called by random address", () => {
                 it("reverts", async () => {
                     
                 });
@@ -317,6 +316,12 @@ describe("ProtocolGovernance", () => {
     
             describe("when call commit on removed token", () => {
                 it("passes", async () => {
+                    
+                });
+            });
+
+            describe("when call remove on address which has been removed previously", () => {
+                it("does not fail", async () => {
                     
                 });
             });
