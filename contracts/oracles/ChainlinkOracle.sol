@@ -3,27 +3,31 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/chainlink/IAggregatorV3.sol";
-import "../interfaces/IOracle.sol";
+import "../interfaces/IChainlinkOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../DefaultAccessControl.sol";
 
-contract ChainlinkOracle is DefaultAccessControl {
+/// @notice Contract for getting chainlink data
+contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _tokenAllowlist;
-    mapping(address => address) chainlinkOracles;
+    mapping(address => address) public chainlinkOracles;
 
     constructor(address admin) DefaultAccessControl(admin) {}
 
+    /// @inheritdoc IChainlinkOracle
     function isAllowedToken(address token) external view returns (bool) {
         return _tokenAllowlist.contains(token);
     }
 
+    /// @inheritdoc IChainlinkOracle
     function tokenAllowlist() external view returns (address[] memory) {
         return _tokenAllowlist.values();
     }
 
+    /// @inheritdoc IChainlinkOracle
     function addChainlinkOracle(address token, address oracle) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(!_tokenAllowlist.contains(token), ExceptionsLibrary.TOKEN_ALREADY_WHITELISTED);
@@ -32,6 +36,7 @@ contract ChainlinkOracle is DefaultAccessControl {
         emit OracleAdded(tx.origin, msg.sender, token, oracle);
     }
 
+    /// @inheritdoc IChainlinkOracle
     function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
         require(
             _tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1),

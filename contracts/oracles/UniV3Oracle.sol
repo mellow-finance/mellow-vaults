@@ -13,15 +13,15 @@ import "../DefaultAccessControl.sol";
 
 contract UniV3Oracle is DefaultAccessControl {
     IUniswapV3Factory public immutable factory;
-    uint16 public blocksForAverage;
+    uint16 public observationsForAverage;
 
     constructor(
         IUniswapV3Factory factory_,
-        uint16 blocksForAverage_,
+        uint16 observationsForAverage_,
         address admin
     ) DefaultAccessControl(admin) {
         factory = factory_;
-        blocksForAverage = blocksForAverage_;
+        observationsForAverage = observationsForAverage_;
     }
 
     function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
@@ -38,7 +38,7 @@ contract UniV3Oracle is DefaultAccessControl {
         (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
             pool
         ).slot0();
-        uint16 bfAvg = blocksForAverage;
+        uint16 bfAvg = observationsForAverage;
         require(observationCardinality > bfAvg, ExceptionsLibrary.NOT_ENOUGH_CARDINALITY);
         uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
             uint256(observationCardinality);
@@ -53,12 +53,12 @@ contract UniV3Oracle is DefaultAccessControl {
         spotPriceX96 = FullMath.mulDiv(spotSqrtPriceX96, spotSqrtPriceX96, CommonLibrary.Q96);
     }
 
-    function setBlocksForAverage(uint16 newBlocksForAverage) external {
+    function setObservationsForAverage(uint16 newObservationsForAverage) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(blocksForAverage > 1, ExceptionsLibrary.INVALID_BLOCKS_FOR_AVERAGE);
-        blocksForAverage = newBlocksForAverage;
-        emit SetBlocksForAverage(tx.origin, msg.sender, newBlocksForAverage);
+        require(observationsForAverage > 1, ExceptionsLibrary.INVALID_BLOCKS_FOR_AVERAGE);
+        observationsForAverage = newObservationsForAverage;
+        emit SetObservationsForAverage(tx.origin, msg.sender, newObservationsForAverage);
     }
 
-    event SetBlocksForAverage(address indexed origin, address indexed sender, uint16 blocksForAverage);
+    event SetObservationsForAverage(address indexed origin, address indexed sender, uint16 observationsForAverage);
 }
