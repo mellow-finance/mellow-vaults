@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSL-1.1
-pragma solidity =0.8.9;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -46,6 +46,7 @@ contract ERC20Vault is Vault, ITrader {
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
         _approveERC20TokenIfNecessary(token0, chiefTrader.getTrader(traderId));
         amountOut = trader.swapExactInput(traderId, address(this), token0, token1, amount, options);
+        emit Swapped(token0 == _vaultTokens[0], traderId, amount, amountOut);
     }
 
     /// @inheritdoc ITrader
@@ -64,6 +65,7 @@ contract ERC20Vault is Vault, ITrader {
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
         _approveERC20TokenIfNecessary(token0, chiefTrader.getTrader(traderId));
         amountIn = trader.swapExactOutput(traderId, address(this), token0, token1, amount, options);
+        emit Swapped(token0 == _vaultTokens[0], traderId, amountIn, amount);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
@@ -96,8 +98,10 @@ contract ERC20Vault is Vault, ITrader {
     }
 
     function _approveERC20TokenIfNecessary(address token, address to) internal {
-        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
-            IERC20(token).approve(to, type(uint256).max);
+        if (IERC20(token).allowance(address(this), to) == 0) {
+            IERC20(token).safeIncreaseAllowance(to, type(uint256).max);
         }
     }
+
+    event Swapped(bool zeroForOne, uint256 traderId, uint256 amount0, uint256 amount1);
 }
