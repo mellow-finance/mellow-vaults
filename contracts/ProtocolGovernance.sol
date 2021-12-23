@@ -1,113 +1,49 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./DefaultAccessControl.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/DelayedAddressPermissions.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
-    using EnumerableSet for EnumerableSet.AddressSet;
+    using DelayedAddressPermissions for DelayedAddressPermissions.BitMap;
+
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
-
-    EnumerableSet.AddressSet private _claimAllowlist;
-    address[] private _pendingClaimAllowlistAdd;
-    uint256 public pendingClaimAllowlistAddTimestamp;
-
-    address[] private _tokenWhitelist;
-    address[] private _pendingTokenWhitelistAdd;
-    uint256 private _numberOfValidTokens;
-    mapping(address => bool) _tokensAllowed;
-    mapping(address => bool) _tokenEverAdded;
-    uint256 public pendingTokenWhitelistAddTimestamp;
-
-    EnumerableSet.AddressSet private _vaultGovernances;
-    address[] private _pendingVaultGovernancesAdd;
-    uint256 public pendingVaultGovernancesAddTimestamp;
-
-    IProtocolGovernance.Params public params;
+    uint256 public pendingParamsTimestamp;
+    Params public params;
     Params public pendingParams;
 
-    uint256 public pendingParamsTimestamp;
+    DelayedAddressPermissions.BitMap private _acl;
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
-    constructor(address admin) DefaultAccessControl(admin) {
-        _tokenWhitelist = new address[](0);
-        _numberOfValidTokens = 0;
-    }
+    constructor(address admin) DefaultAccessControl(admin) {}
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    /// @inheritdoc IProtocolGovernance
-    function claimAllowlist() external view returns (address[] memory) {
-        uint256 l = _claimAllowlist.length();
-        address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; ++i) {
-            res[i] = _claimAllowlist.at(i);
-        }
-        return res;
+    function hasClaimPermission(address addr) external view returns (bool) {
+        return _acl.hasPermissionId(addr, uint8(Permissions.CLAIM));
     }
 
-    /// @inheritdoc IProtocolGovernance
-    function tokenWhitelist() external view returns (address[] memory) {
-        uint256 l = _tokenWhitelist.length;
-        address[] memory res = new address[](_numberOfValidTokens);
-        uint256 j;
-        for (uint256 i = 0; i < l; ++i) {
-            if (!_tokensAllowed[_tokenWhitelist[i]]) {
-                continue;
-            }
-            res[j] = _tokenWhitelist[i];
-            j += 1;
-        }
-        return res;
+    function hasERC20TransferPermission(address addr) external view returns (bool) {
+        return _acl.hasPermissionId(addr, uint8(Permissions.ERC20_TRANSFER)) ||
+            _acl.hasPermissionId(addr, uint8(Permissions.ERC20_OPERATE)) || 
+            _acl.hasPermissionId(addr, uint8(Permissions.ERC20_VAULT_TOKEN));
     }
 
-    /// @inheritdoc IProtocolGovernance
-    function vaultGovernances() external view returns (address[] memory) {
-        uint256 l = _vaultGovernances.length();
-        address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; ++i) {
-            res[i] = _vaultGovernances.at(i);
-        }
-        return res;
+    function hasERC20OperatePermission(address addr) external view returns (bool) {
+        return _acl.hasPermissionId(addr, uint8(Permissions.ERC20_OPERATE)) ||
+            _acl.hasPermissionId(addr, uint8(Permissions.ERC20_VAULT_TOKEN));
     }
 
-    /// @inheritdoc IProtocolGovernance
-    function pendingClaimAllowlistAdd() external view returns (address[] memory) {
-        return _pendingClaimAllowlistAdd;
+    function hasERC20VaultTokenPermission(address addr) external view returns (bool) {
+        return _acl.hasPermissionId(addr, uint8(Permissions.ERC20_VAULT_TOKEN));
     }
 
-    /// @inheritdoc IProtocolGovernance
-    function pendingTokenWhitelistAdd() external view returns (address[] memory) {
-        return _pendingTokenWhitelistAdd;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function pendingVaultGovernancesAdd() external view returns (address[] memory) {
-        return _pendingVaultGovernancesAdd;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function isAllowedToClaim(address addr) external view returns (bool) {
-        return _claimAllowlist.contains(addr);
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function isAllowedToken(address addr) external view returns (bool) {
-        return _tokenEverAdded[addr] && _tokensAllowed[addr];
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function isEverAllowedToken(address addr) external view returns (bool) {
-        return _tokenEverAdded[addr];
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function isVaultGovernance(address addr) external view returns (bool) {
-        return _vaultGovernances.contains(addr);
+    function hasVaultGovernancePermission(address addr) external view returns (bool) {
+        return _acl.hasPermissionId(addr, uint8(Permissions.VAULT_GOVERNANCE));
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -130,114 +66,29 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.protocolTreasury;
     }
 
+    // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
+
+    function commitStagedPermissions() external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _acl.commitStagedPermissions();
+    }
+
+    function revokeClaimPermissionFrom(address addr) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _acl.revokeInstantPermissionId(addr, uint8(IProtocolGovernance.Permissions.CLAIM));
+    }
+
+    function revokeVaultGovernancePermissionFrom(address addr) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _acl.revokeInstantPermissionId(addr, uint8(Permissions.VAULT_GOVERNANCE));
+    }
+
+    function revokeERC20VaultTokenPermissionFrom(address addr) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _acl.revokeInstantPermissionId(addr, uint8(Permissions.ERC20_VAULT_TOKEN));
+    }
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        _pendingClaimAllowlistAdd = addresses;
-        pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function removeFromClaimAllowlist(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        _claimAllowlist.remove(addr);
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingTokenWhitelistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), "ADM");
-        _pendingTokenWhitelistAdd = addresses;
-        pendingTokenWhitelistAddTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function removeFromTokenWhitelist(address addr) external {
-        require(isAdmin(msg.sender), "ADM");
-        if (_tokenEverAdded[addr] && _tokensAllowed[addr]) {
-            _tokensAllowed[addr] = false;
-            --_numberOfValidTokens;
-        }
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingVaultGovernancesAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        _pendingVaultGovernancesAdd = addresses;
-        pendingVaultGovernancesAddTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function removeFromVaultGovernances(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        _vaultGovernances.remove(addr);
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
-        pendingParams = newParams;
-        pendingParamsTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
-
-    /// @inheritdoc IProtocolGovernance
-    function commitClaimAllowlistAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(
-            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp != 0),
-            ExceptionsLibrary.TIMESTAMP
-        );
-        uint256 len = _pendingClaimAllowlistAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
-            _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
-        }
-        delete _pendingClaimAllowlistAdd;
-        delete pendingClaimAllowlistAddTimestamp;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function commitTokenWhitelistAdd() external {
-        require(isAdmin(msg.sender), "ADM");
-        require(
-            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
-            "TS"
-        );
-        uint256 len = _pendingTokenWhitelistAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
-            if (!_tokenEverAdded[_pendingTokenWhitelistAdd[i]]) {
-                _numberOfValidTokens += 1;
-                _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
-                _tokenWhitelist.push(_pendingTokenWhitelistAdd[i]);
-                _tokenEverAdded[_pendingTokenWhitelistAdd[i]] = true;
-            } else {
-                if (!_tokensAllowed[_pendingTokenWhitelistAdd[i]]) {
-                    _numberOfValidTokens += 1;
-                    _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
-                }
-            }
-        }
-        delete _pendingTokenWhitelistAdd;
-        delete pendingTokenWhitelistAddTimestamp;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function commitVaultGovernancesAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(
-            (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
-            ExceptionsLibrary.TIMESTAMP
-        );
-        uint256 len = _pendingVaultGovernancesAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
-            _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
-        }
-        delete _pendingVaultGovernancesAdd;
-        delete pendingVaultGovernancesAddTimestamp;
-    }
 
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
@@ -250,5 +101,29 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
+    }
+
+    function stagePermissions(address[] calldata addresses, uint8[][] calldata permissionIds) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _acl.stagePermissionIds(addresses, permissionIds, params.governanceDelay);
+    }
+
+    function stageGrantERC20VaultTokenPermissions(address[] memory tokens) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        uint8[][] memory permissionIds = new uint8[][](1);
+        permissionIds[0] = new uint8[](3);
+        permissionIds[0][0] = uint8(Permissions.ERC20_VAULT_TOKEN);
+        permissionIds[0][1] = uint8(Permissions.ERC20_OPERATE);
+        permissionIds[0][2] = uint8(Permissions.ERC20_TRANSFER);
+
+        _acl.stagePermissionIds(tokens, permissionIds, params.governanceDelay);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function setPendingParams(IProtocolGovernance.Params memory newParams) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
+        pendingParams = newParams;
+        pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
 }

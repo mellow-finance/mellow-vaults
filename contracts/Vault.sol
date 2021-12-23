@@ -144,7 +144,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            require(governance.isEverAllowedToken(tokens[i]), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
+            require(governance.hasERC20TransferPermission(tokens[i]), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));
             if (tokenAmounts[i] == 0) continue;
@@ -160,7 +160,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.isAllowedToClaim(from), ExceptionsLibrary.ALLOWED_TO_CLAIM);
+        require(protocolGovernance.hasClaimPermission(from), ExceptionsLibrary.ALLOWED_TO_CLAIM);
         (bool res, bytes memory returndata) = from.call(data);
         if (!res) {
             assembly {

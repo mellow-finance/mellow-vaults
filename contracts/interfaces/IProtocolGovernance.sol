@@ -16,37 +16,30 @@ interface IProtocolGovernance is IDefaultAccessControl {
         bool permissionless;
     }
 
+    enum Permissions {
+        ERC20_TRANSFER,
+        ERC20_OPERATE,
+        ERC20_VAULT_TOKEN,
+        CLAIM,
+        VAULT_GOVERNANCE
+    }
+
     // -------------------  PUBLIC, VIEW  -------------------
 
-    /// @notice Addresses allowed to claim liquidity mining rewards from.
-    function claimAllowlist() external view returns (address[] memory);
+    /// @notice Checks if address is allowed to claim
+    function hasClaimPermission(address addr) external view returns (bool);
 
-    /// @notice Pending addresses to be added to claimAllowlist.
-    function pendingClaimAllowlistAdd() external view returns (address[] memory);
+    /// @notice Checks if given ERC20 token is allowed to be transferred
+    function hasERC20TransferPermission(address addr) external view returns (bool);
 
-    /// @notice Addresses of tokens allowed for vaults.
-    function tokenWhitelist() external view returns (address[] memory);
+    /// @notice Checks if given ERC20 token is allowed to be operated (swaped, transferred, etc)
+    function hasERC20OperatePermission(address addr) external view returns (bool);
 
-    /// @notice Pending addresses to be added to tokenWhitelist.
-    function pendingTokenWhitelistAdd() external view returns (address[] memory);
+    /// @notice Checks if given ERC20 token is allowed to be a vault token
+    function hasERC20VaultTokenPermission(address addr) external view returns (bool);
 
-    /// @notice Addresses allowed to claim liquidity mining rewards from.
-    function vaultGovernances() external view returns (address[] memory);
-
-    /// @notice Pending addresses to be added to vaultGovernances.
-    function pendingVaultGovernancesAdd() external view returns (address[] memory);
-
-    /// @notice Check if address is allowed to claim.
-    function isAllowedToClaim(address addr) external view returns (bool);
-
-    /// @notice Check if address is an allowed (whitelisted) token.
-    function isAllowedToken(address addr) external view returns (bool);
-
-    /// @notice Check if address has ever been allowed (whitelisted) token.
-    function isEverAllowedToken(address addr) external view returns (bool);
-
-    /// @notice Check if address is a registered vault governance.
-    function isVaultGovernance(address addr) external view returns (bool);
+    /// @notice Checks if given address is allowed to deploy and manage vaults
+    function hasVaultGovernancePermission(address addr) external view returns (bool);
 
     /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
     function permissionless() external view returns (bool);
@@ -66,38 +59,8 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param newParams newParams to set
     function setPendingParams(Params memory newParams) external;
 
-    /// @notice Stage addresses for claim allow list.
-    /// @param addresses Addresses to add
-    function setPendingClaimAllowlistAdd(address[] calldata addresses) external;
-
-    /// @notice Stage addresses for token whitelist.
-    /// @param addresses Addresses to add
-    function setPendingTokenWhitelistAdd(address[] calldata addresses) external;
-
-    /// @notice Stage addresses for vault governances.
-    /// @param addresses Addresses to add
-    function setPendingVaultGovernancesAdd(address[] calldata addresses) external;
-
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @notice Commit pending params.
     function commitParams() external;
-
-    /// @notice Commit pending ClaimAllowlistAdd params.
-    function commitClaimAllowlistAdd() external;
-
-    /// @notice Commit pending tokenWhitelistAdd params.
-    function commitTokenWhitelistAdd() external;
-
-    /// @notice Commit pending VaultGovernancesAdd params.
-    function commitVaultGovernancesAdd() external;
-
-    /// @notice Remove from claim allow list immediately.
-    function removeFromClaimAllowlist(address addr) external;
-
-    /// @notice Remove from token whitelist immediately.
-    function removeFromTokenWhitelist(address addr) external;
-
-    /// @notice Remove from vault governances immediately.
-    function removeFromVaultGovernances(address addr) external;
 }
