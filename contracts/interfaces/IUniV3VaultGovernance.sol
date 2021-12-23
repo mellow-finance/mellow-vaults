@@ -3,12 +3,14 @@ pragma solidity 0.8.9;
 
 import "./external/univ3/INonfungiblePositionManager.sol";
 import "./IVaultGovernance.sol";
+import "./IMellowOracle.sol";
 
 interface IUniV3VaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param positionManager Reference to UniV3 INonfungiblePositionManager
     struct DelayedProtocolParams {
         INonfungiblePositionManager positionManager;
+        IMellowOracle oracle;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

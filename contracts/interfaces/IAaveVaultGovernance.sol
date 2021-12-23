@@ -7,8 +7,10 @@ import "./IVaultGovernance.sol";
 interface IAaveVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param lendingPool Reference to Aave LendingPool
+    /// @param estimatedAaveAPYX96 APY estimation for calulating tvl range
     struct DelayedProtocolParams {
         ILendingPool lendingPool;
+        uint256 estimatedAaveAPYX96;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

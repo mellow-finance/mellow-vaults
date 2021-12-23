@@ -9,8 +9,8 @@ import "./interfaces/external/univ3/IUniswapV3Factory.sol";
 import "./interfaces/IUniV3VaultGovernance.sol";
 import "./libraries/external/TickMath.sol";
 import "./libraries/external/LiquidityAmounts.sol";
-import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./Vault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IERC721Receiver, Vault {
@@ -45,29 +45,21 @@ contract UniV3Vault is IERC721Receiver, Vault {
         require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
     }
 
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes memory
+    ) external returns (bytes4) {
         require(msg.sender == address(_positionManager()), "SNFT");
         require(_isStrategy(operator), "STR");
-        (
-            , ,
-            address token0,
-            address token1,
-            , , , , , , ,
-        ) = _positionManager().positions(tokenId);
+        (, , address token0, address token1, , , , , , , , ) = _positionManager().positions(tokenId);
         // new position should have vault tokens
-        require(
-            token0 == _vaultTokens[0] && token1 == _vaultTokens[1],
-            "VT"
-        );
+        require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1], "VT");
 
         if (uniV3Nft != 0) {
-            (
-                , , , , , , ,
-                uint128 liquidity,
-                , ,
-                uint128 tokensOwed0,
-                uint128 tokensOwed1
-            ) = _positionManager().positions(uniV3Nft);
+            (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = _positionManager()
+                .positions(uniV3Nft);
             require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, "TVL");
             // return previous uni v3 position nft
             _positionManager().transferFrom(address(this), from, uniV3Nft);
@@ -97,30 +89,53 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     /// @inheritdoc Vault
-    function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0)
-            return tokenAmounts;
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        if (uniV3Nft == 0) {
+            return (new uint256[](2), new uint256[](2));
+        }
+        IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
+            .delayedProtocolParams();
         (
-            , , , , , 
-            int24 tickLower, 
-            int24 tickUpper, 
+            ,
+            ,
+            ,
+            ,
+            ,
+            int24 tickLower,
+            int24 tickUpper,
             uint128 liquidity,
-            , ,
+            ,
+            ,
             uint128 tokensOwed0,
             uint128 tokensOwed1
-        ) = _positionManager().positions(uniV3Nft);
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        ) = params.positionManager.positions(uniV3Nft);
+        (, uint256 minPriceX96, uint256 maxPriceX96) = params.oracle.spotPrice(_vaultTokens[0], _vaultTokens[1]);
+        uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
+        uint256 maxSqrtPriceX96 = CommonLibrary.sqrtX96(maxPriceX96);
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-        (uint256 amount0, uint256 amount1) = LiquidityAmounts.getAmountsForLiquidity(
-            sqrtPriceX96,
+        (uint256 amountMin0, uint256 amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
+            uint160(minSqrtPriceX96),
             sqrtPriceAX96,
             sqrtPriceBX96,
             liquidity
         );
-        tokenAmounts[0] = amount0 + uint256(tokensOwed0);
-        tokenAmounts[1] = amount1 + uint256(tokensOwed1);
+        (uint256 amountMax0, uint256 amountMax1) = LiquidityAmounts.getAmountsForLiquidity(
+            uint160(maxSqrtPriceX96),
+            sqrtPriceAX96,
+            sqrtPriceBX96,
+            liquidity
+        );
+        minTokenAmounts = new uint256[](2);
+        maxTokenAmounts = new uint256[](2);
+        minTokenAmounts[0] = amountMin0 < amountMax0 ? amountMin0 : amountMax0;
+        minTokenAmounts[1] = amountMin1 < amountMax1 ? amountMin1 : amountMax1;
+        maxTokenAmounts[0] = amountMin0 < amountMax0 ? amountMax0 : amountMin0;
+        maxTokenAmounts[1] = amountMin1 < amountMax1 ? amountMax1 : amountMin1;
+        minTokenAmounts[0] += tokensOwed0;
+        maxTokenAmounts[0] += tokensOwed0;
+        minTokenAmounts[1] += tokensOwed1;
+        maxTokenAmounts[1] += tokensOwed1;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -129,22 +144,14 @@ contract UniV3Vault is IERC721Receiver, Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; ++i)
-            _allowTokenIfNecessary(tokens[i]);
+        for (uint256 i = 0; i < tokens.length; ++i) _allowTokenIfNecessary(tokens[i]);
 
         actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0)
-            return actualTokenAmounts;
+        if (uniV3Nft == 0) return actualTokenAmounts;
 
         Options memory opts = _parseOptions(options);
-        Pair memory amounts = Pair({
-            a0: tokenAmounts[0],
-            a1: tokenAmounts[1]
-        });
-        Pair memory minAmounts = Pair({
-            a0: opts.amount0Min,
-            a1: opts.amount1Min
-        });
+        Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
+        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
         (, uint256 amount0, uint256 amount1) = _positionManager().increaseLiquidity(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: uniV3Nft,
@@ -166,8 +173,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         // UniV3Vault should have strictly 2 vault tokens
         actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0)
-            return actualTokenAmounts;
+        if (uniV3Nft == 0) return actualTokenAmounts;
 
         Options memory opts = _parseOptions(options);
         Pair memory amounts = _pullUniV3Nft(tokenAmounts, to, opts);
@@ -183,22 +189,25 @@ contract UniV3Vault is IERC721Receiver, Vault {
         uint128 liquidityToPull;
         // scope the code below to avoid stack-too-deep exception
         {
-            (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(uniV3Nft);
+            (, , , , , int24 tickLower, int24 tickUpper, uint128 liquidity, , , , ) = _positionManager().positions(
+                uniV3Nft
+            );
             (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
             uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
             uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
             liquidityToPull = LiquidityAmounts.getLiquidityForAmounts(
-                sqrtPriceX96, sqrtPriceAX96, sqrtPriceBX96, tokenAmounts[0], tokenAmounts[1]
+                sqrtPriceX96,
+                sqrtPriceAX96,
+                sqrtPriceBX96,
+                tokenAmounts[0],
+                tokenAmounts[1]
             );
             liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
             if (liquidityToPull == 0) {
                 return Pair({a0: 0, a1: 0});
             }
         }
-        Pair memory minAmounts = Pair({
-            a0: opts.amount0Min,
-            a1: opts.amount1Min
-        });
+        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
         (uint256 amount0, uint256 amount1) = _positionManager().decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: uniV3Nft,
@@ -232,8 +241,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
-        if (options.length == 0)
-            return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
+        if (options.length == 0) return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
 
         require(options.length == 32 * 3, ExceptionsLibrary.IO_LENGTH);
         return abi.decode(options, (Options));

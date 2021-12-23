@@ -46,13 +46,14 @@ contract YearnVault is Vault {
     }
 
     /// @inheritdoc Vault
-    function tvl() public view override returns (uint256[] memory tokenAmounts) {
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
-        tokenAmounts = new uint256[](tokens.length);
+        minTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             IYearnVault yToken = IYearnVault(_yTokens[i]);
-            tokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
+            minTokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
+        maxTokenAmounts = minTokenAmounts;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)

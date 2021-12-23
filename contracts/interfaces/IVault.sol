@@ -16,8 +16,10 @@ interface IVault {
     /// @notice Total value locked for this contract.
     /// @dev Generally it is the underlying token value of this contract in some
     /// other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
-    /// @return tokenAmounts Total available balances for multiple tokens (nth tokenAmount corresponds to nth token in vaultTokens)
-    function tvl() external view returns (uint256[] memory tokenAmounts);
+    /// The tvl itself is estimated in some range. Sometimes the range is exact, sometimes it's not
+    /// @return minTokenAmounts Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)
+    /// @return maxTokenAmounts Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)
+    function tvl() external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
     /// @notice Initialize contract with vault nft
     /// @param nft VaultRegistry NFT for this vault

@@ -64,7 +64,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
     }
 
     /// @inheritdoc IVault
-    function tvl() public view virtual returns (uint256[] memory tokenAmounts);
+    function tvl() public view virtual returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
     // -------------------  PUBLIC, MUTATING, VaultGovernance  -------------------
 

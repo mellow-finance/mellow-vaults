@@ -26,6 +26,7 @@ import "./libraries/ExceptionsLibrary.sol";
 contract AaveVault is Vault {
     address[] internal _aTokens;
     uint256[] internal _tvls;
+    uint256 private _lastTvlUpdateTimestamp;
 
     /// @notice Creates a new contract.
     /// @dev Requires that aToken exists for each vaultToken
@@ -41,11 +42,24 @@ contract AaveVault is Vault {
             _aTokens[i] = aToken;
             _tvls.push(0);
         }
+        _lastTvlUpdateTimestamp = block.timestamp;
     }
 
     /// @inheritdoc Vault
-    function tvl() public view override returns (uint256[] memory tokenAmounts) {
-        return _tvls;
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        minTokenAmounts = _tvls;
+        maxTokenAmounts = new uint256[](minTokenAmounts.length);
+        uint256 timeElapsed = block.timestamp - _lastTvlUpdateTimestamp;
+        uint256 factorX96 = CommonLibrary.Q96;
+        if (timeElapsed > 0) {
+            uint256 apyX96 = IAaveVaultGovernance(address(_vaultGovernance))
+                .delayedProtocolParams()
+                .estimatedAaveAPYX96;
+            factorX96 = CommonLibrary.Q96 + FullMath.mulDiv(apyX96, timeElapsed, CommonLibrary.YEAR);
+        }
+        for (uint256 i = 0; i < minTokenAmounts.length; i++) {
+            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, maxTokenAmounts[i], CommonLibrary.Q96);
+        }
     }
 
     /// @notice Update all tvls to current aToken balances.
