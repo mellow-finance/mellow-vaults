@@ -11,6 +11,14 @@ describe("UniV2Trader", () => {
         });
     });
 
+    describe("#router", () => {
+        it("returns correct router address", async () => {});
+
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
+    });
+
     describe("#swapExactInput", () => {
         it("swaps exact amount of `token0` for `token1`", async () => {});
 

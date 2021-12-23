@@ -90,6 +90,24 @@ describe("ChiefTrader", function (this: TestContext<
         });
     });
 
+    describe("#protocolGovernance", () => {
+        it("returns correct protocolGovernance address", async () => {
+            expect(await this.subject.protocolGovernance()).to.eq(
+                this.protocolGovernance.address
+            );
+        });
+
+        describe("access control", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject.connect(signer).protocolGovernance()
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+    });
+
     describe("#tradersCount", () => {
         it("returns the number of traders", async () => {
             expect(await this.subject.tradersCount()).to.eq(2);
@@ -227,12 +245,42 @@ describe("ChiefTrader", function (this: TestContext<
         });
 
         describe("edge cases", () => {
-            xdescribe("when interfaces don't match", () => {
+            describe("when trying to add registered trader", () => {
                 it("reverts", async () => {
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .addTrader(this.protocolGovernance.address)
+                            .addTrader(this.uniV3Trader.address)
+                    ).to.be.revertedWith("TE");
+                });
+            });
+
+            describe("when trying to add address zero", () => {
+                it("reverts", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .addTrader(ethers.constants.AddressZero)
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO_EXCEPTION);
+                });
+            });
+
+            describe("when trying to add a contract that doesn't support ITrader interface", () => {
+                it("reverts", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .addTrader(this.weth.address)
+                    ).to.be.reverted;
+                });
+            });
+
+            describe("when trying to add a contract that supports IChiefTrader interface", () => {
+                it("reverts", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .addTrader(this.chiefTrader.address)
                     ).to.be.reverted;
                 });
             });
@@ -400,6 +448,6 @@ describe("ChiefTrader", function (this: TestContext<
             ).to.be.false;
         });
 
-        it("returns false on random interfaceId", async () => {});
+        xit("returns false on random interfaceId", async () => {});
     });
 });
