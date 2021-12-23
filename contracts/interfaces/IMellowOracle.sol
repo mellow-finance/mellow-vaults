@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IVault.sol";
-
-interface IOracle {
+interface IMellowOracle {
     /// @notice Gets the spot price for tokens
+    /// @dev Out of each suboracle (univ2, chainlink) it extracts spot price. Out of univ3 it extracts spotPrice and average price for
+    /// the last n blocks (excluding current block). Then all this values are combined, minPrice is minimum value, maxPrice is maximum
+    /// value price is average of these values. It is highly recommended to use this oracle with setting Chainlink + Univ3 or Chainlink + Univ3 + UniV2. All other combinations
+    /// might be unsafe and should be used only for dev / test purposes.
     /// @param token0 First token for the price
     /// @param token1 Second token for the price
     /// @return priceX96 Price estimation. The price is `token1 / token0`, i.e. how much token1 needed to buy one unit of token0. The price is in X96 format.

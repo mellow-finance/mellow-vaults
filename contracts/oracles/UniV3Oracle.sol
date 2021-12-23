@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
-import "../interfaces/IOracle.sol";
+import "../interfaces/IUniV3Oracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../DefaultAccessControl.sol";
 
-contract UniV3Oracle is DefaultAccessControl {
+contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
     IUniswapV3Factory public immutable factory;
     uint16 public observationsForAverage;
 
@@ -24,6 +23,7 @@ contract UniV3Oracle is DefaultAccessControl {
         observationsForAverage = observationsForAverage_;
     }
 
+    /// @inheritdoc IUniV3Oracle
     function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
         require(token1 > token0, ExceptionsLibrary.SORTED_AND_UNIQUE);
         address pool = factory.getPool(token0, token1, 3000);
@@ -53,6 +53,7 @@ contract UniV3Oracle is DefaultAccessControl {
         spotPriceX96 = FullMath.mulDiv(spotSqrtPriceX96, spotSqrtPriceX96, CommonLibrary.Q96);
     }
 
+    /// @inheritdoc IUniV3Oracle
     function setObservationsForAverage(uint16 newObservationsForAverage) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(observationsForAverage > 1, ExceptionsLibrary.INVALID_BLOCKS_FOR_AVERAGE);

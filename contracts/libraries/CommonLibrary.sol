@@ -39,6 +39,21 @@ library CommonLibrary {
         }
     }
 
+    /// @notice Sort uint256 using bubble sort. The sorting is done in-place.
+    /// @param arr Array of uint256
+    function bubbleSortUint(uint256[] memory arr) internal pure {
+        uint256 l = arr.length;
+        for (uint256 i = 0; i < l; ++i) {
+            for (uint256 j = i + 1; j < l; ++j) {
+                if (arr[i] > arr[j]) {
+                    uint256 temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+        }
+    }
+
     /// @notice Checks if array of addresses is sorted and all adresses are unique
     /// @param tokens A set of addresses to check
     /// @return `true` if all addresses are sorted and unique, `false` otherwise
