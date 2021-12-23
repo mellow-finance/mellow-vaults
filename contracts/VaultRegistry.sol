@@ -36,7 +36,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function vaultForNft(uint256 nft) external view returns (address) {
-        return _vaults[nft];
+        return _vaults[nft - 1];
     }
 
     /// @inheritdoc IVaultRegistry
@@ -56,10 +56,10 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
             ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
         );
         nft = _topNft;
+        _locks.push(false);
+        _vaults.push(vault);
         _safeMint(owner, nft);
         _nftIndex[vault] = nft;
-        _vaults.push(vault);
-        _locks.push(false);
         _topNft += 1;
         emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
     }
@@ -110,7 +110,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     function lockNft(uint256 nft) external {
         require(ownerOf(nft) == msg.sender, ExceptionsLibrary.TOKEN_OWNER);
-        _locks[nft] = true;
+        _locks[nft - 1] = true;
         emit TokenLocked(tx.origin, msg.sender, nft);
     }
 
@@ -123,7 +123,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         address,
         uint256 tokenId
     ) internal view override {
-        require(!_locks[tokenId], ExceptionsLibrary.LOCKED_NFT);
+        require(!_locks[tokenId - 1], ExceptionsLibrary.LOCKED_NFT);
     }
 
     /// @notice Emitted when token is locked for transfers
