@@ -83,18 +83,18 @@ describe("ERC20Vault", function () {
             });
 
             describe("when tokens are not sorted", () => {
-                it("reverts", async () => {
+                it.only("reverts", async () => {
                     const factory = await ethers.getContractFactory(
                         "ERC20Vault"
                     );
                     await expect(
-                        factory.deploy(ERC20Vault.vaultGovernance(), [
+                        factory.deploy(ERC20VaultGovernance.address, [
                             tokens[1].address,
                             tokens[0].address,
                         ])
                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
                     await expect(
-                        factory.deploy(await stranger.getAddress(), [
+                        factory.deploy(ERC20VaultGovernance.address, [
                             tokens[0].address,
                             tokens[0].address,
                         ])
