@@ -39,7 +39,7 @@ library DelayedAddressPermissions {
         address token,
         uint8 permissionId
     ) internal view returns (bool) {
-        return state._permissions[token] & (uint64(1) << permissionId) != 0;
+        return state._permissions[token] & permissionIdToMask(permissionId) != 0;
     }
 
     function permissionMaskOf(BitMap storage state, address token) internal view returns (uint64) {
