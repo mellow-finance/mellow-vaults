@@ -18,9 +18,12 @@ contract ERC20Vault is Vault, ITrader {
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
-    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
-        Vault(vaultGovernance_, vaultTokens_)
-    {}
+    /// @param nft_ NFT of the vault in the VaultRegistry
+    constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint256 nft_
+    ) Vault(vaultGovernance_, vaultTokens_, nft_) {}
 
     /// @inheritdoc Vault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {

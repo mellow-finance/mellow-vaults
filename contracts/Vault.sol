@@ -38,12 +38,21 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
+    /// @param nft_ NFT of the vault in the VaultRegistry
+    constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint256 nft_
+    ) {
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(nft_ != 0, ExceptionsLibrary.NFT_ZERO);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
+        _nft = nft_;
         uint256 len = _vaultTokens.length;
         for (uint256 i = 0; i < len; ++i) _vaultTokensIndex[vaultTokens_[i]] = true;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     // -------------------  PUBLIC, VIEW  -------------------
@@ -65,17 +74,6 @@ abstract contract Vault is IVault, ReentrancyGuard {
 
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
-
-    // -------------------  PUBLIC, MUTATING, VaultGovernance  -------------------
-
-    function initialize(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(nft_ != 0, ExceptionsLibrary.NFT_ZERO);
-        require(_nft == 0, ExceptionsLibrary.INITIALIZATION);
-        _nft = nft_;
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        registry.setApprovalForAll(address(registry), true);
-    }
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 

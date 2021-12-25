@@ -32,12 +32,14 @@ contract UniV3Vault is IERC721Receiver, Vault {
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
+    /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param fee Fee of the underlying UniV3 pool
     constructor(
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
+        uint256 nft_,
         uint24 fee
-    ) Vault(vaultGovernance_, vaultTokens_) {
+    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
         require(_vaultTokens.length == 2, ExceptionsLibrary.TOKEN_LENGTH);
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)

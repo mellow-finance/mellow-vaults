@@ -30,9 +30,11 @@ contract YearnVault is Vault {
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
-    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
-        Vault(vaultGovernance_, vaultTokens_)
-    {
+    constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint256 nft_
+    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
         _yTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);

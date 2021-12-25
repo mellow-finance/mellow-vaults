@@ -32,9 +32,12 @@ contract AaveVault is Vault {
     /// @dev Requires that aToken exists for each vaultToken
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
-    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
-        Vault(vaultGovernance_, vaultTokens_)
-    {
+    /// @param nft_ NFT of the vault in the VaultRegistry
+    constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint256 nft_
+    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             address aToken = _getAToken(_vaultTokens[i]);

@@ -30,15 +30,18 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
     /// @dev All subvault nfts must be owned by this vault before.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
+    /// @param nft_ NFT of the vault in the VaultRegistry
     /// @param name_ Name of the ERC20 token
     /// @param symbol_ Symbol of the ERC20 token
     constructor(
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
+        uint256 nft_,
         string memory name_,
         string memory symbol_
     ) ERC20(name_, symbol_) {
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         uint256 vaultTokensLength = _vaultTokens.length;
@@ -49,6 +52,9 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
             _existentials.push(10**(ERC20(token).decimals() / 2));
         }
         lastFeeCharge = block.timestamp;
+        _nft = nft_;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
     }
 
     function vaultGovernance() external view returns (IVaultGovernance) {
@@ -70,15 +76,6 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
 
     function nft() external view returns (uint256) {
         return _nft;
-    }
-
-    function initialize(uint256 nft_) external {
-        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(nft_ > 0, ExceptionsLibrary.NFT_ZERO);
-        require(_nft == 0, ExceptionsLibrary.INITIALIZATION);
-        _nft = nft_;
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        registry.setApprovalForAll(address(registry), true);
     }
 
     /// @inheritdoc ILpIssuer

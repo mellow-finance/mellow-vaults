@@ -21,10 +21,6 @@ interface IVault {
     /// @return maxTokenAmounts Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)
     function tvl() external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
-    /// @notice Initialize contract with vault nft
-    /// @param nft VaultRegistry NFT for this vault
-    function initialize(uint256 nft) external;
-
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
     /// the contract balance and convert it to yUSDC.
     /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.

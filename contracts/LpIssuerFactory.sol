@@ -16,10 +16,23 @@ contract LpIssuerFactory is IVaultFactory {
     }
 
     /// @inheritdoc IVaultFactory
-    function deployVault(address[] memory vaultTokens, bytes memory options) external returns (IVault) {
+    function deployVault(
+        address[] memory vaultTokens,
+        uint256 nft,
+        bytes memory options
+    ) external returns (IVault) {
         require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
+        address addr;
         (string memory name, string memory symbol) = abi.decode(options, (string, string));
-        LpIssuer vault = new LpIssuer(vaultGovernance, vaultTokens, name, symbol);
-        return IVault(address(vault));
+        bytes memory bytecode = type(LpIssuer).creationCode;
+        bytes memory initCode = abi.encodePacked(bytecode, abi.encode(vaultGovernance, vaultTokens, nft, name, symbol));
+        assembly {
+            addr := create2(0, add(initCode, 0x20), mload(initCode), nft)
+
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
+        }
+        return IVault(addr);
     }
 }
