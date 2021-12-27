@@ -51,6 +51,7 @@ library ExceptionsLibrary {
     string constant LOCKED_NFT = "LCKD";
     string constant TOKEN_OWNER = "TO";
     string constant NOT_VAULT_TOKEN = "VT";
+    string constant NOT_VAULT = "NV";
     string constant NOT_STRATEGY_TREASURY = "ST";
     string constant ZERO_STRATEGY_ADDRESS = "ZS";
     string constant NFT_VAULT_REGISTRY = "NFTVR";
@@ -71,4 +72,6 @@ library ExceptionsLibrary {
     string constant UNISWAP_POOL_NOT_FOUND = "UPNF";
     string constant BALANCE_FACTOR_ZERO = "BF";
     string constant ZERO_LP_TOKENS = "ZLP";
+    string constant DUPLICATE_NFT = "DNFT";
+    string constant VAULT_ADDRESS_ZERO = "VAZ";
 }
