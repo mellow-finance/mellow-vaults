@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./libraries/CommonLibrary.sol";
@@ -27,7 +28,7 @@ import "./libraries/ExceptionsLibrary.sol";
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin
-abstract contract Vault is IVault, ReentrancyGuard {
+abstract contract Vault is IVault, ReentrancyGuard, ERC165 {
     using SafeERC20 for IERC20;
 
     IVaultGovernance internal _vaultGovernance;
@@ -167,6 +168,10 @@ abstract contract Vault is IVault, ReentrancyGuard {
                 revert(add(32, returndata), returndata_size)
             }
         }
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
     // -------------------  PUBLIC, VIEW   -------------------\

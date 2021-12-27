@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "./interfaces/external/univ3/IUniswapV3Pool.sol";
 import "./interfaces/external/univ3/IUniswapV3Factory.sol";
 import "./interfaces/IUniV3VaultGovernance.sol";
+import "./interfaces/IUniV3Vault.sol";
 import "./libraries/external/TickMath.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./Vault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
-contract UniV3Vault is IERC721Receiver, Vault {
+contract UniV3Vault is IUniV3Vault, Vault {
     struct Options {
         uint256 amount0Min;
         uint256 amount1Min;
@@ -45,6 +45,10 @@ contract UniV3Vault is IERC721Receiver, Vault {
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
         );
         require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, Vault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
     }
 
     function onERC721Received(
@@ -91,7 +95,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     /// @inheritdoc Vault
-    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+    function tvl() public view override(IVault, Vault) returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         if (uniV3Nft == 0) {
             return (new uint256[](2), new uint256[](2));
         }

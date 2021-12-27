@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./IVaultGovernance.sol";
 
-interface IVault {
+interface IVault is IERC165 {
     /// @notice VaultRegistry NFT for this vault
     function nft() external view returns (uint256);
 
