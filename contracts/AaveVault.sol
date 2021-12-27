@@ -109,7 +109,9 @@ contract AaveVault is Vault {
             if ((_tvls[i] == 0) || (tokenAmounts[i] == 0)) {
                 continue;
             }
-            actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], tokenAmounts[i], to);
+            uint256 balance = IERC20(_aTokens[i]).balanceOf(address(this));
+            uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
+            actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], amount, to);
         }
         _updateTvls();
     }

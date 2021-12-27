@@ -62,7 +62,7 @@ interface IVault is IERC165 {
     ///
     /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
     ///
-    /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
+    /// Pull is fulfilled on the best effort basis, i.e. if the tokenAmounts overflows available funds it withdraws all the funds.
     /// @param to Address to receive the tokens
     /// @param tokens Tokens to pull
     /// @param tokenAmounts Amounts of tokens to pull

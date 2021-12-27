@@ -90,7 +90,9 @@ contract YearnVault is Vault {
             IYearnVault yToken = IYearnVault(_yTokens[i]);
             uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
-            if (yTokenAmount > balance) yTokenAmount = balance;
+            if (yTokenAmount > balance) {
+                yTokenAmount = balance;
+            }
 
             if (yTokenAmount == 0) continue;
 

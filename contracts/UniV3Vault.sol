@@ -227,8 +227,8 @@ contract UniV3Vault is IUniV3Vault, Vault {
             INonfungiblePositionManager.CollectParams({
                 tokenId: uniV3Nft,
                 recipient: to,
-                amount0Max: uint128(amount0),
-                amount1Max: uint128(amount1)
+                amount0Max: uint128(tokenAmounts[0]),
+                amount1Max: uint128(tokenAmounts[1])
             })
         );
         return Pair({a0: amount0Collected, a1: amount1Collected});

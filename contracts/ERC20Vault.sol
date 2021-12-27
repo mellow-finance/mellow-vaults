@@ -89,7 +89,13 @@ contract ERC20Vault is IERC20Vault, Vault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokenAmounts.length; ++i) IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
+        for (uint256 i = 0; i < tokenAmounts.length; ++i) {
+            IERC20 vaultToken = IERC20(_vaultTokens[i]);
+            uint256 balance = vaultToken.balanceOf(address(this));
+            uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
+            IERC20(_vaultTokens[i]).safeTransfer(to, amount);
+            actualTokenAmounts[i] = amount;
+        }
 
         actualTokenAmounts = tokenAmounts;
     }
