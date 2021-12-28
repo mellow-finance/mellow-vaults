@@ -9,11 +9,23 @@ describe("VaultRegistry", () => {
         it("returns correct vaults", async () => {
             
         });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
+        });
     });
 
     describe("#vaultForNft", () => {
         it("returns correct ERC20Vault for existing nftERC20", async () => {
            
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
         });
 
         describe("edge cases", () => {
@@ -30,6 +42,12 @@ describe("VaultRegistry", () => {
            
         });
 
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
+        });
+
         describe("edge cases", () => {
             describe("when nftERC20 does not exist", () => {
                 it("returns zero address", async () => {
@@ -44,9 +62,23 @@ describe("VaultRegistry", () => {
             
         });
 
-        describe("when called not by VaultGovernance", async () => {
-            it("reverts", async () => {
+        describe("access control:", () => {
+            it("allowed: VaultGovernance", async () => {
                 
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when address parameter is not an address of vault", () => {
+                it("does not fail", async () => {
+
+                });
+            });
+
+            describe("when vault or owner adresses == 0x0", () => {
+                it("does not fail", async () => {
+
+                });
             });
         });
     });
@@ -55,11 +87,23 @@ describe("VaultRegistry", () => {
         it("has correct protocolGovernance", async () => {
             
         });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
+        });
     });
 
     describe("#stagedProtocolGovernance", () => {
         it("returns correct stagedProtocolGovernance", async () => {
             
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
         });
 
         describe("edge cases", () => {
@@ -71,9 +115,15 @@ describe("VaultRegistry", () => {
         });
     });
 
-    describe("stagedProtocolGovernanceTimestamp", () => {
+    describe("#stagedProtocolGovernanceTimestamp", () => {
         it("returns correct timestamp", async () => {
                     
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
         });
 
         describe("edge cases", () => {
@@ -89,6 +139,12 @@ describe("VaultRegistry", () => {
         it("returns correct vaults count", async () => {
             
         });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
+        });
     });
 
     describe("#stageProtocolGovernance", () => {
@@ -96,10 +152,16 @@ describe("VaultRegistry", () => {
 
         });
 
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                
+            });
+        });
+
         describe("edge cases", () => {
-            describe("when called not by protocol governance admin", () => {
-                it("reverts", async () => {
-                    
+            describe("when new ProtocolGovernance is a zero address", () => {
+                it("does not fail", async () => {
+
                 });
             });
         });
@@ -110,14 +172,14 @@ describe("VaultRegistry", () => {
             
         });
 
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                
+            });
+        });
+
         describe("edge cases", () => {
             describe("when nothing staged", () => {
-                it("reverts", async () => {
-                    
-                });
-            });
-
-            describe("when called by stranger", () => {
                 it("reverts", async () => {
                     
                 });
@@ -136,11 +198,9 @@ describe("VaultRegistry", () => {
             
         });
 
-        describe("edge cases", () => {
-            describe("when called not by admin", () => {
-                it("reverts", async () => {
-                    
-                });
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                
             });
         });
     });
@@ -148,6 +208,12 @@ describe("VaultRegistry", () => {
     describe("#isLocked", () => {
         it("checks if token is locked", async () => {
             
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                
+            });
         });
 
         describe("edge cases", () => {
@@ -164,9 +230,15 @@ describe("VaultRegistry", () => {
 
         });
 
+        describe("access control:", () => {
+            it("allowed: nft owner", async () => {
+                
+            });
+        });
+
         describe("edge cases", () => {
-            describe("when called not by nft owner", () => {
-                it("reverts", async () => {
+            describe("when nft has already been locked", () => {
+                it("does not fail", async () => {
                     
                 });
             });
