@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/IVault.sol";
+import "../interfaces/IIntegrationVault.sol";
 import "../interfaces/IERC20Vault.sol";
 import "../trader/interfaces/IUniV3Trader.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
@@ -29,7 +29,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         IUniswapV3Pool uniV3Pool;
         ISwapRouter uniV3Router;
         IERC20Vault erc20Vault;
-        IVault moneyVault;
+        IIntegrationVault moneyVault;
     }
 
     Params[] public vaultParams;
@@ -47,8 +47,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        uint256[] memory erc20Tvl = erc20Vault.tvl();
-        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        (uint256[] memory moneyTvl, ) = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
 
         for (uint256 i = 0; i < 2; i++) {
@@ -81,14 +81,14 @@ contract MStrategy is DefaultAccessControlLateInit {
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        IVault moneyVault = immutableParams.moneyVault;
+        IIntegrationVault moneyVault = immutableParams.moneyVault;
         address[] memory tokens = erc20Vault.vaultTokens();
-        uint256[] memory erc20Tvl = erc20Vault.tvl();
-        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        (uint256[] memory moneyTvl, ) = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
         _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, moneyVault, params);
-        erc20Tvl = erc20Vault.tvl();
-        moneyTvl = immutableParams.moneyVault.tvl();
+        (erc20Tvl, ) = erc20Vault.tvl();
+        (moneyTvl, ) = immutableParams.moneyVault.tvl();
 
         _rebalancePools(
             erc20Tvl,
@@ -107,8 +107,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         address[] memory tokens,
         uint256 liquidToFixedRatioX96,
         uint256 poolRebalanceThresholdX96,
-        IVault erc20Vault,
-        IVault moneyVault
+        IIntegrationVault erc20Vault,
+        IIntegrationVault moneyVault
     ) internal {
         uint256[] memory erc20PullAmounts = new uint256[](2);
         uint256[] memory moneyPullAmounts = new uint256[](2);
@@ -169,7 +169,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl,
         IUniswapV3Pool pool,
         IERC20Vault erc20Vault,
-        IVault moneyVault,
+        IIntegrationVault moneyVault,
         Params storage params
     ) internal {
         (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
@@ -283,9 +283,9 @@ contract MStrategy is DefaultAccessControlLateInit {
         if (vaultImmutableParams.length > 0) {
             require(vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault, "EXST");
         }
-        IVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
+        IIntegrationVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
         for (uint256 i = 0; i < vaults.length; i++) {
-            IVault vault = vaults[i];
+            IIntegrationVault vault = vaults[i];
             address[] memory tokens = vault.vaultTokens();
             require(tokens[0] == token0, "VT0");
             require(tokens[1] == token1, "VT1");
