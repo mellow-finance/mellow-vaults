@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IIntegrationVault.sol";
 import "./interfaces/IVaultRoot.sol";
-import "./interfaces/IGatewayVault.sol";
-import "./interfaces/IGatewayVaultGovernance.sol";
 import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 

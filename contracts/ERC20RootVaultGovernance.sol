@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IERC20RootVaultGovernance.sol";
 import "./interfaces/IERC20RootVaultFactory.sol";
-import "./interfaces/ILpIssuer.sol";
 import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";

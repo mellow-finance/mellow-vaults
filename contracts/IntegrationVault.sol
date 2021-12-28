@@ -40,8 +40,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
-    }
+    ) Vault(vaultGovernance_, vaultTokens_, nft_) {}
 
     // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
 
@@ -137,7 +136,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         }
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, Vault) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IIntegrationVault).interfaceId);
     }
 

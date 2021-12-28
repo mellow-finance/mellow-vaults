@@ -3,11 +3,10 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./interfaces/IGatewayVault.sol";
 import "./libraries/CommonLibrary.sol";
+import "./libraries/ExceptionsLibrary.sol";
 import "./interfaces/IVault.sol";
 import "./VaultGovernance.sol";
-import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -61,7 +60,6 @@ abstract contract Vault is IVault, ERC165 {
         return _vaultTokensIndex[token];
     }
 
-
     /// @inheritdoc IVault
     function vaultGovernance() external view returns (IVaultGovernance) {
         return _vaultGovernance;
@@ -80,7 +78,7 @@ abstract contract Vault is IVault, ERC165 {
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
@@ -89,5 +87,4 @@ abstract contract Vault is IVault, ERC165 {
             IERC20(token).approve(to, type(uint256).max);
         }
     }
-
 }

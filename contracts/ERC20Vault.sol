@@ -8,11 +8,11 @@ import "./trader/interfaces/IChiefTrader.sol";
 import "./interfaces/IERC20Vault.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
-import "./Vault.sol";
+import "./IntegrationVault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that stores ERC20 tokens.
-contract ERC20Vault is IERC20Vault, Vault {
+contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     /// @notice Creates a new contract.
@@ -23,10 +23,10 @@ contract ERC20Vault is IERC20Vault, Vault {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {}
+    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {}
 
-    /// @inheritdoc Vault
-    function tvl() public view override(IVault, Vault) returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+    /// @inheritdoc IVault
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         uint256 len = tokens.length;
         minTokenAmounts = new uint256[](len);
@@ -36,7 +36,7 @@ contract ERC20Vault is IERC20Vault, Vault {
         maxTokenAmounts = minTokenAmounts;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, Vault) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
 

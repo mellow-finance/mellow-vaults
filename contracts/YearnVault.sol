@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "./interfaces/external/yearn/IYearnVault.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
-import "./Vault.sol";
+import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
 /// @dev Notes:
@@ -23,7 +23,7 @@ import "./Vault.sol";
 /// There are some deposit limits imposed by Yearn vaults.
 /// The contract's vaultTokens are fully allowed to corresponding yTokens.
 
-contract YearnVault is Vault {
+contract YearnVault is IntegrationVault {
     address[] private _yTokens;
     uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
 
@@ -34,7 +34,7 @@ contract YearnVault is Vault {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
+    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {
         _yTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);
@@ -47,7 +47,7 @@ contract YearnVault is Vault {
         return _yTokens;
     }
 
-    /// @inheritdoc Vault
+    /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         minTokenAmounts = new uint256[](tokens.length);
@@ -97,12 +97,6 @@ contract YearnVault is Vault {
             if (yTokenAmount == 0) continue;
 
             actualTokenAmounts[i] = yToken.withdraw(yTokenAmount, to, maxLoss);
-        }
-    }
-
-    function _allowTokenIfNecessary(address token, address yToken) internal {
-        if (IERC20(token).allowance(address(this), yToken) < type(uint256).max / 2) {
-            IERC20(token).approve(yToken, type(uint256).max);
         }
     }
 }
