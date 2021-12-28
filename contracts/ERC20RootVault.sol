@@ -28,14 +28,13 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
         uint256[] memory subvaultNfts_,
         string memory name_,
         string memory symbol_
-    ) AggregateVault(vaultGovernance_, vaultTokens_, nft_, subvaultNfts_) ERC20(name_, symbol_) {
-    }
+    ) AggregateVault(vaultGovernance_, vaultTokens_, nft_, subvaultNfts_) ERC20(name_, symbol_) {}
 
     function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 supply = totalSupply();
         uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
-        uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);  
+        uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         uint256 vaultTokensLength = _vaultTokens.length;
         for (uint256 i = 0; i < vaultTokensLength; ++i) {
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
@@ -73,7 +72,7 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
         uint256 supply = totalSupply();
         require(supply > 0, ExceptionsLibrary.TOTAL_SUPPLY_IS_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
-        (uint256[] memory minTvl,) = tvl();
+        (uint256[] memory minTvl, ) = tvl();
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
             require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.MIN_LP_AMOUNT);
@@ -81,7 +80,7 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
         uint256[] memory actualTokenAmounts = _pull(address(this), tokenAmounts, "");
         uint256 vaultTokensLength = _vaultTokens.length;
         for (uint256 i = 0; i < vaultTokensLength; ++i) {
-            if (actualTokenAmounts[i] == 0) { 
+            if (actualTokenAmounts[i] == 0) {
                 continue;
             }
 
@@ -218,7 +217,7 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
     ) internal pure returns (uint256) {
         if (supply == 0) {
             // skip normalization on init
-            return amount;            
+            return amount;
         }
 
         // normalize amount

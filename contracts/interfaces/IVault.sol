@@ -26,6 +26,4 @@ interface IVault is IERC165 {
     /// @return minTokenAmounts Lower bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)
     /// @return maxTokenAmounts Upper bound for total available balances estimation (nth tokenAmount corresponds to nth token in vaultTokens)
     function tvl() external view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
-
-    
 }
