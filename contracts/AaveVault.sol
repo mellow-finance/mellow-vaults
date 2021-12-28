@@ -77,7 +77,6 @@ contract AaveVault is Vault {
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
-        override
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
@@ -91,7 +90,7 @@ contract AaveVault is Vault {
                 continue;
             }
             address token = tokens[i];
-            _allowTokenIfNecessary(token);
+            _allowTokenIfNecessary(token, address(_lendingPool()));
             _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
         }
         _updateTvls();
@@ -102,7 +101,7 @@ contract AaveVault is Vault {
         address to,
         uint256[] memory tokenAmounts,
         bytes memory
-    ) internal override returns (uint256[] memory actualTokenAmounts) {
+    ) internal returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < _aTokens.length; ++i) {
@@ -119,12 +118,6 @@ contract AaveVault is Vault {
     function _getAToken(address token) internal view returns (address) {
         DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
         return data.aTokenAddress;
-    }
-
-    function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(this), address(_lendingPool())) < type(uint256).max / 2) {
-            IERC20(token).approve(address(_lendingPool()), type(uint256).max);
-        }
     }
 
     function _lendingPool() internal view returns (ILendingPool) {

@@ -10,10 +10,10 @@ import "./interfaces/IUniV3Vault.sol";
 import "./libraries/external/TickMath.sol";
 import "./libraries/external/LiquidityAmounts.sol";
 import "./libraries/ExceptionsLibrary.sol";
-import "./Vault.sol";
+import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
-contract UniV3Vault is IUniV3Vault, Vault {
+contract UniV3Vault is IUniV3Vault, IntegrationVault {
     struct Options {
         uint256 amount0Min;
         uint256 amount1Min;
@@ -39,7 +39,7 @@ contract UniV3Vault is IUniV3Vault, Vault {
         address[] memory vaultTokens_,
         uint256 nft_,
         uint24 fee
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
+    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {
         require(_vaultTokens.length == 2, ExceptionsLibrary.TOKEN_LENGTH);
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
@@ -47,7 +47,7 @@ contract UniV3Vault is IUniV3Vault, Vault {
         require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, Vault) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
     }
 
@@ -94,8 +94,8 @@ contract UniV3Vault is IUniV3Vault, Vault {
         emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
     }
 
-    /// @inheritdoc Vault
-    function tvl() public view override(IVault, Vault) returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+    /// @inheritdoc IVault
+    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         if (uniV3Nft == 0) {
             return (new uint256[](2), new uint256[](2));
         }
@@ -150,7 +150,9 @@ contract UniV3Vault is IUniV3Vault, Vault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; ++i) _allowTokenIfNecessary(tokens[i]);
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            _allowTokenIfNecessary(tokens[i], address(_positionManager()));
+        }
 
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
@@ -238,12 +240,6 @@ contract UniV3Vault is IUniV3Vault, Vault {
 
     function _positionManager() internal view returns (INonfungiblePositionManager) {
         return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
-    }
-
-    function _allowTokenIfNecessary(address token) internal {
-        if (IERC20(token).allowance(address(this), address(_positionManager())) < type(uint256).max / 2) {
-            IERC20(token).approve(address(_positionManager()), type(uint256).max);
-        }
     }
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {

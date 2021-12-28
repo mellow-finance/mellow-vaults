@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./libraries/CommonLibrary.sol";
 import "./interfaces/IVault.sol";
@@ -28,7 +27,7 @@ import "./libraries/ExceptionsLibrary.sol";
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin
-abstract contract Vault is IVault, ReentrancyGuard, ERC165 {
+abstract contract Vault is IVault, ERC165 {
     using SafeERC20 for IERC20;
 
     IVaultGovernance internal _vaultGovernance;
@@ -85,14 +84,10 @@ abstract contract Vault is IVault, ReentrancyGuard, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
-    // -------------------  PRIVATE, VIEW  -------------------
-
-    function _isApprovedOrOwner(address sender) internal view returns (bool) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 nft_ = _nft;
-        if (nft_ == 0) {
-            return false;
+    function _allowTokenIfNecessary(address token, address to) internal {
+        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
+            IERC20(token).approve(to, type(uint256).max);
         }
-        return registry.getApproved(nft_) == sender || registry.ownerOf(nft_) == sender;
     }
+
 }

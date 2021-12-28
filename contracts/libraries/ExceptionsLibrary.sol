@@ -75,4 +75,5 @@ library ExceptionsLibrary {
     string constant DUPLICATE_NFT = "DNFT";
     string constant VAULT_ADDRESS_ZERO = "VAZ";
     string constant ZERO_LENGTH = "ZL";
+    string constant MIN_LP_AMOUNT = "MLP";
 }

@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/IGatewayVault.sol";
+import "./interfaces/IVaultRoot.sol";
 import "./interfaces/IIntegrationVault.sol";
 import "./libraries/CommonLibrary.sol";
 import "./libraries/ExceptionsLibrary.sol";
@@ -169,15 +169,15 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
         if (thisOwnerNft == 0) return false;
 
-        IGatewayVault gw = IGatewayVault(thisOwner);
-        if (!gw.hasSubvault(address(this)) || !gw.hasSubvault(to)) return false;
+        IVaultRoot root = IVaultRoot(thisOwner);
+        if (!root.hasSubvault(address(this)) || !root.hasSubvault(to)) return false;
 
         return true;
     }
 
     // -------------------  PRIVATE, VIEW  -------------------
 
-    function _isApprovedOrOwner(address sender) internal override view returns (bool) {
+    function _isApprovedOrOwner(address sender) internal view returns (bool) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 nft_ = _nft;
         if (nft_ == 0) {
