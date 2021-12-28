@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../interfaces/IVaultFactory.sol";
 import "../interfaces/IVaultFactory.sol";
 import "./AaveVaultTest.sol";
+import "contracts/libraries/ExceptionsLibrary.sol";
 
 contract AaveVaultTestFactory is IVaultFactory {
     IVaultGovernance public vaultGovernance;
@@ -17,7 +18,7 @@ contract AaveVaultTestFactory is IVaultFactory {
     }
 
     function deployVault(address[] memory vaultTokens, bytes memory) external returns (IVault) {
-        require(msg.sender == address(vaultGovernance), "VG");
+        require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         AaveVaultTest vault = new AaveVaultTest(vaultGovernance, vaultTokens);
         return IVault(vault);
     }

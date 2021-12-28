@@ -46,8 +46,8 @@ contract UniV3Vault is IERC721Receiver, Vault {
     }
 
     function onERC721Received(address operator, address from, uint256 tokenId, bytes memory) external returns (bytes4) {
-        require(msg.sender == address(_positionManager()), "SNFT");
-        require(_isStrategy(operator), "STR");
+        require(msg.sender == address(_positionManager()), ExceptionsLibrary.NOT_POSITION_MANAGER);
+        require(_isStrategy(operator), ExceptionsLibrary.NOT_STRATEGY);
         (
             , ,
             address token0,
@@ -57,7 +57,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
         // new position should have vault tokens
         require(
             token0 == _vaultTokens[0] && token1 == _vaultTokens[1],
-            "VT"
+            ExceptionsLibrary.NOT_VAULT_TOKEN
         );
 
         if (uniV3Nft != 0) {
@@ -68,7 +68,7 @@ contract UniV3Vault is IERC721Receiver, Vault {
                 uint128 tokensOwed0,
                 uint128 tokensOwed1
             ) = _positionManager().positions(uniV3Nft);
-            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, "TVL");
+            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.TVL_NOT_ZERO);
             // return previous uni v3 position nft
             _positionManager().transferFrom(address(this), from, uniV3Nft);
         }

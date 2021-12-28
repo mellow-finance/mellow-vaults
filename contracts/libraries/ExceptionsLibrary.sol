@@ -4,17 +4,14 @@ pragma solidity 0.8.9;
 /// @notice Exceptions stores project`s smart-contracts exceptions
 library ExceptionsLibrary {
     string constant INIT = "INIT";
-    string constant GOVERNANCE_OR_DELEGATE = "GD";
     string constant NULL = "NULL";
     string constant TIMESTAMP = "TS";
-    string constant GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO = "ZMG";
     string constant EMPTY_PARAMS = "P0";
     string constant ADMIN = "ADM";
     string constant ADMIN_ADDRESS_ZERO = "ZADM";
+    string constant PROTOCOL_GOVERNANCE_ADDRESS_ZERO = "ZPG";
     string constant YEARN_REGISTRY_ADDRESS_ZERO = "ZY";
     string constant POSITION_MANAGER_ADDRESS_ZERO = "ZPM";
-    string constant VAULT_FACTORY_ADDRESS_ZERO = "ZVF";
-    string constant PROTOCOL_GOVERNANCE_ADDRESS_ZERO = "ZPG";
     string constant VAULT_REGISTRY_ADDRESS_ZERO = "ZVR";
     string constant AAVE_LENDING_POOL_ADDRESS_ZERO = "ZALP";
     string constant TRADER_ADDRESS_ZERO = "ZTR";
@@ -25,14 +22,13 @@ library ExceptionsLibrary {
     string constant SORTED_AND_UNIQUE = "SAU";
     string constant ERC20_INSUFFICIENT_BALANCE = "ERC20: transfer amount exceeds balance";
     string constant VALID_PULL_DESTINATION = "INTRA";
-    string constant CONTRACT_REQUIRED = "C";
     string constant SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE = "VG";
     string constant REQUIRE_AT_LEAST_STRATEGY = "RST";
     string constant NULL_OR_NOT_INITIALIZED = "NA";
     string constant REDIRECTS_AND_VAULT_TOKENS_LENGTH = "RL";
     string constant INITIALIZATION = "INIT";
     string constant PERMISSIONLESS_OR_ADMIN = "POA";
-    string constant TOKEN_NOT_IN_PROJECT = "TPS";
+    string constant TOKEN_NOT_ALLOWED = "TNA";
     string constant WEIGHTS_LENGTH_IS_ZERO = "KGT0";
     string constant AMOUNTS_LENGTH_IS_ZERO = "NGT0";
     string constant MATRIX_NOT_RECTANGULAR = "NV";
@@ -42,7 +38,6 @@ library ExceptionsLibrary {
     string constant SUB_VAULT_INITIALIZED = "SBIN";
     string constant SUB_VAULT_LENGTH = "SBL";
     string constant NFT_ZERO = "NFT0";
-    string constant YEARN_VAULTS = "YV";
     string constant LOCKED_NFT = "LCKD";
     string constant TOKEN_OWNER = "TO";
     string constant NOT_VAULT_TOKEN = "VT";
@@ -66,4 +61,14 @@ library ExceptionsLibrary {
     string constant UNISWAP_POOL_NOT_FOUND = "UPNF";
     string constant BALANCE_FACTOR_ZERO = "BF";
     string constant ZERO_LP_TOKENS = "ZLP";
+    string constant NOT_POSITION_MANAGER = "SNFT";
+    string constant NOT_STRATEGY = "STR";
+    string constant TVL_NOT_ZERO = "TVL";
+    string constant INVALID_VAULT_ID = "VE";
+    string constant VAULT_DISABLED = "DIS";
+    string constant INVALID_TOKEN_0_IN_UNIV3_POOL = "T0";
+    string constant INVALID_TOKEN_1_IN_UNIV3_POOL = "T1";
+    string constant TOKEN_0_NOT_IN_VAULT = "T0";
+    string constant TOKEN_1_NOT_IN_VAULT = "T1";
+    string constant PARAMS_DO_NOT_EXIST = "EXST";
 }
