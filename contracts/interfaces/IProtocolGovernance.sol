@@ -16,30 +16,10 @@ interface IProtocolGovernance is IDefaultAccessControl {
         bool permissionless;
     }
 
-    enum Permissions {
-        ERC20_TRANSFER,
-        ERC20_OPERATE,
-        ERC20_VAULT_TOKEN,
-        CLAIM,
-        VAULT_GOVERNANCE
-    }
-
     // -------------------  PUBLIC, VIEW  -------------------
 
     /// @notice Checks if address is allowed to claim
-    function hasClaimPermission(address addr) external view returns (bool);
-
-    /// @notice Checks if given ERC20 token is allowed to be transferred
-    function hasERC20TransferPermission(address addr) external view returns (bool);
-
-    /// @notice Checks if given ERC20 token is allowed to be operated (swaped, transferred, etc)
-    function hasERC20OperatePermission(address addr) external view returns (bool);
-
-    /// @notice Checks if given ERC20 token is allowed to be a vault token
-    function hasERC20VaultTokenPermission(address addr) external view returns (bool);
-
-    /// @notice Checks if given address is allowed to deploy and manage vaults
-    function hasVaultGovernancePermission(address addr) external view returns (bool);
+    function hasPermissionId(address addr, uint8 permissionId) external view returns (bool);
 
     /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
     function permissionless() external view returns (bool);

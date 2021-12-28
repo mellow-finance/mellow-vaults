@@ -36,16 +36,20 @@ contract AddressPermissionControl {
         return _stagedPermissionMasks;
     }
 
-    function hasPermissionId(address token, uint8 permissionId) internal view returns (bool) {
-        return _permissionMasks[token] & permissionIdToMask(permissionId) != 0;
+    function _permissionIdToMask(uint8 permissionId) internal pure returns (uint256) {
+        return 1 << (permissionId - 1);
     }
 
-    function permissionMaskOf(address token) internal view returns (uint256) {
+    function _hasPermissionId(address token, uint8 permissionId) internal view returns (bool) {
+        return _permissionMasks[token] & _permissionIdToMask(permissionId) != 0;
+    }
+
+    function _permissionMaskOf(address token) internal view returns (uint256) {
         return _permissionMasks[token];
     }
 
-    function revokeInstantPermissionId(address from, uint8 permissionId) internal {
-        uint256 permission = permissionIdToMask(permissionId);
+    function _revokeInstantPermissionId(address from, uint8 permissionId) internal {
+        uint256 permission = _permissionIdToMask(permissionId);
         uint256 oldPermission = _permissionMasks[from];
         require(oldPermission & permission != 0);
         _permissionMasks[from] = oldPermission & (~ permission);
@@ -55,7 +59,7 @@ contract AddressPermissionControl {
         }
     }
 
-    function stagePermissionMasks(
+    function _stagePermissionMasks(
         address[] memory addrs,
         uint256[] memory permissions,
         uint256 delay
@@ -66,7 +70,7 @@ contract AddressPermissionControl {
         _stagedPermissionMasks = permissions;
     }
 
-    function stagePermissionIds(
+    function _stagePermissionIds(
         address[] memory addrs,
         uint8[][] memory permissionIds,
         uint256 delay
@@ -76,14 +80,14 @@ contract AddressPermissionControl {
             uint256 permissionMask = 0;
             for (uint256 j; j < permissionIds[i].length; ++j) {
                 uint8 permissionId = permissionIds[i][j];
-                permissionMask |= permissionIdToMask(permissionId);
+                permissionMask |= _permissionIdToMask(permissionId);
             }
             permissionMasks[i] = permissionMask;
         }
-        stagePermissionMasks(addrs, permissionMasks, delay);
+        _stagePermissionMasks(addrs, permissionMasks, delay);
     }
 
-    function commitStagedPermissions() internal {
+    function _commitStagedPermissions() internal {
         require(_commitTimestamp != 0 && block.timestamp >= _commitTimestamp);
         uint256 len = _stagedAddresses.length;
         for (uint256 i; i != len; ++i) {
@@ -100,9 +104,5 @@ contract AddressPermissionControl {
         delete _commitTimestamp;
         delete _stagedAddresses;
         delete _stagedPermissionMasks;
-    }
-
-    function permissionIdToMask(uint8 permissionId) internal pure returns (uint256) {
-        return 1 << permissionId;
     }
 }
