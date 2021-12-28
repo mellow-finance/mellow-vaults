@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IERC20RootVaultGovernance.sol";
+import "./interfaces/IERC20RootVaultFactory.sol";
 import "./interfaces/ILpIssuer.sol";
 import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
@@ -182,16 +183,26 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
     function deployVault(
         address[] memory vaultTokens,
         bytes memory options,
-        address
+        address owner
     ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
-        (uint256 subvaultNft, string memory name, string memory symbol) = abi.decode(
+        (uint256[] memory subvaultNfts, string memory name, string memory symbol) = abi.decode(
             options,
-            (uint256, string, string)
+            (uint256[], string, string)
         );
-        (vault, nft) = super.deployVault(vaultTokens, abi.encode(name, symbol), msg.sender);
         IVaultRegistry registry = _internalParams.registry;
-        ILpIssuer(address(vault)).addSubvault(subvaultNft);
-        registry.safeTransferFrom(msg.sender, address(vault), subvaultNft);
+        uint256 deployNft = registry.vaultsCount();
+        address vaultAddress = IERC20RootVaultFactory(address(factory)).getDeploymentAddress(
+            this,
+            vaultTokens,
+            deployNft,
+            subvaultNfts,
+            name,
+            symbol
+        );
+        for (uint256 i = 0; i < subvaultNfts.length; i++) {
+            registry.safeTransferFrom(msg.sender, vaultAddress, subvaultNfts[i]);
+        }
+        (vault, nft) = super.deployVault(vaultTokens, options, owner);
     }
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit

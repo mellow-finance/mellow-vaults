@@ -2,11 +2,12 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IVaultFactory.sol";
+import "./interfaces/IERC20RootVaultFactory.sol";
 import "./ERC20RootVault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Helper contract for ERC20RootVaultGovernance that can create new ERC20RootVaults.
-contract ERC20RootVaultFactory is IVaultFactory {
+contract ERC20RootVaultFactory is IERC20RootVaultFactory {
     IVaultGovernance public immutable vaultGovernance;
 
     /// @notice Creates a new contract.
@@ -40,5 +41,22 @@ contract ERC20RootVaultFactory is IVaultFactory {
             }
         }
         return IVault(addr);
+    }
+
+    function getDeploymentAddress(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint256 nft_,
+        uint256[] memory subvaultNfts_,
+        string memory name_,
+        string memory symbol_
+    ) external view returns (address) {
+        bytes memory creatonCode = type(ERC20RootVault).creationCode;
+        bytes memory bytecode = abi.encodePacked(
+            creatonCode,
+            abi.encode(vaultGovernance_, vaultTokens_, nft_, subvaultNfts_, name_, symbol_)
+        );
+        bytes32 addressHash = keccak256(abi.encodePacked(bytes1(0xff), address(this), nft_, keccak256(bytecode)));
+        return address(uint160(uint256(addressHash)));
     }
 }
