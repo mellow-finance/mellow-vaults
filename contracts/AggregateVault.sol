@@ -85,7 +85,7 @@ contract AggregateVault is Vault {
         }
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory options)
+    function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
         override
         returns (uint256[] memory actualTokenAmounts)
