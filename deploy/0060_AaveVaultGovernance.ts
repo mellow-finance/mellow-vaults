@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { BigNumber } from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -18,7 +19,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
             },
-            { lendingPool: aaveLendingPool },
+            {
+                lendingPool: aaveLendingPool,
+                estimatedAaveAPYX96: BigNumber.from(2).pow(96).div(20), // 5%
+            },
         ],
         log: true,
         autoMine: true,
