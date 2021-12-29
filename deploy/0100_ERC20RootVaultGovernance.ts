@@ -10,47 +10,48 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
-    await deploy("GatewayVaultGovernance", {
+    await deploy("ERC20RootVaultGovernance", {
         from: deployer,
         args: [
             {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
             },
+            { managementFeeChargeDelay: 86400 },
         ],
         log: true,
         autoMine: true,
     });
-    const governance = await get("GatewayVaultGovernance");
-    await deploy("GatewayVaultFactory", {
+    const governance = await get("ERC20RootVaultGovernance");
+    await deploy("ERC20RootVaultFactory", {
         from: deployer,
         args: [governance.address],
         log: true,
         autoMine: true,
     });
-    const initialized = await read("GatewayVaultGovernance", "initialized");
+    const initialized = await read("ERC20RootVaultGovernance", "initialized");
     if (!initialized) {
         log("Initializing factory...");
 
-        const factory = await get("GatewayVaultFactory");
+        const factory = await get("ERC20RootVaultFactory");
         await execute(
-            "GatewayVaultGovernance",
+            "ERC20RootVaultGovernance",
             { from: deployer, log: true, autoMine: true },
             "initialize",
             factory.address
         );
     }
-    const { address: gatewayVaultGovernanceAddress } = await get(
-        "GatewayVaultFactory"
+    const { address: lpIssuerVaultGovernanceAddress } = await get(
+        "ERC20RootVaultGovernance"
     );
-    const approvedGw = await read(
+    const approvedIssuer = await read(
         "VaultRegistry",
         "isApprovedForAll",
         deployer,
-        gatewayVaultGovernanceAddress
+        lpIssuerVaultGovernanceAddress
     );
-    if (!approvedGw) {
-        log("Approving gateway vault governance");
+    if (!approvedIssuer) {
+        log("Approving lp issuer governance");
         await execute(
             "VaultRegistry",
             {
@@ -59,11 +60,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 autoMine: true,
             },
             "setApprovalForAll",
-            gatewayVaultGovernanceAddress,
+            lpIssuerVaultGovernanceAddress,
             true
         );
     }
 };
 export default func;
-func.tags = ["GatewayVaultGovernance", "core", ...ALL_NETWORKS];
+func.tags = ["ERC20RootVaultGovernance", "core", ...ALL_NETWORKS];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

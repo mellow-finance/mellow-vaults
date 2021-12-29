@@ -119,6 +119,9 @@ const config: HardhatUserConfig = {
             default: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
             kovan: "0x8a0B62Fbcb1B862BbF1ad31c26a72b7b746EdFC1",
         },
+        uniswapV2Factory: {
+            default: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+        },
         uniswapV2Router02: {
             default: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
             kovan: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",

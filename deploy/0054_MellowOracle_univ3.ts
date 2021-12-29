@@ -6,17 +6,19 @@ import { ALL_NETWORKS, MAIN_NETWORKS } from "./0000_utils";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, execute } = deployments;
-    const { deployer, admin, uniswapV3Factory } = await getNamedAccounts();
-    await deploy("UniV3Oracle", {
+    const { deployer } = await getNamedAccounts();
+    const { address: chainlinkOracle } = await get("ChainlinkOracle");
+    const { address: univ3Oracle } = await get("UniV3Oracle");
+    await deploy("MellowOracle", {
         from: deployer,
-        args: [uniswapV3Factory, 10, admin],
+        args: [hre.ethers.constants.AddressZero, univ3Oracle, chainlinkOracle],
         log: true,
         autoMine: true,
     });
 };
 export default func;
 func.tags = [
-    "UniV3Oracle",
+    "MellowOracle",
     "core",
     ...MAIN_NETWORKS,
     "polygon",

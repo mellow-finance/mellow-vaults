@@ -10,6 +10,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, uniswapV3PositionManager } = await getNamedAccounts();
+    const { address: mellowOracle } = await get("MellowOracle");
+
     await deploy("UniV3VaultGovernance", {
         from: deployer,
         args: [
@@ -17,7 +19,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
             },
-            { positionManager: uniswapV3PositionManager },
+            {
+                positionManager: uniswapV3PositionManager,
+                oracle: mellowOracle,
+            },
         ],
         log: true,
         autoMine: true,

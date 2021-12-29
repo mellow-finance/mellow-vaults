@@ -6,20 +6,13 @@ import { ALL_NETWORKS, MAIN_NETWORKS } from "./0000_utils";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, execute } = deployments;
-    const { deployer, admin, uniswapV3Factory } = await getNamedAccounts();
-    await deploy("UniV3Oracle", {
+    const { deployer, uniswapV2Factory } = await getNamedAccounts();
+    await deploy("UniV2Oracle", {
         from: deployer,
-        args: [uniswapV3Factory, 10, admin],
+        args: [uniswapV2Factory],
         log: true,
         autoMine: true,
     });
 };
 export default func;
-func.tags = [
-    "UniV3Oracle",
-    "core",
-    ...MAIN_NETWORKS,
-    "polygon",
-    "arbitrum",
-    "optimism",
-];
+func.tags = ["UniV2Oracle", "core", ...ALL_NETWORKS];
