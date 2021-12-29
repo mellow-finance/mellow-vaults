@@ -99,49 +99,61 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         if (uniV3Nft == 0) {
             return (new uint256[](2), new uint256[](2));
         }
-        IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
-            .delayedProtocolParams();
-        (
-            ,
-            ,
-            ,
-            ,
-            ,
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity,
-            ,
-            ,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
-        ) = params.positionManager.positions(uniV3Nft);
-        (, uint256 minPriceX96, uint256 maxPriceX96) = params.oracle.spotPrice(_vaultTokens[0], _vaultTokens[1]);
-        uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
-        uint256 maxSqrtPriceX96 = CommonLibrary.sqrtX96(maxPriceX96);
-        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-        (uint256 amountMin0, uint256 amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
-            uint160(minSqrtPriceX96),
-            sqrtPriceAX96,
-            sqrtPriceBX96,
-            liquidity
-        );
-        (uint256 amountMax0, uint256 amountMax1) = LiquidityAmounts.getAmountsForLiquidity(
-            uint160(maxSqrtPriceX96),
-            sqrtPriceAX96,
-            sqrtPriceBX96,
-            liquidity
-        );
+        uint256 amountMin0;
+        uint256 amountMax0;
+        uint256 amountMin1;
+        uint256 amountMax1;
         minTokenAmounts = new uint256[](2);
         maxTokenAmounts = new uint256[](2);
-        minTokenAmounts[0] = amountMin0 < amountMax0 ? amountMin0 : amountMax0;
-        minTokenAmounts[1] = amountMin1 < amountMax1 ? amountMin1 : amountMax1;
-        maxTokenAmounts[0] = amountMin0 < amountMax0 ? amountMax0 : amountMin0;
-        maxTokenAmounts[1] = amountMin1 < amountMax1 ? amountMax1 : amountMin1;
-        minTokenAmounts[0] += tokensOwed0;
-        maxTokenAmounts[0] += tokensOwed0;
-        minTokenAmounts[1] += tokensOwed1;
-        maxTokenAmounts[1] += tokensOwed1;
+        int24 tickLower;
+        int24 tickUpper;
+        uint128 liquidity;
+        uint160 sqrtPriceAX96;
+        uint160 sqrtPriceBX96;
+        {
+            IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
+                .delayedProtocolParams();
+            {
+                uint128 tokensOwed0;
+                uint128 tokensOwed1;
+                (, , , , , tickLower, tickUpper, liquidity, , , tokensOwed0, tokensOwed1) = params
+                    .positionManager
+                    .positions(uniV3Nft);
+                minTokenAmounts[0] = tokensOwed0;
+                maxTokenAmounts[0] = tokensOwed0;
+                minTokenAmounts[1] = tokensOwed1;
+                maxTokenAmounts[1] = tokensOwed1;
+            }
+            sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+            sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+            {
+                uint256 minPriceX96;
+                uint256 maxPriceX96;
+                (, minPriceX96, maxPriceX96) = params.oracle.spotPrice(_vaultTokens[0], _vaultTokens[1]);
+                {
+                    uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
+                    (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
+                        uint160(minSqrtPriceX96),
+                        sqrtPriceAX96,
+                        sqrtPriceBX96,
+                        liquidity
+                    );
+                }
+                {
+                    uint256 maxSqrtPriceX96 = CommonLibrary.sqrtX96(maxPriceX96);
+                    (amountMax0, amountMax1) = LiquidityAmounts.getAmountsForLiquidity(
+                        uint160(maxSqrtPriceX96),
+                        sqrtPriceAX96,
+                        sqrtPriceBX96,
+                        liquidity
+                    );
+                }
+            }
+        }
+        minTokenAmounts[0] += amountMin0 < amountMax0 ? amountMin0 : amountMax0;
+        minTokenAmounts[1] += amountMin1 < amountMax1 ? amountMin1 : amountMax1;
+        maxTokenAmounts[0] += amountMin0 < amountMax0 ? amountMax0 : amountMin0;
+        maxTokenAmounts[1] += amountMin1 < amountMax1 ? amountMax1 : amountMin1;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -216,7 +228,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             }
         }
         Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-        (uint256 amount0, uint256 amount1) = _positionManager().decreaseLiquidity(
+        _positionManager().decreaseLiquidity(
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: uniV3Nft,
                 liquidity: liquidityToPull,
