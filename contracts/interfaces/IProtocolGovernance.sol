@@ -18,8 +18,15 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    /// @notice Checks if address is allowed to claim
-    function hasPermissionId(address addr, uint8 permissionId) external view returns (bool);
+    /// @notice Checks if address has permission
+    /// @param addr Address to check
+    /// @param permissionId Permission id to check
+    function hasPermission(address addr, uint8 permissionId) external view returns (bool);
+
+    /// @notice Checks if address has permission staged
+    /// @param addr Address to check
+    /// @param permissionId Permission id to check
+    function hasStagedPermission(address addr, uint8 permissionId) external view returns (bool);
 
     /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
     function permissionless() external view returns (bool);

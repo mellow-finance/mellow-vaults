@@ -5,10 +5,10 @@ import "./DefaultAccessControl.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/AddressPermissions.sol";
-import "./AddressPermissionControl.sol";
+import "./DelayedAddressPermissionControl.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, AddressPermissionControl {
+contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, DelayedAddressPermissionControl {
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public pendingParamsTimestamp;
     Params public params;
@@ -20,8 +20,16 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Addres
 
     // -------------------  PUBLIC, VIEW  -------------------
 
-    function hasPermissionId(address addr, uint8 permissionId) external view returns (bool) {
-        return _hasPermissionId(addr, permissionId);
+    function hasPermission(address target, uint8 permissionId) external view returns (bool) {
+        return _hasPermission(target, permissionId);
+    }
+
+    function hasStagedPermission(address target, uint8 permissionId) external view returns (bool) {
+        return _hasStagedPermission(target, permissionId);
+    }
+
+    function stagedToCommitAt() external view returns (uint256) {
+        return _stagedToCommitAt;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -51,9 +59,9 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Addres
         _commitStagedPermissions();
     }
 
-    function revokeInstantPermissionId(address addr, uint8 permissionId) external {
+    function revokePermissionsInstant(address addr, uint8[] calldata permissionIds) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        _revokeInstantPermissionId(addr, permissionId);
+        _revokePermissionsInstant(addr, permissionIds);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -71,20 +79,9 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Addres
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
-    function stagePermissionIds(address[] calldata addresses_, uint8[][] calldata permissionIds) external {
+    function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        _stagePermissionIds(addresses_, permissionIds, params.governanceDelay);
-    }
-
-    function stageGrantERC20VaultTokenPermissions(address[] memory tokens) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        uint8[][] memory permissionIds = new uint8[][](1);
-        permissionIds[0] = new uint8[](3);
-        permissionIds[0][0] = AddressPermissions.ERC20_VAULT_TOKEN;
-        permissionIds[0][1] = AddressPermissions.ERC20_SWAP;
-        permissionIds[0][2] = AddressPermissions.ERC20_TRANSFER;
-
-        _stagePermissionIds(tokens, permissionIds, params.governanceDelay);
+        _stageGrantPermissions(target, permissionIds, params.governanceDelay);
     }
 
     /// @inheritdoc IProtocolGovernance
