@@ -114,6 +114,15 @@ const config: HardhatUserConfig = {
             default: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
             kovan: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
         },
+        chainlinkEth: {
+            default: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419",
+        },
+        chainlinkBtc: {
+            default: "0xf4030086522a5beea4988f8ca5b36dbc97bee88c",
+        },
+        chainlinkUsdc: {
+            default: "0x986b5e1e1755e3c2440e960477f25201b0a8bbd4",
+        },
     },
 
     solidity: {

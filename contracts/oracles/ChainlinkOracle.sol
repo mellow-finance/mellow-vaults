@@ -15,7 +15,13 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
     EnumerableSet.AddressSet private _tokenAllowlist;
     mapping(address => address) public chainlinkOracles;
 
-    constructor(address admin) DefaultAccessControl(admin) {}
+    constructor(
+        address[] memory tokens,
+        address[] memory oracles,
+        address admin
+    ) DefaultAccessControl(admin) {
+        _addChainlinkOracles(tokens, oracles);
+    }
 
     /// @inheritdoc IChainlinkOracle
     function isAllowedToken(address token) external view returns (bool) {
@@ -28,12 +34,21 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
     }
 
     /// @inheritdoc IChainlinkOracle
-    function addChainlinkOracle(address token, address oracle) external {
+    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(!_tokenAllowlist.contains(token), ExceptionsLibrary.TOKEN_ALREADY_WHITELISTED);
-        _tokenAllowlist.add(token);
-        chainlinkOracles[token] = oracle;
-        emit OracleAdded(tx.origin, msg.sender, token, oracle);
+        _addChainlinkOracles(tokens, oracles);
+    }
+
+    function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
+        require(tokens.length == oracles.length, ExceptionsLibrary.TOKEN_LENGTH);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            address token = tokens[i];
+            address oracle = oracles[i];
+            require(!_tokenAllowlist.contains(token), ExceptionsLibrary.TOKEN_ALREADY_WHITELISTED);
+            _tokenAllowlist.add(token);
+            chainlinkOracles[token] = oracle;
+        }
+        emit OraclesAdded(tx.origin, msg.sender, tokens, oracles);
     }
 
     /// @inheritdoc IChainlinkOracle
@@ -65,5 +80,5 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
         return FullMath.mulDiv(uint256(answer0), decimalsRatioX96, uint256(answer1));
     }
 
-    event OracleAdded(address indexed origin, address indexed sender, address token, address oracle);
+    event OraclesAdded(address indexed origin, address indexed sender, address[] tokens, address[] oracles);
 }

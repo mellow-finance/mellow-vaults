@@ -25,7 +25,7 @@ interface IChainlinkOracle {
     function spotPrice(address token0, address token1) external view returns (uint256 priceX96);
 
     /// Add a Chainlink price feed for a token
-    /// @param token ERC20 token for the feed
-    /// @param oracle Chainlink oracle price feed (token / USD)
-    function addChainlinkOracle(address token, address oracle) external;
+    /// @param tokens ERC20 tokens for the feed
+    /// @param oracles Chainlink oracle price feeds (token / USD)
+    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external;
 }
