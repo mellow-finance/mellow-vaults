@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { ALL_NETWORKS } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -43,4 +44,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 };
 export default func;
-func.tags = ["ERC20VaultGovernance", "Vaults"];
+func.tags = ["ERC20VaultGovernance", "core", ...ALL_NETWORKS];
+func.dependencies = [
+    "ProtocolGovernance",
+    "VaultRegistry",
+    "ChiefTrader",
+    "UniV2Trader",
+];

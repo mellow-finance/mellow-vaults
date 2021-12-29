@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import { ALL_NETWORKS } from "./000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -39,6 +40,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             factory.address
         );
     }
+    const { address: gatewayVaultGovernanceAddress } = await get(
+        "GatewayVaultFactory"
+    );
+    const approvedGw = await read(
+        "VaultRegistry",
+        "isApprovedForAll",
+        deployer,
+        gatewayVaultGovernanceAddress
+    );
+    if (!approvedGw) {
+        log("Approving gateway vault governance");
+        await execute(
+            "VaultRegistry",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "setApprovalForAll",
+            gatewayVaultGovernanceAddress,
+            true
+        );
+    }
 };
 export default func;
-func.tags = ["GatewayVaultGovernance", "Vaults"];
+func.tags = ["GatewayVaultGovernance", "core", ...ALL_NETWORKS];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry"];
