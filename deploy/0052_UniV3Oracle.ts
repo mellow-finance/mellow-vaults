@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
-import { ALL_NETWORKS } from "./0000_utils";
+import { ALL_NETWORKS, MAIN_NETWORKS } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -28,4 +28,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["ChainlinkOracle", "core", ...ALL_NETWORKS];
+func.tags = [
+    "UniV3Oracle",
+    "core",
+    ...MAIN_NETWORKS,
+    "polygon",
+    "arbitrum",
+    "optimism",
+];

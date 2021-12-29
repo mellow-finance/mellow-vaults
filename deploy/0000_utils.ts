@@ -190,7 +190,7 @@ export const combineVaults = async (
     const coder = hre.ethers.utils.defaultAbiCoder;
 
     const {
-        limits = tokens.map((_) => ethers.constants.MaxUint256),
+        limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
         managementFee = 2 * 10 ** 9,
@@ -283,104 +283,6 @@ const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
         "transferOwnership",
         mStrategyAdmin
     );
-};
-
-const initMStrategy = async (
-    hre: HardhatRuntimeEnvironment,
-    tokens: string[],
-    erc20Vault: string,
-    moneyVault: string,
-    uniPool: "500" | "3000" | "10000"
-) => {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy, log, execute, read, get } = deployments;
-
-    const { deployer, uniswapV3Router, uniswapV3Factory, mStrategyAdmin } =
-        await getNamedAccounts();
-
-    const vaultCount = await read("MStrategy", "vaultCount");
-    if (vaultCount.toNumber() === 0) {
-        log("Setting Strategy params");
-        const uniFactory = await hre.ethers.getContractAt(
-            "IUniswapV3Factory",
-            uniswapV3Factory
-        );
-        const uniV3Pool = await uniFactory.getPool(
-            tokens[0],
-            tokens[1],
-            BigNumber.from(uniV3Fee)
-        );
-        const immutableParams = {
-            token0: tokens[0],
-            token1: tokens[1],
-            uniV3Pool,
-            uniV3Router: uniswapV3Router,
-            erc20Vault,
-            moneyVault,
-        };
-        const params = {
-            oraclePriceTimespan: 1800,
-            oracleLiquidityTimespan: 1800,
-            liquidToFixedRatioX96: BigNumber.from(2).pow(96 - 2),
-            sqrtPMinX96: BigNumber.from(
-                Math.round((1 / Math.sqrt(3000)) * 10 ** 6 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-            sqrtPMaxX96: BigNumber.from(
-                Math.round((1 / Math.sqrt(5000)) * 10 ** 6 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-            tokenRebalanceThresholdX96: BigNumber.from(
-                Math.round(1.1 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-            poolRebalanceThresholdX96: BigNumber.from(
-                Math.round(1.1 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-        };
-        log(
-            `Immutable Params:`,
-            map((x) => x.toString(), immutableParams)
-        );
-        log(
-            `Params:`,
-            map((x) => x.toString(), params)
-        );
-        await execute(
-            "MStrategy",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "addVault",
-            immutableParams,
-            params
-        );
-    }
-    const adminRole = await read("MStrategy", "ADMIN_ROLE");
-    const deployerIsAdmin = await read("MStrategy", "isAdmin", deployer);
-    if (deployerIsAdmin) {
-        await execute(
-            "MStrategy",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "grantRole",
-            adminRole,
-            mStrategyAdmin
-        );
-        await execute(
-            "MStrategy",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "renounceRole",
-            adminRole,
-            deployer
-        );
-    }
 };
 
 export const toObject = (obj: any) =>
