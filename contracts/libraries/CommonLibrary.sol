@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./external/FullMath.sol";
+import "./ExceptionsLibrary.sol";
 
 /// @notice CommonLibrary shared utilities
 library CommonLibrary {
@@ -118,12 +119,12 @@ library CommonLibrary {
         returns (uint256[][] memory)
     {
         uint256 k = weights.length;
-        require(k > 0, "KGT0");
+        require(k > 0, ExceptionsLibrary.WEIGHTS_LENGTH_IS_ZERO);
         uint256 n = amounts.length;
-        require(n > 0, "NGT0");
+        require(n > 0, ExceptionsLibrary.AMOUNTS_LENGTH_IS_ZERO);
         uint256[] memory weightsNorm = new uint256[](n);
         for (uint256 i = 0; i < k; ++i) {
-            require(weights[i].length == n, "NV");
+            require(weights[i].length == n, ExceptionsLibrary.MATRIX_NOT_RECTANGULAR);
         }
         for (uint256 j = 0; j < n; ++j) {
             weightsNorm[j] = 0;

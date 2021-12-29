@@ -147,14 +147,14 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function setPendingTokenWhitelistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         _pendingTokenWhitelistAdd = addresses;
         pendingTokenWhitelistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function removeFromTokenWhitelist(address addr) external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         if (_tokenEverAdded[addr] && _tokensAllowed[addr]) {
             _tokensAllowed[addr] = false;
             --_numberOfValidTokens;
@@ -201,10 +201,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitTokenWhitelistAdd() external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         require(
             (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
-            "TS"
+            ExceptionsLibrary.TIMESTAMP
         );
         uint256 len = _pendingTokenWhitelistAdd.length;
         for (uint256 i = 0; i < len; ++i) {

@@ -11,6 +11,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../DefaultAccessControlLateInit.sol";
+import "contracts/libraries/ExceptionsLibrary.sol";
 
 contract MStrategy is DefaultAccessControlLateInit {
     struct Params {
@@ -75,8 +76,8 @@ contract MStrategy is DefaultAccessControlLateInit {
     }
 
     function rebalance(uint256 id) external {
-        require(id < vaultCount(), "VE");
-        require(!disabled[id], "DIS");
+        require(id < vaultCount(), ExceptionsLibrary.INVALID_VAULT_ID);
+        require(!disabled[id], ExceptionsLibrary.VAULT_DISABLED);
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
@@ -274,21 +275,24 @@ contract MStrategy is DefaultAccessControlLateInit {
     }
 
     function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
         address token0 = immutableParams_.token0;
         address token1 = immutableParams_.token1;
-        require(immutableParams_.uniV3Pool.token0() == token0, "T0");
-        require(immutableParams_.uniV3Pool.token1() == token1, "T1");
-        require(paramsIndex[token0][token1] == 0, "EXST");
+        require(immutableParams_.uniV3Pool.token0() == token0, ExceptionsLibrary.INVALID_TOKEN_0_IN_UNIV3_POOL);
+        require(immutableParams_.uniV3Pool.token1() == token1, ExceptionsLibrary.INVALID_TOKEN_1_IN_UNIV3_POOL);
+        require(paramsIndex[token0][token1] == 0, ExceptionsLibrary.PARAMS_DO_NOT_EXIST);
         if (vaultImmutableParams.length > 0) {
-            require(vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault, "EXST");
+            require(
+                vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault,
+                ExceptionsLibrary.PARAMS_DO_NOT_EXIST
+            );
         }
         IIntegrationVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
         for (uint256 i = 0; i < vaults.length; i++) {
             IIntegrationVault vault = vaults[i];
             address[] memory tokens = vault.vaultTokens();
-            require(tokens[0] == token0, "VT0");
-            require(tokens[1] == token1, "VT1");
+            require(tokens[0] == token0, ExceptionsLibrary.TOKEN_0_NOT_IN_VAULT);
+            require(tokens[1] == token1, ExceptionsLibrary.TOKEN_1_NOT_IN_VAULT);
         }
         uint256 num = vaultParams.length;
         vaultParams.push(params_);
@@ -299,16 +303,16 @@ contract MStrategy is DefaultAccessControlLateInit {
     }
 
     function disableVault(uint256 id, bool disabled_) external {
-        require(isAdmin(msg.sender), "ADM");
-        require(id < vaultCount(), "VE");
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(id < vaultCount(), ExceptionsLibrary.INVALID_VAULT_ID);
         disabled[id] = disabled_;
         emit VaultDisabled(tx.origin, msg.sender, id, disabled_);
     }
 
     function updateVaultParams(uint256 id, Params memory params) external {
-        require(isAdmin(msg.sender), "ADM");
-        require(id < vaultCount(), "VE");
-        require(!disabled[id], "DIS");
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(id < vaultCount(), ExceptionsLibrary.INVALID_VAULT_ID);
+        require(!disabled[id], ExceptionsLibrary.VAULT_DISABLED);
         vaultParams[id] = params;
         emit VaultParamsUpdated(tx.origin, msg.sender, id, params);
     }

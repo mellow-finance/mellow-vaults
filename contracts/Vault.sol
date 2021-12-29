@@ -45,6 +45,11 @@ abstract contract Vault is IVault, ERC165 {
     ) {
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
         require(nft_ != 0, ExceptionsLibrary.NFT_ZERO);
+        IProtocolGovernance governance = vaultGovernance_.internalParams().protocolGovernance;
+        require(
+            vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(),
+            ExceptionsLibrary.IO_LENGTH
+        );
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         _nft = nft_;
