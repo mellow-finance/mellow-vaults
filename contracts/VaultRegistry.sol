@@ -46,7 +46,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function isLocked(uint256 nft) external view returns (bool) {
-        return _locks[nft];
+        return _locks.length > nft ? _locks[nft - 1] : false;
     }
 
     /// @inheritdoc IVaultRegistry
