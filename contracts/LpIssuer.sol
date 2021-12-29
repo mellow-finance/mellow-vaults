@@ -337,7 +337,7 @@ contract LpIssuer is IERC721Receiver, ILpIssuer, ERC20, ReentrancyGuard, ERC165 
         if (amount < existential) {
             // avoid putting small amounts as it can introduce unnecessary harsh errors
             // one should provide amount > existential deposit each time tvl is not 0
-            require(tvl == 0, "PN");
+            require(tvl == 0, ExceptionsLibrary.TVL_NOT_ZERO);
             return 0;
         }
         // normalize amount

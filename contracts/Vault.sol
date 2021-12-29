@@ -40,7 +40,12 @@ abstract contract Vault is IVault, ReentrancyGuard {
     /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_) {
+        IProtocolGovernance governance = vaultGovernance_.internalParams().protocolGovernance;
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(
+            vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(), 
+            ExceptionsLibrary.IO_LENGTH
+        );
         _vaultGovernance = vaultGovernance_;
         _vaultTokens = vaultTokens_;
         uint256 len = _vaultTokens.length;
@@ -124,7 +129,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.IO_LENGTH); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
         require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION); // approved can only pull to whitelisted contracts
