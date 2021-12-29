@@ -3,8 +3,9 @@ pragma solidity 0.8.9;
 
 import "./interfaces/IGatewayVaultGovernance.sol";
 import "./interfaces/IGatewayVault.sol";
-import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/AddressPermissions.sol";
+import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Gateway Vaults params and can deploy a new Gateway Vault.
 contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
@@ -60,7 +61,7 @@ contract GatewayVaultGovernance is VaultGovernance, IGatewayVaultGovernance {
     ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
         uint256 len = vaultTokens.length;
         for (uint256 i = 0; i < len; ++i)
-            require(_internalParams.protocolGovernance.hasERC20VaultTokenPermission(vaultTokens[i]), "TNA");
+            require(_internalParams.protocolGovernance.hasPermission(vaultTokens[i], AddressPermissions.ERC20_VAULT_TOKEN), "TNA");
 
         (vault, nft) = super.deployVault(vaultTokens, "", msg.sender);
         uint256[] memory subvaultNfts = abi.decode(options, (uint256[]));

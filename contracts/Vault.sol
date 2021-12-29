@@ -3,11 +3,12 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./interfaces/IVault.sol";
 import "./interfaces/IGatewayVault.sol";
 import "./libraries/CommonLibrary.sol";
-import "./interfaces/IVault.sol";
-import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/AddressPermissions.sol";
+import "./VaultGovernance.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -144,7 +145,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            require(governance.hasERC20TransferPermission(tokens[i]), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
+            require(governance.hasPermission(tokens[i], AddressPermissions.ERC20_TRANSFER), ExceptionsLibrary.EVER_ALLOWED_TOKEN);
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));
             if (tokenAmounts[i] == 0) continue;
@@ -160,7 +161,7 @@ abstract contract Vault is IVault, ReentrancyGuard {
         require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.hasClaimPermission(from), ExceptionsLibrary.ALLOWED_TO_CLAIM);
+        require(protocolGovernance.hasPermission(from, AddressPermissions.CLAIM), ExceptionsLibrary.ALLOWED_TO_CLAIM);
         (bool res, bytes memory returndata) = from.call(data);
         if (!res) {
             assembly {

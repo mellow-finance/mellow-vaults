@@ -6,6 +6,7 @@ import "../interfaces/IProtocolGovernance.sol";
 import "./interfaces/ITrader.sol";
 import "./interfaces/IChiefTrader.sol";
 import "./libraries/TraderExceptionsLibrary.sol";
+import "../libraries/AddressPermissions.sol";
 
 /// @notice Main contract that allows trading of ERC20 tokens on different Dexes
 /// @dev This contract contains several subtraders that can be used for trading ERC20 tokens.
@@ -83,13 +84,19 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
 
     function _requireAllowedTokens(PathItem[] memory path) internal view {
         IProtocolGovernance pg = protocolGovernance;
-        for (uint256 i = 1; i < path.length; ++i)
+        for (uint256 i = 1; i < path.length; ++i) {
             require(
-                pg.hasERC20OperatePermission(path[i].token0) && pg.hasERC20OperatePermission(path[i].token1),
+                pg.hasPermission(path[i].token0, AddressPermissions.ERC20_SWAP) &&
+                    pg.hasPermission(path[i].token1, AddressPermissions.ERC20_SWAP),
                 TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
             );
-        if (path.length > 0)
-            require(pg.hasERC20OperatePermission(path[0].token1), TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION);
+        }
+        if (path.length > 0) {
+            require(
+                pg.hasPermission(path[0].token1, AddressPermissions.ERC20_SWAP),
+                TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
+            );
+        }
     }
 
     function _requireProtocolAdmin() internal view {

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: BSL-1.1
-pragma solidity =0.8.9;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVault.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/AddressPermissions.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IVaultRegistry, ERC721 {
@@ -53,7 +54,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
         require(
-            _protocolGovernance.hasVaultGovernancePermission(msg.sender),
+            _protocolGovernance.hasPermission(msg.sender, AddressPermissions.VAULT_GOVERNANCE),
             ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
         );
         nft = _topNft;
