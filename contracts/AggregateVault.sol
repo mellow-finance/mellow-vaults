@@ -21,6 +21,7 @@ contract AggregateVault is IVaultRoot, Vault {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_,
+        address strategy,
         uint256[] memory subvaultNfts_
     ) Vault(vaultGovernance_, vaultTokens_, nft_) {
         IVaultRegistry vaultRegistry = vaultGovernance_.internalParams().registry;
@@ -36,12 +37,13 @@ contract AggregateVault is IVaultRoot, Vault {
                 IIntegrationVault(vault).supportsInterface(type(IIntegrationVault).interfaceId),
                 ExceptionsLibrary.NOT_VAULT
             );
+            vaultRegistry.approve(strategy, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
             _subvaultNftsIndex[subvaultNft] = i + 1;
         }
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
             ERC20 token = ERC20(vaultTokens_[i]);
-            _pullExistentials[i] = 10**(token.decimals() / 2);
+            _pullExistentials.push(10**(token.decimals() / 2));
         }
         _subvaultNfts = subvaultNfts_;
     }
@@ -72,17 +74,6 @@ contract AggregateVault is IVaultRoot, Vault {
                 minTokenAmounts[j] += sMinTokenAmounts[j];
                 maxTokenAmounts[j] += sMaxTokenAmounts[j];
             }
-        }
-    }
-
-    function approveAllSubvaults(address strategy) external {
-        require(msg.sender == address(_vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        require(strategy != address(0), ExceptionsLibrary.ZERO_STRATEGY_ADDRESS);
-        IVaultRegistry vaultRegistry = IVaultGovernance(_vaultGovernance).internalParams().registry;
-        uint256[] memory nfts = _subvaultNfts;
-        uint256 len = nfts.length;
-        for (uint256 i = 0; i < len; ++i) {
-            vaultRegistry.approve(strategy, nfts[i]);
         }
     }
 

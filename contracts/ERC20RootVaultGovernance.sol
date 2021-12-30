@@ -184,16 +184,17 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
         bytes memory options,
         address owner
     ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
-        (uint256[] memory subvaultNfts, string memory name, string memory symbol) = abi.decode(
+        (address strategy, uint256[] memory subvaultNfts, string memory name, string memory symbol) = abi.decode(
             options,
-            (uint256[], string, string)
+            (address, uint256[], string, string)
         );
         IVaultRegistry registry = _internalParams.registry;
-        uint256 deployNft = registry.vaultsCount();
+        uint256 deployNft = registry.vaultsCount() + 1;
         address vaultAddress = IERC20RootVaultFactory(address(factory)).getDeploymentAddress(
             this,
             vaultTokens,
             deployNft,
+            strategy,
             subvaultNfts,
             name,
             symbol

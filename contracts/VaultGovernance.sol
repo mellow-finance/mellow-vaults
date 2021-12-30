@@ -97,7 +97,7 @@ abstract contract VaultGovernance is IVaultGovernance {
             ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN
         );
         IVaultRegistry vaultRegistry = _internalParams.registry;
-        nft = vaultRegistry.vaultsCount();
+        nft = vaultRegistry.vaultsCount() + 1;
         vault = factory.deployVault(vaultTokens, nft, options);
         vaultRegistry.registerVault(address(vault), owner);
         emit DeployedVault(tx.origin, msg.sender, vaultTokens, options, owner, address(vault), nft);

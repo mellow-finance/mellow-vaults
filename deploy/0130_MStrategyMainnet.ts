@@ -197,6 +197,5 @@ func.dependencies = [
     "VaultRegistry",
     "ERC20VaultGovernance",
     "YearnVaultGovernance",
-    "GatewayVaultGovernance",
-    "LpIssuerGovernance",
+    "ERC20RootVaultGovernance",
 ];

@@ -196,28 +196,13 @@ export const combineVaults = async (
         managementFee = 2 * 10 ** 9,
         performanceFee = 20 * 10 ** 9,
     } = options || {};
-    await setupVault(hre, expectedNft, "GatewayVaultGovernance", {
-        deployOptions: [
-            tokens,
-            coder.encode(["uint256[]"], [nfts]),
-            strategyAddress,
-        ],
 
-        delayedStrategyParams: {
-            strategyTreasury: strategyTreasuryAddress,
-            redirects: nfts,
-        },
-        strategyParams: {
-            limits: limits.map((x: BigNumberish) => BigNumber.from(x)),
-        },
-    });
-
-    await setupVault(hre, expectedNft + 1, "LpIssuerGovernance", {
+    await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
         deployOptions: [
             tokens,
             coder.encode(
-                ["uint256", "string", "string"],
-                [expectedNft, "MStrategy LP Token", "MSLP"]
+                ["address", "uint256[]", "string", "string"],
+                [strategyAddress, nfts, "MStrategy LP Token", "MSLP"]
             ),
             deployer,
         ],
@@ -231,18 +216,18 @@ export const combineVaults = async (
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
         },
     });
-    const lpIssuer = await deployments.read(
+    const rootVault = await deployments.read(
         "VaultRegistry",
         "vaultForNft",
-        expectedNft + 1
+        expectedNft
     );
     await deployments.execute(
         "VaultRegistry",
         { from: deployer, autoMine: true },
-        "safeTransferFrom(address,address,uint256)",
+        "transferFrom(address,address,uint256)",
         deployer,
-        lpIssuer,
-        expectedNft + 1
+        rootVault,
+        expectedNft
     );
 };
 

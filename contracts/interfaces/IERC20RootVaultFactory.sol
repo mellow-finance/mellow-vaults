@@ -8,6 +8,7 @@ interface IERC20RootVaultFactory is IVaultFactory {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_,
+        address strategy,
         uint256[] memory subvaultNfts_,
         string memory name_,
         string memory symbol_

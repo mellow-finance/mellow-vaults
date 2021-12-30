@@ -24,14 +24,14 @@ contract ERC20RootVaultFactory is IERC20RootVaultFactory {
     ) external returns (IVault) {
         require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
         address addr;
-        (uint256[] memory subvaultTokens, string memory name, string memory symbol) = abi.decode(
+        (address strategy, uint256[] memory subvaultTokens, string memory name, string memory symbol) = abi.decode(
             options,
-            (uint256[], string, string)
+            (address, uint256[], string, string)
         );
         bytes memory bytecode = type(ERC20RootVault).creationCode;
         bytes memory initCode = abi.encodePacked(
             bytecode,
-            abi.encode(vaultGovernance, vaultTokens, nft, subvaultTokens, name, symbol)
+            abi.encode(vaultGovernance, vaultTokens, nft, strategy, subvaultTokens, name, symbol)
         );
         assembly {
             addr := create2(0, add(initCode, 0x20), mload(initCode), nft)
@@ -47,6 +47,7 @@ contract ERC20RootVaultFactory is IERC20RootVaultFactory {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_,
+        address strategy,
         uint256[] memory subvaultNfts_,
         string memory name_,
         string memory symbol_
@@ -54,7 +55,7 @@ contract ERC20RootVaultFactory is IERC20RootVaultFactory {
         bytes memory creatonCode = type(ERC20RootVault).creationCode;
         bytes memory bytecode = abi.encodePacked(
             creatonCode,
-            abi.encode(vaultGovernance_, vaultTokens_, nft_, subvaultNfts_, name_, symbol_)
+            abi.encode(vaultGovernance_, vaultTokens_, nft_, strategy, subvaultNfts_, name_, symbol_)
         );
         bytes32 addressHash = keccak256(abi.encodePacked(bytes1(0xff), address(this), nft_, keccak256(bytecode)));
         return address(uint160(uint256(addressHash)));

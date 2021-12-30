@@ -25,10 +25,11 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_,
+        address strategy,
         uint256[] memory subvaultNfts_,
         string memory name_,
         string memory symbol_
-    ) AggregateVault(vaultGovernance_, vaultTokens_, nft_, subvaultNfts_) ERC20(name_, symbol_) {}
+    ) AggregateVault(vaultGovernance_, vaultTokens_, nft_, strategy, subvaultNfts_) ERC20(name_, symbol_) {}
 
     function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
