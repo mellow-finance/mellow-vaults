@@ -10,10 +10,8 @@ import {
     ERC20,
     ERC20VaultFactory,
     ERC20VaultGovernance,
-    GatewayVaultFactory,
-    GatewayVaultGovernance,
-    LpIssuerFactory,
-    LpIssuerGovernance,
+    ERC20RootVaultFactory,
+    ERC20RootVaultGovernance,
     ProtocolGovernance,
     UniV3VaultFactory,
     UniV3VaultGovernance,
@@ -30,14 +28,12 @@ export type TestContext<T, F> = Suite & {
     erc20VaultGovernance: ERC20VaultGovernance;
     aaveVaultGovernance: AaveVaultGovernance;
     uniV3VaultGovernance: UniV3VaultGovernance;
-    gatewayVaultGovernance: GatewayVaultGovernance;
-    lpIssuerGovernance: LpIssuerGovernance;
+    lpIssuerGovernance: ERC20RootVaultGovernance;
     yearnVaultFactory: YearnVaultFactory;
     erc20VaultFactory: ERC20VaultFactory;
     aaveVaultFactory: AaveVaultFactory;
     uniV3VaultFactory: UniV3VaultFactory;
-    gatewayVaultFactory: GatewayVaultFactory;
-    lpIssuerFactory: LpIssuerFactory;
+    lpIssuerFactory: ERC20RootVaultFactory;
 
     usdc: ERC20;
     weth: ERC20;
@@ -69,13 +65,15 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     this.gatewayVaultGovernance = await ethers.getContract(
         "GatewayVaultGovernance"
     );
-    this.lpIssuerGovernance = await ethers.getContract("LpIssuerGovernance");
+    this.lpIssuerGovernance = await ethers.getContract(
+        "ERC20RootVaultGovernance"
+    );
     this.yearnVaultFactory = await ethers.getContract("YearnVaultFactory");
     this.erc20VaultFactory = await ethers.getContract("ERC20VaultFactory");
     this.aaveVaultFactory = await ethers.getContract("AaveVaultFactory");
     this.uniV3VaultFactory = await ethers.getContract("UniV3VaultFactory");
     this.gatewayVaultFactory = await ethers.getContract("GatewayVaultFactory");
-    this.lpIssuerFactory = await ethers.getContract("LpIssuerFactory");
+    this.lpIssuerFactory = await ethers.getContract("ERC20RootVaultFactory");
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin"]) {

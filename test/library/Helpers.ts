@@ -19,20 +19,15 @@ import {
     IVault,
     IVaultGovernance,
     UniV3VaultGovernance,
-    GatewayVaultGovernance,
     VaultRegistry,
     ERC20,
 } from "../types";
 import {
-    DelayedStrategyParamsStruct as GatewayDelayedStrategyParamsStruct,
-    StrategyParamsStruct as GatewayStrategyParamsStruct,
-} from "../types/GatewayVaultGovernance";
-import {
-    DelayedProtocolPerVaultParamsStruct as LpIssuerDelayedProtocolPerVaultParamsStruct,
-    DelayedStrategyParamsStruct as LpIssuerDelayedStrategyParamsStruct,
-    StrategyParamsStruct as LpIssuerStrategyParamsStruct,
-    LpIssuerGovernance,
-} from "../types/LpIssuerGovernance";
+    DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
+    DelayedStrategyParamsStruct as ERC20RootVaultDelayedStrategyParamsStruct,
+    StrategyParamsStruct as ERC20RootVaultStrategyParamsStruct,
+    ERC20RootVaultGovernance,
+} from "../types/ERC20RootVaultGovernance";
 
 export const randomAddress = () => {
     const id = randomBytes(32).toString("hex");
@@ -182,18 +177,14 @@ export type VaultParams =
     | { name: "ERC20Vault" }
     | { name: "UniV3Vault"; fee: BigNumberish }
     | {
-          name: "GatewayVault";
-          subvaultNfts: BigNumberish[];
-          strategyParams: GatewayStrategyParamsStruct;
-          delayedStrategyParams: GatewayDelayedStrategyParamsStruct;
-      }
-    | {
-          name: "LpIssuer";
+          name: "ERC20RootVault";
           tokenName: string;
           tokenSymbol: string;
-          strategyParams: LpIssuerStrategyParamsStruct;
-          delayedStrategyParams: LpIssuerDelayedStrategyParamsStruct;
-          delayedProtocolPerVaultParams: LpIssuerDelayedProtocolPerVaultParamsStruct;
+          strategy: string;
+          subvaultNfts: BigNumberish[];
+          strategyParams: ERC20RootVaultStrategyParamsStruct;
+          delayedStrategyParams: ERC20RootVaultDelayedStrategyParamsStruct;
+          delayedProtocolPerVaultParams: ERC20RootVaultDelayedProtocolPerVaultParamsStruct;
       };
 export type BaseDeployParams = {
     vaultTokens: string[];
@@ -212,13 +203,15 @@ export const deployVault = async (
         case "UniV3Vault":
             options = coder.encode(["uint256"], [params.fee]);
             break;
-        case "GatewayVault":
-            options = coder.encode(["uint256[]"], [params.subvaultNfts]);
-            break;
-        case "LpIssuer":
+        case "ERC20RootVault":
             options = coder.encode(
-                ["string", "string"],
-                [params.tokenName, params.tokenSymbol]
+                ["address", "uint256[]", "string", "string"],
+                [
+                    params.strategy,
+                    params.subvaultNfts,
+                    params.tokenName,
+                    params.tokenSymbol,
+                ]
             );
 
         default:
@@ -232,9 +225,9 @@ export const deployVault = async (
     const nft = (await vaultRegistry.vaultsCount()).toNumber();
     const address = await vaultRegistry.vaultForNft(nft);
     switch (params.name) {
-        case "LpIssuer":
-            const gov: LpIssuerGovernance = await ethers.getContract(
-                "LpIssuerGovernance"
+        case "ERC20RootVault":
+            const gov: ERC20RootVaultGovernance = await ethers.getContract(
+                "ERC20RootVaultGovernance"
             );
             await gov.setStrategyParams(nft, params.strategyParams);
             await gov.stageDelayedStrategyParams(
@@ -247,17 +240,6 @@ export const deployVault = async (
                 params.delayedProtocolPerVaultParams
             );
             await gov.commitDelayedProtocolPerVaultParams(nft);
-            break;
-        case "GatewayVault":
-            const ggov: GatewayVaultGovernance = await ethers.getContract(
-                "GatewayVaultGovernance"
-            );
-            await ggov.setStrategyParams(nft, params.strategyParams);
-            await ggov.stageDelayedStrategyParams(
-                nft,
-                params.delayedStrategyParams
-            );
-            await ggov.commitDelayedStrategyParams(nft);
             break;
         default:
             break;

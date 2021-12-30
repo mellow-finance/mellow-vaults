@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
 import "./interfaces/IVault.sol";
-import "./Vault.sol";
+import "./IntegrationVault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
@@ -23,7 +23,7 @@ import "./libraries/ExceptionsLibrary.sol";
 /// **Push / Pull**
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
-contract AaveVault is Vault {
+contract AaveVault is IntegrationVault {
     address[] internal _aTokens;
     uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
@@ -37,7 +37,7 @@ contract AaveVault is Vault {
         IVaultGovernance vaultGovernance_,
         address[] memory vaultTokens_,
         uint256 nft_
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
+    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             address aToken = _getAToken(_vaultTokens[i]);
@@ -48,7 +48,7 @@ contract AaveVault is Vault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    /// @inheritdoc Vault
+    /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         minTokenAmounts = _tvls;
         maxTokenAmounts = new uint256[](minTokenAmounts.length);
@@ -77,6 +77,7 @@ contract AaveVault is Vault {
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
+        override
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
@@ -101,7 +102,7 @@ contract AaveVault is Vault {
         address to,
         uint256[] memory tokenAmounts,
         bytes memory
-    ) internal returns (uint256[] memory actualTokenAmounts) {
+    ) internal override returns (uint256[] memory actualTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < _aTokens.length; ++i) {
