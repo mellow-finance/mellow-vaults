@@ -14,6 +14,9 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
     Params public params;
     Params public pendingParams;
 
+    event PendingParamsSet(address indexed sender, uint256 at, Params params);
+    event ParamsCommitted(address indexed sender);
+
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
     constructor(address admin) DefaultAccessControl(admin) {}
@@ -77,6 +80,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
+        emit ParamsCommitted(msg.sender);
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
@@ -92,5 +96,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
         require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
+        emit PendingParamsSet(msg.sender, pendingParamsTimestamp, pendingParams);
     }
 }
