@@ -60,23 +60,22 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
     function commitStagedPermissions() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _requireAdmin();
         _commitStagedPermissions();
     }
 
     function revokePermissionsInstant(address addr, uint8[] calldata permissionIds) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _requireAdmin();
         _revokePermissionsInstant(addr, permissionIds);
     }
 
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
+        _requireAdmin();
         require(
-            pendingParams.maxTokensPerVault != 0 || pendingParams.governanceDelay != 0,
-            ExceptionsLibrary.EMPTY_PARAMS
-        ); // sanity check for empty params
+            pendingParamsTimestamp != 0 && block.timestamp >= pendingParamsTimestamp,
+            ExceptionsLibrary.TIMESTAMP
+        );
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
@@ -86,16 +85,25 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
     function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        _requireAdmin();
         _stageGrantPermissions(target, permissionIds, params.governanceDelay);
     }
 
     /// @inheritdoc IProtocolGovernance
-    function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
+    function setPendingParams(IProtocolGovernance.Params calldata newParams) external {
+        _requireAdmin();
+        _validateGovernanceParams(newParams);
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
         emit PendingParamsSet(msg.sender, pendingParamsTimestamp, pendingParams);
+    }
+
+    function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
+        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.EMPTY_PARAMS);
+        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
+    }
+
+    function _requireAdmin() private view {
+        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
     }
 }

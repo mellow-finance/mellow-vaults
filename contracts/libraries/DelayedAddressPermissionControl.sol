@@ -74,12 +74,12 @@ contract DelayedAddressPermissionControl {
             _stagedAddresses.remove(target);
         }
     }
-    
+
     function _revokePermissionInstant(address from, uint8 permissionId) private {
         uint256 diff = _permissionIdToMask(permissionId);
         uint256 currentMask = _permissionMasks[from];
         require(currentMask & diff != 0, "Permission not yet granted");
-        _permissionMasks[from] = currentMask & (~ diff);
+        _permissionMasks[from] = currentMask & (~diff);
         if (_permissionMasks[from] == 0) {
             delete _permissionMasks[from];
             _addresses.remove(from);
@@ -92,7 +92,6 @@ contract DelayedAddressPermissionControl {
         }
         emit RevokedPermissionsInstant(msg.sender, from, permissionIds);
     }
-
 
     function _stageGrantPermission(address to, uint8 permissionId) private {
         require(!_isStagedToCommit(), "Already staged");
@@ -113,7 +112,11 @@ contract DelayedAddressPermissionControl {
         emit RolledBackStagedPermissions(msg.sender);
     }
 
-    function _stageGrantPermissions(address to, uint8[] calldata permissionIds, uint256 delay) internal {
+    function _stageGrantPermissions(
+        address to,
+        uint8[] calldata permissionIds,
+        uint256 delay
+    ) internal {
         require(!_isStagedToCommit(), "Already staged");
         for (uint256 i; i != permissionIds.length; ++i) {
             _stageGrantPermission(to, permissionIds[i]);
