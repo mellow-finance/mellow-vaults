@@ -2,14 +2,14 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { expect } from "chai";
 import { getNamedAccounts, ethers, deployments } from "hardhat";
 import { mint, randomAddress, withSigner } from "./library/Helpers";
-import { ERC20, LpIssuer, VaultRegistry } from "./types";
+import { ERC20, ERC20RootVault, VaultRegistry } from "./types";
 import { MStrategy } from "./types/MStrategy";
 
-describe("MStrategy", () => {
+xdescribe("MStrategy", () => {
     let deploymentFixture: Function;
     let tokens: string[];
     let tokenContracts: ERC20[];
-    let lpIssuer: LpIssuer;
+    let lpIssuer: ERC20RootVault;
     let mStrategy: MStrategy;
     let vaultId: number;
 
@@ -31,7 +31,7 @@ describe("MStrategy", () => {
                     vaultsCount
                 );
                 lpIssuer = await ethers.getContractAt(
-                    "LpIssuer",
+                    "ERC20RootVault",
                     lpIssuerAddress
                 );
                 tokens = await lpIssuer.vaultTokens();

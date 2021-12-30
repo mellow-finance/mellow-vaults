@@ -16,9 +16,23 @@ contract ERC20VaultFactory is IVaultFactory {
     }
 
     /// @inheritdoc IVaultFactory
-    function deployVault(address[] memory vaultTokens, bytes memory) external returns (IVault) {
+    function deployVault(
+        address[] memory vaultTokens,
+        uint256 nft,
+        bytes memory
+    ) external returns (IVault) {
         require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        ERC20Vault vault = new ERC20Vault(vaultGovernance, vaultTokens);
-        return IVault(vault);
+        address addr;
+        bytes memory bytecode = type(ERC20Vault).creationCode;
+
+        bytes memory initCode = abi.encodePacked(bytecode, abi.encode(vaultGovernance, vaultTokens, nft));
+        assembly {
+            addr := create2(0, add(initCode, 0x20), mload(initCode), nft)
+
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
+        }
+        return IVault(addr);
     }
 }

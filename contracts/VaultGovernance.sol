@@ -96,11 +96,11 @@ abstract contract VaultGovernance is IVaultGovernance {
             protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
             ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN
         );
-        vault = factory.deployVault(vaultTokens, options);
-        address nftOwner = owner;
-        nft = _internalParams.registry.registerVault(address(vault), nftOwner);
-        vault.initialize(nft);
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens, options, nftOwner, address(vault), nft);
+        IVaultRegistry vaultRegistry = _internalParams.registry;
+        nft = vaultRegistry.vaultsCount() + 1;
+        vault = factory.deployVault(vaultTokens, nft, options);
+        vaultRegistry.registerVault(address(vault), owner);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens, options, owner, address(vault), nft);
     }
 
     /// @inheritdoc IVaultGovernance

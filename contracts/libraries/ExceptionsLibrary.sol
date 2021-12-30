@@ -6,8 +6,14 @@ library ExceptionsLibrary {
     string constant INIT = "INIT";
     string constant NULL = "NULL";
     string constant TIMESTAMP = "TS";
+    string constant GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO = "ZMG";
+    string constant TOKEN_ALREADY_WHITELISTED = "TAW";
+    string constant TOKEN_IS_NOT_WHITELISTED = "TNW";
+    string constant ORACLE_NOT_FOUND = "ONF";
     string constant EMPTY_PARAMS = "P0";
     string constant ADMIN = "ADM";
+    string constant NOT_ENOUGH_CARDINALITY = "NEC";
+    string constant INVALID_BLOCKS_FOR_AVERAGE = "IBFA";
     string constant ADMIN_ADDRESS_ZERO = "ZADM";
     string constant PROTOCOL_GOVERNANCE_ADDRESS_ZERO = "ZPG";
     string constant YEARN_REGISTRY_ADDRESS_ZERO = "ZY";
@@ -41,6 +47,7 @@ library ExceptionsLibrary {
     string constant LOCKED_NFT = "LCKD";
     string constant TOKEN_OWNER = "TO";
     string constant NOT_VAULT_TOKEN = "VT";
+    string constant NOT_VAULT = "NV";
     string constant NOT_STRATEGY_TREASURY = "ST";
     string constant ZERO_STRATEGY_ADDRESS = "ZS";
     string constant NFT_VAULT_REGISTRY = "NFTVR";
@@ -61,6 +68,10 @@ library ExceptionsLibrary {
     string constant UNISWAP_POOL_NOT_FOUND = "UPNF";
     string constant BALANCE_FACTOR_ZERO = "BF";
     string constant ZERO_LP_TOKENS = "ZLP";
+    string constant DUPLICATE_NFT = "DNFT";
+    string constant VAULT_ADDRESS_ZERO = "VAZ";
+    string constant ZERO_LENGTH = "ZL";
+    string constant MIN_LP_AMOUNT = "MLP";
     string constant NOT_POSITION_MANAGER = "SNFT";
     string constant NOT_STRATEGY = "STR";
     string constant TVL_NOT_ZERO = "TVL";

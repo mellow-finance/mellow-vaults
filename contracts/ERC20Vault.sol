@@ -5,29 +5,39 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./trader/interfaces/IChiefTrader.sol";
-import "./trader/interfaces/ITrader.sol";
+import "./interfaces/IERC20Vault.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
-import "./Vault.sol";
+import "./IntegrationVault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that stores ERC20 tokens.
-contract ERC20Vault is Vault, ITrader {
+contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     /// @notice Creates a new contract.
     /// @param vaultGovernance_ Reference to VaultGovernance for this vault
     /// @param vaultTokens_ ERC20 tokens under Vault management
-    constructor(IVaultGovernance vaultGovernance_, address[] memory vaultTokens_)
-        Vault(vaultGovernance_, vaultTokens_)
-    {}
+    /// @param nft_ NFT of the vault in the VaultRegistry
+    constructor(
+        IVaultGovernance vaultGovernance_,
+        address[] memory vaultTokens_,
+        uint256 nft_
+    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {}
 
-    /// @inheritdoc Vault
-    function tvl() public view override returns (uint256[] memory tokenAmounts) {
+    /// @inheritdoc IVault
+    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         uint256 len = tokens.length;
-        tokenAmounts = new uint256[](len);
-        for (uint256 i = 0; i < len; ++i) tokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
+        minTokenAmounts = new uint256[](len);
+        for (uint256 i = 0; i < len; ++i) {
+            minTokenAmounts[i] = IERC20(tokens[i]).balanceOf(address(this));
+        }
+        maxTokenAmounts = minTokenAmounts;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
 
     /// @inheritdoc ITrader
@@ -79,7 +89,13 @@ contract ERC20Vault is Vault, ITrader {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-        for (uint256 i = 0; i < tokenAmounts.length; ++i) IERC20(_vaultTokens[i]).safeTransfer(to, tokenAmounts[i]);
+        for (uint256 i = 0; i < tokenAmounts.length; ++i) {
+            IERC20 vaultToken = IERC20(_vaultTokens[i]);
+            uint256 balance = vaultToken.balanceOf(address(this));
+            uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
+            IERC20(_vaultTokens[i]).safeTransfer(to, amount);
+            actualTokenAmounts[i] = amount;
+        }
 
         actualTokenAmounts = tokenAmounts;
     }

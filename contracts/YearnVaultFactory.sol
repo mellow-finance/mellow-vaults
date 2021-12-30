@@ -16,9 +16,22 @@ contract YearnVaultFactory is IVaultFactory {
     }
 
     /// @inheritdoc IVaultFactory
-    function deployVault(address[] memory vaultTokens, bytes memory) external returns (IVault) {
+    function deployVault(
+        address[] memory vaultTokens,
+        uint256 nft,
+        bytes memory
+    ) external returns (IVault) {
         require(msg.sender == address(vaultGovernance), ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE);
-        YearnVault vault = new YearnVault(vaultGovernance, vaultTokens);
-        return IVault(vault);
+        address addr;
+        bytes memory bytecode = type(YearnVault).creationCode;
+        bytes memory initCode = abi.encodePacked(bytecode, abi.encode(vaultGovernance, vaultTokens, nft));
+        assembly {
+            addr := create2(0, add(initCode, 0x20), mload(initCode), nft)
+
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
+        }
+        return IVault(addr);
     }
 }
