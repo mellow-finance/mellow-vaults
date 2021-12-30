@@ -40,7 +40,7 @@ type DeploymentOptions = {
 };
 
 // @ts-ignore
-describe("UniV3VaultGovernance", function (this: TestContext<
+xdescribe("UniV3VaultGovernance", function (this: TestContext<
     UniV3VaultGovernance,
     DeploymentOptions
 > &
@@ -156,7 +156,7 @@ describe("UniV3VaultGovernance", function (this: TestContext<
         });
     });
 
-    describe("#deployVault", () => {
+    xdescribe("#deployVault", () => {
         describe("properties", () => {
             pit(
                 "reverts for any options with length != 32 or != 0",

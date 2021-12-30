@@ -92,14 +92,14 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                     await this.protocolGovernance
                         .connect(this.admin)
                         .commitVaultGovernancesAdd();
+                    this.nft =
+                        (await this.vaultRegistry.vaultsCount()).toNumber() + 1;
+
                     await this.subject.deployVault(
                         this.tokens.map((x: any) => x.address),
                         [],
                         this.ownerSigner.address
                     );
-                    this.nft = (
-                        await this.vaultRegistry.vaultsCount()
-                    ).toNumber();
                     await this.vaultRegistry
                         .connect(this.ownerSigner)
                         .approve(this.strategySigner.address, this.nft);

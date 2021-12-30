@@ -5,7 +5,7 @@ import { mint, randomAddress, withSigner } from "./library/Helpers";
 import { ERC20, ERC20RootVault, VaultRegistry } from "./types";
 import { MStrategy } from "./types/MStrategy";
 
-describe("MStrategy", () => {
+xdescribe("MStrategy", () => {
     let deploymentFixture: Function;
     let tokens: string[];
     let tokenContracts: ERC20[];
