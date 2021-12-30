@@ -5,7 +5,7 @@ import "./DefaultAccessControl.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/AddressPermissions.sol";
-import "./DelayedAddressPermissionControl.sol";
+import "./libraries/DelayedAddressPermissionControl.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, DelayedAddressPermissionControl {
@@ -20,10 +20,12 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
 
     // -------------------  PUBLIC, VIEW  -------------------
 
+    /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
         return _hasPermission(target, permissionId);
     }
 
+    /// @inheritdoc IProtocolGovernance
     function hasStagedPermission(address target, uint8 permissionId) external view returns (bool) {
         return _hasStagedPermission(target, permissionId);
     }
