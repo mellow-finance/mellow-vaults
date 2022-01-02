@@ -5,18 +5,13 @@ import { Context, Suite } from "mocha";
 import { equals, sortBy } from "ramda";
 import { addSigner, toObject } from "./Helpers";
 import {
-    AaveVaultFactory,
     AaveVaultGovernance,
     ERC20,
-    ERC20VaultFactory,
     ERC20VaultGovernance,
-    ERC20RootVaultFactory,
     ERC20RootVaultGovernance,
     ProtocolGovernance,
-    UniV3VaultFactory,
     UniV3VaultGovernance,
     VaultRegistry,
-    YearnVaultFactory,
     YearnVaultGovernance,
 } from "../types";
 
@@ -29,11 +24,6 @@ export type TestContext<T, F> = Suite & {
     aaveVaultGovernance: AaveVaultGovernance;
     uniV3VaultGovernance: UniV3VaultGovernance;
     erc20RootVaultGovernance: ERC20RootVaultGovernance;
-    yearnVaultFactory: YearnVaultFactory;
-    erc20VaultFactory: ERC20VaultFactory;
-    aaveVaultFactory: AaveVaultFactory;
-    uniV3VaultFactory: UniV3VaultFactory;
-    erc20RootVaultFactory: ERC20RootVaultFactory;
 
     usdc: ERC20;
     weth: ERC20;
@@ -64,13 +54,6 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.erc20RootVaultGovernance = await ethers.getContract(
         "ERC20RootVaultGovernance"
-    );
-    this.yearnVaultFactory = await ethers.getContract("YearnVaultFactory");
-    this.erc20VaultFactory = await ethers.getContract("ERC20VaultFactory");
-    this.aaveVaultFactory = await ethers.getContract("AaveVaultFactory");
-    this.uniV3VaultFactory = await ethers.getContract("UniV3VaultFactory");
-    this.erc20RootVaultFactory = await ethers.getContract(
-        "ERC20RootVaultFactory"
     );
 
     const namedAccounts = await getNamedAccounts();

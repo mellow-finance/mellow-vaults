@@ -82,6 +82,7 @@ export function vaultGovernanceBehavior<
             const params: InternalParamsStruct = {
                 protocolGovernance: randomAddress(),
                 registry: randomAddress(),
+                singleton: randomAddress(),
             };
             await this.deploymentFixture({
                 skipInit: true,
@@ -98,6 +99,7 @@ export function vaultGovernanceBehavior<
                     const params: InternalParamsStruct = {
                         protocolGovernance: ethers.constants.AddressZero,
                         registry: randomAddress(),
+                        singleton: randomAddress(),
                     };
                     await expect(
                         this.deploymentFixture({
@@ -114,6 +116,7 @@ export function vaultGovernanceBehavior<
                     const params: InternalParamsStruct = {
                         protocolGovernance: randomAddress(),
                         registry: ethers.constants.AddressZero,
+                        singleton: randomAddress(),
                     };
                     await expect(
                         this.deploymentFixture({
@@ -127,90 +130,8 @@ export function vaultGovernanceBehavior<
             });
         });
     });
-    describe("#factory", () => {
-        it("is 0 after contract creation", async () => {
-            await this.deploymentFixture({ skipInit: true });
-            expect(ethers.constants.AddressZero).to.eq(
-                await this.subject.factory()
-            );
-        });
-        it("is initialized with address after #initialize is called", async () => {
-            const factoryAddress = randomAddress();
-            await this.deploymentFixture({ skipInit: true });
-            await this.subject.initialize(factoryAddress);
-            const actual = await this.subject.factory();
-            expect(factoryAddress).to.eq(actual);
-        });
-        describe("access control", () => {
-            it("allowed: any address", async () => {
-                await withSigner(randomAddress(), async (s) => {
-                    await this.deploymentFixture({ skipInit: true });
-                    await expect(this.subject.connect(s).factory()).to.not.be
-                        .reverted;
-                });
-            });
-        });
-    });
 
-    describe("#initialized", () => {
-        it("is false after contract creation", async () => {
-            await this.deploymentFixture({ skipInit: true });
-            expect(false).to.eq(await this.subject.initialized());
-        });
-        it("is initialized with address after #initialize is called", async () => {
-            const factoryAddress = randomAddress();
-            await this.deploymentFixture({ skipInit: true });
-            await this.subject.initialize(factoryAddress);
-            const actual = await this.subject.initialized();
-            expect(true).to.eq(actual);
-        });
-
-        describe("access control", () => {
-            it("allowed: any address", async () => {
-                await withSigner(randomAddress(), async (s) => {
-                    await expect(this.subject.connect(s).initialized()).to.not
-                        .be.reverted;
-                });
-            });
-        });
-    });
-
-    describe("#initialize", () => {
-        it("initializes factory reference", async () => {
-            const factoryAddress = randomAddress();
-            await this.deploymentFixture({ skipInit: true });
-            await this.subject.initialize(factoryAddress);
-            const actual = await this.subject.factory();
-            expect(factoryAddress).to.eq(actual);
-        });
-
-        describe("access control", () => {
-            it("allowed: any address", async () => {
-                await withSigner(randomAddress(), async (s) => {
-                    const factoryAddress = randomAddress();
-                    await this.deploymentFixture({ skipInit: true });
-                    await expect(
-                        this.subject.connect(s).initialize(factoryAddress)
-                    ).to.not.be.reverted;
-                });
-            });
-        });
-
-        describe("edge cases", () => {
-            describe("when called second time", () => {
-                it("reverts", async () => {
-                    const factoryAddress = randomAddress();
-                    await this.deploymentFixture({ skipInit: true });
-                    await this.subject.initialize(factoryAddress);
-                    await expect(
-                        this.subject.initialize(factoryAddress)
-                    ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
-                });
-            });
-        });
-    });
-
-    describe("#deployVault", () => {
+    xdescribe("#deployVault", () => {
         let deployVaultFixture: Function;
         let lastNft: number;
         let nft: number;

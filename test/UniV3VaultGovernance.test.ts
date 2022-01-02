@@ -78,14 +78,6 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                 this.strategySigner = await addSigner(randomAddress());
 
                 if (!skipInit) {
-                    const { address: factoryAddress } =
-                        await deployments.deploy("UniV3VaultFactoryTest", {
-                            from: this.deployer.address,
-                            contract: "UniV3VaultFactory",
-                            args: [this.subject.address],
-                            autoMine: true,
-                        });
-                    await this.subject.initialize(factoryAddress);
                     await this.protocolGovernance
                         .connect(this.admin)
                         .setPendingVaultGovernancesAdd([this.subject.address]);
@@ -93,9 +85,9 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                     await this.protocolGovernance
                         .connect(this.admin)
                         .commitVaultGovernancesAdd();
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         this.tokens.slice(0, 2).map((x: any) => x.address),
-                        [],
+                        3000,
                         this.ownerSigner.address
                     );
                     this.nft = (
@@ -156,7 +148,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
         });
     });
 
-    xdescribe("#deployVault", () => {
+    xdescribe("#createVault", () => {
         describe("properties", () => {
             pit(
                 "reverts for any options with length != 32 or != 0",
@@ -170,11 +162,11 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                     .map((x) => `0x${x}`),
                 async (bytes: string) => {
                     await expect(
-                        this.subject.deployVault(
+                        this.subject.createVault(
                             this.tokens
                                 .slice(0, 2)
                                 .map((x: ERC20) => x.address),
-                            bytes,
+                            3000,
                             this.ownerSigner.address
                         )
                     ).to.be.revertedWith(Exceptions.INVALID_OPTIONS);
@@ -192,11 +184,11 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                     .map((x) => ethers.utils.hexZeroPad(x, 32)),
                 async (bytes: string) => {
                     await expect(
-                        this.subject.deployVault(
+                        this.subject.createVault(
                             this.tokens
                                 .slice(0, 2)
                                 .map((x: ERC20) => x.address),
-                            bytes,
+                            3000,
                             this.ownerSigner.address
                         )
                     ).to.be.revertedWith(Exceptions.UNISWAP_POOL_NOT_FOUND);
@@ -207,7 +199,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
         describe("edge cases", () => {
             describe("when options are 0 length bytes", () => {
                 it("deploys a vault for 0.3% fee pool", async () => {
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         [this.weth.address, this.usdc.address]
                             .map((x) => x.toLowerCase())
                             .sort(),
@@ -230,7 +222,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
             });
             describe("when options are bytes with length 32", () => {
                 it("deploys a vault with fee equals to uint256 represented by 32 bytes of options", async () => {
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         [this.weth.address, this.usdc.address]
                             .map((x) => x.toLowerCase())
                             .sort(),

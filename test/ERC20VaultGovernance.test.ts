@@ -77,14 +77,6 @@ describe("ERC20VaultGovernance", function (this: TestContext<
                 this.strategySigner = await addSigner(randomAddress());
 
                 if (!skipInit) {
-                    const { address: factoryAddress } =
-                        await deployments.deploy("ERC20VaultFactoryTest", {
-                            from: this.deployer.address,
-                            contract: "ERC20VaultFactory",
-                            args: [this.subject.address],
-                            autoMine: true,
-                        });
-                    await this.subject.initialize(factoryAddress);
                     await this.protocolGovernance
                         .connect(this.admin)
                         .setPendingVaultGovernancesAdd([this.subject.address]);
@@ -92,9 +84,8 @@ describe("ERC20VaultGovernance", function (this: TestContext<
                     await this.protocolGovernance
                         .connect(this.admin)
                         .commitVaultGovernancesAdd();
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         this.tokens.map((x: any) => x.address),
-                        [],
                         this.ownerSigner.address
                     );
                     this.nft = (

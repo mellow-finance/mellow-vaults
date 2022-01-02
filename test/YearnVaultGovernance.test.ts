@@ -45,14 +45,19 @@ describe("YearnVaultGovernance", function (this: TestContext<
         this.deploymentFixture = deployments.createFixture(
             async (_, options?: DeployOptions) => {
                 await deployments.fixture();
+                const { address: singleton } = await deployments.get(
+                    "YearnVault"
+                );
                 const {
                     internalParams = {
                         protocolGovernance: this.protocolGovernance.address,
                         registry: this.vaultRegistry.address,
+                        singleton,
                     },
                     yearnVaultRegistry = yearnVaultRegistryAddress,
                     skipInit = false,
                 } = options || {};
+
                 const { address } = await deployments.deploy(
                     "YearnVaultGovernanceTest",
                     {
@@ -70,14 +75,6 @@ describe("YearnVaultGovernance", function (this: TestContext<
                 this.strategySigner = await addSigner(randomAddress());
 
                 if (!skipInit) {
-                    const { address: factoryAddress } =
-                        await deployments.deploy("YearnVaultFactoryTest", {
-                            from: this.deployer.address,
-                            contract: "YearnVaultFactory",
-                            args: [this.subject.address],
-                            autoMine: true,
-                        });
-                    await this.subject.initialize(factoryAddress);
                     await this.protocolGovernance
                         .connect(this.admin)
                         .setPendingVaultGovernancesAdd([this.subject.address]);
@@ -85,9 +82,8 @@ describe("YearnVaultGovernance", function (this: TestContext<
                     await this.protocolGovernance
                         .connect(this.admin)
                         .commitVaultGovernancesAdd();
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         this.tokens.map((x: any) => x.address),
-                        [],
                         this.ownerSigner.address
                     );
                     this.nft = (
@@ -122,6 +118,9 @@ describe("YearnVaultGovernance", function (this: TestContext<
             describe("when YearnVaultRegistry address is 0", () => {
                 it("reverts", async () => {
                     await deployments.fixture();
+                    const { address: singleton } = await deployments.get(
+                        "YearnVault"
+                    );
                     await expect(
                         deployments.deploy("YearnVaultGovernance", {
                             from: this.deployer.address,
@@ -130,6 +129,7 @@ describe("YearnVaultGovernance", function (this: TestContext<
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
+                                    singleton,
                                 },
                                 {
                                     yearnVaultRegistry:

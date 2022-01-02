@@ -623,7 +623,7 @@ describe("TestVaultGovernance", () => {
         });
     });
 
-    describe("deployVault", () => {
+    xdescribe("deployVault", () => {
         describe("when vault factory has not been initialized", () => {
             it("reverts", async () => {
                 await expect(
