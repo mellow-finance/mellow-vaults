@@ -52,10 +52,14 @@ describe("ERC20VaultGovernance", function (this: TestContext<
         this.deploymentFixture = deployments.createFixture(
             async (_, options?: DeployOptions) => {
                 await deployments.fixture();
+                const { address: singleton } = await deployments.get(
+                    "ERC20Vault"
+                );
                 const {
                     internalParams = {
                         protocolGovernance: this.protocolGovernance.address,
                         registry: this.vaultRegistry.address,
+                        singleton,
                     },
                     trader = traderAddress,
                     skipInit = false,
@@ -120,6 +124,9 @@ describe("ERC20VaultGovernance", function (this: TestContext<
             describe("when trader address is 0", () => {
                 it("reverts", async () => {
                     await deployments.fixture();
+                    const { address: singleton } = await deployments.get(
+                        "ERC20Vault"
+                    );
                     await expect(
                         deployments.deploy("ERC20VaultGovernance", {
                             from: this.deployer.address,
@@ -128,6 +135,7 @@ describe("ERC20VaultGovernance", function (this: TestContext<
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
+                                    singleton,
                                 },
                                 {
                                     trader: ethers.constants.AddressZero,
