@@ -163,10 +163,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let erc20VaultNft = startNft + 1;
 
     await setupVault(hre, yearnVaultNft, "YearnVaultGovernance", {
-        deployOptions: [tokens, [], deployer],
+        createVaultArgs: [tokens, deployer],
     });
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
-        deployOptions: [tokens, [], deployer],
+        createVaultArgs: [tokens, deployer],
     });
 
     const strategy = await get("MStrategy");

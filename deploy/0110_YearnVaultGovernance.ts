@@ -12,37 +12,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, yearnVaultRegistry } = await getNamedAccounts();
+    const { address: singleton } = await deploy("YearnVault", {
+        from: deployer,
+        args: [],
+        log: true,
+        autoMine: true,
+    });
     await deploy("YearnVaultGovernance", {
         from: deployer,
         args: [
             {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
+                singleton,
             },
             { yearnVaultRegistry: yearnVaultRegistry },
         ],
         log: true,
         autoMine: true,
     });
-    const governance = await get("YearnVaultGovernance");
-    await deploy("YearnVaultFactory", {
-        from: deployer,
-        args: [governance.address],
-        log: true,
-        autoMine: true,
-    });
-    const initialized = await read("YearnVaultGovernance", "initialized");
-    if (!initialized) {
-        log("Initializing factory...");
-
-        const factory = await get("YearnVaultFactory");
-        await execute(
-            "YearnVaultGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "initialize",
-            factory.address
-        );
-    }
 };
 export default func;
 func.tags = ["YearnVaultGovernance", "core", ...MAIN_NETWORKS, "fantom"];

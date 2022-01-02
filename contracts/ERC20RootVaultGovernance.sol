@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IERC20RootVaultGovernance.sol";
 import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
-contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance, VaultGovernance {
+contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance {
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
     uint256 public immutable MAX_PERFORMANCE_FEE;
@@ -161,18 +160,6 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
         );
     }
 
-    /// @notice Required for intermediate vault token transfer in deploy
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external view returns (bytes4) {
-        IVaultRegistry registry = _internalParams.registry;
-        require(msg.sender == address(registry), ExceptionsLibrary.NFT_VAULT_REGISTRY);
-        return this.onERC721Received.selector;
-    }
-
     /// @inheritdoc IERC20RootVaultGovernance
     function createVault(
         address[] memory vaultTokens_,
@@ -187,7 +174,8 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
         (vaddr, nft) = _createVault(owner_);
         vault = IERC20RootVault(vaddr);
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
-            registry.safeTransferFrom(msg.sender, vaddr, subvaultNfts_[i]);
+            // RootVault is not yet initialized so we cannot use safeTransferFrom here
+            registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
         vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, name_, symbol_);
     }
