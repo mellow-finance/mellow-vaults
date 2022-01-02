@@ -32,17 +32,7 @@ import "./Vault.sol";
 abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault {
     using SafeERC20 for IERC20;
 
-    /// @notice Creates a new contract.
-    /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
-    /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    /// @param nft_ NFT of the vault in the VaultRegistry
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {}
-
-    // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED  -------------------
+    // -------------------  EXTERNAL, MUTATING, NFT OWNER OR APPROVED  -------------------
 
     /// @inheritdoc IIntegrationVault
     function push(
@@ -100,7 +90,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         emit Pull(to, actualTokenAmounts);
     }
 
-    // -------------------  PUBLIC, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+    // -------------------  EXTERNAL, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL ADMIN -------------------
+
     /// @inheritdoc IIntegrationVault
     function reclaimTokens(address to, address[] memory tokens) external nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INITIALIZATION);

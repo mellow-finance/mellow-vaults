@@ -6,6 +6,7 @@ import "./IVaultGovernance.sol";
 
 interface IVault is IERC165 {
     /// @notice Checks if the vault is initialized
+
     function initialized() external view returns (bool);
 
     /// @notice VaultRegistry NFT for this vault

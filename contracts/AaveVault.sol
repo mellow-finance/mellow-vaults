@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./interfaces/external/aave/ILendingPool.sol";
 import "./interfaces/IAaveVaultGovernance.sol";
 import "./interfaces/IVault.sol";
+import "./interfaces/IAaveVault.sol";
 import "./IntegrationVault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
@@ -23,30 +24,12 @@ import "./libraries/ExceptionsLibrary.sol";
 /// **Push / Pull**
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
-contract AaveVault is IntegrationVault {
+contract AaveVault is IAaveVault, IntegrationVault {
     address[] internal _aTokens;
     uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
 
-    /// @notice Creates a new contract.
-    /// @dev Requires that aToken exists for each vaultToken
-    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
-    /// @param vaultTokens_ ERC20 tokens under Vault management
-    /// @param nft_ NFT of the vault in the VaultRegistry
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_
-    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {
-        _aTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            address aToken = _getAToken(_vaultTokens[i]);
-            require(aToken != address(0), ExceptionsLibrary.ZERO_TOKEN);
-            _aTokens[i] = aToken;
-            _tvls.push(0);
-        }
-        _lastTvlUpdateTimestamp = block.timestamp;
-    }
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
@@ -65,10 +48,28 @@ contract AaveVault is IntegrationVault {
         }
     }
 
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
     /// @notice Update all tvls to current aToken balances.
     function updateTvls() external {
         _updateTvls();
     }
+
+    /// @inheritdoc IAaveVault
+    function initialize(address[] memory vaultTokens_, uint256 nft_) external {
+        _aTokens = new address[](vaultTokens_.length);
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            address aToken = _getAToken(_vaultTokens[i]);
+            require(aToken != address(0), ExceptionsLibrary.ZERO_TOKEN);
+            _aTokens[i] = aToken;
+            _tvls.push(0);
+        }
+        _lastTvlUpdateTimestamp = block.timestamp;
+
+        _initialize(vaultTokens_, nft_);
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _updateTvls() internal {
         uint256 tvlsLength = _tvls.length;

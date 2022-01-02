@@ -38,7 +38,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         _numberOfValidTokens = 0;
     }
 
-    // -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function claimAllowlist() external view returns (address[] memory) {
@@ -130,7 +130,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.protocolTreasury;
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
@@ -182,7 +182,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function commitClaimAllowlistAdd() external {

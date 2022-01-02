@@ -34,32 +34,7 @@ abstract contract Vault is IVault, ERC165 {
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 internal _nft;
 
-    /// @notice Creates a new contract.
-    /// @param vaultGovernance_ Reference to VaultGovernance of this Vault
-    /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    /// @param nft_ NFT of the vault in the VaultRegistry
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_
-    ) {
-        require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
-        require(nft_ != 0, ExceptionsLibrary.NFT_ZERO);
-        IProtocolGovernance governance = vaultGovernance_.internalParams().protocolGovernance;
-        require(
-            vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(),
-            ExceptionsLibrary.IO_LENGTH
-        );
-        _vaultGovernance = vaultGovernance_;
-        _vaultTokens = vaultTokens_;
-        _nft = nft_;
-        uint256 len = _vaultTokens.length;
-        for (uint256 i = 0; i < len; ++i) _vaultTokensIndex[vaultTokens_[i]] = true;
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        registry.setApprovalForAll(address(registry), true);
-    }
-
-    // -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     function initialized() external view returns (bool) {
         return _nft != 0;
@@ -91,9 +66,34 @@ abstract contract Vault is IVault, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
+    // -------------------  INTERNAL, MUTATING  -------------------
+
+    function _initialize(address[] memory vaultTokens_, uint256 nft_) internal {
+        require(_nft == 0, ExceptionsLibrary.INITIALIZATION);
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(nft_ != 0, ExceptionsLibrary.NFT_ZERO); // guarantees that this method can only be called once
+        IProtocolGovernance governance = IVaultGovernance(msg.sender).internalParams().protocolGovernance;
+        require(
+            vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(),
+            ExceptionsLibrary.IO_LENGTH
+        );
+        _vaultGovernance = IVaultGovernance(msg.sender);
+        _vaultTokens = vaultTokens_;
+        _nft = nft_;
+        uint256 len = _vaultTokens.length;
+        for (uint256 i = 0; i < len; ++i) {
+            _vaultTokensIndex[vaultTokens_[i]] = true;
+        }
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        registry.setApprovalForAll(address(registry), true);
+        emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
+    }
+
     function _allowTokenIfNecessary(address token, address to) internal {
         if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
             IERC20(token).approve(to, type(uint256).max);
         }
     }
+
+    event Initialized(address indexed origin, address indexed sender, address[] vaultTokens_, uint256 nft_);
 }

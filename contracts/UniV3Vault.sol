@@ -25,30 +25,26 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 a1;
     }
 
-    IUniswapV3Pool public immutable pool;
+    IUniswapV3Pool public pool;
 
     uint256 public uniV3Nft;
 
-    /// @notice Creates a new contract.
-    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
-    /// @param vaultTokens_ ERC20 tokens under Vault management
-    /// @param nft_ NFT of the vault in the VaultRegistry
-    /// @param fee Fee of the underlying UniV3 pool
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_,
-        uint24 fee
-    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {
-        require(_vaultTokens.length == 2, ExceptionsLibrary.TOKEN_LENGTH);
-        pool = IUniswapV3Pool(
-            IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee)
-        );
-        require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
-    }
-
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
+    }
+
+    function initialize(
+        address[] memory vaultTokens_,
+        uint256 nft_,
+        uint24 fee_
+    ) external {
+        require(_vaultTokens.length == 2, ExceptionsLibrary.TOKEN_LENGTH);
+        pool = IUniswapV3Pool(
+            IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
+        );
+        require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
+
+        _initialize(vaultTokens_, nft_);
     }
 
     function onERC721Received(
