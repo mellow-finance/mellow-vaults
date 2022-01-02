@@ -78,6 +78,7 @@ contract AggregateVault is IVaultRoot, Vault {
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory) internal returns (uint256[] memory actualTokenAmounts) {
+        require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
         uint256 destNft = _subvaultNfts[0];
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         IIntegrationVault destVault = IIntegrationVault(registry.vaultForNft(destNft));
@@ -92,6 +93,7 @@ contract AggregateVault is IVaultRoot, Vault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal returns (uint256[] memory actualTokenAmounts) {
+        require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;

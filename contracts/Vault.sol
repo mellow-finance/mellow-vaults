@@ -61,6 +61,10 @@ abstract contract Vault is IVault, ERC165 {
 
     // -------------------  PUBLIC, VIEW  -------------------
 
+    function initialized() external view returns (bool) {
+        return _nft != 0;
+    }
+
     function isVaultToken(address token) public view returns (bool) {
         return _vaultTokensIndex[token];
     }

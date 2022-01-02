@@ -88,9 +88,11 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256[] memory tokenAmounts,
         bytes memory options
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
+        uint256 nft_ = _nft;
+        require(nft_ != 0, ExceptionsLibrary.INITIALIZATION);
         require(_isApprovedOrOwner(msg.sender), "IO"); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address owner = registry.ownerOf(_nft);
+        address owner = registry.ownerOf(nft_);
         require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION); // approved can only pull to whitelisted contracts
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);

@@ -5,6 +5,9 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./IVaultGovernance.sol";
 
 interface IVault is IERC165 {
+    /// @notice Checks if the vault is initialized
+    function initialized() external view returns (bool);
+
     /// @notice VaultRegistry NFT for this vault
     function nft() external view returns (uint256);
 
