@@ -65,7 +65,7 @@ contract YearnVault is IYearnVault, IntegrationVault {
             }
 
             address token = tokens[i];
-            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             _allowTokenIfNecessary(token, address(yToken));
             yToken.deposit(tokenAmounts[i], address(this));
         }
@@ -82,7 +82,7 @@ contract YearnVault is IYearnVault, IntegrationVault {
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0) continue;
 
-            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
             if (yTokenAmount > balance) {

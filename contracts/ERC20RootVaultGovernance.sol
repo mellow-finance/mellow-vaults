@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IERC20RootVaultGovernance.sol";
-import "./interfaces/IERC20RootVaultFactory.sol";
 import "./libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
@@ -174,37 +173,6 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
         return this.onERC721Received.selector;
     }
 
-    /// @notice Deploys a new vault.
-    /// @param vaultTokens ERC20 tokens under vault management
-    /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault
-    /// @return vault Address of the new vault
-    /// @return nft Nft of the vault in the vault registry
-    function deployVault(
-        address[] memory vaultTokens,
-        bytes memory options,
-        address owner
-    ) public override(VaultGovernance, IVaultGovernance) returns (IVault vault, uint256 nft) {
-        (address strategy, uint256[] memory subvaultNfts, string memory name, string memory symbol) = abi.decode(
-            options,
-            (address, uint256[], string, string)
-        );
-        IVaultRegistry registry = _internalParams.registry;
-        uint256 deployNft = registry.vaultsCount() + 1;
-        address vaultAddress = IERC20RootVaultFactory(address(factory)).getDeploymentAddress(
-            this,
-            vaultTokens,
-            deployNft,
-            strategy,
-            subvaultNfts,
-            name,
-            symbol
-        );
-        for (uint256 i = 0; i < subvaultNfts.length; i++) {
-            registry.safeTransferFrom(msg.sender, vaultAddress, subvaultNfts[i]);
-        }
-        (vault, nft) = super.deployVault(vaultTokens, options, owner);
-    }
-
     /// @inheritdoc IERC20RootVaultGovernance
     function createVault(
         address[] memory vaultTokens_,
@@ -215,10 +183,11 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
         address owner_
     ) external returns (IERC20RootVault vault, uint256 nft) {
         address vaddr;
+        IVaultRegistry registry = _internalParams.registry;
         (vaddr, nft) = _createVault(owner_);
         vault = IERC20RootVault(vaddr);
-        for (uint256 i = 0; i < subvaultNfts.length; i++) {
-            registry.safeTransferFrom(msg.sender, vaddr, subvaultNfts[i]);
+        for (uint256 i = 0; i < subvaultNfts_.length; i++) {
+            registry.safeTransferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
         vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, name_, symbol_);
     }

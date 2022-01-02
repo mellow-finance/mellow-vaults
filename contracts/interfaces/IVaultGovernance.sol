@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "./IProtocolGovernance.sol";
 import "./IVaultRegistry.sol";
-import "./IVaultFactory.sol";
 import "./IVault.sol";
 
 interface IVaultGovernance {
@@ -17,9 +16,6 @@ interface IVaultGovernance {
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
-
-    /// @notice Vault factory for this Vault Governance.
-    function factory() external view returns (IVaultFactory);
 
     /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.
     /// @param nft Nft of the vault
