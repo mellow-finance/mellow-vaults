@@ -95,7 +95,7 @@ abstract contract VaultGovernance is IVaultGovernance {
 
     // -------------------  INTERNAL  -------------------
 
-    function _createVault(address owner) internal returns (IVault vault, uint256 nft) {
+    function _createVault(address owner) internal returns (address vault, uint256 nft) {
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
         require(
             protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
@@ -103,7 +103,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         );
         IVaultRegistry vaultRegistry = _internalParams.registry;
         nft = vaultRegistry.vaultsCount() + 1;
-        vault = IVault(Clones.cloneDeterministic(address(_internalParams.singleton), bytes32(nft)));
+        vault = Clones.cloneDeterministic(address(_internalParams.singleton), bytes32(nft));
         vaultRegistry.registerVault(address(vault), owner);
     }
 

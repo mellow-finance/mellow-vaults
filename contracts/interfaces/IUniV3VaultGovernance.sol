@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./external/univ3/INonfungiblePositionManager.sol";
 import "./IVaultGovernance.sol";
 import "./IMellowOracle.sol";
+import "./IUniV3Vault.sol";
 
 interface IUniV3VaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
@@ -25,4 +26,14 @@ interface IUniV3VaultGovernance is IVaultGovernance {
 
     /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function commitDelayedProtocolParams() external;
+
+    /// @notice Deploys a new vault.
+    /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
+    /// @param fee_ Fee of the UniV3 pool
+    /// @param owner_ Owner of the vault NFT
+    function createVault(
+        address[] memory vaultTokens_,
+        uint24 fee_,
+        address owner_
+    ) external returns (IUniV3Vault vault, uint256 nft);
 }

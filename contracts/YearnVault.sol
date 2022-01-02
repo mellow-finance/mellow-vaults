@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./interfaces/external/yearn/IYearnVault.sol";
+import "./interfaces/external/yearn/IYearnProtocolVault.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
+import "./interfaces/IYearnVault.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
@@ -23,7 +24,7 @@ import "./IntegrationVault.sol";
 /// There are some deposit limits imposed by Yearn vaults.
 /// The contract's vaultTokens are fully allowed to corresponding yTokens.
 
-contract YearnVault is IntegrationVault {
+contract YearnVault is IYearnVault, IntegrationVault {
     address[] private _yTokens;
     uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
 
@@ -37,13 +38,13 @@ contract YearnVault is IntegrationVault {
         address[] memory tokens = _vaultTokens;
         minTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _yTokens.length; ++i) {
-            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             minTokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
         maxTokenAmounts = minTokenAmounts;
     }
 
-    function initialize(address[] memory vaultTokens_, uint256 nft_) external {
+    function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _yTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             _yTokens[i] = IYearnVaultGovernance(address(msg.sender)).yTokenForToken(_vaultTokens[i]);

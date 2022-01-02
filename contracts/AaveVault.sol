@@ -56,7 +56,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     }
 
     /// @inheritdoc IAaveVault
-    function initialize(address[] memory vaultTokens_, uint256 nft_) external {
+    function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             address aToken = _getAToken(_vaultTokens[i]);

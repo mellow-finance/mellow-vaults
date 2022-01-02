@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IUniV3VaultGovernance.sol";
+import "./interfaces/IUniV3Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 
@@ -58,6 +59,18 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
             msg.sender,
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
         );
+    }
+
+    /// @inheritdoc IUniV3VaultGovernance
+    function createVault(
+        address[] memory vaultTokens_,
+        uint24 fee_,
+        address owner_
+    ) external returns (IUniV3Vault vault, uint256 nft) {
+        address vaddr;
+        (vaddr, nft) = _createVault(owner_);
+        vault = IUniV3Vault(vaddr);
+        vault.initialize(nft, vaultTokens_, fee_);
     }
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit

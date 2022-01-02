@@ -174,7 +174,7 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
         return this.onERC721Received.selector;
     }
 
-    /// @notice Deploy a new vault.
+    /// @notice Deploys a new vault.
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Abi encoded uint256 - an nfts of the gateway subvault. It is required that nft subvault is approved by the caller to this address and that it is a gateway vault
     /// @return vault Address of the new vault
@@ -203,6 +203,24 @@ contract ERC20RootVaultGovernance is IERC721Receiver, IERC20RootVaultGovernance,
             registry.safeTransferFrom(msg.sender, vaultAddress, subvaultNfts[i]);
         }
         (vault, nft) = super.deployVault(vaultTokens, options, owner);
+    }
+
+    /// @inheritdoc IERC20RootVaultGovernance
+    function createVault(
+        address[] memory vaultTokens_,
+        address strategy_,
+        uint256[] memory subvaultNfts_,
+        string memory name_,
+        string memory symbol_,
+        address owner_
+    ) external returns (IERC20RootVault vault, uint256 nft) {
+        address vaddr;
+        (vaddr, nft) = _createVault(owner_);
+        vault = IERC20RootVault(vaddr);
+        for (uint256 i = 0; i < subvaultNfts.length; i++) {
+            registry.safeTransferFrom(msg.sender, vaddr, subvaultNfts[i]);
+        }
+        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, name_, symbol_);
     }
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit

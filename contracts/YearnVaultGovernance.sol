@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./interfaces/IYearnVaultGovernance.sol";
+import "./interfaces/IYearnVault.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 
@@ -28,7 +29,7 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         if (yToken != address(0)) {
             return yToken;
         }
-        IYearnVaultRegistry yearnRegistry = delayedProtocolParams().yearnVaultRegistry;
+        IYearnProtocolVaultRegistry yearnRegistry = delayedProtocolParams().yearnVaultRegistry;
         try yearnRegistry.latestVault(token) returns (address _vault) {
             return _vault;
         } catch (bytes memory) {
@@ -39,7 +40,7 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     /// @inheritdoc IYearnVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({yearnVaultRegistry: IYearnVaultRegistry(address(0))});
+            return DelayedProtocolParams({yearnVaultRegistry: IYearnProtocolVaultRegistry(address(0))});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -70,6 +71,17 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         _requireProtocolAdmin();
         _yTokens[token] = yToken;
         emit SetYToken(tx.origin, msg.sender, token, yToken);
+    }
+
+    /// @inheritdoc IYearnVaultGovernance
+    function createVault(address[] memory vaultTokens_, address owner_)
+        external
+        returns (IYearnVault vault, uint256 nft)
+    {
+        address vaddr;
+        (vaddr, nft) = _createVault(owner_);
+        vault = IYearnVault(vaddr);
+        vault.initialize(nft, vaultTokens_);
     }
 
     /// @notice Emitted when new yToken is set

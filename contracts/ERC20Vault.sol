@@ -30,7 +30,7 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
 
-    function initialize(address[] memory vaultTokens_, uint256 nft_) external {
+    function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
     }
 

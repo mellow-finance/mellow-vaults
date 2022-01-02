@@ -34,8 +34,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     function initialize(
-        address[] memory vaultTokens_,
         uint256 nft_,
+        address[] memory vaultTokens_,
         uint24 fee_
     ) external {
         require(_vaultTokens.length == 2, ExceptionsLibrary.TOKEN_LENGTH);

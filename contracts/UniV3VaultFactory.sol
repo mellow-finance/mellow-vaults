@@ -15,7 +15,7 @@ contract UniV3VaultFactory is IVaultFactory {
         vaultGovernance = vaultGovernance_;
     }
 
-    /// @notice Deploy a new vault.
+    /// @notice Deploys a new vault.
     /// @param vaultTokens ERC20 tokens under vault management
     /// @param options Should equal UniV3 pool fee
     function deployVault(
