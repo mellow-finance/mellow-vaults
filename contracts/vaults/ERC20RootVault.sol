@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../interfaces/IERC20RootVaultGovernance.sol";
-import "../interfaces/IERC20RootVault.sol";
+import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IERC20RootVault.sol";
 import "./AggregateVault.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.

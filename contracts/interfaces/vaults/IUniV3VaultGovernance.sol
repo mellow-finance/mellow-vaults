@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "./external/univ3/INonfungiblePositionManager.sol";
+import "../external/univ3/INonfungiblePositionManager.sol";
+import "../oracles/IMellowOracle.sol";
 import "./IVaultGovernance.sol";
-import "./IMellowOracle.sol";
 import "./IUniV3Vault.sol";
 
 interface IUniV3VaultGovernance is IVaultGovernance {

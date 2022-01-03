@@ -2,10 +2,10 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/IChainlinkOracle.sol";
-import "../interfaces/IUniV3Oracle.sol";
-import "../interfaces/IUniV2Oracle.sol";
-import "../interfaces/IMellowOracle.sol";
+import "../interfaces/oracles/IChainlinkOracle.sol";
+import "../interfaces/oracles/IUniV3Oracle.sol";
+import "../interfaces/oracles/IUniV2Oracle.sol";
+import "../interfaces/oracles/IMellowOracle.sol";
 import "../libraries/CommonLibrary.sol";
 
 contract MellowOracle is IMellowOracle {

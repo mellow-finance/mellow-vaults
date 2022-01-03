@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/external/chainlink/IAggregatorV3.sol";
+import "../external/chainlink/IAggregatorV3.sol";
 
 interface IChainlinkOracle {
     /// @notice Checks if token can be queried for price

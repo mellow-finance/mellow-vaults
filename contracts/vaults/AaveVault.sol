@@ -2,9 +2,9 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/external/aave/ILendingPool.sol";
-import "../interfaces/IAaveVaultGovernance.sol";
-import "../interfaces/IVault.sol";
-import "../interfaces/IAaveVault.sol";
+import "../interfaces/vaults/IAaveVaultGovernance.sol";
+import "../interfaces/vaults/IVault.sol";
+import "../interfaces/vaults/IAaveVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 

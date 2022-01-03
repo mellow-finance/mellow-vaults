@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/IAaveVaultGovernance.sol";
+import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/IUniV3VaultGovernance.sol";
-import "../interfaces/IUniV3Vault.sol";
+import "../interfaces/vaults/IUniV3VaultGovernance.sol";
+import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 

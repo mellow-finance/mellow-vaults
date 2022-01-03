@@ -3,9 +3,9 @@ pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "./interfaces/ITrader.sol";
-import "./interfaces/IChiefTrader.sol";
-import "./libraries/TraderExceptionsLibrary.sol";
+import "../interfaces/trader/ITrader.sol";
+import "../interfaces/trader/IChiefTrader.sol";
+import "../libraries/trader/TraderExceptionsLibrary.sol";
 
 /// @notice Main contract that allows trading of ERC20 tokens on different Dexes
 /// @dev This contract contains several subtraders that can be used for trading ERC20 tokens.

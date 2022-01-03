@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./external/univ3/IUniswapV3Factory.sol";
+import "../external/univ3/IUniswapV3Factory.sol";
 
 interface IUniV3Oracle {
     /// @notice Reference to UniV3 factory

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "../trader/interfaces/ITrader.sol";
+import "../trader/ITrader.sol";
 import "./IERC20Vault.sol";
 import "./IVaultGovernance.sol";
 

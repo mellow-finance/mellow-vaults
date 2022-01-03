@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";

@@ -4,8 +4,8 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
-import "./interfaces/IUniV2Trader.sol";
-import "./libraries/TraderExceptionsLibrary.sol";
+import "../interfaces/trader/IUniV2Trader.sol";
+import "../libraries/trader/TraderExceptionsLibrary.sol";
 import "./Trader.sol";
 
 /// @notice Contract that executes swaps on Uniswap V2

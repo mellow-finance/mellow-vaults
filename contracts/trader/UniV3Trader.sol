@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "../interfaces/external/univ3/ISwapRouter.sol";
-import "./interfaces/IUniV3Trader.sol";
-import "./libraries/TraderExceptionsLibrary.sol";
+import "../interfaces/trader/IUniV3Trader.sol";
+import "../libraries/trader/TraderExceptionsLibrary.sol";
 import "./Trader.sol";
 
 /// @notice Contract that can execute ERC20 swaps on Uniswap V3

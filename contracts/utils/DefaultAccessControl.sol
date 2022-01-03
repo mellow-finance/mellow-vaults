@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "../interfaces/IDefaultAccessControl.sol";
+import "../interfaces/utils/IDefaultAccessControl.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice This is a default access control with 2 roles -
