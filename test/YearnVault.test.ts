@@ -122,7 +122,7 @@
 //                         autoMine: true,
 //                         args: [vaultGovernance.address, newTokens],
 //                     })
-//                 ).to.be.revertedWith(Exceptions.YEARN_VAULTS);
+//                 ).to.be.revertedWith(Exceptions.ADDRESS_ZEROS);
 //             });
 //         });
 //     });

@@ -49,7 +49,7 @@
 //                 await expect(
 //                     gatewayVaultFactory.connect(stranger).deployVault([], [])
 //                 ).to.be.revertedWith(
-//                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+//                     Exceptions.FORBIDDEN
 //                 );
 //             });
 //         });

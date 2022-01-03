@@ -238,21 +238,21 @@ describe("YearnVaultGovernance", function (this: TestContext<
                     this.subject
                         .connect(this.ownerSigner)
                         .setYTokenForToken(this.weth.address, yTokenAddress)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
             it("denied: Vault NFT Approved (aka strategy)", async () => {
                 await expect(
                     this.subject
                         .connect(this.strategySigner)
                         .setYTokenForToken(this.weth.address, yTokenAddress)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
             it("denied: deployer", async () => {
                 await expect(
                     this.subject
                         .connect(this.deployer)
                         .setYTokenForToken(this.weth.address, yTokenAddress)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
 
             it("denied: random address", async () => {
@@ -261,7 +261,7 @@ describe("YearnVaultGovernance", function (this: TestContext<
                         this.subject
                             .connect(s)
                             .setYTokenForToken(this.weth.address, yTokenAddress)
-                    ).to.be.revertedWith(Exceptions.ADMIN);
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });

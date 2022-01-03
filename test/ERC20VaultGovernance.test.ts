@@ -143,7 +143,7 @@ describe("ERC20VaultGovernance", function (this: TestContext<
                             ],
                             autoMine: true,
                         })
-                    ).to.be.revertedWith(Exceptions.TRADER_ADDRESS_ZERO);
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });

@@ -48,7 +48,7 @@ contract YearnVault is IYearnVault, IntegrationVault {
         _yTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             _yTokens[i] = IYearnVaultGovernance(address(msg.sender)).yTokenForToken(_vaultTokens[i]);
-            require(_yTokens[i] != address(0), ExceptionsLibrary.YEARN_VAULT);
+            require(_yTokens[i] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         }
         _initialize(vaultTokens_, nft_);
     }

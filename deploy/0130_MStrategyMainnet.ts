@@ -121,7 +121,7 @@ const setupStrategy = async (
             params
         );
     }
-    const adminRole = await read("MStrategy", "ADMIN_ROLE");
+    const adminRole = await read("MStrategy", "FORBIDDEN_ROLE");
     const deployerIsAdmin = await read("MStrategy", "isAdmin", deployer);
     if (deployerIsAdmin) {
         await execute(

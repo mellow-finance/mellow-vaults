@@ -27,7 +27,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256) {
-        require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+        require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         if (path.length == 1) return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
         else return _swapExactInputMultihop(amount, recipient, path, options_);
@@ -41,7 +41,7 @@ contract UniV3Trader is Trader, IUniV3Trader {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256) {
-        require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+        require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         if (path.length == 1)
             return _swapExactOutputSingle(path[0].token0, path[0].token1, amount, recipient, options_);

@@ -42,8 +42,8 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256 amountOut) {
-        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
-        require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
+        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.INVALID_TOKEN);
+        require(_isStrategy(msg.sender), ExceptionsLibrary.INVALID_TARGET);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
@@ -59,8 +59,8 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256 amountOut) {
-        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.NOT_VAULT_TOKEN);
-        require(_isStrategy(msg.sender), ExceptionsLibrary.NOT_STRATEGY_TREASURY);
+        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.INVALID_TOKEN);
+        require(_isStrategy(msg.sender), ExceptionsLibrary.INVALID_TARGET);
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
@@ -95,8 +95,7 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
     }
 
     function _postReclaimTokens(address, address[] memory tokens) internal view override {
-        for (uint256 i = 0; i < tokens.length; ++i)
-            require(!isVaultToken(tokens[i]), ExceptionsLibrary.OTHER_VAULT_TOKENS); // vault token is part of TVL
+        for (uint256 i = 0; i < tokens.length; ++i) require(!isVaultToken(tokens[i]), ExceptionsLibrary.INVALID_TOKEN); // vault token is part of TVL
     }
 
     function _isStrategy(address addr) internal view returns (bool) {

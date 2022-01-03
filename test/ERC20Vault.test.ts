@@ -92,13 +92,13 @@
 //                             tokens[1].address,
 //                             tokens[0].address,
 //                         ])
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                     await expect(
 //                         factory.deploy(ERC20VaultGovernance.address, [
 //                             tokens[0].address,
 //                             tokens[0].address,
 //                         ])
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 //         });
@@ -112,7 +112,7 @@
 //                             [BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+//                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //                 });
 //             });
 
@@ -124,7 +124,7 @@
 //                             [BigNumber.from(1), BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+//                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
 //                 });
 //             });
 
@@ -136,7 +136,7 @@
 //                             [BigNumber.from(1), BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 
@@ -148,7 +148,7 @@
 //                             [BigNumber.from(1), BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 
@@ -168,7 +168,7 @@
 //                             ],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 
@@ -209,7 +209,7 @@
 //                             [BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+//                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //                 });
 //             });
 
@@ -222,7 +222,7 @@
 //                             [BigNumber.from(1), BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.INCONSISTENT_LENGTH);
+//                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
 //                 });
 //             });
 
@@ -235,7 +235,7 @@
 //                             [BigNumber.from(1), BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 
@@ -248,7 +248,7 @@
 //                             [BigNumber.from(1), BigNumber.from(1)],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 
@@ -269,7 +269,7 @@
 //                             ],
 //                             []
 //                         )
-//                     ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                     ).to.be.revertedWith(Exceptions.INVARIANT);
 //                 });
 //             });
 
@@ -383,7 +383,7 @@
 //                             ethers.constants.AddressZero,
 //                             arg
 //                         )
-//                     ).to.be.revertedWith(Exceptions.OTHER_VAULT_TOKENS);
+//                     ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
 //                 });
 //             });
 //         });

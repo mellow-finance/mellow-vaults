@@ -25,7 +25,7 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
 
     /// @inheritdoc IUniV3Oracle
     function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
-        require(token1 > token0, ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(token1 > token0, ExceptionsLibrary.INVARIANT);
         address pool = factory.getPool(token0, token1, 3000);
         if (pool == address(0)) {
             pool = factory.getPool(token0, token1, 500);
@@ -33,13 +33,13 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
         if (pool == address(0)) {
             pool = factory.getPool(token0, token1, 10000);
         }
-        require(pool != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
+        require(pool != address(0), ExceptionsLibrary.NOT_FOUND);
 
         (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
             pool
         ).slot0();
         uint16 bfAvg = observationsForAverage;
-        require(observationCardinality > bfAvg, ExceptionsLibrary.NOT_ENOUGH_CARDINALITY);
+        require(observationCardinality > bfAvg, ExceptionsLibrary.INVALID_VALUE);
         uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
             uint256(observationCardinality);
         uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
@@ -55,8 +55,8 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
 
     /// @inheritdoc IUniV3Oracle
     function setObservationsForAverage(uint16 newObservationsForAverage) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(observationsForAverage > 1, ExceptionsLibrary.INVALID_BLOCKS_FOR_AVERAGE);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(observationsForAverage > 1, ExceptionsLibrary.INVALID_VALUE);
         observationsForAverage = newObservationsForAverage;
         emit SetObservationsForAverage(tx.origin, msg.sender, newObservationsForAverage);
     }

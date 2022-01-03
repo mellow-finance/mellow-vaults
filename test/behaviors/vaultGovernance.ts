@@ -272,9 +272,7 @@ export function vaultGovernanceBehavior<
                                         [],
                                         this.ownerSigner.address
                                     )
-                            ).to.be.revertedWith(
-                                Exceptions.PERMISSIONLESS_OR_ADMIN
-                            );
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         }
                     });
                 });

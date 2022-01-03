@@ -163,7 +163,7 @@
 //                 gatewayVault
 //                     .connect(stranger)
 //                     .push([tokens[0].address], [BigNumber.from(10 ** 3)], [])
-//             ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+//             ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //         });
 
 //         describe("when not subvaultNfts length is zero", () => {
@@ -422,7 +422,7 @@
 //                         .connect(strategy)
 //                         .addSubvaults([BigNumber.from(nftERC20)])
 //                 ).to.be.revertedWith(
-//                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+//                     Exceptions.FORBIDDEN
 //                 );
 //             });
 //         });
@@ -434,7 +434,7 @@
 //                 );
 //                 await expect(
 //                     gatewayVault.addSubvaults([BigNumber.from(nftERC20)])
-//                 ).to.be.revertedWith(Exceptions.SUB_VAULT_INITIALIZED);
+//                 ).to.be.revertedWith(Exceptions.INIT);
 //             });
 //         });
 
@@ -445,7 +445,7 @@
 //                 );
 //                 await gatewayVault.setSubvaultNfts([]);
 //                 await expect(gatewayVault.addSubvaults([])).to.be.revertedWith(
-//                     Exceptions.SUB_VAULT_LENGTH
+//                     Exceptions.INVALID_VALUE
 //                 );
 //             });
 //         });

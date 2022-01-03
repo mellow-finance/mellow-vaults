@@ -89,7 +89,7 @@ describe("UniV2Trader", () => {
 
         describe("#swapExactInput", () => {
             describe("when passed empty path", () => {
-                it("reverts with `INVALID_TRADE_PATH_EXCEPTION`", async () => {
+                it("reverts with `INVALID_VALUE`", async () => {
                     await expect(
                         uniV2Trader.swapExactInput(
                             0,
@@ -103,7 +103,7 @@ describe("UniV2Trader", () => {
             });
 
             describe("when passed not linked path", () => {
-                it("reverts with `INVALID_TRADE_PATH_EXCEPTION`", async () => {
+                it("reverts with `INVALID_VALUE`", async () => {
                     await expect(
                         uniV2Trader.swapExactInput(
                             0,
@@ -128,7 +128,7 @@ describe("UniV2Trader", () => {
             });
 
             describe("when passed a path that contains zero address", () => {
-                it("reverts with `INVALID_TRADE_PATH_EXCEPTION`", async () => {
+                it("reverts with `INVALID_VALUE`", async () => {
                     await expect(
                         uniV2Trader.swapExactInput(
                             0,

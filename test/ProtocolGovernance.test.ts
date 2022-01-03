@@ -243,7 +243,7 @@ describe("ProtocolGovernance", () => {
         it("reverts", async () => {
             await expect(
                 protocolGovernance.connect(stranger).setPendingParams(params)
-            ).to.be.revertedWith(Exceptions.ADMIN);
+            ).to.be.revertedWith(Exceptions.FORBIDDEN);
         });
     });
 
@@ -254,7 +254,7 @@ describe("ProtocolGovernance", () => {
 
                 await expect(
                     protocolGovernance.connect(stranger).commitParams()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
@@ -300,7 +300,7 @@ describe("ProtocolGovernance", () => {
 
                 await expect(
                     protocolGovernance.commitParams()
-                ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
+                ).to.be.revertedWith(Exceptions.EMPTY_LIST);
             });
         });
 
@@ -336,7 +336,7 @@ describe("ProtocolGovernance", () => {
 
                 await expect(
                     protocolGovernance.commitParams()
-                ).to.be.revertedWith(Exceptions.EMPTY_PARAMS);
+                ).to.be.revertedWith(Exceptions.EMPTY_LIST);
             });
         });
 
@@ -422,7 +422,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .setPendingClaimAllowlistAdd([])
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
     });
@@ -492,7 +492,7 @@ describe("ProtocolGovernance", () => {
                             await user1.getAddress(),
                             await user2.getAddress(),
                         ])
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
     });
@@ -581,7 +581,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .commitVaultGovernancesAdd()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
@@ -681,7 +681,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .commitClaimAllowlistAdd()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
@@ -832,7 +832,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .removeFromClaimAllowlist(deployer.getAddress())
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
     });
@@ -844,7 +844,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .removeFromVaultGovernances(await user1.getAddress())
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
@@ -954,7 +954,7 @@ describe("ProtocolGovernance", () => {
                 protocolGovernance
                     .connect(stranger)
                     .setPendingTokenWhitelistAdd([])
-            ).to.be.revertedWith(Exceptions.ADMIN);
+            ).to.be.revertedWith(Exceptions.FORBIDDEN);
         });
 
         it("sets pending token whitelist add and timestamp", async () => {
@@ -1003,7 +1003,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .commitTokenWhitelistAdd()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
@@ -1056,7 +1056,7 @@ describe("ProtocolGovernance", () => {
                     protocolGovernance
                         .connect(stranger)
                         .removeFromTokenWhitelist(tokens[0].address)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 

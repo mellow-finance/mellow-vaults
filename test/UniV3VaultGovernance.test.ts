@@ -189,7 +189,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                             3000,
                             this.ownerSigner.address
                         )
-                    ).to.be.revertedWith(Exceptions.UNISWAP_POOL_NOT_FOUND);
+                    ).to.be.revertedWith(Exceptions.NOT_FOUND);
                     return true;
                 }
             );

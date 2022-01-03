@@ -300,14 +300,14 @@
 //                             [7, 8, 9],
 //                         ]
 //                     )
-//                 ).to.be.revertedWith(Exceptions.AMOUNTS_LENGTH_IS_ZERO);
+//                 ).to.be.revertedWith(Exceptions.EMPTY_LIST);
 //             });
 //         });
 //         describe("when weights.length == 0", () => {
 //             it("reverts", async () => {
 //                 await expect(
 //                     commonTest.splitAmountsTest([1, 2, 3], [])
-//                 ).to.be.revertedWith(Exceptions.WEIGHTS_LENGTH_IS_ZERO);
+//                 ).to.be.revertedWith(Exceptions.EMPTY_LIST);
 //             });
 //         });
 
@@ -322,7 +322,7 @@
 //                             [7, 8, 9],
 //                         ]
 //                     )
-//                 ).to.be.revertedWith(Exceptions.MATRIX_NOT_RECTANGULAR);
+//                 ).to.be.revertedWith(Exceptions.INVALID_VALUE);
 //             });
 //         });
 //     });
