@@ -189,7 +189,7 @@ describe("VaultRegistry", () => {
         });
     });
 
-    describe("lockNft", () => {
+    describe("#lockNft", () => {
         it("locks NFT (disables any transfer)", async () => {});
         it("emits TokenLocked event", async () => {});
 
