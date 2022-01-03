@@ -76,4 +76,14 @@ library ExceptionsLibrary {
     string constant TOKEN_0_NOT_IN_VAULT = "T0";
     string constant TOKEN_1_NOT_IN_VAULT = "T1";
     string constant PARAMS_DO_NOT_EXIST = "EXST";
+    string constant PROTOCOL_ADMIN_REQUIRED_EXCEPTION = "PA";
+    string constant TRADER_ALREADY_REGISTERED_EXCEPTION = "TE";
+    string constant TRADER_NOT_FOUND_EXCEPTION = "UT";
+    string constant TRADE_FAILED_EXCEPTION = "TF";
+    string constant VAULT_NOT_FOUND_EXCEPTION = "VF";
+    string constant VAULT_TOKEN_REQUIRED_EXCEPTION = "VT";
+    string constant AT_LEAST_STRATEGY_REQUIRED_EXCEPTION = "SR";
+    string constant INVALID_TRADE_PATH_EXCEPTION = "TP";
+    string constant TOKEN_NOT_ALLOWED_EXCEPTION = "TA";
+    string constant ADDRESS_ZERO_EXCEPTION = "AZ";
 }
