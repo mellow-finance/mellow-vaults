@@ -33,11 +33,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
-        require(
-            address(internalParams_.protocolGovernance) != address(0),
-            ExceptionsLibrary.PROTOCOL_GOVERNANCE_ADDRESS_ZERO
-        );
-        require(address(internalParams_.registry) != address(0), ExceptionsLibrary.VAULT_REGISTRY_ADDRESS_ZERO);
+        require(address(internalParams_.protocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(internalParams_.registry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _internalParams = internalParams_;
     }
 

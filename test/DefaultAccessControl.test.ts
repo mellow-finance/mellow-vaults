@@ -2,8 +2,9 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { ContractFactory } from "@ethersproject/contracts";
+import Exceptions from "./library/Exceptions";
 
-describe("AaveVaultFactory", () => {
+describe("DefaultAccessControl", () => {
     let someSigner: Signer;
     let factory: ContractFactory;
 
@@ -17,7 +18,7 @@ describe("AaveVaultFactory", () => {
             it("reverts", async () => {
                 await expect(
                     factory.deploy(ethers.constants.AddressZero)
-                ).to.be.revertedWith("ZADM");
+                ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
             });
         });
 

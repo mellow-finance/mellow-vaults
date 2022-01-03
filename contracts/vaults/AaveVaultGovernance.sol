@@ -13,10 +13,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
-        require(
-            address(delayedProtocolParams_.lendingPool) != address(0),
-            ExceptionsLibrary.AAVE_LENDING_POOL_ADDRESS_ZERO
-        );
+        require(address(delayedProtocolParams_.lendingPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 

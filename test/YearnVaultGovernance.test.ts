@@ -138,9 +138,7 @@ describe("YearnVaultGovernance", function (this: TestContext<
                             ],
                             autoMine: true,
                         })
-                    ).to.be.revertedWith(
-                        Exceptions.YEARN_REGISTRY_ADDRESS_ZERO
-                    );
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });

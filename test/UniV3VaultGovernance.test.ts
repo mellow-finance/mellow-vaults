@@ -140,9 +140,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                             ],
                             autoMine: true,
                         })
-                    ).to.be.revertedWith(
-                        Exceptions.POSITION_MANAGER_ADDRESS_ZERO
-                    );
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });

@@ -15,7 +15,7 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
     /// @notice Creates a new contract.
     /// @param admin Admin of the contract
     function init(address admin) external {
-        require(admin != address(0), ExceptionsLibrary.ADMIN_ADDRESS_ZERO);
+        require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(!initialized, ExceptionsLibrary.INIT);
         _setupRole(ADMIN_ROLE, admin);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);

@@ -6,7 +6,7 @@ library ExceptionsLibrary {
     string constant INIT = "INIT";
     string constant NULL = "NULL";
     string constant TIMESTAMP = "TS";
-    string constant GOVERNANCE_OR_DELEGATE_ADDRESS_ZERO = "ZMG";
+    string constant ADDRESS_ZERO = "AZ";
     string constant TOKEN_ALREADY_WHITELISTED = "TAW";
     string constant TOKEN_IS_NOT_WHITELISTED = "TNW";
     string constant ORACLE_NOT_FOUND = "ONF";
@@ -14,12 +14,6 @@ library ExceptionsLibrary {
     string constant ADMIN = "ADM";
     string constant NOT_ENOUGH_CARDINALITY = "NEC";
     string constant INVALID_BLOCKS_FOR_AVERAGE = "IBFA";
-    string constant ADMIN_ADDRESS_ZERO = "ZADM";
-    string constant PROTOCOL_GOVERNANCE_ADDRESS_ZERO = "ZPG";
-    string constant YEARN_REGISTRY_ADDRESS_ZERO = "ZY";
-    string constant POSITION_MANAGER_ADDRESS_ZERO = "ZPM";
-    string constant VAULT_REGISTRY_ADDRESS_ZERO = "ZVR";
-    string constant AAVE_LENDING_POOL_ADDRESS_ZERO = "ZALP";
     string constant TRADER_ADDRESS_ZERO = "ZTR";
     string constant INVALID_OPTIONS = "INVO";
     string constant APPROVED_OR_OWNER = "IO";

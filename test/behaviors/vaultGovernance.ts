@@ -106,9 +106,7 @@ export function vaultGovernanceBehavior<
                             skipInit: true,
                             internalParams: params,
                         })
-                    ).to.be.revertedWith(
-                        Exceptions.PROTOCOL_GOVERNANCE_ADDRESS_ZERO
-                    );
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
             describe("when vaultRegistry address is 0", () => {
@@ -123,9 +121,7 @@ export function vaultGovernanceBehavior<
                             skipInit: true,
                             internalParams: params,
                         })
-                    ).to.be.revertedWith(
-                        Exceptions.VAULT_REGISTRY_ADDRESS_ZERO
-                    );
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });
