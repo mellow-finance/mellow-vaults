@@ -167,7 +167,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                             3000,
                             this.ownerSigner.address
                         )
-                    ).to.be.revertedWith(Exceptions.INVALID_OPTIONS);
+                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                     return true;
                 }
             );

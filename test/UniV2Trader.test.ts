@@ -17,6 +17,7 @@ import {
     encodeToBytes,
     now,
 } from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
 
 describe("UniV2Trader", () => {
     let deploymentFixture: Function;
@@ -98,7 +99,7 @@ describe("UniV2Trader", () => {
                             [],
                             []
                         )
-                    ).to.be.revertedWith("TP");
+                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
             });
 
@@ -123,7 +124,7 @@ describe("UniV2Trader", () => {
                             ],
                             []
                         )
-                    ).to.be.revertedWith("TP");
+                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
             });
 
@@ -148,7 +149,7 @@ describe("UniV2Trader", () => {
                             ],
                             []
                         )
-                    ).to.be.revertedWith("TP");
+                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
             });
 
