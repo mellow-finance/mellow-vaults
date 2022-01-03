@@ -4,12 +4,12 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./trader/interfaces/IChiefTrader.sol";
-import "./interfaces/IERC20Vault.sol";
-import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/IERC20VaultGovernance.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
+import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/vaults/IERC20VaultGovernance.sol";
+import "../libraries/ExceptionsLibrary.sol";
+import "../interfaces/trader/IChiefTrader.sol";
 import "./IntegrationVault.sol";
-import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is IERC20Vault, IntegrationVault {

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./interfaces/IYearnVaultGovernance.sol";
-import "./interfaces/IYearnVault.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../interfaces/vaults/IYearnVaultGovernance.sol";
+import "../interfaces/vaults/IYearnVault.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.

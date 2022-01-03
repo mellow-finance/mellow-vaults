@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/IVaultGovernance.sol";
+import "../interfaces/vaults/IVaultGovernance.sol";
 import "../interfaces/IVaultRegistry.sol";
 
 contract TestEncoding {

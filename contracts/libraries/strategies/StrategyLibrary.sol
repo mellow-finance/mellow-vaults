@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "./external/FullMath.sol";
-import "../interfaces/external/univ3/IUniswapV3Pool.sol";
-import "./CommonLibrary.sol";
-import "./external/TickMath.sol";
+import "../external/FullMath.sol";
+import "../../interfaces/external/univ3/IUniswapV3Pool.sol";
+import "../CommonLibrary.sol";
+import "../external/TickMath.sol";
 
 /// @notice Strategy shared utilities
 library StrategyLibrary {

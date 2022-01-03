@@ -2,16 +2,16 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/IIntegrationVault.sol";
-import "../interfaces/IERC20Vault.sol";
-import "../trader/interfaces/IUniV3Trader.sol";
+import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
+import "../interfaces/trader/IUniV3Trader.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
-import "../libraries/StrategyLibrary.sol";
+import "../libraries/strategies/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../DefaultAccessControlLateInit.sol";
-import "contracts/libraries/ExceptionsLibrary.sol";
+import "../utils/DefaultAccessControlLateInit.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 contract MStrategy is DefaultAccessControlLateInit {
     struct Params {

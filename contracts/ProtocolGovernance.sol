@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./DefaultAccessControl.sol";
+import "./utils/DefaultAccessControl.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.

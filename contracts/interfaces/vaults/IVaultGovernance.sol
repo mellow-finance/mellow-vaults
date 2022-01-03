@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IProtocolGovernance.sol";
-import "./IVaultRegistry.sol";
+import "../IProtocolGovernance.sol";
+import "../IVaultRegistry.sol";
 import "./IVault.sol";
 
 interface IVaultGovernance {

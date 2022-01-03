@@ -2,9 +2,9 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/IVaultGovernance.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/vaults/IVaultGovernance.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice Internal contract for managing different params.
 /// @dev The contract should be overriden by the concrete VaultGovernance,

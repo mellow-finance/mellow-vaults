@@ -2,14 +2,14 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "./interfaces/external/univ3/IUniswapV3Pool.sol";
-import "./interfaces/external/univ3/IUniswapV3Factory.sol";
-import "./interfaces/IUniV3VaultGovernance.sol";
-import "./interfaces/IUniV3Vault.sol";
-import "./libraries/external/TickMath.sol";
-import "./libraries/external/LiquidityAmounts.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
+import "../interfaces/external/univ3/IUniswapV3Pool.sol";
+import "../interfaces/external/univ3/IUniswapV3Factory.sol";
+import "../interfaces/vaults/IUniV3VaultGovernance.sol";
+import "../interfaces/vaults/IUniV3Vault.sol";
+import "../libraries/external/TickMath.sol";
+import "../libraries/external/LiquidityAmounts.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.

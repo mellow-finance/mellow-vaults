@@ -3,12 +3,12 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
-import "../interfaces/IUniV3Oracle.sol";
+import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
-import "../DefaultAccessControl.sol";
+import "../utils/DefaultAccessControl.sol";
 
 contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
     IUniswapV3Factory public immutable factory;

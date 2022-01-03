@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../IntegrationVault.sol";
-import "../interfaces/IVaultGovernance.sol";
-import "../interfaces/IVault.sol";
+import "../vaults/IntegrationVault.sol";
+import "../interfaces/vaults/IVaultGovernance.sol";
+import "../interfaces/vaults/IVault.sol";
 
 contract TestFunctionEncoding {
     IntegrationVault public vault;

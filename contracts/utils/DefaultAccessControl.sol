@@ -2,25 +2,23 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
-import "./interfaces/IDefaultAccessControl.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../interfaces/utils/IDefaultAccessControl.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice This is a default access control with 2 roles -
 /// ADMIN and ADMIN_DELEGATE.
-contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnumerable {
+contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable {
     bytes32 public constant ADMIN_ROLE = keccak256("admin");
     bytes32 public constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
-    bool public initialized;
 
     /// @notice Creates a new contract.
     /// @param admin Admin of the contract
-    function init(address admin) external {
+    constructor(address admin) {
         require(admin != address(0), ExceptionsLibrary.ADMIN_ADDRESS_ZERO);
-        require(!initialized, ExceptionsLibrary.INIT);
-        _setupRole(ADMIN_ROLE, admin);
-        _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
-        _setRoleAdmin(ADMIN_DELEGATE_ROLE, ADMIN_ROLE);
-        initialized = true;
+        bytes32 adminRole = ADMIN_ROLE;
+        _setupRole(adminRole, admin);
+        _setRoleAdmin(adminRole, adminRole);
+        _setRoleAdmin(ADMIN_DELEGATE_ROLE, adminRole);
     }
 
     /// @notice Checks if the address is contract admin.

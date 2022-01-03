@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ2/IUniswapV2Pair.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
-import "../interfaces/IUniV2Oracle.sol";
+import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 
