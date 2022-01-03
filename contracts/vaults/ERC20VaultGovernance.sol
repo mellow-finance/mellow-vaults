@@ -1,48 +1,45 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./interfaces/IAaveVaultGovernance.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../trader/interfaces/ITrader.sol";
+import "../libraries/ExceptionsLibrary.sol";
+import "../interfaces/IERC20VaultGovernance.sol";
+import "../interfaces/IERC20Vault.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
-contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
+/// @notice Governance that manages all ERC20 Vaults params and can deploy a new ERC20 Vault.
+contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
-        require(
-            address(delayedProtocolParams_.lendingPool) != address(0),
-            ExceptionsLibrary.AAVE_LENDING_POOL_ADDRESS_ZERO
-        );
+        require(address(delayedProtocolParams_.trader) != address(0), ExceptionsLibrary.TRADER_ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
-    /// @inheritdoc IAaveVaultGovernance
+    /// @inheritdoc IERC20VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPYX96: 0});
-        }
+        if (_delayedProtocolParams.length == 0) return DelayedProtocolParams({trader: ITrader(address(0))});
+
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
-    /// @inheritdoc IAaveVaultGovernance
+    /// @inheritdoc IERC20VaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
-        if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPYX96: 0});
-        }
+        if (_stagedDelayedProtocolParams.length == 0) return DelayedProtocolParams({trader: ITrader(address(0))});
+
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
-    /// @inheritdoc IAaveVaultGovernance
+    /// @inheritdoc IERC20VaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
-    /// @inheritdoc IAaveVaultGovernance
+    /// @inheritdoc IERC20VaultGovernance
     function commitDelayedProtocolParams() external {
         _commitDelayedProtocolParams();
         emit CommitDelayedProtocolParams(
@@ -52,14 +49,14 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         );
     }
 
-    /// @inheritdoc IAaveVaultGovernance
+    /// @inheritdoc IERC20VaultGovernance
     function createVault(address[] memory vaultTokens_, address owner_)
         external
-        returns (IAaveVault vault, uint256 nft)
+        returns (IERC20Vault vault, uint256 nft)
     {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
-        vault = IAaveVault(vaddr);
+        vault = IERC20Vault(vaddr);
         vault.initialize(nft, vaultTokens_);
     }
 

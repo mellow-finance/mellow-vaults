@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../IntegrationVault.sol";
+import "../vaults/IntegrationVault.sol";
 import "../interfaces/IVaultGovernance.sol";
 import "../interfaces/IVault.sol";
 

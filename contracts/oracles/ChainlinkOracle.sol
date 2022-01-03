@@ -7,7 +7,7 @@ import "../interfaces/IChainlinkOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
-import "../DefaultAccessControl.sol";
+import "../utils/DefaultAccessControl.sol";
 
 /// @notice Contract for getting chainlink data
 contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {

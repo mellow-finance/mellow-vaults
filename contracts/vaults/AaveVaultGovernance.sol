@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./interfaces/IUniV3VaultGovernance.sol";
-import "./interfaces/IUniV3Vault.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../interfaces/IAaveVaultGovernance.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 
-/// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
-contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
+/// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
+contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
@@ -15,43 +14,35 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         VaultGovernance(internalParams_)
     {
         require(
-            address(delayedProtocolParams_.positionManager) != address(0),
-            ExceptionsLibrary.POSITION_MANAGER_ADDRESS_ZERO
+            address(delayedProtocolParams_.lendingPool) != address(0),
+            ExceptionsLibrary.AAVE_LENDING_POOL_ADDRESS_ZERO
         );
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
-    /// @inheritdoc IUniV3VaultGovernance
+    /// @inheritdoc IAaveVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         if (_delayedProtocolParams.length == 0) {
-            return
-                DelayedProtocolParams({
-                    positionManager: INonfungiblePositionManager(address(0)),
-                    oracle: IMellowOracle(address(0))
-                });
+            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPYX96: 0});
         }
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
-    /// @inheritdoc IUniV3VaultGovernance
+    /// @inheritdoc IAaveVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return
-                DelayedProtocolParams({
-                    positionManager: INonfungiblePositionManager(address(0)),
-                    oracle: IMellowOracle(address(0))
-                });
+            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPYX96: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
-    /// @inheritdoc IUniV3VaultGovernance
+    /// @inheritdoc IAaveVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
-    /// @inheritdoc IUniV3VaultGovernance
+    /// @inheritdoc IAaveVaultGovernance
     function commitDelayedProtocolParams() external {
         _commitDelayedProtocolParams();
         emit CommitDelayedProtocolParams(
@@ -61,16 +52,15 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         );
     }
 
-    /// @inheritdoc IUniV3VaultGovernance
-    function createVault(
-        address[] memory vaultTokens_,
-        uint24 fee_,
-        address owner_
-    ) external returns (IUniV3Vault vault, uint256 nft) {
+    /// @inheritdoc IAaveVaultGovernance
+    function createVault(address[] memory vaultTokens_, address owner_)
+        external
+        returns (IAaveVault vault, uint256 nft)
+    {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
-        vault = IUniV3Vault(vaddr);
-        vault.initialize(nft, vaultTokens_, fee_);
+        vault = IAaveVault(vaddr);
+        vault.initialize(nft, vaultTokens_);
     }
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
@@ -84,6 +74,7 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         DelayedProtocolParams params,
         uint256 when
     );
+
     /// @notice Emitted when new DelayedProtocolParams are committed
     /// @param origin Origin of the transaction
     /// @param sender Sender of the transaction

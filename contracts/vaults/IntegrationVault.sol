@@ -4,10 +4,10 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/IVaultRoot.sol";
-import "./interfaces/IIntegrationVault.sol";
-import "./libraries/CommonLibrary.sol";
-import "./libraries/ExceptionsLibrary.sol";
+import "../interfaces/IVaultRoot.sol";
+import "../interfaces/IIntegrationVault.sol";
+import "../libraries/CommonLibrary.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
 

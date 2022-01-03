@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
-import "./interfaces/external/aave/ILendingPool.sol";
-import "./interfaces/IAaveVaultGovernance.sol";
-import "./interfaces/IVault.sol";
-import "./interfaces/IAaveVault.sol";
+import "../interfaces/external/aave/ILendingPool.sol";
+import "../interfaces/IAaveVaultGovernance.sol";
+import "../interfaces/IVault.sol";
+import "../interfaces/IAaveVault.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
-import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Vault that interfaces Aave protocol in the integration layer.
 /// @dev Notes:

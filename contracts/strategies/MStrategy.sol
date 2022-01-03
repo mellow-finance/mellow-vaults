@@ -10,8 +10,8 @@ import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../DefaultAccessControlLateInit.sol";
-import "contracts/libraries/ExceptionsLibrary.sol";
+import "../utils/DefaultAccessControlLateInit.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 contract MStrategy is DefaultAccessControlLateInit {
     struct Params {

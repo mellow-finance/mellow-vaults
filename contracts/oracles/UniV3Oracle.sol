@@ -8,7 +8,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
-import "../DefaultAccessControl.sol";
+import "../utils/DefaultAccessControl.sol";
 
 contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
     IUniswapV3Factory public immutable factory;
