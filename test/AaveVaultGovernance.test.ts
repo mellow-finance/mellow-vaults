@@ -77,14 +77,6 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                 this.strategySigner = await addSigner(randomAddress());
 
                 if (!skipInit) {
-                    const { address: factoryAddress } =
-                        await deployments.deploy("AaveVaultFactoryTest", {
-                            from: this.deployer.address,
-                            contract: "AaveVaultFactory",
-                            args: [this.subject.address],
-                            autoMine: true,
-                        });
-                    await this.subject.initialize(factoryAddress);
                     await this.protocolGovernance
                         .connect(this.admin)
                         .setPendingVaultGovernancesAdd([this.subject.address]);
@@ -95,9 +87,8 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                     this.nft =
                         (await this.vaultRegistry.vaultsCount()).toNumber() + 1;
 
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         this.tokens.map((x: any) => x.address),
-                        [],
                         this.ownerSigner.address
                     );
                     await this.vaultRegistry

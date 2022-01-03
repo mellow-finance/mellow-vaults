@@ -13,12 +13,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     );
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
+    const { address: singleton } = await deploy("AaveVault", {
+        from: deployer,
+        args: [],
+        log: true,
+        autoMine: true,
+    });
     await deploy("AaveVaultGovernance", {
         from: deployer,
         args: [
             {
                 protocolGovernance: protocolGovernance.address,
                 registry: vaultRegistry.address,
+                singleton,
             },
             {
                 lendingPool: aaveLendingPool,
@@ -28,25 +35,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
     });
-    const governance = await get("AaveVaultGovernance");
-    await deploy("AaveVaultFactory", {
-        from: deployer,
-        args: [governance.address],
-        log: true,
-        autoMine: true,
-    });
-    const initialized = await read("AaveVaultGovernance", "initialized");
-    if (!initialized) {
-        log("Initializing factory...");
-
-        const factory = await get("AaveVaultFactory");
-        await execute(
-            "AaveVaultGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "initialize",
-            factory.address
-        );
-    }
 };
 export default func;
 func.tags = [

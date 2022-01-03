@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "./IProtocolGovernance.sol";
 import "./IVaultRegistry.sol";
-import "./IVaultFactory.sol";
 import "./IVault.sol";
 
 interface IVaultGovernance {
@@ -13,16 +12,10 @@ interface IVaultGovernance {
     struct InternalParams {
         IProtocolGovernance protocolGovernance;
         IVaultRegistry registry;
+        IVault singleton;
     }
 
-    // -------------------  PUBLIC, VIEW  -------------------
-
-    /// @notice Checks if contract is initialized.
-    /// @dev Uninitialized contracts cannot deploy vaults
-    function initialized() external view returns (bool);
-
-    /// @notice Vault factory for this Vault Governance.
-    function factory() external view returns (IVaultFactory);
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @notice Timestamp in unix time seconds after which staged Delayed Strategy Params could be committed.
     /// @param nft Nft of the vault
@@ -45,25 +38,7 @@ interface IVaultGovernance {
     /// @dev The Internal Params could be committed after internalParamsTimestamp
     function stagedInternalParams() external view returns (InternalParams memory);
 
-    // -------------------  PUBLIC, MUTATING  -------------------
-
-    /// @notice Instantly initialize governance with factory.
-    /// @dev Can only be called by initial deployer and only once.
-    /// Required to be called before any function starts working.
-    /// @param factory new factory
-    function initialize(IVaultFactory factory) external;
-
-    /// @notice Deploy a new vault.
-    /// @param vaultTokens ERC20 tokens under vault management
-    /// @param options Reserved additional deploy options. Should be 0x0.
-    /// @param owner Owner of the registry vault nft. If it is address(0) then vault will own his own nft
-    /// @return vault Address of the new vault
-    /// @return nft Nft of the vault in the vault registry
-    function deployVault(
-        address[] memory vaultTokens,
-        bytes memory options,
-        address owner
-    ) external returns (IVault vault, uint256 nft);
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Stage new Internal Params.
     /// @param newParams New Internal Params

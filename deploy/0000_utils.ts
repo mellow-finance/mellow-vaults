@@ -34,12 +34,12 @@ export const setupVault = async (
     expectedNft: number,
     contractName: string,
     {
-        deployOptions,
+        createVaultArgs,
         delayedStrategyParams,
         strategyParams,
         delayedProtocolPerVaultParams,
     }: {
-        deployOptions: any[];
+        createVaultArgs: any[];
         delayedStrategyParams?: { [key: string]: any };
         strategyParams?: { [key: string]: any };
         delayedProtocolPerVaultParams?: { [key: string]: any };
@@ -59,8 +59,8 @@ export const setupVault = async (
                 log: true,
                 autoMine: true,
             },
-            "deployVault",
-            ...deployOptions
+            "createVault",
+            ...createVaultArgs
         );
         log(`Done, nft = ${expectedNft}`);
     } else {
@@ -198,12 +198,12 @@ export const combineVaults = async (
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
-        deployOptions: [
+        createVaultArgs: [
             tokens,
-            coder.encode(
-                ["address", "uint256[]", "string", "string"],
-                [strategyAddress, nfts, "MStrategy LP Token", "MSLP"]
-            ),
+            strategyAddress,
+            nfts,
+            "MStrategy LP Token",
+            "MSLP",
             deployer,
         ],
         delayedStrategyParams: {

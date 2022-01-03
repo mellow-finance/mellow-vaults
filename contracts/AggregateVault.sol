@@ -4,49 +4,19 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./interfaces/IIntegrationVault.sol";
 import "./interfaces/IVaultRoot.sol";
+import "./interfaces/IAggregateVault.sol";
 import "./Vault.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
-contract AggregateVault is IVaultRoot, Vault {
+contract AggregateVault is IAggregateVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _subvaultNfts;
     uint256[] private _pullExistentials;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
-
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_,
-        address strategy,
-        uint256[] memory subvaultNfts_
-    ) Vault(vaultGovernance_, vaultTokens_, nft_) {
-        IVaultRegistry vaultRegistry = vaultGovernance_.internalParams().registry;
-        require(subvaultNfts_.length > 0, ExceptionsLibrary.ZERO_LENGTH);
-        for (uint256 i = 0; i < subvaultNfts_.length; i++) {
-            uint256 subvaultNft = subvaultNfts_[i];
-            require(subvaultNft > 0, ExceptionsLibrary.NFT_ZERO);
-            require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.TOKEN_OWNER);
-            require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE_NFT);
-            address vault = vaultRegistry.vaultForNft(subvaultNft);
-            require(vault != address(0), ExceptionsLibrary.VAULT_ADDRESS_ZERO);
-            require(
-                IIntegrationVault(vault).supportsInterface(type(IIntegrationVault).interfaceId),
-                ExceptionsLibrary.NOT_VAULT
-            );
-            vaultRegistry.approve(strategy, subvaultNft);
-            vaultRegistry.lockNft(subvaultNft);
-            _subvaultNftsIndex[subvaultNft] = i + 1;
-        }
-        for (uint256 i = 0; i < vaultTokens_.length; i++) {
-            ERC20 token = ERC20(vaultTokens_[i]);
-            _pullExistentials.push(10**(token.decimals() / 2));
-        }
-        _subvaultNfts = subvaultNfts_;
-    }
 
     function subvaultNfts() external view returns (uint256[] memory) {
         return _subvaultNfts;
@@ -63,7 +33,12 @@ contract AggregateVault is IVaultRoot, Vault {
     }
 
     /// @inheritdoc IVault
-    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+    function tvl()
+        public
+        view
+        override(IVault, Vault)
+        returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts)
+    {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         minTokenAmounts = new uint256[](_vaultTokens.length);
         maxTokenAmounts = new uint256[](_vaultTokens.length);
@@ -77,7 +52,39 @@ contract AggregateVault is IVaultRoot, Vault {
         }
     }
 
+    function _initialize(
+        address[] memory vaultTokens_,
+        uint256 nft_,
+        address strategy_,
+        uint256[] memory subvaultNfts_
+    ) internal virtual {
+        IVaultRegistry vaultRegistry = IVaultGovernance(msg.sender).internalParams().registry;
+        require(subvaultNfts_.length > 0, ExceptionsLibrary.ZERO_LENGTH);
+        for (uint256 i = 0; i < subvaultNfts_.length; i++) {
+            uint256 subvaultNft = subvaultNfts_[i];
+            require(subvaultNft > 0, ExceptionsLibrary.NFT_ZERO);
+            require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.TOKEN_OWNER);
+            require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE_NFT);
+            address vault = vaultRegistry.vaultForNft(subvaultNft);
+            require(vault != address(0), ExceptionsLibrary.VAULT_ADDRESS_ZERO);
+            require(
+                IIntegrationVault(vault).supportsInterface(type(IIntegrationVault).interfaceId),
+                ExceptionsLibrary.NOT_VAULT
+            );
+            vaultRegistry.approve(strategy_, subvaultNft);
+            vaultRegistry.lockNft(subvaultNft);
+            _subvaultNftsIndex[subvaultNft] = i + 1;
+        }
+        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+            ERC20 token = ERC20(vaultTokens_[i]);
+            _pullExistentials.push(10**(token.decimals() / 2));
+        }
+        _subvaultNfts = subvaultNfts_;
+        _initialize(vaultTokens_, nft_);
+    }
+
     function _push(uint256[] memory tokenAmounts, bytes memory) internal returns (uint256[] memory actualTokenAmounts) {
+        require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
         uint256 destNft = _subvaultNfts[0];
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         IIntegrationVault destVault = IIntegrationVault(registry.vaultForNft(destNft));
@@ -92,6 +99,7 @@ contract AggregateVault is IVaultRoot, Vault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal returns (uint256[] memory actualTokenAmounts) {
+        require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;

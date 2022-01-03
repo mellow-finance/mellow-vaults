@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "./trader/interfaces/ITrader.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./interfaces/IERC20VaultGovernance.sol";
+import "./interfaces/IERC20Vault.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all ERC20 Vaults params and can deploy a new ERC20 Vault.
@@ -46,6 +47,17 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
             msg.sender,
             abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
         );
+    }
+
+    /// @inheritdoc IERC20VaultGovernance
+    function createVault(address[] memory vaultTokens_, address owner_)
+        external
+        returns (IERC20Vault vault, uint256 nft)
+    {
+        address vaddr;
+        (vaddr, nft) = _createVault(owner_);
+        vault = IERC20Vault(vaddr);
+        vault.initialize(nft, vaultTokens_);
     }
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit

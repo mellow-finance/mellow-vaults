@@ -15,16 +15,6 @@ import "./libraries/ExceptionsLibrary.sol";
 contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    /// @notice Creates a new contract.
-    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
-    /// @param vaultTokens_ ERC20 tokens under Vault management
-    /// @param nft_ NFT of the vault in the VaultRegistry
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_
-    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {}
-
     /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -38,6 +28,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
+    }
+
+    function initialize(uint256 nft_, address[] memory vaultTokens_) external {
+        _initialize(vaultTokens_, nft_);
     }
 
     /// @inheritdoc ITrader

@@ -6,30 +6,43 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./libraries/external/FullMath.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./interfaces/IERC20RootVaultGovernance.sol";
+import "./interfaces/IERC20RootVault.sol";
 import "./AggregateVault.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
+contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
     uint256[] private _lpPriceHighWaterMarks;
     uint256 public lastFeeCharge;
+    string private _tokenName;
+    string private _tokenSymbol;
 
-    /// @notice Creates a new contract.
-    /// @dev All subvault nfts must be owned by this vault before.
-    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
-    /// @param vaultTokens_ ERC20 tokens under Vault management
-    /// @param nft_ NFT of the vault in the VaultRegistry
-    /// @param name_ Name of the ERC20 token
-    /// @param symbol_ Symbol of the ERC20 token
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
+    constructor() ERC20("", "") {}
+
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    function name() public view override returns (string memory) {
+        return _tokenName;
+    }
+
+    function symbol() public view override returns (string memory) {
+        return _tokenSymbol;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    function initialize(
         uint256 nft_,
-        address strategy,
+        address[] memory vaultTokens_,
+        address strategy_,
         uint256[] memory subvaultNfts_,
         string memory name_,
         string memory symbol_
-    ) AggregateVault(vaultGovernance_, vaultTokens_, nft_, strategy, subvaultNfts_) ERC20(name_, symbol_) {}
+    ) external {
+        _initialize(vaultTokens_, nft_, strategy_, subvaultNfts_);
+        _tokenName = name_;
+        _tokenSymbol = symbol_;
+    }
 
     function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
@@ -91,6 +104,59 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
         _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _getLpAmount(
+        uint256[] memory tvl_,
+        uint256[] memory amounts,
+        uint256 supply
+    ) internal pure returns (uint256 lpAmount) {
+        if (supply == 0) {
+            // On init lpToken = max(tokenAmounts)
+            for (uint256 i = 0; i < tvl_.length; ++i) {
+                if (amounts[i] > lpAmount) {
+                    lpAmount = amounts[i];
+                }
+            }
+
+            return lpAmount;
+        }
+        uint256 tvlsLength = tvl_.length;
+        for (uint256 i = 0; i < tvlsLength; ++i) {
+            if ((amounts[i] == 0) || (tvl_[i] == 0)) {
+                continue;
+            }
+
+            uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
+            // take min of meaningful tokenLp amounts
+            if ((tokenLpAmount < lpAmount) || (lpAmount == 0)) {
+                lpAmount = tokenLpAmount;
+            }
+        }
+    }
+
+    function _getNormalizedAmount(
+        uint256 tvl_,
+        uint256 amount,
+        uint256 lpAmount,
+        uint256 supply
+    ) internal pure returns (uint256) {
+        if (supply == 0) {
+            // skip normalization on init
+            return amount;
+        }
+
+        // normalize amount
+        uint256 res = FullMath.mulDiv(tvl_, lpAmount, CommonLibrary.PRICE_DENOMINATOR);
+        if (res > amount) {
+            res = amount;
+        }
+
+        return res;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     /// @dev We don't charge on any deposit / withdraw to save gas.
     /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
@@ -179,55 +245,6 @@ contract ERC20RootVault is ERC20, ReentrancyGuard, AggregateVault {
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
-    }
-
-    function _getLpAmount(
-        uint256[] memory tvl_,
-        uint256[] memory amounts,
-        uint256 supply
-    ) internal pure returns (uint256 lpAmount) {
-        if (supply == 0) {
-            // On init lpToken = max(tokenAmounts)
-            for (uint256 i = 0; i < tvl_.length; ++i) {
-                if (amounts[i] > lpAmount) {
-                    lpAmount = amounts[i];
-                }
-            }
-
-            return lpAmount;
-        }
-        uint256 tvlsLength = tvl_.length;
-        for (uint256 i = 0; i < tvlsLength; ++i) {
-            if ((amounts[i] == 0) || (tvl_[i] == 0)) {
-                continue;
-            }
-
-            uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
-            // take min of meaningful tokenLp amounts
-            if ((tokenLpAmount < lpAmount) || (lpAmount == 0)) {
-                lpAmount = tokenLpAmount;
-            }
-        }
-    }
-
-    function _getNormalizedAmount(
-        uint256 tvl_,
-        uint256 amount,
-        uint256 lpAmount,
-        uint256 supply
-    ) internal pure returns (uint256) {
-        if (supply == 0) {
-            // skip normalization on init
-            return amount;
-        }
-
-        // normalize amount
-        uint256 res = FullMath.mulDiv(tvl_, lpAmount, CommonLibrary.PRICE_DENOMINATOR);
-        if (res > amount) {
-            res = amount;
-        }
-
-        return res;
     }
 
     /// @notice Emitted when management fees are charged

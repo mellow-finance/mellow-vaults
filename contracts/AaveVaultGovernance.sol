@@ -52,6 +52,17 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         );
     }
 
+    /// @inheritdoc IAaveVaultGovernance
+    function createVault(address[] memory vaultTokens_, address owner_)
+        external
+        returns (IAaveVault vault, uint256 nft)
+    {
+        address vaddr;
+        (vaddr, nft) = _createVault(owner_);
+        vault = IAaveVault(vaddr);
+        vault.initialize(nft, vaultTokens_);
+    }
+
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction
     /// @param sender Sender of the transaction

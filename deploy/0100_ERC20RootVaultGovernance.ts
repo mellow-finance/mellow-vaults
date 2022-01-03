@@ -10,48 +10,36 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
-    await deploy("ERC20RootVaultGovernance", {
+    const { address: singleton } = await deploy("ERC20RootVault", {
         from: deployer,
-        args: [
-            {
-                protocolGovernance: protocolGovernance.address,
-                registry: vaultRegistry.address,
-            },
-            { managementFeeChargeDelay: 86400 },
-        ],
+        args: [],
         log: true,
         autoMine: true,
     });
-    const governance = await get("ERC20RootVaultGovernance");
-    await deploy("ERC20RootVaultFactory", {
-        from: deployer,
-        args: [governance.address],
-        log: true,
-        autoMine: true,
-    });
-    const initialized = await read("ERC20RootVaultGovernance", "initialized");
-    if (!initialized) {
-        log("Initializing factory...");
-
-        const factory = await get("ERC20RootVaultFactory");
-        await execute(
-            "ERC20RootVaultGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "initialize",
-            factory.address
-        );
-    }
-    const { address: lpIssuerVaultGovernanceAddress } = await get(
-        "ERC20RootVaultGovernance"
+    const { address: ERC20RootVaultGovernanceAddress } = await deploy(
+        "ERC20RootVaultGovernance",
+        {
+            from: deployer,
+            args: [
+                {
+                    protocolGovernance: protocolGovernance.address,
+                    registry: vaultRegistry.address,
+                    singleton,
+                },
+                { managementFeeChargeDelay: 86400 },
+            ],
+            log: true,
+            autoMine: true,
+        }
     );
     const approvedIssuer = await read(
         "VaultRegistry",
         "isApprovedForAll",
         deployer,
-        lpIssuerVaultGovernanceAddress
+        ERC20RootVaultGovernanceAddress
     );
     if (!approvedIssuer) {
-        log("Approving lp issuer governance");
+        log("Approving ERC20RootVault governance");
         await execute(
             "VaultRegistry",
             {
@@ -60,7 +48,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 autoMine: true,
             },
             "setApprovalForAll",
-            lpIssuerVaultGovernanceAddress,
+            ERC20RootVaultGovernanceAddress,
             true
         );
     }

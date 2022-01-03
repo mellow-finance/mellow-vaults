@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./external/yearn/IYearnVaultRegistry.sol";
+import "./external/yearn/IYearnProtocolVaultRegistry.sol";
 import "./IVaultGovernance.sol";
+import "./IYearnVault.sol";
 
 interface IYearnVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param yearnVaultRegistry Reference to Yearn Vault Registry
     struct DelayedProtocolParams {
-        IYearnVaultRegistry yearnVaultRegistry;
+        IYearnProtocolVaultRegistry yearnVaultRegistry;
     }
 
     /// @notice Determines a corresponding Yearn vault for token
@@ -35,4 +36,11 @@ interface IYearnVaultGovernance is IVaultGovernance {
     /// @param token ERC-20 token for yToken
     /// @param yToken for ERC-20 token
     function setYTokenForToken(address token, address yToken) external;
+
+    /// @notice Deploys a new vault.
+    /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
+    /// @param owner_ Owner of the vault NFT
+    function createVault(address[] memory vaultTokens_, address owner_)
+        external
+        returns (IYearnVault vault, uint256 nft);
 }

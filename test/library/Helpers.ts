@@ -198,27 +198,27 @@ export const deployVault = async (
         `${params.name}Governance`
     );
     const coder = ethers.utils.defaultAbiCoder;
-    let options;
+    let options: any[];
     switch (params.name) {
         case "UniV3Vault":
-            options = coder.encode(["uint256"], [params.fee]);
+            options = [params.fee];
             break;
         case "ERC20RootVault":
-            options = coder.encode(
-                ["address", "uint256[]", "string", "string"],
-                [
-                    params.strategy,
-                    params.subvaultNfts,
-                    params.tokenName,
-                    params.tokenSymbol,
-                ]
-            );
+            options = [
+                params.strategy,
+                params.subvaultNfts,
+                params.tokenName,
+                params.tokenSymbol,
+            ];
 
         default:
             options = [];
             break;
     }
-    await governance.deployVault(params.vaultTokens, options, params.nftOwner);
+    // @ts-ignore
+    await governance.createVault(
+        ...[params.vaultTokens, ...options, params.nftOwner]
+    );
     const vaultRegistry: VaultRegistry = await ethers.getContract(
         "VaultRegistry"
     );

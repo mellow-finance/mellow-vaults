@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IVaultGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
@@ -29,9 +30,6 @@ abstract contract VaultGovernance is IVaultGovernance {
     mapping(uint256 => bytes) internal _strategyParams;
     bytes internal _protocolParams;
 
-    IVaultFactory public factory;
-    bool public initialized;
-
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
@@ -43,7 +41,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         _internalParams = internalParams_;
     }
 
-    // -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVaultGovernance
     function delayedStrategyParamsTimestamp(uint256 nft) external view returns (uint256) {
@@ -75,33 +73,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         return _stagedInternalParams;
     }
 
-    // -------------------  PUBLIC, MUTATING  -------------------
-
-    /// @inheritdoc IVaultGovernance
-    function initialize(IVaultFactory factory_) external {
-        require(!initialized, ExceptionsLibrary.INITIALIZATION);
-        factory = factory_;
-        initialized = true;
-    }
-
-    /// @inheritdoc IVaultGovernance
-    function deployVault(
-        address[] memory vaultTokens,
-        bytes memory options,
-        address owner
-    ) public virtual returns (IVault vault, uint256 nft) {
-        require(initialized, ExceptionsLibrary.INITIALIZATION);
-        IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
-        require(
-            protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
-            ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN
-        );
-        IVaultRegistry vaultRegistry = _internalParams.registry;
-        nft = vaultRegistry.vaultsCount() + 1;
-        vault = factory.deployVault(vaultTokens, nft, options);
-        vaultRegistry.registerVault(address(vault), owner);
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens, options, owner, address(vault), nft);
-    }
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IVaultGovernance
     function stageInternalParams(InternalParams memory newParams) external {
@@ -122,6 +94,18 @@ abstract contract VaultGovernance is IVaultGovernance {
     }
 
     // -------------------  INTERNAL  -------------------
+
+    function _createVault(address owner) internal returns (address vault, uint256 nft) {
+        IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
+        require(
+            protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
+            ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN
+        );
+        IVaultRegistry vaultRegistry = _internalParams.registry;
+        nft = vaultRegistry.vaultsCount() + 1;
+        vault = Clones.cloneDeterministic(address(_internalParams.singleton), bytes32(nft));
+        vaultRegistry.registerVault(address(vault), owner);
+    }
 
     /// @notice Set Delayed Strategy Params
     /// @param nft Nft of the vault

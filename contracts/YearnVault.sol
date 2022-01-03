@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./interfaces/external/yearn/IYearnVault.sol";
+import "./interfaces/external/yearn/IYearnProtocolVault.sol";
 import "./interfaces/IYearnVaultGovernance.sol";
+import "./interfaces/IYearnVault.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
@@ -23,24 +24,9 @@ import "./IntegrationVault.sol";
 /// There are some deposit limits imposed by Yearn vaults.
 /// The contract's vaultTokens are fully allowed to corresponding yTokens.
 
-contract YearnVault is IntegrationVault {
+contract YearnVault is IYearnVault, IntegrationVault {
     address[] private _yTokens;
     uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
-
-    /// @notice Creates a new contract.
-    /// @param vaultGovernance_ Reference to VaultGovernance for this vault
-    /// @param vaultTokens_ ERC20 tokens under Vault management
-    constructor(
-        IVaultGovernance vaultGovernance_,
-        address[] memory vaultTokens_,
-        uint256 nft_
-    ) IntegrationVault(vaultGovernance_, vaultTokens_, nft_) {
-        _yTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            _yTokens[i] = IYearnVaultGovernance(address(vaultGovernance_)).yTokenForToken(_vaultTokens[i]);
-            require(_yTokens[i] != address(0), ExceptionsLibrary.YEARN_VAULT);
-        }
-    }
 
     /// @notice Yearn protocol vaults used by this contract
     function yTokens() external view returns (address[] memory) {
@@ -52,10 +38,19 @@ contract YearnVault is IntegrationVault {
         address[] memory tokens = _vaultTokens;
         minTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < _yTokens.length; ++i) {
-            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             minTokenAmounts[i] = (yToken.balanceOf(address(this)) * yToken.pricePerShare()) / (10**yToken.decimals());
         }
         maxTokenAmounts = minTokenAmounts;
+    }
+
+    function initialize(uint256 nft_, address[] memory vaultTokens_) external {
+        _yTokens = new address[](vaultTokens_.length);
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            _yTokens[i] = IYearnVaultGovernance(address(msg.sender)).yTokenForToken(_vaultTokens[i]);
+            require(_yTokens[i] != address(0), ExceptionsLibrary.YEARN_VAULT);
+        }
+        _initialize(vaultTokens_, nft_);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
@@ -70,7 +65,7 @@ contract YearnVault is IntegrationVault {
             }
 
             address token = tokens[i];
-            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             _allowTokenIfNecessary(token, address(yToken));
             yToken.deposit(tokenAmounts[i], address(this));
         }
@@ -87,7 +82,7 @@ contract YearnVault is IntegrationVault {
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0) continue;
 
-            IYearnVault yToken = IYearnVault(_yTokens[i]);
+            IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             uint256 yTokenAmount = ((tokenAmounts[i] * (10**yToken.decimals())) / yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
             if (yTokenAmount > balance) {

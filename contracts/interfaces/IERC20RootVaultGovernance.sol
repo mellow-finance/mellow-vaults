@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "./IERC20RootVault.sol";
 import "./IVaultGovernance.sol";
 
 interface IERC20RootVaultGovernance is IVaultGovernance {
@@ -95,4 +96,20 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
 
     /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function commitDelayedProtocolParams() external;
+
+    /// @notice Deploys a new vault.
+    /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
+    /// @param strategy_ The address that will have approvals for subvaultNfts
+    /// @param subvaultNfts_ The NFTs of the subvaults that will be aggregated by this ERC20RootVault
+    /// @param name_ ERC20 Name of the token
+    /// @param symbol_ ERC20 Name of the token
+    /// @param owner_ Owner of the vault NFT
+    function createVault(
+        address[] memory vaultTokens_,
+        address strategy_,
+        uint256[] memory subvaultNfts_,
+        string memory name_,
+        string memory symbol_,
+        address owner_
+    ) external returns (IERC20RootVault vault, uint256 nft);
 }
