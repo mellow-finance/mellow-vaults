@@ -33,11 +33,8 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     constructor(InternalParams memory internalParams_) {
-        require(
-            address(internalParams_.protocolGovernance) != address(0),
-            ExceptionsLibrary.PROTOCOL_GOVERNANCE_ADDRESS_ZERO
-        );
-        require(address(internalParams_.registry) != address(0), ExceptionsLibrary.VAULT_REGISTRY_ADDRESS_ZERO);
+        require(address(internalParams_.protocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(internalParams_.registry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _internalParams = internalParams_;
     }
 
@@ -99,7 +96,7 @@ abstract contract VaultGovernance is IVaultGovernance {
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
         require(
             protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
-            ExceptionsLibrary.PERMISSIONLESS_OR_ADMIN
+            ExceptionsLibrary.FORBIDDEN
         );
         IVaultRegistry vaultRegistry = _internalParams.registry;
         nft = vaultRegistry.vaultsCount() + 1;
@@ -196,12 +193,12 @@ abstract contract VaultGovernance is IVaultGovernance {
             (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
                 _internalParams.registry.getApproved(nft) == msg.sender ||
                 (_internalParams.registry.ownerOf(nft) == msg.sender)),
-            ExceptionsLibrary.REQUIRE_AT_LEAST_STRATEGY
+            ExceptionsLibrary.FORBIDDEN
         );
     }
 
     function _requireProtocolAdmin() internal view {
-        require(_internalParams.protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(_internalParams.protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 
     /// @notice Emitted when InternalParams are staged for commit

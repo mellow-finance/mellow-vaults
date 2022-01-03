@@ -59,17 +59,17 @@ contract AggregateVault is IAggregateVault, Vault {
         uint256[] memory subvaultNfts_
     ) internal virtual {
         IVaultRegistry vaultRegistry = IVaultGovernance(msg.sender).internalParams().registry;
-        require(subvaultNfts_.length > 0, ExceptionsLibrary.ZERO_LENGTH);
+        require(subvaultNfts_.length > 0, ExceptionsLibrary.EMPTY_LIST);
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
             uint256 subvaultNft = subvaultNfts_[i];
-            require(subvaultNft > 0, ExceptionsLibrary.NFT_ZERO);
-            require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.TOKEN_OWNER);
-            require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE_NFT);
+            require(subvaultNft > 0, ExceptionsLibrary.VALUE_ZERO);
+            require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.FORBIDDEN);
+            require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE);
             address vault = vaultRegistry.vaultForNft(subvaultNft);
-            require(vault != address(0), ExceptionsLibrary.VAULT_ADDRESS_ZERO);
+            require(vault != address(0), ExceptionsLibrary.ADDRESS_ZERO);
             require(
                 IIntegrationVault(vault).supportsInterface(type(IIntegrationVault).interfaceId),
-                ExceptionsLibrary.NOT_VAULT
+                ExceptionsLibrary.INVALID_INTERFACE
             );
             vaultRegistry.approve(strategy_, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
@@ -84,7 +84,7 @@ contract AggregateVault is IAggregateVault, Vault {
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory) internal returns (uint256[] memory actualTokenAmounts) {
-        require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
+        require(_nft != 0, ExceptionsLibrary.INIT);
         uint256 destNft = _subvaultNfts[0];
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         IIntegrationVault destVault = IIntegrationVault(registry.vaultForNft(destNft));
@@ -99,7 +99,7 @@ contract AggregateVault is IAggregateVault, Vault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal returns (uint256[] memory actualTokenAmounts) {
-        require(_nft != 0, ExceptionsLibrary.INITIALIZATION);
+        require(_nft != 0, ExceptionsLibrary.INIT);
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;

@@ -78,7 +78,7 @@
 //                         "name",
 //                         "symbol"
 //                     )
-//                 ).to.be.revertedWith(Exceptions.SORTED_AND_UNIQUE);
+//                 ).to.be.revertedWith(Exceptions.INVARIANT);
 //             });
 //         });
 //     });
@@ -89,7 +89,7 @@
 //                 await expect(
 //                     LpIssuer.connect(stranger).addSubvault(42)
 //                 ).to.be.revertedWith(
-//                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+//                     Exceptions.FORBIDDEN
 //                 );
 //             });
 //         });
@@ -434,7 +434,7 @@
 //             it("reverts", async () => {
 //                 await expect(
 //                     LpIssuer.withdraw(await deployer.getAddress(), 1, [])
-//                 ).to.be.revertedWith(Exceptions.TOTAL_SUPPLY_IS_ZERO);
+//                 ).to.be.revertedWith(Exceptions.VALUE_ZERO);
 //             });
 //         });
 
@@ -474,7 +474,7 @@
 //                 await expect(
 //                     LpIssuer.connect(stranger).initialize(42)
 //                 ).to.be.revertedWith(
-//                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+//                     Exceptions.FORBIDDEN
 //                 );
 //             });
 //         });

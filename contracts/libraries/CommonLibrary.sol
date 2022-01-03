@@ -119,12 +119,12 @@ library CommonLibrary {
         returns (uint256[][] memory)
     {
         uint256 k = weights.length;
-        require(k > 0, ExceptionsLibrary.WEIGHTS_LENGTH_IS_ZERO);
+        require(k > 0, ExceptionsLibrary.EMPTY_LIST);
         uint256 n = amounts.length;
-        require(n > 0, ExceptionsLibrary.AMOUNTS_LENGTH_IS_ZERO);
+        require(n > 0, ExceptionsLibrary.EMPTY_LIST);
         uint256[] memory weightsNorm = new uint256[](n);
         for (uint256 i = 0; i < k; ++i) {
-            require(weights[i].length == n, ExceptionsLibrary.MATRIX_NOT_RECTANGULAR);
+            require(weights[i].length == n, ExceptionsLibrary.INVALID_VALUE);
         }
         for (uint256 j = 0; j < n; ++j) {
             weightsNorm[j] = 0;

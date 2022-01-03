@@ -60,7 +60,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             address aToken = _getAToken(_vaultTokens[i]);
-            require(aToken != address(0), ExceptionsLibrary.ZERO_TOKEN);
+            require(aToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
             _aTokens[i] = aToken;
             _tvls.push(0);
         }

@@ -127,7 +127,7 @@
 //                         AaveVault.address,
 //                         [token.address]
 //                     )
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 
@@ -139,7 +139,7 @@
 //                         .reclaimTokens(await stranger.getAddress(), [
 //                             token.address,
 //                         ])
-//                 ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
+//                 ).to.be.revertedWith(Exceptions.INVALID_TARGET);
 //             });
 //         });
 
@@ -226,7 +226,7 @@
 //                             differentERC20Vault.address,
 //                             [differentERC20Vault.address]
 //                         )
-//                     ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
+//                     ).to.be.revertedWith(Exceptions.INVALID_TARGET);
 //                 });
 //             });
 //         });
@@ -239,7 +239,7 @@
 //                     gatewayVault
 //                         .connect(stranger)
 //                         .claimRewards(ERC20Vault.address, [])
-//                 ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //         describe("when from Vault is not registered", () => {
@@ -257,7 +257,7 @@
 //                     gatewayVault
 //                         .connect(deployer)
 //                         .claimRewards(AaveVault.address, [])
-//                 ).to.be.revertedWith(Exceptions.ALLOWED_TO_CLAIM);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //         describe("when allowed to claim and data is empty", () => {
@@ -319,7 +319,7 @@
 //                         [],
 //                         []
 //                     )
-//                 ).to.be.revertedWith(Exceptions.VALID_PULL_DESTINATION);
+//                 ).to.be.revertedWith(Exceptions.INVALID_TARGET);
 //             });
 //         });
 
@@ -332,7 +332,7 @@
 //                         [],
 //                         []
 //                     )
-//                 ).to.be.revertedWith(Exceptions.APPROVED_OR_OWNER);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });
@@ -381,7 +381,7 @@
 //                         .connect(deployer)
 //                         .initialize(ERC20Vault.address, [])
 //                 ).to.be.revertedWith(
-//                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+//                     Exceptions.FORBIDDEN
 //                 );
 //             });
 //         });

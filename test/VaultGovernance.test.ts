@@ -167,7 +167,7 @@
 //                     contract
 //                         .connect(stranger)
 //                         .stageInternalParams(initialParams)
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 
@@ -218,7 +218,7 @@
 
 //                 await expect(
 //                     contract.connect(stranger).commitInternalParams()
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 
@@ -654,7 +654,7 @@
 //                     contract
 //                         .connect(stranger)
 //                         .deployVault([], [], await deployer.getAddress())
-//                 ).to.be.revertedWith(Exceptions.PERMISSIONLESS_OR_ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });
@@ -671,7 +671,7 @@
 //             it("reverts", async () => {
 //                 await expect(
 //                     contract.connect(stranger).requireProtocolAdmin()
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });

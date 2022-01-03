@@ -98,8 +98,8 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @inheritdoc IERC20RootVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
-        require(params.managementFee <= MAX_MANAGEMENT_FEE, ExceptionsLibrary.MAX_MANAGEMENT_FEE);
-        require(params.performanceFee <= MAX_PERFORMANCE_FEE, ExceptionsLibrary.MAX_PERFORMANCE_FEE);
+        require(params.managementFee <= MAX_MANAGEMENT_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(params.performanceFee <= MAX_PERFORMANCE_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
         _stageDelayedStrategyParams(nft, abi.encode(params));
         emit StageDelayedStrategyParams(tx.origin, msg.sender, nft, params, _delayedStrategyParamsTimestamp[nft]);
     }
@@ -117,7 +117,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @inheritdoc IERC20RootVaultGovernance
     function stageDelayedProtocolPerVaultParams(uint256 nft, DelayedProtocolPerVaultParams calldata params) external {
-        require(params.protocolFee <= MAX_PROTOCOL_FEE, ExceptionsLibrary.MAX_PROTOCOL_FEE);
+        require(params.protocolFee <= MAX_PROTOCOL_FEE, ExceptionsLibrary.LIMIT_OVERFLOW);
         _stageDelayedProtocolPerVaultParams(nft, abi.encode(params));
         emit StageDelayedProtocolPerVaultParams(
             tx.origin,

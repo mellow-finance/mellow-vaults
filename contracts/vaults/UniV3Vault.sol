@@ -38,11 +38,11 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         address[] memory vaultTokens_,
         uint24 fee_
     ) external {
-        require(_vaultTokens.length == 2, ExceptionsLibrary.TOKEN_LENGTH);
+        require(_vaultTokens.length == 2, ExceptionsLibrary.INVALID_VALUE);
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
-        require(address(pool) != address(0), ExceptionsLibrary.UNISWAP_POOL_NOT_FOUND);
+        require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
 
         _initialize(vaultTokens_, nft_);
     }
@@ -53,16 +53,16 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 tokenId,
         bytes memory
     ) external returns (bytes4) {
-        require(msg.sender == address(_positionManager()), ExceptionsLibrary.NOT_POSITION_MANAGER);
-        require(_isStrategy(operator), ExceptionsLibrary.NOT_STRATEGY);
+        require(msg.sender == address(_positionManager()), ExceptionsLibrary.FORBIDDEN);
+        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, , , , , , , , ) = _positionManager().positions(tokenId);
         // new position should have vault tokens
-        require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1], ExceptionsLibrary.NOT_VAULT_TOKEN);
+        require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1], ExceptionsLibrary.INVALID_TOKEN);
 
         if (uniV3Nft != 0) {
             (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = _positionManager()
                 .positions(uniV3Nft);
-            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.TVL_NOT_ZERO);
+            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.INVALID_VALUE);
             // return previous uni v3 position nft
             _positionManager().transferFrom(address(this), from, uniV3Nft);
         }
@@ -72,10 +72,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.APPROVED_OR_OWNER);
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
-        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.VALID_PULL_DESTINATION);
+        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.INVALID_TARGET);
         collectedEarnings = new uint256[](2);
         (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
             INonfungiblePositionManager.CollectParams({
@@ -253,7 +253,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
         if (options.length == 0) return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
 
-        require(options.length == 32 * 3, ExceptionsLibrary.IO_LENGTH);
+        require(options.length == 32 * 3, ExceptionsLibrary.INVALID_VALUE);
         return abi.decode(options, (Options));
     }
 

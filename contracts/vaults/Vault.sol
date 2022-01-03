@@ -74,13 +74,13 @@ abstract contract Vault is IVault, ERC165 {
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {
-        require(_nft == 0, ExceptionsLibrary.INITIALIZATION);
-        require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.SORTED_AND_UNIQUE);
-        require(nft_ != 0, ExceptionsLibrary.NFT_ZERO); // guarantees that this method can only be called once
+        require(_nft == 0, ExceptionsLibrary.INIT);
+        require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.INVARIANT);
+        require(nft_ != 0, ExceptionsLibrary.VALUE_ZERO); // guarantees that this method can only be called once
         IProtocolGovernance governance = IVaultGovernance(msg.sender).internalParams().protocolGovernance;
         require(
             vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(),
-            ExceptionsLibrary.IO_LENGTH
+            ExceptionsLibrary.INVALID_VALUE
         );
         _vaultGovernance = IVaultGovernance(msg.sender);
         _vaultTokens = vaultTokens_;

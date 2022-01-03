@@ -156,7 +156,7 @@
 //                         await stranger.getAddress()
 //                     )
 //                 ).to.be.revertedWith(
-//                     Exceptions.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+//                     Exceptions.FORBIDDEN
 //                 );
 //             });
 //         });
@@ -232,7 +232,7 @@
 //                     vaultRegistry
 //                         .connect(stranger)
 //                         .stageProtocolGovernance(protocolGovernance.address)
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });
@@ -251,7 +251,7 @@
 //                 await sleep(Number(await protocolGovernance.governanceDelay()));
 //                 await expect(
 //                     vaultRegistry.commitStagedProtocolGovernance()
-//                 ).to.be.revertedWith(Exceptions.NULL_OR_NOT_INITIALIZED);
+//                 ).to.be.revertedWith(Exceptions.INIT);
 //             });
 //         });
 
@@ -265,7 +265,7 @@
 //                     vaultRegistry
 //                         .connect(stranger)
 //                         .commitStagedProtocolGovernance()
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 
@@ -329,7 +329,7 @@
 //                                 newAddress,
 //                                 nft
 //                             )
-//                         ).to.be.revertedWith(Exceptions.ADMIN);
+//                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //                     }
 //                 }
 //             });
@@ -392,7 +392,7 @@
 //                     randomAddress(),
 //                     nft
 //                 )
-//             ).to.be.revertedWith(Exceptions.LOCKED_NFT);
+//             ).to.be.revertedWith(Exceptions.LOCK);
 //             await expect(
 //                 execute(
 //                     "VaultRegistry",
@@ -402,7 +402,7 @@
 //                     randomAddress(),
 //                     nft
 //                 )
-//             ).to.be.revertedWith(Exceptions.LOCKED_NFT);
+//             ).to.be.revertedWith(Exceptions.LOCK);
 //         });
 
 //         describe("when called not by owner", () => {
@@ -437,7 +437,7 @@
 //                             "lockNft",
 //                             nft
 //                         )
-//                     ).to.be.revertedWith(Exceptions.TOKEN_OWNER);
+//                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //                 }
 //             });
 //         });

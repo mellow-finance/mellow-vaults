@@ -559,7 +559,7 @@
 //                         nft,
 //                         paramsToStage
 //                     )
-//                 ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });
@@ -883,7 +883,7 @@
 //                         "commitDelayedStrategyParams",
 //                         nft
 //                     )
-//                 ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });
@@ -1002,7 +1002,7 @@
 //                         nft,
 //                         paramsToStage
 //                     )
-//                 ).to.be.revertedWith(Exceptions.ADMIN);
+//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
 //     });

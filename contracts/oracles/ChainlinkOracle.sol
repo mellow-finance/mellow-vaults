@@ -35,16 +35,16 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
 
     /// @inheritdoc IChainlinkOracle
     function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _addChainlinkOracles(tokens, oracles);
     }
 
     function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
-        require(tokens.length == oracles.length, ExceptionsLibrary.TOKEN_LENGTH);
+        require(tokens.length == oracles.length, ExceptionsLibrary.INVALID_VALUE);
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
             address oracle = oracles[i];
-            require(!_tokenAllowlist.contains(token), ExceptionsLibrary.TOKEN_ALREADY_WHITELISTED);
+            require(!_tokenAllowlist.contains(token), ExceptionsLibrary.DUPLICATE);
             _tokenAllowlist.add(token);
             chainlinkOracles[token] = oracle;
         }
@@ -53,16 +53,13 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
 
     /// @inheritdoc IChainlinkOracle
     function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
-        require(
-            _tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1),
-            ExceptionsLibrary.TOKEN_IS_NOT_WHITELISTED
-        );
-        require(token1 > token0, ExceptionsLibrary.SORTED_AND_UNIQUE);
+        require(_tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1), ExceptionsLibrary.ALLOWLIST);
+        require(token1 > token0, ExceptionsLibrary.INVARIANT);
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(chainlinkOracles[token0]);
         IAggregatorV3 chainlinkOracle1 = IAggregatorV3(chainlinkOracles[token1]);
         require(
             (address(chainlinkOracle0) != address(0)) && (address(chainlinkOracle1) != address(0)),
-            ExceptionsLibrary.ORACLE_NOT_FOUND
+            ExceptionsLibrary.NOT_FOUND
         );
         priceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
     }

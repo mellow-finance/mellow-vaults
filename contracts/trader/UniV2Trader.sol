@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "../interfaces/trader/IUniV2Trader.sol";
-import "../libraries/trader/TraderExceptionsLibrary.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./Trader.sol";
 
 /// @notice Contract that executes swaps on Uniswap V2
@@ -15,7 +15,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
     IUniswapV2Router02 public immutable router;
 
     constructor(address _router) {
-        require(_router != address(0), TraderExceptionsLibrary.ADDRESS_ZERO_EXCEPTION);
+        require(_router != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         router = IUniswapV2Router02(_router);
     }
 
@@ -27,7 +27,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256) {
-        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+        require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         IERC20(path[0].token0).safeTransferFrom(recipient, address(this), amount);
         _approveERC20TokenIfNecessary(path[0].token0, address(router));
@@ -49,7 +49,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256) {
-        require(super._validatePathLinked(path), TraderExceptionsLibrary.INVALID_TRADE_PATH_EXCEPTION);
+        require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         IERC20(path[0].token0).safeTransferFrom(recipient, address(this), options_.limitAmount);
         uint256[] memory amounts = router.swapTokensForExactTokens(

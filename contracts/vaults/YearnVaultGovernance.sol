@@ -16,10 +16,7 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
-        require(
-            address(delayedProtocolParams_.yearnVaultRegistry) != address(0),
-            ExceptionsLibrary.YEARN_REGISTRY_ADDRESS_ZERO
-        );
+        require(address(delayedProtocolParams_.yearnVaultRegistry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 

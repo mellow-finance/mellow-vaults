@@ -56,14 +56,14 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
         }
         uint256[] memory actualTokenAmounts = _push(normalizedAmounts, "");
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
-        require(lpAmount >= minLpTokens, ExceptionsLibrary.MIN_LP_AMOUNT);
-        require(lpAmount != 0, ExceptionsLibrary.ZERO_LP_TOKENS);
+        require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
 
         uint256 thisNft = _nft;
         require(
             lpAmount + balanceOf(msg.sender) <=
                 IERC20RootVaultGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
-            ExceptionsLibrary.LIMIT_PER_ADDRESS
+            ExceptionsLibrary.LIMIT_OVERFLOW
         );
 
         _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, false);
@@ -84,12 +84,12 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
         uint256[] calldata minTokenAmounts
     ) external nonReentrant {
         uint256 supply = totalSupply();
-        require(supply > 0, ExceptionsLibrary.TOTAL_SUPPLY_IS_ZERO);
+        require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
-            require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.MIN_LP_AMOUNT);
+            require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
         uint256[] memory actualTokenAmounts = _pull(address(this), tokenAmounts, "");
         uint256 vaultTokensLength = _vaultTokens.length;
