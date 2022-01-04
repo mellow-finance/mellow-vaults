@@ -46,7 +46,23 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param newParams newParams to set
     function setPendingParams(Params memory newParams) external;
 
+    /// @notice Stage pending permissions.
+    /// @param target Target address
+    /// @param permissionIds A list of permission ids to grant
+    function stageGrantPermissions(address target, uint8[] memory permissionIds) external;
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
+    /// @notice Rollback staged permissions.
+    function rollbackStagedPermissions() external;
+
+    /// @notice Commit staged permissions.
+    function commitStagedPermissions() external;
+
+    /// @notice Revoke permission instant.
+    /// @param target Target address
+    /// @param permissionIds A list of permission ids to revoke
+    function revokePermissionsInstant(address target, uint8[] memory permissionIds) external;
 
     /// @notice Commit pending params.
     function commitParams() external;

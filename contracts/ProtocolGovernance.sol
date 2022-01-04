@@ -4,11 +4,10 @@ pragma solidity 0.8.9;
 import "./utils/DefaultAccessControl.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
-import "./libraries/AddressPermissions.sol";
-import "./libraries/DelayedAddressPermissionControl.sol";
+import "./libraries/AddressPermissionControl.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, DelayedAddressPermissionControl {
+contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, AddressPermissionControl {
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public pendingParamsTimestamp;
     Params public params;
@@ -103,12 +102,14 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
         emit PendingParamsSet(msg.sender, pendingParamsTimestamp, pendingParams);
     }
 
+    // ---------------------------------- PRIVATE -----------------------------------
+
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
-        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.EMPTY_PARAMS);
-        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
+        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
+        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_UNDERFLOW);
     }
 
     function _requireAdmin() private view {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 }

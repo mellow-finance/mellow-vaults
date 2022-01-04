@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-contract DelayedAddressPermissionControl {
+contract AddressPermissionControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 internal _stagedToCommitAt;
