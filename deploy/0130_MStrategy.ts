@@ -11,6 +11,8 @@ import {
 import { BigNumber, ethers } from "ethers";
 import { map } from "ramda";
 
+type MoneyVault = "Aave" | "Yearn";
+
 const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get } = deployments;
@@ -121,7 +123,7 @@ const setupStrategy = async (
             params
         );
     }
-    const adminRole = await read("MStrategy", "FORBIDDEN_ROLE");
+    const adminRole = await read("MStrategy", "ADMIN_ROLE");
     const deployerIsAdmin = await read("MStrategy", "isAdmin", deployer);
     if (deployerIsAdmin) {
         await execute(
@@ -149,53 +151,51 @@ const setupStrategy = async (
     }
 };
 
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury, weth, usdc } =
-        await getNamedAccounts();
-    await deployMStrategy(hre);
+export const buildMStrategy: (moneyVaultKind: MoneyVault) => DeployFunction =
+    (moneyVaultKind) => async (hre: HardhatRuntimeEnvironment) => {
+        const { deployments, getNamedAccounts } = hre;
+        const { log, execute, read, get } = deployments;
+        const { deployer, mStrategyTreasury, weth, usdc } =
+            await getNamedAccounts();
+        await deployMStrategy(hre);
 
-    const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
-    const startNft =
-        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
-    let yearnVaultNft = startNft;
-    let erc20VaultNft = startNft + 1;
+        const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
+        const startNft =
+            (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+        let yearnVaultNft = startNft;
+        let erc20VaultNft = startNft + 1;
+        const moneyGovernance =
+            moneyVaultKind === "Aave"
+                ? "AaveVaultGovernance"
+                : "YearnVaultGovernance";
+        await setupVault(hre, yearnVaultNft, moneyGovernance, {
+            createVaultArgs: [tokens, deployer],
+        });
+        await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+            createVaultArgs: [tokens, deployer],
+        });
 
-    await setupVault(hre, yearnVaultNft, "YearnVaultGovernance", {
-        createVaultArgs: [tokens, deployer],
-    });
-    await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
-        createVaultArgs: [tokens, deployer],
-    });
+        const strategy = await get("MStrategy");
 
-    const strategy = await get("MStrategy");
+        await combineVaults(
+            hre,
+            erc20VaultNft + 1,
+            [yearnVaultNft, erc20VaultNft],
+            strategy.address,
+            mStrategyTreasury
+        );
+        const erc20Vault = await read(
+            "VaultRegistry",
+            "vaultForNft",
+            erc20VaultNft
+        );
+        const moneyVault = await read(
+            "VaultRegistry",
+            "vaultForNft",
+            yearnVaultNft
+        );
+        await setupStrategy(hre, erc20Vault, moneyVault);
+    };
 
-    await combineVaults(
-        hre,
-        erc20VaultNft + 1,
-        [yearnVaultNft, erc20VaultNft],
-        strategy.address,
-        mStrategyTreasury
-    );
-    const erc20Vault = await read(
-        "VaultRegistry",
-        "vaultForNft",
-        erc20VaultNft
-    );
-    const moneyVault = await read(
-        "VaultRegistry",
-        "vaultForNft",
-        yearnVaultNft
-    );
-    await setupStrategy(hre, erc20Vault, moneyVault);
-};
-
+const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;
-func.tags = ["MStrategy", "hardhat", "localhost", "mainnet"];
-func.dependencies = [
-    "VaultRegistry",
-    "ERC20VaultGovernance",
-    "YearnVaultGovernance",
-    "ERC20RootVaultGovernance",
-];
