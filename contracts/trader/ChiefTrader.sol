@@ -92,14 +92,8 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
             );
         }
         if (path.length > 0) {
-            require(
-                pg.hasPermission(path[0].token0, AddressPermissionIds.ERC20_TRANSFER),
-                ExceptionsLibrary.FORBIDDEN
-            );
-            require(
-                pg.hasPermission(path[0].token1, AddressPermissionIds.ERC20_SWAP),
-                ExceptionsLibrary.FORBIDDEN
-            );
+            require(pg.hasPermission(path[0].token0, AddressPermissionIds.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
+            require(pg.hasPermission(path[0].token1, AddressPermissionIds.ERC20_SWAP), ExceptionsLibrary.FORBIDDEN);
         }
     }
 
