@@ -91,7 +91,8 @@ contract AggregateVault is IAggregateVault, Vault {
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(destVault));
         }
-        actualTokenAmounts = destVault.transferAndPush(msg.sender, _vaultTokens, tokenAmounts, "");
+
+        actualTokenAmounts = destVault.transferAndPush(address(this), _vaultTokens, tokenAmounts, "");
     }
 
     function _pull(

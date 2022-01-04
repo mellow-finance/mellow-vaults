@@ -83,6 +83,7 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+        actualTokenAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < tokenAmounts.length; ++i) {
             IERC20 vaultToken = IERC20(_vaultTokens[i]);
             uint256 balance = vaultToken.balanceOf(address(this));

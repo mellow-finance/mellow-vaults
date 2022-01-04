@@ -2,10 +2,14 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { expect } from "chai";
 import { getNamedAccounts, ethers, deployments } from "hardhat";
 import { mint, randomAddress, withSigner } from "./library/Helpers";
+import { setupDefaultContext, TestContext } from "./library/setup";
 import { ERC20, ERC20RootVault, VaultRegistry } from "./types";
 import { MStrategy } from "./types/MStrategy";
 
-xdescribe("MStrategy", () => {
+type DeployOptions = {};
+
+// @ts-ignore
+describe("MStrategy", function (this: TestContext<MStrategy, DeployOptions>) {
     let deploymentFixture: Function;
     let tokens: string[];
     let tokenContracts: ERC20[];
@@ -14,58 +18,62 @@ xdescribe("MStrategy", () => {
     let vaultId: number;
 
     before(async () => {
+        // @ts-ignore
+        await setupDefaultContext.call(this);
+
         vaultId = 0;
-        deploymentFixture = await deployments.createFixture(async () => {
-            await deployments.fixture();
+        this.deploymentFixture = deployments.createFixture(
+            async (_, options?: DeployOptions) => {
+                await deployments.fixture();
 
-            const { test } = await getNamedAccounts();
-
-            mStrategy = await ethers.getContract("MStrategy");
-
-            await withSigner(test, async (s) => {
-                const vaultRegistry: VaultRegistry = await ethers.getContract(
-                    "VaultRegistry"
-                );
-                const vaultsCount = await vaultRegistry.vaultsCount();
-                const lpIssuerAddress = await vaultRegistry.vaultForNft(
+                const vaultsCount = await this.vaultRegistry.vaultsCount();
+                const lpIssuerAddress = await this.vaultRegistry.vaultForNft(
                     vaultsCount
                 );
-                lpIssuer = await ethers.getContractAt(
-                    "ERC20RootVault",
-                    lpIssuerAddress
-                );
-                tokens = await lpIssuer.vaultTokens();
+                const erc20RootVaultAddress =
+                    await this.vaultRegistry.vaultForNft(3);
+                const erc20RootVault: ERC20RootVault =
+                    await ethers.getContractAt(
+                        "ERC20RootVault",
+                        erc20RootVaultAddress
+                    );
+                tokens = await erc20RootVault.vaultTokens();
                 const balances = [];
                 tokenContracts = [];
                 for (const token of tokens) {
                     const c: ERC20 = await ethers.getContractAt("ERC20", token);
                     tokenContracts.push(c);
-                    balances.push(await c.balanceOf(test));
+                    balances.push(await c.balanceOf(this.test.address));
                     await c
-                        .connect(s)
-                        .approve(lpIssuer.address, ethers.constants.MaxUint256);
+                        .connect(this.test)
+                        .approve(
+                            erc20RootVault.address,
+                            ethers.constants.MaxUint256
+                        );
                 }
-                await lpIssuer
-                    .connect(s)
+                await erc20RootVault
+                    .connect(this.test)
                     .deposit(
                         [balances[0].div(3), balances[1].div(3).mul(2)],
-                        []
+                        0
                     );
-            });
-        });
+                this.subject = this.mStrategy;
+                return this.subject;
+            }
+        );
     });
     beforeEach(async () => {
-        await deploymentFixture();
+        await this.deploymentFixture();
     });
 
     describe("shouldRebalance", () => {
         it("checks if the tokens needs to be rebalanced", async () => {
-            expect(await mStrategy.shouldRebalance(vaultId)).to.be.true;
+            expect(await this.subject.shouldRebalance(vaultId)).to.be.true;
         });
         describe("after rebalance", () => {
             it("returns false", async () => {
-                await mStrategy.rebalance(vaultId);
-                expect(await mStrategy.shouldRebalance(vaultId)).to.be.false;
+                await this.subject.rebalance(vaultId);
+                expect(await this.subject.shouldRebalance(vaultId)).to.be.false;
             });
         });
     });
