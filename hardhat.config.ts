@@ -48,6 +48,15 @@ const config: HardhatUserConfig = {
                 ? [process.env["MAINNET_DEPLOYER_PK"]]
                 : undefined,
         },
+        avalanche: {
+            url: "https://api.avax.network/ext/bc/C/rpc",
+            // gasPrice: 225000000000,
+            chainId: 43114,
+        },
+        polygon: {
+            url: "https://api.avax.network/ext/bc/C/rpc",
+            chainId: 137,
+        },
     },
     namedAccounts: {
         deployer: {
@@ -110,9 +119,21 @@ const config: HardhatUserConfig = {
             default: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
             kovan: "0x8a0B62Fbcb1B862BbF1ad31c26a72b7b746EdFC1",
         },
+        uniswapV2Factory: {
+            default: "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f",
+        },
         uniswapV2Router02: {
             default: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
             kovan: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+        },
+        chainlinkEth: {
+            default: "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419",
+        },
+        chainlinkBtc: {
+            default: "0xf4030086522a5beea4988f8ca5b36dbc97bee88c",
+        },
+        chainlinkUsdc: {
+            default: "0x986b5e1e1755e3c2440e960477f25201b0a8bbd4",
         },
     },
 

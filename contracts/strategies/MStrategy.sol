@@ -2,16 +2,16 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/IVault.sol";
-import "../interfaces/IERC20Vault.sol";
-import "../trader/interfaces/IUniV3Trader.sol";
+import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
+import "../interfaces/trader/IUniV3Trader.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
-import "../libraries/StrategyLibrary.sol";
+import "../libraries/strategies/StrategyLibrary.sol";
 import "../libraries/external/FullMath.sol";
-import "../DefaultAccessControlLateInit.sol";
-import "contracts/libraries/ExceptionsLibrary.sol";
+import "../utils/DefaultAccessControlLateInit.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 contract MStrategy is DefaultAccessControlLateInit {
     struct Params {
@@ -30,7 +30,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         IUniswapV3Pool uniV3Pool;
         ISwapRouter uniV3Router;
         IERC20Vault erc20Vault;
-        IVault moneyVault;
+        IIntegrationVault moneyVault;
     }
 
     Params[] public vaultParams;
@@ -48,8 +48,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        uint256[] memory erc20Tvl = erc20Vault.tvl();
-        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        (uint256[] memory moneyTvl, ) = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
 
         for (uint256 i = 0; i < 2; i++) {
@@ -76,20 +76,20 @@ contract MStrategy is DefaultAccessControlLateInit {
     }
 
     function rebalance(uint256 id) external {
-        require(id < vaultCount(), ExceptionsLibrary.INVALID_VAULT_ID);
-        require(!disabled[id], ExceptionsLibrary.VAULT_DISABLED);
+        require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
+        require(!disabled[id], ExceptionsLibrary.DISABLED);
         Params storage params = vaultParams[id];
         ImmutableParams storage immutableParams = vaultImmutableParams[id];
         IUniswapV3Pool pool = immutableParams.uniV3Pool;
         IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        IVault moneyVault = immutableParams.moneyVault;
+        IIntegrationVault moneyVault = immutableParams.moneyVault;
         address[] memory tokens = erc20Vault.vaultTokens();
-        uint256[] memory erc20Tvl = erc20Vault.tvl();
-        uint256[] memory moneyTvl = immutableParams.moneyVault.tvl();
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        (uint256[] memory moneyTvl, ) = immutableParams.moneyVault.tvl();
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
         _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, moneyVault, params);
-        erc20Tvl = erc20Vault.tvl();
-        moneyTvl = immutableParams.moneyVault.tvl();
+        (erc20Tvl, ) = erc20Vault.tvl();
+        (moneyTvl, ) = immutableParams.moneyVault.tvl();
 
         _rebalancePools(
             erc20Tvl,
@@ -108,8 +108,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         address[] memory tokens,
         uint256 liquidToFixedRatioX96,
         uint256 poolRebalanceThresholdX96,
-        IVault erc20Vault,
-        IVault moneyVault
+        IIntegrationVault erc20Vault,
+        IIntegrationVault moneyVault
     ) internal {
         uint256[] memory erc20PullAmounts = new uint256[](2);
         uint256[] memory moneyPullAmounts = new uint256[](2);
@@ -170,7 +170,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[] memory erc20Tvl,
         IUniswapV3Pool pool,
         IERC20Vault erc20Vault,
-        IVault moneyVault,
+        IIntegrationVault moneyVault,
         Params storage params
     ) internal {
         (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
@@ -275,24 +275,21 @@ contract MStrategy is DefaultAccessControlLateInit {
     }
 
     function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address token0 = immutableParams_.token0;
         address token1 = immutableParams_.token1;
-        require(immutableParams_.uniV3Pool.token0() == token0, ExceptionsLibrary.INVALID_TOKEN_0_IN_UNIV3_POOL);
-        require(immutableParams_.uniV3Pool.token1() == token1, ExceptionsLibrary.INVALID_TOKEN_1_IN_UNIV3_POOL);
-        require(paramsIndex[token0][token1] == 0, ExceptionsLibrary.PARAMS_DO_NOT_EXIST);
+        require(immutableParams_.uniV3Pool.token0() == token0, ExceptionsLibrary.INVALID_TOKEN);
+        require(immutableParams_.uniV3Pool.token1() == token1, ExceptionsLibrary.INVALID_TOKEN);
+        require(paramsIndex[token0][token1] == 0, ExceptionsLibrary.DUPLICATE);
         if (vaultImmutableParams.length > 0) {
-            require(
-                vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault,
-                ExceptionsLibrary.PARAMS_DO_NOT_EXIST
-            );
+            require(vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault, ExceptionsLibrary.DUPLICATE);
         }
-        IVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
+        IIntegrationVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
         for (uint256 i = 0; i < vaults.length; i++) {
-            IVault vault = vaults[i];
+            IIntegrationVault vault = vaults[i];
             address[] memory tokens = vault.vaultTokens();
-            require(tokens[0] == token0, ExceptionsLibrary.TOKEN_0_NOT_IN_VAULT);
-            require(tokens[1] == token1, ExceptionsLibrary.TOKEN_1_NOT_IN_VAULT);
+            require(tokens[0] == token0, ExceptionsLibrary.INVALID_TOKEN);
+            require(tokens[1] == token1, ExceptionsLibrary.INVALID_TOKEN);
         }
         uint256 num = vaultParams.length;
         vaultParams.push(params_);
@@ -303,16 +300,16 @@ contract MStrategy is DefaultAccessControlLateInit {
     }
 
     function disableVault(uint256 id, bool disabled_) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(id < vaultCount(), ExceptionsLibrary.INVALID_VAULT_ID);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
         disabled[id] = disabled_;
         emit VaultDisabled(tx.origin, msg.sender, id, disabled_);
     }
 
     function updateVaultParams(uint256 id, Params memory params) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(id < vaultCount(), ExceptionsLibrary.INVALID_VAULT_ID);
-        require(!disabled[id], ExceptionsLibrary.VAULT_DISABLED);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
+        require(!disabled[id], ExceptionsLibrary.DISABLED);
         vaultParams[id] = params;
         emit VaultParamsUpdated(tx.origin, msg.sender, id, params);
     }

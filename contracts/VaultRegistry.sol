@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/IVault.sol";
+import "./interfaces/vaults/IVault.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/AddressPermissions.sol";
@@ -55,7 +55,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     function registerVault(address vault, address owner) external returns (uint256 nft) {
         require(
             _protocolGovernance.hasPermission(msg.sender, AddressPermissions.VAULT_GOVERNANCE),
-            ExceptionsLibrary.SHOULD_BE_CALLED_BY_VAULT_GOVERNANCE
+            ExceptionsLibrary.FORBIDDEN
         );
         nft = _topNft;
         _safeMint(owner, nft);
@@ -88,7 +88,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
-        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _stagedProtocolGovernance = newProtocolGovernance;
         _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
         emit StagedProtocolGovernance(tx.origin, msg.sender, newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
@@ -96,8 +96,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function commitStagedProtocolGovernance() external {
-        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(_stagedProtocolGovernanceTimestamp != 0, ExceptionsLibrary.NULL_OR_NOT_INITIALIZED);
+        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(_stagedProtocolGovernanceTimestamp != 0, ExceptionsLibrary.INIT);
         require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;
@@ -106,12 +106,12 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function adminApprove(address newAddress, uint256 nft) external {
-        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _approve(newAddress, nft);
     }
 
     function lockNft(uint256 nft) external {
-        require(ownerOf(nft) == msg.sender, ExceptionsLibrary.TOKEN_OWNER);
+        require(ownerOf(nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
         _locks[nft] = true;
         emit TokenLocked(tx.origin, msg.sender, nft);
     }
@@ -125,7 +125,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         address,
         uint256 tokenId
     ) internal view override {
-        require(!_locks[tokenId], ExceptionsLibrary.LOCKED_NFT);
+        require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
 
     /// @notice Emitted when token is locked for transfers

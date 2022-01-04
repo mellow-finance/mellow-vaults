@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "./DefaultAccessControl.sol";
+import "./utils/DefaultAccessControl.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/AddressPermissions.sol";
@@ -21,7 +21,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
     /// @param admin Initial admin of the contract
     constructor(address admin) DefaultAccessControl(admin) {}
 
-    // -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {

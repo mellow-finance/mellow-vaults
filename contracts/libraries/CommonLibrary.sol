@@ -40,6 +40,21 @@ library CommonLibrary {
         }
     }
 
+    /// @notice Sort uint256 using bubble sort. The sorting is done in-place.
+    /// @param arr Array of uint256
+    function bubbleSortUint(uint256[] memory arr) internal pure {
+        uint256 l = arr.length;
+        for (uint256 i = 0; i < l; ++i) {
+            for (uint256 j = i + 1; j < l; ++j) {
+                if (arr[i] > arr[j]) {
+                    uint256 temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+        }
+    }
+
     /// @notice Checks if array of addresses is sorted and all adresses are unique
     /// @param tokens A set of addresses to check
     /// @return `true` if all addresses are sorted and unique, `false` otherwise
@@ -104,12 +119,12 @@ library CommonLibrary {
         returns (uint256[][] memory)
     {
         uint256 k = weights.length;
-        require(k > 0, ExceptionsLibrary.WEIGHTS_LENGTH_IS_ZERO);
+        require(k > 0, ExceptionsLibrary.EMPTY_LIST);
         uint256 n = amounts.length;
-        require(n > 0, ExceptionsLibrary.AMOUNTS_LENGTH_IS_ZERO);
+        require(n > 0, ExceptionsLibrary.EMPTY_LIST);
         uint256[] memory weightsNorm = new uint256[](n);
         for (uint256 i = 0; i < k; ++i) {
-            require(weights[i].length == n, ExceptionsLibrary.MATRIX_NOT_RECTANGULAR);
+            require(weights[i].length == n, ExceptionsLibrary.INVALID_VALUE);
         }
         for (uint256 j = 0; j < n; ++j) {
             weightsNorm[j] = 0;

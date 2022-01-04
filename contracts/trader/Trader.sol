@@ -4,7 +4,7 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-import "./interfaces/ITrader.sol";
+import "../interfaces/trader/ITrader.sol";
 
 /// @notice Base contract for every trader contract (a contract that can execute ERC20 swaps)
 abstract contract Trader is ERC165 {

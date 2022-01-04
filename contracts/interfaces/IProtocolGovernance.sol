@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IDefaultAccessControl.sol";
+import "./utils/IDefaultAccessControl.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice CommonLibrary protocol params.
@@ -16,7 +16,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
         bool permissionless;
     }
 
-    // -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @notice Checks if address has permission
     /// @param addr Address to check
@@ -40,7 +40,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice The address of the protocol treasury.
     function protocolTreasury() external view returns (address);
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @notice Set new pending params.
     /// @param newParams newParams to set
