@@ -21,13 +21,7 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IUniV3VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return
-                DelayedProtocolParams({
-                    positionManager: INonfungiblePositionManager(address(0)),
-                    oracle: IMellowOracle(address(0))
-                });
-        }
+        // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 

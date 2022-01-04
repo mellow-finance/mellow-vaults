@@ -20,9 +20,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
 
     /// @inheritdoc IAaveVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPYX96: 0});
-        }
+        // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
