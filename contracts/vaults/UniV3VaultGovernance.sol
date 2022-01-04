@@ -61,8 +61,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
     /// @inheritdoc IUniV3VaultGovernance
     function createVault(
         address[] memory vaultTokens_,
-        uint24 fee_,
-        address owner_
+        address owner_,
+        uint24 fee_
     ) external returns (IUniV3Vault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);

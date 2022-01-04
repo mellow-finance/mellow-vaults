@@ -21,6 +21,7 @@ import { ERC20, IVault, Vault, VaultGovernance } from "../types";
 import { InternalParamsStructOutput } from "../types/VaultGovernance";
 import { deployments, ethers } from "hardhat";
 import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";
+import { create } from "domain";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -63,17 +64,18 @@ export function vaultGovernanceBehavior<
         strategyParams,
         delayedProtocolParams,
         protocolParams,
-        deployVaultFunction,
+        defaultCreateVault,
     }: {
         delayedStrategyParams?: Arbitrary<DSP>;
         strategyParams?: Arbitrary<SP>;
         delayedProtocolParams?: Arbitrary<DPP>;
         protocolParams?: Arbitrary<PP>;
         delayedProtocolPerVaultParams?: Arbitrary<DPPV>;
-        deployVaultFunction?: (
+        defaultCreateVault?: (
             deployer: Signer,
             tokenAddresses: string[],
-            owner: string
+            owner: string,
+            ...args: any[]
         ) => Promise<void>;
     }
 ) {
@@ -127,35 +129,49 @@ export function vaultGovernanceBehavior<
         });
     });
 
-    xdescribe("#deployVault", () => {
-        let deployVaultFixture: Function;
+    describe("#createVault", () => {
+        let createVaultFixture: Function;
         let lastNft: number;
         let nft: number;
+        let createVault: (
+            deployer: Signer,
+            tokenAddresses: string[],
+            owner: string
+        ) => Promise<void>;
         before(async () => {
-            deployVaultFixture = deployments.createFixture(async () => {
+            createVault = async (
+                deployer: Signer,
+                tokenAddresses: string[],
+                owner: string
+            ) => {
+                if (defaultCreateVault) {
+                    await defaultCreateVault(
+                        this.deployer,
+                        tokenAddresses,
+                        owner
+                    );
+                } else {
+                    await this.subject
+                        .connect(deployer)
+                        .createVault(tokenAddresses, this.ownerSigner.address);
+                }
+            };
+            createVaultFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 lastNft = (await this.vaultRegistry.vaultsCount()).toNumber();
                 const tokenAddresses = this.tokens
                     .slice(0, 2)
                     .map((x: ERC20) => x.address);
-                if (deployVaultFunction) {
-                    await deployVaultFunction(
-                        this.deployer,
-                        tokenAddresses,
-                        this.ownerSigner.address
-                    );
-                } else {
-                    await this.subject.deployVault(
-                        tokenAddresses,
-                        [],
-                        this.ownerSigner.address
-                    );
-                }
+                await createVault(
+                    this.deployer,
+                    tokenAddresses,
+                    this.ownerSigner.address
+                );
                 nft = (await this.vaultRegistry.vaultsCount()).toNumber();
             });
         });
         beforeEach(async () => {
-            await deployVaultFixture();
+            await createVaultFixture();
         });
         it("deploys a new vault", async () => {
             const address = await this.vaultRegistry.vaultForNft(nft);
@@ -167,7 +183,7 @@ export function vaultGovernanceBehavior<
             expect(nft).to.be.gt(lastNft);
         });
 
-        it("the nft is owned by the owner from #deployVault arguments", async () => {
+        it("the nft is owned by the owner from #createVault arguments", async () => {
             expect(this.ownerSigner.address).to.eq(
                 await this.vaultRegistry.ownerOf(nft)
             );
@@ -203,8 +219,8 @@ export function vaultGovernanceBehavior<
                         const tokenAddresses = this.tokens
                             .slice(0, 2)
                             .map((x: ERC20) => x.address);
-                        if (deployVaultFunction) {
-                            await deployVaultFunction(
+                        if (defaultCreateVault) {
+                            await defaultCreateVault(
                                 s,
                                 tokenAddresses,
                                 this.ownerSigner.address
@@ -212,9 +228,8 @@ export function vaultGovernanceBehavior<
                         } else {
                             await this.subject
                                 .connect(s)
-                                .deployVault(
+                                .createVault(
                                     tokenAddresses,
-                                    [],
                                     this.ownerSigner.address
                                 );
                         }
@@ -236,44 +251,25 @@ export function vaultGovernanceBehavior<
                     const tokenAddresses = this.tokens
                         .slice(0, 2)
                         .map((x: ERC20) => x.address);
-                    if (deployVaultFunction) {
-                        await deployVaultFunction(
-                            this.admin,
-                            tokenAddresses,
-                            this.ownerSigner.address
-                        );
-                    } else {
-                        await this.subject
-                            .connect(this.admin)
-                            .deployVault(
-                                tokenAddresses,
-                                [],
-                                this.ownerSigner.address
-                            );
-                    }
+                    await createVault(
+                        this.admin,
+                        tokenAddresses,
+                        this.ownerSigner.address
+                    );
                 });
                 it("denied: any address", async () => {
                     await withSigner(randomAddress(), async (s) => {
                         const tokenAddresses = this.tokens.map(
                             (x: ERC20) => x.address
                         );
-                        if (deployVaultFunction) {
-                            await deployVaultFunction(
-                                this.admin,
+
+                        await expect(
+                            createVault(
+                                s,
                                 tokenAddresses,
                                 this.ownerSigner.address
-                            );
-                        } else {
-                            await expect(
-                                this.subject
-                                    .connect(s)
-                                    .deployVault(
-                                        tokenAddresses,
-                                        [],
-                                        this.ownerSigner.address
-                                    )
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        }
+                            )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
