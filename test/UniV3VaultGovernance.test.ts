@@ -156,54 +156,7 @@ describe("UniV3VaultGovernance", function (this: TestContext<
         });
     });
 
-    xdescribe("#createVault", () => {
-        describe("properties", () => {
-            pit(
-                "reverts for any options with length != 32 or != 0",
-                { numRuns: RUNS.mid },
-                nat(100)
-                    .filter((x) => x != 0 && x != 32)
-                    .map((x) => x * 2) // avoid malformed hex data, should be caught by evm
-                    .chain((len) =>
-                        hexaString({ minLength: len, maxLength: len })
-                    )
-                    .map((x) => `0x${x}`),
-                async (bytes: string) => {
-                    await expect(
-                        this.subject.createVault(
-                            this.tokens
-                                .slice(0, 2)
-                                .map((x: ERC20) => x.address),
-                            this.ownerSigner.address,
-                            3000
-                        )
-                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                    return true;
-                }
-            );
-            pit(
-                "reverts for any fee != 1, 500, 3000, 10000",
-                { numRuns: RUNS.mid },
-                nat(10000)
-                    .filter(
-                        (x) => x != 1 && x != 500 && x != 3000 && x != 10000
-                    )
-                    .map((x) => BigNumber.from(x).toHexString())
-                    .map((x) => ethers.utils.hexZeroPad(x, 32)),
-                async (bytes: string) => {
-                    await expect(
-                        this.subject.createVault(
-                            this.tokens
-                                .slice(0, 2)
-                                .map((x: ERC20) => x.address),
-                            this.ownerSigner.address,
-                            3000
-                        )
-                    ).to.be.revertedWith(Exceptions.NOT_FOUND);
-                    return true;
-                }
-            );
-        });
+    describe("#createVault", () => {
         describe("edge cases", () => {
             describe("when fee is not supported by uni v3", () => {
                 it("reverts", async () => {
@@ -215,7 +168,7 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                             this.ownerSigner.address,
                             2345
                         )
-                    ).to.be.revertedWith(Exceptions.ALLOWLIST);
+                    ).to.be.revertedWith(Exceptions.NOT_FOUND);
                 });
             });
         });
