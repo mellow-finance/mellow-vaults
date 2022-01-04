@@ -28,6 +28,9 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionId Permission id to check
     function hasStagedPermission(address addr, uint8 permissionId) external view returns (bool);
 
+    /// @notice Returns timestamp of the upcoming commit if staged, else returns 0
+    function stagedToCommitAt() external view returns (uint256);
+
     /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
     function permissionless() external view returns (bool);
 

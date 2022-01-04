@@ -4,7 +4,7 @@ describe("ProtocolGovernance", () => {
 
         describe("edge cases", () => {
             describe("when admin is zero address", () => {
-                it("reverts", async () => {});
+                it("reverts with ADDRESS_ZERO", async () => {});
             });
         });
     });
@@ -22,7 +22,7 @@ describe("ProtocolGovernance", () => {
 
         describe("edge cases", () => {
             describe("on unknown permission id", () => {
-                it("dont revert, returns false", async () => {});
+                it("returns false", async () => {});
             });
         });
 
@@ -44,7 +44,7 @@ describe("ProtocolGovernance", () => {
 
         describe("edge cases", () => {
             describe("on unknown permission id", () => {
-                it("dont revert, returns false", async () => {});
+                it("returns false", async () => {});
             });
         });
 
@@ -64,8 +64,6 @@ describe("ProtocolGovernance", () => {
             });
         });
 
-        describe("edge cases", () => {});
-
         describe("access control", () => {
             it("allowed: any address", async () => {});
         });
@@ -74,7 +72,7 @@ describe("ProtocolGovernance", () => {
     describe("#params", () => {
         it("returns initial governance params", async () => {});
 
-        describe("when new governance are set", () => {
+        describe("when new governance params are set", () => {
             it("returns initial governance params", async () => {});
         });
 
@@ -127,17 +125,111 @@ describe("ProtocolGovernance", () => {
         });
     });
 
-    describe("#maxTokensPerVault", () => {});
+    describe("#maxTokensPerVault", () => {
+        it("returns initial value of zero", async () => {});
 
-    describe("#governanceDelay", () => {});
+        describe("when new params were set but not yet committed", () => {
+            it("doesn't change", async () => {});
+        });
 
-    describe("#protocolTreasury", () => {});
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
+    });
 
-    describe("#stageGrantPermissions", () => {});
+    describe("#governanceDelay", () => {
+        it("returns initial value of zero", async () => {});
 
-    describe("#commitStagedPermissions", () => {});
+        describe("when new params were set but not yet committed", () => {
+            it("doesn't change", async () => {});
+        });
 
-    describe("#revokePermissionsInstant", () => {});
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
+    });
+
+    describe("#protocolTreasury", () => {
+        it("returns initial value of address zero", async () => {});
+
+        describe("when new params were set but not yet committed", () => {
+            it("doesn't change", async () => {});
+        });
+
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
+        });
+    });
+
+    describe("#stageGrantPermissions", () => {
+        it("stages permissions to be granted for the given address", async () => {});
+
+        describe("edge cases", () => {
+            // TODO: add edge cases
+        });
+
+        describe("access control", () => {
+            it("allowed: admin", async () => {});
+            it("denied: random address", async () => {});
+        });
+    });
+
+    describe("#commitStagedPermissions", () => {
+        it("commits staged permissions", async () => {});
+
+        it("sets stagedToCommitAt() to zero", async () => {});
+
+        it("emits CommittedStagedPermissions", async () => {});
+
+        describe("edge cases", () => {
+            describe("when nothing is staged", () => {
+                it("reverts with INVARIANT", async () => {});
+            });
+
+            describe("when governance delay not passed yet", () => {
+                it("reverts with TIMESTAMP", async () => {});
+            });
+        });
+
+        describe("access control", () => {
+            it("allowed: admin", async () => {});
+            it("denied: random address", async () => {});
+        });
+    });
+
+    describe("#revokePermissionsInstant", () => {
+        it("revokes permissions from the given address", async () => {});
+
+        describe("edge cases", () => {
+            describe("when given address didn't have one of the given permissions initially", () => {
+                it("reverts with INVALID_TARGET", async () => {});
+            });
+        });
+
+        describe("access control", () => {
+            it("allowed: admin", async () => {});
+            it("denied: random address", async () => {});
+        });
+    });
+
+    describe("#rollbackStagedPermissions", () => {
+        it("rolls back staged permission", async () => {});
+
+        it("sets stagedToCommitAt() to zero", async () => {});
+
+        it("emits RolledBackStagedPermissions", async () => {});
+
+        describe("edge cases", () => {
+            describe("when nothing is staged", () => {
+                it("passes", async () => {});
+            });
+        });
+
+        describe("access control", () => {
+            it("allowed: admin", async () => {});
+            it("denied: random address", async () => {});
+        });
+    });
 
     describe("#setPendingParams", () => {
         it("sets pending governance params", async () => {});

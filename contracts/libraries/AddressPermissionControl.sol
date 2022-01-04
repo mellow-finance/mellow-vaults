@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 contract AddressPermissionControl {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -78,7 +79,7 @@ contract AddressPermissionControl {
     function _revokePermissionInstant(address from, uint8 permissionId) private {
         uint256 diff = _permissionIdToMask(permissionId);
         uint256 currentMask = _permissionMasks[from];
-        require(currentMask & diff != 0, "Permission not yet granted");
+        require(currentMask & diff != 0, ExceptionsLibrary.INVALID_TARGET);
         _permissionMasks[from] = currentMask & (~diff);
         if (_permissionMasks[from] == 0) {
             delete _permissionMasks[from];
@@ -101,12 +102,12 @@ contract AddressPermissionControl {
             _stagedPermissionMasks[to] = _permissionMasks[to];
         }
         uint256 currentMask = _stagedPermissionMasks[to];
-        require(currentMask & diff == 0, "Permission already granted");
+        require(currentMask & diff == 0, ExceptionsLibrary.INVALID_TARGET);
         _stagedPermissionMasks[to] = currentMask | diff;
     }
 
     function _rollbackStagedPermissions() internal {
-        require(_isStagedToCommit(), "Not staged");
+        require(_isStagedToCommit(), ExceptionsLibrary.INVARIANT);
         _clearStagedPermissions();
         delete _stagedToCommitAt;
         emit RolledBackStagedPermissions(msg.sender);
@@ -117,7 +118,7 @@ contract AddressPermissionControl {
         uint8[] calldata permissionIds,
         uint256 delay
     ) internal {
-        require(!_isStagedToCommit(), "Already staged");
+        require(!_isStagedToCommit(), ExceptionsLibrary.INVARIANT);
         for (uint256 i; i != permissionIds.length; ++i) {
             _stageGrantPermission(to, permissionIds[i]);
         }
@@ -126,8 +127,8 @@ contract AddressPermissionControl {
     }
 
     function _commitStagedPermissions() internal {
-        require(_isStagedToCommit());
-        require(block.timestamp >= _stagedToCommitAt);
+        require(_isStagedToCommit(), ExceptionsLibrary.INVARIANT);
+        require(block.timestamp >= _stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         uint256 length = _stagedAddresses.length();
         for (uint256 i; i != length; ++i) {
             address delayedAddress = _stagedAddresses.at(i);

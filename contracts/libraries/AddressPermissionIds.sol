@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+/// @notice Stores permission ids for addresses
 library AddressPermissionIds {
     uint8 constant CLAIM = 0;
     uint8 constant VAULT_GOVERNANCE = 1;
