@@ -59,6 +59,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Delaye
 
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
+    function rollbackStagedPermissions() external {
+        _requireAdmin();
+        _rollbackStagedPermissions();
+    }
+
     function commitStagedPermissions() external {
         _requireAdmin();
         _commitStagedPermissions();
