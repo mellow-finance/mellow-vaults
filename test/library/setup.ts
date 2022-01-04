@@ -18,6 +18,7 @@ import {
     AaveVault,
     UniV3Vault,
     ERC20RootVault,
+    MellowOracle,
 } from "../types";
 
 export type TestContext<T, F> = Suite & {
@@ -34,6 +35,7 @@ export type TestContext<T, F> = Suite & {
     uniV3VaultSingleton: UniV3Vault;
     erc20RootVaultGovernance: ERC20RootVaultGovernance;
     erc20RootVaultSingleton: ERC20RootVault;
+    mellowOracle: MellowOracle;
 
     usdc: ERC20;
     weth: ERC20;
@@ -73,6 +75,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         "ERC20RootVaultGovernance"
     );
     this.erc20RootVaultSingleton = await ethers.getContract("ERC20RootVault");
+    this.mellowOracle = await ethers.getContract("MellowOracle");
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin"]) {

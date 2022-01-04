@@ -38,13 +38,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         address[] memory vaultTokens_,
         uint24 fee_
     ) external {
-        require(_vaultTokens.length == 2, ExceptionsLibrary.INVALID_VALUE);
+        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
+        _initialize(vaultTokens_, nft_);
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
-
-        _initialize(vaultTokens_, nft_);
     }
 
     function onERC721Received(

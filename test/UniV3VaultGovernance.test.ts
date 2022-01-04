@@ -27,6 +27,7 @@ import {
     InternalParamsStructOutput,
 } from "./types/IVaultGovernance";
 import { ERC20, IUniswapV3Pool, UniV3Vault } from "./types";
+import { Signer } from "ethers";
 
 type CustomContext = {
     nft: number;
@@ -40,7 +41,7 @@ type DeploymentOptions = {
 };
 
 // @ts-ignore
-xdescribe("UniV3VaultGovernance", function (this: TestContext<
+describe("UniV3VaultGovernance", function (this: TestContext<
     UniV3VaultGovernance,
     DeploymentOptions
 > &
@@ -57,6 +58,7 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                     internalParams = {
                         protocolGovernance: this.protocolGovernance.address,
                         registry: this.vaultRegistry.address,
+                        singleton: this.uniV3VaultSingleton.address,
                     },
                     positionManager = positionManagerAddress,
                     skipInit = false,
@@ -66,7 +68,13 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                     {
                         from: this.deployer.address,
                         contract: "UniV3VaultGovernance",
-                        args: [internalParams, { positionManager }],
+                        args: [
+                            internalParams,
+                            {
+                                positionManager,
+                                oracle: this.mellowOracle.address,
+                            },
+                        ],
                         autoMine: true,
                     }
                 );
@@ -87,8 +95,8 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                         .commitVaultGovernancesAdd();
                     await this.subject.createVault(
                         this.tokens.slice(0, 2).map((x: any) => x.address),
-                        3000,
-                        this.ownerSigner.address
+                        this.ownerSigner.address,
+                        3000
                     );
                     this.nft = (
                         await this.vaultRegistry.vaultsCount()
@@ -132,10 +140,12 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
+                                    singleton: this.uniV3VaultSingleton.address,
                                 },
                                 {
                                     positionManager:
                                         ethers.constants.AddressZero,
+                                    oracle: this.mellowOracle.address,
                                 },
                             ],
                             autoMine: true,
@@ -164,8 +174,8 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                             this.tokens
                                 .slice(0, 2)
                                 .map((x: ERC20) => x.address),
-                            3000,
-                            this.ownerSigner.address
+                            this.ownerSigner.address,
+                            3000
                         )
                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                     return true;
@@ -186,8 +196,8 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
                             this.tokens
                                 .slice(0, 2)
                                 .map((x: ERC20) => x.address),
-                            3000,
-                            this.ownerSigner.address
+                            this.ownerSigner.address,
+                            3000
                         )
                     ).to.be.revertedWith(Exceptions.NOT_FOUND);
                     return true;
@@ -195,53 +205,17 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
             );
         });
         describe("edge cases", () => {
-            describe("when options are 0 length bytes", () => {
-                it("deploys a vault for 0.3% fee pool", async () => {
-                    await this.subject.createVault(
-                        [this.weth.address, this.usdc.address]
-                            .map((x) => x.toLowerCase())
-                            .sort(),
-                        [],
-                        this.ownerSigner.address
-                    );
-                    const nft = await this.vaultRegistry.vaultsCount();
-                    const address = await this.vaultRegistry.vaultForNft(nft);
-                    const vault: UniV3Vault = await ethers.getContractAt(
-                        "UniV3Vault",
-                        address
-                    );
-                    const poolAddress = await vault.pool();
-                    const pool: IUniswapV3Pool = await ethers.getContractAt(
-                        "IUniswapV3Pool",
-                        poolAddress
-                    );
-                    expect(3000).to.eq(await pool.fee());
-                });
-            });
-            describe("when options are bytes with length 32", () => {
-                it("deploys a vault with fee equals to uint256 represented by 32 bytes of options", async () => {
-                    await this.subject.createVault(
-                        [this.weth.address, this.usdc.address]
-                            .map((x) => x.toLowerCase())
-                            .sort(),
-                        ethers.utils.hexZeroPad(
-                            BigNumber.from(500).toHexString(),
-                            32
-                        ),
-                        this.ownerSigner.address
-                    );
-                    const nft = await this.vaultRegistry.vaultsCount();
-                    const address = await this.vaultRegistry.vaultForNft(nft);
-                    const vault: UniV3Vault = await ethers.getContractAt(
-                        "UniV3Vault",
-                        address
-                    );
-                    const poolAddress = await vault.pool();
-                    const pool: IUniswapV3Pool = await ethers.getContractAt(
-                        "IUniswapV3Pool",
-                        poolAddress
-                    );
-                    expect(500).to.eq(await pool.fee());
+            describe("when fee is not supported by uni v3", () => {
+                it("reverts", async () => {
+                    await expect(
+                        this.subject.createVault(
+                            [this.weth.address, this.usdc.address]
+                                .map((x) => x.toLowerCase())
+                                .sort(),
+                            this.ownerSigner.address,
+                            2345
+                        )
+                    ).to.be.revertedWith(Exceptions.ALLOWLIST);
                 });
             });
         });
@@ -250,6 +224,15 @@ xdescribe("UniV3VaultGovernance", function (this: TestContext<
     // @ts-ignore
     vaultGovernanceBehavior.call(this, {
         delayedProtocolParams,
+        defaultCreateVault: async (
+            deployer: Signer,
+            tokenAddresses: string[],
+            owner: string
+        ) => {
+            await this.subject
+                .connect(deployer)
+                .createVault(tokenAddresses, owner, 3000);
+        },
         ...this,
     });
 });

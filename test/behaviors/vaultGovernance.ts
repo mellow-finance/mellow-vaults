@@ -145,11 +145,7 @@ export function vaultGovernanceBehavior<
                 owner: string
             ) => {
                 if (defaultCreateVault) {
-                    await defaultCreateVault(
-                        this.deployer,
-                        tokenAddresses,
-                        owner
-                    );
+                    await defaultCreateVault(deployer, tokenAddresses, owner);
                 } else {
                     await this.subject
                         .connect(deployer)
