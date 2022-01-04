@@ -153,6 +153,31 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                     ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
+            describe("when oracle address is 0", () => {
+                it("reverts", async () => {
+                    await deployments.fixture();
+                    const positionManagerAddress = (await getNamedAccounts())
+                        .uniswapV3PositionManager;
+                    await expect(
+                        deployments.deploy("UniV3VaultGovernance", {
+                            from: this.deployer.address,
+                            args: [
+                                {
+                                    protocolGovernance:
+                                        this.protocolGovernance.address,
+                                    registry: this.vaultRegistry.address,
+                                    singleton: this.uniV3VaultSingleton.address,
+                                },
+                                {
+                                    positionManager: positionManagerAddress,
+                                    oracle: ethers.constants.AddressZero,
+                                },
+                            ],
+                            autoMine: true,
+                        })
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                });
+            });
         });
     });
 

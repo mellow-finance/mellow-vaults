@@ -15,6 +15,7 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         VaultGovernance(internalParams_)
     {
         require(address(delayedProtocolParams_.positionManager) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 

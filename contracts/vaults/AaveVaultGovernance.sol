@@ -14,6 +14,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         VaultGovernance(internalParams_)
     {
         require(address(delayedProtocolParams_.lendingPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(delayedProtocolParams_.estimatedAaveAPYX96 != 0, ExceptionsLibrary.VALUE_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 

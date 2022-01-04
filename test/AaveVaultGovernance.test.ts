@@ -154,6 +154,31 @@ describe("AaveVaultGovernance", function (this: TestContext<
                     ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
+            describe("when estimatedAaveAPYX96 is 0", () => {
+                it("reverts", async () => {
+                    await deployments.fixture();
+                    const lendingPoolAddress = (await getNamedAccounts())
+                        .aaveLendingPool;
+                    await expect(
+                        deployments.deploy("AaveVaultGovernance", {
+                            from: this.deployer.address,
+                            args: [
+                                {
+                                    protocolGovernance:
+                                        this.protocolGovernance.address,
+                                    registry: this.vaultRegistry.address,
+                                    singleton: this.aaveVaultSingleton.address,
+                                },
+                                {
+                                    lendingPool: lendingPoolAddress,
+                                    estimatedAaveAPYX96: 0,
+                                },
+                            ],
+                            autoMine: true,
+                        })
+                    ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                });
+            });
         });
     });
 
