@@ -40,7 +40,7 @@ type DeployOptions = {
 };
 
 // @ts-ignore
-xdescribe("AaveVaultGovernance", function (this: TestContext<
+describe("AaveVaultGovernance", function (this: TestContext<
     AaveVaultGovernance,
     DeployOptions
 > &
@@ -52,10 +52,12 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
         this.deploymentFixture = deployments.createFixture(
             async (_, options?: DeployOptions) => {
                 await deployments.fixture();
+
                 const {
                     internalParams = {
                         protocolGovernance: this.protocolGovernance.address,
                         registry: this.vaultRegistry.address,
+                        singleton: this.aaveVaultSingleton.address,
                     },
                     lendingPool = lendingPoolAddress,
                     skipInit = false,
@@ -65,7 +67,13 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                     {
                         from: this.deployer.address,
                         contract: "AaveVaultGovernance",
-                        args: [internalParams, { lendingPool }],
+                        args: [
+                            internalParams,
+                            {
+                                lendingPool,
+                                estimatedAaveAPYX96: BigNumber.from(2).pow(98),
+                            },
+                        ],
                         autoMine: true,
                     }
                 );
@@ -133,14 +141,42 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
+                                    singleton: this.aaveVaultSingleton.address,
                                 },
                                 {
                                     lendingPool: ethers.constants.AddressZero,
+                                    estimatedAaveAPYX96:
+                                        BigNumber.from(2).pow(98),
                                 },
                             ],
                             autoMine: true,
                         })
                     ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                });
+            });
+            describe("when estimatedAaveAPYX96 is 0", () => {
+                it("reverts", async () => {
+                    await deployments.fixture();
+                    const lendingPoolAddress = (await getNamedAccounts())
+                        .aaveLendingPool;
+                    await expect(
+                        deployments.deploy("AaveVaultGovernance", {
+                            from: this.deployer.address,
+                            args: [
+                                {
+                                    protocolGovernance:
+                                        this.protocolGovernance.address,
+                                    registry: this.vaultRegistry.address,
+                                    singleton: this.aaveVaultSingleton.address,
+                                },
+                                {
+                                    lendingPool: lendingPoolAddress,
+                                    estimatedAaveAPYX96: 0,
+                                },
+                            ],
+                            autoMine: true,
+                        })
+                    ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                 });
             });
         });

@@ -26,9 +26,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @inheritdoc IERC20RootVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({managementFeeChargeDelay: 0});
-        }
+        // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
