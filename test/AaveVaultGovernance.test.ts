@@ -40,7 +40,7 @@ type DeployOptions = {
 };
 
 // @ts-ignore
-xdescribe("AaveVaultGovernance", function (this: TestContext<
+describe("AaveVaultGovernance", function (this: TestContext<
     AaveVaultGovernance,
     DeployOptions
 > &
@@ -52,10 +52,12 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
         this.deploymentFixture = deployments.createFixture(
             async (_, options?: DeployOptions) => {
                 await deployments.fixture();
+
                 const {
                     internalParams = {
                         protocolGovernance: this.protocolGovernance.address,
                         registry: this.vaultRegistry.address,
+                        singleton: this.aaveVaultSingleton.address,
                     },
                     lendingPool = lendingPoolAddress,
                     skipInit = false,
@@ -65,7 +67,13 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                     {
                         from: this.deployer.address,
                         contract: "AaveVaultGovernance",
-                        args: [internalParams, { lendingPool }],
+                        args: [
+                            internalParams,
+                            {
+                                lendingPool,
+                                estimatedAaveAPYX96: BigNumber.from(2).pow(98),
+                            },
+                        ],
                         autoMine: true,
                     }
                 );
@@ -133,9 +141,12 @@ xdescribe("AaveVaultGovernance", function (this: TestContext<
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
+                                    singleton: this.aaveVaultSingleton.address,
                                 },
                                 {
                                     lendingPool: ethers.constants.AddressZero,
+                                    estimatedAaveAPYX96:
+                                        BigNumber.from(2).pow(98),
                                 },
                             ],
                             autoMine: true,
