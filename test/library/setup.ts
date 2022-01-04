@@ -5,20 +5,13 @@ import { Context, Suite } from "mocha";
 import { equals, sortBy } from "ramda";
 import { addSigner, toObject } from "./Helpers";
 import {
-    AaveVaultFactory,
     AaveVaultGovernance,
     ERC20,
-    ERC20VaultFactory,
     ERC20VaultGovernance,
-    GatewayVaultFactory,
-    GatewayVaultGovernance,
-    LpIssuerFactory,
-    LpIssuerGovernance,
+    ERC20RootVaultGovernance,
     ProtocolGovernance,
-    UniV3VaultFactory,
     UniV3VaultGovernance,
     VaultRegistry,
-    YearnVaultFactory,
     YearnVaultGovernance,
 } from "../types";
 
@@ -30,14 +23,7 @@ export type TestContext<T, F> = Suite & {
     erc20VaultGovernance: ERC20VaultGovernance;
     aaveVaultGovernance: AaveVaultGovernance;
     uniV3VaultGovernance: UniV3VaultGovernance;
-    gatewayVaultGovernance: GatewayVaultGovernance;
-    lpIssuerGovernance: LpIssuerGovernance;
-    yearnVaultFactory: YearnVaultFactory;
-    erc20VaultFactory: ERC20VaultFactory;
-    aaveVaultFactory: AaveVaultFactory;
-    uniV3VaultFactory: UniV3VaultFactory;
-    gatewayVaultFactory: GatewayVaultFactory;
-    lpIssuerFactory: LpIssuerFactory;
+    erc20RootVaultGovernance: ERC20RootVaultGovernance;
 
     usdc: ERC20;
     weth: ERC20;
@@ -66,16 +52,9 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     this.uniV3VaultGovernance = await ethers.getContract(
         "UniV3VaultGovernance"
     );
-    this.gatewayVaultGovernance = await ethers.getContract(
-        "GatewayVaultGovernance"
+    this.erc20RootVaultGovernance = await ethers.getContract(
+        "ERC20RootVaultGovernance"
     );
-    this.lpIssuerGovernance = await ethers.getContract("LpIssuerGovernance");
-    this.yearnVaultFactory = await ethers.getContract("YearnVaultFactory");
-    this.erc20VaultFactory = await ethers.getContract("ERC20VaultFactory");
-    this.aaveVaultFactory = await ethers.getContract("AaveVaultFactory");
-    this.uniV3VaultFactory = await ethers.getContract("UniV3VaultFactory");
-    this.gatewayVaultFactory = await ethers.getContract("GatewayVaultFactory");
-    this.lpIssuerFactory = await ethers.getContract("LpIssuerFactory");
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin"]) {

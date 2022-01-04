@@ -177,7 +177,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                             this.subject
                                 .connect(s)
                                 .stageDelayedProtocolParams(params)
-                        ).to.be.revertedWith(Exceptions.ADMIN);
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
                 }
@@ -196,21 +196,21 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                     this.subject
                         .connect(this.ownerSigner)
                         .stageDelayedProtocolParams(someParams)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
             it("denied: Vault NFT Approved (aka strategy)", async () => {
                 await expect(
                     this.subject
                         .connect(this.strategySigner)
                         .stageDelayedProtocolParams(someParams)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
             it("denied: deployer", async () => {
                 await expect(
                     this.subject
                         .connect(this.deployer)
                         .stageDelayedProtocolParams(someParams)
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
 
             it("denied: random address", async () => {
@@ -219,7 +219,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                         this.subject
                             .connect(s)
                             .stageDelayedProtocolParams(someParams)
-                    ).to.be.revertedWith(Exceptions.ADMIN);
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
@@ -308,7 +308,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                             this.subject
                                 .connect(s)
                                 .commitDelayedProtocolParams()
-                        ).to.be.revertedWith(Exceptions.ADMIN);
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
                 }
@@ -365,28 +365,28 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                     this.subject
                         .connect(this.ownerSigner)
                         .commitDelayedProtocolParams()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
             it("denied: Vault NFT Approved (aka strategy)", async () => {
                 await expect(
                     this.subject
                         .connect(this.strategySigner)
                         .commitDelayedProtocolParams()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
             it("denied: deployer", async () => {
                 await expect(
                     this.subject
                         .connect(this.deployer)
                         .commitDelayedProtocolParams()
-                ).to.be.revertedWith(Exceptions.ADMIN);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
 
             it("denied: random address", async () => {
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
                         this.subject.connect(s).commitDelayedProtocolParams()
-                    ).to.be.revertedWith(Exceptions.ADMIN);
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });

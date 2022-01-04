@@ -11,6 +11,7 @@ import {
     ZERO_INTERFACE_ID,
 } from "./library/Constants";
 import { UniV2Trader } from "./types";
+import Exceptions from "./library/Exceptions";
 
 describe("ChiefTrader", () => {
     let admin: string;
@@ -139,7 +140,7 @@ describe("ChiefTrader", () => {
                         chiefTrader
                             .connect(signer)
                             .addTrader(uniV3Trader.address)
-                    ).to.be.revertedWith("PA");
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });

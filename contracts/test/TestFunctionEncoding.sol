@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../Vault.sol";
-import "../interfaces/IVaultGovernance.sol";
-import "../interfaces/IVault.sol";
+import "../vaults/IntegrationVault.sol";
+import "../interfaces/vaults/IVaultGovernance.sol";
+import "../interfaces/vaults/IVault.sol";
 
 contract TestFunctionEncoding {
-    Vault public vault;
+    IntegrationVault public vault;
 
-    constructor(Vault _vault) {
+    constructor(IntegrationVault _vault) {
         vault = _vault;
     }
 

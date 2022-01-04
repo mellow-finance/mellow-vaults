@@ -206,9 +206,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                             this.subject
                                 .connect(s)
                                 .stageDelayedStrategyParams(this.nft, params)
-                        ).to.be.revertedWith(
-                            Exceptions.REQUIRE_AT_LEAST_STRATEGY
-                        );
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
                 }
@@ -241,7 +239,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                     this.subject
                         .connect(this.deployer)
                         .stageDelayedStrategyParams(this.nft, someParams)
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
 
             it("denied: random address", async () => {
@@ -250,7 +248,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                         this.subject
                             .connect(s)
                             .stageDelayedStrategyParams(this.nft, someParams)
-                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
@@ -345,9 +343,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                             this.subject
                                 .connect(s)
                                 .commitDelayedStrategyParams(this.nft)
-                        ).to.be.revertedWith(
-                            Exceptions.REQUIRE_AT_LEAST_STRATEGY
-                        );
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
                 }
@@ -436,7 +432,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                     this.subject
                         .connect(this.deployer)
                         .commitDelayedStrategyParams(this.nft)
-                ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
 
             it("denied: random address", async () => {
@@ -445,7 +441,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                         this.subject
                             .connect(s)
                             .commitDelayedStrategyParams(this.nft)
-                    ).to.be.revertedWith(Exceptions.REQUIRE_AT_LEAST_STRATEGY);
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });

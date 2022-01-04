@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../VaultGovernance.sol";
+import "../vaults/VaultGovernance.sol";
 
 contract TestVaultGovernance is VaultGovernance {
     constructor(InternalParams memory internalParams_) VaultGovernance(internalParams_) {}

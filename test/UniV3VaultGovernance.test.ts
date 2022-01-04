@@ -19,7 +19,7 @@ import { Context, Suite } from "mocha";
 import { equals } from "ramda";
 import { address, pit, RUNS } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
-import { Arbitrary, hexa, hexaString, nat } from "fast-check";
+import { Arbitrary, hexa, hexaString, nat, tuple } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import {
@@ -40,7 +40,7 @@ type DeploymentOptions = {
 };
 
 // @ts-ignore
-describe("UniV3VaultGovernance", function (this: TestContext<
+xdescribe("UniV3VaultGovernance", function (this: TestContext<
     UniV3VaultGovernance,
     DeploymentOptions
 > &
@@ -78,14 +78,6 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                 this.strategySigner = await addSigner(randomAddress());
 
                 if (!skipInit) {
-                    const { address: factoryAddress } =
-                        await deployments.deploy("UniV3VaultFactoryTest", {
-                            from: this.deployer.address,
-                            contract: "UniV3VaultFactory",
-                            args: [this.subject.address],
-                            autoMine: true,
-                        });
-                    await this.subject.initialize(factoryAddress);
                     await this.protocolGovernance
                         .connect(this.admin)
                         .setPendingVaultGovernancesAdd([this.subject.address]);
@@ -93,9 +85,9 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                     await this.protocolGovernance
                         .connect(this.admin)
                         .commitVaultGovernancesAdd();
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         this.tokens.slice(0, 2).map((x: any) => x.address),
-                        [],
+                        3000,
                         this.ownerSigner.address
                     );
                     this.nft = (
@@ -116,8 +108,10 @@ describe("UniV3VaultGovernance", function (this: TestContext<
         await sleepTo(this.startTimestamp);
     });
 
-    const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-        address.map((positionManager) => ({ positionManager }));
+    const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> = tuple(
+        address,
+        address
+    ).map(([positionManager, oracle]) => ({ positionManager, oracle }));
 
     describe("#constructor", () => {
         it("deploys a new contract", async () => {
@@ -146,15 +140,13 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                             ],
                             autoMine: true,
                         })
-                    ).to.be.revertedWith(
-                        Exceptions.POSITION_MANAGER_ADDRESS_ZERO
-                    );
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });
     });
 
-    describe("#deployVault", () => {
+    xdescribe("#createVault", () => {
         describe("properties", () => {
             pit(
                 "reverts for any options with length != 32 or != 0",
@@ -168,14 +160,14 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                     .map((x) => `0x${x}`),
                 async (bytes: string) => {
                     await expect(
-                        this.subject.deployVault(
+                        this.subject.createVault(
                             this.tokens
                                 .slice(0, 2)
                                 .map((x: ERC20) => x.address),
-                            bytes,
+                            3000,
                             this.ownerSigner.address
                         )
-                    ).to.be.revertedWith(Exceptions.INVALID_OPTIONS);
+                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                     return true;
                 }
             );
@@ -190,14 +182,14 @@ describe("UniV3VaultGovernance", function (this: TestContext<
                     .map((x) => ethers.utils.hexZeroPad(x, 32)),
                 async (bytes: string) => {
                     await expect(
-                        this.subject.deployVault(
+                        this.subject.createVault(
                             this.tokens
                                 .slice(0, 2)
                                 .map((x: ERC20) => x.address),
-                            bytes,
+                            3000,
                             this.ownerSigner.address
                         )
-                    ).to.be.revertedWith(Exceptions.UNISWAP_POOL_NOT_FOUND);
+                    ).to.be.revertedWith(Exceptions.NOT_FOUND);
                     return true;
                 }
             );
@@ -205,7 +197,7 @@ describe("UniV3VaultGovernance", function (this: TestContext<
         describe("edge cases", () => {
             describe("when options are 0 length bytes", () => {
                 it("deploys a vault for 0.3% fee pool", async () => {
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         [this.weth.address, this.usdc.address]
                             .map((x) => x.toLowerCase())
                             .sort(),
@@ -228,7 +220,7 @@ describe("UniV3VaultGovernance", function (this: TestContext<
             });
             describe("when options are bytes with length 32", () => {
                 it("deploys a vault with fee equals to uint256 represented by 32 bytes of options", async () => {
-                    await this.subject.deployVault(
+                    await this.subject.createVault(
                         [this.weth.address, this.usdc.address]
                             .map((x) => x.toLowerCase())
                             .sort(),

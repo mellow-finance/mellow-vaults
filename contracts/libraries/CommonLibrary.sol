@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./external/FullMath.sol";
+import "./ExceptionsLibrary.sol";
 
 /// @notice CommonLibrary shared utilities
 library CommonLibrary {
@@ -32,6 +33,21 @@ library CommonLibrary {
             for (uint256 j = i + 1; j < l; ++j) {
                 if (arr[i] > arr[j]) {
                     address temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+        }
+    }
+
+    /// @notice Sort uint256 using bubble sort. The sorting is done in-place.
+    /// @param arr Array of uint256
+    function bubbleSortUint(uint256[] memory arr) internal pure {
+        uint256 l = arr.length;
+        for (uint256 i = 0; i < l; ++i) {
+            for (uint256 j = i + 1; j < l; ++j) {
+                if (arr[i] > arr[j]) {
+                    uint256 temp = arr[i];
                     arr[i] = arr[j];
                     arr[j] = temp;
                 }
@@ -103,12 +119,12 @@ library CommonLibrary {
         returns (uint256[][] memory)
     {
         uint256 k = weights.length;
-        require(k > 0, "KGT0");
+        require(k > 0, ExceptionsLibrary.EMPTY_LIST);
         uint256 n = amounts.length;
-        require(n > 0, "NGT0");
+        require(n > 0, ExceptionsLibrary.EMPTY_LIST);
         uint256[] memory weightsNorm = new uint256[](n);
         for (uint256 i = 0; i < k; ++i) {
-            require(weights[i].length == n, "NV");
+            require(weights[i].length == n, ExceptionsLibrary.INVALID_VALUE);
         }
         for (uint256 j = 0; j < n; ++j) {
             weightsNorm[j] = 0;

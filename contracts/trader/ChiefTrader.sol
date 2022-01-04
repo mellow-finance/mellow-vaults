@@ -3,9 +3,9 @@ pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "./interfaces/ITrader.sol";
-import "./interfaces/IChiefTrader.sol";
-import "./libraries/TraderExceptionsLibrary.sol";
+import "../interfaces/trader/ITrader.sol";
+import "../interfaces/trader/IChiefTrader.sol";
+import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice Main contract that allows trading of ERC20 tokens on different Dexes
 /// @dev This contract contains several subtraders that can be used for trading ERC20 tokens.
@@ -37,7 +37,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     /// @inheritdoc IChiefTrader
     function addTrader(address traderAddress) external {
         _requireProtocolAdmin();
-        require(!addedTraders[traderAddress], TraderExceptionsLibrary.TRADER_ALREADY_REGISTERED_EXCEPTION);
+        require(!addedTraders[traderAddress], ExceptionsLibrary.DUPLICATE);
         require(ERC165(traderAddress).supportsInterface(type(ITrader).interfaceId));
         require(!ERC165(traderAddress).supportsInterface(type(IChiefTrader).interfaceId));
         _traders.push(traderAddress);
@@ -53,7 +53,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256) {
-        require(traderId < _traders.length, TraderExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderId < _traders.length, ExceptionsLibrary.NOT_FOUND);
         _requireAllowedTokens(path);
         address traderAddress = _traders[traderId];
         address recipient = msg.sender;
@@ -68,7 +68,7 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         PathItem[] calldata path,
         bytes calldata options
     ) external returns (uint256) {
-        require(traderId < _traders.length, TraderExceptionsLibrary.TRADER_NOT_FOUND_EXCEPTION);
+        require(traderId < _traders.length, ExceptionsLibrary.NOT_FOUND);
         _requireAllowedTokens(path);
         address traderAddress = _traders[traderId];
         address recipient = msg.sender;
@@ -86,14 +86,13 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
         for (uint256 i = 1; i < path.length; ++i)
             require(
                 pg.isAllowedToken(path[i].token0) && pg.isAllowedToken(path[i].token1),
-                TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION
+                ExceptionsLibrary.FORBIDDEN
             );
-        if (path.length > 0)
-            require(pg.isAllowedToken(path[0].token1), TraderExceptionsLibrary.TOKEN_NOT_ALLOWED_EXCEPTION);
+        if (path.length > 0) require(pg.isAllowedToken(path[0].token1), ExceptionsLibrary.FORBIDDEN);
     }
 
     function _requireProtocolAdmin() internal view {
-        require(protocolGovernance.isAdmin(msg.sender), TraderExceptionsLibrary.PROTOCOL_ADMIN_REQUIRED_EXCEPTION);
+        require(protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 
     event AddedTrader(uint256 indexed traderId, address traderAddress);

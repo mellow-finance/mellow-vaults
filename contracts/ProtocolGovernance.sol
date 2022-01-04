@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./DefaultAccessControl.sol";
+import "./utils/DefaultAccessControl.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
@@ -38,7 +38,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         _numberOfValidTokens = 0;
     }
 
-    // -------------------  PUBLIC, VIEW  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function claimAllowlist() external view returns (address[] memory) {
@@ -130,31 +130,31 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.protocolTreasury;
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _pendingClaimAllowlistAdd = addresses;
         pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function removeFromClaimAllowlist(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _claimAllowlist.remove(addr);
     }
 
     /// @inheritdoc IProtocolGovernance
     function setPendingTokenWhitelistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _pendingTokenWhitelistAdd = addresses;
         pendingTokenWhitelistAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function removeFromTokenWhitelist(address addr) external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         if (_tokenEverAdded[addr] && _tokensAllowed[addr]) {
             _tokensAllowed[addr] = false;
             --_numberOfValidTokens;
@@ -163,30 +163,30 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function setPendingVaultGovernancesAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _pendingVaultGovernancesAdd = addresses;
         pendingVaultGovernancesAddTimestamp = block.timestamp + params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function removeFromVaultGovernances(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _vaultGovernances.remove(addr);
     }
 
     /// @inheritdoc IProtocolGovernance
     function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
-        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.MAX_GOVERNANCE_DELAY);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function commitClaimAllowlistAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(
             (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp != 0),
             ExceptionsLibrary.TIMESTAMP
@@ -201,10 +201,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitTokenWhitelistAdd() external {
-        require(isAdmin(msg.sender), "ADM");
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(
             (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
-            "TS"
+            ExceptionsLibrary.TIMESTAMP
         );
         uint256 len = _pendingTokenWhitelistAdd.length;
         for (uint256 i = 0; i < len; ++i) {
@@ -226,7 +226,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitVaultGovernancesAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(
             (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
             ExceptionsLibrary.TIMESTAMP
@@ -241,11 +241,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.ADMIN);
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         require(
             pendingParams.maxTokensPerVault != 0 || pendingParams.governanceDelay != 0,
-            ExceptionsLibrary.EMPTY_PARAMS
+            ExceptionsLibrary.EMPTY_LIST
         ); // sanity check for empty params
         params = pendingParams;
         delete pendingParams;
