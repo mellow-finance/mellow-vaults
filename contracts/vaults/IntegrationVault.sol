@@ -62,7 +62,9 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     ) external returns (uint256[] memory actualTokenAmounts) {
         uint256 len = tokens.length;
         for (uint256 i = 0; i < len; ++i)
-            if (tokenAmounts[i] != 0) IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
+            if (tokenAmounts[i] != 0) {
+                IERC20(tokens[i]).safeTransferFrom(from, address(this), tokenAmounts[i]);
+            }
 
         actualTokenAmounts = push(tokens, tokenAmounts, options);
         for (uint256 i = 0; i < tokens.length; ++i) {

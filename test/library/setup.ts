@@ -19,9 +19,10 @@ import {
     UniV3Vault,
     ERC20RootVault,
     MellowOracle,
+    MStrategy,
 } from "../types";
 
-export type TestContext<T, F> = Suite & {
+export interface TestContext<T, F> extends Suite {
     subject: T;
     vaultRegistry: VaultRegistry;
     protocolGovernance: ProtocolGovernance;
@@ -36,6 +37,7 @@ export type TestContext<T, F> = Suite & {
     erc20RootVaultGovernance: ERC20RootVaultGovernance;
     erc20RootVaultSingleton: ERC20RootVault;
     mellowOracle: MellowOracle;
+    mStrategy: MStrategy;
 
     usdc: ERC20;
     weth: ERC20;
@@ -44,11 +46,30 @@ export type TestContext<T, F> = Suite & {
     deployer: SignerWithAddress;
     admin: SignerWithAddress;
     mStrategyAdmin: SignerWithAddress;
+    test: SignerWithAddress;
     startTimestamp: number;
     deploymentFixture: (x?: F) => Promise<T>;
     governanceDelay: number;
     [key: string]: any;
-};
+}
+
+export function contract<T, F, E>(
+    title: string,
+    f: (this: TestContext<T, F> & E) => void
+) {
+    describe(title, function (this: Suite) {
+        const self = this as TestContext<T, F> & E;
+        before(async () => {
+            await setupDefaultContext.call<
+                TestContext<T, F>,
+                [],
+                Promise<void>
+            >(self);
+        });
+
+        f.call(self);
+    });
+}
 
 export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     await deployments.fixture();
@@ -76,15 +97,22 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.erc20RootVaultSingleton = await ethers.getContract("ERC20RootVault");
     this.mellowOracle = await ethers.getContract("MellowOracle");
+    const mStrategy: MStrategy | null = await ethers.getContractOrNull(
+        "MStrategyYearn"
+    );
+    if (!mStrategy) {
+        this.mStrategy = await ethers.getContract("MStrategyAave");
+    } else {
+        this.mStrategy = mStrategy;
+    }
 
     const namedAccounts = await getNamedAccounts();
-    for (const name of ["deployer", "admin", "mStrategyAdmin"]) {
+    for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
         const address = namedAccounts[name];
         let signer = await ethers.getSignerOrNull(address);
         if (!signer) {
             signer = await addSigner(address);
         }
-        // @ts-ignore
         this[name] = signer;
     }
     const { usdc, weth, wbtc } = namedAccounts;

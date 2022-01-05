@@ -14,7 +14,7 @@ import {
     DelayedProtocolParamsStruct,
     UniV3VaultGovernance,
 } from "./types/UniV3VaultGovernance";
-import { setupDefaultContext, TestContext } from "./library/setup";
+import { contract, setupDefaultContext, TestContext } from "./library/setup";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
 import { address, pit, RUNS } from "./library/property";
@@ -35,182 +35,183 @@ type CustomContext = {
     ownerSigner: SignerWithAddress;
 };
 type DeploymentOptions = {
-    internalParams?: InternalParamsStructOutput;
+    internalParams?: InternalParamsStruct;
     positionManager?: string;
     skipInit?: boolean;
 };
 
-// @ts-ignore
-describe("UniV3VaultGovernance", function (this: TestContext<
-    UniV3VaultGovernance,
-    DeploymentOptions
-> &
-    CustomContext) {
-    before(async () => {
-        // @ts-ignore
-        await setupDefaultContext.call(this);
-        const positionManagerAddress = (await getNamedAccounts())
-            .uniswapV3PositionManager;
-        this.deploymentFixture = deployments.createFixture(
-            async (_, options?: DeploymentOptions) => {
-                await deployments.fixture();
-                const {
-                    internalParams = {
-                        protocolGovernance: this.protocolGovernance.address,
-                        registry: this.vaultRegistry.address,
-                        singleton: this.uniV3VaultSingleton.address,
-                    },
-                    positionManager = positionManagerAddress,
-                    skipInit = false,
-                } = options || {};
-                const { address } = await deployments.deploy(
-                    "UniV3VaultGovernanceTest",
-                    {
-                        from: this.deployer.address,
-                        contract: "UniV3VaultGovernance",
-                        args: [
-                            internalParams,
-                            {
-                                positionManager,
-                                oracle: this.mellowOracle.address,
-                            },
-                        ],
-                        autoMine: true,
-                    }
-                );
-                this.subject = await ethers.getContractAt(
-                    "UniV3VaultGovernance",
-                    address
-                );
-                this.ownerSigner = await addSigner(randomAddress());
-                this.strategySigner = await addSigner(randomAddress());
-
-                if (!skipInit) {
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .setPendingVaultGovernancesAdd([this.subject.address]);
-                    await sleep(this.governanceDelay);
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .commitVaultGovernancesAdd();
-                    await this.subject.createVault(
-                        this.tokens.slice(0, 2).map((x: any) => x.address),
-                        this.ownerSigner.address,
-                        3000
-                    );
-                    this.nft = (
-                        await this.vaultRegistry.vaultsCount()
-                    ).toNumber();
-                    await this.vaultRegistry
-                        .connect(this.ownerSigner)
-                        .approve(this.strategySigner.address, this.nft);
-                }
-                return this.subject;
-            }
-        );
-    });
-
-    beforeEach(async () => {
-        await this.deploymentFixture();
-        this.startTimestamp = now();
-        await sleepTo(this.startTimestamp);
-    });
-
-    const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> = tuple(
-        address,
-        address
-    ).map(([positionManager, oracle]) => ({ positionManager, oracle }));
-
-    describe("#constructor", () => {
-        it("deploys a new contract", async () => {
-            expect(ethers.constants.AddressZero).to.not.eq(
-                this.subject.address
-            );
-        });
-
-        describe("edge cases", () => {
-            describe("when positionManager address is 0", () => {
-                it("reverts", async () => {
+contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
+    "UniV3VaultGovernance",
+    function () {
+        before(async () => {
+            const positionManagerAddress = (await getNamedAccounts())
+                .uniswapV3PositionManager;
+            this.deploymentFixture = deployments.createFixture(
+                async (_, options?: DeploymentOptions) => {
                     await deployments.fixture();
-                    await expect(
-                        deployments.deploy("UniV3VaultGovernance", {
+                    const {
+                        internalParams = {
+                            protocolGovernance: this.protocolGovernance.address,
+                            registry: this.vaultRegistry.address,
+                            singleton: this.uniV3VaultSingleton.address,
+                        },
+                        positionManager = positionManagerAddress,
+                        skipInit = false,
+                    } = options || {};
+                    const { address } = await deployments.deploy(
+                        "UniV3VaultGovernanceTest",
+                        {
                             from: this.deployer.address,
+                            contract: "UniV3VaultGovernance",
                             args: [
+                                internalParams,
                                 {
-                                    protocolGovernance:
-                                        this.protocolGovernance.address,
-                                    registry: this.vaultRegistry.address,
-                                    singleton: this.uniV3VaultSingleton.address,
-                                },
-                                {
-                                    positionManager:
-                                        ethers.constants.AddressZero,
+                                    positionManager,
                                     oracle: this.mellowOracle.address,
                                 },
                             ],
                             autoMine: true,
-                        })
-                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
-                });
-            });
-            describe("when oracle address is 0", () => {
-                it("reverts", async () => {
-                    await deployments.fixture();
-                    const positionManagerAddress = (await getNamedAccounts())
-                        .uniswapV3PositionManager;
-                    await expect(
-                        deployments.deploy("UniV3VaultGovernance", {
-                            from: this.deployer.address,
-                            args: [
-                                {
-                                    protocolGovernance:
-                                        this.protocolGovernance.address,
-                                    registry: this.vaultRegistry.address,
-                                    singleton: this.uniV3VaultSingleton.address,
-                                },
-                                {
-                                    positionManager: positionManagerAddress,
-                                    oracle: ethers.constants.AddressZero,
-                                },
-                            ],
-                            autoMine: true,
-                        })
-                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
-                });
-            });
-        });
-    });
+                        }
+                    );
+                    this.subject = await ethers.getContractAt(
+                        "UniV3VaultGovernance",
+                        address
+                    );
+                    this.ownerSigner = await addSigner(randomAddress());
+                    this.strategySigner = await addSigner(randomAddress());
 
-    describe("#createVault", () => {
-        describe("edge cases", () => {
-            describe("when fee is not supported by uni v3", () => {
-                it("reverts", async () => {
-                    await expect(
-                        this.subject.createVault(
-                            [this.weth.address, this.usdc.address]
-                                .map((x) => x.toLowerCase())
-                                .sort(),
+                    if (!skipInit) {
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .setPendingVaultGovernancesAdd([
+                                this.subject.address,
+                            ]);
+                        await sleep(this.governanceDelay);
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .commitVaultGovernancesAdd();
+                        await this.subject.createVault(
+                            this.tokens.slice(0, 2).map((x: any) => x.address),
                             this.ownerSigner.address,
-                            2345
-                        )
-                    ).to.be.revertedWith(Exceptions.NOT_FOUND);
+                            3000
+                        );
+                        this.nft = (
+                            await this.vaultRegistry.vaultsCount()
+                        ).toNumber();
+                        await this.vaultRegistry
+                            .connect(this.ownerSigner)
+                            .approve(this.strategySigner.address, this.nft);
+                    }
+                    return this.subject;
+                }
+            );
+        });
+
+        beforeEach(async () => {
+            await this.deploymentFixture();
+            this.startTimestamp = now();
+            await sleepTo(this.startTimestamp);
+        });
+
+        const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
+            tuple(address, address).map(([positionManager, oracle]) => ({
+                positionManager,
+                oracle,
+            }));
+
+        describe("#constructor", () => {
+            it("deploys a new contract", async () => {
+                expect(ethers.constants.AddressZero).to.not.eq(
+                    this.subject.address
+                );
+            });
+
+            describe("edge cases", () => {
+                describe("when positionManager address is 0", () => {
+                    it("reverts", async () => {
+                        await deployments.fixture();
+                        await expect(
+                            deployments.deploy("UniV3VaultGovernance", {
+                                from: this.deployer.address,
+                                args: [
+                                    {
+                                        protocolGovernance:
+                                            this.protocolGovernance.address,
+                                        registry: this.vaultRegistry.address,
+                                        singleton:
+                                            this.uniV3VaultSingleton.address,
+                                    },
+                                    {
+                                        positionManager:
+                                            ethers.constants.AddressZero,
+                                        oracle: this.mellowOracle.address,
+                                    },
+                                ],
+                                autoMine: true,
+                            })
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    });
+                });
+                describe("when oracle address is 0", () => {
+                    it("reverts", async () => {
+                        await deployments.fixture();
+                        const positionManagerAddress = (
+                            await getNamedAccounts()
+                        ).uniswapV3PositionManager;
+                        await expect(
+                            deployments.deploy("UniV3VaultGovernance", {
+                                from: this.deployer.address,
+                                args: [
+                                    {
+                                        protocolGovernance:
+                                            this.protocolGovernance.address,
+                                        registry: this.vaultRegistry.address,
+                                        singleton:
+                                            this.uniV3VaultSingleton.address,
+                                    },
+                                    {
+                                        positionManager: positionManagerAddress,
+                                        oracle: ethers.constants.AddressZero,
+                                    },
+                                ],
+                                autoMine: true,
+                            })
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    });
                 });
             });
         });
-    });
 
-    // @ts-ignore
-    vaultGovernanceBehavior.call(this, {
-        delayedProtocolParams,
-        defaultCreateVault: async (
-            deployer: Signer,
-            tokenAddresses: string[],
-            owner: string
-        ) => {
-            await this.subject
-                .connect(deployer)
-                .createVault(tokenAddresses, owner, 3000);
-        },
-        ...this,
-    });
-});
+        describe("#createVault", () => {
+            describe("edge cases", () => {
+                describe("when fee is not supported by uni v3", () => {
+                    it("reverts", async () => {
+                        await expect(
+                            this.subject.createVault(
+                                [this.weth.address, this.usdc.address]
+                                    .map((x) => x.toLowerCase())
+                                    .sort(),
+                                this.ownerSigner.address,
+                                2345
+                            )
+                        ).to.be.revertedWith(Exceptions.NOT_FOUND);
+                    });
+                });
+            });
+        });
+
+        vaultGovernanceBehavior.call(this, {
+            delayedProtocolParams,
+            defaultCreateVault: async (
+                deployer: Signer,
+                tokenAddresses: string[],
+                owner: string
+            ) => {
+                await this.subject
+                    .connect(deployer)
+                    .createVault(tokenAddresses, owner, 3000);
+            },
+            ...this,
+        });
+    }
+);

@@ -100,7 +100,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log("Done");
     }
 
-    const adminRole = await read("ProtocolGovernance", "FORBIDDEN_ROLE");
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
     const deployerIsAdmin = await read(
         "ProtocolGovernance",
         "hasRole",

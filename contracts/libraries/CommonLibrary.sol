@@ -12,6 +12,7 @@ library CommonLibrary {
     uint256 constant Q128 = 2**128;
     uint256 constant Q96 = 2**96;
     uint256 constant Q48 = 2**48;
+    uint256 constant Q160 = 2**160;
     uint256 constant UNI_FEE_DENOMINATOR = 10**6;
 
     function deviationFactor(uint256 a, uint256 b) internal pure returns (uint256 deviationX96) {
@@ -19,6 +20,10 @@ library CommonLibrary {
             (a, b) = (b, a);
         }
         if (a == 0) {
+            return type(uint256).max;
+        }
+        if (b / a >= Q160) {
+            // overflow for X96 format
             return type(uint256).max;
         }
 

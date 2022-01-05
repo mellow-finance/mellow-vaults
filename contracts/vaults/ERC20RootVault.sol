@@ -42,6 +42,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
         _initialize(vaultTokens_, nft_, strategy_, subvaultNfts_);
         _tokenName = name_;
         _tokenSymbol = symbol_;
+        uint256 len = vaultTokens_.length;
+        for (uint256 i = 0; i < len; ++i) {
+            _lpPriceHighWaterMarks.push(0);
+        }
+        lastFeeCharge = block.timestamp;
     }
 
     function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {

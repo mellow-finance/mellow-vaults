@@ -53,7 +53,11 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
 
         for (uint256 i = 0; i < 2; i++) {
-            uint256 currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
+            uint256 currentRatioX96 = type(uint256).max;
+            if (moneyTvl[i] != 0) {
+                currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
+            }
+
             uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, params.liquidToFixedRatioX96);
             if (deviation > params.poolRebalanceThresholdX96) {
                 return true;
@@ -65,7 +69,10 @@ contract MStrategy is DefaultAccessControlLateInit {
             uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
             uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
             uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
-            uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 currentTokenRatioX96 = type(uint256).max;
+            if (tvl[0] != 0) {
+                currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            }
             uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
 
             if (deviation > params.tokenRebalanceThresholdX96) {
@@ -152,7 +159,10 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256 liquidToFixedRatioX96,
         uint256 poolRebalanceThresholdX96
     ) internal pure returns (uint256 amountIn, bool zeroForOne) {
-        uint256 currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
+        uint256 currentRatioX96 = type(uint256).max;
+        if (tvl0 != 0) {
+            currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
+        }
         uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
         if (deviation > poolRebalanceThresholdX96) {
             (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
@@ -182,7 +192,10 @@ contract MStrategy is DefaultAccessControlLateInit {
             uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
             uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
             targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
-            uint256 currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            uint256 currentTokenRatioX96 = type(uint256).max;
+            if (tvl[0] != 0) {
+                currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
+            }
             uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
             if (deviation < params.tokenRebalanceThresholdX96) {
                 return;
