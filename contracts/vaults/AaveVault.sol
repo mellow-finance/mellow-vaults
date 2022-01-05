@@ -44,7 +44,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
             factorX96 = CommonLibrary.Q96 + FullMath.mulDiv(apyX96, timeElapsed, CommonLibrary.YEAR);
         }
         for (uint256 i = 0; i < minTokenAmounts.length; i++) {
-            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, maxTokenAmounts[i], CommonLibrary.Q96);
+            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, minTokenAmounts[i], CommonLibrary.Q96);
         }
     }
 
@@ -72,7 +72,9 @@ contract AaveVault is IAaveVault, IntegrationVault {
 
     function _updateTvls() internal {
         uint256 tvlsLength = _tvls.length;
-        for (uint256 i = 0; i < tvlsLength; ++i) _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
+        for (uint256 i = 0; i < tvlsLength; ++i) {
+            _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
+        }
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

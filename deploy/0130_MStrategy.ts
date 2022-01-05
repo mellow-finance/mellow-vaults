@@ -180,7 +180,7 @@ export const buildMStrategy: (moneyVaultKind: MoneyVault) => DeployFunction =
         await combineVaults(
             hre,
             erc20VaultNft + 1,
-            [yearnVaultNft, erc20VaultNft],
+            [erc20VaultNft, yearnVaultNft],
             strategy.address,
             mStrategyTreasury
         );

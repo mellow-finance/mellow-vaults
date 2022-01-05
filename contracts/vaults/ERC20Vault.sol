@@ -16,7 +16,7 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IVault
-    function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
         uint256 len = tokens.length;
         minTokenAmounts = new uint256[](len);
