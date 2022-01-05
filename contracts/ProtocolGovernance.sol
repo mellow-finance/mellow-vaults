@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "./utils/DefaultAccessControl.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
-import "./libraries/AddressPermissionControl.sol";
+import "./utils/AddressPermissionControl.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, AddressPermissionControl {

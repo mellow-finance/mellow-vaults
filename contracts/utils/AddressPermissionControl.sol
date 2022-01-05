@@ -14,11 +14,6 @@ contract AddressPermissionControl {
     EnumerableSet.AddressSet private _stagedAddresses;
     EnumerableSet.AddressSet private _addresses;
 
-    event StagedGrantPermissions(address indexed sender, address indexed target, uint8[] permissionIds, uint256 delay);
-    event RevokedPermissionsInstant(address indexed sender, address indexed target, uint8[] permissionIds);
-    event RolledBackStagedPermissions(address indexed sender);
-    event CommittedStagedPermissions(address indexed sender);
-
     function addresses() public view returns (address[] memory) {
         return _addresses.values();
     }
@@ -31,7 +26,7 @@ contract AddressPermissionControl {
         return _addresses.at(index);
     }
 
-    function permissionMaskOf(address target) public view returns (uint256) {
+    function permissionMask(address target) public view returns (uint256) {
         return _permissionMasks[target];
     }
 
@@ -79,7 +74,6 @@ contract AddressPermissionControl {
     function _revokePermissionInstant(address from, uint8 permissionId) private {
         uint256 diff = _permissionIdToMask(permissionId);
         uint256 currentMask = _permissionMasks[from];
-        require(currentMask & diff != 0, ExceptionsLibrary.INVALID_TARGET);
         _permissionMasks[from] = currentMask & (~diff);
         if (_permissionMasks[from] == 0) {
             delete _permissionMasks[from];
@@ -102,12 +96,12 @@ contract AddressPermissionControl {
             _stagedPermissionMasks[to] = _permissionMasks[to];
         }
         uint256 currentMask = _stagedPermissionMasks[to];
-        require(currentMask & diff == 0, ExceptionsLibrary.INVALID_TARGET);
         _stagedPermissionMasks[to] = currentMask | diff;
     }
 
     function _rollbackStagedPermissions() internal {
-        require(_isStagedToCommit(), ExceptionsLibrary.INVARIANT);
+        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        delete _stagedAddresses;
         _clearStagedPermissions();
         delete _stagedToCommitAt;
         emit RolledBackStagedPermissions(msg.sender);
@@ -118,7 +112,7 @@ contract AddressPermissionControl {
         uint8[] calldata permissionIds,
         uint256 delay
     ) internal {
-        require(!_isStagedToCommit(), ExceptionsLibrary.INVARIANT);
+        require(!_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         for (uint256 i; i != permissionIds.length; ++i) {
             _stageGrantPermission(to, permissionIds[i]);
         }
@@ -127,7 +121,7 @@ contract AddressPermissionControl {
     }
 
     function _commitStagedPermissions() internal {
-        require(_isStagedToCommit(), ExceptionsLibrary.INVARIANT);
+        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         require(block.timestamp >= _stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         uint256 length = _stagedAddresses.length();
         for (uint256 i; i != length; ++i) {
@@ -144,4 +138,9 @@ contract AddressPermissionControl {
         _clearStagedPermissions();
         delete _stagedToCommitAt;
     }
+
+    event StagedGrantPermissions(address indexed sender, address indexed target, uint8[] permissionIds, uint256 delay);
+    event RevokedPermissionsInstant(address indexed sender, address indexed target, uint8[] permissionIds);
+    event RolledBackStagedPermissions(address indexed sender);
+    event CommittedStagedPermissions(address indexed sender);
 }
