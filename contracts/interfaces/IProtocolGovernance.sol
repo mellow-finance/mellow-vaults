@@ -23,6 +23,11 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionId Permission id to check
     function hasPermission(address addr, uint8 permissionId) external view returns (bool);
 
+    /// @notice Checks if address has all permissions
+    /// @param target Address to check
+    /// @param permissionIds A list of permission ids to check
+    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
+
     /// @notice Checks if address has permission staged
     /// @param addr Address to check
     /// @param permissionId Permission id to check

@@ -28,6 +28,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl, Addres
     }
 
     /// @inheritdoc IProtocolGovernance
+    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
+        return _hasAllPermissions(target, permissionIds);
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function hasStagedPermission(address target, uint8 permissionId) external view returns (bool) {
         return _hasStagedPermission(target, permissionId);
     }

@@ -50,6 +50,15 @@ contract AddressPermissionControl {
         return _permissionMasks[addr] & _permissionIdToMask(permissionId) != 0;
     }
 
+    function _hasAllPermissions(address addr, uint8[] calldata permissionIds) internal view returns (bool) {
+        for (uint256 i; i < permissionIds.length; ++i) {
+            if (!_hasPermission(addr, permissionIds[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     function _hasStagedPermission(address addr, uint8 permissionId) internal view returns (bool) {
         return _stagedPermissionMasks[addr] & _permissionIdToMask(permissionId) != 0;
     }
