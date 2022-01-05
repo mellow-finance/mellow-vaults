@@ -27,6 +27,9 @@ contract UniV3Trader is Trader, IUniV3Trader {
         PathItem[] memory path,
         bytes memory options
     ) external returns (uint256) {
+        if (amount == 0) {
+            return 0;
+        }
         require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         if (path.length == 1) return _swapExactInputSingle(path[0].token0, path[0].token1, amount, recipient, options_);
