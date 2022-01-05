@@ -158,8 +158,11 @@ contract MStrategy is DefaultAccessControlLateInit {
         uint256 tvl1,
         uint256 liquidToFixedRatioX96,
         uint256 poolRebalanceThresholdX96
-    ) internal view returns (uint256 amountIn, bool zeroForOne) {
-        uint256 currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
+        uint256 currentRatioX96 = type(uint256).max;
+        if (tvl0 != 0) {
+            currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
+        }
         uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
         if (deviation > poolRebalanceThresholdX96) {
             (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
