@@ -3,8 +3,8 @@ pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../libraries/CommonLibrary.sol";
-import "./VaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance {
