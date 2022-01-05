@@ -20,7 +20,7 @@ contract<MStrategy, {}, {}>("MStrategy", function () {
             await deployments.fixture();
 
             const erc20RootVaultAddress = await this.vaultRegistry.vaultForNft(
-                3
+                6
             );
             const erc20RootVault: ERC20RootVault = await ethers.getContractAt(
                 "ERC20RootVault",
