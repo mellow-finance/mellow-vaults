@@ -3,24 +3,30 @@ import { expect } from "chai";
 import { getNamedAccounts, ethers, deployments } from "hardhat";
 import { mint, randomAddress, withSigner } from "./library/Helpers";
 import { contract, setupDefaultContext, TestContext } from "./library/setup";
-import { ERC20, ERC20RootVault, VaultRegistry } from "./types";
+import {
+    ERC20,
+    ERC20RootVault,
+    IIntegrationVault,
+    VaultRegistry,
+} from "./types";
 import { MStrategy } from "./types/MStrategy";
 
 contract<MStrategy, {}, {}>("MStrategy", function () {
-    let deploymentFixture: Function;
     let tokens: string[];
     let tokenContracts: ERC20[];
-    let lpIssuer: ERC20RootVault;
-    let mStrategy: MStrategy;
-    let vaultId: number;
+    let vaultId: number = 0;
+    let kind: "Yearn" | "Aave";
+    let erc20RootNft: number;
 
     before(async () => {
-        vaultId = 0;
+        kind = "Yearn";
+        // @ts-ignore
+        erc20RootNft = kind === "Yearn" ? 3 : 6;
         this.deploymentFixture = deployments.createFixture(async () => {
             await deployments.fixture();
 
             const erc20RootVaultAddress = await this.vaultRegistry.vaultForNft(
-                6
+                erc20RootNft
             );
             const erc20RootVault: ERC20RootVault = await ethers.getContractAt(
                 "ERC20RootVault",
@@ -43,7 +49,7 @@ contract<MStrategy, {}, {}>("MStrategy", function () {
             await erc20RootVault
                 .connect(this.test)
                 .deposit([balances[0].div(3), balances[1].div(3).mul(2)], 0);
-            this.subject = this.mStrategy;
+            this.subject = await ethers.getContract(`MStrategy${kind}`);
             return this.subject;
         });
     });
@@ -57,7 +63,25 @@ contract<MStrategy, {}, {}>("MStrategy", function () {
         });
         describe("after rebalance", () => {
             it("returns false", async () => {
+                const moneyVaultAddress = await this.vaultRegistry.vaultForNft(
+                    erc20RootNft - 2
+                );
+                const moneyVault: IIntegrationVault =
+                    await ethers.getContractAt(
+                        "IIntegrationVault",
+                        moneyVaultAddress
+                    );
+                const erc20VaultAddress = await this.vaultRegistry.vaultForNft(
+                    erc20RootNft - 1
+                );
+                const erc20Vault: IIntegrationVault =
+                    await ethers.getContractAt(
+                        "IIntegrationVault",
+                        erc20VaultAddress
+                    );
+
                 await this.subject.rebalance(vaultId);
+
                 expect(await this.subject.shouldRebalance(vaultId)).to.be.false;
             });
         });
