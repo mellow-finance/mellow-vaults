@@ -34,7 +34,7 @@ type CustomContext = {
 };
 
 type DeployOptions = {
-    internalParams?: InternalParamsStructOutput;
+    internalParams?: InternalParamsStruct;
     lendingPool?: string;
     skipInit?: boolean;
 };
