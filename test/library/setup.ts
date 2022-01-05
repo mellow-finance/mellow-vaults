@@ -97,7 +97,14 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.erc20RootVaultSingleton = await ethers.getContract("ERC20RootVault");
     this.mellowOracle = await ethers.getContract("MellowOracle");
-    this.mStrategy = await ethers.getContract("MStrategy");
+    const mStrategy: MStrategy | null = await ethers.getContractOrNull(
+        "MStrategyYearn"
+    );
+    if (!mStrategy) {
+        this.mStrategy = await ethers.getContract("MStrategyAave");
+    } else {
+        this.mStrategy = mStrategy;
+    }
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
