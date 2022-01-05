@@ -6,8 +6,6 @@ import { contract, setupDefaultContext, TestContext } from "./library/setup";
 import { ERC20, ERC20RootVault, VaultRegistry } from "./types";
 import { MStrategy } from "./types/MStrategy";
 
-type DeployOptions = {};
-
 contract<MStrategy, {}, {}>("MStrategy", function () {
     let deploymentFixture: Function;
     let tokens: string[];
@@ -18,45 +16,36 @@ contract<MStrategy, {}, {}>("MStrategy", function () {
 
     before(async () => {
         vaultId = 0;
-        this.deploymentFixture = deployments.createFixture(
-            async (_, options?: DeployOptions) => {
-                await deployments.fixture();
+        this.deploymentFixture = deployments.createFixture(async () => {
+            await deployments.fixture();
 
-                const vaultsCount = await this.vaultRegistry.vaultsCount();
-                const lpIssuerAddress = await this.vaultRegistry.vaultForNft(
-                    vaultsCount
-                );
-                const erc20RootVaultAddress =
-                    await this.vaultRegistry.vaultForNft(3);
-                const erc20RootVault: ERC20RootVault =
-                    await ethers.getContractAt(
-                        "ERC20RootVault",
-                        erc20RootVaultAddress
-                    );
-                tokens = await erc20RootVault.vaultTokens();
-                const balances = [];
-                tokenContracts = [];
-                for (const token of tokens) {
-                    const c: ERC20 = await ethers.getContractAt("ERC20", token);
-                    tokenContracts.push(c);
-                    balances.push(await c.balanceOf(this.test.address));
-                    await c
-                        .connect(this.test)
-                        .approve(
-                            erc20RootVault.address,
-                            ethers.constants.MaxUint256
-                        );
-                }
-                await erc20RootVault
+            const erc20RootVaultAddress = await this.vaultRegistry.vaultForNft(
+                3
+            );
+            const erc20RootVault: ERC20RootVault = await ethers.getContractAt(
+                "ERC20RootVault",
+                erc20RootVaultAddress
+            );
+            tokens = await erc20RootVault.vaultTokens();
+            const balances = [];
+            tokenContracts = [];
+            for (const token of tokens) {
+                const c: ERC20 = await ethers.getContractAt("ERC20", token);
+                tokenContracts.push(c);
+                balances.push(await c.balanceOf(this.test.address));
+                await c
                     .connect(this.test)
-                    .deposit(
-                        [balances[0].div(3), balances[1].div(3).mul(2)],
-                        0
+                    .approve(
+                        erc20RootVault.address,
+                        ethers.constants.MaxUint256
                     );
-                this.subject = this.mStrategy;
-                return this.subject;
             }
-        );
+            await erc20RootVault
+                .connect(this.test)
+                .deposit([balances[0].div(3), balances[1].div(3).mul(2)], 0);
+            this.subject = this.mStrategy;
+            return this.subject;
+        });
     });
     beforeEach(async () => {
         await this.deploymentFixture();
