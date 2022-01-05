@@ -106,7 +106,6 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         if (!signer) {
             signer = await addSigner(address);
         }
-        // @ts-ignore
         this[name] = signer;
     }
     const { usdc, weth, wbtc } = namedAccounts;
