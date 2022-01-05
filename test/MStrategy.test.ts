@@ -2,14 +2,13 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { expect } from "chai";
 import { getNamedAccounts, ethers, deployments } from "hardhat";
 import { mint, randomAddress, withSigner } from "./library/Helpers";
-import { setupDefaultContext, TestContext } from "./library/setup";
+import { contract, setupDefaultContext, TestContext } from "./library/setup";
 import { ERC20, ERC20RootVault, VaultRegistry } from "./types";
 import { MStrategy } from "./types/MStrategy";
 
 type DeployOptions = {};
 
-// @ts-ignore
-describe("MStrategy", function (this: TestContext<MStrategy, DeployOptions>) {
+contract<MStrategy, {}, {}>("MStrategy", function () {
     let deploymentFixture: Function;
     let tokens: string[];
     let tokenContracts: ERC20[];
@@ -18,9 +17,6 @@ describe("MStrategy", function (this: TestContext<MStrategy, DeployOptions>) {
     let vaultId: number;
 
     before(async () => {
-        // @ts-ignore
-        await setupDefaultContext.call(this);
-
         vaultId = 0;
         this.deploymentFixture = deployments.createFixture(
             async (_, options?: DeployOptions) => {
