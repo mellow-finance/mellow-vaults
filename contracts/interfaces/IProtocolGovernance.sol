@@ -23,6 +23,31 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionId Permission id to check
     function hasPermission(address addr, uint8 permissionId) external view returns (bool);
 
+    /// @notice Returns known addresses
+    function addresses() external view returns (address[] memory);
+
+    /// @notice Returns number of known addresses
+    function addressesLength() external view returns (uint256);
+
+    /// @notice Returns address by index
+    function addressAt(uint256 index) external view returns (address);
+
+    /// @notice Returns a bit mask of permissions for an address
+    /// @param addr Address to check
+    function permissionMask(address addr) external view returns (uint256);
+
+    /// @notice Returns staged addresses
+    function stagedAddresses() external view returns (address[] memory);
+
+    /// @notice Returns number of staged addresses
+    function stagedAddressesLength() external view returns (uint256);
+
+    /// @notice Returns staged address by index
+    function stagedAddressAt(uint256 index) external view returns (address);
+
+    /// @notice Returns a bit mask of permissions for a staged address
+    function stagedPermissionMask(address addr) external view returns (uint256);
+
     /// @notice Checks if address has all permissions
     /// @param target Address to check
     /// @param permissionIds A list of permission ids to check
@@ -32,6 +57,11 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param addr Address to check
     /// @param permissionId Permission id to check
     function hasStagedPermission(address addr, uint8 permissionId) external view returns (bool);
+
+    /// @notice Checks if address has all given permissions staged
+    /// @param addr Address to check
+    /// @param permissionIds A list of permission ids to check
+    function hasStagedAllPermissions(address addr, uint8[] memory permissionIds) external view returns (bool);
 
     /// @notice Returns timestamp of the upcoming commit if staged, else returns 0
     function stagedToCommitAt() external view returns (uint256);
