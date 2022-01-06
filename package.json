@@ -2,7 +2,7 @@
   "name": "mellow-vaults",
   "version": "1.0.0",
   "repository": "https://github.com/mellow-finance/mellow-vaults",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "scripts": {
     "c": "hardhat compile",
     "compile": "rm -rf artifacts && hardhat compile",
