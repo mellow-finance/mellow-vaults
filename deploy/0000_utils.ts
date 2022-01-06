@@ -11,6 +11,24 @@ import {
 } from "ramda";
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
+import { log } from "console";
+
+export const PRIVATE_VAULT = true;
+
+const ALLOW_ALL_CLAIMS = 0;
+const ALLOW_ALL_REGISTER_VAULT = 0;
+const ALLOW_ALL_ERC20_TRANSFER = 0;
+const ALLOW_ALL_ERC20_SWAP = 0;
+const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
+export const ALLOW_ALL_CREATE_VAULT = 0;
+
+export const ALLOW_MASK =
+    ALLOW_ALL_CLAIMS +
+    (ALLOW_ALL_REGISTER_VAULT << 1) +
+    (ALLOW_ALL_ERC20_TRANSFER << 2) +
+    (ALLOW_ALL_ERC20_SWAP << 3) +
+    (ALLOW_ALL_ERC20_VAULT_TOKEN << 4) +
+    (ALLOW_ALL_CREATE_VAULT << 5);
 
 export const ALL_NETWORKS = [
     "hardhat",
@@ -176,7 +194,7 @@ export const combineVaults = async (
     if (nfts.length === 0) {
         throw `Trying to combine 0 vaults`;
     }
-    const { deployer } = await hre.getNamedAccounts();
+    const { deployer, admin } = await hre.getNamedAccounts();
     const firstNft = nfts[0];
     const firstAddress = await deployments.read(
         "VaultRegistry",
@@ -209,6 +227,7 @@ export const combineVaults = async (
             strategyPerformanceTreasury: strategyPerformanceTreasuryAddress,
             managementFee: BigNumber.from(managementFee),
             performanceFee: BigNumber.from(performanceFee),
+            privateVault: PRIVATE_VAULT,
         },
         strategyParams: {
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
@@ -219,6 +238,14 @@ export const combineVaults = async (
         "vaultForNft",
         expectedNft
     );
+    if (PRIVATE_VAULT) {
+        log("Adding admin to depositors");
+        const rootVaultContract = await hre.ethers.getContractAt(
+            "ERC20RootVault",
+            rootVault
+        );
+        await rootVaultContract.addDepositorsToAllowlist([admin]);
+    }
     await deployments.execute(
         "VaultRegistry",
         { from: deployer, autoMine: true },

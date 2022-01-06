@@ -2,22 +2,13 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
-import { ALL_NETWORKS, PermissionIdsLibrary } from "./0000_utils";
-
-const ALLOW_ALL_CLAIMS = 0;
-const ALLOW_ALL_REGISTER_VAULT = 0;
-const ALLOW_ALL_ERC20_TRANSFER = 0;
-const ALLOW_ALL_ERC20_SWAP = 0;
-const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
-const ALLOW_ALL_CREATE_VAULT = 0;
-
-const ALLOW_MASK =
-    ALLOW_ALL_CLAIMS +
-    (ALLOW_ALL_REGISTER_VAULT << 1) +
-    (ALLOW_ALL_ERC20_TRANSFER << 2) +
-    (ALLOW_ALL_ERC20_SWAP << 3) +
-    (ALLOW_ALL_ERC20_VAULT_TOKEN << 4) +
-    (ALLOW_ALL_CREATE_VAULT << 5);
+import {
+    ALLOW_ALL_CREATE_VAULT,
+    ALLOW_MASK,
+    ALL_NETWORKS,
+    PermissionIdsLibrary,
+    PRIVATE_VAULT,
+} from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
