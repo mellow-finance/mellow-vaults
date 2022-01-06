@@ -44,7 +44,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
             factorX96 = CommonLibrary.Q96 + FullMath.mulDiv(apyX96, timeElapsed, CommonLibrary.YEAR);
         }
         for (uint256 i = 0; i < minTokenAmounts.length; i++) {
-            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, maxTokenAmounts[i], CommonLibrary.Q96);
+            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, minTokenAmounts[i], CommonLibrary.Q96);
         }
     }
 
@@ -57,23 +57,24 @@ contract AaveVault is IAaveVault, IntegrationVault {
 
     /// @inheritdoc IAaveVault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
+        _initialize(vaultTokens_, nft_);
         _aTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            address aToken = _getAToken(_vaultTokens[i]);
+        for (uint256 i = 0; i < vaultTokens_.length; ++i) {
+            address aToken = _getAToken(vaultTokens_[i]);
             require(aToken != address(0), ExceptionsLibrary.ADDRESS_ZERO);
             _aTokens[i] = aToken;
             _tvls.push(0);
         }
         _lastTvlUpdateTimestamp = block.timestamp;
-
-        _initialize(vaultTokens_, nft_);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _updateTvls() internal {
         uint256 tvlsLength = _tvls.length;
-        for (uint256 i = 0; i < tvlsLength; ++i) _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
+        for (uint256 i = 0; i < tvlsLength; ++i) {
+            _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
+        }
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

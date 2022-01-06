@@ -138,9 +138,14 @@ library StrategyLibrary {
 
         if (zeroForOne) {
             uint256 priceProductX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPX96, CommonLibrary.Q96);
-            amountIn = FullMath.mulDiv(l, sqrtPriceX96 - sqrtPX96, priceProductX96);
+            // could be 0 due to arithmetic approximations
+            uint256 priceDelta = sqrtPriceX96 > sqrtPX96 ? sqrtPriceX96 - sqrtPX96 : 0;
+
+            amountIn = FullMath.mulDiv(l, priceDelta, priceProductX96);
         } else {
-            amountIn = FullMath.mulDiv(l, sqrtPX96 - sqrtPriceX96, CommonLibrary.Q96);
+            // could be 0 due to arithmetic approximations
+            uint256 priceDelta = sqrtPX96 > sqrtPriceX96 ? sqrtPX96 - sqrtPriceX96 : 0;
+            amountIn = FullMath.mulDiv(l, priceDelta, CommonLibrary.Q96);
         }
     }
 }
