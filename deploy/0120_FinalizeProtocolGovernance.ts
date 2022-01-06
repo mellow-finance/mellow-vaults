@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 "ProtocolGovernance",
                 "hasPermission",
                 governance.address,
-                PermissionIdsLibrary.VAULT_GOVERNANCE
+                PermissionIdsLibrary.REGISTER_VAULT
             )
         ) {
             continue;
@@ -41,7 +41,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             { from: deployer, log: true, autoMine: true },
             "stageGrantPermissions",
             governance,
-            [PermissionIdsLibrary.VAULT_GOVERNANCE]
+            [PermissionIdsLibrary.REGISTER_VAULT]
         );
         await execute(
             "ProtocolGovernance",

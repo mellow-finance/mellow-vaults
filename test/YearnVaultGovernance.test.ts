@@ -9,7 +9,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
-import { VAULT_GOVERNANCE } from "./library/PermissionIdsLibrary";
+import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import {
     DelayedProtocolParamsStruct,
     YearnVaultGovernance,
@@ -74,7 +74,7 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
                         await this.protocolGovernance
                             .connect(this.admin)
                             .stageGrantPermissions(this.subject.address, [
-                                VAULT_GOVERNANCE,
+                                REGISTER_VAULT,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance

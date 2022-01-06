@@ -239,7 +239,7 @@ export const toObject = (obj: any) =>
 
 export class PermissionIdsLibrary {
     static CLAIM: number = 0;
-    static VAULT_GOVERNANCE: number = 1;
+    static REGISTER_VAULT: number = 1;
     static ERC20_TRANSFER: number = 2;
     static ERC20_SWAP = 3;
     static ERC20_VAULT_TOKEN: number = 4;
