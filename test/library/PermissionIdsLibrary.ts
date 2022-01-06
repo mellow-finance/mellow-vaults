@@ -1,1 +1,1 @@
-export const VAULT_GOVERNANCE = 1;
+export const REGISTER_VAULT = 1;
