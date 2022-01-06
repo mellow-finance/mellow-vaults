@@ -18,35 +18,53 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @notice Addresses allowed to claim liquidity mining rewards from.
-    function claimAllowlist() external view returns (address[] memory);
+    /// @notice Checks if address has permission
+    /// @param addr Address to check
+    /// @param permissionId Permission id to check
+    function hasPermission(address addr, uint8 permissionId) external view returns (bool);
 
-    /// @notice Pending addresses to be added to claimAllowlist.
-    function pendingClaimAllowlistAdd() external view returns (address[] memory);
+    /// @notice Checks if address has all permissions
+    /// @param target Address to check
+    /// @param permissionIds A list of permission ids to check
+    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
 
-    /// @notice Addresses of tokens allowed for vaults.
-    function tokenWhitelist() external view returns (address[] memory);
+    /// @notice Returns known addresses
+    function addresses() external view returns (address[] memory);
 
-    /// @notice Pending addresses to be added to tokenWhitelist.
-    function pendingTokenWhitelistAdd() external view returns (address[] memory);
+    /// @notice Returns number of known addresses
+    function addressesLength() external view returns (uint256);
 
-    /// @notice Addresses allowed to claim liquidity mining rewards from.
-    function vaultGovernances() external view returns (address[] memory);
+    /// @notice Returns address by index
+    function addressAt(uint256 index) external view returns (address);
 
-    /// @notice Pending addresses to be added to vaultGovernances.
-    function pendingVaultGovernancesAdd() external view returns (address[] memory);
+    /// @notice Returns a bit mask of permissions for an address
+    /// @param addr Address to check
+    function permissionMask(address addr) external view returns (uint256);
 
-    /// @notice Check if address is allowed to claim.
-    function isAllowedToClaim(address addr) external view returns (bool);
+    /// @notice Returns staged addresses
+    function stagedAddresses() external view returns (address[] memory);
 
-    /// @notice Check if address is an allowed (whitelisted) token.
-    function isAllowedToken(address addr) external view returns (bool);
+    /// @notice Returns number of staged addresses
+    function stagedAddressesLength() external view returns (uint256);
 
-    /// @notice Check if address has ever been allowed (whitelisted) token.
-    function isEverAllowedToken(address addr) external view returns (bool);
+    /// @notice Returns staged address by index
+    function stagedAddressAt(uint256 index) external view returns (address);
 
-    /// @notice Check if address is a registered vault governance.
-    function isVaultGovernance(address addr) external view returns (bool);
+    /// @notice Returns a bit mask of permissions for a staged address
+    function stagedPermissionMask(address addr) external view returns (uint256);
+
+    /// @notice Checks if address has permission staged
+    /// @param addr Address to check
+    /// @param permissionId Permission id to check
+    function hasStagedPermission(address addr, uint8 permissionId) external view returns (bool);
+
+    /// @notice Checks if address has all given permissions staged
+    /// @param addr Address to check
+    /// @param permissionIds A list of permission ids to check
+    function hasAllStagedPermissions(address addr, uint8[] memory permissionIds) external view returns (bool);
+
+    /// @notice Returns timestamp of the upcoming commit if staged, else returns 0
+    function stagedToCommitAt() external view returns (uint256);
 
     /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
     function permissionless() external view returns (bool);
@@ -66,38 +84,24 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param newParams newParams to set
     function setPendingParams(Params memory newParams) external;
 
-    /// @notice Stage addresses for claim allow list.
-    /// @param addresses Addresses to add
-    function setPendingClaimAllowlistAdd(address[] calldata addresses) external;
+    /// @notice Stage pending permissions.
+    /// @param target Target address
+    /// @param permissionIds A list of permission ids to grant
+    function stageGrantPermissions(address target, uint8[] memory permissionIds) external;
 
-    /// @notice Stage addresses for token whitelist.
-    /// @param addresses Addresses to add
-    function setPendingTokenWhitelistAdd(address[] calldata addresses) external;
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
-    /// @notice Stage addresses for vault governances.
-    /// @param addresses Addresses to add
-    function setPendingVaultGovernancesAdd(address[] calldata addresses) external;
+    /// @notice Rollback staged permissions.
+    function rollbackStagedPermissions() external;
 
-    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+    /// @notice Commit staged permissions.
+    function commitStagedPermissions() external;
+
+    /// @notice Revoke permission instant.
+    /// @param target Target address
+    /// @param permissionIds A list of permission ids to revoke
+    function revokePermissions(address target, uint8[] memory permissionIds) external;
 
     /// @notice Commit pending params.
     function commitParams() external;
-
-    /// @notice Commit pending ClaimAllowlistAdd params.
-    function commitClaimAllowlistAdd() external;
-
-    /// @notice Commit pending tokenWhitelistAdd params.
-    function commitTokenWhitelistAdd() external;
-
-    /// @notice Commit pending VaultGovernancesAdd params.
-    function commitVaultGovernancesAdd() external;
-
-    /// @notice Remove from claim allow list immediately.
-    function removeFromClaimAllowlist(address addr) external;
-
-    /// @notice Remove from token whitelist immediately.
-    function removeFromTokenWhitelist(address addr) external;
-
-    /// @notice Remove from vault governances immediately.
-    function removeFromVaultGovernances(address addr) external;
 }

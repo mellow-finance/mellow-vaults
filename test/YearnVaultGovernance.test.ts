@@ -9,6 +9,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
+import { VAULT_GOVERNANCE } from "./library/PermissionIds";
 import {
     DelayedProtocolParamsStruct,
     YearnVaultGovernance,
@@ -18,7 +19,6 @@ import { address, pit } from "./library/property";
 import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
-import { InternalParamsStructOutput } from "./types/IVaultGovernance";
 import { InternalParamsStruct } from "./types/IYearnVaultGovernance";
 
 type CustomContext = {
@@ -73,13 +73,13 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .setPendingVaultGovernancesAdd([
-                                this.subject.address,
+                            .stageGrantPermissions(this.subject.address, [
+                                VAULT_GOVERNANCE,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .commitVaultGovernancesAdd();
+                            .commitStagedPermissions();
                         await this.subject.createVault(
                             this.tokens.map((x: any) => x.address),
                             this.ownerSigner.address
