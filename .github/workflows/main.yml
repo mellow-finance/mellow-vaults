@@ -13,7 +13,6 @@ jobs:
       cancel-in-progress: true
     env:
       MAINNET_RPC: ${{ secrets.mainnet_rpc }}
-      KOVAN_RPC: ${{ secrets.kovan_rpc }}
     steps:
       - name: Checkout main
         uses: actions/checkout@master
