@@ -49,9 +49,33 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             governance,
             [PermissionIdsLibrary.REGISTER_VAULT]
         );
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+    }
+    if (governances.length > 0) {
+        await execute(
+            "ProtocolGovernance",
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "commitStagedPermissions"
+        );
+        await new Promise((resolve) => setTimeout(resolve, 10000));
     }
 
     for (let token of tokens) {
+        if (
+            await read(
+                "ProtocolGovernance",
+                "hasPermission",
+                token,
+                PermissionIdsLibrary.ERC20_VAULT_TOKEN
+            )
+        ) {
+            continue;
+        }
+
         await execute(
             "ProtocolGovernance",
             {
@@ -67,32 +91,47 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 PermissionIdsLibrary.ERC20_TRANSFER,
             ]
         );
+        await new Promise((resolve) => setTimeout(resolve, 10000));
     }
     if (!ALLOW_ALL_CREATE_VAULT) {
+        for (const address of [deployer, admin]) {
+            if (
+                await read(
+                    "ProtocolGovernance",
+                    "hasPermission",
+                    address,
+                    PermissionIdsLibrary.CREATE_VAULT
+                )
+            ) {
+                continue;
+            }
+
+            await execute(
+                "ProtocolGovernance",
+                { from: deployer, log: true, autoMine: true },
+                "stageGrantPermissions",
+                address,
+                [PermissionIdsLibrary.CREATE_VAULT]
+            );
+            await new Promise((resolve) => setTimeout(resolve, 10000));
+        }
+    }
+    const staged = await read(
+        "ProtocolGovernance",
+        "stagedPermissionAddresses"
+    );
+
+    if (staged.length > 0) {
         await execute(
             "ProtocolGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "stageGrantPermissions",
-            deployer,
-            [PermissionIdsLibrary.CREATE_VAULT]
-        );
-        await execute(
-            "ProtocolGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "stageGrantPermissions",
-            admin,
-            [PermissionIdsLibrary.CREATE_VAULT]
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "commitStagedPermissions"
         );
     }
-    await execute(
-        "ProtocolGovernance",
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
-        },
-        "commitStagedPermissions"
-    );
 
     const delay = await read("ProtocolGovernance", "governanceDelay");
     if (delay == 0) {
