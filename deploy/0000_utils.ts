@@ -26,6 +26,7 @@ export const ALL_NETWORKS = [
     "avalance",
     "polygon",
     "fantom",
+    "xdai",
 ];
 export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan"];
 
