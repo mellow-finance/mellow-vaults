@@ -84,10 +84,9 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .stageGrantPermissions(
-                                this.subject.address,
-                                [AddressPermissionIds.VAULT_GOVERNANCE]
-                            );
+                            .stageGrantPermissions(this.subject.address, [
+                                AddressPermissionIds.VAULT_GOVERNANCE,
+                            ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
                             .connect(this.admin)
