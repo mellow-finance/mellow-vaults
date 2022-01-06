@@ -50,7 +50,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function permissionMask(address target) external view returns (uint256) {
-        return _permissionMasks[target] ^ params.allowDenyMask;
+        return _permissionMasks[target] | params.forceAllowMask;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -84,13 +84,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
-        return ((_permissionMasks[target] ^ params.allowDenyMask) & (1 << (permissionId))) != 0;
+        return ((_permissionMasks[target] | params.forceAllowMask) & (1 << (permissionId))) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
         uint256 submask = _permissionIdsToMask(permissionIds);
-        uint256 mask = _permissionMasks[target] ^ params.allowDenyMask;
+        uint256 mask = _permissionMasks[target] | params.forceAllowMask;
         return mask & submask == submask;
     }
 
@@ -115,8 +115,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
-    function allowDenyMask() external view returns (uint256) {
-        return params.allowDenyMask;
+    function forceAllowMask() external view returns (uint256) {
+        return params.forceAllowMask;
     }
 
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------

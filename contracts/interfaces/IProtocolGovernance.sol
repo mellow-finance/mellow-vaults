@@ -8,12 +8,12 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
-    /// @param allowDenyMask Permissions mask which defines if ordinary permission should be reverted. This bitmask is xored with ordinary mask.
+    /// @param forceAllowMask If a permission bit is set in this mask it forces all addresses to have this permission as true
     struct Params {
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
         address protocolTreasury;
-        uint256 allowDenyMask;
+        uint256 forceAllowMask;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -39,12 +39,12 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @return Permission address
     function permissionAddressAt(uint256 index) external view returns (address);
 
-    /// @notice Raw bitmask of permissions for an address (allowDenyMask is not applied).
+    /// @notice Raw bitmask of permissions for an address (forceAllowMask is not applied).
     /// @param addr Address to check
     /// @return A bitmask of permissions for an address
     function rawPermissionMask(address addr) external view returns (uint256);
 
-    /// @notice Bitmask of true permissions for an address (allowDenyMask is applied).
+    /// @notice Bitmask of true permissions for an address (forceAllowMask is applied).
     /// @param addr Address to check
     /// @return A bitmask of permissions for an address
     function permissionMask(address addr) external view returns (uint256);
@@ -73,7 +73,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     function protocolTreasury() external view returns (address);
 
     /// @notice Permissions mask which defines if ordinary permission should be reverted. This bitmask is xored with ordinary mask.
-    function allowDenyMask() external view returns (uint256);
+    function forceAllowMask() external view returns (uint256);
 
     // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
