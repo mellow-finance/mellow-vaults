@@ -4,6 +4,21 @@ import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import { ALL_NETWORKS, PermissionIdsLibrary } from "./0000_utils";
 
+const ALLOW_ALL_CLAIMS = 0;
+const ALLOW_ALL_REGISTER_VAULT = 0;
+const ALLOW_ALL_ERC20_TRANSFER = 0;
+const ALLOW_ALL_ERC20_SWAP = 0;
+const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
+const ALLOW_ALL_CREATE_VAULT = 0;
+
+const ALLOW_MASK =
+    ALLOW_ALL_CLAIMS +
+    (ALLOW_ALL_REGISTER_VAULT << 1) +
+    (ALLOW_ALL_ERC20_TRANSFER << 2) +
+    (ALLOW_ALL_ERC20_SWAP << 3) +
+    (ALLOW_ALL_ERC20_VAULT_TOKEN << 4) +
+    (ALLOW_ALL_CREATE_VAULT << 5);
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, getOrNull } = deployments;
@@ -43,11 +58,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             governance,
             [PermissionIdsLibrary.REGISTER_VAULT]
         );
-        await execute(
-            "ProtocolGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "commitStagedPermissions"
-        );
     }
 
     for (let token of tokens) {
@@ -66,21 +76,39 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 PermissionIdsLibrary.ERC20_TRANSFER,
             ]
         );
+    }
+    if (!ALLOW_ALL_CREATE_VAULT) {
         await execute(
             "ProtocolGovernance",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "commitStagedPermissions"
+            { from: deployer, log: true, autoMine: true },
+            "stageGrantPermissions",
+            deployer,
+            [PermissionIdsLibrary.CREATE_VAULT]
+        );
+        await execute(
+            "ProtocolGovernance",
+            { from: deployer, log: true, autoMine: true },
+            "stageGrantPermissions",
+            admin,
+            [PermissionIdsLibrary.CREATE_VAULT]
         );
     }
+    console.log("-0-----");
+
+    await execute(
+        "ProtocolGovernance",
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "commitStagedPermissions"
+    );
 
     const delay = await read("ProtocolGovernance", "governanceDelay");
     if (delay == 0) {
         const params = {
-            permissionless: true,
+            forceAllowMask: ALLOW_MASK,
             maxTokensPerVault: 10,
             governanceDelay: 86400,
             protocolTreasury,

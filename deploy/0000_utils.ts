@@ -243,6 +243,7 @@ export class PermissionIdsLibrary {
     static ERC20_TRANSFER: number = 2;
     static ERC20_SWAP = 3;
     static ERC20_VAULT_TOKEN: number = 4;
+    static CREATE_VAULT: number = 5;
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};

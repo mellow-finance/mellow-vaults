@@ -178,7 +178,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
-        require(!_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         uint256 delay = params.governanceDelay;
         uint256 diff = _permissionIdsToMask(permissionIds);
         if (!_stagedPermissionAddresses.contains(target)) {
@@ -226,7 +225,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     function _clearStagedPermissions() private {
         uint256 length = _stagedPermissionAddresses.length();
         for (uint256 i; i != length; ++i) {
-            address target = _stagedPermissionAddresses.at(i);
+            address target = _stagedPermissionAddresses.at(0);
             delete _stagedPermissionMasks[target];
             _stagedPermissionAddresses.remove(target);
         }
