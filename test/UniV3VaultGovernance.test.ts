@@ -10,7 +10,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
-import { AddressPermissionIds } from "./library/AddressPermissionIds";
+import { VAULT_GOVERNANCE } from "./library/PermissionIds";
 import {
     DelayedProtocolParamsStruct,
     UniV3VaultGovernance,
@@ -85,7 +85,7 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                         await this.protocolGovernance
                             .connect(this.admin)
                             .stageGrantPermissions(this.subject.address, [
-                                AddressPermissionIds.VAULT_GOVERNANCE,
+                                VAULT_GOVERNANCE,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance

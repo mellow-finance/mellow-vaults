@@ -10,7 +10,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
-import { AddressPermissionIds } from "./library/AddressPermissionIds";
+import { VAULT_GOVERNANCE } from "./library/PermissionIds";
 import {
     DelayedProtocolParamsStruct,
     ERC20VaultGovernance,
@@ -80,7 +80,7 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
                         await this.protocolGovernance
                             .connect(this.admin)
                             .stageGrantPermissions(this.subject.address, [
-                                AddressPermissionIds.VAULT_GOVERNANCE,
+                                VAULT_GOVERNANCE,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance

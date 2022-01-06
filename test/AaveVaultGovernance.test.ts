@@ -14,7 +14,7 @@ import {
     DelayedProtocolParamsStruct,
     AaveVaultGovernance,
 } from "./types/AaveVaultGovernance";
-import { AddressPermissionIds } from "./library/AddressPermissionIds";
+import { VAULT_GOVERNANCE } from "./library/PermissionIds";
 import { contract } from "./library/setup";
 import { address } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -81,7 +81,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                         await this.protocolGovernance
                             .connect(this.admin)
                             .stageGrantPermissions(this.subject.address, [
-                                AddressPermissionIds.VAULT_GOVERNANCE,
+                                VAULT_GOVERNANCE,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
