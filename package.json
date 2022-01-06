@@ -1,7 +1,7 @@
 {
-  "name": "mellow-contracts-v2",
+  "name": "mellow-vaults",
   "version": "1.0.0",
-  "repository": "https://github.com/mellow-finance/mellow-contracts-v2",
+  "repository": "https://github.com/mellow-finance/mellow-vaults",
   "license": "MIT",
   "scripts": {
     "c": "hardhat compile",
