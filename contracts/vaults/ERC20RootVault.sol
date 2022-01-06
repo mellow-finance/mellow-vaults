@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
@@ -12,10 +13,12 @@ import "./AggregateVault.sol";
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.AddressSet;
     uint256[] private _lpPriceHighWaterMarks;
     uint256 public lastFeeCharge;
     string private _tokenName;
     string private _tokenSymbol;
+    EnumerableSet.AddressSet _depositorsAllowlist;
 
     constructor() ERC20("", "") {}
 
@@ -27,6 +30,20 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
 
     function symbol() public view override returns (string memory) {
         return _tokenSymbol;
+    }
+
+    function addDepositorsToAllowlist(address[] calldata depositors) external {
+        _requireAtLeastStrategy();
+        for (uint256 i = 0; i < depositors.length; i++) {
+            _depositorsAllowlist.add(depositors[i]);
+        }
+    }
+
+    function removeDepositorsFromAllowlist(address[] calldata depositors) external {
+        _requireAtLeastStrategy();
+        for (uint256 i = 0; i < depositors.length; i++) {
+            _depositorsAllowlist.remove(depositors[i]);
+        }
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -46,11 +63,20 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
         for (uint256 i = 0; i < len; ++i) {
             _lpPriceHighWaterMarks.push(0);
         }
+
         lastFeeCharge = block.timestamp;
     }
 
     function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
+        uint256 thisNft = _nft;
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(thisNft);
+        require(
+            !delayedStaretgyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
+            ExceptionsLibrary.FORBIDDEN
+        );
         uint256 supply = totalSupply();
         uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
@@ -64,7 +90,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
 
-        uint256 thisNft = _nft;
         require(
             lpAmount + balanceOf(msg.sender) <=
                 IERC20RootVaultGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
@@ -250,6 +275,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
+    }
+
+    function _requireAtLeastStrategy() internal view {
+        uint256 nft_ = _nft;
+        IVaultGovernance.InternalParams memory internalParams = _vaultGovernance.internalParams();
+        require(
+            (internalParams.protocolGovernance.isAdmin(msg.sender) ||
+                internalParams.registry.getApproved(nft_) == msg.sender ||
+                (internalParams.registry.ownerOf(nft_) == msg.sender)),
+            ExceptionsLibrary.FORBIDDEN
+        );
     }
 
     /// @notice Emitted when management fees are charged

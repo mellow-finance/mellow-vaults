@@ -65,6 +65,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
                 DelayedStrategyParams({
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
+                    privateVault: false,
                     managementFee: 0,
                     performanceFee: 0
                 });
@@ -79,6 +80,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
                 DelayedStrategyParams({
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
+                    privateVault: false,
                     managementFee: 0,
                     performanceFee: 0
                 });

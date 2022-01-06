@@ -86,8 +86,6 @@ contract AggregateVault is IAggregateVault, Vault {
     function _push(uint256[] memory tokenAmounts, bytes memory) internal returns (uint256[] memory actualTokenAmounts) {
         require(_nft != 0, ExceptionsLibrary.INIT);
         IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
-        IProtocolGovernance pg = params.protocolGovernance;
-        require(pg.hasPermission(msg.sender, PermissionIdsLibrary.DEPOSIT), ExceptionsLibrary.FORBIDDEN);
         uint256 destNft = _subvaultNfts[0];
         IVaultRegistry registry = params.registry;
         IIntegrationVault destVault = IIntegrationVault(registry.vaultForNft(destNft));

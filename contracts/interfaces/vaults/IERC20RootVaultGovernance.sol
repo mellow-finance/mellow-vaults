@@ -8,11 +8,13 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
     /// @param strategyTreasury Reference to address that will collect strategy management fees
     /// @param strategyPerformanceTreasury Reference to address that will collect strategy performance fees
+    /// @param privateVault If true, only whitlisted depositors can deposit into the vault
     /// @param managementFee Management fee for Strategist denominated in 10 ** 9
     /// @param performanceFee Performance fee for Strategist denominated in 10 ** 9
     struct DelayedStrategyParams {
         address strategyTreasury;
         address strategyPerformanceTreasury;
+        bool privateVault;
         uint256 managementFee;
         uint256 performanceFee;
     }

@@ -71,7 +71,7 @@ abstract contract Vault is IVault, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
-    // -------------------  INTERNAL, MUTATING  -------------------
+    // -------------------  PRIVATE, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {
         require(_nft == 0, ExceptionsLibrary.INIT);

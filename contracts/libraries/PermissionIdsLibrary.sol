@@ -15,6 +15,4 @@ library PermissionIdsLibrary {
     uint8 constant ERC20_VAULT_TOKEN = 4;
     // The msg.sender is allowed to create vaults
     uint8 constant CREATE_VAULT = 5;
-    // The msg.sender is allowed to make deposits
-    uint8 constant DEPOSIT = 6;
 }
