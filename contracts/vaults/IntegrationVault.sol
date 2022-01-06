@@ -105,10 +105,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            require(
-                governance.hasPermission(tokens[i], PermissionIds.ERC20_TRANSFER),
-                ExceptionsLibrary.INVALID_TOKEN
-            );
+            require(governance.hasPermission(tokens[i], PermissionIds.ERC20_TRANSFER), ExceptionsLibrary.INVALID_TOKEN);
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));
             if (tokenAmounts[i] == 0) continue;

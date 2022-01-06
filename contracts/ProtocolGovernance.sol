@@ -136,11 +136,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         for (uint256 i; i != length; ++i) {
             address delayedAddress = _stagedAddresses.at(i);
             uint256 delayedPermissionMask = _stagedPermissionMasks[delayedAddress];
+            _permissionMasks[delayedAddress] = delayedPermissionMask;
             if (delayedPermissionMask == 0) {
-                delete _permissionMasks[delayedAddress];
                 _addresses.remove(delayedAddress);
             } else {
-                _permissionMasks[delayedAddress] = delayedPermissionMask;
                 _addresses.add(delayedAddress);
             }
         }
@@ -155,8 +154,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         uint256 currentMask = _permissionMasks[target];
         uint256 newMask = currentMask & (~ diff);
         _permissionMasks[target] = newMask;
-        if(newMask == 0) {
-            delete _permissionMasks[target];
+        if (newMask == 0) {
             _addresses.remove(target);
         }
         emit RevokedPermissionsInstant(tx.origin, msg.sender, target, permissionIds);
