@@ -1,445 +1,803 @@
-// import { expect } from "chai";
-// import { ethers, deployments, getNamedAccounts } from "hardhat";
-// import { Signer } from "ethers";
-// import Exceptions from "./library/Exceptions";
-// import {
-//     deploySubVaultSystem,
-//     deployERC20Tokens,
-//     deployProtocolGovernance,
-// } from "./library/Deployments";
-// import {
-//     ERC20,
-//     ERC20Vault,
-//     ProtocolGovernance,
-//     VaultRegistry,
-//     VaultFactory,
-//     VaultGovernance,
-// } from "./library/Types";
-// import {
-//     randomAddress,
-//     sortContractsByAddresses,
-//     withSigner,
-//     setTokenWhitelist,
-// } from "./library/Helpers";
-// import { now, sleep, sleepTo } from "./library/Helpers";
+import { expect } from "chai";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
+import {
+    addSigner,
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    withSigner,
+} from "./library/Helpers";
+import Exceptions from "./library/Exceptions";
+import { setupDefaultContext, TestContext } from "./library/setup";
+import { address, pit } from "./library/property";
+import { Arbitrary } from "fast-check";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
+import { InternalParamsStructOutput } from "./types/IVaultGovernance";
+import { ProtocolGovernance, VaultRegistry } from "./types";
+import { Contract } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { randomBytes } from "crypto";
 
-// describe("VaultRegistry", () => {
-//     let vaultRegistry: VaultRegistry;
-//     let ERC20VaultFactory: VaultFactory;
-//     let ERC20VaultGovernance: VaultGovernance;
-//     let protocolGovernance: ProtocolGovernance;
-//     let ERC20Vault: ERC20Vault;
-//     let AnotherERC20Vault: ERC20Vault;
-//     let UniV3Vault: ERC20Vault;
-//     let AaveVault: ERC20Vault;
-//     let deployer: Signer;
-//     let treasury: Signer;
-//     let stranger: Signer;
-//     let nftERC20: number;
-//     let deployment: Function;
+type CustomContext = {
+    strategySigner: SignerWithAddress;
+    ownerSigner: SignerWithAddress;
+    newERC20Vault: Contract;
+    newAaveVault: Contract;
+    anotherERC20Vault: Contract;
+    nftERC20: number;
+    nftAave: number;
+    nftAnotherERC20: number;
+    newProtocolGovernance: Contract;
+};
+type DeployOptions = {
+    name?: string;
+    symbol?: string;
+    protocolGovernance?: ProtocolGovernance;
+};
 
-//     before(async () => {
-//         [deployer, treasury, stranger] = await ethers.getSigners();
+// @ts-ignore
+describe("VaultRegistry", function (this: TestContext<
+    VaultRegistry,
+    DeployOptions
+> &
+    CustomContext) {
+    before(async () => {
+        // @ts-ignore
+        await setupDefaultContext.call(this);
+        this.deploymentFixture = deployments.createFixture(
+            async (_, options?: DeployOptions) => {
+                await deployments.fixture();
 
-//         deployment = deployments.createFixture(async () => {
-//             await deployments.fixture();
-//             return await deploySubVaultSystem({
-//                 tokensCount: 2,
-//                 adminSigner: deployer,
-//                 vaultOwner: await deployer.getAddress(),
-//                 treasury: await treasury.getAddress(),
-//             });
-//         });
-//     });
+                const { address } = await deployments.deploy("VaultRegistry", {
+                    from: this.deployer.address,
+                    contract: "VaultRegistry",
+                    args: [
+                        options?.name || "Test",
+                        options?.symbol || "TST",
+                        options?.protocolGovernance ||
+                            this.protocolGovernance.address,
+                    ],
+                    autoMine: true,
+                });
+                this.subject = await ethers.getContractAt(
+                    "VaultRegistry",
+                    address
+                );
+                this.ownerSigner = await addSigner(randomAddress());
+                this.strategySigner = await addSigner(randomAddress());
 
-//     beforeEach(async () => {
-//         ({
-//             vaultRegistry,
-//             ERC20VaultFactory,
-//             protocolGovernance,
-//             ERC20VaultFactory,
-//             ERC20VaultGovernance,
-//             ERC20Vault,
-//             AnotherERC20Vault,
-//             AaveVault,
-//             UniV3Vault,
-//             nftERC20,
-//         } = await deployment());
-//     });
+                // register new ERC20Vault
+                await this.erc20VaultGovernance.createVault(
+                    [this.usdc.address],
+                    this.ownerSigner.address
+                );
+                this.newERC20Vault = await ethers.getContract("ERC20Vault");
+                await withSigner(
+                    this.erc20VaultGovernance.address,
+                    async (s) => {
+                        await this.subject
+                            .connect(s)
+                            .registerVault(
+                                this.newERC20Vault.address,
+                                await this.ownerSigner.getAddress()
+                            );
+                    }
+                );
+                this.nftERC20 = (await this.subject.vaultsCount()).toNumber();
 
-//     describe("constructor", () => {
-//         it("creates VaultRegistry", async () => {
-//             expect(
-//                 await deployer.provider?.getCode(vaultRegistry.address)
-//             ).not.to.be.equal("0x");
-//         });
-//     });
+                // register new AaveVault
+                await this.aaveVaultGovernance.createVault(
+                    [this.weth.address],
+                    this.ownerSigner.address
+                );
+                this.newAaveVault = await ethers.getContract("AaveVault");
+                await withSigner(
+                    this.aaveVaultGovernance.address,
+                    async (s) => {
+                        await this.subject
+                            .connect(s)
+                            .registerVault(
+                                this.newAaveVault.address,
+                                await this.ownerSigner.getAddress()
+                            );
+                    }
+                );
+                this.nftAave = (await this.subject.vaultsCount()).toNumber();
 
-//     describe("vaults", () => {
-//         it("returns correct vaults", async () => {
-//             expect(await vaultRegistry.vaults()).to.deep.equal([
-//                 ERC20Vault.address,
-//                 AnotherERC20Vault.address,
-//                 AaveVault.address,
-//                 UniV3Vault.address,
-//                 await deployer.getAddress(), // hack for testing
-//             ]);
-//         });
-//     });
+                // create another ERC20Vault
+                await this.erc20VaultGovernance.createVault(
+                    [this.usdc.address],
+                    this.ownerSigner.address
+                );
+                this.anotherERC20Vault = await ethers.getContract("ERC20Vault");
+                this.nftAnotherERC20 = this.nftAave + 1;
 
-//     describe("vaultForNft", () => {
-//         it("returns correct ERC20Vault for existing nftERC20", async () => {
-//             expect(await vaultRegistry.vaultForNft(nftERC20)).to.equal(
-//                 ERC20Vault.address
-//             );
-//         });
+                // deploy new ProtocolGovernance
+                const { address: singleton } = await deployments.deploy(
+                    "ProtocolGovernance",
+                    {
+                        from: this.deployer.address,
+                        args: [this.deployer.address],
+                        log: true,
+                        autoMine: true,
+                    }
+                );
 
-//         it("returns zero nftERC20 for nonexistent ERC20Vault", async () => {
-//             expect(await vaultRegistry.vaultForNft(nftERC20 + 1)).to.equal(
-//                 ethers.constants.AddressZero
-//             );
-//         });
-//     });
+                this.newProtocolGovernance = await ethers.getContractAt(
+                    "ProtocolGovernance",
+                    singleton
+                );
+                return this.subject;
+            }
+        );
+    });
 
-//     describe("nftForVault", () => {
-//         it("returns correct ERC20Vault for nftERC20", async () => {
-//             expect(
-//                 await vaultRegistry.nftForVault(ERC20Vault.address)
-//             ).to.equal(nftERC20);
-//         });
+    beforeEach(async () => {
+        await this.deploymentFixture();
+        this.startTimestamp = now();
+        await sleepTo(this.startTimestamp);
+    });
 
-//         it("returns zero address for nonexisting nftERC20", async () => {
-//             expect(
-//                 await vaultRegistry.nftForVault(ERC20VaultFactory.address)
-//             ).to.equal(0);
-//         });
-//     });
+    describe("#constructor", () => {
+        it("creates VaultRegistry", async () => {
+            expect(ethers.constants.AddressZero).to.not.eq(
+                this.subject.address
+            );
+        });
+        it("initializes ProtocolGovernance address", async () => {
+            expect(await this.subject.protocolGovernance()).to.be.equal(
+                this.protocolGovernance.address
+            );
+        });
+        it("initializes ERC721 token name", async () => {
+            expect(await this.subject.name()).to.be.equal("Test");
+        });
+        it("initializes ERC721 token symbol", async () => {
+            expect(await this.subject.symbol()).to.be.equal("TST");
+        });
+    });
 
-//     describe("registerVault", () => {
-//         describe("when called by VaultGovernance", async () => {
-//             it("registers ERC20Vault", async () => {
-//                 const anotherTokens = sortContractsByAddresses(
-//                     await deployERC20Tokens(5)
-//                 );
-//                 await setTokenWhitelist(
-//                     protocolGovernance,
-//                     anotherTokens as any,
-//                     deployer
-//                 );
-//                 const [newVaultAddress, _] =
-//                     await ERC20VaultGovernance.callStatic.deployVault(
-//                         anotherTokens.map((token) => token.address),
-//                         [],
-//                         await deployer.getAddress()
-//                     );
-//                 await ERC20VaultGovernance.deployVault(
-//                     anotherTokens.map((token) => token.address),
-//                     [],
-//                     await deployer.getAddress()
-//                 );
-//                 expect(await vaultRegistry.vaults()).to.deep.equal([
-//                     ERC20Vault.address,
-//                     AnotherERC20Vault.address,
-//                     AaveVault.address,
-//                     UniV3Vault.address,
-//                     await deployer.getAddress(), // hack for testing
-//                     newVaultAddress,
-//                 ]);
-//             });
-//         });
+    describe("#vaults", () => {
+        it("returns all registered vaults", async () => {
+            expect(await this.subject.vaults()).to.deep.equal([
+                this.newERC20Vault.address,
+                this.newAaveVault.address,
+            ]);
+        });
 
-//         describe("when called by stranger", async () => {
-//             it("reverts", async () => {
-//                 await expect(
-//                     vaultRegistry.registerVault(
-//                         ERC20VaultFactory.address,
-//                         await stranger.getAddress()
-//                     )
-//                 ).to.be.revertedWith(
-//                     Exceptions.FORBIDDEN
-//                 );
-//             });
-//         });
-//     });
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(this.subject.connect(s).vaults()).to.not.be
+                        .reverted;
+                });
+            });
+        });
+    });
 
-//     describe("protocolGovernance", () => {
-//         it("has correct protocolGovernance", async () => {
-//             expect(await vaultRegistry.protocolGovernance()).to.equal(
-//                 protocolGovernance.address
-//             );
-//         });
-//     });
+    describe("#vaultForNft", () => {
+        it("resolves Vault address by VaultRegistry NFT", async () => {
+            expect(await this.subject.vaultForNft(this.nftERC20)).to.equal(
+                this.newERC20Vault.address
+            );
+        });
 
-//     describe("stagedProtocolGovernance", () => {
-//         describe("when nothing staged", () => {
-//             it("returns address zero", async () => {
-//                 expect(await vaultRegistry.stagedProtocolGovernance()).to.equal(
-//                     ethers.constants.AddressZero
-//                 );
-//             });
-//         });
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject.connect(s).vaultForNft(this.nftAave)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
 
-//         describe("when staged new protocolGovernance", () => {
-//             it("returns correct stagedProtocolGovernance", async () => {
-//                 const newProtocolGovernance = await deployProtocolGovernance({
-//                     adminSigner: deployer,
-//                 });
-//                 await vaultRegistry.stageProtocolGovernance(
-//                     newProtocolGovernance.address
-//                 );
-//                 expect(await vaultRegistry.stagedProtocolGovernance()).to.equal(
-//                     newProtocolGovernance.address
-//                 );
-//             });
-//         });
-//     });
+        describe("edge cases", () => {
+            describe("when Vault NFT is not registered in VaultRegistry", () => {
+                it("returns zero address", async () => {
+                    expect(
+                        await this.subject.vaultForNft(this.nftAnotherERC20)
+                    ).to.equal(ethers.constants.AddressZero);
+                });
+            });
+        });
+    });
 
-//     describe("stagedProtocolGovernanceTimestamp", () => {
-//         it("returns 0 when nothing is staged", async () => {
-//             expect(
-//                 await vaultRegistry.stagedProtocolGovernanceTimestamp()
-//             ).to.equal(0);
-//         });
+    describe("#nftForVault", () => {
+        it("resolves VaultRegistry NFT by Vault address", async () => {
+            expect(
+                await this.subject.nftForVault(this.newERC20Vault.address)
+            ).to.equal(this.nftERC20);
+        });
 
-//         it("returns correct timestamp when new ProtocolGovernance is staged", async () => {
-//             let ts = now();
-//             const newProtocolGovernance = await deployProtocolGovernance({
-//                 adminSigner: deployer,
-//             });
-//             ts += 10 ** 4;
-//             await sleepTo(ts);
-//             await vaultRegistry.stageProtocolGovernance(
-//                 newProtocolGovernance.address
-//             );
-//             expect(
-//                 await vaultRegistry.stagedProtocolGovernanceTimestamp()
-//             ).to.equal(
-//                 ts + Number(await protocolGovernance.governanceDelay()) + 1
-//             );
-//         });
-//     });
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .nftForVault(this.newERC20Vault.address)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
 
-//     describe("vaultsCount", () => {
-//         it("returns correct vaults count", async () => {
-//             expect(await vaultRegistry.vaultsCount()).to.equal(4 + 1); // 4 vaults + 1 for hack
-//         });
-//     });
+        describe("edge cases", () => {
+            describe("when Vault is not registered in VaultRegistry", () => {
+                it("returns zero", async () => {
+                    expect(
+                        await this.subject.nftForVault(
+                            this.protocolGovernance.address
+                        )
+                    ).to.equal(0);
+                });
+            });
+        });
+    });
 
-//     describe("stageProtocolGovernance", () => {
-//         describe("when called by stranger", () => {
-//             it("reverts", async () => {
-//                 await expect(
-//                     vaultRegistry
-//                         .connect(stranger)
-//                         .stageProtocolGovernance(protocolGovernance.address)
-//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
-//             });
-//         });
-//     });
+    describe("#isLocked", () => {
+        it("checks if token is locked (not transferable)", async () => {
+            await this.subject.connect(this.ownerSigner).lockNft(this.nftERC20);
+            expect(await this.subject.isLocked(this.nftERC20)).to.be.equal(
+                true
+            );
+        });
 
-//     describe("commitStagedProtocolGovernance", () => {
-//         let newProtocolGovernance: ProtocolGovernance;
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject.connect(s).isLocked(this.nftERC20)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
 
-//         beforeEach(async () => {
-//             newProtocolGovernance = await deployProtocolGovernance({
-//                 adminSigner: deployer,
-//             });
-//         });
+        describe("edge cases", () => {
+            describe("when VaultRegistry NFT is not registered in VaultRegistry", () => {
+                it("returns false", async () => {
+                    expect(
+                        await this.subject.isLocked(this.nftAnotherERC20)
+                    ).to.be.equal(false);
+                });
+            });
+        });
+    });
 
-//         describe("when nothing staged", () => {
-//             it("reverts", async () => {
-//                 await sleep(Number(await protocolGovernance.governanceDelay()));
-//                 await expect(
-//                     vaultRegistry.commitStagedProtocolGovernance()
-//                 ).to.be.revertedWith(Exceptions.INIT);
-//             });
-//         });
+    describe("#protocolGovernance", () => {
+        it("returns ProtocolGovernance address", async () => {
+            expect(await this.subject.protocolGovernance()).to.be.equal(
+                this.protocolGovernance.address
+            );
+        });
 
-//         describe("when called by stranger", () => {
-//             it("reverts", async () => {
-//                 await vaultRegistry.stageProtocolGovernance(
-//                     newProtocolGovernance.address
-//                 );
-//                 await sleep(Number(await protocolGovernance.governanceDelay()));
-//                 await expect(
-//                     vaultRegistry
-//                         .connect(stranger)
-//                         .commitStagedProtocolGovernance()
-//                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
-//             });
-//         });
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(this.subject.protocolGovernance()).to.not.be
+                        .reverted;
+                });
+            });
+        });
+    });
 
-//         describe("when called too early", () => {
-//             it("reverts", async () => {
-//                 await vaultRegistry.stageProtocolGovernance(
-//                     protocolGovernance.address
-//                 );
-//                 await expect(
-//                     vaultRegistry.commitStagedProtocolGovernance()
-//                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
-//             });
-//         });
+    describe("#stagedProtocolGovernance", () => {
+        it("returns ProtocolGovernance address staged for commit", async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageProtocolGovernance(this.newProtocolGovernance.address);
+            expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
+                this.newProtocolGovernance.address
+            );
+        });
 
-//         it("commits staged ProtocolGovernance", async () => {
-//             await vaultRegistry.stageProtocolGovernance(
-//                 newProtocolGovernance.address
-//             );
-//             await sleep(Number(await protocolGovernance.governanceDelay()));
-//             await vaultRegistry.commitStagedProtocolGovernance();
-//             expect(await vaultRegistry.protocolGovernance()).to.equal(
-//                 newProtocolGovernance.address
-//             );
-//         });
-//     });
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject.connect(s).stagedProtocolGovernance()
+                    ).to.not.be.reverted;
+                });
+            });
+        });
 
-//     describe("adminApprove", () => {
-//         it("approves token to new address", async () => {
-//             const { admin } = await getNamedAccounts();
-//             const { execute, read, get } = deployments;
-//             const vaultCount = await read("VaultRegistry", "vaultsCount");
-//             for (let nft = 1; nft <= vaultCount; nft++) {
-//                 const newAddress = randomAddress();
-//                 await execute(
-//                     "VaultRegistry",
-//                     { from: admin, autoMine: true },
-//                     "adminApprove",
-//                     newAddress,
-//                     nft
-//                 );
+        describe("edge cases", () => {
+            describe("when nothing staged", () => {
+                it("returns zero address", async () => {
+                    expect(
+                        await this.subject.stagedProtocolGovernance()
+                    ).to.be.equal(ethers.constants.AddressZero);
+                });
+            });
 
-//                 expect(await read("VaultRegistry", "getApproved", nft)).to.eq(
-//                     newAddress
-//                 );
-//             }
-//         });
+            describe("right after #commitStagedProtocolGovernance was called", () => {
+                it("returns zero address", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageProtocolGovernance(
+                            this.newProtocolGovernance.address
+                        );
+                    await sleep(
+                        Number(await this.protocolGovernance.governanceDelay())
+                    );
+                    await this.subject
+                        .connect(this.admin)
+                        .commitStagedProtocolGovernance();
+                    expect(
+                        await this.subject.stagedProtocolGovernance()
+                    ).to.be.equal(ethers.constants.AddressZero);
+                });
+            });
+        });
+    });
 
-//         describe("when called not by admin", () => {
-//             it("reverts", async () => {
-//                 const { deployer, stranger } = await getNamedAccounts();
-//                 const { execute, read } = deployments;
-//                 const vaultCount = await read("VaultRegistry", "vaultsCount");
-//                 for (let nft = 1; nft <= vaultCount; nft++) {
-//                     for (const actor of [deployer, stranger]) {
-//                         const newAddress = randomAddress();
-//                         await expect(
-//                             execute(
-//                                 "VaultRegistry",
-//                                 { from: actor, autoMine: true },
-//                                 "adminApprove",
-//                                 newAddress,
-//                                 nft
-//                             )
-//                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
-//                     }
-//                 }
-//             });
-//         });
-//     });
+    describe("#stagedProtocolGovernanceTimestamp", () => {
+        it("returns timestamp after which #commitStagedProtocolGovernance can be called", async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageProtocolGovernance(this.newProtocolGovernance.address);
+            expect(
+                Math.abs(
+                    Number(
+                        await this.subject.stagedProtocolGovernanceTimestamp()
+                    ) -
+                        now() -
+                        Number(await this.protocolGovernance.governanceDelay())
+                )
+            ).to.be.lessThanOrEqual(1);
+        });
 
-//     describe("isLocked", () => {
-//         it("checks if token is locked", async () => {
-//             const { execute, read, get } = deployments;
-//             const { stranger, stranger2 } = await getNamedAccounts();
-//             const vault = randomAddress();
-//             const vaultGovernance = await get("ERC20VaultGovernance");
-//             await withSigner(vaultGovernance.address, async (s) => {
-//                 const vaultRegistry = await ethers.getContract("VaultRegistry");
-//                 await vaultRegistry.connect(s).registerVault(vault, stranger);
-//             });
-//             const nft = await read("VaultRegistry", "vaultsCount");
-//             expect(await read("VaultRegistry", "isLocked", nft)).to.be.false;
-//             await execute(
-//                 "VaultRegistry",
-//                 { from: stranger, autoMine: true },
-//                 "lockNft",
-//                 nft
-//             );
-//             expect(await read("VaultRegistry", "isLocked", nft)).to.be.true;
-//         });
-//     });
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject.stagedProtocolGovernanceTimestamp()
+                    ).to.not.be.reverted;
+                });
+            });
+        });
 
-//     describe("lockNft", () => {
-//         it("locks nft for any transfer", async () => {
-//             const { execute, read, get } = deployments;
-//             const { stranger, stranger2 } = await getNamedAccounts();
-//             const vault = randomAddress();
-//             const vaultGovernance = await get("ERC20VaultGovernance");
-//             await withSigner(vaultGovernance.address, async (s) => {
-//                 const vaultRegistry = await ethers.getContract("VaultRegistry");
-//                 await vaultRegistry.connect(s).registerVault(vault, stranger);
-//             });
-//             const nft = await read("VaultRegistry", "vaultsCount");
-//             await execute(
-//                 "VaultRegistry",
-//                 { from: stranger, autoMine: true },
-//                 "lockNft",
-//                 nft
-//             );
-//             await execute(
-//                 "VaultRegistry",
-//                 { from: stranger, autoMine: true },
-//                 "approve",
-//                 stranger2,
-//                 nft
-//             );
+        describe("edge cases", () => {
+            describe("when nothing is staged", () => {
+                it("returns 0", async () => {
+                    expect(
+                        await this.subject.stagedProtocolGovernanceTimestamp()
+                    ).to.be.equal(0);
+                });
+            });
+            describe("right after #commitStagedProtocolGovernance was called", () => {
+                it("returns 0", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageProtocolGovernance(
+                            this.newProtocolGovernance.address
+                        );
+                    await sleep(
+                        Number(await this.protocolGovernance.governanceDelay())
+                    );
+                    await this.subject
+                        .connect(this.admin)
+                        .commitStagedProtocolGovernance();
+                    expect(
+                        await this.subject.stagedProtocolGovernanceTimestamp()
+                    ).to.be.equal(0);
+                });
+            });
+        });
+    });
 
-//             await expect(
-//                 execute(
-//                     "VaultRegistry",
-//                     { from: stranger, autoMine: true },
-//                     "transferFrom",
-//                     stranger,
-//                     randomAddress(),
-//                     nft
-//                 )
-//             ).to.be.revertedWith(Exceptions.LOCK);
-//             await expect(
-//                 execute(
-//                     "VaultRegistry",
-//                     { from: stranger2, autoMine: true },
-//                     "transferFrom",
-//                     stranger,
-//                     randomAddress(),
-//                     nft
-//                 )
-//             ).to.be.revertedWith(Exceptions.LOCK);
-//         });
+    describe("#vaultsCount", () => {
+        it("returns the number of registered vaults", async () => {
+            expect(await this.subject.vaultsCount()).to.be.equal(2);
+        });
 
-//         describe("when called not by owner", () => {
-//             it("reverts", async () => {
-//                 const { execute, read, get } = deployments;
-//                 const { stranger, stranger2, deployer } =
-//                     await getNamedAccounts();
-//                 const vault = randomAddress();
-//                 const vaultGovernance = await get("ERC20VaultGovernance");
-//                 await withSigner(vaultGovernance.address, async (s) => {
-//                     const vaultRegistry = await ethers.getContract(
-//                         "VaultRegistry"
-//                     );
-//                     await vaultRegistry
-//                         .connect(s)
-//                         .registerVault(vault, stranger);
-//                 });
-//                 const nft = await read("VaultRegistry", "vaultsCount");
-//                 await execute(
-//                     "VaultRegistry",
-//                     { from: stranger, autoMine: true },
-//                     "approve",
-//                     stranger2,
-//                     nft
-//                 );
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(this.subject.vaultsCount()).to.not.be.reverted;
+                });
+            });
+        });
+        describe("edge cases", () => {
+            describe("when new vault is registered", () => {
+                it("is increased by 1", async () => {
+                    let oldVaultsCount = Number(
+                        await this.subject.vaultsCount()
+                    );
+                    await withSigner(
+                        this.erc20VaultGovernance.address,
+                        async (s) => {
+                            await this.subject
+                                .connect(s)
+                                .registerVault(
+                                    this.anotherERC20Vault.address,
+                                    await this.ownerSigner.getAddress()
+                                );
+                        }
+                    );
+                    this.nftAnotherERC20 = Number(
+                        await this.subject.vaultsCount()
+                    );
+                    let newVaultsCount = Number(
+                        await this.subject.vaultsCount()
+                    );
+                    expect(newVaultsCount - oldVaultsCount).to.be.equal(1);
+                });
+            });
+        });
+    });
 
-//                 for (const actor of [stranger2, deployer]) {
-//                     await expect(
-//                         execute(
-//                             "VaultRegistry",
-//                             { from: actor, autoMine: true },
-//                             "lockNft",
-//                             nft
-//                         )
-//                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
-//                 }
-//             });
-//         });
-//     });
-// });
+    describe("#registerVault", () => {
+        it("binds minted ERC721 NFT to Vault address and transfers minted NFT to owner specified in args", async () => {
+            let newOwner = randomAddress();
+            expect(await this.subject.balanceOf(newOwner)).to.be.equal(0);
+            await withSigner(this.erc20VaultGovernance.address, async (s) => {
+                await this.subject
+                    .connect(s)
+                    .registerVault(this.anotherERC20Vault.address, newOwner);
+            });
+            expect(await this.subject.balanceOf(newOwner)).to.be.equal(1);
+        });
+        it("emits VaultRegistered event", async () => {
+            await withSigner(this.erc20VaultGovernance.address, async (s) => {
+                await expect(
+                    this.subject
+                        .connect(s)
+                        .registerVault(
+                            this.anotherERC20Vault.address,
+                            this.ownerSigner.address
+                        )
+                ).to.emit(this.subject, "VaultRegistered");
+            });
+        });
+
+        describe("properties", () => {
+            it("@property: minted NFT equals to vaultRegistry#vaultsCount", async () => {
+                let newOwner = randomAddress();
+                expect(await this.subject.balanceOf(newOwner)).to.be.equal(0);
+                await withSigner(
+                    this.erc20VaultGovernance.address,
+                    async (s) => {
+                        await this.subject
+                            .connect(s)
+                            .registerVault(
+                                this.anotherERC20Vault.address,
+                                newOwner
+                            );
+                    }
+                );
+                expect(await this.subject.balanceOf(newOwner)).to.be.equal(1);
+                expect(
+                    await this.subject.ownerOf(
+                        (await this.subject.vaultsCount()).toNumber()
+                    )
+                ).to.be.equal(newOwner);
+            });
+        });
+
+        describe("access control:", () => {
+            it("allowed: any VaultGovernance registered in ProtocolGovernance", async () => {
+                await withSigner(
+                    this.erc20VaultGovernance.address,
+                    async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .registerVault(
+                                    this.anotherERC20Vault.address,
+                                    this.ownerSigner.address
+                                )
+                        ).to.not.be.reverted;
+                    }
+                );
+            });
+            it("denied: any other address", async () => {
+                let randomAddr = randomAddress();
+                while (
+                    randomAddr == this.erc20VaultGovernance.address ||
+                    randomAddr == this.aaveVaultGovernance.address ||
+                    randomAddr == this.uniV3VaultGovernance.address
+                ) {
+                    randomAddr = randomAddress();
+                }
+                await withSigner(randomAddr, async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .registerVault(
+                                this.anotherERC20Vault.address,
+                                this.ownerSigner.address
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+
+        describe("edge cases", () => {
+            // FIX Vault Registry Contract
+            xdescribe("when address doesn't conform to IVault interface (IERC165)", () => {
+                it("reverts", async () => {});
+            });
+
+            describe("when owner address is zero", () => {
+                it("reverts", async () => {
+                    await withSigner(
+                        this.erc20VaultGovernance.address,
+                        async (s) => {
+                            await expect(
+                                this.subject
+                                    .connect(s)
+                                    .registerVault(
+                                        this.anotherERC20Vault.address,
+                                        ethers.constants.AddressZero
+                                    )
+                            ).to.be.reverted;
+                        }
+                    );
+                });
+            });
+        });
+    });
+
+    describe("#stageProtocolGovernance", () => {
+        it("stages new ProtocolGovernance for commit", async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageProtocolGovernance(this.newProtocolGovernance.address);
+
+            expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
+                this.newProtocolGovernance.address
+            );
+        });
+        it("sets the stagedProtocolGovernanceTimestamp after which #commitStagedProtocolGovernance can be called", async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageProtocolGovernance(this.newProtocolGovernance.address);
+
+            expect(
+                Number(await this.subject.stagedProtocolGovernanceTimestamp()) -
+                    now() -
+                    Number(await this.protocolGovernance.governanceDelay())
+            ).to.be.lessThanOrEqual(1);
+        });
+
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageProtocolGovernance(
+                        this.newProtocolGovernance.address
+                    );
+            });
+            it("denied: any other address", async () => {
+                let randomAddr = randomAddress();
+                while (randomAddr == this.admin.address) {
+                    randomAddr = randomAddress();
+                }
+                await withSigner(randomAddr, async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .stageProtocolGovernance(
+                                this.newProtocolGovernance.address
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when new ProtocolGovernance is a zero address", () => {
+                it("does not fail", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageProtocolGovernance(
+                                ethers.constants.AddressZero
+                            )
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#commitStagedProtocolGovernance", () => {
+        it("commits staged ProtocolGovernance resets staged ProtocolGovernance and ProtocolGovernanceTimestamp", async () => {
+            await this.subject
+                .connect(this.admin)
+                .stageProtocolGovernance(this.newProtocolGovernance.address);
+            await sleep(
+                Number(await this.protocolGovernance.governanceDelay())
+            );
+            await this.subject
+                .connect(this.admin)
+                .commitStagedProtocolGovernance();
+            expect(
+                await this.subject.stagedProtocolGovernanceTimestamp()
+            ).to.be.equal(0);
+            expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
+                ethers.constants.AddressZero
+            );
+            expect(await this.subject.protocolGovernance()).to.be.equal(
+                this.newProtocolGovernance.address
+            );
+        });
+
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageProtocolGovernance(
+                        this.newProtocolGovernance.address
+                    );
+                await sleep(
+                    Number(await this.protocolGovernance.governanceDelay())
+                );
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .commitStagedProtocolGovernance()
+                ).to.not.be.reverted;
+            });
+            it("denied: any other address", async () => {
+                let randomAddr = randomAddress();
+                while (randomAddr == this.admin.address) {
+                    randomAddr = randomAddress();
+                }
+                await this.subject
+                    .connect(this.admin)
+                    .stageProtocolGovernance(
+                        this.newProtocolGovernance.address
+                    );
+                await sleep(
+                    Number(await this.protocolGovernance.governanceDelay())
+                );
+                await withSigner(randomAddr, async (s) => {
+                    await expect(this.subject.commitStagedProtocolGovernance())
+                        .to.be.reverted;
+                });
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when nothing staged", () => {
+                it("reverts", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitStagedProtocolGovernance()
+                    ).to.be.reverted;
+                });
+            });
+
+            describe("when called before stagedProtocolGovernanceTimestamp", () => {
+                it("reverts", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageProtocolGovernance(
+                            this.newProtocolGovernance.address
+                        );
+                    await sleep(
+                        Number(
+                            await this.protocolGovernance.governanceDelay()
+                        ) / 2
+                    );
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitStagedProtocolGovernance()
+                    ).to.be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#adminApprove", () => {
+        it("approves token to new address", async () => {
+            let randomAddr = randomAddress();
+            await this.subject
+                .connect(this.admin)
+                .adminApprove(randomAddr, this.nftERC20);
+            expect(await this.subject.getApproved(this.nftERC20)).to.be.equal(
+                randomAddr
+            );
+        });
+
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .adminApprove(this.ownerSigner.address, this.nftERC20)
+                ).to.not.be.reverted;
+            });
+            it("denied: any other address", async () => {
+                let randomAddr = randomAddress();
+                while (randomAddr == this.admin.address) {
+                    randomAddr = randomAddress();
+                }
+                await withSigner(randomAddr, async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(randomAddr)
+                            .adminApprove(
+                                this.ownerSigner.address,
+                                this.nftERC20
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+        describe("edge cases", () => {
+            describe("when NFT doesn't exist", () => {
+                it("reverts", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .adminApprove(
+                                this.ownerSigner.address,
+                                this.nftAnotherERC20
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#lockNft", () => {
+        it("locks NFT (disables any transfer)", async () => {
+            await this.subject.connect(this.ownerSigner).lockNft(this.nftERC20);
+            expect(await this.subject.isLocked(this.nftERC20)).to.be.equal(
+                true
+            );
+        });
+        it("emits TokenLocked event", async () => {
+            await expect(
+                this.subject.connect(this.ownerSigner).lockNft(this.nftERC20)
+            ).to.emit(this.subject, "TokenLocked");
+        });
+
+        describe("access control:", () => {
+            it("allowed: NFT owner", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.ownerSigner)
+                        .lockNft(this.nftERC20)
+                ).to.not.be.reverted;
+            });
+            it("denied: any other address", async () => {
+                let randomAddr = randomAddress();
+                while (randomAddr == this.ownerSigner.address) {
+                    randomAddr = randomAddress();
+                }
+                await withSigner(randomAddr, async (s) => {
+                    await expect(this.subject.connect(s).lockNft(this.nftERC20))
+                        .to.be.reverted;
+                });
+            });
+        });
+
+        describe("edge cases", () => {
+            describe("when NFT has already been locked", () => {
+                it("succeeds", async () => {
+                    await this.subject
+                        .connect(this.ownerSigner)
+                        .lockNft(this.nftERC20);
+                    expect(
+                        await this.subject.isLocked(this.nftERC20)
+                    ).to.be.equal(true);
+                    await expect(
+                        this.subject
+                            .connect(this.ownerSigner)
+                            .lockNft(this.nftERC20)
+                    ).to.not.be.reverted;
+                    expect(
+                        await this.subject.isLocked(this.nftERC20)
+                    ).to.be.equal(true);
+                });
+            });
+        });
+    });
+});

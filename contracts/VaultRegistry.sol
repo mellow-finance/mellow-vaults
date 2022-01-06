@@ -53,6 +53,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
         require(_protocolGovernance.isVaultGovernance(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(owner != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
@@ -97,6 +98,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;
+        delete _stagedProtocolGovernance;
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
     }
 
