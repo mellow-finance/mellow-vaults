@@ -12,7 +12,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     mapping(address => uint256) private _stagedPermissionMasks;
     mapping(address => uint256) private _permissionMasks;
-    EnumerableSet.AddressSet private _stagedAddresses;
+    EnumerableSet.AddressSet private _stagedPermissionAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
 
     uint256 internal _permissionAddressesTimestamp;
@@ -74,7 +74,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function stagedPermissionAddresses() external view returns (address[] memory) {
-        return _stagedAddresses.values();
+        return _stagedPermissionAddresses.values();
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -84,7 +84,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
-        return ((_permissionMasks[target] ^ params.allowDenyMask) & _permissionIdToMask(permissionId)) != 0;
+        return ((_permissionMasks[target] ^ params.allowDenyMask) & (1 << (permissionId))) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -135,9 +135,9 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         _requireAdmin();
         require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         require(block.timestamp >= _permissionAddressesTimestamp, ExceptionsLibrary.TIMESTAMP);
-        uint256 length = _stagedAddresses.length();
+        uint256 length = _stagedPermissionAddresses.length();
         for (uint256 i; i != length; ++i) {
-            address delayedAddress = _stagedAddresses.at(i);
+            address delayedAddress = _stagedPermissionAddresses.at(i);
             uint256 delayedPermissionMask = _stagedPermissionMasks[delayedAddress];
             _permissionMasks[delayedAddress] = delayedPermissionMask;
             if (delayedPermissionMask == 0) {
@@ -181,8 +181,8 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         require(!_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         uint256 delay = params.governanceDelay;
         uint256 diff = _permissionIdsToMask(permissionIds);
-        if (!_stagedAddresses.contains(target)) {
-            _stagedAddresses.add(target);
+        if (!_stagedPermissionAddresses.contains(target)) {
+            _stagedPermissionAddresses.add(target);
             _stagedPermissionMasks[target] = _permissionMasks[target];
         }
         uint256 currentMask = _stagedPermissionMasks[target];
@@ -207,10 +207,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
-    function _permissionIdToMask(uint8 permissionId) private pure returns (uint256) {
-        return 1 << (permissionId);
-    }
-
     function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
         for (uint256 i = 0; i < permissionIds.length; ++i) {
             mask |= 1 << permissionIds[i];
@@ -228,11 +224,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     // -------------------------------  PRIVATE, MUTATING  ---------------------------
 
     function _clearStagedPermissions() private {
-        uint256 length = _stagedAddresses.length();
+        uint256 length = _stagedPermissionAddresses.length();
         for (uint256 i; i != length; ++i) {
-            address target = _stagedAddresses.at(i);
+            address target = _stagedPermissionAddresses.at(i);
             delete _stagedPermissionMasks[target];
-            _stagedAddresses.remove(target);
+            _stagedPermissionAddresses.remove(target);
         }
     }
 
