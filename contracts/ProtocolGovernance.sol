@@ -44,8 +44,32 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
-    function permissionMask(address target) external view returns (uint256) {
+    function rawPermissionMask(address target) external view returns (uint256) {
         return _permissionMasks[target];
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function permissionMask(address target) external view returns (uint256) {
+        return _permissionMasks[target] ^ params.allowDenyMask;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function dirtyAddresses(uint8 permissionId) external view returns (address[] memory addresses) {
+        uint256 len = _permissionAddresses.length();
+        address[] memory tempAddresses = new address[](len);
+        uint256 addressesLen = 0;
+        uint256 mask = 1 << permissionId;
+        for (uint256 i = 0; i < len; i++) {
+            address addr = _permissionAddresses.at(i);
+            if (_permissionMasks[addr] & mask != 0) {
+                addresses[addressesLen] = addr;
+                addressesLen++;
+            }
+        }
+        addresses = new address[](addressesLen);
+        for (uint256 i = 0; i < addressesLen; i++) {
+            addresses[i] = tempAddresses[i];
+        }
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -146,7 +170,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
-        emit ParamsCommitted(tx.origin, msg.sender);
+        emit ParamsCommitted(tx.origin, msg.sender, params);
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
@@ -260,5 +284,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @notice Emitted when pending parameters are committed
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event ParamsCommitted(address indexed origin, address indexed sender);
+    /// @param params Committed parameters
+    event ParamsCommitted(address indexed origin, address indexed sender, Params params);
 }

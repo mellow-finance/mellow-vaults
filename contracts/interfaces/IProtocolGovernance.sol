@@ -39,10 +39,20 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @return Permission address
     function permissionAddressAt(uint256 index) external view returns (address);
 
-    /// @notice Bitmask of permissions for an address.
+    /// @notice Raw bitmask of permissions for an address (allowDenyMask is not applied).
+    /// @param addr Address to check
+    /// @return A bitmask of permissions for an address
+    function rawPermissionMask(address addr) external view returns (uint256);
+
+    /// @notice Bitmask of true permissions for an address (allowDenyMask is applied).
     /// @param addr Address to check
     /// @return A bitmask of permissions for an address
     function permissionMask(address addr) external view returns (uint256);
+
+    /// @notice Return all addresses where rawPermissionMask bit for permissionId is set to 1.
+    /// @param permissionId Id of the permission to check
+    /// @return A list of dirty addresses
+    function dirtyAddresses(uint8 permissionId) external view returns (address[] memory);
 
     /// @notice Permission addresses staged for commit.
     function stagedPermissionAddresses() external view returns (address[] memory);

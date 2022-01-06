@@ -8,4 +8,6 @@ library PermissionIds {
     uint8 constant ERC20_TRANSFER = 2;
     uint8 constant ERC20_SWAP = 3;
     uint8 constant ERC20_VAULT_TOKEN = 4;
+    uint8 constant CREATE_VAULT = 5;
+    uint8 constant DEPOSIT = 6;
 }
