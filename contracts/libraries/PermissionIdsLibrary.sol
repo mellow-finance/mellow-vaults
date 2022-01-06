@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 /// @notice Stores permission ids for addresses
-library PermissionIds {
+library PermissionIdsLibrary {
     uint8 constant CLAIM = 0;
     uint8 constant VAULT_GOVERNANCE = 1;
     uint8 constant ERC20_TRANSFER = 2;

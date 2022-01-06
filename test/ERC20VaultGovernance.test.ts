@@ -10,7 +10,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
-import { VAULT_GOVERNANCE } from "./library/PermissionIds";
+import { VAULT_GOVERNANCE } from "./library/PermissionIdsLibrary";
 import {
     DelayedProtocolParamsStruct,
     ERC20VaultGovernance,

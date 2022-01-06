@@ -237,7 +237,7 @@ export const toObject = (obj: any) =>
         fromPairs
     )(obj);
 
-export class PermissionIds {
+export class PermissionIdsLibrary {
     static CLAIM: number = 0;
     static VAULT_GOVERNANCE: number = 1;
     static ERC20_TRANSFER: number = 2;

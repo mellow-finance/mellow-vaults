@@ -14,7 +14,7 @@ import {
     DelayedProtocolParamsStruct,
     AaveVaultGovernance,
 } from "./types/AaveVaultGovernance";
-import { VAULT_GOVERNANCE } from "./library/PermissionIds";
+import { VAULT_GOVERNANCE } from "./library/PermissionIdsLibrary";
 import { contract } from "./library/setup";
 import { address } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";

@@ -8,7 +8,7 @@ import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../libraries/PermissionIds.sol";
+import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
 
@@ -105,7 +105,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
 
         uint256[] memory tokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            require(governance.hasPermission(tokens[i], PermissionIds.ERC20_TRANSFER), ExceptionsLibrary.INVALID_TOKEN);
+            require(
+                governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER),
+                ExceptionsLibrary.INVALID_TOKEN
+            );
             IERC20 token = IERC20(tokens[i]);
             tokenAmounts[i] = token.balanceOf(address(this));
             if (tokenAmounts[i] == 0) continue;
@@ -121,7 +124,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.hasPermission(from, PermissionIds.CLAIM), ExceptionsLibrary.FORBIDDEN);
+        require(protocolGovernance.hasPermission(from, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
         (bool res, bytes memory returndata) = from.call(data);
         if (!res) {
             assembly {

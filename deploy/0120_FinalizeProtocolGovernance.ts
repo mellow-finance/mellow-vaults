@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
-import { ALL_NETWORKS, PermissionIds } from "./0000_utils";
+import { ALL_NETWORKS, PermissionIdsLibrary } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 "ProtocolGovernance",
                 "hasPermission",
                 governance.address,
-                PermissionIds.VAULT_GOVERNANCE
+                PermissionIdsLibrary.VAULT_GOVERNANCE
             )
         ) {
             continue;
@@ -41,12 +41,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             { from: deployer, log: true, autoMine: true },
             "stageGrantPermissions",
             governance,
-            [PermissionIds.VAULT_GOVERNANCE],
+            [PermissionIdsLibrary.VAULT_GOVERNANCE]
         );
         await execute(
             "ProtocolGovernance",
             { from: deployer, log: true, autoMine: true },
-            "commitStagedPermissions",
+            "commitStagedPermissions"
         );
     }
 
@@ -61,9 +61,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             "stageGrantPermissions",
             token,
             [
-                PermissionIds.ERC20_VAULT_TOKEN,
-                PermissionIds.ERC20_SWAP,
-                PermissionIds.ERC20_TRANSFER
+                PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                PermissionIdsLibrary.ERC20_SWAP,
+                PermissionIdsLibrary.ERC20_TRANSFER,
             ]
         );
         await execute(
