@@ -83,7 +83,7 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
 
     /// @notice Emitted when new yToken is set
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param token ERC-20 token for the yToken
     /// @param yToken yToken for ERC-20 token
     event SetYToken(address indexed origin, address indexed sender, address indexed token, address yToken);

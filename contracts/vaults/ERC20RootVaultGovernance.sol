@@ -180,7 +180,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
@@ -194,7 +194,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are committed
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that are committed
     event CommitDelayedProtocolPerVaultParams(
@@ -206,7 +206,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @notice Emitted when new DelayedStrategyParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
@@ -220,7 +220,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @notice Emitted when new DelayedStrategyParams are committed
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that are committed
     event CommitDelayedStrategyParams(
@@ -232,14 +232,14 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @notice Emitted when new StrategyParams are set.
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that are set
     event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
     event StageDelayedProtocolParams(
@@ -251,7 +251,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
 
     /// @notice Emitted when new DelayedProtocolParams are committed
     /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender) (msg.sender)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }
