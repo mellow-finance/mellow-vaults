@@ -93,8 +93,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             [PermissionIdsLibrary.CREATE_VAULT]
         );
     }
-    console.log("-0-----");
-
     await execute(
         "ProtocolGovernance",
         {
