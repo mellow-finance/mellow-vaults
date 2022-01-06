@@ -23,6 +23,11 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionId Permission id to check
     function hasPermission(address addr, uint8 permissionId) external view returns (bool);
 
+    /// @notice Checks if address has all permissions
+    /// @param target Address to check
+    /// @param permissionIds A list of permission ids to check
+    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
+
     /// @notice Returns known addresses
     function addresses() external view returns (address[] memory);
 
@@ -48,11 +53,6 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Returns a bit mask of permissions for a staged address
     function stagedPermissionMask(address addr) external view returns (uint256);
 
-    /// @notice Checks if address has all permissions
-    /// @param target Address to check
-    /// @param permissionIds A list of permission ids to check
-    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
-
     /// @notice Checks if address has permission staged
     /// @param addr Address to check
     /// @param permissionId Permission id to check
@@ -61,7 +61,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Checks if address has all given permissions staged
     /// @param addr Address to check
     /// @param permissionIds A list of permission ids to check
-    function hasStagedAllPermissions(address addr, uint8[] memory permissionIds) external view returns (bool);
+    function hasAllStagedPermissions(address addr, uint8[] memory permissionIds) external view returns (bool);
 
     /// @notice Returns timestamp of the upcoming commit if staged, else returns 0
     function stagedToCommitAt() external view returns (uint256);
@@ -100,7 +100,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Revoke permission instant.
     /// @param target Target address
     /// @param permissionIds A list of permission ids to revoke
-    function revokePermissionsInstant(address target, uint8[] memory permissionIds) external;
+    function revokePermissions(address target, uint8[] memory permissionIds) external;
 
     /// @notice Commit pending params.
     function commitParams() external;

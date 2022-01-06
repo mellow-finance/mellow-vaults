@@ -70,22 +70,25 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
-        return _hasPermission(target, permissionId);
+        return (_permissionMasks[target] & _permissionIdToMask(permissionId)) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
-        return _hasAllPermissions(target, permissionIds);
+        uint256 submask = _permissionIdToMask(permissionIds[0]);
+        uint256 mask = _permissionMasks[target];
+        return (mask >= submask && mask & submask == mask - submask);
     }
 
-    /// @inheritdoc IProtocolGovernance
     function hasStagedPermission(address target, uint8 permissionId) external view returns (bool) {
-        return _hasStagedPermission(target, permissionId);
+        return (_stagedPermissionMasks[target] & _permissionIdToMask(permissionId)) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
-    function hasStagedAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
-        return _hasStagedAllPermissions(target, permissionIds);
+    function hasAllStagedPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
+        uint256 submask = _permissionIdsToMask(permissionIds);
+        uint256 mask = _stagedPermissionMasks[target];
+        return (mask >= submask && mask & submask == mask - submask);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -118,19 +121,45 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function rollbackStagedPermissions() external {
         _requireAdmin();
-        _rollbackStagedPermissions();
+        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        _clearStagedPermissions();
+        delete _stagedToCommitAt;
+        emit RolledBackStagedPermissions(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
     function commitStagedPermissions() external {
         _requireAdmin();
-        _commitStagedPermissions();
+        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        require(block.timestamp >= _stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
+        uint256 length = _stagedAddresses.length();
+        for (uint256 i; i != length; ++i) {
+            address delayedAddress = _stagedAddresses.at(i);
+            uint256 delayedPermissionMask = _stagedPermissionMasks[delayedAddress];
+            if (delayedPermissionMask == 0) {
+                delete _permissionMasks[delayedAddress];
+                _addresses.remove(delayedAddress);
+            } else {
+                _permissionMasks[delayedAddress] = delayedPermissionMask;
+                _addresses.add(delayedAddress);
+            }
+        }
+        _clearStagedPermissions();
+        delete _stagedToCommitAt;
     }
 
     /// @inheritdoc IProtocolGovernance
-    function revokePermissionsInstant(address addr, uint8[] calldata permissionIds) external {
+    function revokePermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
-        _revokePermissionsInstant(addr, permissionIds);
+        uint256 diff = _permissionIdsToMask(permissionIds);
+        uint256 currentMask = _permissionMasks[target];
+        uint256 newMask = currentMask & (~ diff);
+        _permissionMasks[target] = newMask;
+        if(newMask == 0) {
+            delete _permissionMasks[target];
+            _addresses.remove(target);
+        }
+        emit RevokedPermissionsInstant(tx.origin, msg.sender, target, permissionIds);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -151,7 +180,17 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @inheritdoc IProtocolGovernance
     function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
-        _stageGrantPermissions(target, permissionIds, params.governanceDelay);
+        require(!_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        uint256 delay = params.governanceDelay;
+        uint256 diff = _permissionIdsToMask(permissionIds);
+        if (!_stagedAddresses.contains(target)) {
+            _stagedAddresses.add(target);
+            _stagedPermissionMasks[target] = _permissionMasks[target];
+        }
+        uint256 currentMask = _stagedPermissionMasks[target];
+        _stagedPermissionMasks[target] = currentMask | diff;
+        _stagedToCommitAt = block.timestamp + delay;
+        emit StagedGrantPermissions(tx.origin, msg.sender, target, permissionIds, delay);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -163,7 +202,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
     }
 
-    // -------------------------------  PRIVATE  ------------------------------------
+    // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
         require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
@@ -174,39 +213,21 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return 1 << (permissionId);
     }
 
+    function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
+        for (uint256 i; i < permissionIds.length; ++i) {
+            mask |= _permissionIdToMask(permissionIds[i]);
+        }
+    }
+
     function _requireAdmin() private view {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-    }
-
-    function _hasPermission(address addr, uint8 permissionId) private view returns (bool) {
-        return (_permissionMasks[addr] & _permissionIdToMask(permissionId)) != 0;
-    }
-
-    function _hasAllPermissions(address addr, uint8[] calldata permissionIds) private view returns (bool) {
-        for (uint256 i; i < permissionIds.length; ++i) {
-            if (!_hasPermission(addr, permissionIds[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function _hasStagedPermission(address addr, uint8 permissionId) private view returns (bool) {
-        return _stagedPermissionMasks[addr] & _permissionIdToMask(permissionId) != 0;
-    }
-
-    function _hasStagedAllPermissions(address addr, uint8[] calldata permissionIds) private view returns (bool) {
-        for (uint256 i; i < permissionIds.length; ++i) {
-            if (!_hasStagedPermission(addr, permissionIds[i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     function _isStagedToCommit() private view returns (bool) {
         return _stagedToCommitAt != 0;
     }
+
+    // -------------------------------  PRIVATE, MUTATING  ---------------------------
 
     function _clearStagedPermissions() private {
         uint256 length = _stagedAddresses.length();
@@ -217,75 +238,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         }
     }
 
-    function _revokePermissionInstant(address from, uint8 permissionId) private {
-        uint256 diff = _permissionIdToMask(permissionId);
-        uint256 currentMask = _permissionMasks[from];
-        _permissionMasks[from] = currentMask & (~diff);
-        if (_permissionMasks[from] == 0) {
-            delete _permissionMasks[from];
-            _addresses.remove(from);
-        }
-    }
-
-    function _revokePermissionsInstant(address from, uint8[] calldata permissionIds) internal {
-        for (uint256 i; i != permissionIds.length; ++i) {
-            _revokePermissionInstant(from, permissionIds[i]);
-        }
-        emit RevokedPermissionsInstant(tx.origin, msg.sender, from, permissionIds);
-    }
-
-    function _stageGrantPermission(address to, uint8 permissionId) private {
-        require(!_isStagedToCommit(), "Already staged");
-        uint256 diff = _permissionIdToMask(permissionId);
-        if (!_stagedAddresses.contains(to)) {
-            _stagedAddresses.add(to);
-            _stagedPermissionMasks[to] = _permissionMasks[to];
-        }
-        uint256 currentMask = _stagedPermissionMasks[to];
-        _stagedPermissionMasks[to] = currentMask | diff;
-    }
-
-    function _rollbackStagedPermissions() private {
-        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
-        delete _stagedAddresses;
-        _clearStagedPermissions();
-        delete _stagedToCommitAt;
-        emit RolledBackStagedPermissions(tx.origin, msg.sender);
-    }
-
-    function _stageGrantPermissions(
-        address to,
-        uint8[] calldata permissionIds,
-        uint256 delay
-    ) internal {
-        require(!_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
-        for (uint256 i; i != permissionIds.length; ++i) {
-            _stageGrantPermission(to, permissionIds[i]);
-        }
-        _stagedToCommitAt = block.timestamp + delay;
-        emit StagedGrantPermissions(tx.origin, msg.sender, to, permissionIds, delay);
-    }
-
-    function _commitStagedPermissions() private {
-        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
-        require(block.timestamp >= _stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
-        uint256 length = _stagedAddresses.length();
-        for (uint256 i; i != length; ++i) {
-            address delayedAddress = _stagedAddresses.at(i);
-            uint256 delayedPermissionMask = _stagedPermissionMasks[delayedAddress];
-            if (delayedPermissionMask == 0) {
-                delete _permissionMasks[delayedAddress];
-                _addresses.remove(delayedAddress);
-            } else {
-                _permissionMasks[delayedAddress] = delayedPermissionMask;
-                _addresses.add(delayedAddress);
-            }
-        }
-        _clearStagedPermissions();
-        delete _stagedToCommitAt;
-    }
-
-    // ---------------------------------- EVENTS ------------------------------------
+    // ---------------------------------- EVENTS -------------------------------------
 
     // Addresses
     event StagedGrantPermissions(
