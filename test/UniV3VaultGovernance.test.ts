@@ -10,6 +10,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
+import { AddressPermissionIds } from "./library/AddressPermissionIds";
 import {
     DelayedProtocolParamsStruct,
     UniV3VaultGovernance,
@@ -83,13 +84,14 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .setPendingVaultGovernancesAdd([
+                            .stageGrantPermissions(
                                 this.subject.address,
-                            ]);
+                                [AddressPermissionIds.VAULT_GOVERNANCE]
+                            );
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .commitVaultGovernancesAdd();
+                            .commitStagedPermissions();
                         await this.subject.createVault(
                             this.tokens.slice(0, 2).map((x: any) => x.address),
                             this.ownerSigner.address,

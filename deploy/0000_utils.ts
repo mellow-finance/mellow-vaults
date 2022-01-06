@@ -1,5 +1,3 @@
-import { PopulatedTransaction } from "@ethersproject/contracts";
-import { TransactionReceipt } from "@ethersproject/abstract-provider";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import {
@@ -11,7 +9,6 @@ import {
     map,
     pipe,
 } from "ramda";
-import { read } from "fs";
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
@@ -238,6 +235,14 @@ export const toObject = (obj: any) =>
         map((x) => [x, obj[x]] as KeyValuePair<string, any>),
         fromPairs
     )(obj);
+
+export class AddressPermissionIds {
+    static CLAIM: number = 0;
+    static VAULT_GOVERNANCE: number = 1;
+    static ERC20_TRANSFER: number = 2;
+    static ERC20_SWAP = 3;
+    static ERC20_VAULT_TOKEN: number = 4;
+}
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;
