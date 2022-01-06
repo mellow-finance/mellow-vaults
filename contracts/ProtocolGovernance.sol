@@ -75,7 +75,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     /// @inheritdoc IProtocolGovernance
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
-        uint256 submask = _permissionIdToMask(permissionIds[0]);
+        uint256 submask = _permissionIdsToMask(permissionIds);
         uint256 mask = _permissionMasks[target];
         return (mask >= submask && mask & submask == mask - submask);
     }
