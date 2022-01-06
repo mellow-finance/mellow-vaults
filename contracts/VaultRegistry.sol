@@ -129,14 +129,14 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     }
 
     /// @notice Emitted when token is locked for transfers
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender) (msg.sender)
     /// @param nft NFT to be locked
     event TokenLocked(address indexed origin, address indexed sender, uint256 indexed nft);
 
     /// @notice Emitted when new Vault is registered in VaultRegistry
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender) (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param vault Address of the Vault contract
     /// @param owner Owner of the VaultRegistry NFT
@@ -148,8 +148,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         address owner
     );
 
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender) (msg.sender)
     /// @param newProtocolGovernance Address of the new ProtocolGovernance
     /// @param start Timestamp of the start of the new ProtocolGovernance
     event StagedProtocolGovernance(
@@ -159,8 +159,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         uint256 start
     );
 
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender) (msg.sender)
     /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
     event CommitedProtocolGovernance(
         address indexed origin,

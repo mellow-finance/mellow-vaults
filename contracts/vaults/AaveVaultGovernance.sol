@@ -60,8 +60,8 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     }
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender) (msg.sender)
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
     event StageDelayedProtocolParams(
@@ -72,8 +72,8 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     );
 
     /// @notice Emitted when new DelayedProtocolParams are committed
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender) (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

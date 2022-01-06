@@ -157,7 +157,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         if (newMask == 0) {
             _addresses.remove(target);
         }
-        emit RevokedPermissionsInstant(tx.origin, msg.sender, target, permissionIds);
+        emit RevokedPermissions(tx.origin, msg.sender, target, permissionIds);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -188,7 +188,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         uint256 currentMask = _stagedPermissionMasks[target];
         _stagedPermissionMasks[target] = currentMask | diff;
         _stagedToCommitAt = block.timestamp + delay;
-        emit StagedGrantPermissions(tx.origin, msg.sender, target, permissionIds, delay);
+        emit StagedGrantPermissions(tx.origin, msg.sender, target, permissionIds, _stagedToCommitAt);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -238,24 +238,51 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     // ---------------------------------- EVENTS -------------------------------------
 
-    // Addresses
+    /// @notice Emitted when new permissions are staged to be granted
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    /// @param permissionIds Permission IDs to be granted
+    /// @param at Timestamp when the staged permissions could be committed
     event StagedGrantPermissions(
         address indexed origin,
         address indexed sender,
-        address indexed target,
+        address indexed target,`
         uint8[] permissionIds,
-        uint256 delay
+        uint256 at
     );
-    event RevokedPermissionsInstant(
+
+    /// @notice Emitted when permissions are revoked
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    /// @param permissionIds Permission IDs to be revoked
+    event RevokedPermissions(
         address indexed origin,
         address indexed sender,
         address indexed target,
         uint8[] permissionIds
     );
+
+    /// @notice Emitted when staged permissions are rolled back
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     event RolledBackStagedPermissions(address indexed origin, address indexed sender);
+
+    /// @notice Emitted when staged permissions are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     event CommittedStagedPermissions(address indexed origin, address indexed sender);
 
-    // Params
+    /// @notice Emitted when pending parameters are set
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param at Timestamp when the pending parameters could be committed
+    /// @param params Pending parameters
     event PendingParamsSet(address indexed origin, address indexed sender, uint256 at, Params params);
+
+    /// @notice Emitted when pending parameters are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     event ParamsCommitted(address indexed origin, address indexed sender);
 }
