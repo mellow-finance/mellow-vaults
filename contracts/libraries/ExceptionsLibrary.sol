@@ -22,4 +22,5 @@ library ExceptionsLibrary {
     string constant LOCK = "LCKD";
     string constant INVALID_INTERFACE = "INVI";
     string constant DISABLED = "DIS";
+    string constant INVALID_STATE = "INVST";
 }
