@@ -247,7 +247,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     event StagedGrantPermissions(
         address indexed origin,
         address indexed sender,
-        address indexed target,`
+        address indexed target,
         uint8[] permissionIds,
         uint256 at
     );
