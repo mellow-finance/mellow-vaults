@@ -10,12 +10,12 @@ import "./libraries/ExceptionsLibrary.sol";
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 internal _stagedToCommitAt;
-
     mapping(address => uint256) private _stagedPermissionMasks;
     mapping(address => uint256) private _permissionMasks;
     EnumerableSet.AddressSet private _stagedAddresses;
     EnumerableSet.AddressSet private _addresses;
+
+    uint256 internal _stagedToCommitAt;
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public pendingParamsTimestamp;
@@ -115,16 +115,19 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
+    /// @inheritdoc IProtocolGovernance
     function rollbackStagedPermissions() external {
         _requireAdmin();
         _rollbackStagedPermissions();
     }
 
+    /// @inheritdoc IProtocolGovernance
     function commitStagedPermissions() external {
         _requireAdmin();
         _commitStagedPermissions();
     }
 
+    /// @inheritdoc IProtocolGovernance
     function revokePermissionsInstant(address addr, uint8[] calldata permissionIds) external {
         _requireAdmin();
         _revokePermissionsInstant(addr, permissionIds);
@@ -140,11 +143,12 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
-        emit ParamsCommitted(msg.sender);
+        emit ParamsCommitted(tx.origin, msg.sender);
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
+    /// @inheritdoc IProtocolGovernance
     function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
         _stageGrantPermissions(target, permissionIds, params.governanceDelay);
@@ -156,15 +160,29 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         _validateGovernanceParams(newParams);
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
-        emit PendingParamsSet(msg.sender, pendingParamsTimestamp, pendingParams);
+        emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
     }
 
+    // -------------------------------  PRIVATE  ------------------------------------
 
-    function _hasPermission(address addr, uint8 permissionId) internal view returns (bool) {
+    function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
+        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
+        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
+    }
+
+    function _permissionIdToMask(uint8 permissionId) private pure returns (uint256) {
+        return 1 << (permissionId);
+    }
+
+    function _requireAdmin() private view {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    }
+
+    function _hasPermission(address addr, uint8 permissionId) private view returns (bool) {
         return (_permissionMasks[addr] & _permissionIdToMask(permissionId)) != 0;
     }
 
-    function _hasAllPermissions(address addr, uint8[] calldata permissionIds) internal view returns (bool) {
+    function _hasAllPermissions(address addr, uint8[] calldata permissionIds) private view returns (bool) {
         for (uint256 i; i < permissionIds.length; ++i) {
             if (!_hasPermission(addr, permissionIds[i])) {
                 return false;
@@ -173,11 +191,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return true;
     }
 
-    function _hasStagedPermission(address addr, uint8 permissionId) internal view returns (bool) {
+    function _hasStagedPermission(address addr, uint8 permissionId) private view returns (bool) {
         return _stagedPermissionMasks[addr] & _permissionIdToMask(permissionId) != 0;
     }
 
-    function _hasStagedAllPermissions(address addr, uint8[] calldata permissionIds) internal view returns (bool) {
+    function _hasStagedAllPermissions(address addr, uint8[] calldata permissionIds) private view returns (bool) {
         for (uint256 i; i < permissionIds.length; ++i) {
             if (!_hasStagedPermission(addr, permissionIds[i])) {
                 return false;
@@ -188,10 +206,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     function _isStagedToCommit() private view returns (bool) {
         return _stagedToCommitAt != 0;
-    }
-
-    function _permissionIdToMask(uint8 permissionId) private pure returns (uint256) {
-        return 1 << (permissionId);
     }
 
     function _clearStagedPermissions() private {
@@ -217,7 +231,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         for (uint256 i; i != permissionIds.length; ++i) {
             _revokePermissionInstant(from, permissionIds[i]);
         }
-        emit RevokedPermissionsInstant(msg.sender, from, permissionIds);
+        emit RevokedPermissionsInstant(tx.origin, msg.sender, from, permissionIds);
     }
 
     function _stageGrantPermission(address to, uint8 permissionId) private {
@@ -231,12 +245,12 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         _stagedPermissionMasks[to] = currentMask | diff;
     }
 
-    function _rollbackStagedPermissions() internal {
+    function _rollbackStagedPermissions() private {
         require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         delete _stagedAddresses;
         _clearStagedPermissions();
         delete _stagedToCommitAt;
-        emit RolledBackStagedPermissions(msg.sender);
+        emit RolledBackStagedPermissions(tx.origin, msg.sender);
     }
 
     function _stageGrantPermissions(
@@ -249,10 +263,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
             _stageGrantPermission(to, permissionIds[i]);
         }
         _stagedToCommitAt = block.timestamp + delay;
-        emit StagedGrantPermissions(msg.sender, to, permissionIds, delay);
+        emit StagedGrantPermissions(tx.origin, msg.sender, to, permissionIds, delay);
     }
 
-    function _commitStagedPermissions() internal {
+    function _commitStagedPermissions() private {
         require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
         require(block.timestamp >= _stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         uint256 length = _stagedAddresses.length();
@@ -271,26 +285,26 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         delete _stagedToCommitAt;
     }
 
-    // ---------------------------------- PRIVATE -----------------------------------
-
-    function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
-        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
-        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
-    }
-
-    function _requireAdmin() private view {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-    }
-
     // ---------------------------------- EVENTS ------------------------------------
 
     // Addresses
-    event StagedGrantPermissions(address indexed sender, address indexed target, uint8[] permissionIds, uint256 delay);
-    event RevokedPermissionsInstant(address indexed sender, address indexed target, uint8[] permissionIds);
-    event RolledBackStagedPermissions(address indexed sender);
-    event CommittedStagedPermissions(address indexed sender);
+    event StagedGrantPermissions(
+        address indexed origin,
+        address indexed sender,
+        address indexed target,
+        uint8[] permissionIds,
+        uint256 delay
+    );
+    event RevokedPermissionsInstant(
+        address indexed origin,
+        address indexed sender,
+        address indexed target,
+        uint8[] permissionIds
+    );
+    event RolledBackStagedPermissions(address indexed origin, address indexed sender);
+    event CommittedStagedPermissions(address indexed origin, address indexed sender);
 
     // Params
-    event PendingParamsSet(address indexed sender, uint256 at, Params params);
-    event ParamsCommitted(address indexed sender);
+    event PendingParamsSet(address indexed origin, address indexed sender, uint256 at, Params params);
+    event ParamsCommitted(address indexed origin, address indexed sender);
 }
