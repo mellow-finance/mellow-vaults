@@ -11,7 +11,7 @@ import {
 import { now, sleep, sleepTo, toObject } from "./library/Helpers";
 import { ERC20 } from "./library/Types";
 
-describe("ProtocolGovernance", () => {
+xdescribe("ProtocolGovernance", () => {
     const SECONDS_PER_DAY = 60 * 60 * 24;
 
     let protocolGovernance: Contract;

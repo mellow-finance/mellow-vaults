@@ -109,10 +109,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
         const address = namedAccounts[name];
-        let signer = await ethers.getSignerOrNull(address);
-        if (!signer) {
-            signer = await addSigner(address);
-        }
+        const signer = await addSigner(address);
         this[name] = signer;
     }
     const { usdc, weth, wbtc } = namedAccounts;

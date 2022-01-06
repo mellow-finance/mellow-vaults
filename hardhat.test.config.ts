@@ -23,9 +23,6 @@ const config: HardhatUserConfig = {
     },
     namedAccounts: {
         ...defaultConfig.namedAccounts,
-        admin: {
-            default: 4,
-        },
         stranger: {
             default: 5,
         },
