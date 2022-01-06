@@ -14,18 +14,14 @@ import {
     DelayedProtocolParamsStruct,
     AaveVaultGovernance,
 } from "./types/AaveVaultGovernance";
-import {
-    AddressPermissionIds
-} from "./library/AddressPermissionIds";
+import { AddressPermissionIds } from "./library/AddressPermissionIds";
 import { contract } from "./library/setup";
 import { address } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 import { Arbitrary, integer, tuple } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
-import {
-    InternalParamsStruct,
-} from "./types/IVaultGovernance";
+import { InternalParamsStruct } from "./types/IVaultGovernance";
 
 type CustomContext = {
     nft: number;
@@ -84,14 +80,13 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .stageGrantPermissions(
-                                this.subject.address,
-                                [AddressPermissionIds.VAULT_GOVERNANCE]
-                            );
+                            .stageGrantPermissions(this.subject.address, [
+                                AddressPermissionIds.VAULT_GOVERNANCE,
+                            ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .commitStagedPermissions()
+                            .commitStagedPermissions();
                         this.nft =
                             (
                                 await this.vaultRegistry.vaultsCount()

@@ -41,10 +41,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             { from: deployer, log: true, autoMine: true },
             "stageGrantPermissions",
             governance,
-            AddressPermissionIds.VAULT_GOVERNANCE
+            [AddressPermissionIds.VAULT_GOVERNANCE],
         );
         await execute(
-            "ProtocolGoverance",
+            "ProtocolGovernance",
             { from: deployer, log: true, autoMine: true },
             "commitStagedPermissions",
         );
