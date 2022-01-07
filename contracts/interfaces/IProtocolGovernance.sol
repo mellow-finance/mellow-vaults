@@ -78,39 +78,42 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice The address of the protocol treasury.
     function protocolTreasury() external view returns (address);
 
-    /// @notice Permissions mask which defines if ordinary permission should be reverted. This bitmask is xored with ordinary mask.
+    /// @notice Permissions mask which defines if ordinary permission should be reverted. 
+    /// This bitmask is xored with ordinary mask.
     function forceAllowMask() external view returns (uint256);
 
     // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
-    /// @notice Set new pending params.
-    /// @param newParams newParams to set
+    /// @notice Sets new pending params that could have been committed after governance delay expires.
+    /// @param newParams New protocol parameters to set.
     function setPendingParams(Params memory newParams) external;
 
-    /// @notice Stage pending permissions.
+    /// @notice Stage granted permissions that could have been committed after governance delay expires.
+    /// Resets commit delay and permissions if there are already staged permissions for this address.
     /// @param target Target address
     /// @param permissionIds A list of permission ids to grant
     function stageGrantPermissions(address target, uint8[] memory permissionIds) external;
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
-    /// @notice Rollback staged permissions.
+    /// @notice Rollback all staged granted permissions.
     function rollbackStagedGrantedPermissions() external;
 
-    /// @notice Commits all staged granted permissions optimistically.
-    /// Addresse skipped if governance delay is not passed, transation doesn't revert.
+    /// @notice Commits all staged granted permissions.
+    /// Address is skipped if governance delay has not passed yet, transation doesn't revert.
     function commitStagedPermissions() external;
 
     /// @notice Comits staged granted permissions for the given address.
-    /// Reverts if governance delay is not passed.
-    /// @param target The given address
+    /// Reverts if governance delay has not passed yet.
+    /// @param target The given address.
     function commitStagedPermission(address target) external;
 
-    /// @notice Revoke permission instant.
-    /// @param target Target address
-    /// @param permissionIds A list of permission ids to revoke
+    /// @notice Revoke permission instantly from the given address.
+    /// @param target The given address.
+    /// @param permissionIds A list of permission ids to revoke.
     function revokePermissions(address target, uint8[] memory permissionIds) external;
 
-    /// @notice Commit pending params.
+    /// @notice Commits staged protocol params.
+    /// Reverts if governance delay has not passed yet.
     function commitParams() external;
 }
