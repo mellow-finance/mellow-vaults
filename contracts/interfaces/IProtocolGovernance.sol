@@ -34,29 +34,40 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Number of addresses for which non-zero permissions are set.
     function permissionAddressesCount() external view returns (uint256);
 
+    /// @notice Returns address by index. 
+    /// The address is expected to have at least one granted permission, otherwise it will be deleted.
+    function permissionAddressAt(uint256 index) external view returns (address);
+
+    /// @notice Returns timestamp after which staged granted permissions for the given address can be committed.
+    /// Returns zero if there are no staged permission grants.
+    /// @param target The given address.
+    function grantedPermissionAddressTimestamps(address target) external view returns (uint256);
+
+    /// @notice Returns timestamp after which staged pending protocol parameters can be committed. 
+    /// Returns zero if there are no staged parameters.
+    function pendingParamsTimestamp() external view returns (uint256);
+
     /// @notice Raw bitmask of permissions for an address (forceAllowMask is not applied).
-    /// @param addr Address to check
+    /// @param addr Address to check.
     /// @return A bitmask of permissions for an address
     function rawPermissionMask(address addr) external view returns (uint256);
 
     /// @notice Bitmask of true permissions for an address (forceAllowMask is applied).
-    /// @param addr Address to check
+    /// @param addr Address to check.
     /// @return A bitmask of permissions for an address
     function permissionMask(address addr) external view returns (uint256);
 
     /// @notice Return all addresses where rawPermissionMask bit for permissionId is set to 1.
-    /// @param permissionId Id of the permission to check
-    /// @return A list of dirty addresses
-    function dirtyAddresses(uint8 permissionId) external view returns (address[] memory);
+    /// @param permissionId Id of the permission to check.
+    /// @return A list of dirty addresses.
+    function addressesByPermissionIdRaw(uint8 permissionId) external view returns (address[] memory);
 
     /// @notice Permission addresses staged for commit.
     function stagedPermissionAddresses() external view returns (address[] memory);
 
-    /// @notice Returns a bitmask of permissions for a staged address.
-    function stagedPermissionMask(address addr) external view returns (uint256);
-
-    /// @notice Timestamp after wich pending protocol params can be committed.
-    function pendingParamsStagedToCommitAt() external view returns (uint256);
+    /// @notice Returns staged granted permission bitmask for the given address.
+    /// @param target The given address.
+    function stagedGrantedPermissionMasks(address target) external view returns (uint256);
 
     /// @notice Max different ERC20 token addresses that could be managed by the protocol.
     function maxTokensPerVault() external view returns (uint256);
