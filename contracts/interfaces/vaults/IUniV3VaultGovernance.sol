@@ -29,11 +29,11 @@ interface IUniV3VaultGovernance is IVaultGovernance {
 
     /// @notice Deploys a new vault.
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
-    /// @param fee_ Fee of the UniV3 pool
     /// @param owner_ Owner of the vault NFT
+    /// @param fee_ Fee of the UniV3 pool
     function createVault(
         address[] memory vaultTokens_,
-        uint24 fee_,
-        address owner_
+        address owner_,
+        uint24 fee_
     ) external returns (IUniV3Vault vault, uint256 nft);
 }

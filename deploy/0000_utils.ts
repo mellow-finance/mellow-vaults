@@ -1,5 +1,3 @@
-import { PopulatedTransaction } from "@ethersproject/contracts";
-import { TransactionReceipt } from "@ethersproject/abstract-provider";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import {
@@ -11,7 +9,6 @@ import {
     map,
     pipe,
 } from "ramda";
-import { read } from "fs";
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
@@ -26,6 +23,7 @@ export const ALL_NETWORKS = [
     "avalance",
     "polygon",
     "fantom",
+    "xdai",
 ];
 export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan"];
 
@@ -231,45 +229,6 @@ export const combineVaults = async (
     );
 };
 
-const deployMStrategy = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy, log, execute, read, get } = deployments;
-    const { deployer, mStrategyAdmin } = await getNamedAccounts();
-
-    const proxyAdminDeployment = await deploy("MStrategyProxyAdmin", {
-        from: deployer,
-        contract: "DefaultProxyAdmin",
-        args: [],
-        log: true,
-        autoMine: true,
-    });
-
-    const mStrategyDeployment = await deploy("MStrategy", {
-        from: deployer,
-        args: [],
-        log: true,
-        autoMine: true,
-        proxy: {
-            execute: { init: { methodName: "init", args: [deployer] } },
-            proxyContract: "DefaultProxy",
-            viaAdminContract: {
-                name: "MStrategyProxyAdmin",
-                artifact: "DefaultProxyAdmin",
-            },
-        },
-    });
-    await execute(
-        "MStrategyProxyAdmin",
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
-        },
-        "transferOwnership",
-        mStrategyAdmin
-    );
-};
-
 export const toObject = (obj: any) =>
     pipe(
         keys,
@@ -277,6 +236,14 @@ export const toObject = (obj: any) =>
         map((x) => [x, obj[x]] as KeyValuePair<string, any>),
         fromPairs
     )(obj);
+
+export class PermissionIds {
+    static CLAIM: number = 0;
+    static VAULT_GOVERNANCE: number = 1;
+    static ERC20_TRANSFER: number = 2;
+    static ERC20_SWAP = 3;
+    static ERC20_VAULT_TOKEN: number = 4;
+}
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;

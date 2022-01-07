@@ -2,112 +2,98 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./interfaces/IProtocolGovernance.sol";
 import "./utils/DefaultAccessControl.sol";
+import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    mapping(address => uint256) private _stagedPermissionMasks;
+    mapping(address => uint256) private _permissionMasks;
+    EnumerableSet.AddressSet private _stagedAddresses;
+    EnumerableSet.AddressSet private _addresses;
+
+    uint256 internal _stagedToCommitAt;
+
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
-
-    EnumerableSet.AddressSet private _claimAllowlist;
-    address[] private _pendingClaimAllowlistAdd;
-    uint256 public pendingClaimAllowlistAddTimestamp;
-
-    address[] private _tokenWhitelist;
-    address[] private _pendingTokenWhitelistAdd;
-    uint256 private _numberOfValidTokens;
-    mapping(address => bool) _tokensAllowed;
-    mapping(address => bool) _tokenEverAdded;
-    uint256 public pendingTokenWhitelistAddTimestamp;
-
-    EnumerableSet.AddressSet private _vaultGovernances;
-    address[] private _pendingVaultGovernancesAdd;
-    uint256 public pendingVaultGovernancesAddTimestamp;
-
-    IProtocolGovernance.Params public params;
-    Params public pendingParams;
-
     uint256 public pendingParamsTimestamp;
+    Params public params;
+    Params public pendingParams;
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
-    constructor(address admin) DefaultAccessControl(admin) {
-        _tokenWhitelist = new address[](0);
-        _numberOfValidTokens = 0;
-    }
+    constructor(address admin) DefaultAccessControl(admin) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IProtocolGovernance
-    function claimAllowlist() external view returns (address[] memory) {
-        uint256 l = _claimAllowlist.length();
-        address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; ++i) {
-            res[i] = _claimAllowlist.at(i);
-        }
-        return res;
+    function addresses() external view returns (address[] memory) {
+        return _addresses.values();
     }
 
     /// @inheritdoc IProtocolGovernance
-    function tokenWhitelist() external view returns (address[] memory) {
-        uint256 l = _tokenWhitelist.length;
-        address[] memory res = new address[](_numberOfValidTokens);
-        uint256 j;
-        for (uint256 i = 0; i < l; ++i) {
-            if (!_tokensAllowed[_tokenWhitelist[i]]) {
-                continue;
-            }
-            res[j] = _tokenWhitelist[i];
-            j += 1;
-        }
-        return res;
+    function addressesLength() external view returns (uint256) {
+        return _addresses.length();
     }
 
     /// @inheritdoc IProtocolGovernance
-    function vaultGovernances() external view returns (address[] memory) {
-        uint256 l = _vaultGovernances.length();
-        address[] memory res = new address[](l);
-        for (uint256 i = 0; i < l; ++i) {
-            res[i] = _vaultGovernances.at(i);
-        }
-        return res;
+    function addressAt(uint256 index) external view returns (address) {
+        return _addresses.at(index);
     }
 
     /// @inheritdoc IProtocolGovernance
-    function pendingClaimAllowlistAdd() external view returns (address[] memory) {
-        return _pendingClaimAllowlistAdd;
+    function permissionMask(address target) external view returns (uint256) {
+        return _permissionMasks[target];
     }
 
     /// @inheritdoc IProtocolGovernance
-    function pendingTokenWhitelistAdd() external view returns (address[] memory) {
-        return _pendingTokenWhitelistAdd;
+    function stagedAddresses() external view returns (address[] memory) {
+        return _stagedAddresses.values();
     }
 
     /// @inheritdoc IProtocolGovernance
-    function pendingVaultGovernancesAdd() external view returns (address[] memory) {
-        return _pendingVaultGovernancesAdd;
+    function stagedAddressesLength() external view returns (uint256) {
+        return _stagedAddresses.length();
     }
 
     /// @inheritdoc IProtocolGovernance
-    function isAllowedToClaim(address addr) external view returns (bool) {
-        return _claimAllowlist.contains(addr);
+    function stagedAddressAt(uint256 index) external view returns (address) {
+        return _stagedAddresses.at(index);
     }
 
     /// @inheritdoc IProtocolGovernance
-    function isAllowedToken(address addr) external view returns (bool) {
-        return _tokenEverAdded[addr] && _tokensAllowed[addr];
+    function stagedPermissionMask(address target) external view returns (uint256) {
+        return _stagedPermissionMasks[target];
     }
 
     /// @inheritdoc IProtocolGovernance
-    function isEverAllowedToken(address addr) external view returns (bool) {
-        return _tokenEverAdded[addr];
+    function hasPermission(address target, uint8 permissionId) external view returns (bool) {
+        return (_permissionMasks[target] & _permissionIdToMask(permissionId)) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
-    function isVaultGovernance(address addr) external view returns (bool) {
-        return _vaultGovernances.contains(addr);
+    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
+        uint256 submask = _permissionIdToMask(permissionIds[0]);
+        uint256 mask = _permissionMasks[target];
+        return (mask >= submask && mask & submask == mask - submask);
+    }
+
+    function hasStagedPermission(address target, uint8 permissionId) external view returns (bool) {
+        return (_stagedPermissionMasks[target] & _permissionIdToMask(permissionId)) != 0;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function hasAllStagedPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
+        uint256 submask = _permissionIdsToMask(permissionIds);
+        uint256 mask = _stagedPermissionMasks[target];
+        return (mask >= submask && mask & submask == mask - submask);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function stagedToCommitAt() external view returns (uint256) {
+        return _stagedToCommitAt;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -130,125 +116,173 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.protocolTreasury;
     }
 
-    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
+    // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
     /// @inheritdoc IProtocolGovernance
-    function setPendingClaimAllowlistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _pendingClaimAllowlistAdd = addresses;
-        pendingClaimAllowlistAddTimestamp = block.timestamp + params.governanceDelay;
+    function rollbackStagedPermissions() external {
+        _requireAdmin();
+        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        _clearStagedPermissions();
+        delete _stagedToCommitAt;
+        emit RolledBackStagedPermissions(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
-    function removeFromClaimAllowlist(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _claimAllowlist.remove(addr);
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingTokenWhitelistAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _pendingTokenWhitelistAdd = addresses;
-        pendingTokenWhitelistAddTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function removeFromTokenWhitelist(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        if (_tokenEverAdded[addr] && _tokensAllowed[addr]) {
-            _tokensAllowed[addr] = false;
-            --_numberOfValidTokens;
-        }
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingVaultGovernancesAdd(address[] calldata addresses) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _pendingVaultGovernancesAdd = addresses;
-        pendingVaultGovernancesAddTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function removeFromVaultGovernances(address addr) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _vaultGovernances.remove(addr);
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function setPendingParams(IProtocolGovernance.Params memory newParams) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(params.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
-        pendingParams = newParams;
-        pendingParamsTimestamp = block.timestamp + params.governanceDelay;
-    }
-
-    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
-
-    /// @inheritdoc IProtocolGovernance
-    function commitClaimAllowlistAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(
-            (block.timestamp >= pendingClaimAllowlistAddTimestamp) && (pendingClaimAllowlistAddTimestamp != 0),
-            ExceptionsLibrary.TIMESTAMP
-        );
-        uint256 len = _pendingClaimAllowlistAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
-            _claimAllowlist.add(_pendingClaimAllowlistAdd[i]);
-        }
-        delete _pendingClaimAllowlistAdd;
-        delete pendingClaimAllowlistAddTimestamp;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function commitTokenWhitelistAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(
-            (block.timestamp >= pendingTokenWhitelistAddTimestamp) && (pendingTokenWhitelistAddTimestamp != 0),
-            ExceptionsLibrary.TIMESTAMP
-        );
-        uint256 len = _pendingTokenWhitelistAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
-            if (!_tokenEverAdded[_pendingTokenWhitelistAdd[i]]) {
-                _numberOfValidTokens += 1;
-                _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
-                _tokenWhitelist.push(_pendingTokenWhitelistAdd[i]);
-                _tokenEverAdded[_pendingTokenWhitelistAdd[i]] = true;
+    function commitStagedPermissions() external {
+        _requireAdmin();
+        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        require(block.timestamp >= _stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
+        uint256 length = _stagedAddresses.length();
+        for (uint256 i; i != length; ++i) {
+            address delayedAddress = _stagedAddresses.at(i);
+            uint256 delayedPermissionMask = _stagedPermissionMasks[delayedAddress];
+            _permissionMasks[delayedAddress] = delayedPermissionMask;
+            if (delayedPermissionMask == 0) {
+                _addresses.remove(delayedAddress);
             } else {
-                if (!_tokensAllowed[_pendingTokenWhitelistAdd[i]]) {
-                    _numberOfValidTokens += 1;
-                    _tokensAllowed[_pendingTokenWhitelistAdd[i]] = true;
-                }
+                _addresses.add(delayedAddress);
             }
         }
-        delete _pendingTokenWhitelistAdd;
-        delete pendingTokenWhitelistAddTimestamp;
+        _clearStagedPermissions();
+        delete _stagedToCommitAt;
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitVaultGovernancesAdd() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(
-            (block.timestamp >= pendingVaultGovernancesAddTimestamp) && (pendingVaultGovernancesAddTimestamp > 0),
-            ExceptionsLibrary.TIMESTAMP
-        );
-        uint256 len = _pendingVaultGovernancesAdd.length;
-        for (uint256 i = 0; i < len; ++i) {
-            _vaultGovernances.add(_pendingVaultGovernancesAdd[i]);
+    function revokePermissions(address target, uint8[] calldata permissionIds) external {
+        _requireAdmin();
+        uint256 diff = _permissionIdsToMask(permissionIds);
+        uint256 currentMask = _permissionMasks[target];
+        uint256 newMask = currentMask & (~ diff);
+        _permissionMasks[target] = newMask;
+        if (newMask == 0) {
+            _addresses.remove(target);
         }
-        delete _pendingVaultGovernancesAdd;
-        delete pendingVaultGovernancesAddTimestamp;
+        emit RevokedPermissions(tx.origin, msg.sender, target, permissionIds);
     }
 
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
+        _requireAdmin();
         require(
-            pendingParams.maxTokensPerVault != 0 || pendingParams.governanceDelay != 0,
-            ExceptionsLibrary.EMPTY_LIST
-        ); // sanity check for empty params
+            pendingParamsTimestamp != 0 && block.timestamp >= pendingParamsTimestamp,
+            ExceptionsLibrary.TIMESTAMP
+        );
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
+        emit ParamsCommitted(tx.origin, msg.sender);
     }
+
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+
+    /// @inheritdoc IProtocolGovernance
+    function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
+        _requireAdmin();
+        require(!_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
+        uint256 delay = params.governanceDelay;
+        uint256 diff = _permissionIdsToMask(permissionIds);
+        if (!_stagedAddresses.contains(target)) {
+            _stagedAddresses.add(target);
+            _stagedPermissionMasks[target] = _permissionMasks[target];
+        }
+        uint256 currentMask = _stagedPermissionMasks[target];
+        _stagedPermissionMasks[target] = currentMask | diff;
+        _stagedToCommitAt = block.timestamp + delay;
+        emit StagedGrantPermissions(tx.origin, msg.sender, target, permissionIds, _stagedToCommitAt);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function setPendingParams(IProtocolGovernance.Params calldata newParams) external {
+        _requireAdmin();
+        _validateGovernanceParams(newParams);
+        pendingParams = newParams;
+        pendingParamsTimestamp = block.timestamp + params.governanceDelay;
+        emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
+    }
+
+    // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
+
+    function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
+        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
+        require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
+    }
+
+    function _permissionIdToMask(uint8 permissionId) private pure returns (uint256) {
+        return 1 << (permissionId);
+    }
+
+    function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
+        for (uint256 i; i < permissionIds.length; ++i) {
+            mask |= _permissionIdToMask(permissionIds[i]);
+        }
+    }
+
+    function _requireAdmin() private view {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    }
+
+    function _isStagedToCommit() private view returns (bool) {
+        return _stagedToCommitAt != 0;
+    }
+
+    // -------------------------------  PRIVATE, MUTATING  ---------------------------
+
+    function _clearStagedPermissions() private {
+        uint256 length = _stagedAddresses.length();
+        for (uint256 i; i != length; ++i) {
+            address target = _stagedAddresses.at(i);
+            delete _stagedPermissionMasks[target];
+            _stagedAddresses.remove(target);
+        }
+    }
+
+    // ---------------------------------- EVENTS -------------------------------------
+
+    /// @notice Emitted when new permissions are staged to be granted
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    /// @param permissionIds Permission IDs to be granted
+    /// @param at Timestamp when the staged permissions could be committed
+    event StagedGrantPermissions(
+        address indexed origin,
+        address indexed sender,
+        address indexed target,
+        uint8[] permissionIds,
+        uint256 at
+    );
+
+    /// @notice Emitted when permissions are revoked
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    /// @param permissionIds Permission IDs to be revoked
+    event RevokedPermissions(
+        address indexed origin,
+        address indexed sender,
+        address indexed target,
+        uint8[] permissionIds
+    );
+
+    /// @notice Emitted when staged permissions are rolled back
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event RolledBackStagedPermissions(address indexed origin, address indexed sender);
+
+    /// @notice Emitted when staged permissions are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event CommittedStagedPermissions(address indexed origin, address indexed sender);
+
+    /// @notice Emitted when pending parameters are set
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param at Timestamp when the pending parameters could be committed
+    /// @param params Pending parameters
+    event PendingParamsSet(address indexed origin, address indexed sender, uint256 at, Params params);
+
+    /// @notice Emitted when pending parameters are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event ParamsCommitted(address indexed origin, address indexed sender);
 }

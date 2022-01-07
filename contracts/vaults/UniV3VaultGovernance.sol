@@ -15,18 +15,13 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         VaultGovernance(internalParams_)
     {
         require(address(delayedProtocolParams_.positionManager) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
     /// @inheritdoc IUniV3VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) {
-            return
-                DelayedProtocolParams({
-                    positionManager: INonfungiblePositionManager(address(0)),
-                    oracle: IMellowOracle(address(0))
-                });
-        }
+        // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
@@ -61,8 +56,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
     /// @inheritdoc IUniV3VaultGovernance
     function createVault(
         address[] memory vaultTokens_,
-        uint24 fee_,
-        address owner_
+        address owner_,
+        uint24 fee_
     ) external returns (IUniV3Vault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
@@ -71,8 +66,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
     }
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
     event StageDelayedProtocolParams(
@@ -82,8 +77,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         uint256 when
     );
     /// @notice Emitted when new DelayedProtocolParams are committed
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

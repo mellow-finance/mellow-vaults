@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BSL-1.1
-pragma solidity =0.8.9;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -7,6 +7,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/PermissionIds.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IVaultRegistry, ERC721 {
@@ -56,6 +57,10 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         require(_protocolGovernance.isVaultGovernance(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
         require(owner != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(
+            _protocolGovernance.hasPermission(msg.sender, PermissionIds.VAULT_GOVERNANCE),
+            ExceptionsLibrary.FORBIDDEN
+        );
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
@@ -129,14 +134,14 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     }
 
     /// @notice Emitted when token is locked for transfers
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft NFT to be locked
     event TokenLocked(address indexed origin, address indexed sender, uint256 indexed nft);
 
     /// @notice Emitted when new Vault is registered in VaultRegistry
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param nft VaultRegistry NFT of the vault
     /// @param vault Address of the Vault contract
     /// @param owner Owner of the VaultRegistry NFT
@@ -148,8 +153,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         address owner
     );
 
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param newProtocolGovernance Address of the new ProtocolGovernance
     /// @param start Timestamp of the start of the new ProtocolGovernance
     event StagedProtocolGovernance(
@@ -159,8 +164,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         uint256 start
     );
 
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param newProtocolGovernance Address of the new ProtocolGovernance that has been committed
     event CommitedProtocolGovernance(
         address indexed origin,

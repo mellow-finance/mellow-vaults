@@ -82,15 +82,15 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     }
 
     /// @notice Emitted when new yToken is set
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param token ERC-20 token for the yToken
     /// @param yToken yToken for ERC-20 token
     event SetYToken(address indexed origin, address indexed sender, address indexed token, address yToken);
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
     event StageDelayedProtocolParams(
@@ -101,8 +101,8 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     );
 
     /// @notice Emitted when new DelayedProtocolParams are committed
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

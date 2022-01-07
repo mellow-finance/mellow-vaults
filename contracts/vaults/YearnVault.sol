@@ -45,12 +45,12 @@ contract YearnVault is IYearnVault, IntegrationVault {
     }
 
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
+        _initialize(vaultTokens_, nft_);
         _yTokens = new address[](vaultTokens_.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            _yTokens[i] = IYearnVaultGovernance(address(msg.sender)).yTokenForToken(_vaultTokens[i]);
+        for (uint256 i = 0; i < vaultTokens_.length; ++i) {
+            _yTokens[i] = IYearnVaultGovernance(address(msg.sender)).yTokenForToken(vaultTokens_[i]);
             require(_yTokens[i] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         }
-        _initialize(vaultTokens_, nft_);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory)

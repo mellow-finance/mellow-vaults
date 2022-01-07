@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/trader/ITrader.sol";
 import "../interfaces/trader/IChiefTrader.sol";
+import "../libraries/PermissionIds.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice Main contract that allows trading of ERC20 tokens on different Dexes
@@ -83,12 +84,17 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
 
     function _requireAllowedTokens(PathItem[] memory path) internal view {
         IProtocolGovernance pg = protocolGovernance;
-        for (uint256 i = 1; i < path.length; ++i)
+        for (uint256 i = 1; i < path.length; ++i) {
             require(
-                pg.isAllowedToken(path[i].token0) && pg.isAllowedToken(path[i].token1),
+                pg.hasPermission(path[i].token0, PermissionIds.ERC20_SWAP) &&
+                    pg.hasPermission(path[i].token1, PermissionIds.ERC20_SWAP),
                 ExceptionsLibrary.FORBIDDEN
             );
-        if (path.length > 0) require(pg.isAllowedToken(path[0].token1), ExceptionsLibrary.FORBIDDEN);
+        }
+        if (path.length > 0) {
+            require(pg.hasPermission(path[0].token0, PermissionIds.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
+            require(pg.hasPermission(path[0].token1, PermissionIds.ERC20_SWAP), ExceptionsLibrary.FORBIDDEN);
+        }
     }
 
     function _requireProtocolAdmin() internal view {

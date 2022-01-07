@@ -27,6 +27,9 @@ contract UniV2Trader is Trader, IUniV2Trader {
         PathItem[] memory path,
         bytes calldata options
     ) external returns (uint256) {
+        if (amount == 0) {
+            return 0;
+        }
         require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         IERC20(path[0].token0).safeTransferFrom(recipient, address(this), amount);

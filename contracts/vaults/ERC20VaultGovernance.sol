@@ -21,8 +21,7 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
 
     /// @inheritdoc IERC20VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
-        if (_delayedProtocolParams.length == 0) return DelayedProtocolParams({trader: ITrader(address(0))});
-
+        // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
@@ -61,8 +60,8 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     }
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that were staged for commit
     /// @param when When the params could be committed
     event StageDelayedProtocolParams(
@@ -73,8 +72,8 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     );
 
     /// @notice Emitted when new DelayedProtocolParams are committed
-    /// @param origin Origin of the transaction
-    /// @param sender Sender of the transaction
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
     /// @param params New params that are committed
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

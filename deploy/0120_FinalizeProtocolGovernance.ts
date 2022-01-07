@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
-import { ALL_NETWORKS } from "./0000_utils";
+import { ALL_NETWORKS, PermissionIds } from "./0000_utils";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -25,36 +25,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         if (
             await read(
                 "ProtocolGovernance",
-                "isVaultGovernance",
-                governance.address
+                "hasPermission",
+                governance.address,
+                PermissionIds.VAULT_GOVERNANCE
             )
         ) {
             continue;
         }
         governances.push(governance.address);
     }
-    const currentGovernances = await read(
-        "ProtocolGovernance",
-        "vaultGovernances"
-    );
-    if (governances.length > 0 && currentGovernances.length == 0) {
+    for (let governance of governances) {
         log(`Registering Governances in ProtocolGovernance`);
         await execute(
             "ProtocolGovernance",
             { from: deployer, log: true, autoMine: true },
-            "setPendingVaultGovernancesAdd",
-            governances
+            "stageGrantPermissions",
+            governance,
+            [PermissionIds.VAULT_GOVERNANCE],
         );
         await execute(
             "ProtocolGovernance",
             { from: deployer, log: true, autoMine: true },
-            "commitVaultGovernancesAdd"
+            "commitStagedPermissions",
         );
-        log("Done");
     }
 
-    const tokenWhitelist = await read("ProtocolGovernance", "tokenWhitelist");
-    if (tokenWhitelist.length === 0) {
+    for (let token of tokens) {
         await execute(
             "ProtocolGovernance",
             {
@@ -62,8 +58,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 log: true,
                 autoMine: true,
             },
-            "setPendingTokenWhitelistAdd",
-            tokens
+            "stageGrantPermissions",
+            token,
+            [
+                PermissionIds.ERC20_VAULT_TOKEN,
+                PermissionIds.ERC20_SWAP,
+                PermissionIds.ERC20_TRANSFER
+            ]
         );
         await execute(
             "ProtocolGovernance",
@@ -72,7 +73,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 log: true,
                 autoMine: true,
             },
-            "commitTokenWhitelistAdd"
+            "commitStagedPermissions"
         );
     }
 
@@ -100,7 +101,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log("Done");
     }
 
-    const adminRole = await read("ProtocolGovernance", "FORBIDDEN_ROLE");
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
     const deployerIsAdmin = await read(
         "ProtocolGovernance",
         "hasRole",
