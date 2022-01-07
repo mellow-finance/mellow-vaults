@@ -7,15 +7,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, execute } = deployments;
     const { deployer, uniswapV3Router } = await getNamedAccounts();
-    await deploy("UniV3Trader", {
+    const uniV3Trader = await deploy("UniV3Trader", {
         from: deployer,
         args: [uniswapV3Router],
         log: true,
         autoMine: true,
     });
-    const tradersCount = (await read("ChiefTrader", "tradersCount")).toNumber();
-    if (tradersCount === 0) {
-        const uniV3Trader = await get("UniV3Trader");
+    const traders = (await read("ChiefTrader", "traders")).map((x) =>
+        x.toLowerCase()
+    );
+    if (!traders.include(uniV3Trader.address.toLowerCase())) {
         await execute(
             "ChiefTrader",
             { from: deployer, log: true, autoMine: true },
@@ -32,5 +33,6 @@ func.tags = [
     ...MAIN_NETWORKS,
     "arbitrum",
     "optimism",
+    "polygon",
 ];
 func.dependencies = ["ChiefTrader"];
