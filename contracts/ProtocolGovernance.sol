@@ -112,11 +112,10 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
     /// @inheritdoc IProtocolGovernance
-    function rollbackStagedPermissions() external {
+    function rollbackStagedGrantedPermissions() external {
         _requireAdmin();
         _clearStagedPermissions();
-        delete pendingParamsTimestamp;
-        emit RolledBackStagedPermissions(tx.origin, msg.sender);
+        emit RolledBackStagedGrantedPermissions(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -138,6 +137,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         delete pendingParamsTimestamp;
     }
 
+    /// @inheritdoc IProtocolGovernance
     function commitStagedPermission(address stagedAddress) external {
         _requireAdmin();
         uint256 stagedToCommitAt = grantedPermissionAddressTimestamps[stagedAddress];
@@ -149,6 +149,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         } else {
             _permissionAddresses.add(stagedAddress);
         }
+        emit CommittedStagedGrantedPermission(tx.origin, msg.sender, stagedAddress);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -239,7 +240,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     // ---------------------------------- EVENTS -------------------------------------
 
-    /// @notice Emitted when new permissions are staged to be granted
+    /// @notice Emitted when new permissions are staged to be granted for speceific address.
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address
@@ -268,12 +269,18 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @notice Emitted when staged permissions are rolled back
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event RolledBackStagedPermissions(address indexed origin, address indexed sender);
+    event RolledBackStagedGrantedPermissions(address indexed origin, address indexed sender);
 
     /// @notice Emitted when staged permissions are committed
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event CommittedStagedPermissions(address indexed origin, address indexed sender);
+    event CommittedStagedGrantedPermissions(address indexed origin, address indexed sender);
+
+    /// @notice Emitted when staged permissions are comitted for speceific address
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    event CommittedStagedGrantedPermission(address indexed origin, address indexed sender, address indexed target);
 
     /// @notice Emitted when pending parameters are set
     /// @param origin Origin of the transaction (tx.origin)

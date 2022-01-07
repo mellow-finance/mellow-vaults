@@ -34,7 +34,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Number of addresses for which non-zero permissions are set.
     function permissionAddressesCount() external view returns (uint256);
 
-    /// @notice Returns address by index. 
+    /// @notice Returns address by index.
     /// The address is expected to have at least one granted permission, otherwise it will be deleted.
     function permissionAddressAt(uint256 index) external view returns (address);
 
@@ -43,7 +43,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param target The given address.
     function grantedPermissionAddressTimestamps(address target) external view returns (uint256);
 
-    /// @notice Returns timestamp after which staged pending protocol parameters can be committed. 
+    /// @notice Returns timestamp after which staged pending protocol parameters can be committed.
     /// Returns zero if there are no staged parameters.
     function pendingParamsTimestamp() external view returns (uint256);
 
@@ -95,10 +95,16 @@ interface IProtocolGovernance is IDefaultAccessControl {
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @notice Rollback staged permissions.
-    function rollbackStagedPermissions() external;
+    function rollbackStagedGrantedPermissions() external;
 
-    /// @notice Commit staged permissions.
+    /// @notice Commits all staged granted permissions optimistically.
+    /// Addresse skipped if governance delay is not passed, transation doesn't revert.
     function commitStagedPermissions() external;
+
+    /// @notice Comits staged granted permissions for the given address.
+    /// Reverts if governance delay is not passed.
+    /// @param target The given address
+    function commitStagedPermission(address target) external;
 
     /// @notice Revoke permission instant.
     /// @param target Target address
