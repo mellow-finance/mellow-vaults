@@ -34,11 +34,6 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Number of addresses for which non-zero permissions are set.
     function permissionAddressesCount() external view returns (uint256);
 
-    /// @notice Address at a specific index for which non-zero permissions are set.
-    /// @param index Number of a permission address
-    /// @return Permission address
-    function permissionAddressAt(uint256 index) external view returns (address);
-
     /// @notice Raw bitmask of permissions for an address (forceAllowMask is not applied).
     /// @param addr Address to check
     /// @return A bitmask of permissions for an address
@@ -60,8 +55,8 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Returns a bitmask of permissions for a staged address.
     function stagedPermissionMask(address addr) external view returns (uint256);
 
-    /// @notice Timestamp after which staged addresses can be committed.
-    function permissionAddressesTimestamp() external view returns (uint256);
+    /// @notice Timestamp after wich pending protocol params can be committed.
+    function pendingParamsStagedToCommitAt() external view returns (uint256);
 
     /// @notice Max different ERC20 token addresses that could be managed by the protocol.
     function maxTokensPerVault() external view returns (uint256);
