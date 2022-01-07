@@ -175,7 +175,9 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
         await deployMStrategy(hre, kind);
 
         const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
-        const startNft = 1;
+        // const startNft = 1;
+        const startNft =
+            (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
         let yearnVaultNft = startNft;
         let erc20VaultNft = startNft + 1;
         const moneyGovernance =

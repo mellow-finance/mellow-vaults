@@ -49,7 +49,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             governance,
             [PermissionIdsLibrary.REGISTER_VAULT]
         );
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        // await new Promise((resolve) => setTimeout(resolve, 10000));
     }
     if (governances.length > 0) {
         await execute(
@@ -61,7 +61,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             },
             "commitStagedPermissions"
         );
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        // await new Promise((resolve) => setTimeout(resolve, 10000));
     }
 
     for (let token of tokens) {
@@ -91,7 +91,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 PermissionIdsLibrary.ERC20_TRANSFER,
             ]
         );
-        await new Promise((resolve) => setTimeout(resolve, 10000));
+        // await new Promise((resolve) => setTimeout(resolve, 10000));
     }
     if (!ALLOW_ALL_CREATE_VAULT) {
         for (const address of [deployer, admin]) {
@@ -113,7 +113,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 address,
                 [PermissionIdsLibrary.CREATE_VAULT]
             );
-            await new Promise((resolve) => setTimeout(resolve, 10000));
+            // await new Promise((resolve) => setTimeout(resolve, 10000));
         }
     }
     const staged = await read(

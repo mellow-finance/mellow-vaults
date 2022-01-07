@@ -251,9 +251,9 @@ export const combineVaults = async (
             "ERC20RootVault",
             rootVault
         );
-        const depositors = await rootVaultContract
-            .depositorsAllowlist()
-            .map((x: any) => x.toString());
+        const depositors = (await rootVaultContract.depositorsAllowlist()).map(
+            (x: any) => x.toString()
+        );
         if (!depositors.includes(admin)) {
             log("Adding admin to depositors");
             const tx =
