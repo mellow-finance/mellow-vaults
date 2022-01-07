@@ -2,12 +2,13 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./utils/DefaultAccessControl.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
+contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
@@ -109,12 +110,23 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.forceAllowMask;
     }
 
+    function supportsInterface(bytes4 interfaceId) public pure override(AccessControlEnumerable, ERC165) returns (bool) {
+        return interfaceId == type(ERC165).interfaceId || interfaceId == type(IProtocolGovernance).interfaceId;
+    }
+
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
     /// @inheritdoc IProtocolGovernance
     function rollbackStagedGrantedPermissions() external {
         _requireAdmin();
-        _clearStagedPermissions();
+        uint256 length = _stagedGrantedPermissionAddresses.length();
+        for (uint256 __; __ != length; ++__) {
+            // actual length is decremented in the loop so we take the first element each time
+            address target = _stagedGrantedPermissionAddresses.at(0);
+            delete stagedGrantedPermissionMasks[target];
+            delete grantedPermissionAddressTimestamps[target];
+            _stagedGrantedPermissionAddresses.remove(target);
+        }
         emit RolledBackStagedGrantedPermissions(tx.origin, msg.sender);
     }
 
@@ -125,16 +137,18 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         for (uint256 i; i != length; ++i) {
             address stagedAddress = _stagedGrantedPermissionAddresses.at(i);
             if (block.timestamp >= grantedPermissionAddressTimestamps[stagedAddress]) {
-                permissionMasks[stagedAddress] = stagedGrantedPermissionMasks[stagedAddress];
+                permissionMasks[stagedAddress] |= stagedGrantedPermissionMasks[stagedAddress];
                 if (permissionMasks[stagedAddress] == 0) {
                     _permissionAddresses.remove(stagedAddress);
                 } else {
                     _permissionAddresses.add(stagedAddress);
                 }
+                delete stagedGrantedPermissionMasks[stagedAddress];
+                delete grantedPermissionAddressTimestamps[stagedAddress];
+                _stagedGrantedPermissionAddresses.remove(stagedAddress);
             }
         }
-        _clearStagedPermissions();
-        delete pendingParamsTimestamp;
+        emit CommittedStagedGrantedPermissions(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -149,6 +163,9 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         } else {
             _permissionAddresses.add(stagedAddress);
         }
+        delete stagedGrantedPermissionMasks[stagedAddress];
+        delete grantedPermissionAddressTimestamps[stagedAddress];
+        _stagedGrantedPermissionAddresses.remove(stagedAddress);
         emit CommittedStagedGrantedPermission(tx.origin, msg.sender, stagedAddress);
     }
 
@@ -216,19 +233,6 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     function _requireAdmin() private view {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-    }
-
-    // -------------------------------  PRIVATE, MUTATING  ---------------------------
-
-    function _clearStagedPermissions() private {
-        uint256 length = _stagedGrantedPermissionAddresses.length();
-        for (uint256 __; __ != length; ++__) {
-            // actual length is decremented in the loop so we take the first element each time
-            address target = _stagedGrantedPermissionAddresses.at(0);
-            delete stagedGrantedPermissionMasks[target];
-            delete grantedPermissionAddressTimestamps[target];
-            _stagedGrantedPermissionAddresses.remove(target);
-        }
     }
 
     // ---------------------------------- EVENTS -------------------------------------

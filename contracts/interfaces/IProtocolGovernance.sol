@@ -34,17 +34,17 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice Number of addresses for which non-zero permissions are set.
     function permissionAddressesCount() external view returns (uint256);
 
-    /// @notice Returns address by index.
+    /// @notice Address by index.
     /// The address is expected to have at least one granted permission, otherwise it will be deleted.
     function permissionAddressAt(uint256 index) external view returns (address);
 
-    /// @notice Returns timestamp after which staged granted permissions for the given address can be committed.
-    /// Returns zero if there are no staged permission grants.
+    /// @notice Timestamp after which staged granted permissions for the given address can be committed.
     /// @param target The given address.
+    /// @return Zero if there are no staged permission grants, timestamp otherwise.
     function grantedPermissionAddressTimestamps(address target) external view returns (uint256);
 
-    /// @notice Returns timestamp after which staged pending protocol parameters can be committed.
-    /// Returns zero if there are no staged parameters.
+    /// @notice Timestamp after which staged pending protocol parameters can be committed 
+    /// @return Zero if there are no staged parameters, timestamp otherwise.
     function pendingParamsTimestamp() external view returns (uint256);
 
     /// @notice Raw bitmask of permissions for an address (forceAllowMask is not applied).
@@ -78,7 +78,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice The address of the protocol treasury.
     function protocolTreasury() external view returns (address);
 
-    /// @notice Permissions mask which defines if ordinary permission should be reverted. 
+    /// @notice Permissions mask which defines if ordinary permission should be reverted.
     /// This bitmask is xored with ordinary mask.
     function forceAllowMask() external view returns (uint256);
 
@@ -103,7 +103,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// Address is skipped if governance delay has not passed yet, transation doesn't revert.
     function commitStagedPermissions() external;
 
-    /// @notice Comits staged granted permissions for the given address.
+    /// @notice Commits staged granted permissions for the given address.
     /// Reverts if governance delay has not passed yet.
     /// @param target The given address.
     function commitStagedPermission(address target) external;
