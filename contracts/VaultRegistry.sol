@@ -54,7 +54,6 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(_protocolGovernance.isVaultGovernance(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
         require(owner != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(
