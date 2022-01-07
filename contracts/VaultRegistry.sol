@@ -2,6 +2,7 @@
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
 import "./interfaces/IVaultRegistry.sol";
@@ -53,6 +54,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
         require(_protocolGovernance.isVaultGovernance(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
         require(owner != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         nft = _topNft;
         _safeMint(owner, nft);

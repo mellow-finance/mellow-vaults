@@ -516,9 +516,22 @@ describe("VaultRegistry", function (this: TestContext<
         });
 
         describe("edge cases", () => {
-            // FIX Vault Registry Contract
-            xdescribe("when address doesn't conform to IVault interface (IERC165)", () => {
-                it("reverts", async () => {});
+            describe("when address doesn't conform to IVault interface (IERC165)", () => {
+                it("reverts", async () => {
+                    await withSigner(
+                        this.erc20VaultGovernance.address,
+                        async (s) => {
+                            await expect(
+                                this.subject
+                                    .connect(s)
+                                    .registerVault(
+                                        randomAddress(),
+                                        ethers.constants.AddressZero
+                                    )
+                            ).to.be.reverted;
+                        }
+                    );
+                });
             });
 
             describe("when owner address is zero", () => {
