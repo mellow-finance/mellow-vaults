@@ -71,7 +71,7 @@ abstract contract Vault is IVault, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
-    // -------------------  INTERNAL, MUTATING  -------------------
+    // -------------------  PRIVATE, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {
         require(_nft == 0, ExceptionsLibrary.INIT);
@@ -82,6 +82,12 @@ abstract contract Vault is IVault, ERC165 {
             vaultTokens_.length > 0 && vaultTokens_.length <= governance.maxTokensPerVault(),
             ExceptionsLibrary.INVALID_VALUE
         );
+        for (uint256 i = 0; i < vaultTokens_.length; i++) {
+            require(
+                governance.hasPermission(vaultTokens_[i], PermissionIdsLibrary.ERC20_VAULT_TOKEN),
+                ExceptionsLibrary.FORBIDDEN
+            );
+        }
         _vaultGovernance = IVaultGovernance(msg.sender);
         _vaultTokens = vaultTokens_;
         _nft = nft_;

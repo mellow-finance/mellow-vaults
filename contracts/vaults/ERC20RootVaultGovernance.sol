@@ -19,9 +19,9 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         VaultGovernance(internalParams_)
     {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
-        MAX_PROTOCOL_FEE = 5 * CommonLibrary.DENOMINATOR;
-        MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
-        MAX_PERFORMANCE_FEE = 50 * CommonLibrary.DENOMINATOR;
+        MAX_PROTOCOL_FEE = (5 * CommonLibrary.DENOMINATOR) / 100;
+        MAX_MANAGEMENT_FEE = (10 * CommonLibrary.DENOMINATOR) / 100;
+        MAX_PERFORMANCE_FEE = (50 * CommonLibrary.DENOMINATOR) / 100;
     }
 
     /// @inheritdoc IERC20RootVaultGovernance
@@ -65,6 +65,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
                 DelayedStrategyParams({
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
+                    privateVault: false,
                     managementFee: 0,
                     performanceFee: 0
                 });
@@ -79,6 +80,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
                 DelayedStrategyParams({
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
+                    privateVault: false,
                     managementFee: 0,
                     performanceFee: 0
                 });

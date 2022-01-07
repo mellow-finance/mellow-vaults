@@ -6,7 +6,7 @@ import "../interfaces/utils/IDefaultAccessControl.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice This is a default access control with 2 roles -
-/// FORBIDDEN and FORBIDDEN_DELEGATE.
+/// ADMIN and ADMIN_DELEGATE.
 contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable {
     bytes32 public constant ADMIN_ROLE = keccak256("admin");
     bytes32 public constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");

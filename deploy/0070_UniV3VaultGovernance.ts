@@ -41,5 +41,6 @@ func.tags = [
     ...MAIN_NETWORKS,
     "arbitrum",
     "optimism",
+    "polygon",
 ];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

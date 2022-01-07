@@ -205,7 +205,10 @@ export function vaultGovernanceBehavior<
                     const params = await this.protocolGovernance.params();
                     await this.protocolGovernance
                         .connect(this.admin)
-                        .setPendingParams({ ...params, permissionless: true });
+                        .setPendingParams({
+                            ...params,
+                            forceAllowMask: 2 ** 5,
+                        });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance
                         .connect(this.admin)
@@ -237,7 +240,7 @@ export function vaultGovernanceBehavior<
                     const params = await this.protocolGovernance.params();
                     await this.protocolGovernance
                         .connect(this.admin)
-                        .setPendingParams({ ...params, permissionless: false });
+                        .setPendingParams({ ...params, forceAllowMask: 0 });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance
                         .connect(this.admin)

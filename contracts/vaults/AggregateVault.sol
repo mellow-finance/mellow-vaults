@@ -9,6 +9,7 @@ import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/PermissionIdsLibrary.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
 contract AggregateVault is IAggregateVault, Vault {
@@ -84,8 +85,9 @@ contract AggregateVault is IAggregateVault, Vault {
 
     function _push(uint256[] memory tokenAmounts, bytes memory) internal returns (uint256[] memory actualTokenAmounts) {
         require(_nft != 0, ExceptionsLibrary.INIT);
+        IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
         uint256 destNft = _subvaultNfts[0];
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        IVaultRegistry registry = params.registry;
         IIntegrationVault destVault = IIntegrationVault(registry.vaultForNft(destNft));
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             _allowTokenIfNecessary(_vaultTokens[i], address(destVault));
