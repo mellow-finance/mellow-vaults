@@ -43,7 +43,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @return Zero if there are no staged permission grants, timestamp otherwise.
     function grantedPermissionAddressTimestamps(address target) external view returns (uint256);
 
-    /// @notice Timestamp after which staged pending protocol parameters can be committed 
+    /// @notice Timestamp after which staged pending protocol parameters can be committed
     /// @return Zero if there are no staged parameters, timestamp otherwise.
     function pendingParamsTimestamp() external view returns (uint256);
 
