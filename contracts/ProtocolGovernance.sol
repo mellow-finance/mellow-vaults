@@ -143,7 +143,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         uint256 stagedToCommitAt = grantedPermissionAddressTimestamps[stagedAddress];
         require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
-        permissionMasks[stagedAddress] = stagedGrantedPermissionMasks[stagedAddress];
+        permissionMasks[stagedAddress] |= stagedGrantedPermissionMasks[stagedAddress];
         if (permissionMasks[stagedAddress] == 0) {
             _permissionAddresses.remove(stagedAddress);
         } else {
@@ -183,18 +183,11 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
 
-    /// @inheritdoc IProtocolGovernance
     function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
-        uint256 delay = params.governanceDelay;
-        uint256 diff = _permissionIdsToMask(permissionIds);
-        if (!_stagedGrantedPermissionAddresses.contains(target)) {
-            _stagedGrantedPermissionAddresses.add(target);
-            stagedGrantedPermissionMasks[target] = permissionMasks[target];
-        }
-        uint256 currentMask = stagedGrantedPermissionMasks[target];
-        stagedGrantedPermissionMasks[target] = currentMask | diff;
-        uint256 stagedToCommitAt = block.timestamp + delay;
+        _stagedGrantedPermissionAddresses.add(target);
+        stagedGrantedPermissionMasks[target] = _permissionIdsToMask(permissionIds);
+        uint256 stagedToCommitAt = block.timestamp + params.governanceDelay;
         grantedPermissionAddressTimestamps[target] = stagedToCommitAt;
         emit StagedGrantPermissions(tx.origin, msg.sender, target, permissionIds, stagedToCommitAt);
     }
