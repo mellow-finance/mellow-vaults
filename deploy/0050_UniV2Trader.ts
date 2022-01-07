@@ -13,10 +13,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
     });
-    const traders = (await read("ChiefTrader", "traders")).map((x) =>
+    const traders = (await read("ChiefTrader", "traders")).map((x: any) =>
         x.toLowerCase()
     );
-    if (!traders.include(uniV2Trader.address.toLowerCase())) {
+    if (!traders.includes(uniV2Trader.address.toLowerCase())) {
         await execute(
             "ChiefTrader",
             { from: deployer, log: true, autoMine: true },
