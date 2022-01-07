@@ -94,8 +94,9 @@ export const setupVault = async (
             expectedNft
         );
 
-        if (!equals(strategyParams, currentParams)) {
+        if (!equals(strategyParams, toObject(currentParams))) {
             log(`Setting Strategy params for ${contractName}`);
+            log(strategyParams);
             await execute(
                 contractName,
                 {
@@ -123,6 +124,7 @@ export const setupVault = async (
 
     if (strategyTreasury !== delayedStrategyParams.strategyTreasury) {
         log(`Setting delayed strategy params for ${contractName}`);
+        log(delayedStrategyParams);
         await execute(
             contractName,
             {
@@ -152,6 +154,11 @@ export const setupVault = async (
             expectedNft
         );
         if (!equals(toObject(params), delayedProtocolPerVaultParams)) {
+            log(
+                `Setting delayed protocol per vault params for ${contractName}`
+            );
+            log(delayedProtocolPerVaultParams);
+
             await execute(
                 contractName,
                 {
@@ -244,7 +251,23 @@ export const combineVaults = async (
             "ERC20RootVault",
             rootVault
         );
-        await rootVaultContract.addDepositorsToAllowlist([admin]);
+        const depositors = await rootVaultContract
+            .depositorsAllowlist()
+            .map((x: any) => x.toString());
+        if (!depositors.includes(admin)) {
+            log("Adding admin to depositors");
+            const tx =
+                await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
+                    [admin]
+                );
+            const [operator] = await hre.ethers.getSigners();
+            const txResp = await operator.sendTransaction(tx);
+            log(
+                `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
+            );
+            const receipt = await txResp.wait(1);
+            log("Transaction confirmed");
+        }
     }
     await deployments.execute(
         "VaultRegistry",
