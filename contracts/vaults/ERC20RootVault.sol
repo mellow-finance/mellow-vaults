@@ -32,6 +32,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20, ReentrancyGuard, AggregateVau
         return _tokenSymbol;
     }
 
+    function depositorsAllowlist() external view returns (address[] memory) {
+        return _depositorsAllowlist.values();
+    }
+
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {

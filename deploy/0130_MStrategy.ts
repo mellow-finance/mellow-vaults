@@ -18,7 +18,7 @@ const deployMStrategy = async function (
     kind: MoneyVault
 ) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, log, execute, read, get } = deployments;
+    const { deploy, log, execute, read, get, getOrNull } = deployments;
     const { deployer, mStrategyAdmin } = await getNamedAccounts();
 
     const proxyAdminDeployment = await deploy(`MStrategy${kind}ProxyAdmin`, {
@@ -29,31 +29,39 @@ const deployMStrategy = async function (
         autoMine: true,
     });
 
-    const mStrategyDeployment = await deploy(`MStrategy${kind}`, {
-        from: deployer,
-        contract: "MStrategy",
-        args: [],
-        log: true,
-        autoMine: true,
-        proxy: {
-            execute: { init: { methodName: "init", args: [deployer] } },
-            proxyContract: "DefaultProxy",
-            viaAdminContract: {
-                name: `MStrategy${kind}ProxyAdmin`,
-                artifact: "DefaultProxyAdmin",
-            },
-        },
-    });
-    await execute(
-        `MStrategy${kind}ProxyAdmin`,
-        {
+    const mStrategyDeployment = await getOrNull(
+        `MStrategy${kind}_Implementation`
+    );
+    if (!mStrategyDeployment) {
+        await deploy(`MStrategy${kind}`, {
             from: deployer,
+            contract: "MStrategy",
+            args: [],
             log: true,
             autoMine: true,
-        },
-        "transferOwnership",
-        mStrategyAdmin
-    );
+            proxy: {
+                execute: { init: { methodName: "init", args: [deployer] } },
+                proxyContract: "DefaultProxy",
+                viaAdminContract: {
+                    name: `MStrategy${kind}ProxyAdmin`,
+                    artifact: "DefaultProxyAdmin",
+                },
+            },
+        });
+    }
+    const owner = await read(`MStrategy${kind}ProxyAdmin`, "owner");
+    if (owner != mStrategyAdmin) {
+        await execute(
+            `MStrategy${kind}ProxyAdmin`,
+            {
+                from: deployer,
+                log: true,
+                autoMine: true,
+            },
+            "transferOwnership",
+            mStrategyAdmin
+        );
+    }
 };
 
 const setupStrategy = async (
@@ -167,8 +175,9 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
         await deployMStrategy(hre, kind);
 
         const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
-        const startNft =
+        let startNft =
             (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+        startNft = startNft - ((startNft - 1) % 3);
         let yearnVaultNft = startNft;
         let erc20VaultNft = startNft + 1;
         const moneyGovernance =

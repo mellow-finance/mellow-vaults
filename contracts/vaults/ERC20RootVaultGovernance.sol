@@ -19,9 +19,9 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         VaultGovernance(internalParams_)
     {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
-        MAX_PROTOCOL_FEE = 5 * CommonLibrary.DENOMINATOR;
-        MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
-        MAX_PERFORMANCE_FEE = 50 * CommonLibrary.DENOMINATOR;
+        MAX_PROTOCOL_FEE = (5 * CommonLibrary.DENOMINATOR) / 100;
+        MAX_MANAGEMENT_FEE = (10 * CommonLibrary.DENOMINATOR) / 100;
+        MAX_PERFORMANCE_FEE = (50 * CommonLibrary.DENOMINATOR) / 100;
     }
 
     /// @inheritdoc IERC20RootVaultGovernance
