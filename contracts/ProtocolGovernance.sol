@@ -98,7 +98,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
 
     /// @inheritdoc IProtocolGovernance
-    function rollbackStagedPermissionGrants() external {
+    function rollbackAllPermissionGrants() external {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
         for (uint256 __; __ != length; ++__) {
@@ -108,7 +108,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
             delete stagedPermissionGrantsTimestamps[target];
             _stagedPermissionGrantsAddresses.remove(target);
         }
-        emit StagedPermissionGrantsRolledBack(tx.origin, msg.sender);
+        emit AllPermissionGrantsRolledBack(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -252,7 +252,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     /// @notice Emitted when staged permissions are rolled back
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event StagedPermissionGrantsRolledBack(address indexed origin, address indexed sender);
+    event AllPermissionGrantsRolledBack(address indexed origin, address indexed sender);
 
     /// @notice Emitted when staged permissions are comitted for speceific address
     /// @param origin Origin of the transaction (tx.origin)

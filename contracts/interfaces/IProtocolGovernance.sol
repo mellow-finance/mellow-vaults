@@ -73,8 +73,8 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
-    /// @notice Rollback all staged granted permissions.
-    function rollbackStagedPermissionGrants() external;
+    /// @notice Rollback all staged granted permission grant.
+    function rollbackAllPermissionGrants() external;
 
     /// @notice Commits permission grants for the given address.
     /// Reverts if governance delay has not passed yet.
