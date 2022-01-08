@@ -2,9 +2,9 @@
 describe("ERC20RootVaultGovernance", () => {
     describe("#constructor", () => {
         it("deploys a new contract", async () => {});
-        it("sets correct MAX_PROTOCOL_FEE", async () => {});
-        it("sets correct MAX_MANAGEMENT_FEE", async () => {});
-        it("sets correct MAX_PERFORMANCE_FEE", async () => {});
+        it("initializes MAX_PROTOCOL_FEE", async () => {});
+        it("initializes MAX_MANAGEMENT_FEE", async () => {});
+        it("initializes MAX_PERFORMANCE_FEE", async () => {});
     });
 
     describe("#delayedProtocolParams", () => {
