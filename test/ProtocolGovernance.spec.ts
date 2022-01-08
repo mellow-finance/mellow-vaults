@@ -1,51 +1,48 @@
+import Exceptions from "./library/Exceptions";
+
 describe("ProtocolGovernance", () => {
     describe("#constructor", () => {
         it("deploys a new contract", async () => {});
-
-        describe("edge cases", () => {
-            describe("when admin is zero address", () => {
-                it("reverts with ADDRESS_ZERO", async () => {});
-            });
-        });
     });
 
     describe("#hasPermission", () => {
-        it("checks if given address has speceific permission set to true", async () => {});
-
+        it("checks if an address has a permission", async () => {});
         describe("properties", () => {
             it("@property: returns false on a random address", async () => {});
-            it("@property: is not affected by staged permissions", async () => {});
-            it("@property: is affected by committed permissions", async () => {});
-        });
-
-        describe("edge cases", () => {
-            describe("on unknown permission id", () => {
-                it("returns false", async () => {});
-            });
+            it("@property: isn't affected by a staged permission", async () => {});
+            it("@property: affected by a committed permission", async () => {});
+            it("@property: when forceAllowMask is set, returns true for any address", async () => {});
         });
 
         describe("access control", () => {
             it("allowed: any address", async () => {});
+        });
+
+        describe("edge cases", () => {
+            describe("when permission is unknown", () => {
+                it("returns false", async () => {});
+            });
         });
     });
 
     describe("#hasAllPermissions", () => {
-        it("checks if given address has a subset of permissions set to true", async () => {});
+        it("checks if an address has all specified permissions", async () => {});
 
         describe("properties", () => {
             it("@property: returns false on a random address", async () => {});
             it("@property: is not affected by staged permissions", async () => {});
             it("@property: is affected by committed permissions", async () => {});
+            it("@property: when forceAllowMask is set, returns true for any address", async () => {});
+        });
+
+        describe("access control", () => {
+            it("allowed: any address", async () => {});
         });
 
         describe("edge cases", () => {
             describe("on unknown permission id", () => {
                 it("returns false", async () => {});
             });
-        });
-
-        describe("access control", () => {
-            it("allowed: any address", async () => {});
         });
     });
 
@@ -53,9 +50,7 @@ describe("ProtocolGovernance", () => {
         it("returns addresses that has any permission set to true", async () => {});
 
         describe("properties", () => {
-            it("@property: address removes when all existing permissions are revoked", async () => {});
-            it("@property: address is added when new staged permissions are comitted", async () => {});
-            it("@property: unaffected if added address that has no permissions", async () => {});
+            it("@property: address is returned <=> permission mask is not 0", async () => {});
         });
 
         describe("access control", () => {
@@ -67,8 +62,7 @@ describe("ProtocolGovernance", () => {
         it("returns number of addresses that has any permission set to true", async () => {});
 
         describe("properties", () => {
-            it("@property: number of addresses is affected by staged permissions", async () => {});
-            it("@property: number of addresses is affected by committed permissions", async () => {});
+            it("@property: always equals to the length of #permissionAddresses result", async () => {});
         });
 
         describe("access control", () => {
@@ -79,19 +73,24 @@ describe("ProtocolGovernance", () => {
     describe("#permissionAddressAt", () => {
         it("returns address at the given index", async () => {});
 
+        describe("properties", () => {
+            it("@property: always equals to the element at the same position in the #permissionAddresses result", async () => {});
+        });
+
         describe("access control", () => {
             it("allowed: any address", async () => {});
         });
     });
 
+    // rename the method and all other to be consistent, i.e. hasStagedGrantPermission
     describe("#hasStagedPermission", () => {
-        it("checks if the given address has speceific permission staged to be granted", async () => {});
+        it("checks if a given address has a specific grant permission staged", async () => {});
 
         describe("properties", () => {
             it("@property: returns false on a random address", async () => {});
-            it("@property: is affected by staged permissions", async () => {});
-            it("@property: resets on commit", async () => {});
-            it("@property: resets when restaged", async () => {});
+            it("@property: updated when permission is staged", async () => {});
+            it("@property: reset on commit", async () => {});
+            it("@property: updated on new stage", async () => {});
         });
 
         describe("edge cases", () => {
@@ -106,16 +105,11 @@ describe("ProtocolGovernance", () => {
     });
 
     describe("#grantedPermissionAddressTimestamps", () => {
-        it("returns commit timestamp for given address", async () => {});
+        it("returns timestamp after which permissions can be commited for a given address", async () => {});
 
         describe("properties", () => {
             it("@property: timestamp resets on restage", async () => {});
-        });
-
-        describe("edge cases", () => {
-            describe("when given unknown address", () => {
-                it("returns zero", async () => {});
-            });
+            it("@property: for a random address it is 0", async () => {});
         });
 
         describe("access control", () => {
