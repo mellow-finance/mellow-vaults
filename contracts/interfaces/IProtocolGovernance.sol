@@ -18,56 +18,45 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @notice Checks if address has permission.
-    /// @param addr Address to check
-    /// @param permissionId Permission id to check
-    function hasPermission(address addr, uint8 permissionId) external view returns (bool);
-
-    /// @notice Checks if address has all permissions.
-    /// @param target Address to check
-    /// @param permissionIds A list of permission ids to check
-    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
-
-    /// @notice Addresses for which non-zero permissions are set.
-    function permissionAddresses() external view returns (address[] memory);
-
-    /// @notice Number of addresses for which non-zero permissions are set.
-    function permissionAddressesCount() external view returns (uint256);
-
-    /// @notice Address by index.
-    /// The address is expected to have at least one granted permission, otherwise it will be deleted.
-    function permissionAddressAt(uint256 index) external view returns (address);
-
     /// @notice Timestamp after which staged granted permissions for the given address can be committed.
-    /// @param target The given address.
-    /// @return Zero if there are no staged permission grants, timestamp otherwise.
-    function grantedPermissionAddressTimestamps(address target) external view returns (uint256);
+    /// @param target The given address
+    /// @return Zero if there are no staged permission grants, timestamp otherwise
+    function stagedPermissionGrantsTimestamps(address target) external view returns (uint256);
+
+    /// @notice Staged granted permission bitmask for the given address.
+    /// @param target The given address
+    /// @return Bitmask
+    function stagedPermissionGrantsMasks(address target) external view returns (uint256);
+
+    /// @notice Permission bitmask for the given address.
+    /// @param target The given address
+    /// @return Bitmask
+    function permissionMasks(address target) external view returns (uint256);
 
     /// @notice Timestamp after which staged pending protocol parameters can be committed
     /// @return Zero if there are no staged parameters, timestamp otherwise.
     function pendingParamsTimestamp() external view returns (uint256);
 
-    /// @notice Raw bitmask of permissions for an address (forceAllowMask is not applied).
-    /// @param addr Address to check.
-    /// @return A bitmask of permissions for an address
-    function rawPermissionMask(address addr) external view returns (uint256);
+    /// @notice Addresses for which non-zero permissions are set.
+    function permissionAddresses() external view returns (address[] memory);
 
-    /// @notice Bitmask of true permissions for an address (forceAllowMask is applied).
-    /// @param addr Address to check.
-    /// @return A bitmask of permissions for an address
-    function permissionMask(address addr) external view returns (uint256);
+    /// @notice Permission addresses staged for commit.
+    function stagedPermissionGrantsAddresses() external view returns (address[] memory);
 
     /// @notice Return all addresses where rawPermissionMask bit for permissionId is set to 1.
     /// @param permissionId Id of the permission to check.
     /// @return A list of dirty addresses.
-    function addressesByPermissionIdRaw(uint8 permissionId) external view returns (address[] memory);
+    function addressesByPermission(uint8 permissionId) external view returns (address[] memory);
 
-    /// @notice Permission addresses staged for commit.
-    function stagedPermissionAddresses() external view returns (address[] memory);
+    /// @notice Checks if address has permission or given permission is force allowed for any address.
+    /// @param addr Address to check
+    /// @param permissionId Permission to check
+    function hasPermission(address addr, uint8 permissionId) external view returns (bool);
 
-    /// @notice Returns staged granted permission bitmask for the given address.
-    /// @param target The given address.
-    function stagedGrantedPermissionMasks(address target) external view returns (uint256);
+    /// @notice Checks if address has all permissions.
+    /// @param target Address to check
+    /// @param permissionIds A list of permissions to check
+    function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
 
     /// @notice Max different ERC20 token addresses that could be managed by the protocol.
     function maxTokensPerVault() external view returns (uint256);
@@ -82,6 +71,28 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// This bitmask is xored with ordinary mask.
     function forceAllowMask() external view returns (uint256);
 
+    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
+    /// @notice Rollback all staged granted permissions.
+    function rollbackStagedPermissionGrants() external;
+
+    /// @notice Commits permission grants for the given address.
+    /// Reverts if governance delay has not passed yet.
+    /// @param target The given address.
+    function commitPermissionGrants(address target) external;
+
+    /// @notice Commites all staged permission grants for which governance delay passed
+    function commitAllPermissionGrantsSurpassedDelay() external;
+
+    /// @notice Revoke permission instantly from the given address.
+    /// @param target The given address.
+    /// @param permissionIds A list of permission ids to revoke.
+    function revokePermissions(address target, uint8[] memory permissionIds) external;
+
+    /// @notice Commits staged protocol params.
+    /// Reverts if governance delay has not passed yet.
+    function commitParams() external;
+
     // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @notice Sets new pending params that could have been committed after governance delay expires.
@@ -92,28 +103,5 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// Resets commit delay and permissions if there are already staged permissions for this address.
     /// @param target Target address
     /// @param permissionIds A list of permission ids to grant
-    function stageGrantPermissions(address target, uint8[] memory permissionIds) external;
-
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
-
-    /// @notice Rollback all staged granted permissions.
-    function rollbackStagedGrantedPermissions() external;
-
-    /// @notice Commits all staged granted permissions.
-    /// Address is skipped if governance delay has not passed yet, transation doesn't revert.
-    function commitStagedPermissions() external;
-
-    /// @notice Commits staged granted permissions for the given address.
-    /// Reverts if governance delay has not passed yet.
-    /// @param target The given address.
-    function commitStagedPermission(address target) external;
-
-    /// @notice Revoke permission instantly from the given address.
-    /// @param target The given address.
-    /// @param permissionIds A list of permission ids to revoke.
-    function revokePermissions(address target, uint8[] memory permissionIds) external;
-
-    /// @notice Commits staged protocol params.
-    /// Reverts if governance delay has not passed yet.
-    function commitParams() external;
+    function stagePermissionGrants(address target, uint8[] memory permissionIds) external;
 }
