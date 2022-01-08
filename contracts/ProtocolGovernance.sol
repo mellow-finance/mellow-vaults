@@ -134,7 +134,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     function commitStagedPermissions() external {
         _requireAdmin();
         uint256 length = _stagedGrantedPermissionAddresses.length();
-        for (uint256 i; i != length; ++i) {
+        for (uint256 i; i != length;) {
             address stagedAddress = _stagedGrantedPermissionAddresses.at(i);
             if (block.timestamp >= grantedPermissionAddressTimestamps[stagedAddress]) {
                 permissionMasks[stagedAddress] |= stagedGrantedPermissionMasks[stagedAddress];
@@ -146,6 +146,9 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
                 delete stagedGrantedPermissionMasks[stagedAddress];
                 delete grantedPermissionAddressTimestamps[stagedAddress];
                 _stagedGrantedPermissionAddresses.remove(stagedAddress);
+                --length;
+            } else {
+                ++i;
             }
         }
         emit CommittedStagedGrantedPermissions(tx.origin, msg.sender);
