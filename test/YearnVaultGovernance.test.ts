@@ -73,13 +73,13 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .stageGrantPermissions(this.subject.address, [
+                            .stagePermissionGrants(this.subject.address, [
                                 REGISTER_VAULT,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .commitStagedPermissions();
+                            .commitPermissionGrants(this.subject.address);
                         await this.subject.createVault(
                             this.tokens.map((x: any) => x.address),
                             this.ownerSigner.address
