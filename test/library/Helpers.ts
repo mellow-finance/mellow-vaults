@@ -323,7 +323,7 @@ export const mint = async (
                 };
                 const resp = await s.sendTransaction(tx);
                 await resp.wait();
-                const c: ERC20 = await ethers.getContractAt("ERC20", weth);
+                const c: ERC20 = await ethers.getContractAt("ERC20Token", weth);
                 await c.connect(s).transfer(to, amount);
             });
             break;

@@ -221,14 +221,7 @@ export const combineVaults = async (
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
-        createVaultArgs: [
-            tokens,
-            strategyAddress,
-            nfts,
-            "MStrategy LP Token",
-            "MSLP",
-            deployer,
-        ],
+        createVaultArgs: [tokens, strategyAddress, nfts, deployer],
         delayedStrategyParams: {
             strategyTreasury: strategyTreasuryAddress,
             strategyPerformanceTreasury: strategyPerformanceTreasuryAddress,

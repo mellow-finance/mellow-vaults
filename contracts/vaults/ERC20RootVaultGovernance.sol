@@ -165,8 +165,6 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         address[] memory vaultTokens_,
         address strategy_,
         uint256[] memory subvaultNfts_,
-        string memory name_,
-        string memory symbol_,
         address owner_
     ) external returns (IERC20RootVault vault, uint256 nft) {
         address vaddr;
@@ -177,7 +175,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
-        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, name_, symbol_);
+        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_);
     }
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
