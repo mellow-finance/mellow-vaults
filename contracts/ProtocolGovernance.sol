@@ -16,9 +16,10 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     mapping(address => uint256) public stagedPermissionGrantsTimestamps;
     mapping(address => uint256) public stagedPermissionGrantsMasks;
     mapping(address => uint256) public permissionMasks;
+    
     uint256 public pendingParamsTimestamp;
-    Params public params;
     Params public pendingParams;
+    Params public params;
 
     EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
@@ -33,7 +34,6 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     function permissionAddresses() external view returns (address[] memory) {
         return _permissionAddresses.values();
     }
-
 
     /// @inheritdoc IProtocolGovernance
     function stagedPermissionGrantsAddresses() external view returns (address[] memory) {
@@ -157,6 +157,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     /// @inheritdoc IProtocolGovernance
     function revokePermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
+        require(target != address(0), ExceptionsLibrary.NULL);
         uint256 diff;
         for (uint256 i = 0; i < permissionIds.length; ++i) {
             diff |= 1 << permissionIds[i];
@@ -188,6 +189,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     /// @inheritdoc IProtocolGovernance
     function stagePermissionGrants(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
+        require(target != address(0), ExceptionsLibrary.NULL);
         _stagedPermissionGrantsAddresses.add(target);
         stagedPermissionGrantsMasks[target] = _permissionIdsToMask(permissionIds);
         uint256 stagedToCommitAt = block.timestamp + params.governanceDelay;
