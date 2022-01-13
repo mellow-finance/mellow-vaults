@@ -81,12 +81,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
-
-        require(
-            lpAmount + balanceOf[msg.sender] <=
-                IERC20RootVaultGovernance(address(_vaultGovernance)).strategyParams(thisNft).tokenLimitPerAddress,
-            ExceptionsLibrary.LIMIT_OVERFLOW
-        );
+        IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
+            .strategyParams(thisNft);
+        require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(lpAmount + totalSupply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
 
         _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, false);
         _mint(msg.sender, lpAmount);

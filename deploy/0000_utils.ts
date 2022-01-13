@@ -194,6 +194,7 @@ export const combineVaults = async (
         limits?: BigNumberish[];
         strategyPerformanceTreasuryAddress?: string;
         tokenLimitPerAddress: BigNumberish;
+        tokenLimit: BigNumberish;
         managementFee: BigNumberish;
         performanceFee: BigNumberish;
     }
@@ -216,6 +217,7 @@ export const combineVaults = async (
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
+        tokenLimit = ethers.constants.MaxUint256,
         managementFee = 2 * 10 ** 7,
         performanceFee = 20 * 10 ** 7,
     } = options || {};
@@ -231,6 +233,7 @@ export const combineVaults = async (
         },
         strategyParams: {
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
+            tokenLimit: BigNumber.from(tokenLimit),
         },
     });
     const rootVault = await deployments.read(

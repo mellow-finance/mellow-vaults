@@ -91,7 +91,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
     /// @inheritdoc IERC20RootVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0});
+            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0});
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }

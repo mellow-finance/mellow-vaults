@@ -26,9 +26,11 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     }
 
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
-    /// @param tokenLimitPerAddress Reference to address that will collect strategy fees
+    /// @param tokenLimitPerAddress Max LP token limit per address
+    /// @param tokenLimit Max LP token for the vault
     struct StrategyParams {
         uint256 tokenLimitPerAddress;
+        uint256 tokenLimit;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
