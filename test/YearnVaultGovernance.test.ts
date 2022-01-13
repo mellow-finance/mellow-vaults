@@ -103,7 +103,9 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
         });
 
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-            address.map((yearnVaultRegistry) => ({ yearnVaultRegistry }));
+            address.map((yearnVaultRegistry) => ({
+                yearnVaultRegistry,
+            }));
 
         describe("#constructor", () => {
             it("deploys a new contract", async () => {

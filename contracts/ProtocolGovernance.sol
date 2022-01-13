@@ -49,7 +49,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         for (uint256 i = 0; i < length; i++) {
             address addr = _permissionAddresses.at(i);
             if (permissionMasks[addr] & mask != 0) {
-                addresses[addressesLength] = addr;
+                tempAddresses[addressesLength] = addr;
                 addressesLength++;
             }
         }
@@ -118,11 +118,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
         permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
-        if (permissionMasks[stagedAddress] == 0) {
-            _permissionAddresses.remove(stagedAddress);
-        } else {
-            _permissionAddresses.add(stagedAddress);
-        }
+        _permissionAddresses.add(stagedAddress);
         delete stagedPermissionGrantsMasks[stagedAddress];
         delete stagedPermissionGrantsTimestamps[stagedAddress];
         _stagedPermissionGrantsAddresses.remove(stagedAddress);
@@ -137,11 +133,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
                 permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
-                if (permissionMasks[stagedAddress] == 0) {
-                    _permissionAddresses.remove(stagedAddress);
-                } else {
-                    _permissionAddresses.add(stagedAddress);
-                }
+                _permissionAddresses.add(stagedAddress);
                 delete stagedPermissionGrantsMasks[stagedAddress];
                 delete stagedPermissionGrantsTimestamps[stagedAddress];
                 _stagedPermissionGrantsAddresses.remove(stagedAddress);

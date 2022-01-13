@@ -109,7 +109,9 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
         });
 
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-            address.map((trader) => ({ trader }));
+            address.map((trader) => ({
+                trader,
+            }));
 
         describe("#constructor", () => {
             it("deploys a new contract", async () => {
