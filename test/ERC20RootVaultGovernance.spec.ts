@@ -39,6 +39,8 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
     "ERC20RootVaultGovernance",
     function () {
         before(async () => {
+            this.ownerSigner = await addSigner(randomAddress());
+            // @ts-ignore
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeployOptions) => {
                     await deployments.fixture();
@@ -68,20 +70,6 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
         });
     
-        // from behavior
-        xdescribe("#delayedProtocolParams", () => {
-            it("returns delayed protocol params", async () => {});
-    
-            describe("properties", () => {
-                it("@property: does't not update by #stageDelayedProtocolParams", async () => {});
-                it("@property: updates by #commitDelayedProtocolParams", async () => {});
-            });
-    
-            describe("access control", () => {
-                it("allowed: any address", async () => {});
-            });
-        });
-    
         describe("#stagedDelayedProtocolParams", () => {
             it("returns staged delayed protocol params", async () => {
                 const params: DelayedProtocolParamsStruct = {
@@ -95,20 +83,6 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 it("@property: updates by #stageDelayedProtocolParams", async () => {});
                 it("@property: resets by #commitDelayedProtocolParams", async () => {});
             });
-            describe("access control", () => {
-                it("allowed: any address", async () => {});
-            });
-        });
-    
-        // TODO: move to vaultGovernanceDelayedProtocolPerVaultParamsBehavior
-        xdescribe("#delayedProtocolPerVaultParams", () => {
-            it("returns delayed protocol params per vault", async () => {});
-    
-            describe("properties", () => {
-                it("@property: doesn't update by #stageDelayedProtocolPerVaultParams", async () => {});
-                it("@property: updates by #commitDelayedProtocolPerVaultParams", async () => {});
-            });
-    
             describe("access control", () => {
                 it("allowed: any address", async () => {});
             });
@@ -309,24 +283,6 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             describe("access control", () => {
                 it("allowed: admin", async () => {});
                 it("denied: deployer", async () => {});
-                it("denied: random address", async () => {});
-            });
-        });
-    
-        // TODO: from behavior
-        xdescribe("#createVault", () => {
-            it("creates new ERC20RootVault", async () => {});
-            it("initializes new ERC20RootVault with correct NFT", async () => {});
-            it("emits VaultRegistered event", async () => {});
-    
-            describe("edge cases", () => {
-                describe("when has zero subvaults", () => {
-                    // TODO: find out
-                });
-            });
-    
-            describe("access control", () => {
-                it("allowed: has CREATE_VAULT permission", async () => {});
                 it("denied: random address", async () => {});
             });
         });
