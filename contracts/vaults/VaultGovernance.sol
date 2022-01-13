@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/PermissionIdsLibrary.sol";
 
 /// @notice Internal contract for managing different params.
 /// @dev The contract should be overriden by the concrete VaultGovernance,
@@ -95,7 +96,7 @@ abstract contract VaultGovernance is IVaultGovernance {
     function _createVault(address owner) internal returns (address vault, uint256 nft) {
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
         require(
-            protocolGovernance.permissionless() || protocolGovernance.isAdmin(msg.sender),
+            protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.CREATE_VAULT),
             ExceptionsLibrary.FORBIDDEN
         );
         IVaultRegistry vaultRegistry = _internalParams.registry;

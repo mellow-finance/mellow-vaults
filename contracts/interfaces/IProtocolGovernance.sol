@@ -8,66 +8,55 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
-    /// @param protocolTreasury Protocol treasury address for collecting management fees
+    /// @param forceAllowMask If a permission bit is set in this mask it forces all addresses to have this permission as true
     struct Params {
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
         address protocolTreasury;
-        bool permissionless;
+        uint256 forceAllowMask;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @notice Checks if address has permission
+    /// @notice Timestamp after which staged granted permissions for the given address can be committed.
+    /// @param target The given address
+    /// @return Zero if there are no staged permission grants, timestamp otherwise
+    function stagedPermissionGrantsTimestamps(address target) external view returns (uint256);
+
+    /// @notice Staged granted permission bitmask for the given address.
+    /// @param target The given address
+    /// @return Bitmask
+    function stagedPermissionGrantsMasks(address target) external view returns (uint256);
+
+    /// @notice Permission bitmask for the given address.
+    /// @param target The given address
+    /// @return Bitmask
+    function permissionMasks(address target) external view returns (uint256);
+
+    /// @notice Timestamp after which staged pending protocol parameters can be committed
+    /// @return Zero if there are no staged parameters, timestamp otherwise.
+    function pendingParamsTimestamp() external view returns (uint256);
+
+    /// @notice Addresses for which non-zero permissions are set.
+    function permissionAddresses() external view returns (address[] memory);
+
+    /// @notice Permission addresses staged for commit.
+    function stagedPermissionGrantsAddresses() external view returns (address[] memory);
+
+    /// @notice Return all addresses where rawPermissionMask bit for permissionId is set to 1.
+    /// @param permissionId Id of the permission to check.
+    /// @return A list of dirty addresses.
+    function addressesByPermission(uint8 permissionId) external view returns (address[] memory);
+
+    /// @notice Checks if address has permission or given permission is force allowed for any address.
     /// @param addr Address to check
-    /// @param permissionId Permission id to check
+    /// @param permissionId Permission to check
     function hasPermission(address addr, uint8 permissionId) external view returns (bool);
 
-    /// @notice Checks if address has all permissions
+    /// @notice Checks if address has all permissions.
     /// @param target Address to check
-    /// @param permissionIds A list of permission ids to check
+    /// @param permissionIds A list of permissions to check
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool);
-
-    /// @notice Returns known addresses
-    function addresses() external view returns (address[] memory);
-
-    /// @notice Returns number of known addresses
-    function addressesLength() external view returns (uint256);
-
-    /// @notice Returns address by index
-    function addressAt(uint256 index) external view returns (address);
-
-    /// @notice Returns a bit mask of permissions for an address
-    /// @param addr Address to check
-    function permissionMask(address addr) external view returns (uint256);
-
-    /// @notice Returns staged addresses
-    function stagedAddresses() external view returns (address[] memory);
-
-    /// @notice Returns number of staged addresses
-    function stagedAddressesLength() external view returns (uint256);
-
-    /// @notice Returns staged address by index
-    function stagedAddressAt(uint256 index) external view returns (address);
-
-    /// @notice Returns a bit mask of permissions for a staged address
-    function stagedPermissionMask(address addr) external view returns (uint256);
-
-    /// @notice Checks if address has permission staged
-    /// @param addr Address to check
-    /// @param permissionId Permission id to check
-    function hasStagedPermission(address addr, uint8 permissionId) external view returns (bool);
-
-    /// @notice Checks if address has all given permissions staged
-    /// @param addr Address to check
-    /// @param permissionIds A list of permission ids to check
-    function hasAllStagedPermissions(address addr, uint8[] memory permissionIds) external view returns (bool);
-
-    /// @notice Returns timestamp of the upcoming commit if staged, else returns 0
-    function stagedToCommitAt() external view returns (uint256);
-
-    /// @notice If `false` only admins can deploy new vaults, o/w anyone can deploy a new vault.
-    function permissionless() external view returns (bool);
 
     /// @notice Max different ERC20 token addresses that could be managed by the protocol.
     function maxTokensPerVault() external view returns (uint256);
@@ -78,30 +67,41 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @notice The address of the protocol treasury.
     function protocolTreasury() external view returns (address);
 
-    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
-
-    /// @notice Set new pending params.
-    /// @param newParams newParams to set
-    function setPendingParams(Params memory newParams) external;
-
-    /// @notice Stage pending permissions.
-    /// @param target Target address
-    /// @param permissionIds A list of permission ids to grant
-    function stageGrantPermissions(address target, uint8[] memory permissionIds) external;
+    /// @notice Permissions mask which defines if ordinary permission should be reverted.
+    /// This bitmask is xored with ordinary mask.
+    function forceAllowMask() external view returns (uint256);
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
-    /// @notice Rollback staged permissions.
-    function rollbackStagedPermissions() external;
+    /// @notice Rollback all staged granted permission grant.
+    function rollbackAllPermissionGrants() external;
 
-    /// @notice Commit staged permissions.
-    function commitStagedPermissions() external;
+    /// @notice Commits permission grants for the given address.
+    /// Reverts if governance delay has not passed yet.
+    /// @param target The given address.
+    function commitPermissionGrants(address target) external;
 
-    /// @notice Revoke permission instant.
-    /// @param target Target address
-    /// @param permissionIds A list of permission ids to revoke
+    /// @notice Commites all staged permission grants for which governance delay passed
+    function commitAllPermissionGrantsSurpassedDelay() external;
+
+    /// @notice Revoke permission instantly from the given address.
+    /// @param target The given address.
+    /// @param permissionIds A list of permission ids to revoke.
     function revokePermissions(address target, uint8[] memory permissionIds) external;
 
-    /// @notice Commit pending params.
+    /// @notice Commits staged protocol params.
+    /// Reverts if governance delay has not passed yet.
     function commitParams() external;
+
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
+
+    /// @notice Sets new pending params that could have been committed after governance delay expires.
+    /// @param newParams New protocol parameters to set.
+    function setPendingParams(Params memory newParams) external;
+
+    /// @notice Stage granted permissions that could have been committed after governance delay expires.
+    /// Resets commit delay and permissions if there are already staged permissions for this address.
+    /// @param target Target address
+    /// @param permissionIds A list of permission ids to grant
+    function stagePermissionGrants(address target, uint8[] memory permissionIds) external;
 }

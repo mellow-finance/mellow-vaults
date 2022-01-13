@@ -7,7 +7,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
-import "./libraries/PermissionIds.sol";
+import "./libraries/PermissionIdsLibrary.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IVaultRegistry, ERC721 {
@@ -57,7 +57,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
         require(owner != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(
-            _protocolGovernance.hasPermission(msg.sender, PermissionIds.VAULT_GOVERNANCE),
+            _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
             ExceptionsLibrary.FORBIDDEN
         );
         nft = _topNft;

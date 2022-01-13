@@ -14,7 +14,7 @@ import {
     DelayedProtocolParamsStruct,
     AaveVaultGovernance,
 } from "./types/AaveVaultGovernance";
-import { VAULT_GOVERNANCE } from "./library/PermissionIds";
+import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { contract } from "./library/setup";
 import { address } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -80,13 +80,13 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                     if (!skipInit) {
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .stageGrantPermissions(this.subject.address, [
-                                VAULT_GOVERNANCE,
+                            .stagePermissionGrants(this.subject.address, [
+                                REGISTER_VAULT,
                             ]);
                         await sleep(this.governanceDelay);
                         await this.protocolGovernance
                             .connect(this.admin)
-                            .commitStagedPermissions();
+                            .commitPermissionGrants(this.subject.address);
                         this.nft =
                             (
                                 await this.vaultRegistry.vaultsCount()

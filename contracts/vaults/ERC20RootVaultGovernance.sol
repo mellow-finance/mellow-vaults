@@ -19,9 +19,9 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         VaultGovernance(internalParams_)
     {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
-        MAX_PROTOCOL_FEE = 5 * CommonLibrary.DENOMINATOR;
-        MAX_MANAGEMENT_FEE = 10 * CommonLibrary.DENOMINATOR;
-        MAX_PERFORMANCE_FEE = 50 * CommonLibrary.DENOMINATOR;
+        MAX_PROTOCOL_FEE = (5 * CommonLibrary.DENOMINATOR) / 100;
+        MAX_MANAGEMENT_FEE = (10 * CommonLibrary.DENOMINATOR) / 100;
+        MAX_PERFORMANCE_FEE = (50 * CommonLibrary.DENOMINATOR) / 100;
     }
 
     /// @inheritdoc IERC20RootVaultGovernance
@@ -65,6 +65,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
                 DelayedStrategyParams({
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
+                    privateVault: false,
                     managementFee: 0,
                     performanceFee: 0
                 });
@@ -79,6 +80,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
                 DelayedStrategyParams({
                     strategyTreasury: address(0),
                     strategyPerformanceTreasury: address(0),
+                    privateVault: false,
                     managementFee: 0,
                     performanceFee: 0
                 });
@@ -89,7 +91,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
     /// @inheritdoc IERC20RootVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0});
+            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0});
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
@@ -163,8 +165,6 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         address[] memory vaultTokens_,
         address strategy_,
         uint256[] memory subvaultNfts_,
-        string memory name_,
-        string memory symbol_,
         address owner_
     ) external returns (IERC20RootVault vault, uint256 nft) {
         address vaddr;
@@ -175,7 +175,7 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
-        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, name_, symbol_);
+        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_);
     }
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
