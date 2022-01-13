@@ -13,8 +13,10 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ProtocolGovernance, VaultRegistry } from "./types";
 import { Contract } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
-import { VAULT_GOVERNANCE } from "./library/PermissionIds";
-import { address, pit } from "./library/property";
+import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
+import { address, pit, RUNS } from "./library/property";
+import Exceptions from "./library/Exceptions";
+import { boolean } from "hardhat/internal/core/params/argumentTypes";
 
 type CustomContext = {
     strategySigner: SignerWithAddress;
@@ -46,11 +48,22 @@ describe("VaultRegistry", function (this: TestContext<
                 await deployments.fixture();
                 this.ownerSigner = await addSigner(randomAddress());
                 this.strategySigner = await addSigner(randomAddress());
-                this.allowedRegisterVaultSigner = await addSigner(randomAddress());
+                this.allowedRegisterVaultSigner = await addSigner(
+                    randomAddress()
+                );
 
-                await this.protocolGovernance.connect(this.admin).stageGrantPermissions(await this.allowedRegisterVaultSigner.getAddress(), [Number(VAULT_GOVERNANCE)]);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(
+                        await this.allowedRegisterVaultSigner.getAddress(),
+                        [Number(REGISTER_VAULT)]
+                    );
                 await sleep(Number(this.governanceDelay));
-                await this.protocolGovernance.connect(this.admin).commitStagedPermissions();
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(
+                        await this.allowedRegisterVaultSigner.getAddress()
+                    );
                 const { address } = await deployments.deploy("VaultRegistry", {
                     from: this.deployer.address,
                     contract: "VaultRegistry",
@@ -73,9 +86,7 @@ describe("VaultRegistry", function (this: TestContext<
                     args: [],
                     autoMine: true,
                 });
-                this.erc165Mock = await ethers.getContract(
-                    "MockERC165Vault",
-                );
+                this.erc165Mock = await ethers.getContract("MockERC165Vault");
                 await deployments.deploy("MockERC165Vault", {
                     from: this.deployer.address,
                     contract: "MockERC165Vault",
@@ -83,12 +94,27 @@ describe("VaultRegistry", function (this: TestContext<
                     autoMine: true,
                 });
                 this.anotherERC165Mock = await ethers.getContract(
-                    "MockERC165Vault",
+                    "MockERC165Vault"
                 );
                 await this.erc165Mock.allowInterfaceIVault();
-                this.nft = Number(await this.subject.connect(this.allowedRegisterVaultSigner).callStatic.registerVault(this.erc165Mock.address, this.ownerSigner.address));
-                this.subject.connect(this.allowedRegisterVaultSigner).registerVault(this.erc165Mock.address, this.ownerSigner.address);
-                
+                this.nft = Number(
+                    await this.subject
+                        .connect(this.allowedRegisterVaultSigner)
+                        .callStatic.registerVault(
+                            this.erc165Mock.address,
+                            this.ownerSigner.address
+                        )
+                );
+                this.subject
+                    .connect(this.allowedRegisterVaultSigner)
+                    .registerVault(
+                        this.erc165Mock.address,
+                        this.ownerSigner.address
+                    );
+
+                this.anotherNft = Math.round(Math.random() * 100 + 10);
+
+                // deploy new ProtocolGovernance
                 const { address: singleton } = await deployments.deploy(
                     "ProtocolGovernance",
                     {
@@ -98,11 +124,11 @@ describe("VaultRegistry", function (this: TestContext<
                         autoMine: true,
                     }
                 );
+
                 this.newProtocolGovernance = await ethers.getContractAt(
                     "ProtocolGovernance",
                     singleton
                 );
-                this.anotherNft = Math.round(Math.random() * 100 + 10);
                 return this.subject;
             }
         );
@@ -135,10 +161,20 @@ describe("VaultRegistry", function (this: TestContext<
 
     describe("#vaults", () => {
         it("returns all registered vaults", async () => {
-            expect(await this.subject.vaults()).to.deep.equal([this.erc165Mock.address]);
+            expect(await this.subject.vaults()).to.deep.equal([
+                this.erc165Mock.address,
+            ]);
             await this.anotherERC165Mock.allowInterfaceIVault();
-            this.subject.connect(this.allowedRegisterVaultSigner).registerVault(this.anotherERC165Mock.address, this.ownerSigner.address);
-            expect(await this.subject.vaults()).to.deep.equal([this.erc165Mock.address, this.anotherERC165Mock.address]);
+            this.subject
+                .connect(this.allowedRegisterVaultSigner)
+                .registerVault(
+                    this.anotherERC165Mock.address,
+                    this.ownerSigner.address
+                );
+            expect(await this.subject.vaults()).to.deep.equal([
+                this.erc165Mock.address,
+                this.anotherERC165Mock.address,
+            ]);
         });
 
         describe("access control:", () => {
@@ -160,8 +196,20 @@ describe("VaultRegistry", function (this: TestContext<
                 ethers.constants.AddressZero
             );
             await this.anotherERC165Mock.allowInterfaceIVault();
-            this.anotherNft = Number(await this.subject.connect(this.allowedRegisterVaultSigner).callStatic.registerVault(this.anotherERC165Mock.address, this.ownerSigner.address));
-            this.subject.connect(this.allowedRegisterVaultSigner).registerVault(this.anotherERC165Mock.address, this.ownerSigner.address);
+            this.anotherNft = Number(
+                await this.subject
+                    .connect(this.allowedRegisterVaultSigner)
+                    .callStatic.registerVault(
+                        this.anotherERC165Mock.address,
+                        this.ownerSigner.address
+                    )
+            );
+            this.subject
+                .connect(this.allowedRegisterVaultSigner)
+                .registerVault(
+                    this.anotherERC165Mock.address,
+                    this.ownerSigner.address
+                );
             expect(await this.subject.vaultForNft(this.anotherNft)).to.equal(
                 this.anotherERC165Mock.address
             );
@@ -170,9 +218,8 @@ describe("VaultRegistry", function (this: TestContext<
         describe("access control:", () => {
             it("allowed: any address", async () => {
                 await withSigner(randomAddress(), async (s) => {
-                    await expect(
-                        this.subject.connect(s).vaultForNft(this.nft)
-                    ).to.not.be.reverted;
+                    await expect(this.subject.connect(s).vaultForNft(this.nft))
+                        .to.not.be.reverted;
                 });
             });
         });
@@ -212,9 +259,7 @@ describe("VaultRegistry", function (this: TestContext<
             describe("when Vault is not registered in VaultRegistry", () => {
                 it("returns zero", async () => {
                     expect(
-                        await this.subject.nftForVault(
-                            randomAddress()
-                        )
+                        await this.subject.nftForVault(randomAddress())
                     ).to.equal(0);
                 });
             });
@@ -230,9 +275,8 @@ describe("VaultRegistry", function (this: TestContext<
         describe("access control:", () => {
             it("allowed: any address", async () => {
                 await withSigner(randomAddress(), async (s) => {
-                    await expect(
-                        this.subject.connect(s).isLocked(this.nft)
-                    ).to.not.be.reverted;
+                    await expect(this.subject.connect(s).isLocked(this.nft)).to
+                        .not.be.reverted;
                 });
             });
         });
@@ -240,9 +284,8 @@ describe("VaultRegistry", function (this: TestContext<
         describe("edge cases", () => {
             describe("when VaultRegistry NFT is not registered in VaultRegistry", () => {
                 it("returns false", async () => {
-                    expect(
-                        await this.subject.isLocked(this.anotherNft)
-                    ).to.be.false;
+                    expect(await this.subject.isLocked(this.anotherNft)).to.be
+                        .false;
                 });
             });
         });
@@ -266,13 +309,12 @@ describe("VaultRegistry", function (this: TestContext<
     });
 
     describe("#stagedProtocolGovernance", () => {
-        let newProtocolGovernance = randomAddress();
         it("returns ProtocolGovernance address staged for commit", async () => {
             await this.subject
                 .connect(this.admin)
-                .stageProtocolGovernance(newProtocolGovernance);
+                .stageProtocolGovernance(this.newProtocolGovernance.address);
             expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
-                newProtocolGovernance
+                this.newProtocolGovernance.address
             );
         });
 
@@ -300,11 +342,9 @@ describe("VaultRegistry", function (this: TestContext<
                     await this.subject
                         .connect(this.admin)
                         .stageProtocolGovernance(
-                            newProtocolGovernance
+                            this.newProtocolGovernance.address
                         );
-                    await sleep(
-                        Number(this.governanceDelay)
-                    );
+                    await sleep(Number(this.governanceDelay));
                     await this.subject
                         .connect(this.admin)
                         .commitStagedProtocolGovernance();
@@ -357,9 +397,7 @@ describe("VaultRegistry", function (this: TestContext<
                         .stageProtocolGovernance(
                             this.newProtocolGovernance.address
                         );
-                    await sleep(
-                        Number(this.governanceDelay)
-                    );
+                    await sleep(Number(this.governanceDelay));
                     await this.subject
                         .connect(this.admin)
                         .commitStagedProtocolGovernance();
@@ -379,10 +417,31 @@ describe("VaultRegistry", function (this: TestContext<
         describe("access control:", () => {
             it("allowed: any address", async () => {
                 await withSigner(randomAddress(), async (s) => {
-                    await expect(this.subject.connect(s).vaultsCount()).to.not.be.reverted;
+                    await expect(this.subject.connect(s).vaultsCount()).to.not
+                        .be.reverted;
                 });
             });
         });
+
+        // describe("properties", () => {
+        //     let randomNumber = Math.round(Math.random() * 10);
+        //     pit("@property: when N new vaults have been registered, vaults count will be increased by N", {numRuns: RUNS.verylow}, delay, async (delay: number, params: P) : Promise<boolean> => {
+        //         await deployments.deploy("MockERC165Vault", {
+        //             from: this.deployer.address,
+        //             contract: "MockERC165Vault",
+        //             args: [],
+        //             autoMine: true,
+        //         });
+        //         let newMock = await ethers.getContract(
+        //             "MockERC165Vault",
+        //         );
+        //         await newMock.allowInterfaceIVault();
+        //         this.nft = Number(await this.subject.connect(this.allowedRegisterVaultSigner).callStatic.registerVault(newMock.address, this.ownerSigner.address));
+        //         this.subject.connect(this.allowedRegisterVaultSigner).registerVault(newMock.address, this.ownerSigner.address);
+        //         return true;
+        //     });
+        // });
+
         describe("edge cases", () => {
             describe("when new vault is registered", () => {
                 it("is increased by 1", async () => {
@@ -390,8 +449,13 @@ describe("VaultRegistry", function (this: TestContext<
                         await this.subject.vaultsCount()
                     );
                     await this.anotherERC165Mock.allowInterfaceIVault();
-                    this.subject.connect(this.allowedRegisterVaultSigner).registerVault(this.anotherERC165Mock.address, this.ownerSigner.address);
-                
+                    this.subject
+                        .connect(this.allowedRegisterVaultSigner)
+                        .registerVault(
+                            this.anotherERC165Mock.address,
+                            this.ownerSigner.address
+                        );
+
                     let newVaultsCount = Number(
                         await this.subject.vaultsCount()
                     );
@@ -405,14 +469,21 @@ describe("VaultRegistry", function (this: TestContext<
         it("binds minted ERC721 NFT to Vault address and transfers minted NFT to owner specified in args", async () => {
             let newOwner = randomAddress();
             expect(await this.subject.balanceOf(newOwner)).to.be.equal(0);
-            const newNft = Number(await this.subject
-            .connect(this.allowedRegisterVaultSigner).callStatic
-            .registerVault(this.anotherERC165Mock.address, newOwner));
+            const newNft = Number(
+                await this.subject
+                    .connect(this.allowedRegisterVaultSigner)
+                    .callStatic.registerVault(
+                        this.anotherERC165Mock.address,
+                        newOwner
+                    )
+            );
             await this.subject
                 .connect(this.allowedRegisterVaultSigner)
                 .registerVault(this.anotherERC165Mock.address, newOwner);
             expect(await this.subject.balanceOf(newOwner)).to.be.equal(1);
-            expect(await this.subject.vaultForNft(newNft)).to.be.equal(this.anotherERC165Mock.address);
+            expect(await this.subject.vaultForNft(newNft)).to.be.equal(
+                this.anotherERC165Mock.address
+            );
         });
         it("emits VaultRegistered event", async () => {
             await expect(
@@ -426,15 +497,27 @@ describe("VaultRegistry", function (this: TestContext<
         });
 
         describe("properties", () => {
-            pit("@property: minted NFT equals to vaultRegistry#vaultsCount", async () => {},  async () => {
-                const newNft = await this.subject.connect(this.allowedRegisterVaultSigner).callStatic.registerVault(this.anotherERC165Mock.address, this.ownerSigner.address);
-                this.subject.connect(this.allowedRegisterVaultSigner).registerVault(this.anotherERC165Mock.address, this.ownerSigner.address);
-                expect(Number(await this.subject.vaultsCount())).to.be.equal(Number(newNft));
+            it("@property: minted NFT equals to vaultRegistry#vaultsCount", async () => {
+                const newNft = await this.subject
+                    .connect(this.allowedRegisterVaultSigner)
+                    .callStatic.registerVault(
+                        this.anotherERC165Mock.address,
+                        this.ownerSigner.address
+                    );
+                this.subject
+                    .connect(this.allowedRegisterVaultSigner)
+                    .registerVault(
+                        this.anotherERC165Mock.address,
+                        this.ownerSigner.address
+                    );
+                expect(Number(await this.subject.vaultsCount())).to.be.equal(
+                    Number(newNft)
+                );
             });
         });
 
         describe("access control:", () => {
-            it("allowed: any VaultGovernance registered in ProtocolGovernance", async () => {
+            it("allowed: any account with Register Vault permissions", async () => {
                 await expect(
                     this.subject
                         .connect(this.allowedRegisterVaultSigner)
@@ -454,7 +537,7 @@ describe("VaultRegistry", function (this: TestContext<
                                 this.anotherERC165Mock.address,
                                 this.ownerSigner.address
                             )
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
@@ -462,14 +545,15 @@ describe("VaultRegistry", function (this: TestContext<
         describe("edge cases", () => {
             describe("when address doesn't conform to IVault interface (IERC165)", () => {
                 it("reverts", async () => {
+                    await this.anotherERC165Mock.denyInterfaceIVault();
                     await expect(
                         this.subject
                             .connect(this.allowedRegisterVaultSigner)
                             .registerVault(
-                                randomAddress(),
+                                this.anotherERC165Mock.address,
                                 ethers.constants.AddressZero
                             )
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.INVALID_INTERFACE);
                 });
             });
 
@@ -482,43 +566,51 @@ describe("VaultRegistry", function (this: TestContext<
                                 this.anotherERC165Mock.address,
                                 ethers.constants.AddressZero
                             )
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });
     });
 
     describe("#stageProtocolGovernance", () => {
-        it("stages new ProtocolGovernance for commit", async () => {
-            await this.subject
-                .connect(this.admin)
-                .stageProtocolGovernance(this.newProtocolGovernance.address);
-
-            expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
-                this.newProtocolGovernance.address
-            );
-        });
-        it("sets the stagedProtocolGovernanceTimestamp after which #commitStagedProtocolGovernance can be called", async () => {
-            await this.subject
-                .connect(this.admin)
-                .stageProtocolGovernance(this.newProtocolGovernance.address);
-
-            expect(
-                Number(await this.subject.stagedProtocolGovernanceTimestamp()) -
-                    now() -
-                    Number(this.governanceDelay)
-            ).to.be.lessThanOrEqual(1);
-        });
-
-        describe("access control:", () => {
-            it("allowed: ProtocolGovernance Admin", async () => {
+        let stagedFixture: Function;
+        before(async () => {
+            stagedFixture = await deployments.createFixture(async () => {
+                await this.deploymentFixture();
                 await this.subject
                     .connect(this.admin)
                     .stageProtocolGovernance(
                         this.newProtocolGovernance.address
                     );
             });
-            it("denied: any other address", async () => {
+        });
+        beforeEach(async () => {
+            await stagedFixture();
+        });
+        it("stages new ProtocolGovernance for commit", async () => {
+            expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
+                this.newProtocolGovernance.address
+            );
+        });
+        it("sets the stagedProtocolGovernanceTimestamp after which #commitStagedProtocolGovernance can be called", async () => {
+            expect(
+                Number(await this.subject.stagedProtocolGovernanceTimestamp()) -
+                    now() -
+                    Number(this.governanceDelay)
+            ).to.be.lessThanOrEqual(5);
+        });
+
+        describe("access control:", () => {
+            it("allowed: ProtocolGovernance Admin", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .stageProtocolGovernance(
+                            this.newProtocolGovernance.address
+                        )
+                ).to.not.be.reverted;
+            });
+            it("denied: any other address (deployer denied)", async () => {
                 let randomAddr = randomAddress();
                 await withSigner(randomAddr, async (s) => {
                     await expect(
@@ -527,58 +619,77 @@ describe("VaultRegistry", function (this: TestContext<
                             .stageProtocolGovernance(
                                 this.newProtocolGovernance.address
                             )
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
+
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .stageProtocolGovernance(
+                            this.newProtocolGovernance.address
+                        )
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
         describe("edge cases", () => {
             describe("when new ProtocolGovernance is a zero address", () => {
-                it("does not fail", async () => {
+                it("reverts", async () => {
                     await expect(
                         this.subject
                             .connect(this.admin)
                             .stageProtocolGovernance(
                                 ethers.constants.AddressZero
                             )
-                    ).to.not.be.reverted;
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });
     });
 
     describe("#commitStagedProtocolGovernance", () => {
-        it("commits staged ProtocolGovernance resets staged ProtocolGovernance and ProtocolGovernanceTimestamp", async () => {
+        let stagedFixture: Function;
+        before(async () => {
+            stagedFixture = await deployments.createFixture(async () => {
+                await this.deploymentFixture();
+                await this.subject
+                    .connect(this.admin)
+                    .stageProtocolGovernance(
+                        this.newProtocolGovernance.address
+                    );
+            });
+        });
+        beforeEach(async () => {
+            await stagedFixture();
+            await sleep(this.governanceDelay);
+        });
+        it("commits staged ProtocolGovernance", async () => {
             await this.subject
                 .connect(this.admin)
-                .stageProtocolGovernance(this.newProtocolGovernance.address);
-            await sleep(
-                Number(this.governanceDelay)
+                .commitStagedProtocolGovernance();
+            expect(await this.subject.protocolGovernance()).to.be.equal(
+                this.newProtocolGovernance.address
             );
+        });
+        it("resets staged ProtocolGovernanceTimestamp", async () => {
             await this.subject
                 .connect(this.admin)
                 .commitStagedProtocolGovernance();
             expect(
                 await this.subject.stagedProtocolGovernanceTimestamp()
             ).to.be.equal(0);
+        });
+        it("resets staged ProtocolGovernance", async () => {
+            await this.subject
+                .connect(this.admin)
+                .commitStagedProtocolGovernance();
             expect(await this.subject.stagedProtocolGovernance()).to.be.equal(
                 ethers.constants.AddressZero
-            );
-            expect(await this.subject.protocolGovernance()).to.be.equal(
-                this.newProtocolGovernance.address
             );
         });
 
         describe("access control:", () => {
             it("allowed: ProtocolGovernance Admin", async () => {
-                await this.subject
-                    .connect(this.admin)
-                    .stageProtocolGovernance(
-                        this.newProtocolGovernance.address
-                    );
-                await sleep(
-                    Number(this.governanceDelay)
-                );
                 await expect(
                     this.subject
                         .connect(this.admin)
@@ -587,17 +698,10 @@ describe("VaultRegistry", function (this: TestContext<
             });
             it("denied: any other address", async () => {
                 let randomAddr = randomAddress();
-                await this.subject
-                    .connect(this.admin)
-                    .stageProtocolGovernance(
-                        this.newProtocolGovernance.address
-                    );
-                await sleep(
-                    Number(this.governanceDelay)
-                );
                 await withSigner(randomAddr, async (s) => {
-                    await expect(this.subject.commitStagedProtocolGovernance())
-                        .to.be.reverted;
+                    await expect(
+                        this.subject.commitStagedProtocolGovernance()
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
@@ -605,11 +709,14 @@ describe("VaultRegistry", function (this: TestContext<
         describe("edge cases", () => {
             describe("when nothing staged", () => {
                 it("reverts", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .commitStagedProtocolGovernance();
                     await expect(
                         this.subject
                             .connect(this.admin)
                             .commitStagedProtocolGovernance()
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.INIT);
                 });
             });
 
@@ -620,16 +727,12 @@ describe("VaultRegistry", function (this: TestContext<
                         .stageProtocolGovernance(
                             this.newProtocolGovernance.address
                         );
-                    await sleep(
-                        Number(
-                            this.governanceDelay
-                        ) / 2
-                    );
+                    await sleep(Number(this.governanceDelay) / 2);
                     await expect(
                         this.subject
                             .connect(this.admin)
                             .commitStagedProtocolGovernance()
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 });
 
                 it("reverts", async () => {
@@ -638,12 +741,12 @@ describe("VaultRegistry", function (this: TestContext<
                         .stageProtocolGovernance(
                             this.newProtocolGovernance.address
                         );
-                    await sleep(1);
+                    await sleep(Number(this.governanceDelay - 5));
                     await expect(
                         this.subject
                             .connect(this.admin)
                             .commitStagedProtocolGovernance()
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
                 });
             });
         });
@@ -668,18 +771,20 @@ describe("VaultRegistry", function (this: TestContext<
                         .adminApprove(this.ownerSigner.address, this.nft)
                 ).to.not.be.reverted;
             });
-            it("denied: any other address", async () => {
+            it("denied: any other address (denied deployer)", async () => {
                 let randomAddr = randomAddress();
                 await withSigner(randomAddr, async (s) => {
                     await expect(
                         this.subject
-                            .connect(randomAddr)
-                            .adminApprove(
-                                this.ownerSigner.address,
-                                this.nft
-                            )
-                    ).to.be.reverted;
+                            .connect(s)
+                            .adminApprove(this.ownerSigner.address, this.nft)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .adminApprove(this.ownerSigner.address, this.nft)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
         describe("edge cases", () => {
@@ -692,7 +797,7 @@ describe("VaultRegistry", function (this: TestContext<
                                 this.ownerSigner.address,
                                 this.anotherNft
                             )
-                    ).to.be.reverted;
+                    ).to.be.revertedWith(Exceptions.UNEXISTING_TOKEN);
                 });
             });
         });
@@ -706,6 +811,15 @@ describe("VaultRegistry", function (this: TestContext<
             expect(await this.subject.isLocked(this.nft)).to.be.false;
             await this.subject.connect(this.ownerSigner).lockNft(this.nft);
             expect(await this.subject.isLocked(this.nft)).to.be.true;
+            await expect(
+                this.subject
+                    .connect(this.ownerSigner)
+                    .transferFrom(
+                        this.ownerSigner.address,
+                        this.strategySigner.address,
+                        this.nft
+                    )
+            ).to.be.revertedWith(Exceptions.LOCK);
         });
 
         it("emits TokenLocked event", async () => {
@@ -717,17 +831,19 @@ describe("VaultRegistry", function (this: TestContext<
         describe("access control:", () => {
             it("allowed: NFT owner", async () => {
                 await expect(
-                    this.subject
-                        .connect(this.ownerSigner)
-                        .lockNft(this.nft)
+                    this.subject.connect(this.ownerSigner).lockNft(this.nft)
                 ).to.not.be.reverted;
             });
-            it("denied: any other address", async () => {
+            it("denied: any other address (denied Protocol Admin)", async () => {
                 let randomAddr = randomAddress();
                 await withSigner(randomAddr, async (s) => {
-                    await expect(this.subject.connect(s).lockNft(this.nft))
-                        .to.be.reverted;
+                    await expect(
+                        this.subject.connect(s).lockNft(this.nft)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
+                await expect(
+                    this.subject.connect(this.admin).lockNft(this.nft)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
 
@@ -737,17 +853,20 @@ describe("VaultRegistry", function (this: TestContext<
                     await this.subject
                         .connect(this.ownerSigner)
                         .lockNft(this.nft);
-                    expect(
-                        await this.subject.isLocked(this.nft)
-                    ).to.be.true;
+                    expect(await this.subject.isLocked(this.nft)).to.be.true;
+                    await expect(
+                        this.subject.connect(this.ownerSigner).lockNft(this.nft)
+                    ).to.not.be.reverted;
+                    expect(await this.subject.isLocked(this.nft)).to.be.true;
                     await expect(
                         this.subject
                             .connect(this.ownerSigner)
-                            .lockNft(this.nft)
-                    ).to.not.be.reverted;
-                    expect(
-                        await this.subject.isLocked(this.nft)
-                    ).to.be.true;
+                            .transferFrom(
+                                this.ownerSigner.address,
+                                this.strategySigner.address,
+                                this.nft
+                            )
+                    ).to.be.revertedWith(Exceptions.LOCK);
                 });
             });
         });

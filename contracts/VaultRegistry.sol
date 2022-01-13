@@ -92,6 +92,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
         require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(address(newProtocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stagedProtocolGovernance = newProtocolGovernance;
         _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
         emit StagedProtocolGovernance(tx.origin, msg.sender, newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
