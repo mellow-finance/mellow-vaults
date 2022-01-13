@@ -256,7 +256,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
     describe("#commitDelayedProtocolParams", () => {
         let stagedFixture: Function;
         before(async () => {
-            stagedFixture = await deployments.createFixture(async () => {
+            stagedFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 await this.subject
                     .connect(this.admin)
