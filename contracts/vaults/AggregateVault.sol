@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
@@ -76,7 +76,7 @@ contract AggregateVault is IAggregateVault, Vault {
             _subvaultNftsIndex[subvaultNft] = i + 1;
         }
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
-            ERC20 token = ERC20(vaultTokens_[i]);
+            IERC20Metadata token = IERC20Metadata(vaultTokens_[i]);
             _pullExistentials.push(10**(token.decimals() / 2));
         }
         _subvaultNfts = subvaultNfts_;
