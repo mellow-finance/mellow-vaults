@@ -98,11 +98,11 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
 
     function supportsInterface(bytes4 interfaceId)
         public
-        pure
-        override(AccessControlEnumerable, ERC165)
+        view
+        override(UnitPricesGovernance, IERC165, ERC165)
         returns (bool)
     {
-        return interfaceId == type(ERC165).interfaceId || interfaceId == type(IProtocolGovernance).interfaceId;
+        return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
 
     // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./utils/IDefaultAccessControl.sol";
 
-interface IUnitPricesGovernance is IDefaultAccessControl {
+interface IUnitPricesGovernance is IDefaultAccessControl, IERC165 {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @notice Estimated amount of token worth 1 USD staged for commit.

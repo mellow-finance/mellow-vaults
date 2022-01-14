@@ -16,6 +16,17 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
 
     constructor(address admin) DefaultAccessControl(admin) {}
 
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, AccessControlEnumerable)
+        returns (bool)
+    {
+        return (interfaceId == type(IUnitPricesGovernance).interfaceId) || super.supportsInterface(interfaceId);
+    }
+
     /// @inheritdoc IUnitPricesGovernance
     function stageUnitPrice(address token, uint256 value) external {
         _requireAdmin();
