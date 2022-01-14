@@ -8,7 +8,6 @@ import {
     sleepTo,
     withSigner,
 } from "./library/Helpers";
-import { setupDefaultContext, TestContext } from "./library/setup";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ProtocolGovernance, VaultRegistry } from "./types";
 import { Contract } from "ethers";
