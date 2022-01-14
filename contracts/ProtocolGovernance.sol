@@ -18,17 +18,28 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     mapping(address => uint256) public permissionMasks;
     
     uint256 public pendingParamsTimestamp;
-    Params public pendingParams;
-    Params public params;
 
     EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
+
+    Params private _pendingParams;
+    Params private _params;
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
     constructor(address admin) DefaultAccessControl(admin) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IProtocolGovernance
+    function pendingParams() public view returns (Params memory) {
+        return _pendingParams;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function params() public view returns (Params memory) {
+        return _params;
+    }
 
     /// @inheritdoc IProtocolGovernance
     function permissionAddresses() external view returns (address[] memory) {
@@ -62,34 +73,34 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
 
     /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
-        return ((permissionMasks[target] | params.forceAllowMask) & (1 << (permissionId))) != 0;
+        return ((permissionMasks[target] | _params.forceAllowMask) & (1 << (permissionId))) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
         uint256 submask = _permissionIdsToMask(permissionIds);
-        uint256 mask = permissionMasks[target] | params.forceAllowMask;
+        uint256 mask = permissionMasks[target] | _params.forceAllowMask;
         return mask & submask == submask;
     }
 
     /// @inheritdoc IProtocolGovernance
     function maxTokensPerVault() external view returns (uint256) {
-        return params.maxTokensPerVault;
+        return _params.maxTokensPerVault;
     }
 
     /// @inheritdoc IProtocolGovernance
     function governanceDelay() external view returns (uint256) {
-        return params.governanceDelay;
+        return _params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function protocolTreasury() external view returns (address) {
-        return params.protocolTreasury;
+        return _params.protocolTreasury;
     }
 
     /// @inheritdoc IProtocolGovernance
     function forceAllowMask() external view returns (uint256) {
-        return params.forceAllowMask;
+        return _params.forceAllowMask;
     }
 
     function supportsInterface(bytes4 interfaceId) public pure override(AccessControlEnumerable, ERC165) returns (bool) {
@@ -180,10 +191,10 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
             pendingParamsTimestamp != 0 && block.timestamp >= pendingParamsTimestamp,
             ExceptionsLibrary.TIMESTAMP
         );
-        params = pendingParams;
-        delete pendingParams;
+        _params = _pendingParams;
+        delete _pendingParams;
         delete pendingParamsTimestamp;
-        emit PendingParamsCommitted(tx.origin, msg.sender, params);
+        emit PendingParamsCommitted(tx.origin, msg.sender, _params);
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
@@ -194,7 +205,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         require(target != address(0), ExceptionsLibrary.NULL);
         _stagedPermissionGrantsAddresses.add(target);
         stagedPermissionGrantsMasks[target] = _permissionIdsToMask(permissionIds);
-        uint256 stagedToCommitAt = block.timestamp + params.governanceDelay;
+        uint256 stagedToCommitAt = block.timestamp + _params.governanceDelay;
         stagedPermissionGrantsTimestamps[target] = stagedToCommitAt;
         emit PermissionGrantsStaged(tx.origin, msg.sender, target, permissionIds, stagedToCommitAt);
     }
@@ -203,9 +214,9 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     function setPendingParams(IProtocolGovernance.Params calldata newParams) external {
         _requireAdmin();
         _validateGovernanceParams(newParams);
-        pendingParams = newParams;
-        pendingParamsTimestamp = block.timestamp + params.governanceDelay;
-        emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
+        _pendingParams = newParams;
+        pendingParamsTimestamp = block.timestamp + _params.governanceDelay;
+        emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, _pendingParams);
     }
 
     // -------------------------  PRIVATE, PURE, VIEW  ------------------------------

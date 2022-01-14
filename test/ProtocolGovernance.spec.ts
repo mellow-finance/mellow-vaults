@@ -415,7 +415,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .setPendingParams(params);
                         expect(
                             toObject(
-                                await (this.subject as Contract).pendingParams()
+                                await this.subject.pendingParams()
                             )
                         ).to.eql(params);
                         return true;
@@ -433,7 +433,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject.connect(this.admin).commitParams();
                         expect(
                             toObject(
-                                await (this.subject as Contract).pendingParams()
+                                await this.subject.pendingParams()
                             )
                         ).to.eql(emptyParams);
                         return true;
@@ -449,7 +449,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     async (signerAddress: string) => {
                         await withSigner(signerAddress, async (signer) => {
                             await expect(
-                                (this.subject as Contract)
+                                this.subject
                                     .connect(signer)
                                     .pendingParams()
                             ).to.not.be.reverted;
@@ -467,14 +467,12 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     { numRuns: RUNS.verylow },
                     paramsArb,
                     async (params: ParamsStruct) => {
-                        const initialParams = await (
-                            this.subject as Contract
-                        ).params();
+                        const initialParams = await this.subject.params();
                         await this.subject
                             .connect(this.admin)
                             .setPendingParams(params);
                         expect(
-                            await (this.subject as Contract).params()
+                            await this.subject.params()
                         ).to.eql(initialParams);
                         return true;
                     }
@@ -490,7 +488,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         expect(
-                            toObject(await (this.subject as Contract).params())
+                            toObject(await this.subject.params())
                         ).to.eql(params);
                         return true;
                     }
@@ -503,8 +501,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     async (signerAddress: string) => {
                         await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                (this.subject as Contract)
+                            await expect(this.subject
                                     .connect(signer)
                                     .params()
                             ).to.not.be.reverted;
@@ -915,13 +912,11 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 }
             );
             it("emits AllPermissionGrantsRolledBack event", async () => {
-                const tx = await this.subject
-                    .connect(this.admin)
-                    .rollbackAllPermissionGrants();
-                await expect(tx).to.emit(
-                    this.subject,
-                    "AllPermissionGrantsRolledBack"
-                );
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .rollbackAllPermissionGrants()
+                ).to.emit(this.subject, "AllPermissionGrantsRolledBack");
             });
 
             describe("access control", () => {
@@ -931,6 +926,23 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#commitPermissionGrants", () => {});
+        describe("#commitPermissionGrants", () => {
+            it("commits staged permission grants", async () => {});
+            it("emits PermissionGrantsCommitted event", async () => {});
+    
+            describe("edge cases", () => {
+                describe("when attempting to commit permissions for zero address", () => {
+                    it("reverts with NULL", async () => {});
+                });
+    
+                describe("when nothigh is staged for the given address", () => {});
+            });
+    
+            describe("access control", () => {
+                it("allowed: admin", async () => {});
+                it("denied: deployer", async () => {});
+                it("denied: random address", async () => {});
+            });
+        });
     }
 );
