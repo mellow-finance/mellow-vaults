@@ -81,8 +81,9 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// @param target The given address.
     function commitPermissionGrants(address target) external;
 
-    /// @notice Commites all staged permission grants for which governance delay passed
-    function commitAllPermissionGrantsSurpassedDelay() external;
+    /// @notice Commites all staged permission grants for which governance delay passed.
+    /// @return An array of addresses for which permission grants were committed.
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory);
 
     /// @notice Revoke permission instantly from the given address.
     /// @param target The given address.

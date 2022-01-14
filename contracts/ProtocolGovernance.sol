@@ -53,6 +53,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
                 addressesLength++;
             }
         }
+        // shrink to fit
         addresses = new address[](addressesLength);
         for (uint256 i = 0; i < addressesLength; i++) {
             addresses[i] = tempAddresses[i];
@@ -126,10 +127,12 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitAllPermissionGrantsSurpassedDelay() external {
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory) {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
-        for (uint256 i; i != length;) {
+        uint256 addressesLeft = length;
+        address[] memory tempAddresses = new address[](length);
+        for (uint256 i; i != addressesLeft;) {
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
                 permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
@@ -137,13 +140,20 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
                 delete stagedPermissionGrantsMasks[stagedAddress];
                 delete stagedPermissionGrantsTimestamps[stagedAddress];
                 _stagedPermissionGrantsAddresses.remove(stagedAddress);
-                --length;
+                tempAddresses[length - addressesLeft] = stagedAddress;
+                --addressesLeft;
                 emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
                 ++i;
             }
         }
-        // TODO: return an array of addresses that were committed
+        // shrink to fit
+        uint256 addressesToReturn = length - addressesLeft;
+        address[] memory result = new address[](addressesToReturn);
+        for (uint256 i; i != addressesToReturn; ++i) {
+            result[i] = tempAddresses[i];
+        }
+        return result;
     }
 
     /// @inheritdoc IProtocolGovernance
