@@ -18,7 +18,6 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     mapping(address => uint256) private _nftIndex;
     mapping(uint256 => address) private _vaultIndex;
     mapping(uint256 => bool) private _locks;
-    mapping(address => bool) private _vaultRegistered;
     uint256 private _topNft = 1;
 
     /// @notice Creates a new contract.
@@ -58,14 +57,13 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
             _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
             ExceptionsLibrary.FORBIDDEN
         );
-        require(!_vaultRegistered[vault], ExceptionsLibrary.DUPLICATE);
+        require(nftForVault(vault) > 0, ExceptionsLibrary.DUPLICATE);
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
         _nftIndex[vault] = nft;
         _vaults.push(vault);
         _topNft += 1;
-        _vaultRegistered[vault] = true;
         emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
     }
 
