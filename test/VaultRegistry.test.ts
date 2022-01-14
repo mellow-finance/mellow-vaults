@@ -15,9 +15,9 @@ import { Contract } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { address, pit, RUNS } from "./library/property";
-import { Arbitrary, integer } from "fast-check";
+import { integer } from "fast-check";
 import Exceptions from "./library/Exceptions";
-import { boolean } from "hardhat/internal/core/params/argumentTypes";
+import { VAULT_INTERFACE } from "./library/Constants";
 
 type CustomContext = {
     strategySigner: SignerWithAddress;
@@ -81,23 +81,23 @@ describe("VaultRegistry", function (this: TestContext<
                     address
                 );
 
-                await deployments.deploy("MockERC165Vault", {
+                await deployments.deploy("MockERC165", {
                     from: this.deployer.address,
-                    contract: "MockERC165Vault",
+                    contract: "MockERC165",
                     args: [],
                     autoMine: true,
                 });
-                this.erc165Mock = await ethers.getContract("MockERC165Vault");
-                await deployments.deploy("MockERC165Vault", {
+                this.erc165Mock = await ethers.getContract("MockERC165");
+                await deployments.deploy("MockERC165", {
                     from: this.deployer.address,
-                    contract: "MockERC165Vault",
+                    contract: "MockERC165",
                     args: [],
                     autoMine: true,
                 });
                 this.anotherERC165Mock = await ethers.getContract(
-                    "MockERC165Vault"
+                    "MockERC165"
                 );
-                await this.erc165Mock.allowInterfaceIVault();
+                await this.erc165Mock.allowInterfaceId(VAULT_INTERFACE);
                 this.nft = Number(
                     await this.subject
                         .connect(this.allowedRegisterVaultSigner)
@@ -165,7 +165,7 @@ describe("VaultRegistry", function (this: TestContext<
             expect(await this.subject.vaults()).to.deep.equal([
                 this.erc165Mock.address,
             ]);
-            await this.anotherERC165Mock.allowInterfaceIVault();
+            await this.anotherERC165Mock.allowInterfaceId(VAULT_INTERFACE);
             this.subject
                 .connect(this.allowedRegisterVaultSigner)
                 .registerVault(
@@ -196,7 +196,7 @@ describe("VaultRegistry", function (this: TestContext<
             expect(await this.subject.vaultForNft(this.anotherNft)).to.equal(
                 ethers.constants.AddressZero
             );
-            await this.anotherERC165Mock.allowInterfaceIVault();
+            await this.anotherERC165Mock.allowInterfaceId(VAULT_INTERFACE);
             this.anotherNft = Number(
                 await this.subject
                     .connect(this.allowedRegisterVaultSigner)
@@ -434,16 +434,16 @@ describe("VaultRegistry", function (this: TestContext<
                         await this.subject.vaultsCount()
                     );
                     for (var i = 0; i < vaultsCount; ++i) {
-                        await deployments.deploy("MockERC165Vault", {
+                        await deployments.deploy("MockERC165", {
                             from: this.deployer.address,
-                            contract: "MockERC165Vault",
+                            contract: "MockERC165",
                             args: [],
                             autoMine: true,
                         });
                         let newMock = await ethers.getContract(
-                            "MockERC165Vault"
+                            "MockERC165"
                         );
-                        await newMock.allowInterfaceIVault();
+                        await newMock.allowInterfaceId(VAULT_INTERFACE);
 
                         this.subject
                             .connect(this.allowedRegisterVaultSigner)
@@ -472,7 +472,7 @@ describe("VaultRegistry", function (this: TestContext<
                     let oldVaultsCount = Number(
                         await this.subject.vaultsCount()
                     );
-                    await this.anotherERC165Mock.allowInterfaceIVault();
+                    await this.anotherERC165Mock.allowInterfaceId(VAULT_INTERFACE);
                     this.subject
                         .connect(this.allowedRegisterVaultSigner)
                         .registerVault(
@@ -572,7 +572,7 @@ describe("VaultRegistry", function (this: TestContext<
         describe("edge cases", () => {
             describe("when address doesn't conform to IVault interface (IERC165)", () => {
                 it("reverts", async () => {
-                    await this.anotherERC165Mock.denyInterfaceIVault();
+                    await this.anotherERC165Mock.denyInterfaceId(VAULT_INTERFACE);
                     await expect(
                         this.subject
                             .connect(this.allowedRegisterVaultSigner)
