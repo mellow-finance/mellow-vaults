@@ -189,7 +189,7 @@ export function vaultGovernanceBehavior<
             const vault: IVault = await ethers.getContractAt("IVault", address);
             expect(nft).to.eq(await vault.nft());
         });
-        it("vault sets AprrovedForAll for VaultRegistry", async () => {
+        it("vault sets ApprovedForAll for VaultRegistry", async () => {
             const address = await this.vaultRegistry.vaultForNft(nft);
             expect(true).to.eq(
                 await this.vaultRegistry.isApprovedForAll(

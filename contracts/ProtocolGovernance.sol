@@ -187,8 +187,9 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
         _requireAdmin();
+        require(pendingParamsTimestamp != 0, ExceptionsLibrary.NULL);
         require(
-            pendingParamsTimestamp != 0 && block.timestamp >= pendingParamsTimestamp,
+            block.timestamp >= pendingParamsTimestamp,
             ExceptionsLibrary.TIMESTAMP
         );
         _params = _pendingParams;
@@ -222,7 +223,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
-        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
+        require(newParams.maxTokensPerVault != 0 && newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
         require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 

@@ -542,44 +542,44 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         return true;
                     }
                 );
-                // pit(
-                //     `doesn't update when committed permission grant for an existing address`,
-                //     { numRuns: RUNS.verylow },
-                //     address.filter((x) => x != ethers.constants.AddressZero),
-                //     uint8.filter((x) => x.lt(100)),
-                //     uint8.filter((x) => x.gte(100)),
-                //     async (
-                //         target: string,
-                //         permissionId: BigNumber,
-                //         anotherPermissionId: BigNumber
-                //     ) => {
-                //         const initialPermissionAddresses =
-                //             await this.subject.permissionAddresses();
-                //         await this.subject
-                //             .connect(this.admin)
-                //             .stagePermissionGrants(target, [permissionId]);
-                //         await sleep(await this.subject.governanceDelay());
-                //         await this.subject
-                //             .connect(this.admin)
-                //             .commitPermissionGrants(target);
-                //         expect(await this.subject.permissionAddresses()).to.eql(
-                //             initialPermissionAddresses.concat([target])
-                //         );
-                //         await this.subject
-                //             .connect(this.admin)
-                //             .stagePermissionGrants(target, [
-                //                 anotherPermissionId,
-                //             ]);
-                //         await sleep(await this.subject.governanceDelay());
-                //         await this.subject
-                //             .connect(this.admin)
-                //             .commitPermissionGrants(target);
-                //         expect(await this.subject.permissionAddresses()).to.eql(
-                //             initialPermissionAddresses.concat([target])
-                //         );
-                //         return true;
-                //     }
-                // );
+                pit(
+                    `doesn't update when committed permission grant for an existing address`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x != ethers.constants.AddressZero),
+                    uint8.filter((x) => x.lt(100)),
+                    uint8.filter((x) => x.gte(100)),
+                    async (
+                        target: string,
+                        permissionId: BigNumber,
+                        anotherPermissionId: BigNumber
+                    ) => {
+                        const initialPermissionAddresses =
+                            await this.subject.permissionAddresses();
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(target, [permissionId]);
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitPermissionGrants(target);
+                        expect(await this.subject.permissionAddresses()).to.eql(
+                            initialPermissionAddresses.concat([target])
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(target, [
+                                anotherPermissionId,
+                            ]);
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitPermissionGrants(target);
+                        expect(await this.subject.permissionAddresses()).to.eql(
+                            initialPermissionAddresses.concat([target])
+                        );
+                        return true;
+                    }
+                );
             });
 
             describe("access control", () => {
@@ -1061,6 +1061,29 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         ).to.be.revertedWith(Exceptions.NULL);
                     });
                 });
+
+                describe("when attempting to commit permissions too early", () => {
+                    pit(
+                        `reverts with ${Exceptions.TIMESTAMP}`,
+                        { numRuns: 1 },
+                        address.filter(
+                            (x) => x !== ethers.constants.AddressZero
+                        ),
+                        uint8,
+                        async (target: string, permissionId: BigNumber) => {
+                            await this.subject
+                                .connect(this.admin)
+                                .stagePermissionGrants(target, [permissionId]);
+                            await sleep(1);
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .commitPermissionGrants(target)
+                            ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                            return true;
+                        }
+                    );
+                });
             });
 
             describe("access control", () => {
@@ -1124,7 +1147,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 { numRuns: 1 },
                 paramsArb,
                 async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).setPendingParams(params);
+                    await this.subject
+                        .connect(this.admin)
+                        .setPendingParams(params);
                     await sleep(await this.subject.governanceDelay());
                     await expect(
                         this.subject.connect(this.admin).commitParams()
@@ -1132,6 +1157,35 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     return true;
                 }
             );
+
+            describe("edge cases", () => {
+                describe("when attempting to commit params too early", () => {
+                    pit(
+                        `reverts with ${Exceptions.TIMESTAMP}`,
+                        { numRuns: 1 },
+                        paramsArb,
+                        async (params: ParamsStruct) => {
+                            await this.subject
+                                .connect(this.admin)
+                                .setPendingParams(params);
+                            await sleep(1);
+                            await expect(
+                                this.subject.connect(this.admin).commitParams()
+                            ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                            return true;
+                        }
+                    );
+                });
+
+                describe("when attempting to commit params without setting pending params", () => {
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
+                        await expect(
+                            this.subject.connect(this.admin).commitParams()
+                        ).to.be.revertedWith(Exceptions.NULL);
+                        return true;
+                    });
+                });
+            });
 
             describe("access control", () => {
                 it("allowed: protocol admin", async () => {});
@@ -1187,7 +1241,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
         describe("#setPendingParams", () => {
             pit(
-                `emits ParamsCommitted event`,
+                `emits PendingParamsSet event`,
                 { numRuns: RUNS.verylow },
                 paramsArb,
                 async (params: ParamsStruct) => {
@@ -1195,7 +1249,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         this.subject
                             .connect(this.admin)
                             .setPendingParams(params)
-                    ).to.emit(this.subject, "ParamsCommitted");
+                    ).to.emit(this.subject, "PendingParamsSet");
                     return true;
                 }
             );
@@ -1210,7 +1264,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             async (params: ParamsStruct) => {
                                 params.maxTokensPerVault = BigNumber.from(0);
                                 await expect(
-                                    this.subject.connect(this.admin).setPendingParams(params)
+                                    this.subject
+                                        .connect(this.admin)
+                                        .setPendingParams(params)
                                 ).to.be.revertedWith(Exceptions.NULL);
                                 return true;
                             }
@@ -1225,7 +1281,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             async (params: ParamsStruct) => {
                                 params.governanceDelay = BigNumber.from(0);
                                 await expect(
-                                    this.subject.connect(this.admin).setPendingParams(params)
+                                    this.subject
+                                        .connect(this.admin)
+                                        .setPendingParams(params)
                                 ).to.be.revertedWith(Exceptions.NULL);
                                 return true;
                             }
@@ -1242,7 +1300,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                     MAX_GOVERNANCE_DELAY.add(1)
                                 );
                                 await expect(
-                                    this.subject.connect(this.admin).setPendingParams(params)
+                                    this.subject
+                                        .connect(this.admin)
+                                        .setPendingParams(params)
                                 ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                                 return true;
                             }
