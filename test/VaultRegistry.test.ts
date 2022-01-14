@@ -162,7 +162,9 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                 expect(await this.subject.vaults()).to.deep.equal([
                     this.erc165Mock.address,
                 ]);
-                await this.anotherERC165Mock.allowInterfaceId(VAULT_INTERFACE_ID);
+                await this.anotherERC165Mock.allowInterfaceId(
+                    VAULT_INTERFACE_ID
+                );
                 this.subject
                     .connect(this.allowedRegisterVaultSigner)
                     .registerVault(
@@ -193,7 +195,9 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                 expect(await this.subject.vaultForNft(this.randomNft)).to.equal(
                     ethers.constants.AddressZero
                 );
-                await this.anotherERC165Mock.allowInterfaceId(VAULT_INTERFACE_ID);
+                await this.anotherERC165Mock.allowInterfaceId(
+                    VAULT_INTERFACE_ID
+                );
                 this.randomNft = Number(
                     await this.subject
                         .connect(this.allowedRegisterVaultSigner)
