@@ -414,9 +414,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .connect(this.admin)
                             .setPendingParams(params);
                         expect(
-                            toObject(
-                                await this.subject.pendingParams()
-                            )
+                            toObject(await this.subject.pendingParams())
                         ).to.eql(params);
                         return true;
                     }
@@ -432,9 +430,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         expect(
-                            toObject(
-                                await this.subject.pendingParams()
-                            )
+                            toObject(await this.subject.pendingParams())
                         ).to.eql(emptyParams);
                         return true;
                     }
@@ -449,9 +445,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     async (signerAddress: string) => {
                         await withSigner(signerAddress, async (signer) => {
                             await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .pendingParams()
+                                this.subject.connect(signer).pendingParams()
                             ).to.not.be.reverted;
                         });
                         return true;
@@ -471,9 +465,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject
                             .connect(this.admin)
                             .setPendingParams(params);
-                        expect(
-                            await this.subject.params()
-                        ).to.eql(initialParams);
+                        expect(await this.subject.params()).to.eql(
+                            initialParams
+                        );
                         return true;
                     }
                 );
@@ -487,9 +481,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .setPendingParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
-                        expect(
-                            toObject(await this.subject.params())
-                        ).to.eql(params);
+                        expect(toObject(await this.subject.params())).to.eql(
+                            params
+                        );
                         return true;
                     }
                 );
@@ -501,10 +495,8 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     async (signerAddress: string) => {
                         await withSigner(signerAddress, async (signer) => {
-                            await expect(this.subject
-                                    .connect(signer)
-                                    .params()
-                            ).to.not.be.reverted;
+                            await expect(this.subject.connect(signer).params())
+                                .to.not.be.reverted;
                         });
                         return true;
                     }
@@ -929,15 +921,15 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         describe("#commitPermissionGrants", () => {
             it("commits staged permission grants", async () => {});
             it("emits PermissionGrantsCommitted event", async () => {});
-    
+
             describe("edge cases", () => {
                 describe("when attempting to commit permissions for zero address", () => {
                     it("reverts with NULL", async () => {});
                 });
-    
+
                 describe("when nothigh is staged for the given address", () => {});
             });
-    
+
             describe("access control", () => {
                 it("allowed: admin", async () => {});
                 it("denied: deployer", async () => {});
