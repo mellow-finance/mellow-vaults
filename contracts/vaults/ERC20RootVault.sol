@@ -19,6 +19,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     uint256[] private _lpPriceHighWaterMarks;
     uint256 public lastFeeCharge;
     EnumerableSet.AddressSet _depositorsAllowlist;
+    uint256 public totalWithdrawnAmountsTimestamp;
+    uint256[] public totalWithdrawnAmounts;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -120,6 +122,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
+        _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, true);
         _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
@@ -287,6 +290,27 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
             _mint(treasury, toMint);
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
+        }
+    }
+
+    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
+        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
+        uint256 timestamp = block.timestamp;
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        if (timestamp != totalWithdrawnAmountsTimestamp) {
+            totalWithdrawnAmountsTimestamp = timestamp;
+        } else {
+            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+                withdrawn[i] = totalWithdrawnAmounts[i];
+            }
+        }
+        for (uint256 i = 0; i < tokenAmounts.length; i++) {
+            withdrawn[i] += tokenAmounts[i];
+            require(
+                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
+                ExceptionsLibrary.LIMIT_OVERFLOW
+            );
+            totalWithdrawnAmounts[i] = withdrawn[i];
         }
     }
 
