@@ -15,6 +15,7 @@ import { Contract } from "ethers";
 import { Address } from "hardhat-deploy/dist/types";
 import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { address, pit, RUNS } from "./library/property";
+import { Arbitrary, integer } from "fast-check";
 import Exceptions from "./library/Exceptions";
 import { boolean } from "hardhat/internal/core/params/argumentTypes";
 
@@ -423,24 +424,47 @@ describe("VaultRegistry", function (this: TestContext<
             });
         });
 
-        // describe("properties", () => {
-        //     let randomNumber = Math.round(Math.random() * 10);
-        //     pit("@property: when N new vaults have been registered, vaults count will be increased by N", {numRuns: RUNS.verylow}, delay, async (delay: number, params: P) : Promise<boolean> => {
-        //         await deployments.deploy("MockERC165Vault", {
-        //             from: this.deployer.address,
-        //             contract: "MockERC165Vault",
-        //             args: [],
-        //             autoMine: true,
-        //         });
-        //         let newMock = await ethers.getContract(
-        //             "MockERC165Vault",
-        //         );
-        //         await newMock.allowInterfaceIVault();
-        //         this.nft = Number(await this.subject.connect(this.allowedRegisterVaultSigner).callStatic.registerVault(newMock.address, this.ownerSigner.address));
-        //         this.subject.connect(this.allowedRegisterVaultSigner).registerVault(newMock.address, this.ownerSigner.address);
-        //         return true;
-        //     });
-        // });
+        describe("properties", () => {
+            pit(
+                "@property: when N new vaults have been registered, vaults count will be increased by N",
+                { numRuns: RUNS.verylow },
+                integer({ min: 1, max: 5 }),
+                async (vaultsCount: number): Promise<boolean> => {
+                    let oldVaultsCount = Number(
+                        await this.subject.vaultsCount()
+                    );
+                    for (var i = 0; i < vaultsCount; ++i) {
+                        await deployments.deploy("MockERC165Vault", {
+                            from: this.deployer.address,
+                            contract: "MockERC165Vault",
+                            args: [],
+                            autoMine: true,
+                        });
+                        let newMock = await ethers.getContract(
+                            "MockERC165Vault"
+                        );
+                        await newMock.allowInterfaceIVault();
+
+                        this.subject
+                            .connect(this.allowedRegisterVaultSigner)
+                            .registerVault(
+                                newMock.address,
+                                this.ownerSigner.address
+                            );
+                    }
+                    let newVaultsCount = Number(
+                        await this.subject.vaultsCount()
+                    );
+                    expect(newVaultsCount - oldVaultsCount).to.be.equal(
+                        vaultsCount
+                    );
+                    expect((await this.subject.vaults()).length).to.be.equal(
+                        await this.subject.vaultsCount()
+                    );
+                    return true;
+                }
+            );
+        });
 
         describe("edge cases", () => {
             describe("when new vault is registered", () => {
@@ -497,23 +521,26 @@ describe("VaultRegistry", function (this: TestContext<
         });
 
         describe("properties", () => {
-            it("@property: minted NFT equals to vaultRegistry#vaultsCount", async () => {
-                const newNft = await this.subject
-                    .connect(this.allowedRegisterVaultSigner)
-                    .callStatic.registerVault(
-                        this.anotherERC165Mock.address,
-                        this.ownerSigner.address
-                    );
-                this.subject
-                    .connect(this.allowedRegisterVaultSigner)
-                    .registerVault(
-                        this.anotherERC165Mock.address,
-                        this.ownerSigner.address
-                    );
-                expect(Number(await this.subject.vaultsCount())).to.be.equal(
-                    Number(newNft)
-                );
-            });
+            pit(
+                "@property: minted NFT equals to vaultRegistry#vaultsCount",
+                { numRuns: 1 },
+                address.filter((x) => x != ethers.constants.AddressZero),
+                async (address: Address): Promise<boolean> => {
+                    const newNft = await this.subject
+                        .connect(this.allowedRegisterVaultSigner)
+                        .callStatic.registerVault(
+                            this.anotherERC165Mock.address,
+                            address
+                        );
+                    this.subject
+                        .connect(this.allowedRegisterVaultSigner)
+                        .registerVault(this.anotherERC165Mock.address, address);
+                    expect(
+                        Number(await this.subject.vaultsCount())
+                    ).to.be.equal(Number(newNft));
+                    return true;
+                }
+            );
         });
 
         describe("access control:", () => {
