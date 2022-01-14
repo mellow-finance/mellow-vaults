@@ -74,6 +74,11 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// This bitmask is xored with ordinary mask.
     function forceAllowMask() external view returns (uint256);
 
+    /// @notice Withdraw limit per token per block.
+    /// @param token Address of the token
+    /// @return Withdraw limit per token per block
+    function withdrawLimit(address token) external view returns (uint256);
+
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @notice Rollback all staged granted permission grant.

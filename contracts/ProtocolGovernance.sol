@@ -91,6 +91,11 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         return params.forceAllowMask;
     }
 
+    /// @inheritdoc IProtocolGovernance
+    function withdrawLimit(address token) external view returns (uint256) {
+        return params.withdrawLimit * unitPrices[token];
+    }
+
     function supportsInterface(bytes4 interfaceId)
         public
         pure
