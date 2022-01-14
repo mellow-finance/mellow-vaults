@@ -27,4 +27,8 @@ contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable 
     function isAdmin(address sender) public view returns (bool) {
         return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
     }
+
+    function _requireAdmin() internal view {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    }
 }
