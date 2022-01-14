@@ -57,7 +57,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
             _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
             ExceptionsLibrary.FORBIDDEN
         );
-        require(nftForVault(vault) > 0, ExceptionsLibrary.DUPLICATE);
+        require(nftForVault(vault) == 0, ExceptionsLibrary.DUPLICATE);
         nft = _topNft;
         _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
