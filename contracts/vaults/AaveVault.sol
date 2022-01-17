@@ -49,6 +49,10 @@ contract AaveVault is IAaveVault, IntegrationVault {
         }
     }
 
+    function lendingPool() external view returns (ILendingPool) {
+        return _lendingPool;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Update all tvls to current aToken balances.
