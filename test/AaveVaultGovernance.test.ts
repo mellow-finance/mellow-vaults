@@ -113,11 +113,11 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
         });
 
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-            tuple(address, integer({ min: 1, max: 2 ** 6 })).map(
+            tuple(address, integer({ min: 1, max: 99 })).map(
                 ([lendingPool, num]) => ({
                     lendingPool,
                     estimatedAaveAPY: BigNumber.from(num).mul(
-                        BigNumber.from(2).pow(94)
+                        BigNumber.from(10).pow(7)
                     ),
                 })
             );
@@ -148,7 +148,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                         lendingPool:
                                             ethers.constants.AddressZero,
                                         estimatedAaveAPY:
-                                            BigNumber.from(2).pow(98),
+                                            BigNumber.from(10).pow(8),
                                     },
                                 ],
                                 autoMine: true,
