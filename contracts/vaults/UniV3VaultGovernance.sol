@@ -39,6 +39,10 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IUniV3VaultGovernance).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IUniV3VaultGovernance

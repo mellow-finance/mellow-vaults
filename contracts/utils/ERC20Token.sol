@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity =0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
-contract ERC20Token {
+contract ERC20Token is IERC20 {
     bytes32 public constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
     uint8 public constant decimals = 18;
@@ -140,7 +141,4 @@ contract ERC20Token {
     }
 
     // --------------------------  EVENTS  --------------------------
-
-    event Transfer(address indexed from, address indexed to, uint256 amount);
-    event Approval(address indexed owner, address indexed spender, uint256 amount);
 }

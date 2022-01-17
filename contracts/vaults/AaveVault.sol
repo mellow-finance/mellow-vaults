@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
 import "../interfaces/external/aave/ILendingPool.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../interfaces/vaults/IVault.sol";
@@ -51,6 +53,10 @@ contract AaveVault is IAaveVault, IntegrationVault {
         return _lendingPool;
     }
 
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Update all tvls to current aToken balances.
@@ -81,7 +87,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _updateTvls() internal {
+    function _updateTvls() private {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));

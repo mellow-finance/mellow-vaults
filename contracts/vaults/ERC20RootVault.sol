@@ -28,6 +28,16 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         return _depositorsAllowlist.values();
     }
 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, AggregateVault)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || type(IERC20RootVault).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     function addDepositorsToAllowlist(address[] calldata depositors) external {

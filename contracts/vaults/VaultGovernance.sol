@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
@@ -11,7 +12,7 @@ import "../libraries/PermissionIdsLibrary.sol";
 /// @dev The contract should be overriden by the concrete VaultGovernance,
 /// define different params structs and use abi.decode / abi.encode to serialize
 /// to bytes in this contract. It also should emit events on params change.
-abstract contract VaultGovernance is IVaultGovernance {
+abstract contract VaultGovernance is IVaultGovernance, ERC165 {
     InternalParams internal _internalParams;
     InternalParams private _stagedInternalParams;
     uint256 internal _internalParamsTimestamp;
@@ -69,6 +70,10 @@ abstract contract VaultGovernance is IVaultGovernance {
     /// @inheritdoc IVaultGovernance
     function stagedInternalParams() external view returns (InternalParams memory) {
         return _stagedInternalParams;
+    }
+
+    function supportsInterface(bytes4 interfaceID) public view virtual override(ERC165) returns (bool) {
+        return super.supportsInterface(interfaceID) || interfaceID == type(IVaultGovernance).interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

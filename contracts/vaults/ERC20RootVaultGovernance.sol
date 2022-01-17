@@ -98,6 +98,10 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernance).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IERC20RootVaultGovernance
