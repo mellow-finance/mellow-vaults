@@ -314,6 +314,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
+    // ---------------------------------- EVENTS -------------------------------------
+
     /// @notice Emitted when management fees are charged
     /// @param treasury Treasury receiver of the fee
     /// @param feeRate Fee percent applied denominated in 10 ** 9

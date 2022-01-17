@@ -108,5 +108,12 @@ abstract contract Vault is IVault, ERC165 {
         }
     }
 
+    // ---------------------------------- EVENTS -------------------------------------
+
+    /// @notice Emitted when Vault is intialized
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param vaultTokens_ ERC20 tokens under the vault management
+    /// @param nft_ VaultRegistry NFT assigned to the vault
     event Initialized(address indexed origin, address indexed sender, address[] vaultTokens_, uint256 nft_);
 }

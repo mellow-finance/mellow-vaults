@@ -152,7 +152,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         );
         collectedEarnings[0] = collectedEarnings0;
         collectedEarnings[1] = collectedEarnings1;
-        emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
+        emit CollectedEarnings(tx.origin, msg.sender, to, collectedEarnings0, collectedEarnings1);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -268,5 +268,19 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return Pair({a0: amount0Collected, a1: amount1Collected});
     }
 
-    event CollectedEarnings(address indexed origin, address indexed to, uint256 amount0, uint256 amount1);
+    // ---------------------------------- EVENTS -------------------------------------
+
+    /// @notice Emitted when earnings are collected
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param to Receiver of the fees
+    /// @param amount0 Amount of token0 collected
+    /// @param amount1 Amount of token1 collected
+    event CollectedEarnings(
+        address indexed origin,
+        address indexed sender,
+        address indexed to,
+        uint256 amount0,
+        uint256 amount1
+    );
 }

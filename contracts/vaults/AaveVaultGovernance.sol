@@ -63,6 +63,8 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         vault.initialize(nft, vaultTokens_);
     }
 
+    // ---------------------------------- EVENTS -------------------------------------
+
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)

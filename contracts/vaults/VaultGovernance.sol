@@ -204,6 +204,8 @@ abstract contract VaultGovernance is IVaultGovernance {
         _protocolParams = params;
     }
 
+    // ---------------------------------- EVENTS -------------------------------------
+
     /// @notice Emitted when InternalParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)

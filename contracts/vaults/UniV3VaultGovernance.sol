@@ -69,6 +69,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         vault.initialize(nft, vaultTokens_, fee_);
     }
 
+    // ---------------------------------- EVENTS -------------------------------------
+
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)

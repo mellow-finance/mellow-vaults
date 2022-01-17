@@ -182,6 +182,8 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_);
     }
 
+    // ---------------------------------- EVENTS -------------------------------------
+
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
