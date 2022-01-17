@@ -3,18 +3,24 @@ pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
+    uint256 public immutable MAX_ESTIMATED_AAVE_APY;
+
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        MAX_ESTIMATED_AAVE_APY = 100 * CommonLibrary.DENOMINATOR;
         require(address(delayedProtocolParams_.lendingPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.estimatedAaveAPYX96 != 0, ExceptionsLibrary.VALUE_ZERO);
+        require(delayedProtocolParams_.estimatedAaveAPY != 0, ExceptionsLibrary.VALUE_ZERO);
+        require(delayedProtocolParams_.estimatedAaveAPY <= MAX_ESTIMATED_AAVE_APY, ExceptionsLibrary.LIMIT_OVERFLOW);
+
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -29,7 +35,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     /// @inheritdoc IAaveVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPYX96: 0});
+            return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPY: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
@@ -38,6 +44,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
 
     /// @inheritdoc IAaveVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        require(params.estimatedAaveAPY <= MAX_ESTIMATED_AAVE_APY, ExceptionsLibrary.LIMIT_OVERFLOW);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
