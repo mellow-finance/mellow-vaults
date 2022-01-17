@@ -63,7 +63,7 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
         vault.initialize(nft, vaultTokens_);
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)

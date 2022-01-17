@@ -61,7 +61,7 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
         emit UnitPriceCommitted(tx.origin, msg.sender, token, price);
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice UnitPrice staged for commit
     /// @param origin Origin of the transaction (tx.origin)

@@ -108,7 +108,7 @@ abstract contract Vault is IVault, ERC165 {
         }
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when Vault is intialized
     /// @param origin Origin of the transaction (tx.origin)

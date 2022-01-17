@@ -14,6 +14,8 @@ contract UniV2Oracle is IUniV2Oracle {
         factory = factory_;
     }
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     /// @inheritdoc IUniV2Oracle
     function spotPrice(address token0, address token1) external view returns (uint256 spotPriceX96) {
         require(token1 > token0, ExceptionsLibrary.INVARIANT);

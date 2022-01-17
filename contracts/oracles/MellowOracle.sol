@@ -23,6 +23,8 @@ contract MellowOracle is IMellowOracle {
         chainlinkOracle = chainlinkOracle_;
     }
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     /// @inheritdoc IMellowOracle
     function spotPrice(address token0, address token1)
         external

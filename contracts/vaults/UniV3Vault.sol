@@ -268,7 +268,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return Pair({a0: amount0Collected, a1: amount1Collected});
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when earnings are collected
     /// @param origin Origin of the transaction (tx.origin)

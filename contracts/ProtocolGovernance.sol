@@ -223,7 +223,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         }
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new permissions are staged to be granted for speceific address.
     /// @param origin Origin of the transaction (tx.origin)

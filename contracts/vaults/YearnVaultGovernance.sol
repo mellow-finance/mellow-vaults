@@ -85,7 +85,7 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         vault.initialize(nft, vaultTokens_);
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new yToken is set
     /// @param origin Origin of the transaction (tx.origin)

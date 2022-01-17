@@ -199,7 +199,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
 
     function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted on successful push
     /// @param tokenAmounts The amounts of tokens to pushed
