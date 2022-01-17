@@ -49,6 +49,10 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return VaultGovernance.supportsInterface(interfaceId) || type(IYearnVaultGovernance).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IYearnVaultGovernance
