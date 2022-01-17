@@ -26,7 +26,7 @@ contract UniV2Oracle is IUniV2Oracle, ERC165 {
         spotPriceX96 = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return ERC165.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
     }
 }

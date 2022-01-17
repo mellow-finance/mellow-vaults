@@ -141,7 +141,4 @@ contract ERC20Token is IERC20 {
     }
 
     // --------------------------  EVENTS  --------------------------
-
-    // event Transfer(address indexed from, address indexed to, uint256 amount);
-    // event Approval(address indexed owner, address indexed spender, uint256 amount);
 }

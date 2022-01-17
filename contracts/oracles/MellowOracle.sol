@@ -71,7 +71,7 @@ contract MellowOracle is IMellowOracle, ERC165 {
         maxPriceX96 = values[values.length - 1];
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return ERC165.supportsInterface(interfaceId) || type(IMellowOracle).interfaceId == interfaceId;
     }
 }

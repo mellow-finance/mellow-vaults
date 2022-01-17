@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "../external/chainlink/IAggregatorV3.sol";
 
-interface IChainlinkOracle is IERC165 {
+interface IChainlinkOracle {
     /// @notice Checks if token can be queried for price
     /// @param token token address
     /// @return `true` if token is allowed, `false` o/w

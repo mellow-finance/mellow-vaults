@@ -55,12 +55,7 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
         spotPriceX96 = FullMath.mulDiv(spotSqrtPriceX96, spotSqrtPriceX96, CommonLibrary.Q96);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(IERC165, AccessControlEnumerable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return AccessControlEnumerable.supportsInterface(interfaceId) || type(IUniV3Oracle).interfaceId == interfaceId;
     }
 

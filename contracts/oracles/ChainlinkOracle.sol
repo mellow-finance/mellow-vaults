@@ -48,12 +48,7 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
         priceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(IERC165, AccessControlEnumerable)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return
             AccessControlEnumerable.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
     }
