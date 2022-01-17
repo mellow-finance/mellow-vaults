@@ -63,8 +63,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                 internalParams,
                                 {
                                     lendingPool,
-                                    estimatedAaveAPYX96:
-                                        BigNumber.from(2).pow(98),
+                                    estimatedAaveAPY: BigNumber.from(2).pow(98),
                                 },
                             ],
                             autoMine: true,
@@ -115,7 +114,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
             tuple(address, integer({ min: 1, max: 2 ** 6 })).map(
                 ([lendingPool, num]) => ({
                     lendingPool,
-                    estimatedAaveAPYX96: BigNumber.from(num).mul(
+                    estimatedAaveAPY: BigNumber.from(num).mul(
                         BigNumber.from(2).pow(94)
                     ),
                 })
@@ -146,7 +145,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                     {
                                         lendingPool:
                                             ethers.constants.AddressZero,
-                                        estimatedAaveAPYX96:
+                                        estimatedAaveAPY:
                                             BigNumber.from(2).pow(98),
                                     },
                                 ],
@@ -155,7 +154,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
                 });
-                describe("when estimatedAaveAPYX96 is 0", () => {
+                describe("when estimatedAaveAPY is 0", () => {
                     it("reverts", async () => {
                         await deployments.fixture();
                         const lendingPoolAddress = (await getNamedAccounts())
@@ -173,7 +172,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                     },
                                     {
                                         lendingPool: lendingPoolAddress,
-                                        estimatedAaveAPYX96: 0,
+                                        estimatedAaveAPY: 0,
                                     },
                                 ],
                                 autoMine: true,
