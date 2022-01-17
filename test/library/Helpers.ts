@@ -135,7 +135,7 @@ export async function depositW9(
     amount: BigNumberish
 ): Promise<void> {
     const { weth } = await getNamedAccounts();
-    const w9 = await ethers.getContractAt("WERC20Test", weth);
+    const w9 = await ethers.getContractAt("ERC20Token", weth);
     const sender = randomAddress();
     await withSigner(sender, async (signer) => {
         await w9.connect(signer).deposit({ value: amount });
@@ -148,7 +148,7 @@ export async function depositWBTC(
     amount: BigNumberish
 ): Promise<void> {
     const { wbtcRichGuy, wbtc } = await getNamedAccounts();
-    const wbtcContract = await ethers.getContractAt("WERC20Test", wbtc);
+    const wbtcContract = await ethers.getContractAt("ERC20Token", wbtc);
     await withSigner(wbtcRichGuy, async (signer) => {
         await wbtcContract.connect(signer).transfer(receiver, amount);
     });
