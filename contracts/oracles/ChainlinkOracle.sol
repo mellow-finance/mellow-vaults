@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/chainlink/IAggregatorV3.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../libraries/external/FullMath.sol";
@@ -10,10 +11,12 @@ import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 
 /// @notice Contract for getting chainlink data
-contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
+contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    string public constant VERSION = "1.0.0";
+    bytes32 public constant CONTRACT_NAME = "ChainlinkOracle";
+    uint256 public constant CONTRACT_VERSION = 1;
+
     mapping(address => address) public chainlinkOracles;
 
     EnumerableSet.AddressSet private _tokenAllowlist;

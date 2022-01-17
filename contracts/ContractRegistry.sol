@@ -2,11 +2,11 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/utils/IContractRegistry.sol";
-import "../interfaces/utils/IContractMeta.sol";
-import "../libraries/ExceptionsLibrary.sol";
-import "../libraries/PermissionIdsLibrary.sol";
+import "./interfaces/IProtocolGovernance.sol";
+import "./interfaces/utils/IContractRegistry.sol";
+import "./interfaces/utils/IContractMeta.sol";
+import "./libraries/ExceptionsLibrary.sol";
+import "./libraries/PermissionIdsLibrary.sol";
 
 contract ContractRegistry is IContractRegistry {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -31,7 +31,7 @@ contract ContractRegistry is IContractRegistry {
         for (uint256 i; i != targets.length; ++i) {
             require(_registeredContracts.add(targets[i]), ExceptionsLibrary.DUPLICATE);
             IContractMeta newContract = IContractMeta(targets[i]);
-            bytes32 newContractName = newContract.CONRTACT_NAME();
+            bytes32 newContractName = newContract.CONTRACT_NAME();
             uint256 newContractVersion = newContract.CONTRACT_VERSION();
             registeredContractsAddresses[newContractName].push(targets[i]);
             uint256 currentVersionCount = versionCount[newContractName];

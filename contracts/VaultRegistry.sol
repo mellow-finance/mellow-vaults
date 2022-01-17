@@ -4,13 +4,15 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
+import "./interfaces/utils/IContractMeta.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/PermissionIdsLibrary.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
-contract VaultRegistry is IVaultRegistry, ERC721 {
-    string public constant VERSION = "1.0.0";
+contract VaultRegistry is IContractMeta, IVaultRegistry, ERC721 {
+    bytes32 public constant CONTRACT_NAME = "VaultRegistry";
+    uint256 public constant CONTRACT_VERSION = 1;
 
     uint256 private _stagedProtocolGovernanceTimestamp;
     IProtocolGovernance private _protocolGovernance;

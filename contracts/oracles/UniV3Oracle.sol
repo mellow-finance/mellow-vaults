@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
@@ -10,8 +11,10 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
-    string public constant VERSION = "1.0.0";
+contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
+    bytes32 public constant CONTRACT_NAME = "UniV3Oracle";
+    uint256 public constant CONTRACT_VERSION = 1;
+
     IUniswapV3Factory public immutable factory;
     uint16 public observationsForAverage;
 

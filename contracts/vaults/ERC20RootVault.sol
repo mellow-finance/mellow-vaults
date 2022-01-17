@@ -7,17 +7,20 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
-contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
+contract ERC20RootVault is IContractMeta, IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    string public constant VERSION = "1.0.0";
+    bytes32 public constant CONTRACT_NAME = "ERC20RootVault";
+    uint256 public constant CONTRACT_VERSION = 1;
+
     uint256 public lastFeeCharge;
     uint256 public totalWithdrawnAmountsTimestamp;
     uint256[] public totalWithdrawnAmounts;

@@ -4,6 +4,7 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20VaultGovernance.sol";
@@ -12,10 +13,11 @@ import "../interfaces/trader/IChiefTrader.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that stores ERC20 tokens.
-contract ERC20Vault is IERC20Vault, IntegrationVault {
+contract ERC20Vault is IContractMeta, IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    string public constant VERSION = "1.0.0";
+    bytes32 public constant CONTRACT_NAME = "ERC20Vault";
+    uint256 public constant CONTRACT_VERSION = 1;
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {

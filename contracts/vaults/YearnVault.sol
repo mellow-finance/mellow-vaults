@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../interfaces/external/yearn/IYearnProtocolVault.sol";
 import "../interfaces/vaults/IYearnVaultGovernance.sol";
 import "../interfaces/vaults/IYearnVault.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
@@ -24,8 +25,10 @@ import "./IntegrationVault.sol";
 /// There are some deposit limits imposed by Yearn vaults.
 /// The contract's vaultTokens are fully allowed to corresponding yTokens.
 
-contract YearnVault is IYearnVault, IntegrationVault {
-    string public constant VERSION = "1.0.0";
+contract YearnVault is IContractMeta, IYearnVault, IntegrationVault {
+    bytes32 public constant CONTRACT_NAME = "YearnVault";
+    uint256 public constant CONTRACT_VERSION = 1;
+
     uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
 
     address[] private _yTokens;

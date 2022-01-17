@@ -4,14 +4,16 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./interfaces/IProtocolGovernance.sol";
+import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance {
+contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    string public constant VERSION = "1.0.0";
+    bytes32 public constant CONTRACT_NAME = "ProtocolGovernance";
+    uint256 public constant CONTRACT_VERSION = 1;
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
