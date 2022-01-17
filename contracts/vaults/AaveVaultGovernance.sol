@@ -18,6 +18,8 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IAaveVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
@@ -31,6 +33,8 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IAaveVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {

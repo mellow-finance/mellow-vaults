@@ -29,65 +29,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     uint256 public uniV3Nft;
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
-    }
-
-    function initialize(
-        uint256 nft_,
-        address[] memory vaultTokens_,
-        uint24 fee_
-    ) external {
-        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
-        _initialize(vaultTokens_, nft_);
-        pool = IUniswapV3Pool(
-            IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
-        );
-        require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
-    }
-
-    function onERC721Received(
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes memory
-    ) external returns (bytes4) {
-        require(msg.sender == address(_positionManager()), ExceptionsLibrary.FORBIDDEN);
-        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
-        (, , address token0, address token1, , , , , , , , ) = _positionManager().positions(tokenId);
-        // new position should have vault tokens
-        require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1], ExceptionsLibrary.INVALID_TOKEN);
-
-        if (uniV3Nft != 0) {
-            (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = _positionManager()
-                .positions(uniV3Nft);
-            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.INVALID_VALUE);
-            // return previous uni v3 position nft
-            _positionManager().transferFrom(address(this), from, uniV3Nft);
-        }
-
-        uniV3Nft = tokenId;
-        return this.onERC721Received.selector;
-    }
-
-    function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address owner = registry.ownerOf(_nft);
-        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.INVALID_TARGET);
-        collectedEarnings = new uint256[](2);
-        (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: uniV3Nft,
-                recipient: to,
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            })
-        );
-        collectedEarnings[0] = collectedEarnings0;
-        collectedEarnings[1] = collectedEarnings1;
-        emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
-    }
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
@@ -150,6 +92,89 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         maxTokenAmounts[0] += amountMin0 < amountMax0 ? amountMax0 : amountMin0;
         maxTokenAmounts[1] += amountMin1 < amountMax1 ? amountMax1 : amountMin1;
     }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    function initialize(
+        uint256 nft_,
+        address[] memory vaultTokens_,
+        uint24 fee_
+    ) external {
+        require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
+        _initialize(vaultTokens_, nft_);
+        pool = IUniswapV3Pool(
+            IUniswapV3Factory(_positionManager().factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
+        );
+        require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes memory
+    ) external returns (bytes4) {
+        require(msg.sender == address(_positionManager()), ExceptionsLibrary.FORBIDDEN);
+        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
+        (, , address token0, address token1, , , , , , , , ) = _positionManager().positions(tokenId);
+        // new position should have vault tokens
+        require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1], ExceptionsLibrary.INVALID_TOKEN);
+
+        if (uniV3Nft != 0) {
+            (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = _positionManager()
+                .positions(uniV3Nft);
+            require(liquidity == 0 && tokensOwed0 == 0 && tokensOwed1 == 0, ExceptionsLibrary.INVALID_VALUE);
+            // return previous uni v3 position nft
+            _positionManager().transferFrom(address(this), from, uniV3Nft);
+        }
+
+        uniV3Nft = tokenId;
+        return this.onERC721Received.selector;
+    }
+
+    function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
+        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        address owner = registry.ownerOf(_nft);
+        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.INVALID_TARGET);
+        collectedEarnings = new uint256[](2);
+        (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager().collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: uniV3Nft,
+                recipient: to,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
+        collectedEarnings[0] = collectedEarnings0;
+        collectedEarnings[1] = collectedEarnings1;
+        emit CollectedEarnings(tx.origin, to, collectedEarnings0, collectedEarnings1);
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _postReclaimTokens(address, address[] memory tokens) internal view override {}
+
+    function _positionManager() internal view returns (INonfungiblePositionManager) {
+        return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
+    }
+
+    function _parseOptions(bytes memory options) internal view returns (Options memory) {
+        if (options.length == 0) return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
+
+        require(options.length == 32 * 3, ExceptionsLibrary.INVALID_VALUE);
+        return abi.decode(options, (Options));
+    }
+
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
@@ -241,23 +266,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             })
         );
         return Pair({a0: amount0Collected, a1: amount1Collected});
-    }
-
-    function _postReclaimTokens(address, address[] memory tokens) internal view override {}
-
-    function _positionManager() internal view returns (INonfungiblePositionManager) {
-        return IUniV3VaultGovernance(address(_vaultGovernance)).delayedProtocolParams().positionManager;
-    }
-
-    function _parseOptions(bytes memory options) internal view returns (Options memory) {
-        if (options.length == 0) return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});
-
-        require(options.length == 32 * 3, ExceptionsLibrary.INVALID_VALUE);
-        return abi.decode(options, (Options));
-    }
-
-    function _isStrategy(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
     event CollectedEarnings(address indexed origin, address indexed to, uint256 amount0, uint256 amount1);

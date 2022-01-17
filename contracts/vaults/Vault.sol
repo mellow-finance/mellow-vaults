@@ -41,10 +41,12 @@ abstract contract Vault is IVault, ERC165 {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    /// @inheritdoc IVault
     function initialized() external view returns (bool) {
         return _nft != 0;
     }
 
+    /// @inheritdoc IVault
     function isVaultToken(address token) public view returns (bool) {
         return _vaultTokensIndex[token];
     }
@@ -71,7 +73,7 @@ abstract contract Vault is IVault, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
-    // -------------------  PRIVATE, MUTATING  -------------------
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {
         require(_nft == 0, ExceptionsLibrary.INIT);

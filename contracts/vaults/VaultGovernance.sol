@@ -91,7 +91,22 @@ abstract contract VaultGovernance is IVaultGovernance {
         emit CommitedInternalParams(tx.origin, msg.sender, _internalParams);
     }
 
-    // -------------------  INTERNAL  -------------------
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _requireAtLeastStrategy(uint256 nft) internal view {
+        require(
+            (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
+                _internalParams.registry.getApproved(nft) == msg.sender ||
+                (_internalParams.registry.ownerOf(nft) == msg.sender)),
+            ExceptionsLibrary.FORBIDDEN
+        );
+    }
+
+    function _requireProtocolAdmin() internal view {
+        require(_internalParams.protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _createVault(address owner) internal returns (address vault, uint256 nft) {
         IProtocolGovernance protocolGovernance = IProtocolGovernance(_internalParams.protocolGovernance);
@@ -187,19 +202,6 @@ abstract contract VaultGovernance is IVaultGovernance {
     function _setProtocolParams(bytes memory params) internal {
         _requireProtocolAdmin();
         _protocolParams = params;
-    }
-
-    function _requireAtLeastStrategy(uint256 nft) internal view {
-        require(
-            (_internalParams.protocolGovernance.isAdmin(msg.sender) ||
-                _internalParams.registry.getApproved(nft) == msg.sender ||
-                (_internalParams.registry.ownerOf(nft) == msg.sender)),
-            ExceptionsLibrary.FORBIDDEN
-        );
-    }
-
-    function _requireProtocolAdmin() internal view {
-        require(_internalParams.protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 
     /// @notice Emitted when InternalParams are staged for commit

@@ -33,7 +33,13 @@ import "./Vault.sol";
 abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault {
     using SafeERC20 for IERC20;
 
-    // -------------------  EXTERNAL, MUTATING, NFT OWNER OR APPROVED  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IIntegrationVault).interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IIntegrationVault
     function push(
@@ -93,8 +99,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         emit Pull(to, actualTokenAmounts);
     }
 
-    // -------------------  EXTERNAL, MUTATING, NFT OWNER OR APPROVED OR PROTOCOL FORBIDDEN -------------------
-
     /// @inheritdoc IIntegrationVault
     function reclaimTokens(address to, address[] memory tokens) external nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
@@ -135,11 +139,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         }
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IIntegrationVault).interfaceId);
-    }
-
-    // -------------------  PRIVATE, VIEW  -------------------
+    // -------------------  INTERNAL, VIEW  -------------------
 
     function _validateAndProjectTokens(address[] memory tokens, uint256[] memory tokenAmounts)
         internal
@@ -182,7 +182,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         return registry.getApproved(nft_) == sender || registry.ownerOf(nft_) == sender;
     }
 
-    // -------------------  PRIVATE, MUTATING  -------------------
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     /// Guaranteed to have exact signature matchinn vault tokens
     function _push(uint256[] memory tokenAmounts, bytes memory options)

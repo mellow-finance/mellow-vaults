@@ -33,6 +33,8 @@ contract YearnVault is IYearnVault, IntegrationVault {
         return _yTokens;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IVault
     function tvl() public view override returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -44,6 +46,8 @@ contract YearnVault is IYearnVault, IntegrationVault {
         maxTokenAmounts = minTokenAmounts;
     }
 
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
         _yTokens = new address[](vaultTokens_.length);
@@ -52,6 +56,8 @@ contract YearnVault is IYearnVault, IntegrationVault {
             require(_yTokens[i] != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         }
     }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal

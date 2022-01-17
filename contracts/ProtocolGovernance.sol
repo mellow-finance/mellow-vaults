@@ -190,7 +190,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         emit PendingParamsCommitted(tx.origin, msg.sender, params);
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, DELAY  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function stagePermissionGrants(address target, uint8[] calldata permissionIds) external {
@@ -211,7 +211,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
     }
 
-    // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
+    // -------------------------  INTERNAL, PURE, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
         require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
