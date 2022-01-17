@@ -33,6 +33,7 @@ contract MStrategy is DefaultAccessControlLateInit {
         IIntegrationVault moneyVault;
     }
 
+    string public constant VERSION = "1.0.0";
     Params[] public vaultParams;
     ImmutableParams[] public vaultImmutableParams;
     mapping(address => mapping(address => uint256)) public vaultIndex;
