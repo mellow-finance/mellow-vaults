@@ -63,7 +63,9 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                 internalParams,
                                 {
                                     lendingPool,
-                                    estimatedAaveAPY: BigNumber.from(2).pow(98),
+                                    estimatedAaveAPY: BigNumber.from(10)
+                                        .pow(9)
+                                        .div(20),
                                 },
                             ],
                             autoMine: true,
