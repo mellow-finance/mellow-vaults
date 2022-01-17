@@ -22,32 +22,33 @@ contract VersionControl is Ownable {
     }
 
     function _isNumeric(bytes1 num) private pure returns (bool) {
-        return (
-            num == '9' || 
-            num == '8' || 
-            num == '7' || 
-            num == '6' || 
-            num == '5' || 
-            num == '4' ||
-            num == '3' ||
-            num == '2' ||
-            num == '1' ||
-            num == '0'
-        );
+        return (num == "9" ||
+            num == "8" ||
+            num == "7" ||
+            num == "6" ||
+            num == "5" ||
+            num == "4" ||
+            num == "3" ||
+            num == "2" ||
+            num == "1" ||
+            num == "0");
     }
 
-    function _validateVersion(string calldata version) private view returns (bool) {
+    function _validateVersion(string calldata version) private pure returns (bool) {
         // q0 -- beginning of the number
         // q1 -- in the number
         // q2 -- end of the number
-        uint8 q; 
+        // q0: [1-9] -> q1, [0] -> q2
+        // q1: [0-9] -> q1, '.' -> q2
+        // q2: '.' -> q0
+        uint8 q;
         uint8 dots;
         bytes memory v = bytes(version);
         for (uint8 i; i != v.length; ++i) {
             if (q == 0) {
-                if (_isNumeric(v[i]) && v[i] != '0') {
+                if (_isNumeric(v[i]) && v[i] != "0") {
                     q = 1;
-                } else if (v[i] == '0') {
+                } else if (v[i] == "0") {
                     q = 2;
                 } else {
                     return false;
@@ -55,14 +56,14 @@ contract VersionControl is Ownable {
             } else if (q == 1) {
                 if (_isNumeric(v[i])) {
                     q = 1;
-                } else if (v[i] == '.') {
+                } else if (v[i] == ".") {
                     q = 0;
                     dots++;
                 } else {
                     return false;
                 }
             } else if (q == 2) {
-                if (v[i] == '.') {
+                if (v[i] == ".") {
                     dots++;
                     q = 0;
                 } else {
