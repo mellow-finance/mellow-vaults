@@ -8,6 +8,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 
 contract UniV2Oracle is IUniV2Oracle {
+    string public constant VERSION = "1.0.0";
     IUniswapV2Factory public immutable factory;
 
     constructor(IUniswapV2Factory factory_) {

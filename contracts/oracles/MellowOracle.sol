@@ -9,6 +9,7 @@ import "../interfaces/oracles/IMellowOracle.sol";
 import "../libraries/CommonLibrary.sol";
 
 contract MellowOracle is IMellowOracle {
+    string public constant VERSION = "1.0.0";
     IUniV2Oracle public immutable univ2Oracle;
     IUniV3Oracle public immutable univ3Oracle;
     IChainlinkOracle public immutable chainlinkOracle;

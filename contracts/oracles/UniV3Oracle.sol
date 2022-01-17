@@ -11,6 +11,7 @@ import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 
 contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
+    string public constant VERSION = "1.0.0";
     IUniswapV3Factory public immutable factory;
     uint16 public observationsForAverage;
 

@@ -12,8 +12,11 @@ import "../utils/DefaultAccessControl.sol";
 /// @notice Contract for getting chainlink data
 contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
-    EnumerableSet.AddressSet private _tokenAllowlist;
+
+    string public constant VERSION = "1.0.0";
     mapping(address => address) public chainlinkOracles;
+
+    EnumerableSet.AddressSet private _tokenAllowlist;
 
     constructor(
         address[] memory tokens,
