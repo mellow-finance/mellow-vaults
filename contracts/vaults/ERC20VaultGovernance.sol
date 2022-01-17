@@ -19,6 +19,8 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IERC20VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
@@ -31,6 +33,8 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
 
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IERC20VaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
@@ -58,6 +62,8 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
         vault = IERC20Vault(vaddr);
         vault.initialize(nft, vaultTokens_);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)

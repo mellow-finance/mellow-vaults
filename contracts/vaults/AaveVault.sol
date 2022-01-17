@@ -68,6 +68,17 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _getAToken(address token) internal view returns (address) {
+        DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
+        return data.aTokenAddress;
+    }
+
+    function _lendingPool() internal view returns (ILendingPool) {
+        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _updateTvls() internal {
@@ -116,14 +127,5 @@ contract AaveVault is IAaveVault, IntegrationVault {
             actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], amount, to);
         }
         _updateTvls();
-    }
-
-    function _getAToken(address token) internal view returns (address) {
-        DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
-        return data.aTokenAddress;
-    }
-
-    function _lendingPool() internal view returns (ILendingPool) {
-        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
 }

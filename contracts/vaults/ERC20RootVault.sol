@@ -28,6 +28,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         return _depositorsAllowlist.values();
     }
 
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -41,8 +43,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             _depositorsAllowlist.remove(depositors[i]);
         }
     }
-
-    // -------------------  EXTERNAL, MUTATING  -------------------
 
     function initialize(
         uint256 nft_,
@@ -313,6 +313,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             totalWithdrawnAmounts[i] = withdrawn[i];
         }
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when management fees are charged
     /// @param treasury Treasury receiver of the fee

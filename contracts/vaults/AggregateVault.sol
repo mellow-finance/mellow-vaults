@@ -18,6 +18,8 @@ contract AggregateVault is IAggregateVault, Vault {
     uint256[] private _pullExistentials;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     function subvaultNfts() external view returns (uint256[] memory) {
         return _subvaultNfts;
     }
@@ -51,6 +53,8 @@ contract AggregateVault is IAggregateVault, Vault {
             }
         }
     }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(
         address[] memory vaultTokens_,

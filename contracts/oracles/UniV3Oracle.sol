@@ -23,6 +23,8 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
         observationsForAverage = observationsForAverage_;
     }
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     /// @inheritdoc IUniV3Oracle
     function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
@@ -53,6 +55,8 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
         spotPriceX96 = FullMath.mulDiv(spotSqrtPriceX96, spotSqrtPriceX96, CommonLibrary.Q96);
     }
 
+    // -------------------------  EXTERNAL, MUTATING  ------------------------------
+
     /// @inheritdoc IUniV3Oracle
     function setObservationsForAverage(uint16 newObservationsForAverage) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
@@ -60,6 +64,8 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
         observationsForAverage = newObservationsForAverage;
         emit SetObservationsForAverage(tx.origin, msg.sender, newObservationsForAverage);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     event SetObservationsForAverage(address indexed origin, address indexed sender, uint16 observationsForAverage);
 }

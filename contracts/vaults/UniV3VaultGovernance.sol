@@ -19,6 +19,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IUniV3VaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
@@ -36,6 +38,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IUniV3VaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
@@ -64,6 +68,8 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
         vault = IUniV3Vault(vaddr);
         vault.initialize(nft, vaultTokens_, fee_);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
