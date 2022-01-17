@@ -16,7 +16,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
-        MAX_ESTIMATED_AAVE_APY = 100 * CommonLibrary.DENOMINATOR;
+        MAX_ESTIMATED_AAVE_APY = CommonLibrary.DENOMINATOR;
         require(address(delayedProtocolParams_.lendingPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.estimatedAaveAPY != 0, ExceptionsLibrary.VALUE_ZERO);
         require(delayedProtocolParams_.estimatedAaveAPY <= MAX_ESTIMATED_AAVE_APY, ExceptionsLibrary.LIMIT_OVERFLOW);
