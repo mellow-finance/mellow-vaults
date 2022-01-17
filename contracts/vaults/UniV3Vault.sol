@@ -29,7 +29,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     uint256 public uniV3Nft;
 
-    INonfungiblePositionManager public _positionManager;
+    INonfungiblePositionManager private _positionManager;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
