@@ -5,9 +5,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
 
 interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
-
     /// @notice Reference to INonfungiblePositionManager of UniswapV3 protocol.
-    function positionManager() external view returns (INonfungiblePositionManager) {
+    function positionManager() external view returns (INonfungiblePositionManager);
 
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
