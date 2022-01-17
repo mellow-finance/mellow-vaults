@@ -37,15 +37,13 @@ contract AaveVault is IAaveVault, IntegrationVault {
         minTokenAmounts = _tvls;
         maxTokenAmounts = new uint256[](minTokenAmounts.length);
         uint256 timeElapsed = block.timestamp - _lastTvlUpdateTimestamp;
-        uint256 factorX96 = CommonLibrary.Q96;
+        uint256 factor = CommonLibrary.DENOMINATOR;
         if (timeElapsed > 0) {
-            uint256 apyX96 = IAaveVaultGovernance(address(_vaultGovernance))
-                .delayedProtocolParams()
-                .estimatedAaveAPYX96;
-            factorX96 = CommonLibrary.Q96 + FullMath.mulDiv(apyX96, timeElapsed, CommonLibrary.YEAR);
+            uint256 apy = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().estimatedAaveAPY;
+            factor = CommonLibrary.DENOMINATOR + FullMath.mulDiv(apy, timeElapsed, CommonLibrary.YEAR);
         }
         for (uint256 i = 0; i < minTokenAmounts.length; i++) {
-            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, minTokenAmounts[i], CommonLibrary.Q96);
+            maxTokenAmounts[i] = FullMath.mulDiv(factor, minTokenAmounts[i], CommonLibrary.DENOMINATOR);
         }
     }
 
