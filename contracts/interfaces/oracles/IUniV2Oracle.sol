@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "../external/univ2/IUniswapV2Factory.sol";
 
-interface IUniV2Oracle {
+interface IUniV2Oracle is IERC165 {
     /// @notice Reference to UniV2 factory
     function factory() external returns (IUniswapV2Factory);
 

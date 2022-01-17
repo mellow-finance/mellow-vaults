@@ -73,6 +73,10 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         return _vaults.length;
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
+        return ERC721.supportsInterface(interfaceId) || type(IVaultRegistry).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IVaultRegistry

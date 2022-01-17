@@ -102,7 +102,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         override(UnitPricesGovernance, IERC165, ERC165)
         returns (bool)
     {
-        return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
+        return (interfaceId == type(IProtocolGovernance).interfaceId) || UnitPricesGovernance.supportsInterface(interfaceId);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

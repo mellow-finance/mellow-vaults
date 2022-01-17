@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/external/univ2/IUniswapV2Pair.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract UniV2Oracle is IUniV2Oracle {
+contract UniV2Oracle is IUniV2Oracle, ERC165 {
     IUniswapV2Factory public immutable factory;
 
     constructor(IUniswapV2Factory factory_) {
@@ -23,5 +24,9 @@ contract UniV2Oracle is IUniV2Oracle {
         require(pool != address(0), ExceptionsLibrary.NOT_FOUND);
         (uint112 reserve0, uint112 reserve1, ) = IUniswapV2Pair(pool).getReserves();
         spotPriceX96 = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, ERC165) returns (bool) {
+        return ERC165.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
     }
 }

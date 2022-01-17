@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IMellowOracle {
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
+interface IMellowOracle is IERC165 {
     /// @notice Gets the spot price for tokens
     /// @dev Out of each suboracle (univ2, chainlink) it extracts spot price. Out of univ3 it extracts spotPrice and average price for
     /// the last n blocks (excluding current block). Then all this values are combined, minPrice is minimum value, maxPrice is maximum
