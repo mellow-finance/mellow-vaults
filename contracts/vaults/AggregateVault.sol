@@ -12,7 +12,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
-contract AggregateVault is IAggregateVault, Vault {
+abstract contract AggregateVault is IAggregateVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _subvaultNfts;
     uint256[] private _pullExistentials;

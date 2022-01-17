@@ -11,6 +11,8 @@ import "./UnitPricesGovernance.sol";
 contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    string public constant VERSION = "1.0.0";
+
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
 

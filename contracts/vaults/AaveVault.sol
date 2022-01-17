@@ -25,8 +25,10 @@ import "./IntegrationVault.sol";
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
 contract AaveVault is IAaveVault, IntegrationVault {
-    address[] internal _aTokens;
-    uint256[] internal _tvls;
+    string public constant VERSION = "1.0.0";
+
+    address[] private _aTokens;
+    uint256[] private _tvls;
     uint256 private _lastTvlUpdateTimestamp;
 
     // -------------------  EXTERNAL, VIEW  -------------------

@@ -8,6 +8,8 @@ import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance {
+    string public constant VERSION = "1.0.0";
+
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
     uint256 public immutable MAX_PERFORMANCE_FEE;

@@ -25,6 +25,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 a1;
     }
 
+    string public constant VERSION = "1.0.0";
+
     IUniswapV3Pool public pool;
 
     uint256 public uniV3Nft;

@@ -7,6 +7,8 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
+    string public constant VERSION = "1.0.0";
+
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params

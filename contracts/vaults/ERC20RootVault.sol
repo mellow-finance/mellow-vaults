@@ -16,11 +16,14 @@ import "./AggregateVault.sol";
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint256[] private _lpPriceHighWaterMarks;
+
+    string public constant VERSION = "1.0.0";
     uint256 public lastFeeCharge;
-    EnumerableSet.AddressSet _depositorsAllowlist;
     uint256 public totalWithdrawnAmountsTimestamp;
     uint256[] public totalWithdrawnAmounts;
+
+    uint256[] private _lpPriceHighWaterMarks;
+    EnumerableSet.AddressSet private _depositorsAllowlist;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 

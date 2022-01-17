@@ -15,6 +15,8 @@ import "./IntegrationVault.sol";
 contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    string public constant VERSION = "1.0.0";
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
