@@ -195,7 +195,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         _params = _pendingParams;
         delete _pendingParams;
         delete pendingParamsTimestamp;
-        emit PendingParamsCommitted(tx.origin, msg.sender, _params);
+        emit ParamsCommitted(tx.origin, msg.sender, _params);
     }
 
     // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
@@ -212,12 +212,12 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     }
 
     /// @inheritdoc IProtocolGovernance
-    function setPendingParams(IProtocolGovernance.Params calldata newParams) external {
+    function stageParams(IProtocolGovernance.Params calldata newParams) external {
         _requireAdmin();
         _validateGovernanceParams(newParams);
         _pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + _params.governanceDelay;
-        emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, _pendingParams);
+        emit ParamsStaged(tx.origin, msg.sender, pendingParamsTimestamp, _pendingParams);
     }
 
     // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
@@ -281,11 +281,11 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
     /// @param sender Sender of the call (msg.sender)
     /// @param at Timestamp when the pending parameters could be committed
     /// @param params Pending parameters
-    event PendingParamsSet(address indexed origin, address indexed sender, uint256 at, Params params);
+    event ParamsStaged(address indexed origin, address indexed sender, uint256 at, Params params);
 
     /// @notice Emitted when pending parameters are committed
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param params Committed parameters
-    event PendingParamsCommitted(address indexed origin, address indexed sender, Params params);
+    event ParamsCommitted(address indexed origin, address indexed sender, Params params);
 }

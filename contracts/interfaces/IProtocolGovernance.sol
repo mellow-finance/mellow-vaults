@@ -104,7 +104,7 @@ interface IProtocolGovernance is IDefaultAccessControl {
 
     /// @notice Sets new pending params that could have been committed after governance delay expires.
     /// @param newParams New protocol parameters to set.
-    function setPendingParams(Params memory newParams) external;
+    function stageParams(Params memory newParams) external;
 
     /// @notice Stage granted permissions that could have been committed after governance delay expires.
     /// Resets commit delay and permissions if there are already staged permissions for this address.
