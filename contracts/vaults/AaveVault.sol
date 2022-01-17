@@ -30,6 +30,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     address[] internal _aTokens;
     uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
+    ILendingPool private _lendingPool;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -50,6 +51,19 @@ contract AaveVault is IAaveVault, IntegrationVault {
         }
     }
 
+    function lendingPool() external view returns (ILendingPool) {
+        return _lendingPool;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(IERC165, IntegrationVault)
+        returns (bool)
+    {
+        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Update all tvls to current aToken balances.
@@ -60,6 +74,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     /// @inheritdoc IAaveVault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
+        _lendingPool = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < vaultTokens_.length; ++i) {
             address aToken = _getAToken(vaultTokens_[i]);
@@ -70,14 +85,11 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(IERC165, IntegrationVault)
-        returns (bool)
-    {
-        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _getAToken(address token) internal view returns (address) {
+        DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
+        return data.aTokenAddress;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -105,8 +117,8 @@ contract AaveVault is IAaveVault, IntegrationVault {
                 continue;
             }
             address token = tokens[i];
-            _allowTokenIfNecessary(token, address(_lendingPool()));
-            _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
+            _allowTokenIfNecessary(token, address(_lendingPool));
+            _lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
         }
         _updateTvls();
         actualTokenAmounts = tokenAmounts;
@@ -125,17 +137,8 @@ contract AaveVault is IAaveVault, IntegrationVault {
             }
             uint256 balance = IERC20(_aTokens[i]).balanceOf(address(this));
             uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
-            actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], amount, to);
+            actualTokenAmounts[i] = _lendingPool.withdraw(tokens[i], amount, to);
         }
         _updateTvls();
-    }
-
-    function _getAToken(address token) private view returns (address) {
-        DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
-        return data.aTokenAddress;
-    }
-
-    function _lendingPool() private view returns (ILendingPool) {
-        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
 }
