@@ -55,12 +55,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         return _lendingPool;
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(IERC165, IntegrationVault)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
     }
 
