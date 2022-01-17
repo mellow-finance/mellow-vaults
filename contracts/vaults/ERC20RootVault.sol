@@ -35,7 +35,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         override(IERC165, AggregateVault)
         returns (bool)
     {
-        return AggregateVault.supportsInterface(interfaceId) || type(IERC20RootVault).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IERC20RootVault).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

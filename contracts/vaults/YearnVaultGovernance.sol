@@ -50,7 +50,7 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return VaultGovernance.supportsInterface(interfaceId) || type(IYearnVaultGovernance).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IYearnVaultGovernance).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

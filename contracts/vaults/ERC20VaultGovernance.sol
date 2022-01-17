@@ -35,7 +35,7 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return VaultGovernance.supportsInterface(interfaceId) || type(IERC20VaultGovernance).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IERC20VaultGovernance).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

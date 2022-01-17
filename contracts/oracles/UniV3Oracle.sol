@@ -56,7 +56,7 @@ contract UniV3Oracle is IUniV3Oracle, DefaultAccessControl {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return AccessControlEnumerable.supportsInterface(interfaceId) || type(IUniV3Oracle).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IUniV3Oracle).interfaceId == interfaceId;
     }
 
     // -------------------------  EXTERNAL, MUTATING  ------------------------------

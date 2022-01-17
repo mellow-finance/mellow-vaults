@@ -40,7 +40,7 @@ contract UniV3VaultGovernance is IUniV3VaultGovernance, VaultGovernance {
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return VaultGovernance.supportsInterface(interfaceId) || type(IUniV3VaultGovernance).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IUniV3VaultGovernance).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

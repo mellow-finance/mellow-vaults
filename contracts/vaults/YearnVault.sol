@@ -53,7 +53,7 @@ contract YearnVault is IYearnVault, IntegrationVault {
         override(IERC165, IntegrationVault)
         returns (bool)
     {
-        return IntegrationVault.supportsInterface(interfaceId) || type(IYearnVault).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IYearnVault).interfaceId == interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

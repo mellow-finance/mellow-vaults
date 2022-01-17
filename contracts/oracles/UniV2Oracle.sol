@@ -27,6 +27,6 @@ contract UniV2Oracle is IUniV2Oracle, ERC165 {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return ERC165.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
     }
 }

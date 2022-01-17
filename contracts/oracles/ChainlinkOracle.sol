@@ -49,8 +49,7 @@ contract ChainlinkOracle is IChainlinkOracle, DefaultAccessControl {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return
-            AccessControlEnumerable.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
+        return super.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
     }
 
     // -------------------------  EXTERNAL, MUTATING  ------------------------------

@@ -54,7 +54,7 @@ contract AggregateVault is IAggregateVault, Vault {
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
-        return Vault.supportsInterface(interfaceId) || type(IAggregateVault).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IAggregateVault).interfaceId == interfaceId;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

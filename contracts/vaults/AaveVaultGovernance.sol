@@ -27,7 +27,7 @@ contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return VaultGovernance.supportsInterface(interfaceId) || interfaceId == type(IAaveVaultGovernance).interfaceId;
+        return super.supportsInterface(interfaceId) || interfaceId == type(IAaveVaultGovernance).interfaceId;
     }
 
     /// @inheritdoc IAaveVaultGovernance
