@@ -39,7 +39,7 @@ contract VersionControl is Ownable {
         // q1 -- in the number
         // q2 -- end of the number
         // q0: [1-9] -> q1, [0] -> q2
-        // q1: [0-9] -> q1, '.' -> q2
+        // q1: [0-9] -> q1, '.' -> q0
         // q2: '.' -> q0
         uint8 q;
         uint8 dots;
@@ -71,6 +71,6 @@ contract VersionControl is Ownable {
                 }
             }
         }
-        return true;
+        return dots == 2 && (q == 1 || q == 2);
     }
 }
