@@ -3,8 +3,12 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
+import "../external/univ3/INonfungiblePositionManager.sol";
 
 interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
+    /// @notice Reference to INonfungiblePositionManager of UniswapV3 protocol.
+    function positionManager() external view returns (INonfungiblePositionManager);
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
