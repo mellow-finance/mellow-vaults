@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
 import "../interfaces/external/aave/ILendingPool.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../interfaces/vaults/IVault.sol";
@@ -68,20 +70,19 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
-    // -------------------  INTERNAL, VIEW  -------------------
-
-    function _getAToken(address token) internal view returns (address) {
-        DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
-        return data.aTokenAddress;
-    }
-
-    function _lendingPool() internal view returns (ILendingPool) {
-        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, IntegrationVault)
+        returns (bool)
+    {
+        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _updateTvls() internal {
+    function _updateTvls() private {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
@@ -127,5 +128,14 @@ contract AaveVault is IAaveVault, IntegrationVault {
             actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], amount, to);
         }
         _updateTvls();
+    }
+
+    function _getAToken(address token) private view returns (address) {
+        DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
+        return data.aTokenAddress;
+    }
+
+    function _lendingPool() private view returns (ILendingPool) {
+        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
 }

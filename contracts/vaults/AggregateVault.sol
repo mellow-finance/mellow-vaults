@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
@@ -52,6 +51,10 @@ contract AggregateVault is IAggregateVault, Vault {
                 maxTokenAmounts[j] += sMaxTokenAmounts[j];
             }
         }
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
+        return Vault.supportsInterface(interfaceId) || type(IAggregateVault).interfaceId == interfaceId;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

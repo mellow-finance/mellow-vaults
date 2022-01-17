@@ -46,6 +46,16 @@ contract YearnVault is IYearnVault, IntegrationVault {
         maxTokenAmounts = minTokenAmounts;
     }
 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, IntegrationVault)
+        returns (bool)
+    {
+        return IntegrationVault.supportsInterface(interfaceId) || type(IYearnVault).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {

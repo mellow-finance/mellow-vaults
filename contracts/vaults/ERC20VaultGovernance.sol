@@ -34,6 +34,10 @@ contract ERC20VaultGovernance is IERC20VaultGovernance, VaultGovernance {
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(VaultGovernance) returns (bool) {
+        return VaultGovernance.supportsInterface(interfaceId) || type(IERC20VaultGovernance).interfaceId == interfaceId;
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IERC20VaultGovernance
