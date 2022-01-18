@@ -34,7 +34,7 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
     function init(address admin) external {
         require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(!initialized, ExceptionsLibrary.INIT);
-        
+
         _setupRole(OPERATOR, admin);
         _setupRole(ADMIN_ROLE, admin);
 
