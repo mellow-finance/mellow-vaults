@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { SemverLibraryTest } from "./types/SemverLibraryTest";
-import { contract } from "./library/setup";
-import { uint256, uint8, pit, RUNS } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 import { arrayify } from "@ethersproject/bytes";
+import { SemverLibraryTest } from "./types/SemverLibraryTest";
+import { uint256, uint8, pit, RUNS } from "./library/property";
+import { contract } from "./library/setup";
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -44,13 +44,12 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
                 const stringifier = ethers.utils.parseBytes32String(
                     await this.subject.stringifySemver(numberified)
                 );
-                console.log(`${semver} -> ${numberified} -> ${stringifier}`);
                 expect(stringifier).to.eq(semver);
                 return true;
             }
         );
 
-        xdescribe("#numberify", () => {
+        describe("#numberify", () => {
             pit(
                 "converts number to string",
                 { numRuns: RUNS.low },
@@ -63,7 +62,6 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
                     const result: BigNumber = await this.subject.numberify(
                         input
                     );
-                    // console.log(`${a} -> ${input} -> ${result}`);
                     expect(result).to.eq(a);
                     return true;
                 }
