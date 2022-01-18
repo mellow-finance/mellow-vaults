@@ -1,0 +1,150 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.9;
+
+library SemverLibrary {
+    uint8 internal constant ASCII_ZERO = 48;
+    uint8 internal constant BIT_OFFSET = 85;
+    uint256 internal constant MAX_LENGTH = 0x20;
+
+    function isNumeric(bytes1 num) internal pure returns (bool) {
+        return num >= "0" && num <= "9";
+    }
+
+    function shrinkToFit(bytes memory array) internal pure returns (bytes memory result) {
+        uint256 i;
+        while (i != array.length && array[i] != 0) {
+            ++i;
+        }
+        result = new bytes(i);
+        for (uint256 j; j != i; ++j) {
+            result[j] = array[j];
+        }
+    }
+
+    function numberify(bytes memory _num) internal pure returns (uint256 result) {
+        assembly {
+            let len := mload(_num)
+            let num := add(_num, 0x20)
+            for {
+                let end := add(num, mul(len, 0x20))
+            } lt(num, end) {
+                num := add(num, 0x20)
+            } {
+                result := add(mul(result, 0xa), sub(mload(num), "0"))
+            }
+        }
+    }
+
+    function stringify(uint256 num) internal pure returns (bytes memory result) {
+        uint256 i;
+        result = new bytes(0x20);
+        while (num > 0) {
+            uint8 digit = uint8(num % 10);
+            result[i] = bytes1(digit + ASCII_ZERO);
+            num /= 10;
+            ++i;
+        }
+        for (uint256 j; j != i; ++j) {
+            (result[j], result[i - j - 1]) = (result[i - j - 1], result[j]);
+        }
+        shrinkToFit(result);
+    }
+
+    function numberifySemver(bytes32 _semver) internal pure returns (uint256) {
+        bytes memory semver = shrinkToFit(abi.encodePacked(_semver));
+        if (semver.length >= MAX_LENGTH) {
+            return 0;
+        }
+
+        uint8 BEFORE_NUMBER = 0;
+        uint8 IN_NUMBER = 1;
+        uint8 END_OF_NUMBER = 2;
+
+        uint8 state;
+        uint8 dotsCount;
+        uint8 lastDotPosition;
+
+        bytes memory num1;
+        bytes memory num2;
+        bytes memory num3;
+
+        for (uint8 i; i != semver.length; ++i) {
+            // switch state
+
+            // q0: [1-9] -> q1, [0] -> q2
+            if (state == BEFORE_NUMBER) {
+                if (isNumeric(semver[i]) && semver[i] != "0") {
+                    state = IN_NUMBER;
+                } else if (semver[i] == "0") {
+                    state = END_OF_NUMBER;
+                } else {
+                    return 0;
+                }
+                // q1: [0-9] -> q1, '.' -> q0
+            } else if (state == IN_NUMBER) {
+                if (isNumeric(semver[i])) {
+                    state = IN_NUMBER;
+                } else if (semver[i] == ".") {
+                    dotsCount++;
+                    lastDotPosition = i;
+                    state = BEFORE_NUMBER;
+                } else {
+                    return 0;
+                }
+                // q2: '.' -> q0
+            } else if (state == END_OF_NUMBER) {
+                if (semver[i] == ".") {
+                    dotsCount++;
+                    lastDotPosition = i;
+                    state = BEFORE_NUMBER;
+                } else {
+                    return 0;
+                }
+            }
+
+            // construct the number
+
+            if (dotsCount > 2) {
+                return 0;
+            }
+
+            if (state != BEFORE_NUMBER) {
+                if (dotsCount == 0) {
+                    num1[i] = semver[i];
+                } else if (dotsCount == 1) {
+                    num2[i - lastDotPosition - 1] = semver[i];
+                } else {
+                    num3[i - lastDotPosition - 1] = semver[i];
+                }
+            }
+        }
+        if (dotsCount == 2 && state != BEFORE_NUMBER) {
+            uint256 result = numberify(shrinkToFit(num1)) << BIT_OFFSET;
+            result |= numberify(shrinkToFit(num2));
+            result <<= BIT_OFFSET;
+            result |= numberify(shrinkToFit(num3));
+            return result;
+        }
+        return 0;
+    }
+
+    function stringifySemver(uint256 num) internal pure returns (bytes32) {
+        uint256 filterMask = (1 << BIT_OFFSET) - 1;
+        bytes memory n1 = stringify(num >> (BIT_OFFSET * 2));
+        bytes memory n2 = stringify((num >> BIT_OFFSET) & filterMask);
+        bytes memory n3 = stringify(num & filterMask);
+        bytes memory result = new bytes(n1.length + n2.length + n3.length + 2);
+        for (uint256 i; i != n1.length; ++i) {
+            result[i] = n1[i];
+        }
+        result[n1.length] = ".";
+        for (uint256 i; i != n2.length; ++i) {
+            result[n1.length + 1 + i] = n2[i];
+        }
+        result[n1.length + n2.length + 1] = ".";
+        for (uint256 i; i != n3.length; ++i) {
+            result[n1.length + n2.length + 1 + i] = n3[i];
+        }
+        return bytes32(result);
+    }
+}
