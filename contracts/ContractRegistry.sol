@@ -7,72 +7,81 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/utils/IContractRegistry.sol";
 import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
-import "./libraries/PermissionIdsLibrary.sol";
+import "./libraries/SemverLibrary.sol";
 
 contract ContractRegistry is IContractRegistry, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     IProtocolGovernance public governance;
-    mapping(bytes32 => address[]) public registeredContractsAddresses;
-    mapping(bytes32 => uint256) public versionCount;
-
-    EnumerableSet.AddressSet private _registeredContracts;
-    EnumerableSet.AddressSet private _taggedAddresses;
-    mapping(address => EnumerableSet.Bytes32Set) private _tags;
+    mapping(bytes32 => mapping(uint256 => address)) private _nameToVersionToAddress;
+    mapping(bytes32 => uint256[]) private _nameToVersions;
+    EnumerableSet.AddressSet private _addresses;
+    EnumerableSet.Bytes32Set private _names;
 
     constructor(address _governance) {
         governance = IProtocolGovernance(_governance);
     }
 
-    function tagAddresses() external view returns (address[] memory) {
-        return _taggedAddresses.values();
+    function addresses() external view returns (address[] memory) {
+        return _addresses.values();
     }
 
-    function tags(address target) external view returns (bytes32[] memory) {
-        EnumerableSet.Bytes32Set storage tagsRef = _tags[target];
-        return tagsRef.values();
+    function names() external view returns (bytes32[] memory) {
+        return _names.values();
     }
 
-    function registeredContracts() external view returns (address[] memory) {
-        return _registeredContracts.values();
+    function versions(bytes32 name) external view returns (bytes32[] memory result) {
+        uint256[] memory versions_ = _nameToVersions[name];
+        result = new bytes32[](versions_.length);
+        for (uint256 i = 0; i < versions_.length; i++) {
+            result[i] = SemverLibrary.stringifySemver(versions_[i]);
+        }
     }
 
-    function registerContracts(address[] calldata targets) external {
+    function latestVersion(bytes32 name) external view returns (bytes32) {
+        return SemverLibrary.stringifySemver(_latestVersion(name));
+    }
+
+    function registerContract(address target) external {
+        require(governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(
-            governance.hasPermission(msg.sender, PermissionIdsLibrary.TRUSTED_DEPLOYER),
-            ExceptionsLibrary.FORBIDDEN
+            _addresses.add(target),
+            ExceptionsLibrary.DUPLICATE
         );
-        for (uint256 i; i != targets.length; ++i) {
-            require(_registeredContracts.add(targets[i]), ExceptionsLibrary.DUPLICATE);
-            IContractMeta newContract = IContractMeta(targets[i]);
-            bytes32 newContractName = newContract.CONTRACT_NAME();
-            uint256 newContractVersion = newContract.CONTRACT_VERSION();
-            registeredContractsAddresses[newContractName].push(targets[i]);
-            uint256 currentVersionCount = versionCount[newContractName];
-            require(currentVersionCount + 1 >= newContractVersion, ExceptionsLibrary.INVALID_VALUE);
-            if (newContractVersion > currentVersionCount) {
-                ++versionCount[newContractName];
-            }
-        }
+
+        IContractMeta newContract = IContractMeta(target);
+        bytes32 newContractName = newContract.CONTRACT_NAME();
+        bytes32 newContractVersionRaw = newContract.CONTRACT_VERSION();
+        uint256 newContractVersion = SemverLibrary.numberifySemver(newContractVersionRaw);
+
+        require(
+            newContractVersion > _latestVersion(newContractName),
+            ExceptionsLibrary.INVALID_VALUE
+        );
+
+        _nameToVersionToAddress[newContractName][newContractVersion] = target;
+        _names.add(newContractName);
+        emit ContractRegistered(
+            tx.origin,
+            msg.sender,
+            newContractName,
+            newContractVersionRaw,
+            target
+        );
     }
 
-    function addTag(address to, bytes32 tag) external {
-        _requireTagManager();
-        _tags[to].add(tag);
-        _taggedAddresses.add(to);
+    function _latestVersion(bytes32 name) internal view returns (uint256) {
+        uint256[] storage versions_ = _nameToVersions[name];
+        uint256 versionsLength = versions_.length;
+        return versionsLength != 0 ? versions_[versionsLength - 1] : 0;
     }
 
-    function removeTag(address from, bytes32 tag) external {
-        _requireTagManager();
-        EnumerableSet.Bytes32Set storage tagsRef = _tags[from];
-        tagsRef.remove(tag);
-        if (tagsRef.length() == 0) {
-            _taggedAddresses.remove(from);
-        }
-    }
-
-    function _requireTagManager() internal view {
-        require(governance.hasPermission(msg.sender, PermissionIdsLibrary.TAG_MANAGER), ExceptionsLibrary.FORBIDDEN);
-    }
+    event ContractRegistered(
+        address indexed origin,
+        address indexed sender,
+        bytes32 indexed name,
+        bytes32 version, 
+        address target
+    );
 }

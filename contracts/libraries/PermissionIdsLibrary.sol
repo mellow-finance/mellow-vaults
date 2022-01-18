@@ -15,8 +15,4 @@ library PermissionIdsLibrary {
     uint8 constant ERC20_VAULT_TOKEN = 4;
     // The msg.sender is allowed to create vaults
     uint8 constant CREATE_VAULT = 5;
-    // The msg.sender is trusted mellow contracts deployer
-    uint8 constant TRUSTED_DEPLOYER = 6;
-    // The msg.sender can assign tags to addresses at the contract registry
-    uint8 constant TAG_MANAGER = 7;
 }
