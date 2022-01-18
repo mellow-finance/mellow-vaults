@@ -22,32 +22,28 @@ library SemverLibrary {
     }
 
     function numberify(bytes memory _num) internal pure returns (uint256 result) {
-        assembly {
-            let len := mload(_num)
-            let num := add(_num, 0x20)
-            for {
-                let end := add(num, mul(len, 0x20))
-            } lt(num, end) {
-                num := add(num, 0x20)
-            } {
-                result := add(mul(result, 0xa), sub(mload(num), "0"))
-            }
+        for (uint256 i; i != _num.length; ++i) {
+            result *= 10;
+            result += uint256(uint8(_num[i])) - ASCII_ZERO;
         }
     }
 
     function stringify(uint256 num) internal pure returns (bytes memory result) {
+        if (num == 0) {
+            return "0";
+        }
         uint256 i;
-        result = new bytes(0x20);
+        bytes memory resultTemp = new bytes(0xff);
         while (num > 0) {
-            uint8 digit = uint8(num % 10);
-            result[i] = bytes1(digit + ASCII_ZERO);
+            uint256 digit = num % 10;
+            resultTemp[i] = bytes1(uint8(digit) + ASCII_ZERO);
             num /= 10;
             ++i;
         }
+        result = new bytes(i);
         for (uint256 j; j != i; ++j) {
-            (result[j], result[i - j - 1]) = (result[i - j - 1], result[j]);
+            result[j] = resultTemp[i - j - 1];
         }
-        shrinkToFit(result);
     }
 
     function numberifySemver(bytes32 _semver) internal pure returns (uint256) {
@@ -64,9 +60,9 @@ library SemverLibrary {
         uint8 dotsCount;
         uint8 lastDotPosition;
 
-        bytes memory num1;
-        bytes memory num2;
-        bytes memory num3;
+        bytes memory num1 = new bytes(MAX_LENGTH);
+        bytes memory num2 = new bytes(MAX_LENGTH);
+        bytes memory num3 = new bytes(MAX_LENGTH);
 
         for (uint8 i; i != semver.length; ++i) {
             // switch state
@@ -143,7 +139,7 @@ library SemverLibrary {
         }
         result[n1.length + n2.length + 1] = ".";
         for (uint256 i; i != n3.length; ++i) {
-            result[n1.length + n2.length + 1 + i] = n3[i];
+            result[n1.length + n2.length + 2 + i] = n3[i];
         }
         return bytes32(result);
     }

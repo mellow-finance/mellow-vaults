@@ -29,6 +29,10 @@ export const uint256: Arbitrary<BigNumber> = bigUintN(256).map((x: bigint) =>
     BigNumber.from(x.toString())
 );
 
+export const uint8: Arbitrary<BigNumber> = bigUintN(8).map((x: bigint) =>
+    BigNumber.from(x.toString())
+);
+
 export const address: Arbitrary<string> = hexaString({
     minLength: 40,
     maxLength: 40,
