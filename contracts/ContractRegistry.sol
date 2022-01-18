@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
-import "./interfaces/utils/IContractRegistry.sol";
+import "./interfaces/IContractRegistry.sol";
 import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/SemverLibrary.sol";
@@ -14,6 +14,7 @@ contract ContractRegistry is IContractRegistry, Multicall {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     IProtocolGovernance public governance;
+
     mapping(bytes32 => mapping(uint256 => address)) private _nameToVersionToAddress;
     mapping(bytes32 => uint256[]) private _nameToVersions;
     EnumerableSet.AddressSet private _addresses;
@@ -39,8 +40,12 @@ contract ContractRegistry is IContractRegistry, Multicall {
         }
     }
 
-    function latestVersion(bytes32 name) external view returns (bytes32) {
-        return SemverLibrary.stringifySemver(_latestVersion(name));
+    function latestVersion(bytes32 name) external view returns (bytes32, address) {
+        uint256 version = _latestVersion(name);
+        return (
+            SemverLibrary.stringifySemver(version),
+            _nameToVersionToAddress[name][version]
+        );
     }
 
     function registerContract(address target) external {
