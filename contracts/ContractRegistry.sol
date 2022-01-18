@@ -49,7 +49,7 @@ contract ContractRegistry is IContractRegistry, Multicall {
     }
 
     function registerContract(address target) external {
-        require(governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(governance.isOperator(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(
             _addresses.add(target),
             ExceptionsLibrary.DUPLICATE
