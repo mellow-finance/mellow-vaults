@@ -7,14 +7,13 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/vaults/IUniV3VaultGovernance.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
-contract UniV3Vault is IContractMeta, IUniV3Vault, IntegrationVault {
+contract UniV3Vault is IUniV3Vault, IntegrationVault {
     struct Options {
         uint256 amount0Min;
         uint256 amount1Min;
@@ -25,9 +24,6 @@ contract UniV3Vault is IContractMeta, IUniV3Vault, IntegrationVault {
         uint256 a0;
         uint256 a1;
     }
-
-    bytes32 public constant CONTRACT_NAME = "UniV3Vault";
-    uint256 public constant CONTRACT_VERSION = 1;
 
     IUniswapV3Pool public pool;
 

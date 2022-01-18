@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/aave/ILendingPool.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../interfaces/vaults/IVault.sol";
@@ -25,10 +24,7 @@ import "./IntegrationVault.sol";
 /// **Push / Pull**
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
-contract AaveVault is IContractMeta, IAaveVault, IntegrationVault {
-    bytes32 public constant CONTRACT_NAME = "AaveVault";
-    uint256 public constant CONTRACT_VERSION = 1;
-
+contract AaveVault is IAaveVault, IntegrationVault {
     address[] private _aTokens;
     uint256[] private _tvls;
     uint256 private _lastTvlUpdateTimestamp;
