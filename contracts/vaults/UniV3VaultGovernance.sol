@@ -10,7 +10,7 @@ import "./VaultGovernance.sol";
 /// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
 contract UniV3VaultGovernance is IContractMeta, IUniV3VaultGovernance, VaultGovernance {
     bytes32 public constant CONTRACT_NAME = "UniV3VaultGovernance";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params

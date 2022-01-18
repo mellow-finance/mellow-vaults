@@ -10,7 +10,7 @@ import "./VaultGovernance.sol";
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract YearnVaultGovernance is IContractMeta, IYearnVaultGovernance, VaultGovernance {
     bytes32 public constant CONTRACT_NAME = "YearnVaultGovernance";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     mapping(address => address) private _yTokens;
 

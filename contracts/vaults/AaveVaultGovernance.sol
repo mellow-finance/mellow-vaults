@@ -10,7 +10,7 @@ import "./VaultGovernance.sol";
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract AaveVaultGovernance is IContractMeta, IAaveVaultGovernance, VaultGovernance {
     bytes32 public constant CONTRACT_NAME = "AaveVaultGovernance";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     uint256 public immutable MAX_ESTIMATED_AAVE_APY;
 

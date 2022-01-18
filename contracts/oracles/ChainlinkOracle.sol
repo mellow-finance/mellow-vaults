@@ -15,7 +15,7 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes32 public constant CONTRACT_NAME = "ChainlinkOracle";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     mapping(address => address) public chainlinkOracles;
 

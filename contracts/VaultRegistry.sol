@@ -12,7 +12,7 @@ import "./libraries/PermissionIdsLibrary.sol";
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
 contract VaultRegistry is IContractMeta, IVaultRegistry, ERC721 {
     bytes32 public constant CONTRACT_NAME = "VaultRegistry";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     uint256 private _stagedProtocolGovernanceTimestamp;
     IProtocolGovernance private _protocolGovernance;

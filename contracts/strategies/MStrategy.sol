@@ -35,7 +35,7 @@ contract MStrategy is IContractMeta, DefaultAccessControlLateInit {
     }
 
     bytes32 public constant CONTRACT_NAME = "MStrategy";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     Params[] public vaultParams;
     ImmutableParams[] public vaultImmutableParams;

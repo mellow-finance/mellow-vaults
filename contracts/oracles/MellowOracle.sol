@@ -12,7 +12,7 @@ import "../libraries/CommonLibrary.sol";
 
 contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
     bytes32 public constant CONTRACT_NAME = "MellowOracle";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     IUniV2Oracle public immutable univ2Oracle;
     IUniV3Oracle public immutable univ3Oracle;

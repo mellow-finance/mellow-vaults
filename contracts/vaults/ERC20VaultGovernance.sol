@@ -11,7 +11,7 @@ import "./VaultGovernance.sol";
 /// @notice Governance that manages all ERC20 Vaults params and can deploy a new ERC20 Vault.
 contract ERC20VaultGovernance is IContractMeta, IERC20VaultGovernance, VaultGovernance {
     bytes32 public constant CONTRACT_NAME = "ERC20VaultGovernance";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params

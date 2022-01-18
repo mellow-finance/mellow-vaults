@@ -13,7 +13,7 @@ import "../utils/DefaultAccessControl.sol";
 
 contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
     bytes32 public constant CONTRACT_NAME = "UniV3Oracle";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     IUniswapV3Factory public immutable factory;
     uint16 public observationsForAverage;

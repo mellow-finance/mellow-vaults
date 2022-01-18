@@ -11,7 +11,7 @@ import "../libraries/CommonLibrary.sol";
 
 contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
     bytes32 public constant CONTRACT_NAME = "UniV2Oracle";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     IUniswapV2Factory public immutable factory;
 

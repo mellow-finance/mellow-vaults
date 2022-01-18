@@ -14,7 +14,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes32 public constant CONTRACT_NAME = "ProtocolGovernance";
-    uint256 public constant CONTRACT_VERSION = 1;
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
