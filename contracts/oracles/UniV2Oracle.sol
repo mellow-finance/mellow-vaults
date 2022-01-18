@@ -2,13 +2,14 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/utils/IContractMeta.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/external/univ2/IUniswapV2Pair.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract UniV2Oracle is IContractMeta, IUniV2Oracle {
+contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
     bytes32 public constant CONTRACT_NAME = "UniV2Oracle";
     uint256 public constant CONTRACT_VERSION = 1;
 
@@ -18,6 +19,8 @@ contract UniV2Oracle is IContractMeta, IUniV2Oracle {
         factory = factory_;
     }
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     /// @inheritdoc IUniV2Oracle
     function spotPrice(address token0, address token1) external view returns (uint256 spotPriceX96) {
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
@@ -25,5 +28,9 @@ contract UniV2Oracle is IContractMeta, IUniV2Oracle {
         require(pool != address(0), ExceptionsLibrary.NOT_FOUND);
         (uint112 reserve0, uint112 reserve1, ) = IUniswapV2Pair(pool).getReserves();
         spotPriceX96 = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
     }
 }

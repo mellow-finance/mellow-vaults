@@ -3,13 +3,14 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance {
+contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes32 public constant CONTRACT_NAME = "ProtocolGovernance";
@@ -109,7 +110,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
         return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
 
-    // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function rollbackAllPermissionGrants() external {
@@ -194,8 +195,6 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
         emit PendingParamsCommitted(tx.origin, msg.sender, params);
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
-
     /// @inheritdoc IProtocolGovernance
     function stagePermissionGrants(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
@@ -215,7 +214,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
         emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
     }
 
-    // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
+    // -------------------------  INTERNAL, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
         require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
@@ -229,7 +228,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
         }
     }
 
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new permissions are staged to be granted for speceific address.
     /// @param origin Origin of the transaction (tx.origin)

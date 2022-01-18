@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
@@ -9,7 +10,7 @@ import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../interfaces/oracles/IMellowOracle.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract MellowOracle is IContractMeta, IMellowOracle {
+contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
     bytes32 public constant CONTRACT_NAME = "MellowOracle";
     uint256 public constant CONTRACT_VERSION = 1;
 
@@ -26,6 +27,8 @@ contract MellowOracle is IContractMeta, IMellowOracle {
         univ3Oracle = univ3Oracle_;
         chainlinkOracle = chainlinkOracle_;
     }
+
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
 
     /// @inheritdoc IMellowOracle
     function spotPrice(address token0, address token1)
@@ -70,5 +73,9 @@ contract MellowOracle is IContractMeta, IMellowOracle {
         priceX96 /= values.length;
         minPriceX96 = values[0];
         maxPriceX96 = values[values.length - 1];
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IMellowOracle).interfaceId == interfaceId;
     }
 }

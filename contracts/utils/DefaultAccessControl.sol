@@ -21,12 +21,16 @@ contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable 
         _setRoleAdmin(ADMIN_DELEGATE_ROLE, adminRole);
     }
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     /// @notice Checks if the address is contract admin.
     /// @param sender Adddress to check
     /// @return `true` if sender is an admin, `false` otherwise
     function isAdmin(address sender) public view returns (bool) {
         return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
     }
+
+    // -------------------------  INTERNAL, VIEW  ------------------------------
 
     function _requireAdmin() internal view {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);

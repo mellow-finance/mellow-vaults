@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
 import "../interfaces/external/aave/ILendingPool.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../interfaces/vaults/IVault.sol";
@@ -28,6 +30,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     address[] private _aTokens;
     uint256[] private _tvls;
     uint256 private _lastTvlUpdateTimestamp;
+    ILendingPool private _lendingPool;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -36,16 +39,22 @@ contract AaveVault is IAaveVault, IntegrationVault {
         minTokenAmounts = _tvls;
         maxTokenAmounts = new uint256[](minTokenAmounts.length);
         uint256 timeElapsed = block.timestamp - _lastTvlUpdateTimestamp;
-        uint256 factorX96 = CommonLibrary.Q96;
+        uint256 factor = CommonLibrary.DENOMINATOR;
         if (timeElapsed > 0) {
-            uint256 apyX96 = IAaveVaultGovernance(address(_vaultGovernance))
-                .delayedProtocolParams()
-                .estimatedAaveAPYX96;
-            factorX96 = CommonLibrary.Q96 + FullMath.mulDiv(apyX96, timeElapsed, CommonLibrary.YEAR);
+            uint256 apy = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().estimatedAaveAPY;
+            factor = CommonLibrary.DENOMINATOR + FullMath.mulDiv(apy, timeElapsed, CommonLibrary.YEAR);
         }
         for (uint256 i = 0; i < minTokenAmounts.length; i++) {
-            maxTokenAmounts[i] = FullMath.mulDiv(factorX96, minTokenAmounts[i], CommonLibrary.Q96);
+            maxTokenAmounts[i] = FullMath.mulDiv(factor, minTokenAmounts[i], CommonLibrary.DENOMINATOR);
         }
+    }
+
+    function lendingPool() external view returns (ILendingPool) {
+        return _lendingPool;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -58,6 +67,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
     /// @inheritdoc IAaveVault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
+        _lendingPool = IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
         _aTokens = new address[](vaultTokens_.length);
         for (uint256 i = 0; i < vaultTokens_.length; ++i) {
             address aToken = _getAToken(vaultTokens_[i]);
@@ -68,9 +78,16 @@ contract AaveVault is IAaveVault, IntegrationVault {
         _lastTvlUpdateTimestamp = block.timestamp;
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _getAToken(address token) internal view returns (address) {
+        DataTypes.ReserveData memory data = _lendingPool.getReserveData(token);
+        return data.aTokenAddress;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _updateTvls() internal {
+    function _updateTvls() private {
         uint256 tvlsLength = _tvls.length;
         for (uint256 i = 0; i < tvlsLength; ++i) {
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
@@ -93,8 +110,8 @@ contract AaveVault is IAaveVault, IntegrationVault {
                 continue;
             }
             address token = tokens[i];
-            _allowTokenIfNecessary(token, address(_lendingPool()));
-            _lendingPool().deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
+            _allowTokenIfNecessary(token, address(_lendingPool));
+            _lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
         }
         _updateTvls();
         actualTokenAmounts = tokenAmounts;
@@ -113,17 +130,8 @@ contract AaveVault is IAaveVault, IntegrationVault {
             }
             uint256 balance = IERC20(_aTokens[i]).balanceOf(address(this));
             uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
-            actualTokenAmounts[i] = _lendingPool().withdraw(tokens[i], amount, to);
+            actualTokenAmounts[i] = _lendingPool.withdraw(tokens[i], amount, to);
         }
         _updateTvls();
-    }
-
-    function _getAToken(address token) internal view returns (address) {
-        DataTypes.ReserveData memory data = _lendingPool().getReserveData(token);
-        return data.aTokenAddress;
-    }
-
-    function _lendingPool() internal view returns (ILendingPool) {
-        return IAaveVaultGovernance(address(_vaultGovernance)).delayedProtocolParams().lendingPool;
     }
 }

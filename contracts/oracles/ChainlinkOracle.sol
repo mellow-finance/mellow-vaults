@@ -29,6 +29,8 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         _addChainlinkOracles(tokens, oracles);
     }
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     /// @inheritdoc IChainlinkOracle
     function isAllowedToken(address token) external view returns (bool) {
         return _tokenAllowlist.contains(token);
@@ -37,24 +39,6 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     /// @inheritdoc IChainlinkOracle
     function tokenAllowlist() external view returns (address[] memory) {
         return _tokenAllowlist.values();
-    }
-
-    /// @inheritdoc IChainlinkOracle
-    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _addChainlinkOracles(tokens, oracles);
-    }
-
-    function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
-        require(tokens.length == oracles.length, ExceptionsLibrary.INVALID_VALUE);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            address token = tokens[i];
-            address oracle = oracles[i];
-            require(!_tokenAllowlist.contains(token), ExceptionsLibrary.DUPLICATE);
-            _tokenAllowlist.add(token);
-            chainlinkOracles[token] = oracle;
-        }
-        emit OraclesAdded(tx.origin, msg.sender, tokens, oracles);
     }
 
     /// @inheritdoc IChainlinkOracle
@@ -70,6 +54,20 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         priceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
     }
 
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return super.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
+    }
+
+    // -------------------------  EXTERNAL, MUTATING  ------------------------------
+
+    /// @inheritdoc IChainlinkOracle
+    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _addChainlinkOracles(tokens, oracles);
+    }
+
+    // -------------------------  INTERNAL, VIEW  ------------------------------
+
     function _getChainlinkPrice(IAggregatorV3 chainlinkOracle0, IAggregatorV3 chainlinkOracle1)
         internal
         view
@@ -82,6 +80,22 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         uint256 decimalsRatioX96 = FullMath.mulDiv(decimalsFactor1, CommonLibrary.Q96, decimalsFactor0);
         return FullMath.mulDiv(uint256(answer0), decimalsRatioX96, uint256(answer1));
     }
+
+    // -------------------------  INTERNAL, MUTATING  ------------------------------
+
+    function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
+        require(tokens.length == oracles.length, ExceptionsLibrary.INVALID_VALUE);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            address token = tokens[i];
+            address oracle = oracles[i];
+            require(!_tokenAllowlist.contains(token), ExceptionsLibrary.DUPLICATE);
+            _tokenAllowlist.add(token);
+            chainlinkOracles[token] = oracle;
+        }
+        emit OraclesAdded(tx.origin, msg.sender, tokens, oracles);
+    }
+
+    // --------------------------  EVENTS  --------------------------
 
     event OraclesAdded(address indexed origin, address indexed sender, address[] tokens, address[] oracles);
 }

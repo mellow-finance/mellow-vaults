@@ -11,7 +11,6 @@ import {
 } from "ramda";
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
-import { log } from "console";
 
 export const PRIVATE_VAULT = true;
 
@@ -202,6 +201,7 @@ export const combineVaults = async (
     if (nfts.length === 0) {
         throw `Trying to combine 0 vaults`;
     }
+    const { log } = deployments;
     const { deployer, admin } = await hre.getNamedAccounts();
     const firstNft = nfts[0];
     const firstAddress = await deployments.read(

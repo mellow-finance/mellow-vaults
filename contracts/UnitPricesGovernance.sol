@@ -16,6 +16,8 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
 
     constructor(address admin) DefaultAccessControl(admin) {}
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
@@ -26,6 +28,8 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
     {
         return (interfaceId == type(IUnitPricesGovernance).interfaceId) || super.supportsInterface(interfaceId);
     }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IUnitPricesGovernance
     function stageUnitPrice(address token, uint256 value) external {
@@ -56,6 +60,8 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
         delete stagedUnitPricesTimestamps[token];
         emit UnitPriceCommitted(tx.origin, msg.sender, token, price);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice UnitPrice staged for commit
     /// @param origin Origin of the transaction (tx.origin)
