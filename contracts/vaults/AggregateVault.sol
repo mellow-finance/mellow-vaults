@@ -34,6 +34,12 @@ contract AggregateVault is IAggregateVault, Vault {
         return (_subvaultNftsIndex[subvaultNft] > 0);
     }
 
+    function subvaultAt(uint256 index) external view returns (address) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 subvaultNft = _subvaultNfts[index];
+        return registry.vaultForNft(subvaultNft);
+    }
+
     /// @inheritdoc IVault
     function tvl()
         public

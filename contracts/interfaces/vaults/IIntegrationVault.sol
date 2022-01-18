@@ -57,11 +57,11 @@ interface IIntegrationVault is IVault {
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
-    /// @notice This method is for claiming accidentally accumulated tokens on the contact's balance.
-    /// @dev Can only be called by Protocol Governance.
-    /// @param to Address that will receive the tokens
-    /// @param tokens Tokens to claim. Each token must be other than those in vaultTokens
-    function reclaimTokens(address to, address[] memory tokens) external;
+    /// @notice Claim ERC20 tokens from vault balance to zero vault.
+    /// @dev Cannot be called from zero vault.
+    /// @param tokens Tokens to claim
+    /// @return actualTokenAmounts Amounts reclaimed
+    function reclaimTokens(address[] memory tokens) external returns (uint256[] memory actualTokenAmounts);
 
     /// @notice Claim liquidity mining rewards.
     /// @dev Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
