@@ -38,6 +38,17 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         _initialize(vaultTokens_, nft_);
     }
 
+    // @inheritdoc IIntegrationVault
+    function reclaimTokens(address[] memory tokens)
+        external
+        override(IIntegrationVault, IntegrationVault)
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
+        // no-op
+        actualTokenAmounts = new uint256[](tokens.length);
+    }
+
     /// @inheritdoc ITrader
     function swapExactInput(
         uint256 traderId,

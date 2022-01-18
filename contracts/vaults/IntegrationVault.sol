@@ -49,9 +49,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 nft_ = _nft;
         require(nft_ != 0, ExceptionsLibrary.INIT);
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); // Also checks that the token exists
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
-        IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_));
+        IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_)); // Also checks that the token exists
         uint256 ownerNft = vaultRegistry.nftForVault(address(ownerVault));
         require(ownerNft != 0, ExceptionsLibrary.NOT_FOUND); // require deposits only through Vault
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
@@ -112,6 +111,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     /// @inheritdoc IIntegrationVault
     function reclaimTokens(address[] memory tokens)
         external
+        virtual
         nonReentrant
         returns (uint256[] memory actualTokenAmounts)
     {
