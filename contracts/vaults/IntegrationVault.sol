@@ -26,7 +26,7 @@ import "./Vault.sol";
 /// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
 /// ApprovedForAll person cannot do anything except ERC-721 token transfers.
 ///
-/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+/// Both NFT owner and approved person can call externalCall method which claims liquidity mining rewards (if any)
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin
@@ -124,12 +124,16 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     }
 
     /// @inheritdoc IIntegrationVault
-    function claimRewards(address from, bytes memory data) external override nonReentrant {
+    function externalCall(
+        address to,
+        uint256 value,
+        bytes memory data
+    ) external override nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.hasPermission(from, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
-        (bool res, bytes memory returndata) = from.call(data);
+        require(protocolGovernance.hasPermission(to, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
+        (bool res, bytes memory returndata) = to.call{value: value}(data);
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)

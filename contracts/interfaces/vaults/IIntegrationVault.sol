@@ -63,13 +63,18 @@ interface IIntegrationVault is IVault {
     /// @param tokens Tokens to claim. Each token must be other than those in vaultTokens
     function reclaimTokens(address to, address[] memory tokens) external;
 
-    /// @notice Claim liquidity mining rewards.
+    /// @notice Make external call
     /// @dev Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
     /// Strategy is approved address for the vault NFT.
     ///
-    /// Since this method allows sending arbitrary transactions, the destinations of the calls
-    /// are whitelisted by Protocol Governance.
-    /// @param from Address of the reward pool
-    /// @param data Abi encoded call to the `from` address
-    function claimRewards(address from, bytes memory data) external;
+    /// Call destinations and selectors are whitelisted by Protocol governance.
+    /// Additionally validation scripts are run against input
+    /// @param to Address of the call
+    /// @param value Eth value for the call
+    /// @param data Abi encoded data call
+    function externalCall(
+        address to,
+        uint256 value,
+        bytes memory data
+    ) external;
 }
