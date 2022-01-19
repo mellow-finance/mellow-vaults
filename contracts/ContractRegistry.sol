@@ -13,8 +13,8 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    bytes32 public CONTRACT_NAME = "ContractRegistry";
-    bytes32 public CONTRACT_VERSION = "1.0.0";
+    bytes32 public constant CONTRACT_NAME = "ContractRegistry";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     IProtocolGovernance public governance;
 
@@ -69,7 +69,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         uint256 newContractVersion = SemverLibrary.numberifySemver(newContractVersionRaw);
 
         require(
-            _validateContractName(newContractName) && newContractName != CONTRACT_NAME,
+            _validateContractName(newContractName),
             ExceptionsLibrary.INVALID_VALUE
         );
         require(

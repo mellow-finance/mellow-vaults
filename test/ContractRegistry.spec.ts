@@ -49,7 +49,7 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                 uint8.filter((x) => x.gt(0) && x.lt(20)),
                 uint8.filter((x) => x.lt(20)),
                 uint8.filter((x) => x.lt(20)),
-                hexaString({ minLength: 1, maxLength: 20 }),
+                hexaString({ minLength: 5, maxLength: 20 }),
                 async (
                     n1: BigNumber,
                     n2: BigNumber,

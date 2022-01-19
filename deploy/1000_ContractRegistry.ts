@@ -29,6 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const yearnVaultGovernance = await get("YearnVaultGovernance");
     
     const multicallData = [
+        contractRegistry.interface.encodeFunctionData("registerContract", [contractRegistry.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [protocolGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [vaultRegistry.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [chainlinkOracle.address]),
