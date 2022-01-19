@@ -40,6 +40,10 @@ contract ContractRegistry is IContractRegistry, Multicall {
         }
     }
 
+    function versionAddress(bytes32 name, bytes32 version) external view returns (address) {
+        return _nameToVersionToAddress[name][SemverLibrary.numberifySemver(version)];
+    }
+
     function latestVersion(bytes32 name) external view returns (bytes32, address) {
         uint256 version = _latestVersion(name);
         return (
@@ -66,6 +70,7 @@ contract ContractRegistry is IContractRegistry, Multicall {
         );
 
         _nameToVersionToAddress[newContractName][newContractVersion] = target;
+        _nameToVersions[newContractName].push(newContractVersion);
         _names.add(newContractName);
         emit ContractRegistered(
             tx.origin,
@@ -77,9 +82,8 @@ contract ContractRegistry is IContractRegistry, Multicall {
     }
 
     function _latestVersion(bytes32 name) internal view returns (uint256) {
-        uint256[] storage versions_ = _nameToVersions[name];
-        uint256 versionsLength = versions_.length;
-        return versionsLength != 0 ? versions_[versionsLength - 1] : 0;
+        uint256 versionsLength = _nameToVersions[name].length;
+        return versionsLength != 0 ? _nameToVersions[name][versionsLength - 1] : 0;
     }
 
     event ContractRegistered(
