@@ -55,23 +55,6 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     }
 
     /// @inheritdoc IVaultRegistry
-    function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
-        require(owner != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(
-            _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
-            ExceptionsLibrary.FORBIDDEN
-        );
-        nft = _topNft;
-        _safeMint(owner, nft);
-        _vaultIndex[nft] = vault;
-        _nftIndex[vault] = nft;
-        _vaults.push(vault);
-        _topNft += 1;
-        emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
-    }
-
-    /// @inheritdoc IVaultRegistry
     function protocolGovernance() external view returns (IProtocolGovernance) {
         return _protocolGovernance;
     }
