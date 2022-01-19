@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
@@ -17,6 +16,8 @@ contract AggregateVault is IAggregateVault, Vault {
     uint256[] private _subvaultNfts;
     uint256[] private _pullExistentials;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
+
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     function subvaultNfts() external view returns (uint256[] memory) {
         return _subvaultNfts;
@@ -51,6 +52,12 @@ contract AggregateVault is IAggregateVault, Vault {
             }
         }
     }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IAggregateVault).interfaceId == interfaceId;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(
         address[] memory vaultTokens_,

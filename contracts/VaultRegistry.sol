@@ -33,6 +33,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         _protocolGovernance = protocolGovernance_;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     function vaults() external view returns (address[] memory) {
         return _vaults;
     }
@@ -89,6 +91,28 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         return _vaults.length;
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IVaultRegistry).interfaceId == interfaceId;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IVaultRegistry
+    function registerVault(address vault, address owner) external returns (uint256 nft) {
+        require(
+            _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
+            ExceptionsLibrary.FORBIDDEN
+        );
+        require(_nftIndex[vault] == 0, ExceptionsLibrary.DUPLICATE);
+        nft = _topNft;
+        _safeMint(owner, nft);
+        _vaultIndex[nft] = vault;
+        _nftIndex[vault] = nft;
+        _vaults.push(vault);
+        _topNft += 1;
+        emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
+    }
+
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
         require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
@@ -121,6 +145,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         emit TokenLocked(tx.origin, msg.sender, nft);
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
     function _isProtocolAdmin(address sender) internal view returns (bool) {
         return _protocolGovernance.isAdmin(sender);
     }
@@ -132,6 +158,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     ) internal view override {
         require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when token is locked for transfers
     /// @param origin Origin of the transaction (tx.origin)

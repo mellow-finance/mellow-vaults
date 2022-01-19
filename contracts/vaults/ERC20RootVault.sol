@@ -19,12 +19,26 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     uint256[] private _lpPriceHighWaterMarks;
     uint256 public lastFeeCharge;
     EnumerableSet.AddressSet _depositorsAllowlist;
+    uint256 public totalWithdrawnAmountsTimestamp;
+    uint256[] public totalWithdrawnAmounts;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function depositorsAllowlist() external view returns (address[] memory) {
         return _depositorsAllowlist.values();
     }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(IERC165, AggregateVault)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId) || type(IERC20RootVault).interfaceId == interfaceId;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
@@ -39,8 +53,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             _depositorsAllowlist.remove(depositors[i]);
         }
     }
-
-    // -------------------  EXTERNAL, MUTATING  -------------------
 
     function initialize(
         uint256 nft_,
@@ -120,6 +132,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
             IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
+        _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, true);
         _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
@@ -289,6 +302,29 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
     }
+
+    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
+        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
+        uint256 timestamp = block.timestamp;
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        if (timestamp != totalWithdrawnAmountsTimestamp) {
+            totalWithdrawnAmountsTimestamp = timestamp;
+        } else {
+            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+                withdrawn[i] = totalWithdrawnAmounts[i];
+            }
+        }
+        for (uint256 i = 0; i < tokenAmounts.length; i++) {
+            withdrawn[i] += tokenAmounts[i];
+            require(
+                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
+                ExceptionsLibrary.LIMIT_OVERFLOW
+            );
+            totalWithdrawnAmounts[i] = withdrawn[i];
+        }
+    }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when management fees are charged
     /// @param treasury Treasury receiver of the fee

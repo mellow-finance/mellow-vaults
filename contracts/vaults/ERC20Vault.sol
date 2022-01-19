@@ -15,6 +15,8 @@ import "./IntegrationVault.sol";
 contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -29,6 +31,8 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
@@ -68,6 +72,18 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         return trader.swapExactOutput(traderId, amount, address(0), path, options);
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _postReclaimTokens(address, address[] memory tokens) internal view override {
+        for (uint256 i = 0; i < tokens.length; ++i) require(!isVaultToken(tokens[i]), ExceptionsLibrary.INVALID_TOKEN); // vault token is part of TVL
+    }
+
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
+
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
         pure
@@ -93,14 +109,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         }
 
         actualTokenAmounts = tokenAmounts;
-    }
-
-    function _postReclaimTokens(address, address[] memory tokens) internal view override {
-        for (uint256 i = 0; i < tokens.length; ++i) require(!isVaultToken(tokens[i]), ExceptionsLibrary.INVALID_TOKEN); // vault token is part of TVL
-    }
-
-    function _isStrategy(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
     function _approveERC20TokenIfNecessary(address token, address to) internal {

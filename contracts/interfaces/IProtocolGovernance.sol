@@ -2,18 +2,21 @@
 pragma solidity 0.8.9;
 
 import "./utils/IDefaultAccessControl.sol";
+import "./IUnitPricesGovernance.sol";
 
-interface IProtocolGovernance is IDefaultAccessControl {
+interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @notice CommonLibrary protocol params.
     /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
     /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
     /// @param forceAllowMask If a permission bit is set in this mask it forces all addresses to have this permission as true
+    /// @param withdrawLimit Withdraw limit (in unit prices, i.e. usd)
     struct Params {
         uint256 maxTokensPerVault;
         uint256 governanceDelay;
         address protocolTreasury;
         uint256 forceAllowMask;
+        uint256 withdrawLimit;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -71,7 +74,12 @@ interface IProtocolGovernance is IDefaultAccessControl {
     /// This bitmask is xored with ordinary mask.
     function forceAllowMask() external view returns (uint256);
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+    /// @notice Withdraw limit per token per block.
+    /// @param token Address of the token
+    /// @return Withdraw limit per token per block
+    function withdrawLimit(address token) external view returns (uint256);
+
+    // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
 
     /// @notice Rollback all staged granted permission grant.
     function rollbackAllPermissionGrants() external;

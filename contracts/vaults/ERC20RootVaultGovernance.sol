@@ -24,6 +24,8 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         MAX_PERFORMANCE_FEE = (50 * CommonLibrary.DENOMINATOR) / 100;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IERC20RootVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
@@ -95,6 +97,12 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernance).interfaceId == interfaceId;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IERC20RootVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
@@ -177,6 +185,8 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         }
         vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)

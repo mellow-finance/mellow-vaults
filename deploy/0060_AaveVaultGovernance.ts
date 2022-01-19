@@ -29,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             },
             {
                 lendingPool: aaveLendingPool,
-                estimatedAaveAPYX96: BigNumber.from(2).pow(96).div(20), // 5%
+                estimatedAaveAPY: BigNumber.from(10).pow(9).div(20), // 5%
             },
         ],
         log: true,
