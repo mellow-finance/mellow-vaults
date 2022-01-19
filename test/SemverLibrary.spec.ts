@@ -99,6 +99,14 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
                     );
                     expect(numberified).to.eq(BigNumber.from(0));
                 });
+                it("returns zero on '4.2.0.1'", async () => {
+                    const semver = "4.2.0.1";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
             });
         });
 
