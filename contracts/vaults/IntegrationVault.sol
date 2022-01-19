@@ -132,7 +132,17 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.hasPermission(to, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
+        uint256 selectorAddress;
+        assembly {
+            selectorAddress := mload(add(data, 0x20))
+        }
+        selectorAddress = (selectorAddress >> 224) << 224;
+        selectorAddress = selectorAddress | uint160(to);
+        bytes memory verificationScript = protocolGovernance.verificationScripts(selectorAddress);
+        require(verificationScript.length > 0, ExceptionsLibrary.INVALID_VALUE);
+
+        // TODO - add reference to ExtenalCallVerifier somewhere
+        // reqiuire(ExtenalCallVerifier.verify(verificationScript, data) > 0)
         (bool res, bytes memory returndata) = to.call{value: value}(data);
         if (!res) {
             assembly {

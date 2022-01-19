@@ -11,6 +11,7 @@ import "./UnitPricesGovernance.sol";
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
@@ -24,6 +25,15 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
 
     EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
+
+    EnumerableSet.UintSet private _stagedSelectorAddresses;
+    /// @inheritdoc IProtocolGovernance
+    mapping(uint256 => bytes) public stagedVerificationScripts;
+    /// @inheritdoc IProtocolGovernance
+    mapping(uint256 => uint256) public stagedVerificationScriptsTimestamps;
+    EnumerableSet.UintSet private _selectorAddresses;
+    /// @inheritdoc IProtocolGovernance
+    mapping(uint256 => bytes) public verificationScripts;
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
@@ -208,6 +218,18 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         pendingParams = newParams;
         pendingParamsTimestamp = block.timestamp + params.governanceDelay;
         emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
+    }
+
+    function resetVerificationScript(address selectorAddress) external {
+        // TBA
+    }
+
+    function commitAllVerificationScriptsSurpassedDelay() external {
+        // TBA
+    }
+
+    function stageVerificationScript(uint256 selectorAddress, bytes memory verificationScript) external {
+        // TBA
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------

@@ -36,6 +36,21 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @return Bitmask
     function permissionMasks(address target) external view returns (uint256);
 
+    /// @notice Timestamp after which staged verification scripts for the given selector address can be committed.
+    /// @param selectorAddress Address combined with selector (right 4 bytes for selector)
+    /// @return Zero if there are no staged verification scripts, timestamp otherwise
+    function stagedVerificationScriptsTimestamps(uint256 selectorAddress) external view returns (uint256);
+
+    /// @notice Staged verification scripts for the given selector address.
+    /// @param selectorAddress Address combined with selector (right 4 bytes for selector)
+    /// @return Staged verification script
+    function stagedVerificationScripts(uint256 selectorAddress) external view returns (bytes memory);
+
+    /// @notice Verification scripts for the given selector address.
+    /// @param selectorAddress Address combined with selector (right 4 bytes for selector)
+    /// @return Verification script, an evm-like bytecode for verification
+    function verificationScripts(uint256 selectorAddress) external view returns (bytes memory);
+
     /// @notice Timestamp after which staged pending protocol parameters can be committed
     /// @return Zero if there are no staged parameters, timestamp otherwise.
     function pendingParamsTimestamp() external view returns (uint256);
@@ -89,13 +104,20 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @param target The given address.
     function commitPermissionGrants(address target) external;
 
-    /// @notice Commites all staged permission grants for which governance delay passed
+    /// @notice Commits all staged permission grants for which governance delay passed
     function commitAllPermissionGrantsSurpassedDelay() external;
 
-    /// @notice Revoke permission instantly from the given address.
+    /// @notice Revoke permission instantly for the given address.
     /// @param target The given address.
     /// @param permissionIds A list of permission ids to revoke.
     function revokePermissions(address target, uint8[] memory permissionIds) external;
+
+    /// @notice Reset verification script instantly for the given selectorAddress.
+    /// @param selectorAddress Address combined with selector (right 4 bytes for selector)
+    function resetVerificationScript(address selectorAddress) external;
+
+    /// @notice Commits all verification scripts for which delay passed
+    function commitAllVerificationScriptsSurpassedDelay() external;
 
     /// @notice Commits staged protocol params.
     /// Reverts if governance delay has not passed yet.
@@ -107,9 +129,15 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @param newParams New protocol parameters to set.
     function setPendingParams(Params memory newParams) external;
 
-    /// @notice Stage granted permissions that could have been committed after governance delay expires.
+    /// @notice Stage granted permissions that could be committed after governance delay expires.
     /// Resets commit delay and permissions if there are already staged permissions for this address.
     /// @param target Target address
     /// @param permissionIds A list of permission ids to grant
     function stagePermissionGrants(address target, uint8[] memory permissionIds) external;
+
+    /// @notice Stage verification script that could be committed after governance delay expires.
+    /// Resets commit delay and permissions if there are already staged permissions for this address.
+    /// @param selectorAddress Address combined with selector (right 4 bytes for selector)
+    /// @param verificationScript Script to stage
+    function stageVerificationScript(uint256 selectorAddress, bytes memory verificationScript) external;
 }
