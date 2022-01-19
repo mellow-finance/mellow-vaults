@@ -77,22 +77,10 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         address
                     );
 
-                    await deployments.deploy("MockERC165", {
-                        from: this.deployer.address,
-                        contract: "MockERC165",
-                        args: [],
-                        autoMine: true,
-                    });
-                    this.erc165Mock = await ethers.getContract("MockERC165");
-                    await deployments.deploy("MockERC165", {
-                        from: this.deployer.address,
-                        contract: "MockERC165",
-                        args: [],
-                        autoMine: true,
-                    });
-                    this.anotherERC165Mock = await ethers.getContract(
-                        "MockERC165"
-                    );
+                    const MockVaultFactory = await ethers.getContractFactory("MockERC165");
+                    this.erc165Mock = await MockVaultFactory.deploy();
+                    this.anotherERC165Mock = await MockVaultFactory.deploy();
+
                     await this.erc165Mock.allowInterfaceId(VAULT_INTERFACE_ID);
                     this.nft = Number(
                         await this.subject
@@ -126,6 +114,8 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         "ProtocolGovernance",
                         singleton
                     );
+                    console.log(this.erc165Mock.address);
+                    console.log(this.anotherERC165Mock.address);
                     return this.subject;
                 }
             );
@@ -159,11 +149,8 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
         describe("#vaults", () => {
             it("returns all registered vaults", async () => {
                 expect(await this.subject.vaults()).to.deep.equal([
-                    this.erc165Mock.address,
+                    this.erc165Mock.address
                 ]);
-                await this.anotherERC165Mock.allowInterfaceId(
-                    VAULT_INTERFACE_ID
-                );
                 this.subject
                     .connect(this.allowedRegisterVaultSigner)
                     .registerVault(
@@ -172,7 +159,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                     );
                 expect(await this.subject.vaults()).to.deep.equal([
                     this.erc165Mock.address,
-                    this.anotherERC165Mock.address,
+                    this.anotherERC165Mock.address
                 ]);
             });
 
@@ -429,47 +416,48 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("properties", () => {
-                pit(
-                    "@property: when N new vaults have been registered, vaults count will be increased by N",
-                    { numRuns: RUNS.verylow },
-                    integer({ min: 1, max: 5 }),
-                    async (vaultsCount: number): Promise<boolean> => {
-                        let oldVaultsCount = Number(
-                            await this.subject.vaultsCount()
-                        );
-                        for (var i = 0; i < vaultsCount; ++i) {
-                            await deployments.deploy("MockERC165", {
-                                from: this.deployer.address,
-                                contract: "MockERC165",
-                                args: [],
-                                autoMine: true,
-                            });
-                            let newMock = await ethers.getContract(
-                                "MockERC165"
-                            );
-                            await newMock.allowInterfaceId(VAULT_INTERFACE_ID);
+            // describe("properties", () => {
+            //     pit(
+            //         "@property: when N new vaults have been registered, vaults count will be increased by N",
+            //         { numRuns: RUNS.verylow },
+            //         integer({ min: 1, max: 5 }),
+            //         async (vaultsCount: number): Promise<boolean> => {
+            //             await deployments.fixture();
+            //             let oldVaultsCount = Number(
+            //                 await this.subject.vaultsCount()
+            //             );
+            //             for (var i = 0; i < vaultsCount; ++i) {
+            //                 await deployments.deploy("MockERC165", {
+            //                     from: this.deployer.address,
+            //                     contract: "MockERC165",
+            //                     args: [],
+            //                     autoMine: true,
+            //                 });
+            //                 let newMock = await ethers.getContract(
+            //                     "MockERC165"
+            //                 );
+            //                 await newMock.allowInterfaceId(VAULT_INTERFACE_ID);
 
-                            this.subject
-                                .connect(this.allowedRegisterVaultSigner)
-                                .registerVault(
-                                    newMock.address,
-                                    this.ownerSigner.address
-                                );
-                        }
-                        let newVaultsCount = Number(
-                            await this.subject.vaultsCount()
-                        );
-                        expect(newVaultsCount - oldVaultsCount).to.be.equal(
-                            vaultsCount
-                        );
-                        expect(
-                            (await this.subject.vaults()).length
-                        ).to.be.equal(await this.subject.vaultsCount());
-                        return true;
-                    }
-                );
-            });
+            //                 this.subject
+            //                     .connect(this.allowedRegisterVaultSigner)
+            //                     .registerVault(
+            //                         newMock.address,
+            //                         this.ownerSigner.address
+            //                     );
+            //             }
+            //             let newVaultsCount = Number(
+            //                 await this.subject.vaultsCount()
+            //             );
+            //             expect(newVaultsCount - oldVaultsCount).to.be.equal(
+            //                 vaultsCount
+            //             );
+            //             expect(
+            //                 (await this.subject.vaults()).length
+            //             ).to.be.equal(await this.subject.vaultsCount());
+            //             return true;
+            //         }
+            //     );
+            // });
 
             describe("edge cases", () => {
                 describe("when new vault is registered", () => {
@@ -527,31 +515,32 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                 ).to.emit(this.subject, "VaultRegistered");
             });
 
-            describe("properties", () => {
-                pit(
-                    "@property: minted NFT equals to vaultRegistry#vaultsCount",
-                    { numRuns: 1 },
-                    address.filter((x) => x != ethers.constants.AddressZero),
-                    async (address: Address): Promise<boolean> => {
-                        const newNft = await this.subject
-                            .connect(this.allowedRegisterVaultSigner)
-                            .callStatic.registerVault(
-                                this.anotherERC165Mock.address,
-                                address
-                            );
-                        this.subject
-                            .connect(this.allowedRegisterVaultSigner)
-                            .registerVault(
-                                this.anotherERC165Mock.address,
-                                address
-                            );
-                        expect(
-                            Number(await this.subject.vaultsCount())
-                        ).to.be.equal(Number(newNft));
-                        return true;
-                    }
-                );
-            });
+            // describe("properties", () => {
+            //     pit(
+            //         "@property: minted NFT equals to vaultRegistry#vaultsCount",
+            //         { numRuns: 1 },
+            //         address.filter((x) => x != ethers.constants.AddressZero),
+            //         async (address: Address): Promise<boolean> => {
+            //             await deployments.fixture();
+            //             const newNft = await this.subject
+            //                 .connect(this.allowedRegisterVaultSigner)
+            //                 .callStatic.registerVault(
+            //                     this.anotherERC165Mock.address,
+            //                     address
+            //                 );
+            //             this.subject
+            //                 .connect(this.allowedRegisterVaultSigner)
+            //                 .registerVault(
+            //                     this.anotherERC165Mock.address,
+            //                     address
+            //                 );
+            //             expect(
+            //                 Number(await this.subject.vaultsCount())
+            //             ).to.be.equal(Number(newNft));
+            //             return true;
+            //         }
+            //     );
+            // });
 
             describe("access control:", () => {
                 it("allowed: any account with Register Vault permissions", async () => {
@@ -592,7 +581,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                                     .connect(this.allowedRegisterVaultSigner)
                                     .registerVault(
                                         this.anotherERC165Mock.address,
-                                        ethers.constants.AddressZero
+                                        this.ownerSigner.address
                                     )
                             ).to.be.revertedWith(Exceptions.INVALID_INTERFACE);
                         }
