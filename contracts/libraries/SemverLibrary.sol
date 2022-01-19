@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 library SemverLibrary {
     uint8 internal constant ASCII_ZERO = 48;
     uint8 internal constant BIT_OFFSET = 85;
-    uint256 internal constant MAX_LENGTH = 0x20;
+    uint256 internal constant MAX_LENGTH = 0x1f;
 
     function isNumeric(bytes1 num) internal pure returns (bool) {
         return num >= "0" && num <= "9";
@@ -48,9 +48,6 @@ library SemverLibrary {
 
     function numberifySemver(bytes32 _semver) internal pure returns (uint256) {
         bytes memory semver = shrinkToFit(abi.encodePacked(_semver));
-        if (semver.length >= MAX_LENGTH) {
-            return 0;
-        }
 
         uint8 BEFORE_NUMBER = 0;
         uint8 IN_NUMBER = 1;

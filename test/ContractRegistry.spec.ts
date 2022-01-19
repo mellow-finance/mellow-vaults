@@ -208,14 +208,13 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
 
             describe("access control", () => {
                 xit("allowed: operator (deployer)", async () => {});
-                xit("denied: random address", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        expect(
-                            this.subject
-                                .connect(signer)
-                                .registerContract(randomAddress())
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
+                xit("denied: random address", async () => {});
+                it("denied: protocol admin", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .registerContract(randomAddress())
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });

@@ -51,12 +51,54 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
 
         describe("#numberifySemver", () => {
             describe("edge cases", () => {
-                xit("returns zero on '0.0.0'", async () => {});
-                xit("returns zero on '4.2'", async () => {});
-                xit("returns zero on '42'", async () => {});
-                xit("returns zero on '4..20'", async () => {});
-                xit("returns zero on '04.2.0'", async () => {});
-                xit("returns zero on '4:20", async () => {});
+                it("returns zero on '0.0.0'", async () => {
+                    const semver = "0.0.0";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
+                it("returns zero on '4.2'", async () => {
+                    const semver = "4.2";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
+                it("returns zero on '42'", async () => {
+                    const semver = "42";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
+                it("returns zero on '4..20'", async () => {
+                    const semver = "4..20";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
+                it("returns zero on '04.2.0'", async () => {
+                    const semver = "04.2.0";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
+                it("returns zero on '4:20", async () => {
+                    const semver = "4:20";
+                    const input = ethers.utils.formatBytes32String(semver);
+                    const numberified = await this.subject.numberifySemver(
+                        input
+                    );
+                    expect(numberified).to.eq(BigNumber.from(0));
+                });
             });
         });
 
