@@ -1,6 +1,4 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { Signer } from "ethers";
 import {
     Arbitrary,
     assert,

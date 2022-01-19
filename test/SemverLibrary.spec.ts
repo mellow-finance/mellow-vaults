@@ -49,6 +49,17 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
             }
         );
 
+        describe("#numberifySemver", () => {
+            describe("edge cases", () => {
+                xit("returns zero on '0.0.0'", async () => {});
+                xit("returns zero on '4.2'", async () => {});
+                xit("returns zero on '42'", async () => {});
+                xit("returns zero on '4..20'", async () => {});
+                xit("returns zero on '04.2.0'", async () => {});
+                xit("returns zero on '4:20", async () => {});
+            });
+        });
+
         describe("#numberify", () => {
             pit(
                 "converts number to string",

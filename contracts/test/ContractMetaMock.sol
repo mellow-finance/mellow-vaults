@@ -7,11 +7,8 @@ contract ContractMetaMock is IContractMeta {
     bytes32 public CONTRACT_NAME;
     bytes32 public CONTRACT_VERSION;
 
-    function setName(bytes32 newName) external {
-        CONTRACT_NAME = newName;
-    }
-
-    function setVersion(bytes32 newVersion) external {
-        CONTRACT_VERSION = newVersion;
+    constructor(bytes32 name_, bytes32 version_) {
+        CONTRACT_NAME = name_;
+        CONTRACT_VERSION = version_;
     }
 }

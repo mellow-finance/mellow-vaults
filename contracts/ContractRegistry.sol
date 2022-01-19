@@ -70,7 +70,7 @@ contract ContractRegistry is IContractRegistry, Multicall {
         );
         require(
             newContractVersion > _latestVersion(newContractName),
-            ExceptionsLibrary.INVALID_VALUE
+            ExceptionsLibrary.INVARIANT
         );
 
         _nameToVersionToAddress[newContractName][newContractVersion] = target;
