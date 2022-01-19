@@ -65,6 +65,10 @@ contract ContractRegistry is IContractRegistry, Multicall {
         uint256 newContractVersion = SemverLibrary.numberifySemver(newContractVersionRaw);
 
         require(
+            _validateContractName(newContractName),
+            ExceptionsLibrary.INVALID_VALUE
+        );
+        require(
             newContractVersion > _latestVersion(newContractName),
             ExceptionsLibrary.INVALID_VALUE
         );
@@ -84,6 +88,22 @@ contract ContractRegistry is IContractRegistry, Multicall {
     function _latestVersion(bytes32 name) internal view returns (uint256) {
         uint256 versionsLength = _nameToVersions[name].length;
         return versionsLength != 0 ? _nameToVersions[name][versionsLength - 1] : 0;
+    }
+
+    function _validateContractName(bytes32 name_) internal pure returns (bool) {
+        bytes memory name = SemverLibrary.shrinkToFit(abi.encodePacked(name_));
+        for (uint256 i; i < name.length; ++i) {
+            uint8 ascii = uint8(name[i]);
+            bool isAlphanumeric = (
+                (0x61 <= ascii && ascii <= 0x7a) || 
+                (0x41 <= ascii && ascii <= 0x5a) || 
+                (0x30 <= ascii && ascii <= 0x39)
+            );
+            if (!isAlphanumeric) {
+                return false;
+            }
+        }
+        return true;
     }
 
     event ContractRegistered(
