@@ -77,12 +77,16 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         address
                     );
 
-                    const MockVaultFactory = await ethers.getContractFactory("MockERC165");
+                    const MockVaultFactory = await ethers.getContractFactory(
+                        "MockERC165"
+                    );
                     this.erc165Mock = await MockVaultFactory.deploy();
                     this.anotherERC165Mock = await MockVaultFactory.deploy();
 
                     await this.erc165Mock.allowInterfaceId(VAULT_INTERFACE_ID);
-                    await this.anotherERC165Mock.allowInterfaceId(VAULT_INTERFACE_ID);
+                    await this.anotherERC165Mock.allowInterfaceId(
+                        VAULT_INTERFACE_ID
+                    );
                     this.nft = Number(
                         await this.subject
                             .connect(this.allowedRegisterVaultSigner)
@@ -148,7 +152,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
         describe("#vaults", () => {
             it("returns all registered vaults", async () => {
                 expect(await this.subject.vaults()).to.deep.equal([
-                    this.erc165Mock.address
+                    this.erc165Mock.address,
                 ]);
                 await this.subject
                     .connect(this.allowedRegisterVaultSigner)
@@ -158,7 +162,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                     );
                 expect(await this.subject.vaults()).to.deep.equal([
                     this.erc165Mock.address,
-                    this.anotherERC165Mock.address
+                    this.anotherERC165Mock.address,
                 ]);
             });
 
@@ -424,7 +428,8 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         let oldVaultsCount = Number(
                             await this.subject.vaultsCount()
                         );
-                        const MockVaultFactory = await ethers.getContractFactory("MockERC165");
+                        const MockVaultFactory =
+                            await ethers.getContractFactory("MockERC165");
                         for (var i = 0; i < vaultsCount; ++i) {
                             let newMock = await MockVaultFactory.deploy();
                             await newMock.allowInterfaceId(VAULT_INTERFACE_ID);
