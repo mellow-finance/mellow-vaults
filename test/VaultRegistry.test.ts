@@ -7,6 +7,7 @@ import {
     sleep,
     sleepTo,
     withSigner,
+    randomNft,
 } from "./library/Helpers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { ProtocolGovernance, VaultRegistry } from "./types";
@@ -23,10 +24,9 @@ type CustomContext = {
     ownerSigner: SignerWithAddress;
     newProtocolGovernance: Contract;
     allowedRegisterVaultSigner: SignerWithAddress;
-    erc165Mock: Contract;
-    anotherERC165Mock: Contract;
+    vaultMock: Contract;
+    anotherVaultMock: Contract;
     nft: number;
-    randomNft: number;
 };
 type DeployOptions = {
     name?: string;
@@ -80,29 +80,27 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                     const MockVaultFactory = await ethers.getContractFactory(
                         "MockERC165"
                     );
-                    this.erc165Mock = await MockVaultFactory.deploy();
-                    this.anotherERC165Mock = await MockVaultFactory.deploy();
+                    this.vaultMock = await MockVaultFactory.deploy();
+                    this.anotherVaultMock = await MockVaultFactory.deploy();
 
-                    await this.erc165Mock.allowInterfaceId(VAULT_INTERFACE_ID);
-                    await this.anotherERC165Mock.allowInterfaceId(
+                    await this.vaultMock.allowInterfaceId(VAULT_INTERFACE_ID);
+                    await this.anotherVaultMock.allowInterfaceId(
                         VAULT_INTERFACE_ID
                     );
                     this.nft = Number(
                         await this.subject
                             .connect(this.allowedRegisterVaultSigner)
                             .callStatic.registerVault(
-                                this.erc165Mock.address,
+                                this.vaultMock.address,
                                 this.ownerSigner.address
                             )
                     );
                     this.subject
                         .connect(this.allowedRegisterVaultSigner)
                         .registerVault(
-                            this.erc165Mock.address,
+                            this.vaultMock.address,
                             this.ownerSigner.address
                         );
-
-                    this.randomNft = Math.round(Math.random() * 1000000 + 10);
 
                     // deploy new ProtocolGovernance
                     const { address: singleton } = await deployments.deploy(
@@ -152,17 +150,17 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
         describe("#vaults", () => {
             it("returns all registered vaults", async () => {
                 expect(await this.subject.vaults()).to.deep.equal([
-                    this.erc165Mock.address,
+                    this.vaultMock.address,
                 ]);
                 await this.subject
                     .connect(this.allowedRegisterVaultSigner)
                     .registerVault(
-                        this.anotherERC165Mock.address,
+                        this.anotherVaultMock.address,
                         this.ownerSigner.address
                     );
                 expect(await this.subject.vaults()).to.deep.equal([
-                    this.erc165Mock.address,
-                    this.anotherERC165Mock.address,
+                    this.vaultMock.address,
+                    this.anotherVaultMock.address,
                 ]);
             });
 
@@ -179,30 +177,30 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
         describe("#vaultForNft", () => {
             it("resolves Vault address by VaultRegistry NFT", async () => {
                 expect(await this.subject.vaultForNft(this.nft)).to.equal(
-                    this.erc165Mock.address
+                    this.vaultMock.address
                 );
-                expect(await this.subject.vaultForNft(this.randomNft)).to.equal(
+                expect(await this.subject.vaultForNft(randomNft())).to.equal(
                     ethers.constants.AddressZero
                 );
-                await this.anotherERC165Mock.allowInterfaceId(
+                await this.anotherVaultMock.allowInterfaceId(
                     VAULT_INTERFACE_ID
                 );
-                this.randomNft = Number(
+                let anotherNft = Number(
                     await this.subject
                         .connect(this.allowedRegisterVaultSigner)
                         .callStatic.registerVault(
-                            this.anotherERC165Mock.address,
+                            this.anotherVaultMock.address,
                             this.ownerSigner.address
                         )
                 );
                 this.subject
                     .connect(this.allowedRegisterVaultSigner)
                     .registerVault(
-                        this.anotherERC165Mock.address,
+                        this.anotherVaultMock.address,
                         this.ownerSigner.address
                     );
-                expect(await this.subject.vaultForNft(this.randomNft)).to.equal(
-                    this.anotherERC165Mock.address
+                expect(await this.subject.vaultForNft(anotherNft)).to.equal(
+                    this.anotherVaultMock.address
                 );
             });
 
@@ -231,7 +229,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
         describe("#nftForVault", () => {
             it("resolves VaultRegistry NFT by Vault address", async () => {
                 expect(
-                    await this.subject.nftForVault(this.erc165Mock.address)
+                    await this.subject.nftForVault(this.vaultMock.address)
                 ).to.equal(this.nft);
             });
 
@@ -241,7 +239,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(s)
-                                .nftForVault(this.erc165Mock.address)
+                                .nftForVault(this.vaultMock.address)
                         ).to.not.be.reverted;
                     });
                 });
@@ -276,8 +274,8 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
             describe("edge cases", () => {
                 describe("when VaultRegistry NFT is not registered in VaultRegistry", () => {
                     it("returns false", async () => {
-                        expect(await this.subject.isLocked(this.randomNft)).to
-                            .be.false;
+                        expect(await this.subject.isLocked(randomNft())).to.be
+                            .false;
                     });
                 });
             });
@@ -302,14 +300,13 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
 
         describe("#stagedProtocolGovernance", () => {
             it("returns ProtocolGovernance address staged for commit", async () => {
+                let randomAddr = randomAddress();
                 await this.subject
                     .connect(this.admin)
-                    .stageProtocolGovernance(
-                        this.newProtocolGovernance.address
-                    );
+                    .stageProtocolGovernance(randomAddr);
                 expect(
                     await this.subject.stagedProtocolGovernance()
-                ).to.be.equal(this.newProtocolGovernance.address);
+                ).to.be.equal(randomAddr);
             });
 
             describe("access control:", () => {
@@ -323,7 +320,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
             });
 
             describe("edge cases", () => {
-                describe("when nothing staged", () => {
+                describe("when nothing is staged", () => {
                     it("returns zero address", async () => {
                         expect(
                             await this.subject.stagedProtocolGovernance()
@@ -421,9 +418,9 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
 
             describe("properties", () => {
                 pit(
-                    "property: when N new vaults have been registered, vaults count will be increased by N",
+                    "when N new vaults have been registered, vaults count will be increased by N",
                     { numRuns: RUNS.verylow },
-                    integer({ min: 1, max: 5 }),
+                    integer({ min: 0, max: 5 }),
                     async (vaultsCount: number): Promise<boolean> => {
                         let oldVaultsCount = Number(
                             await this.subject.vaultsCount()
@@ -431,12 +428,14 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         const MockVaultFactory =
                             await ethers.getContractFactory("MockERC165");
                         for (var i = 0; i < vaultsCount; ++i) {
-                            let newMock = await MockVaultFactory.deploy();
-                            await newMock.allowInterfaceId(VAULT_INTERFACE_ID);
+                            let newVaultMock = await MockVaultFactory.deploy();
+                            await newVaultMock.allowInterfaceId(
+                                VAULT_INTERFACE_ID
+                            );
                             await this.subject
                                 .connect(this.allowedRegisterVaultSigner)
                                 .registerVault(
-                                    newMock.address,
+                                    newVaultMock.address,
                                     this.ownerSigner.address
                                 );
                         }
@@ -449,33 +448,12 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         expect(
                             (await this.subject.vaults()).length
                         ).to.be.equal(await this.subject.vaultsCount());
+                        expect(
+                            (await this.subject.vaults()).length + 1
+                        ).to.not.be.equal(await this.subject.vaultsCount());
                         return true;
                     }
                 );
-            });
-
-            describe("edge cases", () => {
-                describe("when new vault is registered", () => {
-                    it("is increased by 1", async () => {
-                        let oldVaultsCount = Number(
-                            await this.subject.vaultsCount()
-                        );
-                        await this.anotherERC165Mock.allowInterfaceId(
-                            VAULT_INTERFACE_ID
-                        );
-                        this.subject
-                            .connect(this.allowedRegisterVaultSigner)
-                            .registerVault(
-                                this.anotherERC165Mock.address,
-                                this.ownerSigner.address
-                            );
-
-                        let newVaultsCount = Number(
-                            await this.subject.vaultsCount()
-                        );
-                        expect(newVaultsCount - oldVaultsCount).to.be.equal(1);
-                    });
-                });
             });
         });
 
@@ -487,16 +465,16 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                     await this.subject
                         .connect(this.allowedRegisterVaultSigner)
                         .callStatic.registerVault(
-                            this.anotherERC165Mock.address,
+                            this.anotherVaultMock.address,
                             newOwner
                         )
                 );
                 await this.subject
                     .connect(this.allowedRegisterVaultSigner)
-                    .registerVault(this.anotherERC165Mock.address, newOwner);
+                    .registerVault(this.anotherVaultMock.address, newOwner);
                 expect(await this.subject.balanceOf(newOwner)).to.be.equal(1);
                 expect(await this.subject.vaultForNft(newNft)).to.be.equal(
-                    this.anotherERC165Mock.address
+                    this.anotherVaultMock.address
                 );
             });
             it("emits VaultRegistered event", async () => {
@@ -504,7 +482,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                     this.subject
                         .connect(this.allowedRegisterVaultSigner)
                         .registerVault(
-                            this.anotherERC165Mock.address,
+                            this.anotherVaultMock.address,
                             this.ownerSigner.address
                         )
                 ).to.emit(this.subject, "VaultRegistered");
@@ -512,22 +490,23 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
 
             describe("properties", () => {
                 pit(
-                    "property: minted NFT equals to vaultRegistry#vaultsCount",
-                    { numRuns: 1 },
+                    "minted NFT equals to vaultRegistry#vaultsCount",
+                    { numRuns: RUNS.mid },
                     address.filter((x) => x != ethers.constants.AddressZero),
                     async (address: Address): Promise<boolean> => {
+                        const MockVaultFactory =
+                            await ethers.getContractFactory("MockERC165");
+                        let newVaultMock = await MockVaultFactory.deploy();
+                        await newVaultMock.allowInterfaceId(VAULT_INTERFACE_ID);
                         const newNft = await this.subject
                             .connect(this.allowedRegisterVaultSigner)
                             .callStatic.registerVault(
-                                this.anotherERC165Mock.address,
+                                newVaultMock.address,
                                 address
                             );
                         await this.subject
                             .connect(this.allowedRegisterVaultSigner)
-                            .registerVault(
-                                this.anotherERC165Mock.address,
-                                address
-                            );
+                            .registerVault(newVaultMock.address, address);
                         expect(
                             Number(await this.subject.vaultsCount())
                         ).to.be.equal(Number(newNft));
@@ -542,7 +521,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         this.subject
                             .connect(this.allowedRegisterVaultSigner)
                             .registerVault(
-                                this.anotherERC165Mock.address,
+                                this.anotherVaultMock.address,
                                 this.ownerSigner.address
                             )
                     ).to.not.be.reverted;
@@ -554,41 +533,48 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                             this.subject
                                 .connect(s)
                                 .registerVault(
-                                    this.anotherERC165Mock.address,
+                                    this.anotherVaultMock.address,
                                     this.ownerSigner.address
                                 )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
+                it("denied: protocol governance admin", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .registerVault(
+                                this.anotherVaultMock.address,
+                                this.ownerSigner.address
+                            )
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
             });
 
             describe("edge cases", () => {
                 describe("when address doesn't conform to IVault interface (IERC165)", () => {
-                    it(
-                        "reverts with " + Exceptions.INVALID_INTERFACE,
-                        async () => {
-                            await this.anotherERC165Mock.denyInterfaceId(
-                                VAULT_INTERFACE_ID
-                            );
-                            await expect(
-                                this.subject
-                                    .connect(this.allowedRegisterVaultSigner)
-                                    .registerVault(
-                                        this.anotherERC165Mock.address,
-                                        this.ownerSigner.address
-                                    )
-                            ).to.be.revertedWith(Exceptions.INVALID_INTERFACE);
-                        }
-                    );
-                });
-
-                describe("when owner address is zero", () => {
-                    it("reverts with " + Exceptions.ADDRESS_ZERO, async () => {
+                    it(`reverts with ${Exceptions.INVALID_INTERFACE}`, async () => {
+                        await this.anotherVaultMock.denyInterfaceId(
+                            VAULT_INTERFACE_ID
+                        );
                         await expect(
                             this.subject
                                 .connect(this.allowedRegisterVaultSigner)
                                 .registerVault(
-                                    this.anotherERC165Mock.address,
+                                    this.anotherVaultMock.address,
+                                    this.ownerSigner.address
+                                )
+                        ).to.be.revertedWith(Exceptions.INVALID_INTERFACE);
+                    });
+                });
+
+                describe("when owner address is zero", () => {
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.allowedRegisterVaultSigner)
+                                .registerVault(
+                                    this.anotherVaultMock.address,
                                     ethers.constants.AddressZero
                                 )
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
@@ -662,7 +648,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
 
             describe("edge cases", () => {
                 describe("when new ProtocolGovernance is a zero address", () => {
-                    it("reverts with " + Exceptions.ADDRESS_ZERO, async () => {
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
                         await expect(
                             this.subject
                                 .connect(this.admin)
@@ -744,8 +730,8 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
             });
 
             describe("edge cases", () => {
-                describe("when nothing staged", () => {
-                    it("reverts with " + Exceptions.INIT, async () => {
+                describe("when nothing is staged", () => {
+                    it(`reverts with ${Exceptions.INIT}`, async () => {
                         await this.subject
                             .connect(this.admin)
                             .commitStagedProtocolGovernance();
@@ -758,7 +744,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                 });
 
                 describe("when called before stagedProtocolGovernanceTimestamp", () => {
-                    it("reverts with " + Exceptions.TIMESTAMP, async () => {
+                    it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
                         await this.subject
                             .connect(this.admin)
                             .stageProtocolGovernance(
@@ -772,7 +758,7 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                         ).to.be.revertedWith(Exceptions.TIMESTAMP);
                     });
 
-                    it("reverts with " + Exceptions.TIMESTAMP, async () => {
+                    it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
                         await this.subject
                             .connect(this.admin)
                             .stageProtocolGovernance(
@@ -831,28 +817,45 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
             });
             describe("edge cases", () => {
                 describe("when NFT doesn't exist", () => {
-                    it(
-                        "reverts with " + Exceptions.UNEXISTING_TOKEN,
-                        async () => {
-                            await expect(
-                                this.subject
-                                    .connect(this.admin)
-                                    .adminApprove(
-                                        this.ownerSigner.address,
-                                        this.randomNft
-                                    )
-                            ).to.be.revertedWith(Exceptions.UNEXISTING_TOKEN);
-                        }
-                    );
+                    it(`reverts with ${Exceptions.UNEXISTING_TOKEN}`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .adminApprove(
+                                    this.ownerSigner.address,
+                                    randomNft()
+                                )
+                        ).to.be.revertedWith(Exceptions.UNEXISTING_TOKEN);
+                    });
+                });
+
+                describe("when approve called on same nft", () => {
+                    it("approves token to new address", async () => {
+                        let randomAddr = randomAddress();
+                        let anotherRandomAddress = randomAddress();
+                        await this.subject
+                            .connect(this.admin)
+                            .adminApprove(randomAddr, this.nft);
+                        expect(
+                            await this.subject.getApproved(this.nft)
+                        ).to.be.equal(randomAddr);
+                        await this.subject
+                            .connect(this.admin)
+                            .adminApprove(anotherRandomAddress, this.nft);
+                        expect(
+                            await this.subject.getApproved(this.nft)
+                        ).to.not.be.equal(randomAddr);
+                        expect(
+                            await this.subject.getApproved(this.nft)
+                        ).to.be.equal(anotherRandomAddress);
+                    });
                 });
             });
         });
 
         describe("#lockNft", () => {
-            let randomNft = Math.round(Math.random() * 100 + 10);
-
             it("locks NFT (disables any transfer)", async () => {
-                expect(await this.subject.isLocked(randomNft)).to.be.false;
+                expect(await this.subject.isLocked(randomNft())).to.be.false;
                 expect(await this.subject.isLocked(this.nft)).to.be.false;
                 await this.subject.connect(this.ownerSigner).lockNft(this.nft);
                 expect(await this.subject.isLocked(this.nft)).to.be.true;
