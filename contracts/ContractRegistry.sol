@@ -9,9 +9,12 @@ import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/SemverLibrary.sol";
 
-contract ContractRegistry is IContractRegistry, Multicall {
+contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    bytes32 public CONTRACT_NAME = "ContractRegistry";
+    bytes32 public CONTRACT_VERSION = "1.0.0";
 
     IProtocolGovernance public governance;
 
@@ -41,7 +44,8 @@ contract ContractRegistry is IContractRegistry, Multicall {
     }
 
     function versionAddress(bytes32 name, bytes32 version) external view returns (address) {
-        return _nameToVersionToAddress[name][SemverLibrary.numberifySemver(version)];
+        uint256 versionNum = SemverLibrary.numberifySemver(version);
+        return _nameToVersionToAddress[name][versionNum];
     }
 
     function latestVersion(bytes32 name) external view returns (bytes32, address) {
@@ -65,7 +69,7 @@ contract ContractRegistry is IContractRegistry, Multicall {
         uint256 newContractVersion = SemverLibrary.numberifySemver(newContractVersionRaw);
 
         require(
-            _validateContractName(newContractName),
+            _validateContractName(newContractName) && newContractName != CONTRACT_NAME,
             ExceptionsLibrary.INVALID_VALUE
         );
         require(
@@ -76,6 +80,7 @@ contract ContractRegistry is IContractRegistry, Multicall {
         _nameToVersionToAddress[newContractName][newContractVersion] = target;
         _nameToVersions[newContractName].push(newContractVersion);
         _names.add(newContractName);
+
         emit ContractRegistered(
             tx.origin,
             msg.sender,
