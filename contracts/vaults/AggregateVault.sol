@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
@@ -31,6 +32,12 @@ contract AggregateVault is IAggregateVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 subvaultNft = registry.nftForVault(vault);
         return (_subvaultNftsIndex[subvaultNft] > 0);
+    }
+
+    function subvaultAt(uint256 index) external view returns (address) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 subvaultNft = _subvaultNfts[index];
+        return registry.vaultForNft(subvaultNft);
     }
 
     /// @inheritdoc IVault

@@ -19,4 +19,7 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
         address[] memory vaultTokens_,
         uint24 fee_
     ) external;
+
+    /// @notice Collect UniV3 fees to zero vault.
+    function collectEarnings() external returns (uint256[] memory collectedEarnings);
 }
