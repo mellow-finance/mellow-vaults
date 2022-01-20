@@ -21,7 +21,7 @@ abstract contract Trader is ERC165 {
         uint256 amount
     ) internal {
         if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
-            IERC20(token).safeIncreaseAllowance(to, amount);
+            IERC20(token).safeIncreaseAllowance(to, amount - IERC20(token).allowance(address(this), to));
         }
     }
 
