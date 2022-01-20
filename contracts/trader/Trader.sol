@@ -2,19 +2,26 @@
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import "../interfaces/trader/ITrader.sol";
 
 /// @notice Base contract for every trader contract (a contract that can execute ERC20 swaps)
 abstract contract Trader is ERC165 {
+    using SafeERC20 for IERC20;
+
     function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
         return (interfaceId == this.supportsInterface.selector || interfaceId == type(ITrader).interfaceId);
     }
 
-    function _approveERC20TokenIfNecessary(address token, address to) internal {
+    function _approveERC20TokenIfNecessary(
+        address token,
+        address to,
+        uint256 amount
+    ) internal {
         if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
-            IERC20(token).approve(to, type(uint256).max);
+            IERC20(token).safeIncreaseAllowance(to, amount);
         }
     }
 

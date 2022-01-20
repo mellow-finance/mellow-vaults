@@ -110,7 +110,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
                 continue;
             }
             address token = tokens[i];
-            _allowTokenIfNecessary(token, address(_lendingPool));
+            _allowTokenIfNecessary(token, address(_lendingPool), tokenAmounts[i]);
             _lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
         }
         _updateTvls();

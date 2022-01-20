@@ -183,7 +183,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; ++i) {
-            _allowTokenIfNecessary(tokens[i], address(_positionManager));
+            _allowTokenIfNecessary(tokens[i], address(_positionManager), tokenAmounts[i]);
         }
 
         actualTokenAmounts = new uint256[](2);
