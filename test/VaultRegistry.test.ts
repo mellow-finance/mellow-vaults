@@ -17,7 +17,10 @@ import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { address, pit, RUNS } from "./library/property";
 import { integer } from "fast-check";
 import Exceptions from "./library/Exceptions";
-import { VAULT_INTERFACE_ID } from "./library/Constants";
+import {
+    VAULT_INTERFACE_ID,
+    VAULT_REGISTRY_INTERFACE_ID,
+} from "./library/Constants";
 import { contract } from "./library/setup";
 
 type CustomContext = {
@@ -477,6 +480,40 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
             });
         });
 
+        describe("#supportsInterface", () => {
+            it("returns true if this contract supports a certain interface", async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        VAULT_REGISTRY_INTERFACE_ID
+                    )
+                ).to.be.true;
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .supportsInterface(VAULT_REGISTRY_INTERFACE_ID)
+                        ).to.not.be.reverted;
+                    });
+                });
+            });
+
+            describe("edge cases:", () => {
+                describe("when contract does not support the given interface", () => {
+                    it("returns false", async () => {
+                        expect(
+                            await this.subject.supportsInterface(
+                                VAULT_INTERFACE_ID
+                            )
+                        ).to.be.false;
+                    });
+                });
+            });
+        });
+
         describe("#registerVault", () => {
             it("binds minted ERC721 NFT to Vault address and transfers minted NFT to owner specified in args", async () => {
                 let newOwner = randomAddress();
@@ -596,6 +633,25 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                                     this.ownerSigner.address
                                 )
                         ).to.be.revertedWith(Exceptions.INVALID_INTERFACE);
+                    });
+                });
+
+                describe("when vault has already been registered", () => {
+                    it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
+                        await this.subject
+                            .connect(this.allowedRegisterVaultSigner)
+                            .registerVault(
+                                this.anotherVaultMock.address,
+                                this.ownerSigner.address
+                            );
+                        await expect(
+                            this.subject
+                                .connect(this.allowedRegisterVaultSigner)
+                                .registerVault(
+                                    this.anotherVaultMock.address,
+                                    this.ownerSigner.address
+                                )
+                        ).to.be.revertedWith(Exceptions.DUPLICATE);
                     });
                 });
 
