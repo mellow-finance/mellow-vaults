@@ -20,9 +20,9 @@ contract DefaultAccessControl is IDefaultAccessControl, AccessControlEnumerable 
         _setupRole(OPERATOR, admin);
         _setupRole(ADMIN_ROLE, admin);
 
-        _setRoleAdmin(OPERATOR, ADMIN_ROLE);
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(ADMIN_DELEGATE_ROLE, ADMIN_ROLE);
+        _setRoleAdmin(OPERATOR, ADMIN_DELEGATE_ROLE);
     }
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
