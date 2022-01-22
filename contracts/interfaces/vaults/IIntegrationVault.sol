@@ -69,5 +69,5 @@ interface IIntegrationVault is IVault {
     /// are whitelisted by Protocol Governance.
     /// @param from Address of the reward pool
     /// @param data Abi encoded call to the `from` address
-    function claimRewards(address from, bytes memory data) external;
+    function externalCall(address from, bytes memory data) external;
 }

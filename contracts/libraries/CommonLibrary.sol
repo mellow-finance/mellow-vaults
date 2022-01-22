@@ -197,4 +197,11 @@ library CommonLibrary {
         uint256 r1 = x / r;
         return (r < r1 ? r : r1);
     }
+
+    function getSelector(bytes calldata data) internal pure returns (uint256 selector) {
+        assembly {
+            selector := calldataload(data.offset)
+            selector := shr(224, selector)
+        }
+    }
 }

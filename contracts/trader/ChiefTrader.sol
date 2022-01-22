@@ -85,16 +85,16 @@ contract ChiefTrader is ERC165, IChiefTrader, ITrader {
     function _requireAllowedTokens(PathItem[] memory path) internal view {
         IProtocolGovernance pg = protocolGovernance;
         for (uint256 i = 1; i < path.length; ++i) {
-            require(
-                pg.hasPermission(path[i].token0, PermissionIdsLibrary.ERC20_SWAP) &&
-                    pg.hasPermission(path[i].token1, PermissionIdsLibrary.ERC20_SWAP),
-                ExceptionsLibrary.FORBIDDEN
-            );
+            // require(
+            //     pg.hasPermission(path[i].token0, PermissionIdsLibrary.ERC20_SWAP) &&
+            //         pg.hasPermission(path[i].token1, PermissionIdsLibrary.ERC20_SWAP),
+            //     ExceptionsLibrary.FORBIDDEN
+            // );
         }
-        if (path.length > 0) {
-            require(pg.hasPermission(path[0].token0, PermissionIdsLibrary.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
-            require(pg.hasPermission(path[0].token1, PermissionIdsLibrary.ERC20_SWAP), ExceptionsLibrary.FORBIDDEN);
-        }
+        // if (path.length > 0) {
+        //     require(pg.hasPermission(path[0].token0, PermissionIdsLibrary.ERC20_TRANSFER), ExceptionsLibrary.FORBIDDEN);
+        //     require(pg.hasPermission(path[0].token1, PermissionIdsLibrary.ERC20_SWAP), ExceptionsLibrary.FORBIDDEN);
+        // }
     }
 
     function _requireProtocolAdmin() internal view {
