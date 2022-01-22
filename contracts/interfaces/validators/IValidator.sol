@@ -8,10 +8,9 @@ interface IValidator is IBaseValidator {
     // @param addr Address of the called contract
     // @param value Ether value for the call
     // @param data Call data
-    // @return 0 if validated successfully, errorCode > 0 otherwise
     function validate(
         address addr,
         uint256 value,
         bytes calldata data
-    ) external view returns (uint256);
+    ) external view;
 }

@@ -8,6 +8,7 @@ import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
+import "../libraries/ExceptionsLibrary.sol";
 import "./BaseValidator.sol";
 
 contract UniV3Validator is IValidator, BaseValidator {
@@ -35,37 +36,35 @@ contract UniV3Validator is IValidator, BaseValidator {
         address addr,
         uint256 value,
         bytes calldata data
-    ) external view returns (uint256) {
-        if (address(swapRouter) != addr) {
-            return 1;
-        }
-        if (value > 0) {
-            return 10;
-        }
+    ) external view {
+        require(address(swapRouter) != addr, ExceptionsLibrary.INVALID_TARGET);
+        require(value == 0, ExceptionsLibrary.INVALID_VALUE);
         uint256 selector = CommonLibrary.getSelector(data);
         if (selector == exactInputSingleSelector) {
             ISwapRouter.ExactInputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactInputSingleParams));
-            return _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
+            _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
+            return;
         }
         if (selector == exactOutputSingleSelector) {
             ISwapRouter.ExactOutputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactOutputSingleParams));
-            return _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
+            _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
+            return;
         }
         if (selector == exactInputSelector) {
             ISwapRouter.ExactInputParams memory params = abi.decode(data, (ISwapRouter.ExactInputParams));
-            return _verifyMultiCall(params.path);
+            _verifyMultiCall(params.path);
+            return;
         }
         if (selector == exactOutputSelector) {
             ISwapRouter.ExactOutputParams memory params = abi.decode(data, (ISwapRouter.ExactOutputParams));
-            return _verifyMultiCall(params.path);
+            _verifyMultiCall(params.path);
+            return;
         }
-
-        return 2;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _verifyMultiCall(bytes memory path) private view returns (uint256) {
+    function _verifyMultiCall(bytes memory path) private view {
         uint256 i;
         address token0;
         address token1;
@@ -83,28 +82,19 @@ contract UniV3Validator is IValidator, BaseValidator {
                 d := mload(add(o, 23))
                 token1 := shr(96, d)
             }
-            uint256 res = _verifySingleCall(token0, token1, fee);
-            if (res > 0) {
-                return res;
-            }
+            _verifySingleCall(token0, token1, fee);
             i += 23;
         }
-        return 0;
     }
 
     function _verifySingleCall(
         address tokenIn,
         address tokenOut,
         uint24 fee
-    ) private view returns (uint256) {
-        if (tokenIn == tokenOut) {
-            return 3;
-        }
+    ) private view {
+        require(tokenIn != tokenOut, ExceptionsLibrary.INVALID_TOKEN);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         address pool = factory.getPool(tokenIn, tokenOut, fee);
-        if (!protocolGovernance.hasPermission(pool, PermissionIdsLibrary.SWAP)) {
-            return 13;
-        }
-        return 0;
+        require(protocolGovernance.hasPermission(pool, PermissionIdsLibrary.SWAP), ExceptionsLibrary.FORBIDDEN);
     }
 }
