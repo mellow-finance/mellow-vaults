@@ -37,7 +37,7 @@ contract UniV3Validator is IValidator, BaseValidator {
         uint256 value,
         bytes calldata data
     ) external view {
-        require(address(swapRouter) != addr, ExceptionsLibrary.INVALID_TARGET);
+        require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
         uint256 selector = CommonLibrary.getSelector(data);
         if (selector == exactInputSingleSelector) {
@@ -60,6 +60,7 @@ contract UniV3Validator is IValidator, BaseValidator {
             _verifyMultiCall(params.path);
             return;
         }
+        revert(ExceptionsLibrary.INVALID_SELECTOR);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -95,6 +96,6 @@ contract UniV3Validator is IValidator, BaseValidator {
         require(tokenIn != tokenOut, ExceptionsLibrary.INVALID_TOKEN);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         address pool = factory.getPool(tokenIn, tokenOut, fee);
-        require(protocolGovernance.hasPermission(pool, PermissionIdsLibrary.SWAP), ExceptionsLibrary.FORBIDDEN);
+        require(protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_SWAP), ExceptionsLibrary.FORBIDDEN);
     }
 }

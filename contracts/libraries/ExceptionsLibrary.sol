@@ -19,8 +19,9 @@ library ExceptionsLibrary {
     string constant INVARIANT = "INVA";
     string constant INVALID_TARGET = "INVTR";
     string constant INVALID_TOKEN = "INVTO";
-    string constant LOCK = "LCKD";
     string constant INVALID_INTERFACE = "INVI";
-    string constant DISABLED = "DIS";
+    string constant INVALID_SELECTOR = "INVS";
     string constant INVALID_STATE = "INVST";
+    string constant LOCK = "LCKD";
+    string constant DISABLED = "DIS";
 }
