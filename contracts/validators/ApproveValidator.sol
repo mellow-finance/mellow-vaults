@@ -3,15 +3,17 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/validators/IValidator.sol";
+import "../interfaces/IProtocolGovernance.sol";
+import "./BaseValidator.sol";
 
-contract ApproveValidator is IValidator {
+contract ApproveValidator is IValidator, BaseValidator {
     uint256 public constant exactInputSingleSelector = uint32(ISwapRouter.exactInputSingle.selector);
     uint256 public constant exactInput = uint32(ISwapRouter.exactInput.selector);
     uint256 public constant exactOutputSingleSelector = uint32(ISwapRouter.exactOutputSingle.selector);
     uint256 public constant exactOutput = uint32(ISwapRouter.exactOutput.selector);
     address public immutable swapRouter;
 
-    constructor(address swapRouter_) {
+    constructor(IProtocolGovernance protocolGovernance_, address swapRouter_) BaseValidator(protocolGovernance_) {
         swapRouter = swapRouter_;
     }
 

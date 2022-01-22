@@ -7,8 +7,10 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
+import "../libraries/PermissionIdsLibrary.sol";
+import "./BaseValidator.sol";
 
-contract UniV3Validator is IValidator {
+contract UniV3Validator is IValidator, BaseValidator {
     using EnumerableSet for EnumerableSet.AddressSet;
     uint256 public constant exactInputSingleSelector = uint32(ISwapRouter.exactInputSingle.selector);
     uint256 public constant exactInputSelector = uint32(ISwapRouter.exactInput.selector);
@@ -16,19 +18,17 @@ contract UniV3Validator is IValidator {
     uint256 public constant exactOutputSelector = uint32(ISwapRouter.exactOutput.selector);
     address public immutable swapRouter;
     IUniswapV3Factory public immutable factory;
-    IProtocolGovernance public protocolGovernance;
-
-    EnumerableSet.AddressSet private _allowedPools;
 
     constructor(
+        IProtocolGovernance protocolGovernance_,
         address swapRouter_,
-        IUniswapV3Factory factory_,
-        IProtocolGovernance protocolGovernance_
-    ) {
+        IUniswapV3Factory factory_
+    ) BaseValidator(protocolGovernance_) {
         swapRouter = swapRouter_;
-        protocolGovernance = protocolGovernance_;
         factory = factory_;
     }
+
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     // @inhericdoc IValidator
     function validate(
@@ -63,6 +63,8 @@ contract UniV3Validator is IValidator {
         return 2;
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
     function _verifyMultiCall(bytes memory path) private view returns (uint256) {
         uint256 i;
         address token0;
@@ -70,6 +72,8 @@ contract UniV3Validator is IValidator {
         uint24 fee;
         uint256 feeMask = (1 << 24) - 1;
         while (path.length - i > 20) {
+            // the sample UniV3 path structure is (DAI address,DAI-USDC fee, USDC, USDC-WETH fee, WETH)
+            // addresses are 20 bytes, fees are 3 bytes
             assembly {
                 let o := add(add(path, 0x20), i)
                 let d := mload(o)
@@ -96,8 +100,9 @@ contract UniV3Validator is IValidator {
         if (tokenIn == tokenOut) {
             return 3;
         }
+        IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         address pool = factory.getPool(tokenIn, tokenOut, fee);
-        if (!_allowedPools.contains(pool)) {
+        if (!protocolGovernance.hasPermission(pool, PermissionIdsLibrary.SWAP)) {
             return 13;
         }
         return 0;
