@@ -33,7 +33,6 @@ type CustomContext = {
 
 type DeployOptions = {
     internalParams?: InternalParamsStruct;
-    trader?: string;
     skipInit?: boolean;
 };
 
@@ -41,7 +40,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
     "ERC20VaultGovernance",
     function () {
         before(async () => {
-            const traderAddress = (await getNamedAccounts()).aaveLendingPool;
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeployOptions) => {
                     await deployments.fixture();
@@ -54,7 +52,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
                             registry: this.vaultRegistry.address,
                             singleton,
                         },
-                        trader = traderAddress,
                         skipInit = false,
                     } = options || {};
                     const { address } = await deployments.deploy(
@@ -62,7 +59,7 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
                         {
                             from: this.deployer.address,
                             contract: "ERC20VaultGovernance",
-                            args: [internalParams, { trader }],
+                            args: [internalParams],
                             autoMine: true,
                         }
                     );
@@ -110,34 +107,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.subject.address
                 );
-            });
-
-            describe("edge cases", () => {
-                describe("when trader address is 0", () => {
-                    it("reverts", async () => {
-                        await deployments.fixture();
-                        const { address: singleton } = await deployments.get(
-                            "ERC20Vault"
-                        );
-                        await expect(
-                            deployments.deploy("ERC20VaultGovernance", {
-                                from: this.deployer.address,
-                                args: [
-                                    {
-                                        protocolGovernance:
-                                            this.protocolGovernance.address,
-                                        registry: this.vaultRegistry.address,
-                                        singleton,
-                                    },
-                                    {
-                                        trader: ethers.constants.AddressZero,
-                                    },
-                                ],
-                                autoMine: true,
-                            })
-                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
-                    });
-                });
             });
         });
 
