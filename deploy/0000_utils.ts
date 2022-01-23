@@ -284,12 +284,12 @@ export const toObject = (obj: any) =>
     )(obj);
 
 export class PermissionIdsLibrary {
-    static CLAIM: number = 0;
     static REGISTER_VAULT: number = 1;
-    static ERC20_TRANSFER: number = 2;
-    static ERC20_SWAP = 3;
-    static ERC20_VAULT_TOKEN: number = 4;
-    static CREATE_VAULT: number = 5;
+    static CREATE_VAULT: number = 2;
+    static ERC20_TRANSFER: number = 3;
+    static ERC20_VAULT_TOKEN = 4;
+    static ERC20_SWAP: number = 5;
+    static ERC20_APPROVE: number = 6;
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};

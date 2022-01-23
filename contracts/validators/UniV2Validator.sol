@@ -11,7 +11,7 @@ import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./Validator.sol";
 
-contract UniV3Validator is Validator {
+contract UniV2Validator is Validator {
     struct TokenInput {
         uint256 amount;
         uint256 amountMax;
@@ -49,6 +49,7 @@ contract UniV3Validator is Validator {
 
     // @inhericdoc IValidator
     function validate(
+        address,
         address addr,
         uint256 value,
         bytes calldata data

@@ -69,11 +69,6 @@ interface IIntegrationVault is IVault, IERC1271 {
     /// Since this method allows sending arbitrary transactions, the destinations of the calls
     /// are whitelisted by Protocol Governance.
     /// @param to Address of the reward pool
-    /// @param value ETH value to send
     /// @param data Abi encoded call to the `from` address
-    function externalCall(
-        address to,
-        uint256 value,
-        bytes memory data
-    ) external;
+    function externalCall(address to, bytes memory data) external payable;
 }
