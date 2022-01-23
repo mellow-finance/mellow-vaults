@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../external/aave/ILendingPool.sol";
 import "./IIntegrationVault.sol";
-import "../trader/ITrader.sol";
 
-interface IERC20Vault is ITrader, IIntegrationVault {
+interface IERC20Vault is IIntegrationVault {
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry

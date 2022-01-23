@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/trader/IUniV3Trader.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../libraries/CommonLibrary.sol";
@@ -271,28 +270,28 @@ contract MStrategy is DefaultAccessControlLateInit {
                 }
             }
         }
-        ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
-        {
-            bytes memory poolOptions = new bytes(32);
-            assembly {
-                mstore(add(poolOptions, 32), poolFee)
-            }
-            (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
-            if (!zeroForOne) {
-                (tokenIn, tokenOut) = (tokenOut, tokenIn);
-            }
+        // ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
+        // {
+        //     bytes memory poolOptions = new bytes(32);
+        //     assembly {
+        //         mstore(add(poolOptions, 32), poolFee)
+        //     }
+        //     (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
+        //     if (!zeroForOne) {
+        //         (tokenIn, tokenOut) = (tokenOut, tokenIn);
+        //     }
 
-            path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
-        }
-        bytes memory bytesOptions = abi.encode(
-            IUniV3Trader.Options({
-                fee: uint24(poolFee),
-                sqrtPriceLimitX96: 0,
-                deadline: block.timestamp + 1800,
-                limitAmount: 0
-            })
-        );
-        erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
+        //     path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
+        // }
+        // bytes memory bytesOptions = abi.encode(
+        //     IUniV3Trader.Options({
+        //         fee: uint24(poolFee),
+        //         sqrtPriceLimitX96: 0,
+        //         deadline: block.timestamp + 1800,
+        //         limitAmount: 0
+        //     })
+        // );
+        // erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
     }
 
     function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {
