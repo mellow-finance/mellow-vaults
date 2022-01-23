@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../interfaces/external/erc/IERC1271.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../interfaces/validators/IValidator.sol";
@@ -37,7 +38,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IIntegrationVault).interfaceId);
+        return
+            super.supportsInterface(interfaceId) ||
+            (interfaceId == type(IIntegrationVault).interfaceId) ||
+            (interfaceId == type(IERC1271).interfaceId);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -136,6 +140,30 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
             token.safeTransfer(to, actualTokenAmounts[i]);
         }
         emit ReclaimTokens(to, tokens, actualTokenAmounts);
+    }
+
+    function isValidSignature(bytes32 _hash, bytes memory _signature) external view returns (bytes4 magicValue) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 nft_ = _nft;
+        if (nft_ == 0) {
+            return 0xffffffff;
+        }
+        address strategy = registry.getApproved(nft_);
+        uint32 size;
+        assembly {
+            size := extcodesize(strategy)
+        }
+        if (size > 0) {
+            if (IERC165(strategy).supportsInterface(type(IERC1271).interfaceId)) {
+                return IERC1271(strategy).isValidSignature(_hash, _signature);
+            } else {
+                return 0xffffffff;
+            }
+        }
+        if (CommonLibrary.recoverSigner(_hash, _signature) == strategy) {
+            return 0x1626ba7e;
+        }
+        return 0xffffffff;
     }
 
     function externalCall(

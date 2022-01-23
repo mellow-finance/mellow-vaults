@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../external/erc/IERC1271.sol";
 import "./IVault.sol";
 
-interface IIntegrationVault is IVault {
+interface IIntegrationVault is IVault, IERC1271 {
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
     /// the contract balance and convert it to yUSDC.
     /// @dev Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
