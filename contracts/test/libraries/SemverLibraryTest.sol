@@ -12,11 +12,11 @@ contract SemverLibraryTest {
         return SemverLibrary.numberify(input);
     }
 
-    function stringifySemver(uint256 input) external pure returns (bytes32) {
+    function stringifySemver(uint256 input) external pure returns (string memory) {
         return SemverLibrary.stringifySemver(input);
     }
 
-    function numberifySemver(bytes32 input) external pure returns (uint256) {
+    function numberifySemver(string memory input) external pure returns (uint256) {
         return SemverLibrary.numberifySemver(input);
     }
 }

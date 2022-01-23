@@ -46,8 +46,8 @@ library SemverLibrary {
         }
     }
 
-    function numberifySemver(bytes32 _semver) internal pure returns (uint256) {
-        bytes memory semver = shrinkToFit(abi.encodePacked(_semver));
+    function numberifySemver(string memory _semver) internal pure returns (uint256) {
+        bytes memory semver = bytes(_semver);
 
         uint8 BEFORE_NUMBER = 0;
         uint8 IN_NUMBER = 1;
@@ -121,7 +121,7 @@ library SemverLibrary {
         return 0;
     }
 
-    function stringifySemver(uint256 num) internal pure returns (bytes32) {
+    function stringifySemver(uint256 num) internal pure returns (string memory) {
         uint256 filterMask = (1 << BIT_OFFSET) - 1;
         bytes memory n1 = stringify(num >> (BIT_OFFSET * 2));
         bytes memory n2 = stringify((num >> BIT_OFFSET) & filterMask);
@@ -138,6 +138,6 @@ library SemverLibrary {
         for (uint256 i; i != n3.length; ++i) {
             result[n1.length + n2.length + 2 + i] = n3[i];
         }
-        return bytes32(result);
+        return string(result);
     }
 }

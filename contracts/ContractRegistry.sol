@@ -31,27 +31,34 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         return _addresses.values();
     }
 
-    function names() external view returns (bytes32[] memory) {
-        return _names.values();
+    function names() external view returns (string[] memory result) {
+        uint256 length = _names.length();
+        result = new string[](length);
+        for (uint256 i; i != length; ++i) {
+            result[i] = _bytes32ToString(_names.at(i));
+        }
     }
 
-    function versions(bytes32 name) external view returns (bytes32[] memory result) {
+    function versions(string memory name_) external view returns (string[] memory result) {
+        bytes32 name = bytes32(bytes(name_));
         uint256[] memory versions_ = _nameToVersions[name];
-        result = new bytes32[](versions_.length);
+        result = new string[](versions_.length);
         for (uint256 i = 0; i < versions_.length; i++) {
             result[i] = SemverLibrary.stringifySemver(versions_[i]);
         }
     }
 
-    function versionAddress(bytes32 name, bytes32 version) external view returns (address) {
+    function versionAddress(string memory name_, string memory version) external view returns (address) {
+        bytes32 name = bytes32(bytes(name_));
         uint256 versionNum = SemverLibrary.numberifySemver(version);
         return _nameToVersionToAddress[name][versionNum];
     }
 
-    function latestVersion(bytes32 name) external view returns (bytes32, address) {
+    function latestVersion(string memory name_) external view returns (string memory, address) {
+        bytes32 name = bytes32(abi.encodePacked(name_));
         uint256 version = _latestVersion(name);
         return (
-            SemverLibrary.stringifySemver(version),
+            string(SemverLibrary.stringifySemver(version)),
             _nameToVersionToAddress[name][version]
         );
     }
@@ -66,7 +73,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         IContractMeta newContract = IContractMeta(target);
         bytes32 newContractName = newContract.CONTRACT_NAME();
         bytes32 newContractVersionRaw = newContract.CONTRACT_VERSION();
-        uint256 newContractVersion = SemverLibrary.numberifySemver(newContractVersionRaw);
+        uint256 newContractVersion = SemverLibrary.numberifySemver(_bytes32ToString(newContractVersionRaw));
 
         require(
             _validateContractName(newContractName),
@@ -109,6 +116,10 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
             }
         }
         return true;
+    }
+
+    function _bytes32ToString(bytes32 text) internal pure returns (string memory) {
+        return string(SemverLibrary.shrinkToFit(abi.encodePacked((text))));
     }
 
     event ContractRegistered(
