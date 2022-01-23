@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/validators/IValidator.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
@@ -137,12 +138,18 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         emit ReclaimTokens(to, tokens, actualTokenAmounts);
     }
 
-    function externalCall(address from, bytes memory data) external override nonReentrant {
+    function externalCall(
+        address to,
+        uint256 value,
+        bytes calldata data
+    ) external nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        // IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        // require(protocolGovernance.hasPermission(from, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
-        (bool res, bytes memory returndata) = from.call(data);
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        IValidator validator = IValidator(protocolGovernance.validators(to));
+        require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
+        validator.validate(to, value, data);
+        (bool res, bytes memory returndata) = to.call(data);
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)

@@ -61,13 +61,18 @@ interface IIntegrationVault is IVault {
     /// @return actualTokenAmounts Amounts reclaimed
     function reclaimTokens(address[] memory tokens) external returns (uint256[] memory actualTokenAmounts);
 
-    /// @notice Claim liquidity mining rewards.
+    /// @notice Execute one of whitelisted calls.
     /// @dev Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
     /// Strategy is approved address for the vault NFT.
     ///
     /// Since this method allows sending arbitrary transactions, the destinations of the calls
     /// are whitelisted by Protocol Governance.
-    /// @param from Address of the reward pool
+    /// @param to Address of the reward pool
+    /// @param value ETH value to send
     /// @param data Abi encoded call to the `from` address
-    function externalCall(address from, bytes memory data) external;
+    function externalCall(
+        address to,
+        uint256 value,
+        bytes memory data
+    ) external;
 }
