@@ -79,13 +79,59 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @return Withdraw limit per token per block
     function withdrawLimit(address token) external view returns (uint256);
 
+    /// @notice Addresses that has staged validators.
+    function stagedValidatorsAddresses() external view returns (address[] memory);
+
+    /// @notice Timestamp after which staged granted permissions for the given address can be committed.
+    /// @param target The given address
+    /// @return Zero if there are no staged permission grants, timestamp otherwise
+    function stagedValidatorsTimestamps(address target) external view returns (uint256);
+
+    /// @notice Staged validator for the given address.
+    /// @param target The given address
+    /// @return Validator
+    function stagedValidators(address target) external view returns (address);
+
+    /// @notice Addresses that has validators.
+    function validatorsAddresses() external view returns (address[] memory);
+
+    /// @notice Address that has validators.
+    /// @param i The number of address
+    /// @return Validator address
+    function validatorsAddress(uint256 i) external view returns (address);
+
+    /// @notice Validator for the given address.
+    /// @param target The given address
+    /// @return Validator
+    function validators(address target) external view returns (address);
+
     // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
+    /// @notice Rollback all staged validators.
+    function rollbackStagedValidators() external;
+
+    /// @notice Revoke validator instantly from the given address.
+    /// @param target The given address
+    function revokeValidator(address target) external;
+
+    /// @notice Stages a new validator for the given address
+    /// @param target The given address
+    /// @param validator The validator for the given address
+    function stageValidator(address target, address validator) external;
+
+    /// @notice Commits validator for the given address.
+    /// @dev Reverts if governance delay has not passed yet.
+    /// @param target The given address.
+    function commitValidator(address target) external;
+
+    /// @notice Commites all staged validators for which governance delay passed
+    function commitAllValidatorsSurpassedDelay() external;
 
     /// @notice Rollback all staged granted permission grant.
     function rollbackAllPermissionGrants() external;
 
     /// @notice Commits permission grants for the given address.
-    /// Reverts if governance delay has not passed yet.
+    /// @dev Reverts if governance delay has not passed yet.
     /// @param target The given address.
     function commitPermissionGrants(address target) external;
 
