@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import {
+    ALLOWED_APPROVE_LIST,
     ALLOW_ALL_CREATE_VAULT,
     ALLOW_MASK,
     ALL_NETWORKS,
@@ -10,6 +11,7 @@ import {
     PRIVATE_VAULT,
 } from "./0000_utils";
 import { ethers } from "ethers";
+import { deployments } from "hardhat";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -26,37 +28,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         return;
     }
     log("Creating protocol governance finalizing tx");
-    const txDatas = [];
-    for (const name of [
-        "AaveVaultGovernance",
-        "UniV3VaultGovernance",
-        "ERC20VaultGovernance",
-        "YearnVaultGovernance",
-        "ERC20RootVaultGovernance",
-    ]) {
-        const governance = await getOrNull(name);
-        if (!governance) {
-            continue;
-        }
-        const tx =
-            await protocolGovernance.populateTransaction.stagePermissionGrants(
-                governance.address,
-                [PermissionIdsLibrary.REGISTER_VAULT]
-            );
-        txDatas.push(tx.data);
-    }
+    const txDatas: (string | undefined)[] = [];
+    await registerGovernances(hre, txDatas);
+    await registerTokens(hre, txDatas);
+    await registerExternalProtocols(hre, txDatas);
 
-    for (let token of tokens) {
-        const tx =
-            await protocolGovernance.populateTransaction.stagePermissionGrants(
-                token,
-                [
-                    PermissionIdsLibrary.ERC20_VAULT_TOKEN,
-                    PermissionIdsLibrary.ERC20_TRANSFER,
-                ]
-            );
-        txDatas.push(tx.data);
-    }
     if (!ALLOW_ALL_CREATE_VAULT) {
         for (const address of [deployer, admin]) {
             const tx =
@@ -68,8 +44,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         }
     }
     if (txDatas.length > 0) {
-        const tx =
+        let tx =
             await protocolGovernance.populateTransaction.commitAllPermissionGrantsSurpassedDelay();
+        txDatas.push(tx.data);
+        tx =
+            await protocolGovernance.populateTransaction.commitAllValidatorsSurpassedDelay();
         txDatas.push(tx.data);
     }
 
@@ -103,11 +82,118 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         {
             from: deployer,
             autoMine: true,
+            log: true,
         },
         "multicall",
         txDatas
     );
 };
+
+async function registerGovernances(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+
+    for (const name of [
+        "AaveVaultGovernance",
+        "UniV3VaultGovernance",
+        "ERC20VaultGovernance",
+        "YearnVaultGovernance",
+        "ERC20RootVaultGovernance",
+    ]) {
+        const governance = await hre.deployments.getOrNull(name);
+        if (!governance) {
+            continue;
+        }
+        const tx =
+            await protocolGovernance.populateTransaction.stagePermissionGrants(
+                governance.address,
+                [PermissionIdsLibrary.REGISTER_VAULT]
+            );
+        txDatas.push(tx.data);
+    }
+}
+
+async function registerTokens(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+    const erc20Validator = await deployments.get("ERC20Validator");
+    const { weth, wbtc, usdc } = await hre.getNamedAccounts();
+    const tokens = [weth, wbtc, usdc].map((t) => t.toLowerCase()).sort();
+    for (const token of tokens) {
+        let tx =
+            await protocolGovernance.populateTransaction.stagePermissionGrants(
+                token,
+                [
+                    PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                    PermissionIdsLibrary.ERC20_TRANSFER,
+                ]
+            );
+        txDatas.push(tx.data);
+        tx = await protocolGovernance.populateTransaction.stageValidator(
+            token,
+            erc20Validator.address
+        );
+    }
+}
+
+async function registerExternalProtocols(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    let name = hre.network.name;
+    if (name === "hardhat" || name === "localhost") {
+        name = "mainnet";
+    }
+    // @ts-ignore
+    const data = ALLOWED_APPROVE_LIST[hre.network.name];
+    if (!data) {
+        return;
+    }
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+
+    for (const key in data) {
+        const permission =
+            key === "cowswap"
+                ? PermissionIdsLibrary.ERC20_APPROVE_RESTRICTED
+                : PermissionIdsLibrary.ERC20_APPROVE;
+        for (const address of data[key]) {
+            let tx =
+                await protocolGovernance.populateTransaction.stagePermissionGrants(
+                    address,
+                    [permission]
+                );
+            txDatas.push(tx.data);
+        }
+    }
+    const validators = {
+        uniV3: "UniV3Validator",
+        uniV2: "UniV2Validator",
+        curve: "CurveValidator",
+    };
+    for (const key in validators) {
+        // @ts-ignore
+        const validator = await deployments.get(validators[key]);
+        for (const address of data[key]) {
+            const tx =
+                await protocolGovernance.populateTransaction.stageValidator(
+                    address,
+                    validator.address
+                );
+            txDatas.push(tx.data);
+        }
+    }
+}
+
 export default func;
 func.tags = ["Finalize", "core", ...ALL_NETWORKS];
 func.dependencies = ["ProtocolGovernance"];

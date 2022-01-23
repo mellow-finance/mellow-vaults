@@ -14,13 +14,13 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
-        univ3: [
+        uniV3: [
             "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8", // USDC-ETH 0.3%
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
             "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
         ],
-        univ2: [
+        uniV2: [
             "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc", // USDC-ETH
             "0xbb2b8038a1640196fbe3e38816f3e67cba72d940", // WBTC-ETH
         ],

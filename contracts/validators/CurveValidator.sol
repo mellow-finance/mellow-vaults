@@ -11,7 +11,7 @@ import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./Validator.sol";
 
-contract UniV3Validator is Validator {
+contract CurveValidator is Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
     uint256 public constant exchangeSelector = 0x3df02124;
 
