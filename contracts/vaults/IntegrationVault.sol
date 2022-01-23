@@ -142,13 +142,19 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         emit ReclaimTokens(to, tokens, actualTokenAmounts);
     }
 
+    /// @inheritdoc IERC1271
     function isValidSignature(bytes32 _hash, bytes memory _signature) external view returns (bytes4 magicValue) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
+        IVaultRegistry registry = params.registry;
+        IProtocolGovernance protocolGovernance = params.protocolGovernance;
         uint256 nft_ = _nft;
         if (nft_ == 0) {
             return 0xffffffff;
         }
         address strategy = registry.getApproved(nft_);
+        if (!protocolGovernance.hasPermission(strategy, PermissionIdsLibrary.TRUSTED_STRATEGY)) {
+            return 0xffffffff;
+        }
         uint32 size;
         assembly {
             size := extcodesize(strategy)

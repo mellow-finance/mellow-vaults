@@ -162,15 +162,11 @@ async function registerExternalProtocols(
     );
 
     for (const key in data) {
-        const permission =
-            key === "cowswap"
-                ? PermissionIdsLibrary.ERC20_APPROVE_RESTRICTED
-                : PermissionIdsLibrary.ERC20_APPROVE;
         for (const address of data[key]) {
             let tx =
                 await protocolGovernance.populateTransaction.stagePermissionGrants(
                     address,
-                    [permission]
+                    [PermissionIdsLibrary.ERC20_APPROVE]
                 );
             txDatas.push(tx.data);
         }
