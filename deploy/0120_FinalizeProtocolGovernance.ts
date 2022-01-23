@@ -103,6 +103,7 @@ async function registerGovernances(
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
         "ERC20RootVaultGovernance",
+        "MellowVaultGovernance",
     ]) {
         const governance = await hre.deployments.getOrNull(name);
         if (!governance) {
