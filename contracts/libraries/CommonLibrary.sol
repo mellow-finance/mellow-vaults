@@ -205,14 +205,14 @@ library CommonLibrary {
         }
     }
 
-    function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) public pure returns (address) {
+    function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) internal pure returns (address) {
         (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
 
         return ecrecover(_ethSignedMessageHash, v, r, s);
     }
 
     function splitSignature(bytes memory sig)
-        public
+        internal
         pure
         returns (
             bytes32 r,
