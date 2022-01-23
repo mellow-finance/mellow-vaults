@@ -11,10 +11,7 @@ import {
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
-import {
-    DelayedProtocolParamsStruct,
-    ERC20VaultGovernance,
-} from "./types/ERC20VaultGovernance";
+import { ERC20VaultGovernance } from "./types/ERC20VaultGovernance";
 import { contract, setupDefaultContext, TestContext } from "./library/setup";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
@@ -108,9 +105,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
             await sleepTo(this.startTimestamp);
         });
 
-        const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-            address.map((trader) => ({ trader }));
-
         describe("#constructor", () => {
             it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
@@ -147,9 +141,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
             });
         });
 
-        vaultGovernanceBehavior.call(this, {
-            delayedProtocolParams,
-            ...this,
-        });
+        vaultGovernanceBehavior.call(this, {});
     }
 );
