@@ -9,9 +9,9 @@ import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "./BaseValidator.sol";
+import "./Validator.sol";
 
-contract UniV3Validator is IValidator, BaseValidator {
+contract UniV3Validator is Validator {
     struct TokenInput {
         uint256 amount;
         uint256 amountMax;

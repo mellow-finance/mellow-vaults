@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "./IBaseValidator.sol";
 
-interface IValidator is IBaseValidator {
+interface IValidator is IBaseValidator, IERC165 {
     // @notice Validate if call can be made to external contract.
     // @param addr Address of the called contract
     // @param value Ether value for the call

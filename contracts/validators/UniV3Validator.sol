@@ -9,9 +9,9 @@ import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "./BaseValidator.sol";
+import "./Validator.sol";
 
-contract UniV3Validator is IValidator, BaseValidator {
+contract UniV3Validator is Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
     uint256 public constant exactInputSingleSelector = uint32(ISwapRouter.exactInputSingle.selector);
     uint256 public constant exactInputSelector = uint32(ISwapRouter.exactInput.selector);

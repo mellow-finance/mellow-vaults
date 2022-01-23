@@ -6,9 +6,9 @@ import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
-import "./BaseValidator.sol";
+import "./Validator.sol";
 
-contract ERC20Validator is IValidator, BaseValidator {
+contract ERC20Validator is Validator {
     uint256 public constant approveSelector = uint32(IERC20.approve.selector);
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
