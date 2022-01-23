@@ -97,6 +97,9 @@ contract UniV3Validator is Validator {
         require(tokenIn != tokenOut, ExceptionsLibrary.INVALID_TOKEN);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         address pool = factory.getPool(tokenIn, tokenOut, fee);
-        require(protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_SWAP), ExceptionsLibrary.FORBIDDEN);
+        require(
+            protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_APPROVE),
+            ExceptionsLibrary.FORBIDDEN
+        );
     }
 }

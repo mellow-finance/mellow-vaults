@@ -11,12 +11,10 @@ library PermissionIdsLibrary {
     uint8 constant ERC20_TRANSFER = 3;
     // The token is allowed to be added to vault
     uint8 constant ERC20_VAULT_TOKEN = 4;
-    // The pool is allowed to be used for swap
-    uint8 constant ERC20_SWAP = 5;
     // Trusted protocols that are allowed to be approved of vault ERC20 tokens by any strategy
-    uint8 constant ERC20_APPROVE = 6;
+    uint8 constant ERC20_APPROVE = 5;
     // Trusted protocols that are allowed to be approved of vault ERC20 tokens by trusted strategy
-    uint8 constant ERC20_APPROVE_RESTRICTED = 7;
+    uint8 constant ERC20_APPROVE_RESTRICTED = 6;
     // Strategy allowed using restricted API
-    uint8 constant TRUSTED_STRATEGY = 8;
+    uint8 constant TRUSTED_STRATEGY = 7;
 }

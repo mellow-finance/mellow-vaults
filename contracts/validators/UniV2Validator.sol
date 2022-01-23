@@ -84,7 +84,7 @@ contract UniV2Validator is Validator {
             address pool = factory.getPair(token0, token1);
             require(token0 != token1, ExceptionsLibrary.INVALID_TOKEN);
             require(
-                protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_SWAP),
+                protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_APPROVE),
                 ExceptionsLibrary.FORBIDDEN
             );
         }
