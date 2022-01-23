@@ -177,7 +177,7 @@
 //                     await withSigner(test, async (s) => {
 //                         for (const token of tokens) {
 //                             const contract: ERC20 = await ethers.getContractAt(
-//                                 "ERC20",
+//                                 "ERC20Token",
 //                                 token
 //                             );
 //                             const balance = await contract.balanceOf(test);
@@ -190,7 +190,7 @@
 //                     await withSigner(gatewayVault, async (signer) => {
 //                         for (const token of tokens) {
 //                             const contract: ERC20 = await ethers.getContractAt(
-//                                 "ERC20",
+//                                 "ERC20Token",
 //                                 token
 //                             );
 //                             await contract
@@ -309,7 +309,7 @@
 //                         .connect(signer)
 //                         .pull(erc20Vault, tokens, [0, amount], []);
 //                     const wethContract: ERC20 = await ethers.getContractAt(
-//                         "ERC20",
+//                         "ERC20Token",
 //                         tokens[1]
 //                     );
 //                     expect(await wethContract.balanceOf(erc20Vault)).to.eql(

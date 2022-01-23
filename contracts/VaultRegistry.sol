@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
 import "./interfaces/IVaultRegistry.sol";
@@ -32,6 +33,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         _protocolGovernance = protocolGovernance_;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     function vaults() external view returns (address[] memory) {
         return _vaults;
     }
@@ -49,21 +52,6 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function isLocked(uint256 nft) external view returns (bool) {
         return _locks[nft];
-    }
-
-    /// @inheritdoc IVaultRegistry
-    function registerVault(address vault, address owner) external returns (uint256 nft) {
-        require(
-            _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
-            ExceptionsLibrary.FORBIDDEN
-        );
-        nft = _topNft;
-        _safeMint(owner, nft);
-        _vaultIndex[nft] = vault;
-        _nftIndex[vault] = nft;
-        _vaults.push(vault);
-        _topNft += 1;
-        emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
     }
 
     /// @inheritdoc IVaultRegistry
@@ -86,9 +74,34 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         return _vaults.length;
     }
 
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IVaultRegistry).interfaceId == interfaceId;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IVaultRegistry
+    function registerVault(address vault, address owner) external returns (uint256 nft) {
+        require(address(owner) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
+        require(
+            _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
+            ExceptionsLibrary.FORBIDDEN
+        );
+        require(_nftIndex[vault] == 0, ExceptionsLibrary.DUPLICATE);
+        nft = _topNft;
+        _safeMint(owner, nft);
+        _vaultIndex[nft] = vault;
+        _nftIndex[vault] = nft;
+        _vaults.push(vault);
+        _topNft += 1;
+        emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
+    }
+
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
         require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(address(newProtocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stagedProtocolGovernance = newProtocolGovernance;
         _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
         emit StagedProtocolGovernance(tx.origin, msg.sender, newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
@@ -101,6 +114,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;
+        delete _stagedProtocolGovernance;
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
     }
 
@@ -116,6 +130,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         emit TokenLocked(tx.origin, msg.sender, nft);
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
     function _isProtocolAdmin(address sender) internal view returns (bool) {
         return _protocolGovernance.isAdmin(sender);
     }
@@ -127,6 +143,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     ) internal view override {
         require(!_locks[tokenId], ExceptionsLibrary.LOCK);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when token is locked for transfers
     /// @param origin Origin of the transaction (tx.origin)

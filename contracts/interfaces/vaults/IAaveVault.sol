@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../external/aave/ILendingPool.sol";
 import "./IIntegrationVault.sol";
 
 interface IAaveVault is IIntegrationVault {
+    /// @notice Reference to Aave protocol lending pool.
+    function lendingPool() external view returns (ILendingPool);
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry

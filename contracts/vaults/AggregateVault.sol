@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
@@ -18,6 +18,8 @@ contract AggregateVault is IAggregateVault, Vault {
     uint256[] private _pullExistentials;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     function subvaultNfts() external view returns (uint256[] memory) {
         return _subvaultNfts;
     }
@@ -30,6 +32,12 @@ contract AggregateVault is IAggregateVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 subvaultNft = registry.nftForVault(vault);
         return (_subvaultNftsIndex[subvaultNft] > 0);
+    }
+
+    function subvaultAt(uint256 index) external view returns (address) {
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        uint256 subvaultNft = _subvaultNfts[index];
+        return registry.vaultForNft(subvaultNft);
     }
 
     /// @inheritdoc IVault
@@ -51,6 +59,12 @@ contract AggregateVault is IAggregateVault, Vault {
             }
         }
     }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IAggregateVault).interfaceId == interfaceId;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(
         address[] memory vaultTokens_,
@@ -76,7 +90,7 @@ contract AggregateVault is IAggregateVault, Vault {
             _subvaultNftsIndex[subvaultNft] = i + 1;
         }
         for (uint256 i = 0; i < vaultTokens_.length; i++) {
-            ERC20 token = ERC20(vaultTokens_[i]);
+            IERC20Metadata token = IERC20Metadata(vaultTokens_[i]);
             _pullExistentials.push(10**(token.decimals() / 2));
         }
         _subvaultNfts = subvaultNfts_;

@@ -20,6 +20,8 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IYearnVaultGovernance
     function yTokenForToken(address token) external view returns (address) {
         address yToken = _yTokens[token];
@@ -46,6 +48,12 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
+
+    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IYearnVaultGovernance).interfaceId == interfaceId;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IYearnVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
@@ -80,6 +88,8 @@ contract YearnVaultGovernance is IYearnVaultGovernance, VaultGovernance {
         vault = IYearnVault(vaddr);
         vault.initialize(nft, vaultTokens_);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new yToken is set
     /// @param origin Origin of the transaction (tx.origin)

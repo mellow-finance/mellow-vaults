@@ -11,7 +11,6 @@ import {
 } from "ramda";
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
-import { log } from "console";
 
 export const PRIVATE_VAULT = true;
 
@@ -194,6 +193,7 @@ export const combineVaults = async (
         limits?: BigNumberish[];
         strategyPerformanceTreasuryAddress?: string;
         tokenLimitPerAddress: BigNumberish;
+        tokenLimit: BigNumberish;
         managementFee: BigNumberish;
         performanceFee: BigNumberish;
     }
@@ -201,6 +201,7 @@ export const combineVaults = async (
     if (nfts.length === 0) {
         throw `Trying to combine 0 vaults`;
     }
+    const { log } = deployments;
     const { deployer, admin } = await hre.getNamedAccounts();
     const firstNft = nfts[0];
     const firstAddress = await deployments.read(
@@ -216,19 +217,13 @@ export const combineVaults = async (
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
         tokenLimitPerAddress = ethers.constants.MaxUint256,
+        tokenLimit = ethers.constants.MaxUint256,
         managementFee = 2 * 10 ** 7,
         performanceFee = 20 * 10 ** 7,
     } = options || {};
 
     await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
-        createVaultArgs: [
-            tokens,
-            strategyAddress,
-            nfts,
-            "MStrategy LP Token",
-            "MSLP",
-            deployer,
-        ],
+        createVaultArgs: [tokens, strategyAddress, nfts, deployer],
         delayedStrategyParams: {
             strategyTreasury: strategyTreasuryAddress,
             strategyPerformanceTreasury: strategyPerformanceTreasuryAddress,
@@ -238,6 +233,7 @@ export const combineVaults = async (
         },
         strategyParams: {
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
+            tokenLimit: BigNumber.from(tokenLimit),
         },
     });
     const rootVault = await deployments.read(

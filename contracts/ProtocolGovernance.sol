@@ -3,15 +3,17 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "./utils/DefaultAccessControl.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl {
+contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
+    uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
 
     mapping(address => uint256) public stagedPermissionGrantsTimestamps;
     mapping(address => uint256) public stagedPermissionGrantsMasks;
@@ -27,7 +29,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
-    constructor(address admin) DefaultAccessControl(admin) {}
+    constructor(address admin) UnitPricesGovernance(admin) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -103,11 +105,21 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         return _params.forceAllowMask;
     }
 
-    function supportsInterface(bytes4 interfaceId) public pure override(AccessControlEnumerable, ERC165) returns (bool) {
-        return interfaceId == type(ERC165).interfaceId || interfaceId == type(IProtocolGovernance).interfaceId;
+    /// @inheritdoc IProtocolGovernance
+    function withdrawLimit(address token) external view returns (uint256) {
+        return _params.withdrawLimit * unitPrices[token];
     }
 
-    // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(UnitPricesGovernance, IERC165, ERC165)
+        returns (bool)
+    {
+        return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IProtocolGovernance
     function rollbackAllPermissionGrants() external {
@@ -198,8 +210,6 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         emit ParamsCommitted(tx.origin, msg.sender, _params);
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
-
     /// @inheritdoc IProtocolGovernance
     function stagePermissionGrants(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
@@ -220,11 +230,12 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         emit ParamsStaged(tx.origin, msg.sender, pendingParamsTimestamp, _pendingParams);
     }
 
-    // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
+    // -------------------------  INTERNAL, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
         require(newParams.maxTokensPerVault != 0 && newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
         require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(newParams.withdrawLimit >= MIN_WITHDRAW_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
@@ -233,11 +244,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, DefaultAccessControl
         }
     }
 
-    function _requireAdmin() private view {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-    }
-
-    // ---------------------------------- EVENTS -------------------------------------
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new permissions are staged to be granted for speceific address.
     /// @param origin Origin of the transaction (tx.origin)

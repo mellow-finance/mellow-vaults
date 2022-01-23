@@ -12,6 +12,17 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
     bytes32 public constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
     bool public initialized;
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
+    /// @notice Checks if the address is contract admin.
+    /// @param sender Adddress to check
+    /// @return `true` if sender is an admin, `false` otherwise
+    function isAdmin(address sender) public view returns (bool) {
+        return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
+    }
+
+    // -------------------------  EXTERNAL, MUTATING  ------------------------------
+
     /// @notice Creates a new contract.
     /// @param admin Admin of the contract
     function init(address admin) external {
@@ -21,12 +32,5 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
         _setRoleAdmin(ADMIN_ROLE, ADMIN_ROLE);
         _setRoleAdmin(ADMIN_DELEGATE_ROLE, ADMIN_ROLE);
         initialized = true;
-    }
-
-    /// @notice Checks if the address is contract admin.
-    /// @param sender Adddress to check
-    /// @return `true` if sender is an admin, `false` otherwise
-    function isAdmin(address sender) public view returns (bool) {
-        return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
     }
 }

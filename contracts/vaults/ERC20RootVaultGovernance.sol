@@ -24,6 +24,8 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         MAX_PERFORMANCE_FEE = (50 * CommonLibrary.DENOMINATOR) / 100;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IERC20RootVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
@@ -91,10 +93,16 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
     /// @inheritdoc IERC20RootVaultGovernance
     function strategyParams(uint256 nft) external view returns (StrategyParams memory) {
         if (_strategyParams[nft].length == 0) {
-            return StrategyParams({tokenLimitPerAddress: 0});
+            return StrategyParams({tokenLimitPerAddress: 0, tokenLimit: 0});
         }
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernance).interfaceId == interfaceId;
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IERC20RootVaultGovernance
     function stageDelayedStrategyParams(uint256 nft, DelayedStrategyParams calldata params) external {
@@ -165,8 +173,6 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
         address[] memory vaultTokens_,
         address strategy_,
         uint256[] memory subvaultNfts_,
-        string memory name_,
-        string memory symbol_,
         address owner_
     ) external returns (IERC20RootVault vault, uint256 nft) {
         address vaddr;
@@ -177,8 +183,10 @@ contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance 
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
-        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, name_, symbol_);
+        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when new DelayedProtocolPerVaultParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)

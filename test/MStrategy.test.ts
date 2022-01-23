@@ -36,7 +36,10 @@ contract<MStrategy, {}, {}>("MStrategy", function () {
             const balances = [];
             tokenContracts = [];
             for (const token of tokens) {
-                const c: ERC20 = await ethers.getContractAt("ERC20", token);
+                const c: ERC20 = await ethers.getContractAt(
+                    "ERC20Token",
+                    token
+                );
                 tokenContracts.push(c);
                 balances.push(await c.balanceOf(this.test.address));
                 await c
@@ -57,7 +60,7 @@ contract<MStrategy, {}, {}>("MStrategy", function () {
         await this.deploymentFixture();
     });
 
-    describe("shouldRebalance", () => {
+    xdescribe("shouldRebalance", () => {
         it("checks if the tokens needs to be rebalanced", async () => {
             expect(await this.subject.shouldRebalance(vaultId)).to.be.true;
         });

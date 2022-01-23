@@ -15,6 +15,8 @@ import "./IntegrationVault.sol";
 contract ERC20Vault is IERC20Vault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
         address[] memory tokens = _vaultTokens;
@@ -30,8 +32,21 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
 
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
+    }
+
+    // @inheritdoc IIntegrationVault
+    function reclaimTokens(address[] memory tokens)
+        external
+        override(IIntegrationVault, IntegrationVault)
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
+        // no-op
+        actualTokenAmounts = new uint256[](tokens.length);
     }
 
     /// @inheritdoc ITrader
@@ -68,6 +83,14 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         return trader.swapExactOutput(traderId, amount, address(0), path, options);
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
+
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
         pure
@@ -81,26 +104,35 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory
+        bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
+        address[] memory tokens = _vaultTokens;
+        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
+        address owner = registry.ownerOf(_nft);
+
         for (uint256 i = 0; i < tokenAmounts.length; ++i) {
             IERC20 vaultToken = IERC20(_vaultTokens[i]);
             uint256 balance = vaultToken.balanceOf(address(this));
             uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
             IERC20(_vaultTokens[i]).safeTransfer(to, amount);
-            actualTokenAmounts[i] = amount;
+            if (owner != to) {
+                // this will equal to amounts pulled + any accidental prior balances on `to`;
+                actualTokenAmounts[i] = IERC20(_vaultTokens[i]).balanceOf(to);
+            } else {
+                actualTokenAmounts[i] = amount;
+            }
         }
-
-        actualTokenAmounts = tokenAmounts;
-    }
-
-    function _postReclaimTokens(address, address[] memory tokens) internal view override {
-        for (uint256 i = 0; i < tokens.length; ++i) require(!isVaultToken(tokens[i]), ExceptionsLibrary.INVALID_TOKEN); // vault token is part of TVL
-    }
-
-    function _isStrategy(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+        if (owner != to) {
+            // if we pull as a strategy, make sure everything is pushed
+            IIntegrationVault(to).push(tokens, tokenAmounts, options);
+            // any accidental prior balances + push leftovers
+            uint256[] memory reclaimed = IIntegrationVault(to).reclaimTokens(tokens);
+            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+                // equals to exactly how much is pushed
+                actualTokenAmounts[i] -= reclaimed[i];
+            }
+        }
     }
 
     function _approveERC20TokenIfNecessary(address token, address to) internal {
