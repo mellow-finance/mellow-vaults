@@ -7,8 +7,8 @@ contract ContractMetaMock is IContractMeta {
     bytes32 public CONTRACT_NAME;
     bytes32 public CONTRACT_VERSION;
 
-    constructor(bytes32 name_, bytes32 version_) {
-        CONTRACT_NAME = name_;
-        CONTRACT_VERSION = version_;
+    constructor(string memory name_, string memory version_) {
+        CONTRACT_NAME = bytes32(abi.encodePacked(name_));
+        CONTRACT_VERSION = bytes32(abi.encodePacked(version_));
     }
 }

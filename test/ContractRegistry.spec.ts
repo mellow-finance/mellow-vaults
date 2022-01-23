@@ -57,41 +57,26 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                     name: string
                 ) => {
                     const semver = `${n1}.${n2}.${n3}`;
-                    const semverInput =
-                        ethers.utils.formatBytes32String(semver);
-                    const nameInput = ethers.utils.formatBytes32String(name);
                     const mockFactory = await ethers.getContractFactory(
                         "ContractMetaMock"
                     );
-                    const mock = await mockFactory.deploy(
-                        nameInput,
-                        semverInput
-                    );
+                    const mock = await mockFactory.deploy(name, semver);
                     await expect(
                         this.subject.registerContract(mock.address)
                     ).to.emit(this.subject, "ContractRegistered");
-                    const [semverResponseRaw, addressResponse] =
-                        await this.subject.latestVersion(nameInput);
-                    const semverResponse =
-                        ethers.utils.parseBytes32String(semverResponseRaw);
+                    const [semverResponse, addressResponse] =
+                        await this.subject.latestVersion(name);
                     expect(semverResponse).to.eq(semver);
                     expect(addressResponse).to.eq(mock.address);
-                    expect(
-                        (await this.subject.names()).map((x) =>
-                            ethers.utils.parseBytes32String(x)
-                        )
-                    ).to.contain(name);
+                    expect(await this.subject.names()).to.contain(name);
                     expect(await this.subject.addresses()).to.contain(
                         mock.address
                     );
+                    expect(await this.subject.versions(name)).to.have.members([
+                        semverResponse,
+                    ]);
                     expect(
-                        await this.subject.versions(nameInput)
-                    ).to.have.members([semverResponseRaw]);
-                    expect(
-                        await this.subject.versionAddress(
-                            nameInput,
-                            semverInput
-                        )
+                        await this.subject.versionAddress(name, semver)
                     ).to.eq(mock.address);
                     return true;
                 }
@@ -103,26 +88,17 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                         // initial version
                         const semver = "1.0.1";
                         const name = "ContractMetaMock";
-                        const semverInput =
-                            ethers.utils.formatBytes32String(semver);
-                        const nameInput =
-                            ethers.utils.formatBytes32String(name);
                         const mockFactory = await ethers.getContractFactory(
                             "ContractMetaMock"
                         );
-                        const mock = await mockFactory.deploy(
-                            nameInput,
-                            semverInput
-                        );
+                        const mock = await mockFactory.deploy(name, semver);
                         await this.subject.registerContract(mock.address);
 
                         // lower version
                         const lowerSemver = "1.0.0";
-                        const lowerSemverInput =
-                            ethers.utils.formatBytes32String(lowerSemver);
                         const anotherMock = await mockFactory.deploy(
-                            nameInput,
-                            lowerSemverInput
+                            name,
+                            lowerSemver
                         );
                         await expect(
                             this.subject.registerContract(anotherMock.address)
@@ -130,8 +106,8 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
 
                         // equal version
                         const yetAnotherMock = await mockFactory.deploy(
-                            nameInput,
-                            semverInput
+                            name,
+                            semver
                         );
                         await expect(
                             this.subject.registerContract(
@@ -145,17 +121,10 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         const semver = "1...";
                         const name = "ContractMetaMock";
-                        const semverInput =
-                            ethers.utils.formatBytes32String(semver);
-                        const nameInput =
-                            ethers.utils.formatBytes32String(name);
                         const mockFactory = await ethers.getContractFactory(
                             "ContractMetaMock"
                         );
-                        const mock = await mockFactory.deploy(
-                            nameInput,
-                            semverInput
-                        );
+                        const mock = await mockFactory.deploy(name, semver);
                         await expect(
                             this.subject.registerContract(mock.address)
                         ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -166,17 +135,10 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                     it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
                         const semver = "4.2.0";
                         const name = "¯\\_(ツ)_/¯";
-                        const semverInput =
-                            ethers.utils.formatBytes32String(semver);
-                        const nameInput =
-                            ethers.utils.formatBytes32String(name);
                         const mockFactory = await ethers.getContractFactory(
                             "ContractMetaMock"
                         );
-                        const mock = await mockFactory.deploy(
-                            nameInput,
-                            semverInput
-                        );
+                        const mock = await mockFactory.deploy(name, semver);
                         await expect(
                             this.subject.registerContract(mock.address)
                         ).to.be.revertedWith(Exceptions.INVALID_VALUE);
@@ -187,17 +149,10 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                     it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
                         const semver = "1.0.0";
                         const name = "ContractMetaMock";
-                        const semverInput =
-                            ethers.utils.formatBytes32String(semver);
-                        const nameInput =
-                            ethers.utils.formatBytes32String(name);
                         const mockFactory = await ethers.getContractFactory(
                             "ContractMetaMock"
                         );
-                        const mock = await mockFactory.deploy(
-                            nameInput,
-                            semverInput
-                        );
+                        const mock = await mockFactory.deploy(name, semver);
                         await this.subject.registerContract(mock.address);
                         await expect(
                             this.subject.registerContract(mock.address)
