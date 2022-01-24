@@ -4,8 +4,10 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../interfaces/external/erc/IERC1271.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/validators/IValidator.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
@@ -26,7 +28,7 @@ import "./Vault.sol";
 /// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
 /// ApprovedForAll person cannot do anything except ERC-721 token transfers.
 ///
-/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+/// Both NFT owner and approved person can call externalCall method which claims liquidity mining rewards (if any)
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin
@@ -36,7 +38,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IIntegrationVault).interfaceId);
+        return
+            super.supportsInterface(interfaceId) ||
+            (interfaceId == type(IIntegrationVault).interfaceId) ||
+            (interfaceId == type(IERC1271).interfaceId);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -137,13 +142,44 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         emit ReclaimTokens(to, tokens, actualTokenAmounts);
     }
 
-    /// @inheritdoc IIntegrationVault
-    function claimRewards(address from, bytes memory data) external override nonReentrant {
+    /// @inheritdoc IERC1271
+    function isValidSignature(bytes32 _hash, bytes memory _signature) external view returns (bytes4 magicValue) {
+        IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
+        IVaultRegistry registry = params.registry;
+        IProtocolGovernance protocolGovernance = params.protocolGovernance;
+        uint256 nft_ = _nft;
+        if (nft_ == 0) {
+            return 0xffffffff;
+        }
+        address strategy = registry.getApproved(nft_);
+        if (!protocolGovernance.hasPermission(strategy, PermissionIdsLibrary.TRUSTED_STRATEGY)) {
+            return 0xffffffff;
+        }
+        uint32 size;
+        assembly {
+            size := extcodesize(strategy)
+        }
+        if (size > 0) {
+            if (IERC165(strategy).supportsInterface(type(IERC1271).interfaceId)) {
+                return IERC1271(strategy).isValidSignature(_hash, _signature);
+            } else {
+                return 0xffffffff;
+            }
+        }
+        if (CommonLibrary.recoverSigner(_hash, _signature) == strategy) {
+            return 0x1626ba7e;
+        }
+        return 0xffffffff;
+    }
+
+    function externalCall(address to, bytes calldata data) external payable nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.hasPermission(from, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
-        (bool res, bytes memory returndata) = from.call(data);
+        IValidator validator = IValidator(protocolGovernance.validators(to));
+        require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
+        validator.validate(msg.sender, to, msg.value, data);
+        (bool res, bytes memory returndata) = to.call{value: msg.value}(data);
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)

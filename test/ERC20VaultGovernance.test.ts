@@ -11,10 +11,7 @@ import {
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
-import {
-    DelayedProtocolParamsStruct,
-    ERC20VaultGovernance,
-} from "./types/ERC20VaultGovernance";
+import { ERC20VaultGovernance } from "./types/ERC20VaultGovernance";
 import { contract, setupDefaultContext, TestContext } from "./library/setup";
 import { Context, Suite } from "mocha";
 import { equals } from "ramda";
@@ -36,7 +33,6 @@ type CustomContext = {
 
 type DeployOptions = {
     internalParams?: InternalParamsStruct;
-    trader?: string;
     skipInit?: boolean;
 };
 
@@ -44,7 +40,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
     "ERC20VaultGovernance",
     function () {
         before(async () => {
-            const traderAddress = (await getNamedAccounts()).aaveLendingPool;
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeployOptions) => {
                     await deployments.fixture();
@@ -57,7 +52,6 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
                             registry: this.vaultRegistry.address,
                             singleton,
                         },
-                        trader = traderAddress,
                         skipInit = false,
                     } = options || {};
                     const { address } = await deployments.deploy(
@@ -65,7 +59,7 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
                         {
                             from: this.deployer.address,
                             contract: "ERC20VaultGovernance",
-                            args: [internalParams, { trader }],
+                            args: [internalParams],
                             autoMine: true,
                         }
                     );
@@ -108,50 +102,14 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
             await sleepTo(this.startTimestamp);
         });
 
-        const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-            address.map((trader) => ({
-                trader,
-            }));
-
         describe("#constructor", () => {
             it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.subject.address
                 );
             });
-
-            describe("edge cases", () => {
-                describe("when trader address is 0", () => {
-                    it("reverts", async () => {
-                        await deployments.fixture();
-                        const { address: singleton } = await deployments.get(
-                            "ERC20Vault"
-                        );
-                        await expect(
-                            deployments.deploy("ERC20VaultGovernance", {
-                                from: this.deployer.address,
-                                args: [
-                                    {
-                                        protocolGovernance:
-                                            this.protocolGovernance.address,
-                                        registry: this.vaultRegistry.address,
-                                        singleton,
-                                    },
-                                    {
-                                        trader: ethers.constants.AddressZero,
-                                    },
-                                ],
-                                autoMine: true,
-                            })
-                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
-                    });
-                });
-            });
         });
 
-        vaultGovernanceBehavior.call(this, {
-            delayedProtocolParams,
-            ...this,
-        });
+        vaultGovernanceBehavior.call(this, {});
     }
 );

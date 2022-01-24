@@ -3,13 +3,17 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../interfaces/oracles/IMellowOracle.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract MellowOracle is IMellowOracle, ERC165 {
+contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
+    bytes32 public constant CONTRACT_NAME = "MellowOracle";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     IUniV2Oracle public immutable univ2Oracle;
     IUniV3Oracle public immutable univ3Oracle;
     IChainlinkOracle public immutable chainlinkOracle;

@@ -207,7 +207,7 @@ export function vaultGovernanceBehavior<
                         .connect(this.admin)
                         .stageParams({
                             ...params,
-                            forceAllowMask: 2 ** 5,
+                            forceAllowMask: 2 ** 2,
                         });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance

@@ -22,7 +22,7 @@ import "./VaultGovernance.sol";
 /// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
 /// ApprovedForAll person cannot do anything except ERC-721 token transfers.
 ///
-/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+/// Both NFT owner and approved person can call externalCall method which claims liquidity mining rewards (if any)
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin
@@ -100,12 +100,6 @@ abstract contract Vault is IVault, ERC165 {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         registry.setApprovalForAll(address(registry), true);
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
-    }
-
-    function _allowTokenIfNecessary(address token, address to) internal {
-        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
-            IERC20(token).approve(to, type(uint256).max);
-        }
     }
 
     // --------------------------  EVENTS  --------------------------

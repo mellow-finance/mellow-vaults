@@ -197,4 +197,36 @@ library CommonLibrary {
         uint256 r1 = x / r;
         return (r < r1 ? r : r1);
     }
+
+    function getSelector(bytes calldata data) internal pure returns (bytes4 selector) {
+        assembly {
+            let s := calldataload(data.offset)
+            s := shr(224, selector)
+            selector := s
+        }
+    }
+
+    function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) internal pure returns (address) {
+        (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
+
+        return ecrecover(_ethSignedMessageHash, v, r, s);
+    }
+
+    function splitSignature(bytes memory sig)
+        internal
+        pure
+        returns (
+            bytes32 r,
+            bytes32 s,
+            uint8 v
+        )
+    {
+        require(sig.length == 65, ExceptionsLibrary.INVALID_LENGTH);
+
+        assembly {
+            r := mload(add(sig, 32))
+            s := mload(add(sig, 64))
+            v := byte(0, mload(add(sig, 96)))
+        }
+    }
 }

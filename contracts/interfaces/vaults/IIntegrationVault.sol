@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../external/erc/IERC1271.sol";
 import "./IVault.sol";
 
-interface IIntegrationVault is IVault {
+interface IIntegrationVault is IVault, IERC1271 {
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
     /// the contract balance and convert it to yUSDC.
     /// @dev Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
@@ -61,13 +62,13 @@ interface IIntegrationVault is IVault {
     /// @return actualTokenAmounts Amounts reclaimed
     function reclaimTokens(address[] memory tokens) external returns (uint256[] memory actualTokenAmounts);
 
-    /// @notice Claim liquidity mining rewards.
+    /// @notice Execute one of whitelisted calls.
     /// @dev Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
     /// Strategy is approved address for the vault NFT.
     ///
     /// Since this method allows sending arbitrary transactions, the destinations of the calls
     /// are whitelisted by Protocol Governance.
-    /// @param from Address of the reward pool
+    /// @param to Address of the reward pool
     /// @param data Abi encoded call to the `from` address
-    function claimRewards(address from, bytes memory data) external;
+    function externalCall(address to, bytes memory data) external payable;
 }

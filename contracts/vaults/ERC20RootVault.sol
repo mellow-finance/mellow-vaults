@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
@@ -16,11 +17,13 @@ import "./AggregateVault.sol";
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint256[] private _lpPriceHighWaterMarks;
+
     uint256 public lastFeeCharge;
-    EnumerableSet.AddressSet _depositorsAllowlist;
     uint256 public totalWithdrawnAmountsTimestamp;
     uint256[] public totalWithdrawnAmounts;
+
+    uint256[] private _lpPriceHighWaterMarks;
+    EnumerableSet.AddressSet private _depositorsAllowlist;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -71,7 +74,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = block.timestamp;
     }
 
-    function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {
+    function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens)
+        external
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(
@@ -89,7 +96,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
-        uint256[] memory actualTokenAmounts = _push(normalizedAmounts, "");
+        actualTokenAmounts = _push(normalizedAmounts, "");
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
@@ -113,8 +120,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        uint256[] calldata minTokenAmounts
-    ) external nonReentrant {
+        uint256[] memory minTokenAmounts
+    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 supply = totalSupply;
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
@@ -123,7 +130,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
             require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
-        uint256[] memory actualTokenAmounts = _pull(address(this), tokenAmounts, "");
+        actualTokenAmounts = _pull(address(this), tokenAmounts, "");
         uint256 vaultTokensLength = _vaultTokens.length;
         for (uint256 i = 0; i < vaultTokensLength; ++i) {
             if (actualTokenAmounts[i] == 0) {
