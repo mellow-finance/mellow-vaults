@@ -9,6 +9,9 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
     /// @notice Reference to INonfungiblePositionManager of UniswapV3 protocol.
     function positionManager() external view returns (INonfungiblePositionManager);
 
+    /// @notice NFT of UniV3 position manager
+    function uniV3Nft() external view returns (uint256);
+
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
