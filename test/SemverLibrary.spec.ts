@@ -81,12 +81,14 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
                     );
                     expect(numberified).to.eq(BigNumber.from(0));
                 });
-                it("returns zero on '04.2.0'", async () => {
+                it("returns '4.2.0' on '04.2.0'", async () => {
                     const semver = "04.2.0";
                     const numberified = await this.subject.numberifySemver(
                         semver
                     );
-                    expect(numberified).to.eq(BigNumber.from(0));
+                    expect(numberified).to.eq(
+                        BigNumber.from(4 * (1 << 16) + 2 * (1 << 8))
+                    );
                 });
                 it("returns zero on '4:20", async () => {
                     const semver = "4:20";
@@ -105,40 +107,40 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#numberify", () => {
-            pit(
-                "converts number to string",
-                { numRuns: RUNS.low },
-                uint256,
-                async (a: BigNumber) => {
-                    const input: number[] = a
-                        .toString()
-                        .split("")
-                        .map((x) => x.charCodeAt(0));
-                    const result: BigNumber = await this.subject.numberify(
-                        input
-                    );
-                    expect(result).to.eq(a);
-                    return true;
-                }
-            );
-        });
+        // describe("#numberify", () => {
+        //     pit(
+        //         "converts number to string",
+        //         { numRuns: RUNS.low },
+        //         uint256,
+        //         async (a: BigNumber) => {
+        //             const input: number[] = a
+        //                 .toString()
+        //                 .split("")
+        //                 .map((x) => x.charCodeAt(0));
+        //             const result: BigNumber = await this.subject.numberify(
+        //                 input
+        //             );
+        //             expect(result).to.eq(a);
+        //             return true;
+        //         }
+        //     );
+        // });
 
-        describe("#stringify", () => {
-            pit(
-                "converts string to number",
-                { numRuns: RUNS.low },
-                uint256,
-                async (a: BigNumber) => {
-                    const response = arrayify(await this.subject.stringify(a));
-                    let result: string = "";
-                    for (const i of response) {
-                        result += String.fromCharCode(i);
-                    }
-                    expect(result).to.eq(a.toString());
-                    return true;
-                }
-            );
-        });
+        // describe("#stringify", () => {
+        //     pit(
+        //         "converts string to number",
+        //         { numRuns: RUNS.low },
+        //         uint256,
+        //         async (a: BigNumber) => {
+        //             const response = arrayify(await this.subject.stringify(a));
+        //             let result: string = "";
+        //             for (const i of response) {
+        //                 result += String.fromCharCode(i);
+        //             }
+        //             expect(result).to.eq(a.toString());
+        //             return true;
+        //         }
+        //     );
+        // });
     }
 );

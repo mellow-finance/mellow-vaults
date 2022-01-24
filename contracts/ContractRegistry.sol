@@ -64,10 +64,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
     function latestVersion(string memory name_) external view returns (string memory, address) {
         bytes32 name = bytes32(abi.encodePacked(name_));
         uint256 version = _latestVersion(name);
-        return (
-            string(SemverLibrary.stringifySemver(version)),
-            _nameToVersionToAddress[name][version]
-        );
+        return (string(SemverLibrary.stringifySemver(version)), _nameToVersionToAddress[name][version]);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -75,36 +72,21 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
     /// @inheritdoc IContractRegistry
     function registerContract(address target) external {
         require(governance.isOperator(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(
-            _addresses.add(target),
-            ExceptionsLibrary.DUPLICATE
-        );
+        require(_addresses.add(target), ExceptionsLibrary.DUPLICATE);
 
         IContractMeta newContract = IContractMeta(target);
         bytes32 newContractName = newContract.CONTRACT_NAME();
         bytes32 newContractVersionRaw = newContract.CONTRACT_VERSION();
         uint256 newContractVersion = SemverLibrary.numberifySemver(_bytes32ToString(newContractVersionRaw));
 
-        require(
-            _validateContractName(newContractName),
-            ExceptionsLibrary.INVALID_VALUE
-        );
-        require(
-            newContractVersion > _latestVersion(newContractName),
-            ExceptionsLibrary.INVARIANT
-        );
+        require(_validateContractName(newContractName), ExceptionsLibrary.INVALID_VALUE);
+        require(newContractVersion > _latestVersion(newContractName), ExceptionsLibrary.INVARIANT);
 
         _nameToVersionToAddress[newContractName][newContractVersion] = target;
         _nameToVersions[newContractName].push(newContractVersion);
         _names.add(newContractName);
 
-        emit ContractRegistered(
-            tx.origin,
-            msg.sender,
-            newContractName,
-            newContractVersionRaw,
-            target
-        );
+        emit ContractRegistered(tx.origin, msg.sender, newContractName, newContractVersionRaw, target);
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
@@ -118,11 +100,9 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         bytes memory name = SemverLibrary.shrinkToFit(abi.encodePacked(name_));
         for (uint256 i; i < name.length; ++i) {
             uint8 ascii = uint8(name[i]);
-            bool isAlphanumeric = (
-                (0x61 <= ascii && ascii <= 0x7a) || 
-                (0x41 <= ascii && ascii <= 0x5a) || 
-                (0x30 <= ascii && ascii <= 0x39)
-            );
+            bool isAlphanumeric = ((0x61 <= ascii && ascii <= 0x7a) ||
+                (0x41 <= ascii && ascii <= 0x5a) ||
+                (0x30 <= ascii && ascii <= 0x39));
             if (!isAlphanumeric) {
                 return false;
             }
@@ -140,7 +120,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         address indexed origin,
         address indexed sender,
         bytes32 indexed name,
-        bytes32 version, 
+        bytes32 version,
         address target
     );
 }
