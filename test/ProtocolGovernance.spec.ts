@@ -134,7 +134,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await this.subject.stagedPermissionGrantsTimestamps(
                                 target
                             )
-                        ).to.be.equivalent(BigNumber.from(0));
+                        ).to.deep.equal(BigNumber.from(0));
                         return true;
                     }
                 );
