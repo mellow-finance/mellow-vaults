@@ -1,4 +1,6 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: GPL-2.0-or-later
+// TODO: Check if GPL is fine
+// TODO: Keeper rewards
 pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
@@ -6,8 +8,12 @@ import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/CommonLibrary.sol";
+import "../libraries/external/FullMath.sol";
+import "../libraries/external/TickMath.sol";
 
 contract LStrategy {
+    uint256 public constant DENOMINATOR = 10**9;
     uint16 public intervalWidthInTicks;
     IERC20Vault public erc20Vault;
     IUniV3Vault public lowerVault;
@@ -15,6 +21,71 @@ contract LStrategy {
     INonfungiblePositionManager public positionManager;
     uint256 public minToken0ForOpening;
     uint256 public minToken1ForOpening;
+    int24 public tickPoint;
+    int24 public tickPointInOneYear;
+    uint256 public tickPointTimestamp;
+
+    // As the upper vault goes from 100% liquidity to 0% liquidty, price moves from middle of the lower interval to right of the lower interval
+    function _targetLiquidityRatio(INonfungiblePositionManager positionManager_)
+        internal
+        view
+        returns (uint256 liquidityRatioD, bool isNegative)
+    {
+        int24 targetTick = _targetTick();
+        (int24 tickLower, int24 tickUpper, ) = _getVaultStats(positionManager_, lowerVault);
+        int24 midTick = (tickUpper + tickLower) / 2;
+        isNegative = midTick > targetTick;
+        if (isNegative) {
+            liquidityRatioD = FullMath.mulDiv(
+                uint256(uint24(midTick - targetTick)),
+                DENOMINATOR,
+                uint256(uint24((tickUpper - tickLower) / 2))
+            );
+        } else {
+            liquidityRatioD = FullMath.mulDiv(
+                uint256(uint24(targetTick - midTick)),
+                DENOMINATOR,
+                uint256(uint24((tickUpper - tickLower) / 2))
+            );
+        }
+    }
+
+    function _targetTick() internal view returns (int24) {
+        uint256 timeDelta = block.timestamp - tickPointTimestamp;
+        int24 tickPoint_ = tickPoint;
+        int24 tickPointInOneYear_ = tickPointInOneYear;
+        int24 annualTickDelta = tickPointInOneYear_ - tickPoint_;
+        if (annualTickDelta > 0) {
+            return
+                tickPoint_ +
+                int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickDelta)), timeDelta, CommonLibrary.YEAR)));
+        } else {
+            return
+                tickPoint_ -
+                int24(uint24(FullMath.mulDiv(uint256(uint25(-annualTickDelta)), timeDelta, CommonLibrary.YEAR)));
+        }
+    }
+
+    function _liquidityRatio(uint128 lowerLiquidity, uint128 upperLiquidity)
+        external
+        pure
+        returns (uint256 liquidityRatioD)
+    {
+        return FullMath.mulDiv(lowerLiquidity, DENOMINATOR, lowerLiquidity + upperLiquidity);
+    }
+
+    function _getVaultStats(INonfungiblePositionManager positionManager_, IUniV3Vault vault)
+        internal
+        view
+        returns (
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity
+        )
+    {
+        uint256 nft = vault.uniV3Nft();
+        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager_.positions(nft);
+    }
 
     function _swapVaults() internal {
         lowerVault.collectEarnings();
