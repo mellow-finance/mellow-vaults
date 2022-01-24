@@ -183,11 +183,16 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; ++i) {
-            _allowTokenIfNecessary(tokens[i], address(_positionManager), tokenAmounts[i]);
+            _increaseAllowancesByAmount(tokens[i], address(_positionManager), tokenAmounts[i]);
         }
 
         actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0) return actualTokenAmounts;
+        if (uniV3Nft == 0) {
+            for (uint256 i = 0; i < tokens.length; ++i) {
+                _decreaseAllowances(tokens[i], address(_positionManager));
+            }
+            return actualTokenAmounts;
+        }
 
         Options memory opts = _parseOptions(options);
         Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
@@ -202,6 +207,9 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 deadline: opts.deadline
             })
         );
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            _decreaseAllowances(tokens[i], address(_positionManager));
+        }
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
     }

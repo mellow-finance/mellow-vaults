@@ -82,8 +82,9 @@ contract YearnVault is IYearnVault, IntegrationVault {
 
             address token = tokens[i];
             IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
-            _allowTokenIfNecessary(token, address(yToken), tokenAmounts[i]);
+            _increaseAllowancesByAmount(token, address(yToken), tokenAmounts[i]);
             yToken.deposit(tokenAmounts[i], address(this));
+            _decreaseAllowances(token, address(yToken));
         }
         actualTokenAmounts = tokenAmounts;
     }

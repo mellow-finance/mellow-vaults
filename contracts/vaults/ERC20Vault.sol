@@ -62,8 +62,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId), amount);
-        return trader.swapExactInput(traderId, amount, address(0), path, options);
+        _increaseAllowancesByAmount(path[0].token0, chiefTrader.getTrader(traderId), amount);
+        uint256 amountOut = trader.swapExactInput(traderId, amount, address(0), path, options);
+        _decreaseAllowances(path[0].token0, chiefTrader.getTrader(traderId));
+        return amountOut;
     }
 
     /// @inheritdoc ITrader
@@ -79,8 +81,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId), amount);
-        return trader.swapExactOutput(traderId, amount, address(0), path, options);
+        _increaseAllowancesByAmount(path[0].token0, chiefTrader.getTrader(traderId), amount);
+        uint256 amountOut = trader.swapExactOutput(traderId, amount, address(0), path, options);
+        _decreaseAllowances(path[0].token0, chiefTrader.getTrader(traderId));
+        return amountOut;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -132,17 +136,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
                 // equals to exactly how much is pushed
                 actualTokenAmounts[i] -= reclaimed[i];
             }
-        }
-    }
-
-    function _approveERC20TokenIfNecessary(
-        address token,
-        address to,
-        uint256 amount
-    ) internal {
-        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
-            IERC20(token).safeDecreaseAllowance(to, IERC20(token).allowance(address(this), to));
-            IERC20(token).safeIncreaseAllowance(to, amount);
         }
     }
 }
