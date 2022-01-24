@@ -19,7 +19,7 @@ import {
 } from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 
-describe("UniV2Trader", () => {
+xdescribe("UniV2Trader", () => {
     let deploymentFixture: Function;
     let uniV2Trader: UniV2Trader;
     let deployer: string;
@@ -90,7 +90,7 @@ describe("UniV2Trader", () => {
 
         describe("#swapExactInput", () => {
             describe("when passed empty path", () => {
-                it("reverts with `INVALID_VALUE`", async () => {
+                it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
                     await expect(
                         uniV2Trader.swapExactInput(
                             0,

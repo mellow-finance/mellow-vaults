@@ -45,7 +45,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await execute(
             "ProtocolGovernance",
             { from: deployer, log: true, autoMine: true },
-            "stageGrantPermissions",
+            "stagePermissionGrants",
             governance,
             [PermissionIdsLibrary.REGISTER_VAULT]
         );
@@ -59,7 +59,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 log: true,
                 autoMine: true,
             },
-            "commitStagedPermissions"
+            "commitAllPermissionGrantsSurpassedDelay"
         );
         // await new Promise((resolve) => setTimeout(resolve, 10000));
     }
@@ -83,7 +83,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 log: true,
                 autoMine: true,
             },
-            "stageGrantPermissions",
+            "stagePermissionGrants",
             token,
             [
                 PermissionIdsLibrary.ERC20_VAULT_TOKEN,
@@ -109,7 +109,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             await execute(
                 "ProtocolGovernance",
                 { from: deployer, log: true, autoMine: true },
-                "stageGrantPermissions",
+                "stagePermissionGrants",
                 address,
                 [PermissionIdsLibrary.CREATE_VAULT]
             );
@@ -118,7 +118,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
     const staged = await read(
         "ProtocolGovernance",
-        "stagedPermissionAddresses"
+        "stagedPermissionGrantsAddresses"
     );
 
     if (staged.length > 0) {
@@ -129,7 +129,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 log: true,
                 autoMine: true,
             },
-            "commitStagedPermissions"
+            "commitAllPermissionGrantsSurpassedDelay"
         );
     }
 
@@ -140,6 +140,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             maxTokensPerVault: 10,
             governanceDelay: 86400,
             protocolTreasury,
+            withdrawLimit: 200000,
         };
         log(`Setting ProtocolGovernance params`);
         log(JSON.stringify(params, null, 2));

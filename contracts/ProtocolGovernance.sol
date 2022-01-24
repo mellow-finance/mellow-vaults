@@ -2,29 +2,32 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./utils/DefaultAccessControl.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
+contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    mapping(address => uint256) private _stagedPermissionMasks;
-    mapping(address => uint256) private _permissionMasks;
-    EnumerableSet.AddressSet private _stagedPermissionAddresses;
-    EnumerableSet.AddressSet private _permissionAddresses;
-
-    uint256 internal _permissionAddressesTimestamp;
-
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
+    uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
+
+    mapping(address => uint256) public stagedPermissionGrantsTimestamps;
+    mapping(address => uint256) public stagedPermissionGrantsMasks;
+    mapping(address => uint256) public permissionMasks;
     uint256 public pendingParamsTimestamp;
     Params public params;
     Params public pendingParams;
 
+    EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
+    EnumerableSet.AddressSet private _permissionAddresses;
+
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
-    constructor(address admin) DefaultAccessControl(admin) {}
+    constructor(address admin) UnitPricesGovernance(admin) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -34,69 +37,39 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     }
 
     /// @inheritdoc IProtocolGovernance
-    function permissionAddressesCount() external view returns (uint256) {
-        return _permissionAddresses.length();
+    function stagedPermissionGrantsAddresses() external view returns (address[] memory) {
+        return _stagedPermissionGrantsAddresses.values();
     }
 
     /// @inheritdoc IProtocolGovernance
-    function permissionAddressAt(uint256 index) external view returns (address) {
-        return _permissionAddresses.at(index);
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function rawPermissionMask(address target) external view returns (uint256) {
-        return _permissionMasks[target];
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function permissionMask(address target) external view returns (uint256) {
-        return _permissionMasks[target] | params.forceAllowMask;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function dirtyAddresses(uint8 permissionId) external view returns (address[] memory addresses) {
-        uint256 len = _permissionAddresses.length();
-        address[] memory tempAddresses = new address[](len);
-        uint256 addressesLen = 0;
+    function addressesByPermission(uint8 permissionId) external view returns (address[] memory addresses) {
+        uint256 length = _permissionAddresses.length();
+        address[] memory tempAddresses = new address[](length);
+        uint256 addressesLength = 0;
         uint256 mask = 1 << permissionId;
-        for (uint256 i = 0; i < len; i++) {
+        for (uint256 i = 0; i < length; i++) {
             address addr = _permissionAddresses.at(i);
-            if (_permissionMasks[addr] & mask != 0) {
-                addresses[addressesLen] = addr;
-                addressesLen++;
+            if (permissionMasks[addr] & mask != 0) {
+                addresses[addressesLength] = addr;
+                addressesLength++;
             }
         }
-        addresses = new address[](addressesLen);
-        for (uint256 i = 0; i < addressesLen; i++) {
+        addresses = new address[](addressesLength);
+        for (uint256 i = 0; i < addressesLength; i++) {
             addresses[i] = tempAddresses[i];
         }
     }
 
     /// @inheritdoc IProtocolGovernance
-    function stagedPermissionAddresses() external view returns (address[] memory) {
-        return _stagedPermissionAddresses.values();
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function stagedPermissionMask(address target) external view returns (uint256) {
-        return _stagedPermissionMasks[target];
-    }
-
-    /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
-        return ((_permissionMasks[target] | params.forceAllowMask) & (1 << (permissionId))) != 0;
+        return ((permissionMasks[target] | params.forceAllowMask) & (1 << (permissionId))) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
         uint256 submask = _permissionIdsToMask(permissionIds);
-        uint256 mask = _permissionMasks[target] | params.forceAllowMask;
+        uint256 mask = permissionMasks[target] | params.forceAllowMask;
         return mask & submask == submask;
-    }
-
-    /// @inheritdoc IProtocolGovernance
-    function permissionAddressesTimestamp() external view returns (uint256) {
-        return _permissionAddressesTimestamp;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -119,48 +92,93 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         return params.forceAllowMask;
     }
 
-    // ------------------- PUBLIC, MUTATING, GOVERNANCE, IMMEDIATE -----------------
+    /// @inheritdoc IProtocolGovernance
+    function withdrawLimit(address token) external view returns (uint256) {
+        return params.withdrawLimit * unitPrices[token];
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(UnitPricesGovernance, IERC165, ERC165)
+        returns (bool)
+    {
+        return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IProtocolGovernance
-    function rollbackStagedPermissions() external {
+    function rollbackAllPermissionGrants() external {
         _requireAdmin();
-        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
-        _clearStagedPermissions();
-        delete _permissionAddressesTimestamp;
-        emit RolledBackStagedPermissions(tx.origin, msg.sender);
+        uint256 length = _stagedPermissionGrantsAddresses.length();
+        for (uint256 __; __ != length; ++__) {
+            // actual length is decremented in the loop so we take the first element each time
+            address target = _stagedPermissionGrantsAddresses.at(0);
+            delete stagedPermissionGrantsMasks[target];
+            delete stagedPermissionGrantsTimestamps[target];
+            _stagedPermissionGrantsAddresses.remove(target);
+        }
+        emit AllPermissionGrantsRolledBack(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitStagedPermissions() external {
+    function commitPermissionGrants(address stagedAddress) external {
         _requireAdmin();
-        require(_isStagedToCommit(), ExceptionsLibrary.INVALID_STATE);
-        require(block.timestamp >= _permissionAddressesTimestamp, ExceptionsLibrary.TIMESTAMP);
-        uint256 length = _stagedPermissionAddresses.length();
-        for (uint256 i; i != length; ++i) {
-            address delayedAddress = _stagedPermissionAddresses.at(i);
-            uint256 delayedPermissionMask = _stagedPermissionMasks[delayedAddress];
-            _permissionMasks[delayedAddress] = delayedPermissionMask;
-            if (delayedPermissionMask == 0) {
-                _permissionAddresses.remove(delayedAddress);
+        uint256 stagedToCommitAt = stagedPermissionGrantsTimestamps[stagedAddress];
+        require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
+        require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
+        permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
+        if (permissionMasks[stagedAddress] == 0) {
+            _permissionAddresses.remove(stagedAddress);
+        } else {
+            _permissionAddresses.add(stagedAddress);
+        }
+        delete stagedPermissionGrantsMasks[stagedAddress];
+        delete stagedPermissionGrantsTimestamps[stagedAddress];
+        _stagedPermissionGrantsAddresses.remove(stagedAddress);
+        emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitAllPermissionGrantsSurpassedDelay() external {
+        _requireAdmin();
+        uint256 length = _stagedPermissionGrantsAddresses.length();
+        for (uint256 i; i != length; ) {
+            address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
+            if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
+                permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
+                if (permissionMasks[stagedAddress] == 0) {
+                    _permissionAddresses.remove(stagedAddress);
+                } else {
+                    _permissionAddresses.add(stagedAddress);
+                }
+                delete stagedPermissionGrantsMasks[stagedAddress];
+                delete stagedPermissionGrantsTimestamps[stagedAddress];
+                _stagedPermissionGrantsAddresses.remove(stagedAddress);
+                --length;
+                emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
-                _permissionAddresses.add(delayedAddress);
+                ++i;
             }
         }
-        _clearStagedPermissions();
-        delete _permissionAddressesTimestamp;
+        // TODO: return an array of addresses that were committed
     }
 
     /// @inheritdoc IProtocolGovernance
     function revokePermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
-        uint256 diff = _permissionIdsToMask(permissionIds);
-        uint256 currentMask = _permissionMasks[target];
+        uint256 diff;
+        for (uint256 i = 0; i < permissionIds.length; ++i) {
+            diff |= 1 << permissionIds[i];
+        }
+        uint256 currentMask = permissionMasks[target];
         uint256 newMask = currentMask & (~diff);
-        _permissionMasks[target] = newMask;
+        permissionMasks[target] = newMask;
         if (newMask == 0) {
             _permissionAddresses.remove(target);
         }
-        emit RevokedPermissions(tx.origin, msg.sender, target, permissionIds);
+        emit PermissionsRevoked(tx.origin, msg.sender, target, permissionIds);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -170,24 +188,17 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         params = pendingParams;
         delete pendingParams;
         delete pendingParamsTimestamp;
-        emit ParamsCommitted(tx.origin, msg.sender, params);
+        emit PendingParamsCommitted(tx.origin, msg.sender, params);
     }
 
-    // -------------------  PUBLIC, MUTATING, GOVERNANCE, DELAY  -------------------
-
     /// @inheritdoc IProtocolGovernance
-    function stageGrantPermissions(address target, uint8[] calldata permissionIds) external {
+    function stagePermissionGrants(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
-        uint256 delay = params.governanceDelay;
-        uint256 diff = _permissionIdsToMask(permissionIds);
-        if (!_stagedPermissionAddresses.contains(target)) {
-            _stagedPermissionAddresses.add(target);
-            _stagedPermissionMasks[target] = _permissionMasks[target];
-        }
-        uint256 currentMask = _stagedPermissionMasks[target];
-        _stagedPermissionMasks[target] = currentMask | diff;
-        _permissionAddressesTimestamp = block.timestamp + delay;
-        emit StagedGrantPermissions(tx.origin, msg.sender, target, permissionIds, _permissionAddressesTimestamp);
+        _stagedPermissionGrantsAddresses.add(target);
+        stagedPermissionGrantsMasks[target] = _permissionIdsToMask(permissionIds);
+        uint256 stagedToCommitAt = block.timestamp + params.governanceDelay;
+        stagedPermissionGrantsTimestamps[target] = stagedToCommitAt;
+        emit PermissionGrantsStaged(tx.origin, msg.sender, target, permissionIds, stagedToCommitAt);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -199,11 +210,12 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
     }
 
-    // -------------------------  PRIVATE, PURE, VIEW  ------------------------------
+    // -------------------------  INTERNAL, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
         require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
         require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(newParams.withdrawLimit >= MIN_WITHDRAW_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
 
     function _permissionIdsToMask(uint8[] calldata permissionIds) private pure returns (uint256 mask) {
@@ -212,34 +224,15 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
         }
     }
 
-    function _requireAdmin() private view {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-    }
+    // --------------------------  EVENTS  --------------------------
 
-    function _isStagedToCommit() private view returns (bool) {
-        return _permissionAddressesTimestamp != 0;
-    }
-
-    // -------------------------------  PRIVATE, MUTATING  ---------------------------
-
-    function _clearStagedPermissions() private {
-        uint256 length = _stagedPermissionAddresses.length();
-        for (uint256 i; i != length; ++i) {
-            address target = _stagedPermissionAddresses.at(0);
-            delete _stagedPermissionMasks[target];
-            _stagedPermissionAddresses.remove(target);
-        }
-    }
-
-    // ---------------------------------- EVENTS -------------------------------------
-
-    /// @notice Emitted when new permissions are staged to be granted
+    /// @notice Emitted when new permissions are staged to be granted for speceific address.
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address
     /// @param permissionIds Permission IDs to be granted
     /// @param at Timestamp when the staged permissions could be committed
-    event StagedGrantPermissions(
+    event PermissionGrantsStaged(
         address indexed origin,
         address indexed sender,
         address indexed target,
@@ -252,7 +245,7 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address
     /// @param permissionIds Permission IDs to be revoked
-    event RevokedPermissions(
+    event PermissionsRevoked(
         address indexed origin,
         address indexed sender,
         address indexed target,
@@ -262,12 +255,13 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @notice Emitted when staged permissions are rolled back
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event RolledBackStagedPermissions(address indexed origin, address indexed sender);
+    event AllPermissionGrantsRolledBack(address indexed origin, address indexed sender);
 
-    /// @notice Emitted when staged permissions are committed
+    /// @notice Emitted when staged permissions are comitted for speceific address
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event CommittedStagedPermissions(address indexed origin, address indexed sender);
+    /// @param target Target address
+    event PermissionGrantsCommitted(address indexed origin, address indexed sender, address indexed target);
 
     /// @notice Emitted when pending parameters are set
     /// @param origin Origin of the transaction (tx.origin)
@@ -280,5 +274,5 @@ contract ProtocolGovernance is IProtocolGovernance, DefaultAccessControl {
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param params Committed parameters
-    event ParamsCommitted(address indexed origin, address indexed sender, Params params);
+    event PendingParamsCommitted(address indexed origin, address indexed sender, Params params);
 }

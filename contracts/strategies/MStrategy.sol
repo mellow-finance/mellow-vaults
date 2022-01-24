@@ -39,6 +39,8 @@ contract MStrategy is DefaultAccessControlLateInit {
     mapping(uint256 => bool) public disabled;
     mapping(address => mapping(address => uint256)) public paramsIndex;
 
+    // -------------------------  EXTERNAL, VIEW  ------------------------------
+
     function vaultCount() public view returns (uint256) {
         return vaultImmutableParams.length;
     }
@@ -82,6 +84,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         return false;
     }
 
+    // -------------------------  EXTERNAL, MUTATING  ------------------------------
+
     function rebalance(uint256 id) external {
         require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
         require(!disabled[id], ExceptionsLibrary.DISABLED);
@@ -108,6 +112,50 @@ contract MStrategy is DefaultAccessControlLateInit {
             moneyVault
         );
     }
+
+    // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function _calcRebalancePoolAmount(
+        uint256 tvl0,
+        uint256 tvl1,
+        uint256 liquidToFixedRatioX96,
+        uint256 poolRebalanceThresholdX96
+    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
+        uint256 currentRatioX96 = type(uint256).max;
+        if (tvl0 != 0) {
+            currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
+        }
+        uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
+        if (deviation > poolRebalanceThresholdX96) {
+            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
+                liquidToFixedRatioX96,
+                CommonLibrary.Q96,
+                tvl0,
+                tvl1,
+                0
+            );
+        }
+    }
+
+    // [0, 1]
+    function targetValueRatioX96(
+        uint256 sqrtPriceX96,
+        uint256 sqrtPMinX96,
+        uint256 sqrtPMaxX96
+    ) public pure returns (uint256) {
+        if (sqrtPMinX96 > sqrtPMaxX96) {
+            (sqrtPMinX96, sqrtPMaxX96) = (sqrtPMaxX96, sqrtPMinX96);
+        }
+        if (sqrtPriceX96 <= sqrtPMinX96) {
+            return 0;
+        }
+        if (sqrtPriceX96 >= sqrtPMaxX96) {
+            return CommonLibrary.Q96;
+        }
+        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPriceX96);
+    }
+
+    // -------------------------  INTERNAL, MUTATING  ------------------------------
 
     function _rebalancePools(
         uint256[] memory erc20Tvl,
@@ -150,28 +198,6 @@ contract MStrategy is DefaultAccessControlLateInit {
             if ((moneyPullAmounts[0] > 0) || (moneyPullAmounts[1] > 0)) {
                 moneyVault.pull(address(erc20Vault), tokens, moneyPullAmounts, "");
             }
-        }
-    }
-
-    function _calcRebalancePoolAmount(
-        uint256 tvl0,
-        uint256 tvl1,
-        uint256 liquidToFixedRatioX96,
-        uint256 poolRebalanceThresholdX96
-    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
-        uint256 currentRatioX96 = type(uint256).max;
-        if (tvl0 != 0) {
-            currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
-        }
-        uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
-        if (deviation > poolRebalanceThresholdX96) {
-            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
-                liquidToFixedRatioX96,
-                CommonLibrary.Q96,
-                tvl0,
-                tvl1,
-                0
-            );
         }
     }
 
@@ -269,24 +295,6 @@ contract MStrategy is DefaultAccessControlLateInit {
         erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
     }
 
-    // [0, 1]
-    function targetValueRatioX96(
-        uint256 sqrtPriceX96,
-        uint256 sqrtPMinX96,
-        uint256 sqrtPMaxX96
-    ) public pure returns (uint256) {
-        if (sqrtPMinX96 > sqrtPMaxX96) {
-            (sqrtPMinX96, sqrtPMaxX96) = (sqrtPMaxX96, sqrtPMinX96);
-        }
-        if (sqrtPriceX96 <= sqrtPMinX96) {
-            return 0;
-        }
-        if (sqrtPriceX96 >= sqrtPMaxX96) {
-            return CommonLibrary.Q96;
-        }
-        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPriceX96);
-    }
-
     function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         address token0 = immutableParams_.token0;
@@ -326,6 +334,8 @@ contract MStrategy is DefaultAccessControlLateInit {
         vaultParams[id] = params;
         emit VaultParamsUpdated(tx.origin, msg.sender, id, params);
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     event VaultAdded(
         address indexed origin,

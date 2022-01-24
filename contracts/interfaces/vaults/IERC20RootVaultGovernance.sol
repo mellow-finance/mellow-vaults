@@ -26,9 +26,11 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     }
 
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
-    /// @param tokenLimitPerAddress Reference to address that will collect strategy fees
+    /// @param tokenLimitPerAddress Max LP token limit per address
+    /// @param tokenLimit Max LP token for the vault
     struct StrategyParams {
         uint256 tokenLimitPerAddress;
+        uint256 tokenLimit;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
@@ -103,15 +105,11 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @param vaultTokens_ ERC20 tokens that will be managed by this Vault
     /// @param strategy_ The address that will have approvals for subvaultNfts
     /// @param subvaultNfts_ The NFTs of the subvaults that will be aggregated by this ERC20RootVault
-    /// @param name_ ERC20 Name of the token
-    /// @param symbol_ ERC20 Name of the token
     /// @param owner_ Owner of the vault NFT
     function createVault(
         address[] memory vaultTokens_,
         address strategy_,
         uint256[] memory subvaultNfts_,
-        string memory name_,
-        string memory symbol_,
         address owner_
     ) external returns (IERC20RootVault vault, uint256 nft);
 }

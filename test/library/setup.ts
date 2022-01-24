@@ -113,9 +113,9 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         this[name] = signer;
     }
     const { usdc, weth, wbtc } = namedAccounts;
-    this.usdc = await ethers.getContractAt("ERC20", usdc);
-    this.weth = await ethers.getContractAt("ERC20", weth);
-    this.wbtc = await ethers.getContractAt("ERC20", wbtc);
+    this.usdc = await ethers.getContractAt("ERC20Token", usdc);
+    this.weth = await ethers.getContractAt("ERC20Token", weth);
+    this.wbtc = await ethers.getContractAt("ERC20Token", wbtc);
     this.tokens = sortBy(
         (c: ERC20) => c.address.toLowerCase(),
         [this.usdc, this.weth, this.wbtc]
