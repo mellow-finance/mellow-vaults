@@ -164,7 +164,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             describe("properties", () => {
                 pit(
                     `updates when #stagePermissionGrants is called`,
-                    { numRuns: 1 },
+                    { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8,
                     async (target: string, permissionId: BigNumber) => {
@@ -175,7 +175,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await this.subject.stagedPermissionGrantsMasks(
                                 target
                             )
-                        ).to.eql(maskByPermissionIds([permissionId]));
+                        ).to.deep.equal(maskByPermissionIds([permissionId]));
                         return true;
                     }
                 );
@@ -195,13 +195,13 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await this.subject.stagedPermissionGrantsMasks(
                                 target
                             )
-                        ).to.eql(maskByPermissionIds([permissionId]));
+                        ).to.deep.equal(maskByPermissionIds([permissionId]));
                         return true;
                     }
                 );
                 pit(
                     `clears when #rollbackAllPermissionGrants is called`,
-                    { numRuns: 1 },
+                    { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8,
                     async (target: string, permissionId: BigNumber) => {
@@ -215,7 +215,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await this.subject.stagedPermissionGrantsMasks(
                                 target
                             )
-                        ).to.eql(BigNumber.from(0));
+                        ).to.deep.equal(BigNumber.from(0));
                         return true;
                     }
                 );
@@ -228,7 +228,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await this.subject.stagedPermissionGrantsTimestamps(
                                 target
                             )
-                        ).to.eql(BigNumber.from(0));
+                        ).to.deep.equal(BigNumber.from(0));
                         return true;
                     }
                 );
@@ -267,7 +267,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stagePermissionGrants(target, [permissionId]);
                         expect(
                             await this.subject.permissionMasks(target)
-                        ).to.eql(BigNumber.from(0));
+                        ).to.deep.equal(BigNumber.from(0));
                         return true;
                     }
                 );
@@ -289,7 +289,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .rollbackAllPermissionGrants();
                         expect(
                             await this.subject.permissionMasks(target)
-                        ).to.eql(maskByPermissionIds([permissionId]));
+                        ).to.deep.equal(maskByPermissionIds([permissionId]));
                         return true;
                     }
                 );
@@ -308,7 +308,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .commitPermissionGrants(target);
                         expect(
                             await this.subject.permissionMasks(target)
-                        ).to.eql(maskByPermissionIds([permissionId]));
+                        ).to.deep.equal(maskByPermissionIds([permissionId]));
                         return true;
                     }
                 );
@@ -319,7 +319,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     async (target: string) => {
                         expect(
                             await this.subject.permissionMasks(target)
-                        ).to.eql(BigNumber.from(0));
+                        ).to.deep.equal(BigNumber.from(0));
                         return true;
                     }
                 );
@@ -368,7 +368,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await this.subject.connect(this.admin).stageParams(params);
                     await sleep(await this.subject.governanceDelay());
                     await this.subject.connect(this.admin).commitParams();
-                    expect(await this.subject.stagedParamsTimestamp()).to.eql(
+                    expect(await this.subject.stagedParamsTimestamp()).to.deep.equal(
                         BigNumber.from(0)
                     );
                     return true;
@@ -380,7 +380,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     it("returns zero", async () => {
                         expect(
                             await this.subject.stagedParamsTimestamp()
-                        ).to.eql(BigNumber.from(0));
+                        ).to.deep.equal(BigNumber.from(0));
                     });
                 });
             });
@@ -416,7 +416,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stageParams(params);
                         expect(
                             toObject(await this.subject.stagedParams())
-                        ).to.eql(params);
+                        ).to.deep.equal(params);
                         return true;
                     }
                 );
@@ -432,7 +432,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject.connect(this.admin).commitParams();
                         expect(
                             toObject(await this.subject.stagedParams())
-                        ).to.eql(emptyParams);
+                        ).to.deep.equal(emptyParams);
                         return true;
                     }
                 );
@@ -466,7 +466,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject
                             .connect(this.admin)
                             .stageParams(params);
-                        expect(await this.subject.params()).to.eql(
+                        expect(await this.subject.params()).to.deep.equal(
                             initialParams
                         );
                         return true;
@@ -482,7 +482,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
-                        expect(toObject(await this.subject.params())).to.eql(
+                        expect(toObject(await this.subject.params())).to.deep.equal(
                             params
                         );
                         return true;
@@ -760,7 +760,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await this.subject.addressesByPermission(
                                 permissionId
                             )
-                        ).to.eql([]);
+                        ).to.be.empty;
                         return true;
                     }
                 );
@@ -965,10 +965,10 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         .rollbackAllPermissionGrants();
                     expect(
                         await this.subject.stagedPermissionGrantsAddresses()
-                    ).to.eql([]);
+                    ).to.be.empty;
                     expect(
                         await this.subject.stagedPermissionGrantsMasks(target)
-                    ).to.eql(BigNumber.from(0));
+                    ).to.deep.equal(BigNumber.from(0));
                     return true;
                 }
             );
