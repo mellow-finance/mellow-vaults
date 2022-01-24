@@ -4,8 +4,10 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "../interfaces/external/erc/IERC1271.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/validators/IValidator.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
@@ -26,7 +28,7 @@ import "./Vault.sol";
 /// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
 /// ApprovedForAll person cannot do anything except ERC-721 token transfers.
 ///
-/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+/// Both NFT owner and approved person can call externalCall method which claims liquidity mining rewards (if any)
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin
@@ -36,7 +38,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IIntegrationVault).interfaceId);
+        return
+            super.supportsInterface(interfaceId) ||
+            (interfaceId == type(IIntegrationVault).interfaceId) ||
+            (interfaceId == type(IERC1271).interfaceId);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -49,9 +54,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 nft_ = _nft;
         require(nft_ != 0, ExceptionsLibrary.INIT);
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); // Also checks that the token exists
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
-        IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_));
+        IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_)); // Also checks that the token exists
         uint256 ownerNft = vaultRegistry.nftForVault(address(ownerVault));
         require(ownerNft != 0, ExceptionsLibrary.NOT_FOUND); // require deposits only through Vault
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
@@ -92,7 +96,17 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(nft_);
-        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.INVALID_TARGET); // approved can only pull to whitelisted contracts
+        IVaultRoot root = _root(registry, nft_);
+        if (owner != msg.sender) {
+            address zeroVault = root.subvaultAt(0);
+            if (zeroVault == address(this)) {
+                // If we pull from zero vault
+                require(root.hasSubvault(to) && to != address(this), ExceptionsLibrary.INVALID_TARGET);
+            } else {
+                // If we pull from other vault
+                require(zeroVault == to, ExceptionsLibrary.INVALID_TARGET);
+            }
+        }
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
@@ -100,36 +114,72 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
     }
 
     /// @inheritdoc IIntegrationVault
-    function reclaimTokens(address to, address[] memory tokens) external nonReentrant {
-        require(_nft != 0, ExceptionsLibrary.INIT);
-        IProtocolGovernance governance = _vaultGovernance.internalParams().protocolGovernance;
-        bool isProtocolAdmin = governance.isAdmin(msg.sender);
-        require(isProtocolAdmin || _isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        if (!isProtocolAdmin) require(_isValidPullDestination(to), ExceptionsLibrary.INVALID_TARGET);
-
-        uint256[] memory tokenAmounts = new uint256[](tokens.length);
+    function reclaimTokens(address[] memory tokens)
+        external
+        virtual
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
+        uint256 nft_ = _nft;
+        require(nft_ != 0, ExceptionsLibrary.INIT);
+        IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
+        IProtocolGovernance governance = params.protocolGovernance;
+        IVaultRegistry registry = params.registry;
+        address to = _root(registry, nft_).subvaultAt(0);
+        require(to != address(this), ExceptionsLibrary.INVARIANT);
+        actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             require(
                 governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER),
                 ExceptionsLibrary.INVALID_TOKEN
             );
             IERC20 token = IERC20(tokens[i]);
-            tokenAmounts[i] = token.balanceOf(address(this));
-            if (tokenAmounts[i] == 0) continue;
+            actualTokenAmounts[i] = token.balanceOf(address(this));
+            if (actualTokenAmounts[i] == 0) continue;
 
-            token.safeTransfer(to, tokenAmounts[i]);
+            token.safeTransfer(to, actualTokenAmounts[i]);
         }
-        _postReclaimTokens(to, tokens);
-        emit ReclaimTokens(to, tokens, tokenAmounts);
+        emit ReclaimTokens(to, tokens, actualTokenAmounts);
     }
 
-    /// @inheritdoc IIntegrationVault
-    function claimRewards(address from, bytes memory data) external override nonReentrant {
+    /// @inheritdoc IERC1271
+    function isValidSignature(bytes32 _hash, bytes memory _signature) external view returns (bytes4 magicValue) {
+        IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
+        IVaultRegistry registry = params.registry;
+        IProtocolGovernance protocolGovernance = params.protocolGovernance;
+        uint256 nft_ = _nft;
+        if (nft_ == 0) {
+            return 0xffffffff;
+        }
+        address strategy = registry.getApproved(nft_);
+        if (!protocolGovernance.hasPermission(strategy, PermissionIdsLibrary.TRUSTED_STRATEGY)) {
+            return 0xffffffff;
+        }
+        uint32 size;
+        assembly {
+            size := extcodesize(strategy)
+        }
+        if (size > 0) {
+            if (IERC165(strategy).supportsInterface(type(IERC1271).interfaceId)) {
+                return IERC1271(strategy).isValidSignature(_hash, _signature);
+            } else {
+                return 0xffffffff;
+            }
+        }
+        if (CommonLibrary.recoverSigner(_hash, _signature) == strategy) {
+            return 0x1626ba7e;
+        }
+        return 0xffffffff;
+    }
+
+    function externalCall(address to, bytes calldata data) external payable nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        require(protocolGovernance.hasPermission(from, PermissionIdsLibrary.CLAIM), ExceptionsLibrary.FORBIDDEN);
-        (bool res, bytes memory returndata) = from.call(data);
+        IValidator validator = IValidator(protocolGovernance.validators(to));
+        require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
+        validator.validate(msg.sender, to, msg.value, data);
+        (bool res, bytes memory returndata) = to.call{value: msg.value}(data);
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)
@@ -151,26 +201,12 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         pTokenAmounts = CommonLibrary.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
-    /// The idea is to check that `this` Vault and `to` Vault
-    /// nfts are owned by the same address. Then check that nft for this address
-    /// exists in registry as Vault => it's one of the vaults with trusted interface.
-    /// Then check that both `this` and `to` are registered in the nft owner using hasSubvault function.
-    /// Since only gateway vault has hasSubvault function this will prove correctly that
-    /// the vaults belong to the same vault system.
-    function _isValidPullDestination(address to) internal view returns (bool) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        // make sure that this vault is a registered vault
-        if (_nft == 0) return false;
-
-        address thisOwner = registry.ownerOf(_nft);
-        // make sure that vault has a registered owner
+    function _root(IVaultRegistry registry, uint256 thisNft) internal view returns (IVaultRoot) {
+        address thisOwner = registry.ownerOf(thisNft);
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-        if (thisOwnerNft == 0) return false;
+        require(thisNft + thisOwnerNft != 0, ExceptionsLibrary.INIT);
 
-        IVaultRoot root = IVaultRoot(thisOwner);
-        if (!root.hasSubvault(address(this)) || !root.hasSubvault(to)) return false;
-
-        return true;
+        return IVaultRoot(thisOwner);
     }
 
     function _isApprovedOrOwner(address sender) internal view returns (bool) {
@@ -196,8 +232,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal virtual returns (uint256[] memory actualTokenAmounts);
-
-    function _postReclaimTokens(address to, address[] memory tokens) internal virtual {}
 
     // --------------------------  EVENTS  --------------------------
 

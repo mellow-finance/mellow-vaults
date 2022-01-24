@@ -144,11 +144,9 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
-    function collectEarnings(address to) external nonReentrant returns (uint256[] memory collectedEarnings) {
-        require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    function collectEarnings() external nonReentrant returns (uint256[] memory collectedEarnings) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address owner = registry.ownerOf(_nft);
-        require(owner == msg.sender || _isValidPullDestination(to), ExceptionsLibrary.INVALID_TARGET);
+        address to = _root(registry, _nft).subvaultAt(0);
         collectedEarnings = new uint256[](2);
         (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager.collect(
             INonfungiblePositionManager.CollectParams({
@@ -164,8 +162,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
-
-    function _postReclaimTokens(address, address[] memory tokens) internal view override {}
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
         if (options.length == 0) return Options({amount0Min: 0, amount1Min: 0, deadline: block.timestamp + 600});

@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../external/erc/IERC1271.sol";
 import "./IVault.sol";
 
-interface IIntegrationVault is IVault {
+interface IIntegrationVault is IVault, IERC1271 {
     /// @notice Pushes tokens on the vault balance to the underlying protocol. For example, for Yearn this operation will take USDC from
     /// the contract balance and convert it to yUSDC.
-    /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
-    /// Strategy is approved address for the vault NFT.
-    ///
-    /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
+    /// @dev Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
     ///
     /// Also notice that this operation doesn't guarantee that tokenAmounts will be invested in full.
     /// @param tokens Tokens to push
@@ -36,11 +34,12 @@ interface IIntegrationVault is IVault {
     ) external returns (uint256[] memory actualTokenAmounts);
 
     /// @notice Pulls tokens from the underlying protocol to the `to` address.
-    /// For example, for Yearn this operation will take yUSDC from
-    /// the Yearn protocol, convert it to USDC and send to `to` address.
     /// @dev Can only be called but Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
-    /// Strategy is approved address for the vault NFT. There's a subtle difference however - while vault owner
-    /// can pull the tokens to any address, Strategy can only pull to other vault in the Vault System (a set of vaults united by the Gateway Vault)
+    /// Strategy is approved address for the vault NFT.
+    /// When called by vault owner this method just pulls the tokens from the protocol to the `to` address
+    /// When called by strategy on vault other than zero vault it pulls the tokens to zero vault (required `to` == zero vault)
+    /// When called by strategy on zero vault it pulls the tokens to zero vault, pushes tokens on the `to` vault, and reclaims everything that's left.
+    /// Thus any vault other than zero vault cannot have any tokens on it
     ///
     /// Tokens **must** be a subset of Vault Tokens. However, the convention is that if tokenAmount == 0 it is the same as token is missing.
     ///
@@ -57,19 +56,19 @@ interface IIntegrationVault is IVault {
         bytes memory options
     ) external returns (uint256[] memory actualTokenAmounts);
 
-    /// @notice This method is for claiming accidentally accumulated tokens on the contact's balance.
-    /// @dev Can only be called by Protocol Governance.
-    /// @param to Address that will receive the tokens
-    /// @param tokens Tokens to claim. Each token must be other than those in vaultTokens
-    function reclaimTokens(address to, address[] memory tokens) external;
+    /// @notice Claim ERC20 tokens from vault balance to zero vault.
+    /// @dev Cannot be called from zero vault.
+    /// @param tokens Tokens to claim
+    /// @return actualTokenAmounts Amounts reclaimed
+    function reclaimTokens(address[] memory tokens) external returns (uint256[] memory actualTokenAmounts);
 
-    /// @notice Claim liquidity mining rewards.
+    /// @notice Execute one of whitelisted calls.
     /// @dev Can only be called by Vault Owner or Strategy. Vault owner is the owner of NFT for this vault in VaultManager.
     /// Strategy is approved address for the vault NFT.
     ///
     /// Since this method allows sending arbitrary transactions, the destinations of the calls
     /// are whitelisted by Protocol Governance.
-    /// @param from Address of the reward pool
+    /// @param to Address of the reward pool
     /// @param data Abi encoded call to the `from` address
-    function claimRewards(address from, bytes memory data) external;
+    function externalCall(address to, bytes memory data) external payable;
 }

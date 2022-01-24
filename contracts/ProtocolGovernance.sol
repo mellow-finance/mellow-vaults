@@ -22,18 +22,42 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
     mapping(address => uint256) public stagedPermissionGrantsTimestamps;
     mapping(address => uint256) public stagedPermissionGrantsMasks;
     mapping(address => uint256) public permissionMasks;
-    uint256 public pendingParamsTimestamp;
-    Params public params;
-    Params public pendingParams;
-
     EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
+
+    /// @inheritdoc IProtocolGovernance
+    mapping(address => uint256) public stagedValidatorsTimestamps;
+    /// @inheritdoc IProtocolGovernance
+    mapping(address => address) public stagedValidators;
+    /// @inheritdoc IProtocolGovernance
+    mapping(address => address) public validators;
+    EnumerableSet.AddressSet private _stagedValidatorsAddresses;
+    EnumerableSet.AddressSet private _validatorsAddresses;
+
+    Params public params;
+    Params public pendingParams;
+    uint256 public pendingParamsTimestamp;
 
     /// @notice Creates a new contract.
     /// @param admin Initial admin of the contract
     constructor(address admin) UnitPricesGovernance(admin) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IProtocolGovernance
+    function stagedValidatorsAddresses() external view returns (address[] memory) {
+        return _stagedValidatorsAddresses.values();
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function validatorsAddresses() external view returns (address[] memory) {
+        return _validatorsAddresses.values();
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function validatorsAddress(uint256 i) external view returns (address) {
+        return _validatorsAddresses.at(i);
+    }
 
     /// @inheritdoc IProtocolGovernance
     function permissionAddresses() external view returns (address[] memory) {
@@ -113,11 +137,87 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IProtocolGovernance
+    function stageValidator(address target, address validator) external {
+        _requireAdmin();
+        _stagedValidatorsAddresses.add(target);
+        stagedValidators[target] = validator;
+        uint256 at = block.timestamp + params.governanceDelay;
+        stagedValidatorsTimestamps[target] = at;
+        emit ValidatorStaged(tx.origin, msg.sender, target, validator, at);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function rollbackStagedValidators() external {
+        _requireAdmin();
+        uint256 length = _stagedValidatorsAddresses.length();
+        for (uint256 i; i != length; ++i) {
+            address target = _stagedValidatorsAddresses.at(0);
+            delete stagedValidators[target];
+            delete stagedValidatorsTimestamps[target];
+            _stagedValidatorsAddresses.remove(target);
+        }
+        emit AllStagedValidatorsRolledBack(tx.origin, msg.sender);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitValidator(address stagedAddress) external {
+        _requireAdmin();
+        uint256 stagedToCommitAt = stagedValidatorsTimestamps[stagedAddress];
+        require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
+        require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
+        validators[stagedAddress] = stagedValidators[stagedAddress];
+        if (validators[stagedAddress] == address(0)) {
+            _validatorsAddresses.remove(stagedAddress);
+        } else {
+            _validatorsAddresses.add(stagedAddress);
+        }
+        delete stagedValidators[stagedAddress];
+        delete stagedValidatorsTimestamps[stagedAddress];
+        _stagedValidatorsAddresses.remove(stagedAddress);
+        emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitAllValidatorsSurpassedDelay() external returns (address[] memory addressesCommitted) {
+        _requireAdmin();
+        uint256 length = _stagedValidatorsAddresses.length();
+        addressesCommitted = new address[](length);
+        uint256 addressesCommittedLength;
+        for (uint256 i; i != length; i++) {
+            address stagedAddress = _stagedValidatorsAddresses.at(0);
+            if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
+                validators[stagedAddress] = stagedValidators[stagedAddress];
+                if (validators[stagedAddress] == address(0)) {
+                    _validatorsAddresses.remove(stagedAddress);
+                } else {
+                    _validatorsAddresses.add(stagedAddress);
+                }
+                delete stagedValidators[stagedAddress];
+                delete stagedValidatorsTimestamps[stagedAddress];
+                _stagedValidatorsAddresses.remove(stagedAddress);
+                addressesCommitted[addressesCommittedLength] = stagedAddress;
+                addressesCommittedLength += 1;
+                emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
+            }
+        }
+        assembly {
+            mstore(addressesCommitted, addressesCommittedLength)
+        }
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function revokeValidator(address target) external {
+        _requireAdmin();
+        delete validators[target];
+        _validatorsAddresses.remove(target);
+        emit ValidatorRevoked(tx.origin, msg.sender, target);
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function rollbackAllPermissionGrants() external {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
-        for (uint256 __; __ != length; ++__) {
-            // actual length is decremented in the loop so we take the first element each time
+        for (uint256 i; i != length; ++i) {
             address target = _stagedPermissionGrantsAddresses.at(0);
             delete stagedPermissionGrantsMasks[target];
             delete stagedPermissionGrantsTimestamps[target];
@@ -230,7 +330,38 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
 
     // --------------------------  EVENTS  --------------------------
 
-    /// @notice Emitted when new permissions are staged to be granted for speceific address.
+    /// @notice Emitted when validators are staged to be granted for specific address.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    /// @param validator Staged validator
+    /// @param at Timestamp when the staged permissions could be committed
+    event ValidatorStaged(
+        address indexed origin,
+        address indexed sender,
+        address indexed target,
+        address validator,
+        uint256 at
+    );
+
+    /// @notice Validator revoked
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    event ValidatorRevoked(address indexed origin, address indexed sender, address indexed target);
+
+    /// @notice Emitted when staged validators are rolled back
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event AllStagedValidatorsRolledBack(address indexed origin, address indexed sender);
+
+    /// @notice Emitted when staged validators are comitted for specific address
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    event ValidatorCommitted(address indexed origin, address indexed sender, address indexed target);
+
+    /// @notice Emitted when new permissions are staged to be granted for specific address.
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address
@@ -261,7 +392,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
     /// @param sender Sender of the call (msg.sender)
     event AllPermissionGrantsRolledBack(address indexed origin, address indexed sender);
 
-    /// @notice Emitted when staged permissions are comitted for speceific address
+    /// @notice Emitted when staged permissions are comitted for specific address
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address

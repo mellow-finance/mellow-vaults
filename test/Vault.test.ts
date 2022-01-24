@@ -232,13 +232,13 @@
 //         });
 //     });
 
-//     describe("claimRewards", () => {
+//     describe("externalCall", () => {
 //         describe("when called by stranger", () => {
 //             it("reverts", async () => {
 //                 await expect(
 //                     gatewayVault
 //                         .connect(stranger)
-//                         .claimRewards(ERC20Vault.address, [])
+//                         .externalCall(ERC20Vault.address, [])
 //                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
@@ -247,7 +247,7 @@
 //                 await expect(
 //                     testVault
 //                         .connect(deployer)
-//                         .claimRewards(ERC20Vault.address, [])
+//                         .externalCall(ERC20Vault.address, [])
 //                 ).to.be.revertedWith(Exceptions.INITIALIZED_ALREADY);
 //             });
 //         });
@@ -256,7 +256,7 @@
 //                 await expect(
 //                     gatewayVault
 //                         .connect(deployer)
-//                         .claimRewards(AaveVault.address, [])
+//                         .externalCall(AaveVault.address, [])
 //                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
 //             });
 //         });
@@ -270,7 +270,7 @@
 //                     .connect(protocolGovernanceAdmin)
 //                     .commitClaimAllowlistAdd();
 //                 await expect(
-//                     ERC20Vault.connect(user).claimRewards(AaveVault.address, [])
+//                     ERC20Vault.connect(user).externalCall(AaveVault.address, [])
 //                 ).to.be.reverted;
 //             });
 //         });

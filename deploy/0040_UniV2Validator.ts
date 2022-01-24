@@ -7,14 +7,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
-    const { deployer } = await getNamedAccounts();
-    await deploy("ChiefTrader", {
+    const { deployer, uniswapV2Router02, uniswapV2Factory } =
+        await getNamedAccounts();
+    await deploy("UniV2Validator", {
         from: deployer,
-        args: [protocolGovernance.address],
+        args: [protocolGovernance.address, uniswapV2Router02, uniswapV2Factory],
         log: true,
         autoMine: true,
     });
 };
 export default func;
-func.tags = ["ChiefTrader", "core", "Traders", ...ALL_NETWORKS];
+func.tags = ["UniV2Validator", "core", ...ALL_NETWORKS];
 func.dependencies = ["ProtocolGovernance"];

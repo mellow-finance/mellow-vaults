@@ -384,3 +384,7 @@ export function zeroify<
     }
     throw `Unknown type for value ${x}`;
 }
+
+export const randomNft = () => {
+    return Math.round(Math.random() * 1000000 + 100);
+};
