@@ -103,7 +103,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `timestamp updates when #stagePermissionGrants is called twice`,
                     { numRuns: 1 },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
+                    uint8.filter((x) => x.lt(250)),
                     async (target: string, permissionId: BigNumber) => {
                         await this.subject
                             .connect(this.admin)
