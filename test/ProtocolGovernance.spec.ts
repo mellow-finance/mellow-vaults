@@ -1002,7 +1002,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         .commitPermissionGrants(target);
                     expect(
                         await this.subject.hasPermission(target, permissionId)
-                    ).to.deep.equal(BigNumber.from(1));
+                    ).to.be.true;
                     expect(
                         await this.subject.permissionMasks(target)
                     ).to.deep.equal(maskByPermissionIds([permissionId]));
