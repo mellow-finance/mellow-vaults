@@ -27,10 +27,14 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         governance = IProtocolGovernance(_governance);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IContractRegistry
     function addresses() external view returns (address[] memory) {
         return _addresses.values();
     }
 
+    /// @inheritdoc IContractRegistry
     function names() external view returns (string[] memory result) {
         uint256 length = _names.length();
         result = new string[](length);
@@ -39,6 +43,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         }
     }
 
+    /// @inheritdoc IContractRegistry
     function versions(string memory name_) external view returns (string[] memory result) {
         bytes32 name = bytes32(bytes(name_));
         uint256[] memory versions_ = _nameToVersions[name];
@@ -48,12 +53,14 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         }
     }
 
+    /// @inheritdoc IContractRegistry
     function versionAddress(string memory name_, string memory version) external view returns (address) {
         bytes32 name = bytes32(bytes(name_));
         uint256 versionNum = SemverLibrary.numberifySemver(version);
         return _nameToVersionToAddress[name][versionNum];
     }
 
+    /// @inheritdoc IContractRegistry
     function latestVersion(string memory name_) external view returns (string memory, address) {
         bytes32 name = bytes32(abi.encodePacked(name_));
         uint256 version = _latestVersion(name);
@@ -63,6 +70,9 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         );
     }
 
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IContractRegistry
     function registerContract(address target) external {
         require(governance.isOperator(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(
@@ -97,6 +107,8 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         );
     }
 
+    // -------------------------  INTERNAL, VIEW  ------------------------------
+
     function _latestVersion(bytes32 name) internal view returns (uint256) {
         uint256 versionsLength = _nameToVersions[name].length;
         return versionsLength != 0 ? _nameToVersions[name][versionsLength - 1] : 0;
@@ -121,6 +133,8 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
     function _bytes32ToString(bytes32 text) internal pure returns (string memory) {
         return string(SemverLibrary.shrinkToFit(abi.encodePacked((text))));
     }
+
+    // --------------------------  EVENTS  --------------------------
 
     event ContractRegistered(
         address indexed origin,
