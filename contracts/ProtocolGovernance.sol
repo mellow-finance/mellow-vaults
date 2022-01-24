@@ -18,13 +18,13 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     mapping(address => uint256) public stagedPermissionGrantsTimestamps;
     mapping(address => uint256) public stagedPermissionGrantsMasks;
     mapping(address => uint256) public permissionMasks;
-    
-    uint256 public pendingParamsTimestamp;
+
+    uint256 public stagedParamsTimestamp;
 
     EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
 
-    Params private _pendingParams;
+    Params private _stagedParams;
     Params private _params;
 
     /// @notice Creates a new contract.
@@ -34,8 +34,8 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @inheritdoc IProtocolGovernance
-    function pendingParams() public view returns (Params memory) {
-        return _pendingParams;
+    function stagedParams() public view returns (Params memory) {
+        return _stagedParams;
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -199,14 +199,14 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
         _requireAdmin();
-        require(pendingParamsTimestamp != 0, ExceptionsLibrary.NULL);
+        require(stagedParamsTimestamp != 0, ExceptionsLibrary.NULL);
         require(
-            block.timestamp >= pendingParamsTimestamp,
+            block.timestamp >= stagedParamsTimestamp,
             ExceptionsLibrary.TIMESTAMP
         );
-        _params = _pendingParams;
-        delete _pendingParams;
-        delete pendingParamsTimestamp;
+        _params = _stagedParams;
+        delete _stagedParams;
+        delete stagedParamsTimestamp;
         emit ParamsCommitted(tx.origin, msg.sender, _params);
     }
 
@@ -225,9 +225,9 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     function stageParams(IProtocolGovernance.Params calldata newParams) external {
         _requireAdmin();
         _validateGovernanceParams(newParams);
-        _pendingParams = newParams;
-        pendingParamsTimestamp = block.timestamp + _params.governanceDelay;
-        emit ParamsStaged(tx.origin, msg.sender, pendingParamsTimestamp, _pendingParams);
+        _stagedParams = newParams;
+        stagedParamsTimestamp = block.timestamp + _params.governanceDelay;
+        emit ParamsStaged(tx.origin, msg.sender, stagedParamsTimestamp, _stagedParams);
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------

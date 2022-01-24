@@ -147,7 +147,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await execute(
             "ProtocolGovernance",
             { from: deployer, log: true, autoMine: true },
-            "setPendingParams",
+            "stageParams",
             params
         );
         await execute(

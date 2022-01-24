@@ -38,10 +38,10 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
 
     /// @notice Timestamp after which staged pending protocol parameters can be committed
     /// @return Zero if there are no staged parameters, timestamp otherwise.
-    function pendingParamsTimestamp() external view returns (uint256);
+    function stagedParamsTimestamp() external view returns (uint256);
 
     /// @notice Staged pending protocol parameters.
-    function pendingParams() external view returns (Params memory);
+    function stagedParams() external view returns (Params memory);
 
     /// @notice Current protocol parameters.
     function params() external view returns (Params memory);

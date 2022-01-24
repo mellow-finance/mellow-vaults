@@ -25,18 +25,21 @@ const paramsArb: Arbitrary<ParamsStruct> = tuple(
     integer({ min: 1, max: 100 }),
     integer({ min: 1, max: 86400 }),
     address.filter((x) => x !== ethers.constants.AddressZero),
-    uint256
+    uint256,
+    uint256.filter((x) => x.gt(200_000))
 ).map(
     ([
         maxTokensPerVault,
         governanceDelay,
         protocolTreasury,
         forceAllowMask,
+        withdrawLimit,
     ]) => ({
         maxTokensPerVault: BigNumber.from(maxTokensPerVault),
         governanceDelay: BigNumber.from(governanceDelay),
         protocolTreasury: protocolTreasury,
         forceAllowMask: BigNumber.from(forceAllowMask),
+        withdrawLimit: BigNumber.from(withdrawLimit),
     })
 );
 
@@ -45,6 +48,7 @@ const emptyParams: ParamsStruct = {
     governanceDelay: BigNumber.from(0),
     protocolTreasury: ethers.constants.AddressZero,
     forceAllowMask: BigNumber.from(0),
+    withdrawLimit: BigNumber.from(0),
 };
 
 contract<IProtocolGovernance, CustomContext, DeployOptions>(
@@ -52,7 +56,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
-                async (_, options?: DeployOptions) => {
+                async (_, __?: DeployOptions) => {
                     await deployments.fixture();
                     const { address } = await deployments.get(
                         "ProtocolGovernance"
@@ -341,18 +345,16 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#pendingParamsTimestamp", () => {
+        describe("#stagedParamsTimestamp", () => {
             pit(
-                `timestamp equals #setPendingParams's block.timestamp + governanceDelay`,
+                `timestamp equals #stageParams's block.timestamp + governanceDelay`,
                 { numRuns: 1 },
                 paramsArb,
                 async (params: ParamsStruct) => {
                     const governanceDelay: BigNumber =
                         await this.subject.governanceDelay();
-                    await this.subject
-                        .connect(this.admin)
-                        .setPendingParams(params);
-                    expect(await this.subject.pendingParamsTimestamp()).to.eql(
+                    await this.subject.connect(this.admin).stageParams(params);
+                    expect(await this.subject.stagedParamsTimestamp()).to.eql(
                         governanceDelay.add(this.startTimestamp).add(1)
                     );
                     return true;
@@ -363,12 +365,10 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 { numRuns: RUNS.verylow },
                 paramsArb,
                 async (params: ParamsStruct) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .setPendingParams(params);
+                    await this.subject.connect(this.admin).stageParams(params);
                     await sleep(await this.subject.governanceDelay());
                     await this.subject.connect(this.admin).commitParams();
-                    expect(await this.subject.pendingParamsTimestamp()).to.eql(
+                    expect(await this.subject.stagedParamsTimestamp()).to.eql(
                         BigNumber.from(0)
                     );
                     return true;
@@ -379,7 +379,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 describe("when nothing is set", () => {
                     it("returns zero", async () => {
                         expect(
-                            await this.subject.pendingParamsTimestamp()
+                            await this.subject.stagedParamsTimestamp()
                         ).to.eql(BigNumber.from(0));
                     });
                 });
@@ -395,7 +395,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             await expect(
                                 this.subject
                                     .connect(signer)
-                                    .pendingParamsTimestamp()
+                                    .stagedParamsTimestamp()
                             ).to.not.be.reverted;
                         });
                         return true;
@@ -404,18 +404,18 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#pendingParams", () => {
+        describe("#stagedParams", () => {
             describe("properties", () => {
                 pit(
-                    `updates by #setPendingParams`,
+                    `updates by #stageParams`,
                     { numRuns: RUNS.verylow },
                     paramsArb,
                     async (params: ParamsStruct) => {
                         await this.subject
                             .connect(this.admin)
-                            .setPendingParams(params);
+                            .stageParams(params);
                         expect(
-                            toObject(await this.subject.pendingParams())
+                            toObject(await this.subject.stagedParams())
                         ).to.eql(params);
                         return true;
                     }
@@ -427,11 +427,11 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     async (params: ParamsStruct) => {
                         await this.subject
                             .connect(this.admin)
-                            .setPendingParams(params);
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         expect(
-                            toObject(await this.subject.pendingParams())
+                            toObject(await this.subject.stagedParams())
                         ).to.eql(emptyParams);
                         return true;
                     }
@@ -446,7 +446,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     async (signerAddress: string) => {
                         await withSigner(signerAddress, async (signer) => {
                             await expect(
-                                this.subject.connect(signer).pendingParams()
+                                this.subject.connect(signer).stagedParams()
                             ).to.not.be.reverted;
                         });
                         return true;
@@ -458,14 +458,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         describe("#params", () => {
             describe("properties", () => {
                 pit(
-                    `is not affected by #setPendingParams`,
-                    { numRuns: RUNS.verylow },
+                    `is not affected by #stageParams`,
+                    { numRuns: RUNS.low },
                     paramsArb,
                     async (params: ParamsStruct) => {
                         const initialParams = await this.subject.params();
                         await this.subject
                             .connect(this.admin)
-                            .setPendingParams(params);
+                            .stageParams(params);
                         expect(await this.subject.params()).to.eql(
                             initialParams
                         );
@@ -473,13 +473,13 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     }
                 );
                 pit(
-                    `updates by #setPendingParams + #commitParams`,
-                    { numRuns: RUNS.verylow },
+                    `updates by #stageParams + #commitParams`,
+                    { numRuns: RUNS.low },
                     paramsArb,
                     async (params: ParamsStruct) => {
                         await this.subject
                             .connect(this.admin)
-                            .setPendingParams(params);
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         expect(toObject(await this.subject.params())).to.eql(
@@ -709,7 +709,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#addressesByPermission", () => {
-            it("returns addresses that has the given raw permission set to true", async () => {});
+            xit("returns addresses that has the given raw permission set to true", async () => {});
 
             describe("properties", () => {
                 pit(
@@ -752,7 +752,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         ]);
                         await this.subject
                             .connect(this.admin)
-                            .setPendingParams(params);
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         // assume that PG already has some addresses listed since deployment
@@ -877,7 +877,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         ]);
                         await this.subject
                             .connect(this.admin)
-                            .setPendingParams(params);
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         await this.subject
@@ -920,45 +920,35 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#hasAllPermissions", () => {
-            it("checks if an address has all permissions set to true", async () => {});
+            xit("checks if an address has all permissions set to true", async () => {});
 
             describe("properties", () => {
-                it("@property: returns false on random address", async () => {});
-                it("@property: is not affected by staged permissions", async () => {});
-                it("@property: is affected by committed permissions", async () => {});
-                it("@property: returns true for any address when forceAllowMask is set to true", async () => {});
+                xit("@property: returns false on random address", async () => {});
+                xit("@property: is not affected by staged permissions", async () => {});
+                xit("@property: is affected by committed permissions", async () => {});
+                xit("@property: returns true for any address when forceAllowMask is set to true", async () => {});
             });
 
             describe("access control", () => {
-                it("allowed: any address", async () => {});
+                xit("allowed: any address", async () => {});
             });
 
             describe("edge cases", () => {
                 describe("on unknown permission id", () => {
-                    it("returns false", async () => {});
+                    xit("returns false", async () => {});
                 });
             });
         });
 
-        describe("#maxTokensPerVault", () => {
-            // TODO: implement
-        });
+        xdescribe("#maxTokensPerVault", () => {});
 
-        describe("#governanceDelay", () => {
-            // TODO: implement
-        });
+        xdescribe("#governanceDelay", () => {});
 
-        describe("#protocolTreasury", () => {
-            // TODO: implement
-        });
+        xdescribe("#protocolTreasury", () => {});
 
-        describe("#forceAllowMask", () => {
-            // TODO: implement
-        });
+        xdescribe("#forceAllowMask", () => {});
 
-        describe("#supportsInterface", () => {
-            // TODO: implement
-        });
+        xdescribe("#supportsInterface", () => {});
 
         describe("#rollbackAllPermissionGrants", () => {
             pit(
@@ -991,9 +981,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                it("allowed: admin", async () => {});
-                it("denied: deployer", async () => {});
-                it("denied: random address", async () => {});
+                xit("allowed: admin", async () => {});
+                xit("denied: deployer", async () => {});
+                xit("denied: random address", async () => {});
             });
         });
 
@@ -1087,15 +1077,13 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                it("allowed: admin", async () => {});
-                it("denied: deployer", async () => {});
-                it("denied: random address", async () => {});
+                xit("allowed: admin", async () => {});
+                xit("denied: deployer", async () => {});
+                xit("denied: random address", async () => {});
             });
         });
 
-        describe("#commitAllPermissionGrantsSurpassedDelay", () => {
-            // TODO: implement
-        });
+        xdescribe("#commitAllPermissionGrantsSurpassedDelay", () => {});
 
         describe("#revokePermissions", () => {
             pit(
@@ -1143,17 +1131,15 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
         describe("#commitParams", () => {
             pit(
-                `emits PendingParamsCommitted event`,
-                { numRuns: 1 },
+                `emits ParamsCommitted event`,
+                { numRuns: RUNS.verylow },
                 paramsArb,
                 async (params: ParamsStruct) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .setPendingParams(params);
+                    await this.subject.connect(this.admin).stageParams(params);
                     await sleep(await this.subject.governanceDelay());
                     await expect(
                         this.subject.connect(this.admin).commitParams()
-                    ).to.emit(this.subject, "PendingParamsCommitted");
+                    ).to.emit(this.subject, "ParamsCommitted");
                     return true;
                 }
             );
@@ -1167,7 +1153,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         async (params: ParamsStruct) => {
                             await this.subject
                                 .connect(this.admin)
-                                .setPendingParams(params);
+                                .stageParams(params);
                             await sleep(1);
                             await expect(
                                 this.subject.connect(this.admin).commitParams()
@@ -1188,9 +1174,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                it("allowed: protocol admin", async () => {});
-                it("denied: deployer", async () => {});
-                it("denied: random address", async () => {});
+                xit("allowed: protocol admin", async () => {});
+                xit("denied: deployer", async () => {});
+                xit("denied: random address", async () => {});
             });
         });
 
@@ -1233,23 +1219,21 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                it("allowed: admin", async () => {});
-                it("denied: deployer", async () => {});
-                it("denied: random address", async () => {});
+                xit("allowed: admin", async () => {});
+                xit("denied: deployer", async () => {});
+                xit("denied: random address", async () => {});
             });
         });
 
-        describe("#setPendingParams", () => {
+        describe("#stageParams", () => {
             pit(
-                `emits PendingParamsSet event`,
+                `emits ParamsStaged event`,
                 { numRuns: RUNS.verylow },
                 paramsArb,
                 async (params: ParamsStruct) => {
                     await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .setPendingParams(params)
-                    ).to.emit(this.subject, "PendingParamsSet");
+                        this.subject.connect(this.admin).stageParams(params)
+                    ).to.emit(this.subject, "ParamsStaged");
                     return true;
                 }
             );
@@ -1266,7 +1250,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                 await expect(
                                     this.subject
                                         .connect(this.admin)
-                                        .setPendingParams(params)
+                                        .stageParams(params)
                                 ).to.be.revertedWith(Exceptions.NULL);
                                 return true;
                             }
@@ -1283,7 +1267,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                 await expect(
                                     this.subject
                                         .connect(this.admin)
-                                        .setPendingParams(params)
+                                        .stageParams(params)
                                 ).to.be.revertedWith(Exceptions.NULL);
                                 return true;
                             }
@@ -1302,7 +1286,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                 await expect(
                                     this.subject
                                         .connect(this.admin)
-                                        .setPendingParams(params)
+                                        .stageParams(params)
                                 ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                                 return true;
                             }
@@ -1312,8 +1296,8 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                it("allowed: admin", async () => {});
-                it("denied: random address", async () => {});
+                xit("allowed: admin", async () => {});
+                xit("denied: random address", async () => {});
             });
         });
     }
