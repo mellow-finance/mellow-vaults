@@ -9,7 +9,7 @@ import "../libraries/PermissionIdsLibrary.sol";
 import "./Validator.sol";
 
 contract ERC20Validator is Validator {
-    uint256 public constant approveSelector = uint32(IERC20.approve.selector);
+    bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
@@ -23,8 +23,8 @@ contract ERC20Validator is Validator {
         bytes calldata data
     ) external view {
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-        uint256 selector = CommonLibrary.getSelector(data);
-        if (selector == approveSelector) {
+        bytes4 selector = CommonLibrary.getSelector(data);
+        if (selector == APPROVE_SELECTOR) {
             address spender;
             assembly {
                 spender := calldataload(add(data.offset, 4))

@@ -26,12 +26,12 @@ contract UniV2Validator is Validator {
         uint256 deadline;
     }
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint256 public constant exactInputSelector = uint32(IUniswapV2Router01.swapExactTokensForTokens.selector);
-    uint256 public constant exactOutputSelector = uint32(IUniswapV2Router01.swapTokensForExactTokens.selector);
-    uint256 public constant exactEthInputSelector = uint32(IUniswapV2Router01.swapExactETHForTokens.selector);
-    uint256 public constant exactEthOutputSelector = uint32(IUniswapV2Router01.swapTokensForExactETH.selector);
-    uint256 public constant exactTokensInputSelector = uint32(IUniswapV2Router01.swapExactTokensForETH.selector);
-    uint256 public constant exactTokensOutputSelector = uint32(IUniswapV2Router01.swapETHForExactTokens.selector);
+    bytes4 public constant EXACT_INPUT_SELECTOR = IUniswapV2Router01.swapExactTokensForTokens.selector;
+    bytes4 public constant EXACT_OUTPUT_SELECTOR = IUniswapV2Router01.swapTokensForExactTokens.selector;
+    bytes4 public constant EXACT_ETH_INPUT_SELECTOR = IUniswapV2Router01.swapExactETHForTokens.selector;
+    bytes4 public constant EXACT_ETH_OUTPUT_SELECTOR = IUniswapV2Router01.swapTokensForExactETH.selector;
+    bytes4 public constant EXACT_TOKENS_INPUT_SELECTOR = IUniswapV2Router01.swapExactTokensForETH.selector;
+    bytes4 public constant EXACT_TOKENS_OUTPUT_SELECTOR = IUniswapV2Router01.swapETHForExactTokens.selector;
 
     address public immutable swapRouter;
     IUniswapV2Factory public immutable factory;
@@ -55,17 +55,17 @@ contract UniV2Validator is Validator {
         bytes calldata data
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
-        uint256 selector = CommonLibrary.getSelector(data);
-        if ((selector == exactEthInputSelector) || (selector == exactTokensOutputSelector)) {
+        bytes4 selector = CommonLibrary.getSelector(data);
+        if ((selector == EXACT_ETH_INPUT_SELECTOR) || (selector == EXACT_TOKENS_OUTPUT_SELECTOR)) {
             (, address[] memory path, , ) = abi.decode(data, (uint256, address[], address, uint256));
             _verifyPath(path);
             return;
         }
         if (
-            (selector == exactEthOutputSelector) ||
-            (selector == exactTokensInputSelector) ||
-            (selector == exactInputSelector) ||
-            (selector == exactOutputSelector)
+            (selector == EXACT_ETH_OUTPUT_SELECTOR) ||
+            (selector == EXACT_TOKENS_INPUT_SELECTOR) ||
+            (selector == EXACT_INPUT_SELECTOR) ||
+            (selector == EXACT_OUTPUT_SELECTOR)
         ) {
             require(value == 0, ExceptionsLibrary.INVALID_VALUE);
             (, , address[] memory path, , ) = abi.decode(data, (uint256, uint256, address[], address, uint256));

@@ -13,10 +13,10 @@ import "./Validator.sol";
 
 contract UniV3Validator is Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint256 public constant exactInputSingleSelector = uint32(ISwapRouter.exactInputSingle.selector);
-    uint256 public constant exactInputSelector = uint32(ISwapRouter.exactInput.selector);
-    uint256 public constant exactOutputSingleSelector = uint32(ISwapRouter.exactOutputSingle.selector);
-    uint256 public constant exactOutputSelector = uint32(ISwapRouter.exactOutput.selector);
+    bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
+    bytes4 public constant EXACT_INPUT_SELECTOR = ISwapRouter.exactInput.selector;
+    bytes4 public constant EXACT_OUTPUT_SINGLE_SELECTOR = ISwapRouter.exactOutputSingle.selector;
+    bytes4 public constant EXACT_OUTPUT_SELECTOR = ISwapRouter.exactOutput.selector;
     address public immutable swapRouter;
     IUniswapV3Factory public immutable factory;
 
@@ -40,23 +40,23 @@ contract UniV3Validator is Validator {
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-        uint256 selector = CommonLibrary.getSelector(data);
-        if (selector == exactInputSingleSelector) {
+        bytes4 selector = CommonLibrary.getSelector(data);
+        if (selector == EXACT_INPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactInputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactInputSingleParams));
             _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
             return;
         }
-        if (selector == exactOutputSingleSelector) {
+        if (selector == EXACT_OUTPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactOutputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactOutputSingleParams));
             _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
             return;
         }
-        if (selector == exactInputSelector) {
+        if (selector == EXACT_INPUT_SELECTOR) {
             ISwapRouter.ExactInputParams memory params = abi.decode(data, (ISwapRouter.ExactInputParams));
             _verifyMultiCall(params.path);
             return;
         }
-        if (selector == exactOutputSelector) {
+        if (selector == EXACT_OUTPUT_SELECTOR) {
             ISwapRouter.ExactOutputParams memory params = abi.decode(data, (ISwapRouter.ExactOutputParams));
             _verifyMultiCall(params.path);
             return;

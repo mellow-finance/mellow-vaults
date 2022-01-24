@@ -13,7 +13,7 @@ import "./Validator.sol";
 
 contract CurveValidator is Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
-    uint256 public constant exchangeSelector = 0x3df02124;
+    bytes4 public constant EXCHANGE_SELECTOR = 0x3df02124;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
@@ -26,8 +26,8 @@ contract CurveValidator is Validator {
         uint256,
         bytes calldata data
     ) external view {
-        uint256 selector = CommonLibrary.getSelector(data);
-        if (selector == exchangeSelector) {
+        bytes4 selector = CommonLibrary.getSelector(data);
+        if (selector == EXCHANGE_SELECTOR) {
             (int128 i, int128 j, , ) = abi.decode(data, (int128, int128, uint256, uint256));
             require(i != j, ExceptionsLibrary.INVALID_VALUE);
             IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
