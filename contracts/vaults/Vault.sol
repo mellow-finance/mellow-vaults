@@ -111,7 +111,7 @@ abstract contract Vault is IVault, ERC165 {
     }
 
     function _decreaseAllowances(address token, address to) internal {
-        IERC20(token).safeDecreaseAllowance(to, IERC20(token).allowance(address(this), to));
+        IERC20(token).safeApprove(to, 0);
     }
 
     // --------------------------  EVENTS  --------------------------
