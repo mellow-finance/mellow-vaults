@@ -26,7 +26,6 @@ import "./IntegrationVault.sol";
 
 contract YearnVault is IYearnVault, IntegrationVault {
     using SafeERC20 for IERC20;
-    address[] private _yTokens;
     uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
 
     address[] private _yTokens;
