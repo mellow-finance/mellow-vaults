@@ -3,6 +3,7 @@
 // TODO: Keeper rewards
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
@@ -12,7 +13,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 
-contract LStrategy {
+contract LStrategy is Multicall {
     uint256 public constant DENOMINATOR = 10**9;
     address[] public tokens;
     uint16 public intervalWidthInTicks;
@@ -25,6 +26,23 @@ contract LStrategy {
     int24 public tickPoint;
     int24 public tickPointInOneYear;
     uint256 public tickPointTimestamp;
+    uint256 public erc20UniV3RatioD;
+
+    function pullFromUniV3Vault(
+        IUniV3Vault fromVault,
+        uint256[] memory tokenAmounts,
+        IUniV3Vault.Options memory withdrawOptions
+    ) external {
+        fromVault.pull(address(erc20Vault), tokens, tokenAmounts, abi.encode(withdrawOptions));
+    }
+
+    function pullFromERC20Vault(
+        IUniV3Vault toVault,
+        uint256[] memory tokenAmounts,
+        IUniV3Vault.Options memory depositOptions
+    ) external {
+        erc20Vault.pull(address(toVault), tokens, tokenAmounts, abi.encode(depositOptions));
+    }
 
     function rebalanceUniV3Vaults(IUniV3Vault.Options memory withdrawOptions, IUniV3Vault.Options memory depositOptions)
         external
