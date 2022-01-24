@@ -102,18 +102,6 @@ abstract contract Vault is IVault, ERC165 {
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
     }
 
-    function _increaseAllowancesByAmount(
-        address token,
-        address to,
-        uint256 amount
-    ) internal {
-        IERC20(token).safeIncreaseAllowance(to, amount);
-    }
-
-    function _decreaseAllowances(address token, address to) internal {
-        IERC20(token).safeApprove(to, 0);
-    }
-
     // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when Vault is intialized

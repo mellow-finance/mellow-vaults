@@ -15,18 +15,6 @@ abstract contract Trader is ERC165 {
         return (interfaceId == this.supportsInterface.selector || interfaceId == type(ITrader).interfaceId);
     }
 
-    function _increaseAllowancesByAmount(
-        address token,
-        address to,
-        uint256 amount
-    ) internal {
-        IERC20(token).safeIncreaseAllowance(to, amount);
-    }
-
-    function _decreaseAllowances(address token, address to) internal {
-        IERC20(token).safeApprove(to, 0);
-    }
-
     function _validatePathLinked(ITrader.PathItem[] memory path) internal pure returns (bool result) {
         uint256 pathLength = path.length;
         if (pathLength == 0) return false;

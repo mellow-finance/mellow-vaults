@@ -69,9 +69,9 @@ contract UniV3Trader is Trader, IUniV3Trader {
             sqrtPriceLimitX96: options.sqrtPriceLimitX96
         });
         IERC20(input).safeTransferFrom(recipient, address(this), amount);
-        _increaseAllowancesByAmount(input, address(swapRouter), amount);
+        IERC20(input).safeIncreaseAllowance(address(swapRouter), amount);
         amountOut = swapRouter.exactInputSingle(params);
-        _decreaseAllowances(input, address(swapRouter));
+        IERC20(input).safeApprove(address(swapRouter), 0);
     }
 
     function _swapExactOutputSingle(
@@ -92,10 +92,10 @@ contract UniV3Trader is Trader, IUniV3Trader {
             sqrtPriceLimitX96: options.sqrtPriceLimitX96
         });
         IERC20(input).safeTransferFrom(recipient, address(this), options.limitAmount);
-        _increaseAllowancesByAmount(input, address(swapRouter), amount);
+        IERC20(input).safeIncreaseAllowance(address(swapRouter), amount);
         amountIn = swapRouter.exactOutputSingle(params);
         if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
-        _decreaseAllowances(input, address(swapRouter));
+        IERC20(input).safeApprove(address(swapRouter), 0);
     }
 
     function _swapExactInputMultihop(
@@ -113,9 +113,9 @@ contract UniV3Trader is Trader, IUniV3Trader {
             amountOutMinimum: options.limitAmount
         });
         IERC20(input).safeTransferFrom(recipient, address(this), amount);
-        _increaseAllowancesByAmount(input, address(swapRouter), amount);
+        IERC20(input).safeIncreaseAllowance(address(swapRouter), amount);
         amountOut = swapRouter.exactInput(params);
-        _decreaseAllowances(input, address(swapRouter));
+        IERC20(input).safeApprove(address(swapRouter), 0);
     }
 
     function _swapExactOutputMultihop(
@@ -133,10 +133,10 @@ contract UniV3Trader is Trader, IUniV3Trader {
             amountInMaximum: options.limitAmount
         });
         IERC20(input).safeTransferFrom(recipient, address(this), options.limitAmount);
-        _increaseAllowancesByAmount(input, address(swapRouter), amount);
+        IERC20(input).safeIncreaseAllowance(address(swapRouter), amount);
         amountIn = swapRouter.exactOutput(params);
         if (amountIn < options.limitAmount) IERC20(input).safeTransfer(recipient, options.limitAmount - amountIn);
-        _decreaseAllowances(input, address(swapRouter));
+        IERC20(input).safeApprove(address(swapRouter), 0);
     }
 
     function _reverseBytes(bytes memory input) internal pure returns (bytes memory output) {

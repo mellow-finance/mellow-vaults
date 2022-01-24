@@ -14,6 +14,7 @@ import "./IntegrationVault.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
+    using SafeERC20 for IERC20;
     struct Options {
         uint256 amount0Min;
         uint256 amount1Min;
@@ -183,13 +184,13 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     {
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; ++i) {
-            _increaseAllowancesByAmount(tokens[i], address(_positionManager), tokenAmounts[i]);
+            IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
         }
 
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
-                _decreaseAllowances(tokens[i], address(_positionManager));
+                IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
             }
             return actualTokenAmounts;
         }
@@ -208,7 +209,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             })
         );
         for (uint256 i = 0; i < tokens.length; ++i) {
-            _decreaseAllowances(tokens[i], address(_positionManager));
+            IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
         }
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;

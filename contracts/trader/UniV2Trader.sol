@@ -33,7 +33,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
         require(super._validatePathLinked(path), ExceptionsLibrary.INVALID_VALUE);
         Options memory options_ = abi.decode(options, (Options));
         IERC20(path[0].token0).safeTransferFrom(recipient, address(this), amount);
-        _increaseAllowancesByAmount(path[0].token0, address(router), amount);
+        IERC20(path[0].token0).safeIncreaseAllowance(address(router), amount);
         uint256[] memory amounts = router.swapExactTokensForTokens(
             amount,
             options_.limitAmount,
@@ -41,7 +41,7 @@ contract UniV2Trader is Trader, IUniV2Trader {
             recipient,
             options_.deadline
         );
-        _decreaseAllowances(path[0].token0, address(router));
+        IERC20(path[0].token0).safeApprove(address(router), 0);
         return amounts[amounts.length - 1];
     }
 

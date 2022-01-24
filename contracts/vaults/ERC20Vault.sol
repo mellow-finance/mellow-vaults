@@ -62,9 +62,9 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _increaseAllowancesByAmount(path[0].token0, chiefTrader.getTrader(traderId), amount);
+        IERC20(path[0].token0).safeIncreaseAllowance(chiefTrader.getTrader(traderId), amount);
         uint256 amountOut = trader.swapExactInput(traderId, amount, address(0), path, options);
-        _decreaseAllowances(path[0].token0, chiefTrader.getTrader(traderId));
+        IERC20(path[0].token0).safeApprove(chiefTrader.getTrader(traderId), 0);
         return amountOut;
     }
 
@@ -81,10 +81,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
         ITrader trader = ITrader(vg.delayedProtocolParams().trader);
         IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _increaseAllowancesByAmount(path[0].token0, chiefTrader.getTrader(traderId), amount);
-        uint256 amountOut = trader.swapExactOutput(traderId, amount, address(0), path, options);
-        _decreaseAllowances(path[0].token0, chiefTrader.getTrader(traderId));
-        return amountOut;
+        IERC20(path[0].token0).safeIncreaseAllowance(chiefTrader.getTrader(traderId), amount);
+        uint256 output = trader.swapExactOutput(traderId, amount, address(0), path, options);
+        IERC20(path[0].token0).safeApprove(chiefTrader.getTrader(traderId), 0);
+        return output;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
