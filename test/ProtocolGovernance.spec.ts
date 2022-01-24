@@ -416,7 +416,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stageParams(params);
                         expect(
                             toObject(await this.subject.stagedParams())
-                        ).to.deep.equal(params);
+                        ).to.equivalent(params);
                         return true;
                     }
                 );
@@ -432,7 +432,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject.connect(this.admin).commitParams();
                         expect(
                             toObject(await this.subject.stagedParams())
-                        ).to.deep.equal(emptyParams);
+                        ).to.equivalent(emptyParams);
                         return true;
                     }
                 );
@@ -484,7 +484,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject.connect(this.admin).commitParams();
                         expect(
                             toObject(await this.subject.params())
-                        ).to.deep.equal(params);
+                        ).to.equivalent(params);
                         return true;
                     }
                 );
@@ -1002,10 +1002,10 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         .commitPermissionGrants(target);
                     expect(
                         await this.subject.hasPermission(target, permissionId)
-                    ).to.eql(true);
-                    expect(await this.subject.permissionMasks(target)).to.eql(
-                        maskByPermissionIds([permissionId])
-                    );
+                    ).to.deep.equal(BigNumber.from(1));
+                    expect(
+                        await this.subject.permissionMasks(target)
+                    ).to.deep.equal(maskByPermissionIds([permissionId]));
                     return true;
                 }
             );
