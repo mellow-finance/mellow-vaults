@@ -33,10 +33,11 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
 
     /// @inheritdoc IUnitPricesGovernance
     function stageUnitPrice(address token, uint256 value) external {
+        require(token != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _requireAdmin();
         stagedUnitPrices[token] = value;
-        stagedUnitPricesTimestamps[token] = block.timestamp;
-        emit UnitPriceRolledBack(tx.origin, msg.sender, token);
+        stagedUnitPricesTimestamps[token] = unitPrices[token] == 0 ? block.timestamp : block.timestamp + DELAY;
+        emit UnitPriceStaged(tx.origin, msg.sender, token, value);
     }
 
     /// @inheritdoc IUnitPricesGovernance
@@ -49,10 +50,10 @@ contract UnitPricesGovernance is IUnitPricesGovernance, DefaultAccessControl {
 
     /// @inheritdoc IUnitPricesGovernance
     function commitUnitPrice(address token) external {
+        _requireAdmin();
         uint256 timestamp = stagedUnitPricesTimestamps[token];
-        if (unitPrices[token] != 0) {
-            require(timestamp > 0 && timestamp <= block.timestamp, ExceptionsLibrary.TIMESTAMP);
-        }
+        require(timestamp != 0, ExceptionsLibrary.INVALID_STATE);
+        require(timestamp <= block.timestamp, ExceptionsLibrary.TIMESTAMP);
 
         uint256 price = stagedUnitPrices[token];
         unitPrices[token] = price;
