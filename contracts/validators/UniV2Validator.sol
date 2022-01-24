@@ -70,6 +70,7 @@ contract UniV2Validator is Validator {
             require(value == 0, ExceptionsLibrary.INVALID_VALUE);
             (, , address[] memory path, , ) = abi.decode(data, (uint256, uint256, address[], address, uint256));
             _verifyPath(path);
+            return;
         }
         revert(ExceptionsLibrary.INVALID_SELECTOR);
     }
