@@ -368,9 +368,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await this.subject.connect(this.admin).stageParams(params);
                     await sleep(await this.subject.governanceDelay());
                     await this.subject.connect(this.admin).commitParams();
-                    expect(await this.subject.stagedParamsTimestamp()).to.deep.equal(
-                        BigNumber.from(0)
-                    );
+                    expect(
+                        await this.subject.stagedParamsTimestamp()
+                    ).to.deep.equal(BigNumber.from(0));
                     return true;
                 }
             );
@@ -482,9 +482,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
-                        expect(toObject(await this.subject.params())).to.deep.equal(
-                            params
-                        );
+                        expect(
+                            toObject(await this.subject.params())
+                        ).to.deep.equal(params);
                         return true;
                     }
                 );
@@ -963,9 +963,8 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await this.subject
                         .connect(this.admin)
                         .rollbackAllPermissionGrants();
-                    expect(
-                        await this.subject.stagedPermissionGrantsAddresses()
-                    ).to.be.empty;
+                    expect(await this.subject.stagedPermissionGrantsAddresses())
+                        .to.be.empty;
                     expect(
                         await this.subject.stagedPermissionGrantsMasks(target)
                     ).to.deep.equal(BigNumber.from(0));
