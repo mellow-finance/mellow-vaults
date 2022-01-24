@@ -31,8 +31,9 @@ contract ERC20Validator is Validator {
                 spender := shr(96, addr)
             }
             _verifyApprove(sender, addr, spender);
+        } else {
+            revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
-        revert(ExceptionsLibrary.INVALID_SELECTOR);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

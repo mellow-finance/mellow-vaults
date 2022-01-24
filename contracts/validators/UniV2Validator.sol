@@ -59,9 +59,7 @@ contract UniV2Validator is Validator {
         if ((selector == EXACT_ETH_INPUT_SELECTOR) || (selector == EXACT_TOKENS_OUTPUT_SELECTOR)) {
             (, address[] memory path, , ) = abi.decode(data, (uint256, address[], address, uint256));
             _verifyPath(path);
-            return;
-        }
-        if (
+        } else if (
             (selector == EXACT_ETH_OUTPUT_SELECTOR) ||
             (selector == EXACT_TOKENS_INPUT_SELECTOR) ||
             (selector == EXACT_INPUT_SELECTOR) ||
@@ -71,8 +69,9 @@ contract UniV2Validator is Validator {
             (, , address[] memory path, , ) = abi.decode(data, (uint256, uint256, address[], address, uint256));
             _verifyPath(path);
             return;
+        } else {
+            revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
-        revert(ExceptionsLibrary.INVALID_SELECTOR);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

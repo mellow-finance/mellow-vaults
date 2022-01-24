@@ -44,24 +44,18 @@ contract UniV3Validator is Validator {
         if (selector == EXACT_INPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactInputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactInputSingleParams));
             _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
-            return;
-        }
-        if (selector == EXACT_OUTPUT_SINGLE_SELECTOR) {
+        } else if (selector == EXACT_OUTPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactOutputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactOutputSingleParams));
             _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
-            return;
-        }
-        if (selector == EXACT_INPUT_SELECTOR) {
+        } else if (selector == EXACT_INPUT_SELECTOR) {
             ISwapRouter.ExactInputParams memory params = abi.decode(data, (ISwapRouter.ExactInputParams));
             _verifyMultiCall(params.path);
-            return;
-        }
-        if (selector == EXACT_OUTPUT_SELECTOR) {
+        } else if (selector == EXACT_OUTPUT_SELECTOR) {
             ISwapRouter.ExactOutputParams memory params = abi.decode(data, (ISwapRouter.ExactOutputParams));
             _verifyMultiCall(params.path);
-            return;
+        } else {
+            revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
-        revert(ExceptionsLibrary.INVALID_SELECTOR);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

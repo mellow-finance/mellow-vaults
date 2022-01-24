@@ -36,7 +36,8 @@ contract CurveValidator is Validator {
                 ExceptionsLibrary.FORBIDDEN
             );
             return;
+        } else {
+            revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
-        revert(ExceptionsLibrary.INVALID_SELECTOR);
     }
 }
