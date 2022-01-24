@@ -3,12 +3,15 @@ import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import {
+    ALLOWED_APPROVE_LIST,
     ALLOW_ALL_CREATE_VAULT,
     ALLOW_MASK,
     ALL_NETWORKS,
     PermissionIdsLibrary,
     PRIVATE_VAULT,
 } from "./0000_utils";
+import { ethers } from "ethers";
+import { deployments } from "hardhat";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -16,7 +19,84 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer, admin, protocolTreasury, weth, wbtc, usdc } =
         await getNamedAccounts();
     const tokens = [weth, wbtc, usdc].map((t) => t.toLowerCase()).sort();
-    const governances = [];
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+    const delay = await read("ProtocolGovernance", "governanceDelay");
+    if (delay > 0) {
+        log("Protocol governance is already finalized");
+        return;
+    }
+    log("Creating protocol governance finalizing tx");
+    const txDatas: (string | undefined)[] = [];
+    await registerGovernances(hre, txDatas);
+    await registerTokens(hre, txDatas);
+    await registerExternalProtocols(hre, txDatas);
+
+    if (!ALLOW_ALL_CREATE_VAULT) {
+        for (const address of [deployer, admin]) {
+            const tx =
+                await protocolGovernance.populateTransaction.stagePermissionGrants(
+                    address,
+                    [PermissionIdsLibrary.CREATE_VAULT]
+                );
+            txDatas.push(tx.data);
+        }
+    }
+    if (txDatas.length > 0) {
+        let tx =
+            await protocolGovernance.populateTransaction.commitAllPermissionGrantsSurpassedDelay();
+        txDatas.push(tx.data);
+        tx =
+            await protocolGovernance.populateTransaction.commitAllValidatorsSurpassedDelay();
+        txDatas.push(tx.data);
+    }
+
+    const params = {
+        forceAllowMask: ALLOW_MASK,
+        maxTokensPerVault: 10,
+        governanceDelay: 86400,
+        protocolTreasury,
+        withdrawLimit: 200000,
+    };
+    let tx = await protocolGovernance.populateTransaction.setPendingParams(
+        params
+    );
+    txDatas.push(tx.data);
+    tx = await protocolGovernance.populateTransaction.commitParams();
+    txDatas.push(tx.data);
+
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    tx = await protocolGovernance.populateTransaction.grantRole(
+        adminRole,
+        admin
+    );
+    txDatas.push(tx.data);
+    tx = await protocolGovernance.populateTransaction.renounceRole(
+        adminRole,
+        deployer
+    );
+    txDatas.push(tx.data);
+    await execute(
+        "ProtocolGovernance",
+        {
+            from: deployer,
+            autoMine: true,
+            log: true,
+        },
+        "multicall",
+        txDatas
+    );
+};
+
+async function registerGovernances(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+
     for (const name of [
         "AaveVaultGovernance",
         "UniV3VaultGovernance",
@@ -24,170 +104,92 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "YearnVaultGovernance",
         "ERC20RootVaultGovernance",
     ]) {
-        const governance = await getOrNull(name);
+        const governance = await hre.deployments.getOrNull(name);
         if (!governance) {
             continue;
         }
-        if (
-            await read(
-                "ProtocolGovernance",
-                "hasPermission",
+        const tx =
+            await protocolGovernance.populateTransaction.stagePermissionGrants(
                 governance.address,
-                PermissionIdsLibrary.REGISTER_VAULT
-            )
-        ) {
-            continue;
-        }
-        governances.push(governance.address);
-    }
-    for (let governance of governances) {
-        log(`Registering Governances in ProtocolGovernance`);
-        await execute(
-            "ProtocolGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "stagePermissionGrants",
-            governance,
-            [PermissionIdsLibrary.REGISTER_VAULT]
-        );
-        // await new Promise((resolve) => setTimeout(resolve, 10000));
-    }
-    if (governances.length > 0) {
-        await execute(
-            "ProtocolGovernance",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "commitAllPermissionGrantsSurpassedDelay"
-        );
-        // await new Promise((resolve) => setTimeout(resolve, 10000));
-    }
-
-    for (let token of tokens) {
-        if (
-            await read(
-                "ProtocolGovernance",
-                "hasPermission",
-                token,
-                PermissionIdsLibrary.ERC20_VAULT_TOKEN
-            )
-        ) {
-            continue;
-        }
-
-        await execute(
-            "ProtocolGovernance",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "stagePermissionGrants",
-            token,
-            [
-                PermissionIdsLibrary.ERC20_VAULT_TOKEN,
-                PermissionIdsLibrary.ERC20_SWAP,
-                PermissionIdsLibrary.ERC20_TRANSFER,
-            ]
-        );
-        // await new Promise((resolve) => setTimeout(resolve, 10000));
-    }
-    if (!ALLOW_ALL_CREATE_VAULT) {
-        for (const address of [deployer, admin]) {
-            if (
-                await read(
-                    "ProtocolGovernance",
-                    "hasPermission",
-                    address,
-                    PermissionIdsLibrary.CREATE_VAULT
-                )
-            ) {
-                continue;
-            }
-
-            await execute(
-                "ProtocolGovernance",
-                { from: deployer, log: true, autoMine: true },
-                "stagePermissionGrants",
-                address,
-                [PermissionIdsLibrary.CREATE_VAULT]
+                [PermissionIdsLibrary.REGISTER_VAULT]
             );
-            // await new Promise((resolve) => setTimeout(resolve, 10000));
+        txDatas.push(tx.data);
+    }
+}
+
+async function registerTokens(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+    const erc20Validator = await deployments.get("ERC20Validator");
+    const { weth, wbtc, usdc } = await hre.getNamedAccounts();
+    const tokens = [weth, wbtc, usdc].map((t) => t.toLowerCase()).sort();
+    for (const token of tokens) {
+        let tx =
+            await protocolGovernance.populateTransaction.stagePermissionGrants(
+                token,
+                [
+                    PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                    PermissionIdsLibrary.ERC20_TRANSFER,
+                ]
+            );
+        txDatas.push(tx.data);
+        tx = await protocolGovernance.populateTransaction.stageValidator(
+            token,
+            erc20Validator.address
+        );
+    }
+}
+
+async function registerExternalProtocols(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    let name = hre.network.name;
+    if (name === "hardhat" || name === "localhost") {
+        name = "mainnet";
+    }
+    // @ts-ignore
+    const data = ALLOWED_APPROVE_LIST[hre.network.name];
+    if (!data) {
+        return;
+    }
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+
+    for (const key in data) {
+        for (const address of data[key]) {
+            let tx =
+                await protocolGovernance.populateTransaction.stagePermissionGrants(
+                    address,
+                    [PermissionIdsLibrary.ERC20_APPROVE]
+                );
+            txDatas.push(tx.data);
         }
     }
-    const staged = await read(
-        "ProtocolGovernance",
-        "stagedPermissionGrantsAddresses"
-    );
-
-    if (staged.length > 0) {
-        await execute(
-            "ProtocolGovernance",
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "commitAllPermissionGrantsSurpassedDelay"
-        );
+    const validators = {
+        uniV3: "UniV3Validator",
+        uniV2: "UniV2Validator",
+        curve: "CurveValidator",
+    };
+    for (const key in validators) {
+        // @ts-ignore
+        const validator = await deployments.get(validators[key]);
+        for (const address of data[key]) {
+            const tx =
+                await protocolGovernance.populateTransaction.stageValidator(
+                    address,
+                    validator.address
+                );
+            txDatas.push(tx.data);
+        }
     }
+}
 
-    const delay = await read("ProtocolGovernance", "governanceDelay");
-    if (delay == 0) {
-        const params = {
-            forceAllowMask: ALLOW_MASK,
-            maxTokensPerVault: 10,
-            governanceDelay: 86400,
-            protocolTreasury,
-            withdrawLimit: 200000,
-        };
-        log(`Setting ProtocolGovernance params`);
-        log(JSON.stringify(params, null, 2));
-        await execute(
-            "ProtocolGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "setPendingParams",
-            params
-        );
-        await execute(
-            "ProtocolGovernance",
-            { from: deployer, log: true, autoMine: true },
-            "commitParams"
-        );
-        log("Done");
-    }
-
-    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
-    const deployerIsAdmin = await read(
-        "ProtocolGovernance",
-        "hasRole",
-        adminRole,
-        deployer
-    );
-    if (deployerIsAdmin) {
-        await execute(
-            "ProtocolGovernance",
-            {
-                from: deployer,
-                autoMine: true,
-            },
-            "grantRole",
-            adminRole,
-            admin
-        );
-        await execute(
-            "ProtocolGovernance",
-            {
-                from: deployer,
-                autoMine: true,
-            },
-            "renounceRole",
-            adminRole,
-            deployer
-        );
-    }
-};
 export default func;
 func.tags = ["Finalize", "core", ...ALL_NETWORKS];
 func.dependencies = ["ProtocolGovernance"];

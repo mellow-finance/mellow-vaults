@@ -9,7 +9,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, log, execute, read } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
-    const chiefTrader = await get("ChiefTrader");
     const { deployer } = await getNamedAccounts();
     const { address: singleton } = await deploy("ERC20Vault", {
         from: deployer,
@@ -25,7 +24,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 registry: vaultRegistry.address,
                 singleton,
             },
-            { trader: chiefTrader.address },
         ],
         log: true,
         autoMine: true,

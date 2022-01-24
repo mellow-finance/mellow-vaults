@@ -12,22 +12,44 @@ import {
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
+export const ALLOWED_APPROVE_LIST = {
+    mainnet: {
+        uniV3: [
+            "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8", // USDC-ETH 0.3%
+            "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
+            "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
+            "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
+        ],
+        uniV2: [
+            "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc", // USDC-ETH
+            "0xbb2b8038a1640196fbe3e38816f3e67cba72d940", // WBTC-ETH
+        ],
+        curve: [
+            "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7", // USDC-DAI
+            "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022", // ETH-STETH
+        ],
+        cowswap: ["0xC92E8bdf79f0507f65a392b0ab4667716BFE0110"],
+    },
+};
+
 export const PRIVATE_VAULT = true;
 
-const ALLOW_ALL_CLAIMS = 0;
 const ALLOW_ALL_REGISTER_VAULT = 0;
-const ALLOW_ALL_ERC20_TRANSFER = 0;
-const ALLOW_ALL_ERC20_SWAP = 0;
-const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
 export const ALLOW_ALL_CREATE_VAULT = 0;
+const ALLOW_ALL_ERC20_TRANSFER = 0;
+const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
+const ALLOW_ALL_ERC20_APPROVE = 0;
+const ALLOW_ALL_ERC20_APPROVE_RESTRICTED = 0;
+const ALLOW_ALL_TRUSTED_STRATEGY = 0;
 
 export const ALLOW_MASK =
-    ALLOW_ALL_CLAIMS +
     (ALLOW_ALL_REGISTER_VAULT << 1) +
-    (ALLOW_ALL_ERC20_TRANSFER << 2) +
-    (ALLOW_ALL_ERC20_SWAP << 3) +
+    (ALLOW_ALL_CREATE_VAULT << 2) +
+    (ALLOW_ALL_ERC20_TRANSFER << 3) +
     (ALLOW_ALL_ERC20_VAULT_TOKEN << 4) +
-    (ALLOW_ALL_CREATE_VAULT << 5);
+    (ALLOW_ALL_ERC20_APPROVE << 5) +
+    (ALLOW_ALL_ERC20_APPROVE_RESTRICTED << 6) +
+    (ALLOW_ALL_TRUSTED_STRATEGY << 7);
 
 export const ALL_NETWORKS = [
     "hardhat",
@@ -284,12 +306,13 @@ export const toObject = (obj: any) =>
     )(obj);
 
 export class PermissionIdsLibrary {
-    static CLAIM: number = 0;
     static REGISTER_VAULT: number = 1;
-    static ERC20_TRANSFER: number = 2;
-    static ERC20_SWAP = 3;
-    static ERC20_VAULT_TOKEN: number = 4;
-    static CREATE_VAULT: number = 5;
+    static CREATE_VAULT: number = 2;
+    static ERC20_TRANSFER: number = 3;
+    static ERC20_VAULT_TOKEN = 4;
+    static ERC20_APPROVE: number = 5;
+    static ERC20_APPROVE_RESTRICTED: number = 6;
+    static ERC20_TRUSTED_STRATEGY: number = 7;
 }
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};

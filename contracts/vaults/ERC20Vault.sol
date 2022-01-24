@@ -4,11 +4,9 @@ pragma solidity =0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/vaults/IERC20VaultGovernance.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../interfaces/trader/IChiefTrader.sol";
 import "./IntegrationVault.sol";
 
 /// @notice Vault that stores ERC20 tokens.
@@ -28,10 +26,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         maxTokenAmounts = minTokenAmounts;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
-    }
-
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
@@ -47,40 +41,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
     {
         // no-op
         actualTokenAmounts = new uint256[](tokens.length);
-    }
-
-    /// @inheritdoc ITrader
-    function swapExactInput(
-        uint256 traderId,
-        uint256 amount,
-        address,
-        PathItem[] memory path,
-        bytes memory options
-    ) external returns (uint256 amountOut) {
-        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.INVALID_TOKEN);
-        require(_isStrategy(msg.sender), ExceptionsLibrary.INVALID_TARGET);
-        IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
-        ITrader trader = ITrader(vg.delayedProtocolParams().trader);
-        IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
-        return trader.swapExactInput(traderId, amount, address(0), path, options);
-    }
-
-    /// @inheritdoc ITrader
-    function swapExactOutput(
-        uint256 traderId,
-        uint256 amount,
-        address,
-        PathItem[] memory path,
-        bytes calldata options
-    ) external returns (uint256 amountOut) {
-        require(path.length > 0 && isVaultToken(path[path.length - 1].token1), ExceptionsLibrary.INVALID_TOKEN);
-        require(_isStrategy(msg.sender), ExceptionsLibrary.INVALID_TARGET);
-        IERC20VaultGovernance vg = IERC20VaultGovernance(address(_vaultGovernance));
-        ITrader trader = ITrader(vg.delayedProtocolParams().trader);
-        IChiefTrader chiefTrader = IChiefTrader(address(trader));
-        _approveERC20TokenIfNecessary(path[0].token0, chiefTrader.getTrader(traderId));
-        return trader.swapExactOutput(traderId, amount, address(0), path, options);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
