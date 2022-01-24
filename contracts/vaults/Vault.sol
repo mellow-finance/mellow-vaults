@@ -22,7 +22,7 @@ import "./VaultGovernance.sol";
 /// The semantics is: NFT owner owns all Vault liquidity, Approved person is liquidity manager.
 /// ApprovedForAll person cannot do anything except ERC-721 token transfers.
 ///
-/// Both NFT owner and approved person can call claimRewards method which claims liquidity mining rewards (if any)
+/// Both NFT owner and approved person can call externalCall method which claims liquidity mining rewards (if any)
 ///
 /// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
 /// the protocol admin

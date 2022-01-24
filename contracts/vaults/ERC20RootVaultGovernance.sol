@@ -2,12 +2,16 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
-contract ERC20RootVaultGovernance is IERC20RootVaultGovernance, VaultGovernance {
+contract ERC20RootVaultGovernance is IContractMeta, IERC20RootVaultGovernance, VaultGovernance {
+    bytes32 public constant CONTRACT_NAME = "ERC20RootVaultGovernance";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
     uint256 public immutable MAX_PERFORMANCE_FEE;

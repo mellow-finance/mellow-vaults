@@ -1,6 +1,4 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { Signer } from "ethers";
 import {
     Arbitrary,
     assert,
@@ -26,6 +24,10 @@ export type PropertyOptions = Parameters & {
 };
 
 export const uint256: Arbitrary<BigNumber> = bigUintN(256).map((x: bigint) =>
+    BigNumber.from(x.toString())
+);
+
+export const uint8: Arbitrary<BigNumber> = bigUintN(8).map((x: bigint) =>
     BigNumber.from(x.toString())
 );
 

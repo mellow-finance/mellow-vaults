@@ -2,14 +2,19 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
+import "./interfaces/utils/IContractMeta.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/PermissionIdsLibrary.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
-contract VaultRegistry is IVaultRegistry, ERC721 {
+contract VaultRegistry is IContractMeta, IVaultRegistry, ERC721 {
+    bytes32 public constant CONTRACT_NAME = "VaultRegistry";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     uint256 private _stagedProtocolGovernanceTimestamp;
     IProtocolGovernance private _protocolGovernance;
     IProtocolGovernance private _stagedProtocolGovernance;
@@ -81,6 +86,8 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
 
     /// @inheritdoc IVaultRegistry
     function registerVault(address vault, address owner) external returns (uint256 nft) {
+        require(address(owner) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(ERC165(vault).supportsInterface(type(IVault).interfaceId), ExceptionsLibrary.INVALID_INTERFACE);
         require(
             _protocolGovernance.hasPermission(msg.sender, PermissionIdsLibrary.REGISTER_VAULT),
             ExceptionsLibrary.FORBIDDEN
@@ -98,6 +105,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
     /// @inheritdoc IVaultRegistry
     function stageProtocolGovernance(IProtocolGovernance newProtocolGovernance) external {
         require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(address(newProtocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stagedProtocolGovernance = newProtocolGovernance;
         _stagedProtocolGovernanceTimestamp = (block.timestamp + _protocolGovernance.governanceDelay());
         emit StagedProtocolGovernance(tx.origin, msg.sender, newProtocolGovernance, _stagedProtocolGovernanceTimestamp);
@@ -110,6 +118,7 @@ contract VaultRegistry is IVaultRegistry, ERC721 {
         require(block.timestamp >= _stagedProtocolGovernanceTimestamp, ExceptionsLibrary.TIMESTAMP);
         _protocolGovernance = _stagedProtocolGovernance;
         delete _stagedProtocolGovernanceTimestamp;
+        delete _stagedProtocolGovernance;
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
     }
 
