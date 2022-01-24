@@ -15,11 +15,6 @@ import "./IntegrationVault.sol";
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
     using SafeERC20 for IERC20;
-    struct Options {
-        uint256 amount0Min;
-        uint256 amount1Min;
-        uint256 deadline;
-    }
 
     struct Pair {
         uint256 a0;
@@ -103,6 +98,22 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     /// @inheritdoc IUniV3Vault
     function positionManager() external view returns (INonfungiblePositionManager) {
         return _positionManager;
+    }
+
+    /// @inheritdoc IUniV3Vault
+    function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
+        tokenAmounts = new uint256[](2);
+        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
+
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
+            sqrtPriceX96,
+            sqrtPriceAX96,
+            sqrtPriceBX96,
+            liquidity
+        );
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

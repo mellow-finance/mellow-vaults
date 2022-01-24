@@ -6,11 +6,22 @@ import "./IIntegrationVault.sol";
 import "../external/univ3/INonfungiblePositionManager.sol";
 
 interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
+    struct Options {
+        uint256 amount0Min;
+        uint256 amount1Min;
+        uint256 deadline;
+    }
+
     /// @notice Reference to INonfungiblePositionManager of UniswapV3 protocol.
     function positionManager() external view returns (INonfungiblePositionManager);
 
     /// @notice NFT of UniV3 position manager
     function uniV3Nft() external view returns (uint256);
+
+    /// @notice Returns tokenAmounts corresponding to liquidity
+    /// @param liquidity Liquidity that will be converted to token amounts
+    /// @return tokenAmounts Token amounts for the specified liquidity
+    function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts);
 
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
