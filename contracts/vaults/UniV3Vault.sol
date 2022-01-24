@@ -182,17 +182,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
+        actualTokenAmounts = new uint256[](2);
+        if (uniV3Nft == 0) return actualTokenAmounts;
+
         address[] memory tokens = _vaultTokens;
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
-        }
-
-        actualTokenAmounts = new uint256[](2);
-        if (uniV3Nft == 0) {
-            for (uint256 i = 0; i < tokens.length; ++i) {
-                IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
-            }
-            return actualTokenAmounts;
         }
 
         Options memory opts = _parseOptions(options);
