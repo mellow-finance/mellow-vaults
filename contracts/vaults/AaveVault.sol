@@ -27,8 +27,9 @@ import "./IntegrationVault.sol";
 /// It is assumed that any amounts of tokens can be deposited / withdrawn from Aave.
 /// The contract's vaultTokens are fully allowed to Aave Lending Pool.
 contract AaveVault is IAaveVault, IntegrationVault {
-    address[] private _aTokens;
-    uint256[] private _tvls;
+    using SafeERC20 for IERC20;
+    address[] internal _aTokens;
+    uint256[] internal _tvls;
     uint256 private _lastTvlUpdateTimestamp;
     ILendingPool private _lendingPool;
 
@@ -110,8 +111,9 @@ contract AaveVault is IAaveVault, IntegrationVault {
                 continue;
             }
             address token = tokens[i];
-            _allowTokenIfNecessary(token, address(_lendingPool));
+            IERC20(token).safeIncreaseAllowance(address(_lendingPool), tokenAmounts[i]);
             _lendingPool.deposit(tokens[i], tokenAmounts[i], address(this), uint16(referralCode));
+            IERC20(token).safeApprove(address(_lendingPool), 0);
         }
         _updateTvls();
         actualTokenAmounts = tokenAmounts;

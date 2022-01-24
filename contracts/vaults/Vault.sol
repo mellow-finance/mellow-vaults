@@ -102,12 +102,6 @@ abstract contract Vault is IVault, ERC165 {
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
     }
 
-    function _allowTokenIfNecessary(address token, address to) internal {
-        if (IERC20(token).allowance(address(this), to) < type(uint256).max / 2) {
-            IERC20(token).approve(to, type(uint256).max);
-        }
-    }
-
     // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when Vault is intialized
