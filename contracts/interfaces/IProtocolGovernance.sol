@@ -125,7 +125,8 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     function commitValidator(address target) external;
 
     /// @notice Commites all staged validators for which governance delay passed
-    function commitAllValidatorsSurpassedDelay() external;
+    /// @return Addresses for which validators were committed
+    function commitAllValidatorsSurpassedDelay() external returns (address[] memory);
 
     /// @notice Rollback all staged granted permission grant.
     function rollbackAllPermissionGrants() external;

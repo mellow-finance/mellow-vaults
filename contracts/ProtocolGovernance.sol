@@ -174,9 +174,11 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitAllValidatorsSurpassedDelay() external {
+    function commitAllValidatorsSurpassedDelay() external returns (address[] memory addressesCommitted) {
         _requireAdmin();
         uint256 length = _stagedValidatorsAddresses.length();
+        addressesCommitted = new address[](length);
+        uint256 addressesCommittedLength;
         for (uint256 i; i != length; i++) {
             address stagedAddress = _stagedValidatorsAddresses.at(0);
             if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
@@ -189,10 +191,14 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
                 delete stagedValidators[stagedAddress];
                 delete stagedValidatorsTimestamps[stagedAddress];
                 _stagedValidatorsAddresses.remove(stagedAddress);
+                addressesCommitted[addressesCommittedLength] = stagedAddress;
+                addressesCommittedLength += 1;
                 emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
             }
         }
-        // TODO: return an array of addresses that were committed
+        assembly {
+            mstore(addressesCommitted, addressesCommittedLength)
+        }
     }
 
     /// @inheritdoc IProtocolGovernance
