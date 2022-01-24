@@ -3,8 +3,6 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/validators/IValidator.sol";
-import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/ExceptionsLibrary.sol";
 import "./BaseValidator.sol";
 
 abstract contract Validator is IValidator, ERC165, BaseValidator {
