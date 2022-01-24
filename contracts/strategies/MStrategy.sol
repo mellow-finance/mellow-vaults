@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
@@ -12,7 +13,7 @@ import "../libraries/external/FullMath.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
-contract MStrategy is DefaultAccessControlLateInit {
+contract MStrategy is IContractMeta, DefaultAccessControlLateInit {
     struct Params {
         uint256 oraclePriceTimespan;
         uint256 oracleLiquidityTimespan;
@@ -31,6 +32,9 @@ contract MStrategy is DefaultAccessControlLateInit {
         IERC20Vault erc20Vault;
         IIntegrationVault moneyVault;
     }
+
+    bytes32 public constant CONTRACT_NAME = "MStrategy";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     Params[] public vaultParams;
     ImmutableParams[] public vaultImmutableParams;

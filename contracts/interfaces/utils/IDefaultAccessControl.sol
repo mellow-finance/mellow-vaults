@@ -8,4 +8,6 @@ interface IDefaultAccessControl is IAccessControlEnumerable {
     /// @param who Address to check
     /// @return `true` if who is admin, `false` otherwise
     function isAdmin(address who) external view returns (bool);
+
+    function isOperator(address who) external view returns (bool);
 }

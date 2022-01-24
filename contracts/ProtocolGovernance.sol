@@ -5,12 +5,16 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
+import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance, Multicall {
+contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    bytes32 public constant CONTRACT_NAME = "ProtocolGovernance";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
