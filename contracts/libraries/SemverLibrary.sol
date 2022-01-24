@@ -5,8 +5,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 library SemverLibrary {
     uint8 internal constant ASCII_ZERO = 48;
-    uint8 internal constant BIT_OFFSET = 85;
-    uint256 internal constant MAX_LENGTH = 0x1f;
 
     function shrinkToFit(bytes memory array) internal pure returns (bytes memory result) {
         uint256 i;
