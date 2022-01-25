@@ -22,8 +22,10 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
 ) {
     let someParams: P;
     let noneParams: P;
+    let nft: number;
     this.beforeEach(() => {
         ({ someParams, noneParams } = generateParams(paramsArb));
+        nft = 1;
     });
 
     describe(`#stagedDelayedProtocolParams`, () => {

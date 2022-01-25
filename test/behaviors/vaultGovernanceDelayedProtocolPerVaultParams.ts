@@ -11,10 +11,14 @@ import {
 import { address, pit, RUNS } from "../library/property";
 import { equals } from "ramda";
 import { expect } from "chai";
+import { mersenne } from "pure-rand";
+import { uint8 } from "../library/property";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import Exceptions from "../library/Exceptions";
 import { generateParams, VaultGovernanceContext } from "./vaultGovernance";
 import { deployments } from "hardhat";
+
+const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
 export function delayedProtocolPerVaultParamsBehaviour<P, S extends Contract, F>(
     this: VaultGovernanceContext<S, F>,
@@ -22,17 +26,19 @@ export function delayedProtocolPerVaultParamsBehaviour<P, S extends Contract, F>
 ) {
     let someParams: P;
     let noneParams: P;
+    let nft: BigNumber;
     this.beforeEach(() => {
         ({ someParams, noneParams } = generateParams(paramsArb));
+        nft = uint8.filter(x => x.lt(5)).generate(random).value; // TODO: max vaultsCount() 
     });
 
     describe(`#stagedDelayedProtocolPerVaultParams`, () => {
         it(`returns DelayedProtocolPerVaultParams staged for commit`, async () => {
             await this.subject
                 .connect(this.admin)
-                .stageDelayedProtocolPerVaultParams(someParams);
+                .stageDelayedProtocolPerVaultParams(nft, someParams);
             const actualParams =
-                await this.subject.stagedDelayedProtocolPerVaultParams();
+                await this.subject.stagedDelayedProtocolPerVaultParams(nft);
             expect(someParams).to.be.equivalent(actualParams);
         });
 
@@ -256,11 +262,11 @@ export function delayedProtocolPerVaultParamsBehaviour<P, S extends Contract, F>
     describe("#commitDelayedProtocolParams", () => {
         let stagedFixture: Function;
         before(async () => {
-            stagedFixture = await deployments.createFixture(async () => {
+            stagedFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 await this.subject
                     .connect(this.admin)
-                    .stageDelayedProtocolParams(someParams);
+                    .stageDelayedProtocolParams(nft, someParams);
             });
         });
         beforeEach(async () => {

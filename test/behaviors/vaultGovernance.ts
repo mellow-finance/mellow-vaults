@@ -22,6 +22,7 @@ import { InternalParamsStructOutput } from "../types/VaultGovernance";
 import { deployments, ethers } from "hardhat";
 import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";
 import { create } from "domain";
+import { delayedProtocolPerVaultParamsBehaviour } from "./vaultGovernanceDelayedProtocolPerVaultParams";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -65,6 +66,7 @@ export function vaultGovernanceBehavior<
         delayedProtocolParams,
         protocolParams,
         defaultCreateVault,
+        delayedProtocolPerVaultParams,
     }: {
         delayedStrategyParams?: Arbitrary<DSP>;
         strategyParams?: Arbitrary<SP>;
@@ -280,5 +282,8 @@ export function vaultGovernanceBehavior<
     }
     if (delayedStrategyParams) {
         delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
+    }
+    if (delayedProtocolPerVaultParams) {
+        delayedProtocolPerVaultParamsBehaviour.call(this as any, delayedProtocolPerVaultParams);
     }
 }
