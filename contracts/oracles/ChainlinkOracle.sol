@@ -42,6 +42,15 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     }
 
     /// @inheritdoc IChainlinkOracle
+    function canTellSpotPrice(address token0, address token1) external view returns (bool) {
+        return
+            _tokenAllowlist.contains(token0) &&
+            _tokenAllowlist.contains(token1) &&
+            (chainlinkOracles[token0] != address(0)) &&
+            (chainlinkOracles[token1] != address(0));
+    }
+
+    /// @inheritdoc IChainlinkOracle
     function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
         require(_tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1), ExceptionsLibrary.ALLOWLIST);
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
