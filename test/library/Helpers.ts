@@ -130,14 +130,13 @@ export const setTokenWhitelist = async (
     await protocolGovernance.connect(admin).commitTokenWhitelistAdd();
 };
 
-export async function depositW9(
+export async function depositWETH(
     receiver: string,
     amount: BigNumberish
 ): Promise<void> {
     const { weth } = await getNamedAccounts();
-    const w9 = await ethers.getContractAt("ERC20Token", weth);
-    const sender = randomAddress();
-    await withSigner(sender, async (signer) => {
+    const w9 = await ethers.getContractAt("WETH", weth);
+    await withSigner(randomAddress(), async (signer) => {
         await w9.connect(signer).deposit({ value: amount });
         await w9.connect(signer).transfer(receiver, amount);
     });
