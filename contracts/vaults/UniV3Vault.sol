@@ -175,7 +175,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
-    // -------------------  INTERNAL, MUTATING  --------------------
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
