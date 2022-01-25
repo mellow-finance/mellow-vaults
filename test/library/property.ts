@@ -1,6 +1,4 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { Signer } from "ethers";
 import {
     Arbitrary,
     assert,
@@ -26,6 +24,10 @@ export type PropertyOptions = Parameters & {
 };
 
 export const uint256: Arbitrary<BigNumber> = bigUintN(256).map((x: bigint) =>
+    BigNumber.from(x.toString())
+);
+
+export const uint8: Arbitrary<BigNumber> = bigUintN(8).map((x: bigint) =>
     BigNumber.from(x.toString())
 );
 
@@ -82,6 +84,7 @@ export function pit<T0, T1, T2, T3, T4>(
     f: (c0: T0, c1: T1, c2: T2, c3: T3, c4: T4) => Promise<boolean>
 ): void;
 
+// TODO: reset to checkpoint after each test
 export function pit(
     description: string,
     options: PropertyOptions,

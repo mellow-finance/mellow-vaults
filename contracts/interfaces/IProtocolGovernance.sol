@@ -38,7 +38,13 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
 
     /// @notice Timestamp after which staged pending protocol parameters can be committed
     /// @return Zero if there are no staged parameters, timestamp otherwise.
-    function pendingParamsTimestamp() external view returns (uint256);
+    function stagedParamsTimestamp() external view returns (uint256);
+
+    /// @notice Staged pending protocol parameters.
+    function stagedParams() external view returns (Params memory);
+
+    /// @notice Current protocol parameters.
+    function params() external view returns (Params memory);
 
     /// @notice Addresses for which non-zero permissions are set.
     function permissionAddresses() external view returns (address[] memory);
@@ -79,18 +85,66 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @return Withdraw limit per token per block
     function withdrawLimit(address token) external view returns (uint256);
 
+    /// @notice Addresses that has staged validators.
+    function stagedValidatorsAddresses() external view returns (address[] memory);
+
+    /// @notice Timestamp after which staged granted permissions for the given address can be committed.
+    /// @param target The given address
+    /// @return Zero if there are no staged permission grants, timestamp otherwise
+    function stagedValidatorsTimestamps(address target) external view returns (uint256);
+
+    /// @notice Staged validator for the given address.
+    /// @param target The given address
+    /// @return Validator
+    function stagedValidators(address target) external view returns (address);
+
+    /// @notice Addresses that has validators.
+    function validatorsAddresses() external view returns (address[] memory);
+
+    /// @notice Address that has validators.
+    /// @param i The number of address
+    /// @return Validator address
+    function validatorsAddress(uint256 i) external view returns (address);
+
+    /// @notice Validator for the given address.
+    /// @param target The given address
+    /// @return Validator
+    function validators(address target) external view returns (address);
+
     // -------------------  EXTERNAL, MUTATING, GOVERNANCE, IMMEDIATE  -------------------
+
+    /// @notice Rollback all staged validators.
+    function rollbackStagedValidators() external;
+
+    /// @notice Revoke validator instantly from the given address.
+    /// @param target The given address
+    function revokeValidator(address target) external;
+
+    /// @notice Stages a new validator for the given address
+    /// @param target The given address
+    /// @param validator The validator for the given address
+    function stageValidator(address target, address validator) external;
+
+    /// @notice Commits validator for the given address.
+    /// @dev Reverts if governance delay has not passed yet.
+    /// @param target The given address.
+    function commitValidator(address target) external;
+
+    /// @notice Commites all staged validators for which governance delay passed
+    /// @return Addresses for which validators were committed
+    function commitAllValidatorsSurpassedDelay() external returns (address[] memory);
 
     /// @notice Rollback all staged granted permission grant.
     function rollbackAllPermissionGrants() external;
 
     /// @notice Commits permission grants for the given address.
-    /// Reverts if governance delay has not passed yet.
+    /// @dev Reverts if governance delay has not passed yet.
     /// @param target The given address.
     function commitPermissionGrants(address target) external;
 
-    /// @notice Commites all staged permission grants for which governance delay passed
-    function commitAllPermissionGrantsSurpassedDelay() external;
+    /// @notice Commites all staged permission grants for which governance delay passed.
+    /// @return An array of addresses for which permission grants were committed.
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory);
 
     /// @notice Revoke permission instantly from the given address.
     /// @param target The given address.
@@ -105,7 +159,7 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
 
     /// @notice Sets new pending params that could have been committed after governance delay expires.
     /// @param newParams New protocol parameters to set.
-    function setPendingParams(Params memory newParams) external;
+    function stageParams(Params memory newParams) external;
 
     /// @notice Stage granted permissions that could have been committed after governance delay expires.
     /// Resets commit delay and permissions if there are already staged permissions for this address.

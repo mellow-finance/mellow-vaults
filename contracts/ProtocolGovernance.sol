@@ -5,31 +5,74 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
+import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance, Multicall {
+contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    bytes32 public constant CONTRACT_NAME = "ProtocolGovernance";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     uint256 public constant MAX_GOVERNANCE_DELAY = 7 days;
     uint256 public constant MIN_WITHDRAW_LIMIT = 200_000;
 
+    /// @inheritdoc IProtocolGovernance
     mapping(address => uint256) public stagedPermissionGrantsTimestamps;
+    /// @inheritdoc IProtocolGovernance
     mapping(address => uint256) public stagedPermissionGrantsMasks;
+    /// @inheritdoc IProtocolGovernance
     mapping(address => uint256) public permissionMasks;
-    uint256 public pendingParamsTimestamp;
-    Params public params;
-    Params public pendingParams;
+
+    /// @inheritdoc IProtocolGovernance
+    mapping(address => uint256) public stagedValidatorsTimestamps;
+    /// @inheritdoc IProtocolGovernance
+    mapping(address => address) public stagedValidators;
+    /// @inheritdoc IProtocolGovernance
+    mapping(address => address) public validators;
+
+    /// @inheritdoc IProtocolGovernance
+    uint256 public stagedParamsTimestamp;
 
     EnumerableSet.AddressSet private _stagedPermissionGrantsAddresses;
     EnumerableSet.AddressSet private _permissionAddresses;
+    EnumerableSet.AddressSet private _validatorsAddresses;
+    EnumerableSet.AddressSet private _stagedValidatorsAddresses;
 
-    /// @notice Creates a new contract.
+    Params private _stagedParams;
+    Params private _params;
+
+    /// @notice Creates a new contract
     /// @param admin Initial admin of the contract
     constructor(address admin) UnitPricesGovernance(admin) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IProtocolGovernance
+    function stagedParams() public view returns (Params memory) {
+        return _stagedParams;
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function params() public view returns (Params memory) {
+        return _params;
+    }
+
+    function stagedValidatorsAddresses() external view returns (address[] memory) {
+        return _stagedValidatorsAddresses.values();
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function validatorsAddresses() external view returns (address[] memory) {
+        return _validatorsAddresses.values();
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function validatorsAddress(uint256 i) external view returns (address) {
+        return _validatorsAddresses.at(i);
+    }
 
     /// @inheritdoc IProtocolGovernance
     function permissionAddresses() external view returns (address[] memory) {
@@ -50,10 +93,11 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         for (uint256 i = 0; i < length; i++) {
             address addr = _permissionAddresses.at(i);
             if (permissionMasks[addr] & mask != 0) {
-                addresses[addressesLength] = addr;
+                tempAddresses[addressesLength] = addr;
                 addressesLength++;
             }
         }
+        // shrink to fit
         addresses = new address[](addressesLength);
         for (uint256 i = 0; i < addressesLength; i++) {
             addresses[i] = tempAddresses[i];
@@ -62,39 +106,39 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
 
     /// @inheritdoc IProtocolGovernance
     function hasPermission(address target, uint8 permissionId) external view returns (bool) {
-        return ((permissionMasks[target] | params.forceAllowMask) & (1 << (permissionId))) != 0;
+        return ((permissionMasks[target] | _params.forceAllowMask) & (1 << (permissionId))) != 0;
     }
 
     /// @inheritdoc IProtocolGovernance
     function hasAllPermissions(address target, uint8[] calldata permissionIds) external view returns (bool) {
         uint256 submask = _permissionIdsToMask(permissionIds);
-        uint256 mask = permissionMasks[target] | params.forceAllowMask;
+        uint256 mask = permissionMasks[target] | _params.forceAllowMask;
         return mask & submask == submask;
     }
 
     /// @inheritdoc IProtocolGovernance
     function maxTokensPerVault() external view returns (uint256) {
-        return params.maxTokensPerVault;
+        return _params.maxTokensPerVault;
     }
 
     /// @inheritdoc IProtocolGovernance
     function governanceDelay() external view returns (uint256) {
-        return params.governanceDelay;
+        return _params.governanceDelay;
     }
 
     /// @inheritdoc IProtocolGovernance
     function protocolTreasury() external view returns (address) {
-        return params.protocolTreasury;
+        return _params.protocolTreasury;
     }
 
     /// @inheritdoc IProtocolGovernance
     function forceAllowMask() external view returns (uint256) {
-        return params.forceAllowMask;
+        return _params.forceAllowMask;
     }
 
     /// @inheritdoc IProtocolGovernance
     function withdrawLimit(address token) external view returns (uint256) {
-        return params.withdrawLimit * unitPrices[token];
+        return _params.withdrawLimit * unitPrices[token];
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -109,11 +153,87 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IProtocolGovernance
+    function stageValidator(address target, address validator) external {
+        _requireAdmin();
+        _stagedValidatorsAddresses.add(target);
+        stagedValidators[target] = validator;
+        uint256 at = block.timestamp + _params.governanceDelay;
+        stagedValidatorsTimestamps[target] = at;
+        emit ValidatorStaged(tx.origin, msg.sender, target, validator, at);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function rollbackStagedValidators() external {
+        _requireAdmin();
+        uint256 length = _stagedValidatorsAddresses.length();
+        for (uint256 i; i != length; ++i) {
+            address target = _stagedValidatorsAddresses.at(0);
+            delete stagedValidators[target];
+            delete stagedValidatorsTimestamps[target];
+            _stagedValidatorsAddresses.remove(target);
+        }
+        emit AllStagedValidatorsRolledBack(tx.origin, msg.sender);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitValidator(address stagedAddress) external {
+        _requireAdmin();
+        uint256 stagedToCommitAt = stagedValidatorsTimestamps[stagedAddress];
+        require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
+        require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
+        validators[stagedAddress] = stagedValidators[stagedAddress];
+        if (validators[stagedAddress] == address(0)) {
+            _validatorsAddresses.remove(stagedAddress);
+        } else {
+            _validatorsAddresses.add(stagedAddress);
+        }
+        delete stagedValidators[stagedAddress];
+        delete stagedValidatorsTimestamps[stagedAddress];
+        _stagedValidatorsAddresses.remove(stagedAddress);
+        emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function commitAllValidatorsSurpassedDelay() external returns (address[] memory addressesCommitted) {
+        _requireAdmin();
+        uint256 length = _stagedValidatorsAddresses.length();
+        addressesCommitted = new address[](length);
+        uint256 addressesCommittedLength;
+        for (uint256 i; i != length; i++) {
+            address stagedAddress = _stagedValidatorsAddresses.at(0);
+            if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
+                validators[stagedAddress] = stagedValidators[stagedAddress];
+                if (validators[stagedAddress] == address(0)) {
+                    _validatorsAddresses.remove(stagedAddress);
+                } else {
+                    _validatorsAddresses.add(stagedAddress);
+                }
+                delete stagedValidators[stagedAddress];
+                delete stagedValidatorsTimestamps[stagedAddress];
+                _stagedValidatorsAddresses.remove(stagedAddress);
+                addressesCommitted[addressesCommittedLength] = stagedAddress;
+                addressesCommittedLength += 1;
+                emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
+            }
+        }
+        assembly {
+            mstore(addressesCommitted, addressesCommittedLength)
+        }
+    }
+
+    /// @inheritdoc IProtocolGovernance
+    function revokeValidator(address target) external {
+        _requireAdmin();
+        delete validators[target];
+        _validatorsAddresses.remove(target);
+        emit ValidatorRevoked(tx.origin, msg.sender, target);
+    }
+
+    /// @inheritdoc IProtocolGovernance
     function rollbackAllPermissionGrants() external {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
-        for (uint256 __; __ != length; ++__) {
-            // actual length is decremented in the loop so we take the first element each time
+        for (uint256 i; i != length; ++i) {
             address target = _stagedPermissionGrantsAddresses.at(0);
             delete stagedPermissionGrantsMasks[target];
             delete stagedPermissionGrantsTimestamps[target];
@@ -129,11 +249,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
         require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
         permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
-        if (permissionMasks[stagedAddress] == 0) {
-            _permissionAddresses.remove(stagedAddress);
-        } else {
-            _permissionAddresses.add(stagedAddress);
-        }
+        _permissionAddresses.add(stagedAddress);
         delete stagedPermissionGrantsMasks[stagedAddress];
         delete stagedPermissionGrantsTimestamps[stagedAddress];
         _stagedPermissionGrantsAddresses.remove(stagedAddress);
@@ -141,33 +257,39 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitAllPermissionGrantsSurpassedDelay() external {
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory) {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
-        for (uint256 i; i != length; ) {
+        uint256 addressesLeft = length;
+        address[] memory tempAddresses = new address[](length);
+        for (uint256 i; i != addressesLeft;) {
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
                 permissionMasks[stagedAddress] |= stagedPermissionGrantsMasks[stagedAddress];
-                if (permissionMasks[stagedAddress] == 0) {
-                    _permissionAddresses.remove(stagedAddress);
-                } else {
-                    _permissionAddresses.add(stagedAddress);
-                }
+                _permissionAddresses.add(stagedAddress);
                 delete stagedPermissionGrantsMasks[stagedAddress];
                 delete stagedPermissionGrantsTimestamps[stagedAddress];
                 _stagedPermissionGrantsAddresses.remove(stagedAddress);
-                --length;
+                tempAddresses[length - addressesLeft] = stagedAddress;
+                --addressesLeft;
                 emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
                 ++i;
             }
         }
-        // TODO: return an array of addresses that were committed
+        // shrink to fit
+        uint256 addressesToReturn = length - addressesLeft;
+        address[] memory result = new address[](addressesToReturn);
+        for (uint256 i; i != addressesToReturn; ++i) {
+            result[i] = tempAddresses[i];
+        }
+        return result;
     }
 
     /// @inheritdoc IProtocolGovernance
     function revokePermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
+        require(target != address(0), ExceptionsLibrary.NULL);
         uint256 diff;
         for (uint256 i = 0; i < permissionIds.length; ++i) {
             diff |= 1 << permissionIds[i];
@@ -184,36 +306,41 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     /// @inheritdoc IProtocolGovernance
     function commitParams() external {
         _requireAdmin();
-        require(pendingParamsTimestamp != 0 && block.timestamp >= pendingParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
-        params = pendingParams;
-        delete pendingParams;
-        delete pendingParamsTimestamp;
-        emit PendingParamsCommitted(tx.origin, msg.sender, params);
+        require(stagedParamsTimestamp != 0, ExceptionsLibrary.NULL);
+        require(
+            block.timestamp >= stagedParamsTimestamp,
+            ExceptionsLibrary.TIMESTAMP
+        );
+        _params = _stagedParams;
+        delete _stagedParams;
+        delete stagedParamsTimestamp;
+        emit ParamsCommitted(tx.origin, msg.sender, _params);
     }
 
     /// @inheritdoc IProtocolGovernance
     function stagePermissionGrants(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
+        require(target != address(0), ExceptionsLibrary.NULL);
         _stagedPermissionGrantsAddresses.add(target);
         stagedPermissionGrantsMasks[target] = _permissionIdsToMask(permissionIds);
-        uint256 stagedToCommitAt = block.timestamp + params.governanceDelay;
+        uint256 stagedToCommitAt = block.timestamp + _params.governanceDelay;
         stagedPermissionGrantsTimestamps[target] = stagedToCommitAt;
         emit PermissionGrantsStaged(tx.origin, msg.sender, target, permissionIds, stagedToCommitAt);
     }
 
     /// @inheritdoc IProtocolGovernance
-    function setPendingParams(IProtocolGovernance.Params calldata newParams) external {
+    function stageParams(IProtocolGovernance.Params calldata newParams) external {
         _requireAdmin();
         _validateGovernanceParams(newParams);
-        pendingParams = newParams;
-        pendingParamsTimestamp = block.timestamp + params.governanceDelay;
-        emit PendingParamsSet(tx.origin, msg.sender, pendingParamsTimestamp, pendingParams);
+        _stagedParams = newParams;
+        stagedParamsTimestamp = block.timestamp + _params.governanceDelay;
+        emit ParamsStaged(tx.origin, msg.sender, stagedParamsTimestamp, _stagedParams);
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
 
     function _validateGovernanceParams(IProtocolGovernance.Params calldata newParams) private pure {
-        require(newParams.maxTokensPerVault != 0 || newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
+        require(newParams.maxTokensPerVault != 0 && newParams.governanceDelay != 0, ExceptionsLibrary.NULL);
         require(newParams.governanceDelay <= MAX_GOVERNANCE_DELAY, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(newParams.withdrawLimit >= MIN_WITHDRAW_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
     }
@@ -226,7 +353,38 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
 
     // --------------------------  EVENTS  --------------------------
 
-    /// @notice Emitted when new permissions are staged to be granted for speceific address.
+    /// @notice Emitted when validators are staged to be granted for specific address.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    /// @param validator Staged validator
+    /// @param at Timestamp when the staged permissions could be committed
+    event ValidatorStaged(
+        address indexed origin,
+        address indexed sender,
+        address indexed target,
+        address validator,
+        uint256 at
+    );
+
+    /// @notice Validator revoked
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    event ValidatorRevoked(address indexed origin, address indexed sender, address indexed target);
+
+    /// @notice Emitted when staged validators are rolled back
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event AllStagedValidatorsRolledBack(address indexed origin, address indexed sender);
+
+    /// @notice Emitted when staged validators are comitted for specific address
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param target Target address
+    event ValidatorCommitted(address indexed origin, address indexed sender, address indexed target);
+
+    /// @notice Emitted when new permissions are staged to be granted for specific address.
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address
@@ -257,7 +415,7 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     /// @param sender Sender of the call (msg.sender)
     event AllPermissionGrantsRolledBack(address indexed origin, address indexed sender);
 
-    /// @notice Emitted when staged permissions are comitted for speceific address
+    /// @notice Emitted when staged permissions are comitted for specific address
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param target Target address
@@ -268,11 +426,11 @@ contract ProtocolGovernance is ERC165, IProtocolGovernance, UnitPricesGovernance
     /// @param sender Sender of the call (msg.sender)
     /// @param at Timestamp when the pending parameters could be committed
     /// @param params Pending parameters
-    event PendingParamsSet(address indexed origin, address indexed sender, uint256 at, Params params);
+    event ParamsStaged(address indexed origin, address indexed sender, uint256 at, Params params);
 
     /// @notice Emitted when pending parameters are committed
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param params Committed parameters
-    event PendingParamsCommitted(address indexed origin, address indexed sender, Params params);
+    event ParamsCommitted(address indexed origin, address indexed sender, Params params);
 }

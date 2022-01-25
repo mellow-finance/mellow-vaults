@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
-contract AaveVaultGovernance is IAaveVaultGovernance, VaultGovernance {
+contract AaveVaultGovernance is IContractMeta, IAaveVaultGovernance, VaultGovernance {
+    bytes32 public constant CONTRACT_NAME = "AaveVaultGovernance";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     uint256 public immutable MAX_ESTIMATED_AAVE_APY;
 
     /// @notice Creates a new contract.

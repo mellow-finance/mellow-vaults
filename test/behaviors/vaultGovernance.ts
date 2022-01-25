@@ -189,7 +189,7 @@ export function vaultGovernanceBehavior<
             const vault: IVault = await ethers.getContractAt("IVault", address);
             expect(nft).to.eq(await vault.nft());
         });
-        it("vault sets AprrovedForAll for VaultRegistry", async () => {
+        it("vault sets ApprovedForAll for VaultRegistry", async () => {
             const address = await this.vaultRegistry.vaultForNft(nft);
             expect(true).to.eq(
                 await this.vaultRegistry.isApprovedForAll(
@@ -205,9 +205,9 @@ export function vaultGovernanceBehavior<
                     const params = await this.protocolGovernance.params();
                     await this.protocolGovernance
                         .connect(this.admin)
-                        .setPendingParams({
+                        .stageParams({
                             ...params,
-                            forceAllowMask: 2 ** 5,
+                            forceAllowMask: 2 ** 2,
                         });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance
@@ -240,7 +240,7 @@ export function vaultGovernanceBehavior<
                     const params = await this.protocolGovernance.params();
                     await this.protocolGovernance
                         .connect(this.admin)
-                        .setPendingParams({ ...params, forceAllowMask: 0 });
+                        .stageParams({ ...params, forceAllowMask: 0 });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance
                         .connect(this.admin)

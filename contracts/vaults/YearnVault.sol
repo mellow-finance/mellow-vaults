@@ -25,8 +25,10 @@ import "./IntegrationVault.sol";
 /// The contract's vaultTokens are fully allowed to corresponding yTokens.
 
 contract YearnVault is IYearnVault, IntegrationVault {
-    address[] private _yTokens;
+    using SafeERC20 for IERC20;
     uint256 public constant DEFAULT_MAX_LOSS = 10000; // 10000%%
+
+    address[] private _yTokens;
 
     /// @notice Yearn protocol vaults used by this contract
     function yTokens() external view returns (address[] memory) {
@@ -82,8 +84,9 @@ contract YearnVault is IYearnVault, IntegrationVault {
 
             address token = tokens[i];
             IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
-            _allowTokenIfNecessary(token, address(yToken));
+            IERC20(token).safeIncreaseAllowance(address(yToken), tokenAmounts[i]);
             yToken.deposit(tokenAmounts[i], address(this));
+            IERC20(token).safeApprove(address(yToken), 0);
         }
         actualTokenAmounts = tokenAmounts;
     }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "../interfaces/utils/IContractMeta.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/external/univ2/IUniswapV2Pair.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
@@ -8,7 +9,10 @@ import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract UniV2Oracle is IUniV2Oracle, ERC165 {
+contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
+    bytes32 public constant CONTRACT_NAME = "UniV2Oracle";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     IUniswapV2Factory public immutable factory;
 
     constructor(IUniswapV2Factory factory_) {
