@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./IIntegrationVault.sol";
 import "../external/univ3/INonfungiblePositionManager.sol";
+import "../external/univ3/IUniswapV3Pool.sol";
 
 interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
     struct Options {
@@ -14,6 +15,9 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
 
     /// @notice Reference to INonfungiblePositionManager of UniswapV3 protocol.
     function positionManager() external view returns (INonfungiblePositionManager);
+
+    /// @notice Reference to UniswapV3 pool.
+    function pool() external view returns (IUniswapV3Pool);
 
     /// @notice NFT of UniV3 position manager
     function uniV3Nft() external view returns (uint256);

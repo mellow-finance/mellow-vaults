@@ -2,6 +2,8 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/Multicall.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
@@ -12,11 +14,15 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 
 contract LStrategy is Multicall {
+    using SafeERC20 for IERC20;
+
     // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
     INonfungiblePositionManager public immutable positionManager;
+    bool public immutable reversedTokensInPool;
+    uint24 public immutable poolFee;
 
     // INTERNAL STATE
 
@@ -68,13 +74,55 @@ contract LStrategy is Multicall {
         erc20Vault = erc20vault_;
         lowerVault = vault1_;
         upperVault = vault2_;
+        tokens = vault1_.vaultTokens();
+        poolFee = vault1_.pool().fee();
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    /// @notice Target tick based on mutable params
+    function targetTick() public view returns (int24) {
+        uint256 timeDelta = block.timestamp - tickPointTimestamp;
+        int24 annualTickGrowth = tickParams.annualTickGrowth;
+        int24 tickPoint = tickParams.tickPoint;
+        if (annualTickGrowth > 0) {
+            return
+                tickPoint +
+                int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
+        } else {
+            return
+                tickPoint -
+                int24(uint24(FullMath.mulDiv(uint256(uint24(-annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
+        }
+    }
+
+    /// @notice Target liquidity ratio for UniV3 vaults
+    function targetLiquidityRatio() public view returns (uint256 liquidityRatioD, bool isNegative) {
+        int24 targetTick_ = targetTick();
+        (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
+        int24 midTick = (tickUpper + tickLower) / 2;
+        isNegative = midTick > targetTick_;
+        if (isNegative) {
+            liquidityRatioD = FullMath.mulDiv(
+                uint256(uint24(midTick - targetTick_)),
+                DENOMINATOR,
+                uint256(uint24((tickUpper - tickLower) / 2))
+            );
+        } else {
+            liquidityRatioD = FullMath.mulDiv(
+                uint256(uint24(targetTick_ - midTick)),
+                DENOMINATOR,
+                uint256(uint24((tickUpper - tickLower) / 2))
+            );
+        }
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    // -------------------  INTERNAL, VIEW  -------------------
+    function collectEarnings() external {
+        lowerVault.collectEarnings();
+        upperVault.collectEarnings();
+    }
 
     function pullFromUniV3Vault(
         IUniV3Vault fromVault,
@@ -92,22 +140,38 @@ contract LStrategy is Multicall {
         erc20Vault.pull(address(toVault), tokens, tokenAmounts, abi.encode(depositOptions));
     }
 
-    function rebalanceUniV3Vaults(IUniV3Vault.Options memory withdrawOptions, IUniV3Vault.Options memory depositOptions)
-        external
-    {
-        (uint256 targetLiquidityRatioD, bool isNegativeLiquidityRatio) = _targetLiquidityRatio();
+    function rebalanceUniV3Vaults(
+        uint256[] memory minWithdrawTokens,
+        uint256[] memory minDepositTokens,
+        uint256 deadline
+    ) external {
+        (uint256 targetLiquidityRatioD, bool isNegativeLiquidityRatio) = targetLiquidityRatio();
         // // we crossed the interval right to left
         if (isNegativeLiquidityRatio) {
-            // pull max liquidity and swap intervals
-            _rebalanceLiquidity(upperVault, lowerVault, type(uint128).max, withdrawOptions, depositOptions);
-            _swapVaults(false);
+            // pull all liquidity to other vault and swap intervals
+            _rebalanceUniV3Liquidity(
+                upperVault,
+                lowerVault,
+                type(uint128).max,
+                minWithdrawTokens,
+                minDepositTokens,
+                deadline
+            );
+            _swapVaults(false, deadline);
             return;
         }
         // we crossed the interval left to right
         if (targetLiquidityRatioD > DENOMINATOR) {
-            // pull max liquidity and swap intervals
-            _rebalanceLiquidity(lowerVault, upperVault, type(uint128).max, withdrawOptions, depositOptions);
-            _swapVaults(true);
+            // pull all liquidity to other vault and swap intervals
+            _rebalanceUniV3Liquidity(
+                lowerVault,
+                upperVault,
+                type(uint128).max,
+                minWithdrawTokens,
+                minDepositTokens,
+                deadline
+            );
+            _swapVaults(true, deadline);
             return;
         }
 
@@ -127,47 +191,34 @@ contract LStrategy is Multicall {
             fromVault = lowerVault;
             toVault = upperVault;
         }
-        _rebalanceLiquidity(fromVault, toVault, liquidityDelta, withdrawOptions, depositOptions);
+        _rebalanceUniV3Liquidity(fromVault, toVault, liquidityDelta, minWithdrawTokens, minDepositTokens, deadline);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    // As the upper vault goes from 100% liquidity to 0% liquidty, price moves from middle of the lower interval to right of the lower interval
-    function _targetLiquidityRatio() internal view returns (uint256 liquidityRatioD, bool isNegative) {
-        int24 targetTick = _targetTick();
-        (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
-        int24 midTick = (tickUpper + tickLower) / 2;
-        isNegative = midTick > targetTick;
-        if (isNegative) {
-            liquidityRatioD = FullMath.mulDiv(
-                uint256(uint24(midTick - targetTick)),
-                DENOMINATOR,
-                uint256(uint24((tickUpper - tickLower) / 2))
-            );
-        } else {
-            liquidityRatioD = FullMath.mulDiv(
-                uint256(uint24(targetTick - midTick)),
-                DENOMINATOR,
-                uint256(uint24((tickUpper - tickLower) / 2))
-            );
-        }
+    /// @notice The vault to get stats from
+    /// @return tickLower Lower tick for the uniV3 poistion inside the vault
+    /// @return tickUpper Upper tick for the uniV3 poistion inside the vault
+    /// @return liquidity Vault liquidity
+    function _getVaultStats(IUniV3Vault vault)
+        internal
+        view
+        returns (
+            int24 tickLower,
+            int24 tickUpper,
+            uint128 liquidity
+        )
+    {
+        uint256 nft = vault.uniV3Nft();
+        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(nft);
     }
 
-    function _targetTick() internal view returns (int24) {
-        uint256 timeDelta = block.timestamp - tickPointTimestamp;
-        int24 annualTickGrowth = tickParams.annualTickGrowth;
-        int24 tickPoint = tickParams.tickPoint;
-        if (annualTickGrowth > 0) {
-            return
-                tickPoint +
-                int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
-        } else {
-            return
-                tickPoint -
-                int24(uint24(FullMath.mulDiv(uint256(uint24(-annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
-        }
-    }
-
+    /// @notice Liquidity required to be sold to reach targetLiquidityRatioD
+    /// @param lowerLiquidity Lower vault liquidity
+    /// @param upperLiquidity Upper vault liquidity
+    /// @param targetLiquidityRatioD Tardet liquidity ratio (multiplied by DENOMINATOR)
+    /// @return delta Liquidity required to reach targetLiquidityRatioD
+    /// @return isNegative If `true` then delta needs to be bought to reach targetLiquidityRatioD, o/w needs to be sold
     function _liquidityDelta(
         uint128 lowerLiquidity,
         uint128 upperLiquidity,
@@ -185,94 +236,134 @@ contract LStrategy is Multicall {
         }
     }
 
-    function _getVaultStats(IUniV3Vault vault)
-        internal
-        view
-        returns (
-            int24 tickLower,
-            int24 tickUpper,
-            uint128 liquidity
-        )
-    {
-        uint256 nft = vault.uniV3Nft();
-        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(nft);
-    }
-
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function _rebalanceLiquidity(
+    /// @notice Pull liquidity from `fromVault` and put into `toVault`
+    /// @param fromVault The vault to pull liquidity from
+    /// @param toVault The vault to pull liquidity to
+    /// @param liquidity The amount of liquidity. On overflow best effort pull is made
+    /// @param minWithdrawTokens Min accepted tokenAmounts for withdrawal
+    /// @param minDepositTokens Min accepted tokenAmounts for deposit
+    /// @param deadline Timestamp after which the transaction reverts
+    function _rebalanceUniV3Liquidity(
         IUniV3Vault fromVault,
         IUniV3Vault toVault,
         uint128 liquidity,
-        IUniV3Vault.Options memory withdrawOptions,
-        IUniV3Vault.Options memory depositOptions
+        uint256[] memory minWithdrawTokens,
+        uint256[] memory minDepositTokens,
+        uint256 deadline
     ) internal {
+        address[] memory tokens_ = tokens;
         uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
-        (, , uint128 maxFromLiquidity) = _getVaultStats(fromVault);
-        fromVault.pull(address(erc20Vault), tokens, withdrawTokenAmounts, abi.encode(withdrawOptions));
+        (, , uint128 fromVaultLiquidity) = _getVaultStats(fromVault);
+        fromVault.pull(
+            address(erc20Vault),
+            tokens_,
+            withdrawTokenAmounts,
+            _makeUniswapVaultOptions(minWithdrawTokens, deadline)
+        );
         // Approximately `liquidity` will be pulled unless `liquidity` is more than total liquidity in the vault
-        uint128 pulledLiqudity = maxFromLiquidity > liquidity ? liquidity : maxFromLiquidity;
-        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(pulledLiqudity);
-        erc20Vault.pull(address(toVault), tokens, depositTokenAmounts, abi.encode(depositOptions));
+        uint128 actualLiqudity = fromVaultLiquidity > liquidity ? liquidity : fromVaultLiquidity;
+        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(actualLiqudity);
+        erc20Vault.pull(
+            address(toVault),
+            tokens_,
+            depositTokenAmounts,
+            _makeUniswapVaultOptions(minDepositTokens, deadline)
+        );
     }
 
-    function _swapVaults(bool positiveGrowth) internal {
+    /// @notice Closes position with zero liquidity and creates a new one.
+    /// @dev This happens when the price croses "zero" point and a new interval must be created while old one is close
+    /// @param positiveTickGrowth `true` if price tick increased
+    /// @param deadline Deadline for Uniswap V3 operations
+    function _swapVaults(bool positiveTickGrowth, uint256 deadline) internal {
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
-        if (!positiveGrowth) {
-            fromVault = lowerVault;
-            toVault = upperVault;
+        if (!positiveTickGrowth) {
+            (fromVault, toVault) = (lowerVault, upperVault);
         } else {
-            fromVault = upperVault;
-            toVault = lowerVault;
+            (fromVault, toVault) = (upperVault, lowerVault);
         }
-        fromVault.collectEarnings();
         uint256 fromNft = fromVault.uniV3Nft();
         uint256 toNft = toVault.uniV3Nft();
-        address token0;
-        address token1;
-        uint24 fee;
-        {
-            uint128 fromLiquidity;
-            uint128 fromTokensOwed0;
-            uint128 fromTokensOwed1;
 
-            (, , token0, token1, fee, , , fromLiquidity, , , fromTokensOwed0, fromTokensOwed1) = positionManager
-                .positions(fromNft);
-            require(fromLiquidity + fromTokensOwed0 + fromTokensOwed1 == 0, ExceptionsLibrary.INVARIANT);
+        {
+            fromVault.collectEarnings();
+            (, , , , , , , uint128 fromLiquidity, , , , ) = positionManager.positions(fromNft);
+            require(fromLiquidity == 0, ExceptionsLibrary.INVARIANT);
         }
+
         (, , , , , int24 toTickLower, int24 toTickUpper, , , , , ) = positionManager.positions(toNft);
         int24 newTickLower;
         int24 newTickUpper;
-        {
-            uint16 intervalWidthInTicks = otherParams.intervalWidthInTicks;
-            if (positiveGrowth) {
-                newTickLower = (toTickLower + toTickUpper) / 2;
-                newTickUpper = newTickLower + int24(uint24(intervalWidthInTicks));
-            } else {
-                newTickUpper = (toTickLower + toTickUpper) / 2;
-                newTickLower = newTickUpper - int24(uint24(intervalWidthInTicks));
-            }
+        if (positiveTickGrowth) {
+            newTickLower = (toTickLower + toTickUpper) / 2;
+            newTickUpper = newTickLower + int24(uint24(otherParams.intervalWidthInTicks));
+        } else {
+            newTickUpper = (toTickLower + toTickUpper) / 2;
+            newTickLower = newTickUpper - int24(uint24(otherParams.intervalWidthInTicks));
         }
-        (uint256 newNft, , , ) = positionManager.mint(
+
+        uint256 newNft = _mintNewNft(newTickLower, newTickUpper, deadline);
+        positionManager.safeTransferFrom(address(this), address(fromVault), newNft);
+        positionManager.burn(fromNft);
+
+        (lowerVault, upperVault) = (upperVault, lowerVault);
+
+        emit SwapVault(fromNft, newNft, newTickLower, newTickUpper);
+    }
+
+    /// @notice Mints new Nft in Uniswap V3 positionManager
+    /// @param lowerTick Lower tick of the Uni interval
+    /// @param upperTick Upper tick of the Uni interval
+    /// @param deadline Timestamp after which the transaction will be reverted
+    function _mintNewNft(
+        int24 lowerTick,
+        int24 upperTick,
+        uint256 deadline
+    ) internal returns (uint256 newNft) {
+        uint256 minToken0ForOpening = otherParams.minToken0ForOpening;
+        uint256 minToken1ForOpening = otherParams.minToken1ForOpening;
+        IERC20(tokens[0]).safeApprove(address(positionManager), minToken0ForOpening);
+        IERC20(tokens[1]).safeApprove(address(positionManager), minToken1ForOpening);
+        (newNft, , , ) = positionManager.mint(
             INonfungiblePositionManager.MintParams({
-                token0: token0,
-                token1: token1,
-                fee: fee,
-                tickLower: newTickLower,
-                tickUpper: newTickUpper,
-                amount0Desired: otherParams.minToken0ForOpening,
-                amount1Desired: otherParams.minToken0ForOpening,
+                token0: tokens[0],
+                token1: tokens[1],
+                fee: poolFee,
+                tickLower: lowerTick,
+                tickUpper: upperTick,
+                amount0Desired: minToken0ForOpening,
+                amount1Desired: minToken1ForOpening,
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: address(this),
-                deadline: block.timestamp + 600
+                deadline: deadline
             })
         );
-        positionManager.safeTransferFrom(address(this), address(fromVault), newNft);
-        (lowerVault, upperVault) = (upperVault, lowerVault);
-        positionManager.burn(fromNft);
-        emit SwapVault(fromNft, newNft, newTickLower, newTickUpper);
+        IERC20(tokens[0]).safeApprove(address(positionManager), 0);
+        IERC20(tokens[1]).safeApprove(address(positionManager), 0);
+    }
+
+    /// @notice Covert token amounts and deadline to byte options
+    /// @dev Empty tokenAmounts are equivalent to zero tokenAmounts
+    function _makeUniswapVaultOptions(uint256[] memory tokenAmounts, uint256 deadline)
+        internal
+        returns (bytes memory options)
+    {
+        options = new bytes(96);
+        assembly {
+            mstore(add(options, 0x60), deadline)
+        }
+        if (tokenAmounts.length == 2) {
+            uint256 tokenAmount0 = tokenAmounts[0];
+            uint256 tokenAmount1 = tokenAmounts[1];
+            assembly {
+                mstore(add(options, 0x20), tokenAmount0)
+                mstore(add(options, 0x40), tokenAmount1)
+            }
+        }
     }
 
     /// @notice Emitted when vault is swapped.
