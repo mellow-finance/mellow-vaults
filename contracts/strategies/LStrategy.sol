@@ -119,27 +119,32 @@ contract LStrategy is Multicall {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    function collectEarnings() external {
+    /// @notice Collect Uniswap pool fees to erc20 vault
+    function collectUniFees() external {
         lowerVault.collectEarnings();
         upperVault.collectEarnings();
     }
 
-    function pullFromUniV3Vault(
-        IUniV3Vault fromVault,
+    /// @notice Manually pull tokens from fromVault to toVault
+    /// @param fromVault Pull tokens from this vault
+    /// @param toVault Pull tokens to this vault
+    /// @param tokenAmounts Token amounts to pull
+    /// @param minTokensAmounts Minimal token amounts to pull
+    /// @param deadline Timestamp after which the transaction is invalid
+    function manualPull(
+        IIntegrationVault fromVault,
+        IIntegrationVault toVault,
         uint256[] memory tokenAmounts,
-        IUniV3Vault.Options memory withdrawOptions
+        uint256[] memory minTokensAmounts,
+        uint256 deadline
     ) external {
-        fromVault.pull(address(erc20Vault), tokens, tokenAmounts, abi.encode(withdrawOptions));
+        fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
     }
 
-    function pullFromERC20Vault(
-        IUniV3Vault toVault,
-        uint256[] memory tokenAmounts,
-        IUniV3Vault.Options memory depositOptions
-    ) external {
-        erc20Vault.pull(address(toVault), tokens, tokenAmounts, abi.encode(depositOptions));
-    }
-
+    /// @notice Make a rebalance of UniV3 vaults
+    /// @param minWithdrawTokens Min accepted tokenAmounts for withdrawal
+    /// @param minDepositTokens Min accepted tokenAmounts for deposit
+    /// @param deadline Timestamp after which the transaction reverts
     function rebalanceUniV3Vaults(
         uint256[] memory minWithdrawTokens,
         uint256[] memory minDepositTokens,
@@ -245,6 +250,8 @@ contract LStrategy is Multicall {
     /// @param minWithdrawTokens Min accepted tokenAmounts for withdrawal
     /// @param minDepositTokens Min accepted tokenAmounts for deposit
     /// @param deadline Timestamp after which the transaction reverts
+    /// @return pulledAmounts amounts pulled from fromVault
+    /// @return pushedAmounts amounts pushed to toVault
     function _rebalanceUniV3Liquidity(
         IUniV3Vault fromVault,
         IUniV3Vault toVault,
@@ -252,11 +259,11 @@ contract LStrategy is Multicall {
         uint256[] memory minWithdrawTokens,
         uint256[] memory minDepositTokens,
         uint256 deadline
-    ) internal {
+    ) internal returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
         address[] memory tokens_ = tokens;
         uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
         (, , uint128 fromVaultLiquidity) = _getVaultStats(fromVault);
-        fromVault.pull(
+        pulledAmounts = fromVault.pull(
             address(erc20Vault),
             tokens_,
             withdrawTokenAmounts,
@@ -265,12 +272,13 @@ contract LStrategy is Multicall {
         // Approximately `liquidity` will be pulled unless `liquidity` is more than total liquidity in the vault
         uint128 actualLiqudity = fromVaultLiquidity > liquidity ? liquidity : fromVaultLiquidity;
         uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(actualLiqudity);
-        erc20Vault.pull(
+        pushedAmounts = erc20Vault.pull(
             address(toVault),
             tokens_,
             depositTokenAmounts,
             _makeUniswapVaultOptions(minDepositTokens, deadline)
         );
+        emit RebalancedUniV3(address(fromVault), address(toVault), pulledAmounts, pushedAmounts, liquidity);
     }
 
     /// @notice Closes position with zero liquidity and creates a new one.
@@ -372,4 +380,17 @@ contract LStrategy is Multicall {
     /// @param newTickLower Lower tick for created UniV3 nft
     /// @param newTickUpper Upper tick for created UniV3 nft
     event SwapVault(uint256 oldNft, uint256 newNft, int24 newTickLower, int24 newTickUpper);
+
+    /// @param fromVault The vault to pull liquidity from
+    /// @param toVault The vault to pull liquidity to
+    /// @param pulledAmounts amounts pulled from fromVault
+    /// @param pushedAmounts amounts pushed to toVault
+    /// @param liquidity The amount of liquidity. On overflow best effort pull is made
+    event RebalancedUniV3(
+        address fromVault,
+        address toVault,
+        uint256[] pulledAmounts,
+        uint256[] pushedAmounts,
+        uint128 liquidity
+    );
 }
