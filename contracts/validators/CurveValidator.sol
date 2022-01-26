@@ -2,8 +2,6 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
