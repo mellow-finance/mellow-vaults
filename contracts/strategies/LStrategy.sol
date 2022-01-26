@@ -18,10 +18,13 @@ contract LStrategy is Multicall {
 
     // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;
+    bytes4 public constant SET_PRESIGNATURE_SELECTOR = 0xec6cb13f;
+    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
     INonfungiblePositionManager public immutable positionManager;
     uint24 public immutable poolFee;
+    address public immutable cowswap;
 
     // INTERNAL STATE
 
@@ -65,6 +68,7 @@ contract LStrategy is Multicall {
     // @param vault2_ Reference to Uniswap V3 Vault 2
     constructor(
         INonfungiblePositionManager positionManager_,
+        address cowswap_,
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,
         IUniV3Vault vault2_
@@ -75,6 +79,7 @@ contract LStrategy is Multicall {
         upperVault = vault2_;
         tokens = vault1_.vaultTokens();
         poolFee = vault1_.pool().fee();
+        cowswap = cowswap_;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -117,6 +122,28 @@ contract LStrategy is Multicall {
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// Sign Cowswap order
+    /// @param tokenNumber The number of the token to swap
+    /// @param allowance Allowance to set for cowswap
+    /// @param uuid Cowswap order id
+    /// @param signed To sign order set to `true`
+    function signOrder(
+        uint8 tokenNumber,
+        uint256 allowance,
+        bytes calldata uuid,
+        bool signed
+    ) external {
+        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, allowance));
+        erc20Vault.externalCall(tokens[tokenNumber], approveData);
+        bytes memory setPresignatureData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
+        erc20Vault.externalCall(cowswap, setPresignatureData);
+    }
+
+    function resetCowswapAllowance(uint8 tokenNumber) external {
+        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
+        erc20Vault.externalCall(tokens[tokenNumber], approveData);
+    }
 
     /// @notice Collect Uniswap pool fees to erc20 vault
     function collectUniFees() external {
