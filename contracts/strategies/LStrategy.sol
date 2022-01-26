@@ -21,7 +21,6 @@ contract LStrategy is Multicall {
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
     INonfungiblePositionManager public immutable positionManager;
-    bool public immutable reversedTokensInPool;
     uint24 public immutable poolFee;
 
     // INTERNAL STATE
