@@ -1,7 +1,13 @@
-import { ethers, getNamedAccounts } from "hardhat";
+import hre from "hardhat";
+import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { mint } from "../library/Helpers";
+import { mint, withSigner } from "../library/Helpers";
+import { contract } from "../library/setup";
+import { ERC20RootVault } from "../types/ERC20RootVault";
+import { UniV3Vault } from "../types/UniV3Vault";
+import { ERC20Vault } from "../types/ERC20Vault";
+import { setupVault, combineVaults } from "../../deploy/0000_utils";
 
 async function mintUniV3Position_USDC_WETH(options: {
     tickLower: BigNumberish;
@@ -64,8 +70,8 @@ async function mintUniV3Position_USDC_WETH(options: {
         token0: usdc,
         token1: weth,
         fee: options.fee,
-        tickLower: -60,
-        tickUpper: 60,
+        tickLower: options.tickLower,
+        tickUpper: options.tickUpper,
         amount0Desired: options.usdcAmount,
         amount1Desired: options.wethAmount,
         amount0Min: 0,
@@ -82,15 +88,108 @@ async function mintUniV3Position_USDC_WETH(options: {
     return result;
 }
 
-describe("rebalance", () => {
-    it("mints univ3 position", async () => {
-        const result = await mintUniV3Position_USDC_WETH({
-            fee: 3000,
-            tickLower: -60,
-            tickUpper: 60,
-            usdcAmount: 300000000,
-            wethAmount: 100000000,
+type CustomContext = {
+    erc20Vault: ERC20Vault;
+    uniV3Vault: UniV3Vault;
+};
+
+type DeployOptions = {};
+
+contract<ERC20RootVault, DeployOptions, CustomContext>(
+    "Integration__UniV3_ERC20_rebalance",
+    function () {
+        const uniV3PoolFee = 3000;
+
+        before(async () => {
+            this.deploymentFixture = deployments.createFixture(
+                async (_, __?: DeployOptions) => {
+                    const { read } = deployments;
+                    const { deployer, weth, usdc } = await getNamedAccounts();
+
+                    const tokens = [weth, usdc]
+                        .map((t) => t.toLowerCase())
+                        .sort();
+                    const startNft =
+                        (
+                            await read("VaultRegistry", "vaultsCount")
+                        ).toNumber() + 1;
+
+                    let uniV3VaultNft = startNft;
+                    let erc20VaultNft = startNft + 1;
+                    await setupVault(
+                        hre,
+                        uniV3VaultNft,
+                        "UniV3VaultGovernance",
+                        {
+                            createVaultArgs: [tokens, deployer, uniV3PoolFee],
+                        }
+                    );
+                    await setupVault(
+                        hre,
+                        erc20VaultNft,
+                        "ERC20VaultGovernance",
+                        {
+                            createVaultArgs: [tokens, deployer],
+                        }
+                    );
+
+                    await combineVaults(
+                        hre,
+                        erc20VaultNft + 1,
+                        [erc20VaultNft, uniV3VaultNft],
+                        deployer,
+                        deployer
+                    );
+                    const erc20Vault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20VaultNft
+                    );
+                    const uniV3Vault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        uniV3VaultNft
+                    );
+
+                    const erc20RootVault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20VaultNft + 1
+                    );
+
+                    this.subject = await ethers.getContractAt(
+                        "ERC20RootVault",
+                        erc20RootVault
+                    );
+                    this.erc20Vault = await ethers.getContractAt(
+                        "ERC20Vault",
+                        erc20Vault
+                    );
+                    this.uniV3Vault = await ethers.getContractAt(
+                        "UniV3Vault",
+                        uniV3Vault
+                    );
+
+                    return this.subject;
+                }
+            );
         });
-        console.log(result);
-    });
-});
+
+        beforeEach(async () => {
+            await this.deploymentFixture();
+        });
+
+        describe("#rebalance", () => {
+            it("initializes uniV3 vault with position nft", async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: uniV3PoolFee,
+                    tickLower: -60,
+                    tickUpper: 60,
+                    usdcAmount: 300000000,
+                    wethAmount: 100000000,
+                });
+                console.log(result.tokenId.toString());
+            });
+        });
+    }
+);
