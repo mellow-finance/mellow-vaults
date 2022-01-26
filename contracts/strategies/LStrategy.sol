@@ -240,6 +240,27 @@ contract LStrategy is Multicall {
         }
     }
 
+    /// @notice Covert token amounts and deadline to byte options
+    /// @dev Empty tokenAmounts are equivalent to zero tokenAmounts
+    function _makeUniswapVaultOptions(uint256[] memory tokenAmounts, uint256 deadline)
+        internal
+        pure
+        returns (bytes memory options)
+    {
+        options = new bytes(96);
+        assembly {
+            mstore(add(options, 0x60), deadline)
+        }
+        if (tokenAmounts.length == 2) {
+            uint256 tokenAmount0 = tokenAmounts[0];
+            uint256 tokenAmount1 = tokenAmounts[1];
+            assembly {
+                mstore(add(options, 0x20), tokenAmount0)
+                mstore(add(options, 0x40), tokenAmount1)
+            }
+        }
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     /// @notice Pull liquidity from `fromVault` and put into `toVault`
@@ -351,26 +372,6 @@ contract LStrategy is Multicall {
         );
         IERC20(tokens[0]).safeApprove(address(positionManager), 0);
         IERC20(tokens[1]).safeApprove(address(positionManager), 0);
-    }
-
-    /// @notice Covert token amounts and deadline to byte options
-    /// @dev Empty tokenAmounts are equivalent to zero tokenAmounts
-    function _makeUniswapVaultOptions(uint256[] memory tokenAmounts, uint256 deadline)
-        internal
-        returns (bytes memory options)
-    {
-        options = new bytes(96);
-        assembly {
-            mstore(add(options, 0x60), deadline)
-        }
-        if (tokenAmounts.length == 2) {
-            uint256 tokenAmount0 = tokenAmounts[0];
-            uint256 tokenAmount1 = tokenAmounts[1];
-            assembly {
-                mstore(add(options, 0x20), tokenAmount0)
-                mstore(add(options, 0x40), tokenAmount1)
-            }
-        }
     }
 
     /// @notice Emitted when vault is swapped.
