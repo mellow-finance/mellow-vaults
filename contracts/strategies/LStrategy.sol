@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// TODO: Check if GPL is fine
-// TODO: Keeper rewards
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/Multicall.sol";
@@ -26,20 +24,40 @@ contract LStrategy is Multicall {
     IUniV3Vault public upperVault;
     uint256 public tickPointTimestamp;
 
-    // MUTABLE PARAMS STATE
+    // MUTABLE PARAMS
 
-    int24 public tickPoint;
-    int24 public annualTickGrowth;
-    uint16 public intervalWidthInTicks;
-    uint256 public erc20UniV3RatioD;
-    uint256 public erc20TokenRatioD;
-    uint256 public lowerPriceDeviationD;
-    uint256 public upperPriceDeviationD;
-    uint256 public maxBotAllowance;
-    uint256 public minBotWaitTime;
-    uint256 public minToken0ForOpening;
-    uint256 public minToken1ForOpening;
+    struct TickParams {
+        int24 tickPoint;
+        int24 annualTickGrowth;
+    }
 
+    struct RatioParams {
+        uint256 erc20UniV3RatioD;
+        uint256 erc20TokenRatioD;
+    }
+    struct BotParams {
+        uint256 maxBotAllowance;
+        uint256 minBotWaitTime;
+    }
+
+    struct OtherParams {
+        uint16 intervalWidthInTicks;
+        uint256 lowerTickDeviation;
+        uint256 upperTickDeviation;
+        uint256 minToken0ForOpening;
+        uint256 minToken1ForOpening;
+    }
+
+    TickParams public tickParams;
+    RatioParams public ratioParams;
+    BotParams public botParams;
+    OtherParams public otherParams;
+
+    // @notice Constructor for a new contract
+    // @param positionManager_ Reference to UniswapV3 positionManager
+    // @param erc20vault_ Reference to ERC20 Vault
+    // @param vault1_ Reference to Uniswap V3 Vault 1
+    // @param vault2_ Reference to Uniswap V3 Vault 2
     constructor(
         INonfungiblePositionManager positionManager_,
         IERC20Vault erc20vault_,
@@ -51,6 +69,12 @@ contract LStrategy is Multicall {
         lowerVault = vault1_;
         upperVault = vault2_;
     }
+
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    // -------------------  INTERNAL, VIEW  -------------------
 
     function pullFromUniV3Vault(
         IUniV3Vault fromVault,
@@ -71,39 +95,24 @@ contract LStrategy is Multicall {
     function rebalanceUniV3Vaults(IUniV3Vault.Options memory withdrawOptions, IUniV3Vault.Options memory depositOptions)
         external
     {
-        INonfungiblePositionManager positionManager_ = positionManager;
-        (uint256 targetLiquidityRatioD, bool isNegativeLiquidityRatio) = _targetLiquidityRatio(positionManager_);
+        (uint256 targetLiquidityRatioD, bool isNegativeLiquidityRatio) = _targetLiquidityRatio();
         // // we crossed the interval right to left
         if (isNegativeLiquidityRatio) {
             // pull max liquidity and swap intervals
-            _rebalanceLiquidity(
-                positionManager_,
-                upperVault,
-                lowerVault,
-                type(uint128).max,
-                withdrawOptions,
-                depositOptions
-            );
-            _swapVaults(positionManager_, false);
+            _rebalanceLiquidity(upperVault, lowerVault, type(uint128).max, withdrawOptions, depositOptions);
+            _swapVaults(false);
             return;
         }
         // we crossed the interval left to right
         if (targetLiquidityRatioD > DENOMINATOR) {
             // pull max liquidity and swap intervals
-            _rebalanceLiquidity(
-                positionManager_,
-                lowerVault,
-                upperVault,
-                type(uint128).max,
-                withdrawOptions,
-                depositOptions
-            );
-            _swapVaults(positionManager_, true);
+            _rebalanceLiquidity(lowerVault, upperVault, type(uint128).max, withdrawOptions, depositOptions);
+            _swapVaults(true);
             return;
         }
 
-        (, , uint128 lowerLiquidity) = _getVaultStats(positionManager_, lowerVault);
-        (, , uint128 upperLiquidity) = _getVaultStats(positionManager_, upperVault);
+        (, , uint128 lowerLiquidity) = _getVaultStats(lowerVault);
+        (, , uint128 upperLiquidity) = _getVaultStats(upperVault);
         (uint128 liquidityDelta, bool isNegativeLiquidityDelta) = _liquidityDelta(
             lowerLiquidity,
             upperLiquidity,
@@ -118,34 +127,15 @@ contract LStrategy is Multicall {
             fromVault = lowerVault;
             toVault = upperVault;
         }
-        _rebalanceLiquidity(positionManager_, fromVault, toVault, liquidityDelta, withdrawOptions, depositOptions);
+        _rebalanceLiquidity(fromVault, toVault, liquidityDelta, withdrawOptions, depositOptions);
     }
 
-    function _rebalanceLiquidity(
-        INonfungiblePositionManager positionManager_,
-        IUniV3Vault fromVault,
-        IUniV3Vault toVault,
-        uint128 liquidity,
-        IUniV3Vault.Options memory withdrawOptions,
-        IUniV3Vault.Options memory depositOptions
-    ) internal {
-        uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
-        (, , uint128 maxFromLiquidity) = _getVaultStats(positionManager_, fromVault);
-        fromVault.pull(address(erc20Vault), tokens, withdrawTokenAmounts, abi.encode(withdrawOptions));
-        // Approximately `liquidity` will be pulled unless `liquidity` is more than total liquidity in the vault
-        uint128 pulledLiqudity = maxFromLiquidity > liquidity ? liquidity : maxFromLiquidity;
-        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(pulledLiqudity);
-        erc20Vault.pull(address(toVault), tokens, depositTokenAmounts, abi.encode(depositOptions));
-    }
+    // -------------------  INTERNAL, VIEW  -------------------
 
     // As the upper vault goes from 100% liquidity to 0% liquidty, price moves from middle of the lower interval to right of the lower interval
-    function _targetLiquidityRatio(INonfungiblePositionManager positionManager_)
-        internal
-        view
-        returns (uint256 liquidityRatioD, bool isNegative)
-    {
+    function _targetLiquidityRatio() internal view returns (uint256 liquidityRatioD, bool isNegative) {
         int24 targetTick = _targetTick();
-        (int24 tickLower, int24 tickUpper, ) = _getVaultStats(positionManager_, lowerVault);
+        (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
         int24 midTick = (tickUpper + tickLower) / 2;
         isNegative = midTick > targetTick;
         if (isNegative) {
@@ -165,14 +155,15 @@ contract LStrategy is Multicall {
 
     function _targetTick() internal view returns (int24) {
         uint256 timeDelta = block.timestamp - tickPointTimestamp;
-        int24 tickPoint_ = tickPoint;
+        int24 annualTickGrowth = tickParams.annualTickGrowth;
+        int24 tickPoint = tickParams.tickPoint;
         if (annualTickGrowth > 0) {
             return
-                tickPoint_ +
+                tickPoint +
                 int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
         } else {
             return
-                tickPoint_ -
+                tickPoint -
                 int24(uint24(FullMath.mulDiv(uint256(uint24(-annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
         }
     }
@@ -194,7 +185,7 @@ contract LStrategy is Multicall {
         }
     }
 
-    function _getVaultStats(INonfungiblePositionManager positionManager_, IUniV3Vault vault)
+    function _getVaultStats(IUniV3Vault vault)
         internal
         view
         returns (
@@ -204,10 +195,28 @@ contract LStrategy is Multicall {
         )
     {
         uint256 nft = vault.uniV3Nft();
-        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager_.positions(nft);
+        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(nft);
     }
 
-    function _swapVaults(INonfungiblePositionManager positionManager_, bool positiveGrowth) internal {
+    // -------------------  INTERNAL, MUTATING  -------------------
+
+    function _rebalanceLiquidity(
+        IUniV3Vault fromVault,
+        IUniV3Vault toVault,
+        uint128 liquidity,
+        IUniV3Vault.Options memory withdrawOptions,
+        IUniV3Vault.Options memory depositOptions
+    ) internal {
+        uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
+        (, , uint128 maxFromLiquidity) = _getVaultStats(fromVault);
+        fromVault.pull(address(erc20Vault), tokens, withdrawTokenAmounts, abi.encode(withdrawOptions));
+        // Approximately `liquidity` will be pulled unless `liquidity` is more than total liquidity in the vault
+        uint128 pulledLiqudity = maxFromLiquidity > liquidity ? liquidity : maxFromLiquidity;
+        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(pulledLiqudity);
+        erc20Vault.pull(address(toVault), tokens, depositTokenAmounts, abi.encode(depositOptions));
+    }
+
+    function _swapVaults(bool positiveGrowth) internal {
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
         if (!positiveGrowth) {
@@ -228,29 +237,32 @@ contract LStrategy is Multicall {
             uint128 fromTokensOwed0;
             uint128 fromTokensOwed1;
 
-            (, , token0, token1, fee, , , fromLiquidity, , , fromTokensOwed0, fromTokensOwed1) = positionManager_
+            (, , token0, token1, fee, , , fromLiquidity, , , fromTokensOwed0, fromTokensOwed1) = positionManager
                 .positions(fromNft);
             require(fromLiquidity + fromTokensOwed0 + fromTokensOwed1 == 0, ExceptionsLibrary.INVARIANT);
         }
-        (, , , , , int24 toTickLower, int24 toTickUpper, , , , , ) = positionManager_.positions(toNft);
+        (, , , , , int24 toTickLower, int24 toTickUpper, , , , , ) = positionManager.positions(toNft);
         int24 newTickLower;
         int24 newTickUpper;
-        if (positiveGrowth) {
-            newTickLower = (toTickLower + toTickUpper) / 2;
-            newTickUpper = newTickLower + int24(uint24(intervalWidthInTicks));
-        } else {
-            newTickUpper = (toTickLower + toTickUpper) / 2;
-            newTickLower = newTickUpper - int24(uint24(intervalWidthInTicks));
+        {
+            uint16 intervalWidthInTicks = otherParams.intervalWidthInTicks;
+            if (positiveGrowth) {
+                newTickLower = (toTickLower + toTickUpper) / 2;
+                newTickUpper = newTickLower + int24(uint24(intervalWidthInTicks));
+            } else {
+                newTickUpper = (toTickLower + toTickUpper) / 2;
+                newTickLower = newTickUpper - int24(uint24(intervalWidthInTicks));
+            }
         }
-        (uint256 newNft, , , ) = positionManager_.mint(
+        (uint256 newNft, , , ) = positionManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,
                 fee: fee,
                 tickLower: newTickLower,
                 tickUpper: newTickUpper,
-                amount0Desired: minToken0ForOpening,
-                amount1Desired: minToken1ForOpening,
+                amount0Desired: otherParams.minToken0ForOpening,
+                amount1Desired: otherParams.minToken0ForOpening,
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: address(this),
@@ -259,23 +271,14 @@ contract LStrategy is Multicall {
         );
         positionManager.safeTransferFrom(address(this), address(fromVault), newNft);
         (lowerVault, upperVault) = (upperVault, lowerVault);
-        // TODO: Where should old NFT go?
-        emit SwapVault(tx.origin, msg.sender, fromNft, newNft, newTickLower, newTickUpper);
+        positionManager.burn(fromNft);
+        emit SwapVault(fromNft, newNft, newTickLower, newTickUpper);
     }
 
     /// @notice Emitted when vault is swapped.
-    /// @param origin Origin of the tx
-    /// @param sender Sender of the tx
-    /// @param oldNft UniV3 nft that was swapped
-    /// @param oldNft UniV3 nft that was created
+    /// @param oldNft UniV3 nft that was burned
+    /// @param newNft UniV3 nft that was created
     /// @param newTickLower Lower tick for created UniV3 nft
     /// @param newTickUpper Upper tick for created UniV3 nft
-    event SwapVault(
-        address indexed origin,
-        address indexed sender,
-        uint256 oldNft,
-        uint256 newNft,
-        int24 newTickLower,
-        int24 newTickUpper
-    );
+    event SwapVault(uint256 oldNft, uint256 newNft, int24 newTickLower, int24 newTickUpper);
 }
