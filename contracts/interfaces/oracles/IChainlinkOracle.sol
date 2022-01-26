@@ -33,5 +33,6 @@ interface IChainlinkOracle {
     /// Add a Chainlink price feed for a token
     /// @param tokens ERC20 tokens for the feed
     /// @param oracles Chainlink oracle price feeds (token / USD)
-    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external;
+    /// @param decimals The number of decimals for the tokens
+    function addChainlinkOracles(address[] memory tokens, address[] memory oracles, uint8[] memory decimals) external;
 }

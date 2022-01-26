@@ -19,14 +19,16 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
 
     mapping(address => address) public chainlinkOracles;
 
+    mapping(address => uint8) private _tokenDecimals;
     EnumerableSet.AddressSet private _tokenAllowlist;
 
     constructor(
         address[] memory tokens,
         address[] memory oracles,
+        uint8[] memory decimals,
         address admin
     ) DefaultAccessControl(admin) {
-        _addChainlinkOracles(tokens, oracles);
+        _addChainlinkOracles(tokens, oracles, decimals);
     }
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
@@ -60,7 +62,12 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
             (address(chainlinkOracle0) != address(0)) && (address(chainlinkOracle1) != address(0)),
             ExceptionsLibrary.NOT_FOUND
         );
-        priceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
+        (, int256 answer0, , , ) = chainlinkOracle0.latestRoundData(); // this can throw if there's no data
+        uint256 decimalsFactor0 = 10**(chainlinkOracle0.decimals() + _tokenDecimals[token0]);
+        (, int256 answer1, , , ) = chainlinkOracle1.latestRoundData();
+        uint256 decimalsFactor1 = 10**(chainlinkOracle0.decimals() + _tokenDecimals[token1]);
+        uint256 decimalsRatioX96 = FullMath.mulDiv(decimalsFactor1, CommonLibrary.Q96, decimalsFactor0);
+        priceX96 = FullMath.mulDiv(uint256(answer0), decimalsRatioX96, uint256(answer1));
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -70,41 +77,41 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     // -------------------------  EXTERNAL, MUTATING  ------------------------------
 
     /// @inheritdoc IChainlinkOracle
-    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
+    function addChainlinkOracles(
+        address[] memory tokens,
+        address[] memory oracles,
+        uint8[] memory decimals
+    ) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _addChainlinkOracles(tokens, oracles);
-    }
-
-    // -------------------------  INTERNAL, VIEW  ------------------------------
-
-    function _getChainlinkPrice(IAggregatorV3 chainlinkOracle0, IAggregatorV3 chainlinkOracle1)
-        internal
-        view
-        returns (uint256)
-    {
-        (, int256 answer0, , , ) = chainlinkOracle0.latestRoundData(); // this can throw if there's no data
-        uint256 decimalsFactor0 = 10**chainlinkOracle0.decimals();
-        (, int256 answer1, , , ) = chainlinkOracle1.latestRoundData();
-        uint256 decimalsFactor1 = 10**chainlinkOracle0.decimals();
-        uint256 decimalsRatioX96 = FullMath.mulDiv(decimalsFactor1, CommonLibrary.Q96, decimalsFactor0);
-        return FullMath.mulDiv(uint256(answer0), decimalsRatioX96, uint256(answer1));
+        _addChainlinkOracles(tokens, oracles, decimals);
     }
 
     // -------------------------  INTERNAL, MUTATING  ------------------------------
 
-    function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
+    function _addChainlinkOracles(
+        address[] memory tokens,
+        address[] memory oracles,
+        uint8[] memory decimals
+    ) internal {
         require(tokens.length == oracles.length, ExceptionsLibrary.INVALID_VALUE);
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
             address oracle = oracles[i];
             require(!_tokenAllowlist.contains(token), ExceptionsLibrary.DUPLICATE);
             _tokenAllowlist.add(token);
+            _tokenDecimals[token] = decimals[i];
             chainlinkOracles[token] = oracle;
         }
-        emit OraclesAdded(tx.origin, msg.sender, tokens, oracles);
+        emit OraclesAdded(tx.origin, msg.sender, tokens, oracles, decimals);
     }
 
     // --------------------------  EVENTS  --------------------------
 
-    event OraclesAdded(address indexed origin, address indexed sender, address[] tokens, address[] oracles);
+    event OraclesAdded(
+        address indexed origin,
+        address indexed sender,
+        address[] tokens,
+        address[] oracles,
+        uint8[] decimals
+    );
 }
