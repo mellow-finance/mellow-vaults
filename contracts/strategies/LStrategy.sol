@@ -14,19 +14,43 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 
 contract LStrategy is Multicall {
+    // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;
     address[] public tokens;
-    uint16 public intervalWidthInTicks;
-    IERC20Vault public erc20Vault;
+    IERC20Vault public immutable erc20Vault;
+    INonfungiblePositionManager public immutable positionManager;
+
+    // INTERNAL STATE
+
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
-    INonfungiblePositionManager public positionManager;
+    uint256 public tickPointTimestamp;
+
+    // MUTABLE PARAMS STATE
+
+    int24 public tickPoint;
+    int24 public annualTickGrowth;
+    uint16 public intervalWidthInTicks;
+    uint256 public erc20UniV3RatioD;
+    uint256 public erc20TokenRatioD;
+    uint256 public lowerPriceDeviationD;
+    uint256 public upperPriceDeviationD;
+    uint256 public maxBotAllowance;
+    uint256 public minBotWaitTime;
     uint256 public minToken0ForOpening;
     uint256 public minToken1ForOpening;
-    int24 public tickPoint;
-    int24 public tickPointInOneYear;
-    uint256 public tickPointTimestamp;
-    uint256 public erc20UniV3RatioD;
+
+    constructor(
+        INonfungiblePositionManager positionManager_,
+        IERC20Vault erc20vault_,
+        IUniV3Vault vault1_,
+        IUniV3Vault vault2_
+    ) {
+        positionManager = positionManager_;
+        erc20Vault = erc20vault_;
+        lowerVault = vault1_;
+        upperVault = vault2_;
+    }
 
     function pullFromUniV3Vault(
         IUniV3Vault fromVault,
@@ -142,16 +166,14 @@ contract LStrategy is Multicall {
     function _targetTick() internal view returns (int24) {
         uint256 timeDelta = block.timestamp - tickPointTimestamp;
         int24 tickPoint_ = tickPoint;
-        int24 tickPointInOneYear_ = tickPointInOneYear;
-        int24 annualTickDelta = tickPointInOneYear_ - tickPoint_;
-        if (annualTickDelta > 0) {
+        if (annualTickGrowth > 0) {
             return
                 tickPoint_ +
-                int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickDelta)), timeDelta, CommonLibrary.YEAR)));
+                int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
         } else {
             return
                 tickPoint_ -
-                int24(uint24(FullMath.mulDiv(uint256(uint24(-annualTickDelta)), timeDelta, CommonLibrary.YEAR)));
+                int24(uint24(FullMath.mulDiv(uint256(uint24(-annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
         }
     }
 
