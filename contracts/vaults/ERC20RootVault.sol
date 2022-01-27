@@ -79,6 +79,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         nonReentrant
         returns (uint256[] memory actualTokenAmounts)
     {
+        require(
+            !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
+            ExceptionsLibrary.FORBIDDEN
+        );
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(
