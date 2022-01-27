@@ -1,353 +1,208 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../interfaces/utils/IContractMeta.sol";
-import "../interfaces/vaults/IIntegrationVault.sol";
-import "../interfaces/vaults/IERC20Vault.sol";
+import "@openzeppelin/contracts/utils/Multicall.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../libraries/CommonLibrary.sol";
-import "../libraries/strategies/StrategyLibrary.sol";
-import "../libraries/external/FullMath.sol";
-import "../utils/DefaultAccessControlLateInit.sol";
+import "../interfaces/IVaultRegistry.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
+import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/CommonLibrary.sol";
+import "../libraries/external/FullMath.sol";
+import "../libraries/external/TickMath.sol";
 
-contract MStrategy is IContractMeta, DefaultAccessControlLateInit {
-    struct Params {
-        uint256 oraclePriceTimespan;
-        uint256 oracleLiquidityTimespan;
-        uint256 liquidToFixedRatioX96;
-        uint256 sqrtPMinX96;
-        uint256 sqrtPMaxX96;
-        uint256 tokenRebalanceThresholdX96;
-        uint256 poolRebalanceThresholdX96;
+contract MStrategy is Multicall {
+    using SafeERC20 for IERC20;
+
+    // IMMUTABLES
+    uint256 public constant DENOMINATOR = 10**9;
+    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
+    bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
+    bytes4 public constant EXACT_OUTPUT_SINGLE_SELECTOR = ISwapRouter.exactOutputSingle.selector;
+
+    address[] public tokens;
+    IERC20Vault public erc20Vault;
+    IIntegrationVault public moneyVault;
+    INonfungiblePositionManager public positionManager;
+    IUniswapV3Pool public pool;
+    ISwapRouter public router;
+
+    // INTERNAL STATE
+
+    // MUTABLE PARAMS
+
+    struct TickParams {
+        int24 tickMin;
+        int24 tickMax;
     }
 
-    struct ImmutableParams {
-        address token0;
-        address token1;
-        IUniswapV3Pool uniV3Pool;
-        ISwapRouter uniV3Router;
-        IERC20Vault erc20Vault;
-        IIntegrationVault moneyVault;
+    struct OracleParams {
+        uint16 oracleObservationDelta;
+        uint256 maxSlippageD;
     }
 
-    bytes32 public constant CONTRACT_NAME = "MStrategy";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
-    Params[] public vaultParams;
-    ImmutableParams[] public vaultImmutableParams;
-    mapping(address => mapping(address => uint256)) public vaultIndex;
-    mapping(uint256 => bool) public disabled;
-    mapping(address => mapping(address => uint256)) public paramsIndex;
-
-    // -------------------------  EXTERNAL, VIEW  ------------------------------
-
-    function vaultCount() public view returns (uint256) {
-        return vaultImmutableParams.length;
+    struct RatioParams {
+        uint256 erc20UniV3RatioD;
+        uint256 erc20TokenRatioD;
+    }
+    struct BotParams {
+        uint256 maxBotAllowance;
+        uint256 minBotWaitTime;
     }
 
-    function shouldRebalance(uint256 id) external view returns (bool) {
-        Params storage params = vaultParams[id];
-        ImmutableParams storage immutableParams = vaultImmutableParams[id];
-        IUniswapV3Pool pool = immutableParams.uniV3Pool;
-        IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-        (uint256[] memory moneyTvl, ) = immutableParams.moneyVault.tvl();
-        uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
-
-        for (uint256 i = 0; i < 2; i++) {
-            uint256 currentRatioX96 = type(uint256).max;
-            if (moneyTvl[i] != 0) {
-                currentRatioX96 = FullMath.mulDiv(erc20Tvl[i], CommonLibrary.Q96, moneyTvl[i]);
-            }
-
-            uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, params.liquidToFixedRatioX96);
-            if (deviation > params.poolRebalanceThresholdX96) {
-                return true;
-            }
-        }
-        {
-            (uint256 sqrtPriceX96, , ) = StrategyLibrary.getUniV3Averages(pool, params.oraclePriceTimespan);
-
-            uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
-            uint256 targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
-            uint256 currentTokenRatioX96 = type(uint256).max;
-            if (tvl[0] != 0) {
-                currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-            }
-            uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
-
-            if (deviation > params.tokenRebalanceThresholdX96) {
-                return true;
-            }
-        }
-        return false;
+    struct OtherParams {
+        uint16 intervalWidthInTicks;
+        uint256 lowerTickDeviation;
+        uint256 upperTickDeviation;
+        uint256 minToken0ForOpening;
+        uint256 minToken1ForOpening;
     }
 
-    // -------------------------  EXTERNAL, MUTATING  ------------------------------
+    TickParams public tickParams;
+    OracleParams public oracleParams;
+    BotParams public botParams;
+    OtherParams public otherParams;
 
-    function rebalance(uint256 id) external {
-        require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
-        require(!disabled[id], ExceptionsLibrary.DISABLED);
-        Params storage params = vaultParams[id];
-        ImmutableParams storage immutableParams = vaultImmutableParams[id];
-        IUniswapV3Pool pool = immutableParams.uniV3Pool;
-        IERC20Vault erc20Vault = immutableParams.erc20Vault;
-        IIntegrationVault moneyVault = immutableParams.moneyVault;
-        address[] memory tokens = erc20Vault.vaultTokens();
-        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-        (uint256[] memory moneyTvl, ) = immutableParams.moneyVault.tvl();
-        uint256[2] memory tvl = [erc20Tvl[0] + moneyTvl[0], erc20Tvl[1] + moneyTvl[1]];
-        _rebalanceTokens(tvl, erc20Tvl, pool, erc20Vault, moneyVault, params);
-        (erc20Tvl, ) = erc20Vault.tvl();
-        (moneyTvl, ) = immutableParams.moneyVault.tvl();
+    // @notice Constructor for a new contract
+    // @param positionManager_ Reference to UniswapV3 positionManager
+    // @param erc20vault_ Reference to ERC20 Vault
+    // @param vault1_ Reference to Uniswap V3 Vault 1
+    // @param vault2_ Reference to Uniswap V3 Vault 2
 
-        _rebalancePools(
-            erc20Tvl,
-            moneyTvl,
-            tokens,
-            params.liquidToFixedRatioX96,
-            params.poolRebalanceThresholdX96,
-            erc20Vault,
-            moneyVault
-        );
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @notice Manually pull tokens from fromVault to toVault
+    /// @param fromVault Pull tokens from this vault
+    /// @param toVault Pull tokens to this vault
+    /// @param tokenAmounts Token amounts to pull
+    function manualPull(
+        IIntegrationVault fromVault,
+        IIntegrationVault toVault,
+        uint256[] memory tokenAmounts
+    ) external {
+        fromVault.pull(address(toVault), tokens, tokenAmounts, "");
     }
 
-    // -------------------------  INTERNAL, VIEW  ------------------------------
+    // -------------------  INTERNAL, VIEW  -------------------
 
-    function _calcRebalancePoolAmount(
-        uint256 tvl0,
-        uint256 tvl1,
-        uint256 liquidToFixedRatioX96,
-        uint256 poolRebalanceThresholdX96
-    ) internal pure returns (uint256 amountIn, bool zeroForOne) {
-        uint256 currentRatioX96 = type(uint256).max;
-        if (tvl0 != 0) {
-            currentRatioX96 = FullMath.mulDiv(tvl1, CommonLibrary.Q96, tvl0);
-        }
-        uint256 deviation = CommonLibrary.deviationFactor(currentRatioX96, liquidToFixedRatioX96);
-        if (deviation > poolRebalanceThresholdX96) {
-            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithoutSlippage(
-                liquidToFixedRatioX96,
-                CommonLibrary.Q96,
-                tvl0,
-                tvl1,
-                0
-            );
-        }
+    function _priceX96FromTick(int24 _tick) internal pure returns (uint256) {
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
+        return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
     }
 
-    // [0, 1]
-    function targetValueRatioX96(
-        uint256 sqrtPriceX96,
-        uint256 sqrtPMinX96,
-        uint256 sqrtPMaxX96
-    ) public pure returns (uint256) {
-        if (sqrtPMinX96 > sqrtPMaxX96) {
-            (sqrtPMinX96, sqrtPMaxX96) = (sqrtPMaxX96, sqrtPMinX96);
-        }
-        if (sqrtPriceX96 <= sqrtPMinX96) {
+    function _targetTokenRatioD(
+        int24 tick,
+        int24 tickMin,
+        int24 tickMax
+    ) internal pure returns (uint256) {
+        if (tick <= tickMin) {
             return 0;
         }
-        if (sqrtPriceX96 >= sqrtPMaxX96) {
-            return CommonLibrary.Q96;
+        if (tick >= tickMax) {
+            return DENOMINATOR;
         }
-        return FullMath.mulDiv(sqrtPriceX96 - sqrtPMinX96, CommonLibrary.Q96, sqrtPMaxX96 - sqrtPriceX96);
+        return (uint256(uint24(tick - tickMin)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
     }
 
-    // -------------------------  INTERNAL, MUTATING  ------------------------------
+    function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick) {
+        uint16 oracleObservationDelta = tickParams.oracleObservationDelta;
 
-    function _rebalancePools(
-        uint256[] memory erc20Tvl,
-        uint256[] memory moneyTvl,
-        address[] memory tokens,
-        uint256 liquidToFixedRatioX96,
-        uint256 poolRebalanceThresholdX96,
-        IIntegrationVault erc20Vault,
-        IIntegrationVault moneyVault
-    ) internal {
-        uint256[] memory erc20PullAmounts = new uint256[](2);
-        uint256[] memory moneyPullAmounts = new uint256[](2);
-        bool[] memory zeroForOnes = new bool[](2);
-        for (uint256 i = 0; i < 2; i++) {
-            (uint256 amountIn, bool zeroForOne) = _calcRebalancePoolAmount(
-                moneyTvl[i],
-                erc20Tvl[i],
-                liquidToFixedRatioX96,
-                poolRebalanceThresholdX96
-            );
-            zeroForOnes[i] = zeroForOne;
-            if (zeroForOne) {
-                moneyPullAmounts[i] = amountIn;
-            } else {
-                erc20PullAmounts[i] = amountIn;
-            }
-        }
-        if (!zeroForOnes[0] || !zeroForOnes[1]) {
-            if ((erc20PullAmounts[0] > 0) || (erc20PullAmounts[1] > 0)) {
-                uint256[] memory actualTokenAmounts = erc20Vault.pull(
-                    address(moneyVault),
-                    tokens,
-                    erc20PullAmounts,
-                    ""
-                );
-                moneyVault.push(tokens, actualTokenAmounts, "");
-            }
-        }
-        if (zeroForOnes[0] || zeroForOnes[1]) {
-            if ((moneyPullAmounts[0] > 0) || (moneyPullAmounts[1] > 0)) {
-                moneyVault.pull(address(erc20Vault), tokens, moneyPullAmounts, "");
-            }
-        }
+        (, , uint16 observationIndex, uint16 observationCardinality, , , ) = pool_.slot0();
+        require(observationCardinality > oracleObservationDelta, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        (uint32 blockTimestamp, int56 tickCumulative, , ) = pool_.observations(observationIndex);
+
+        uint16 observationIndexLast = observationIndex >= oracleObservationDelta
+            ? observationIndex - oracleObservationDelta
+            : observationIndex + (type(uint16).max - oracleObservationDelta + 1);
+        (uint32 blockTimestampLast, int56 tickCumulativeLast, , ) = pool_.observations(observationIndexLast);
+
+        uint32 timespan = blockTimestamp - blockTimestampLast;
+        averageTick = int24((int256(tickCumulative) - int256(tickCumulativeLast)) / int256(uint256(timespan)));
     }
+
+    // -------------------  INTERNAL, MUTATING  -------------------
 
     function _rebalanceTokens(
-        uint256[2] memory tvl,
-        uint256[] memory erc20Tvl,
-        IUniswapV3Pool pool,
-        IERC20Vault erc20Vault,
-        IIntegrationVault moneyVault,
-        Params storage params
+        IUniswapV3Pool pool_,
+        ISwapRouter router_,
+        IIntegrationVault erc20Vault_,
+        IIntegrationVault moneyVault_
     ) internal {
-        (uint256 sqrtPriceX96, uint256 liquidity, ) = StrategyLibrary.getUniV3Averages(
-            pool,
-            params.oraclePriceTimespan
-        );
-        uint256 targetTokenRatioX96;
-        {
-            uint256 valueRatioX96 = targetValueRatioX96(sqrtPriceX96, params.sqrtPMinX96, params.sqrtPMaxX96);
-            uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
-            targetTokenRatioX96 = FullMath.mulDiv(valueRatioX96, priceX96, CommonLibrary.Q96);
-            uint256 currentTokenRatioX96 = type(uint256).max;
-            if (tvl[0] != 0) {
-                currentTokenRatioX96 = FullMath.mulDiv(tvl[1], CommonLibrary.Q96, tvl[0]);
-            }
-            uint256 deviation = CommonLibrary.deviationFactor(targetTokenRatioX96, currentTokenRatioX96);
-            if (deviation < params.tokenRebalanceThresholdX96) {
-                return;
-            }
-        }
-        uint256 amountIn;
-        uint256 poolFee = pool.fee();
-        bool zeroForOne;
-        {
-            (amountIn, zeroForOne) = StrategyLibrary.swapToTargetWithSlippage(
-                targetTokenRatioX96,
-                sqrtPriceX96,
-                tvl[0],
-                tvl[1],
-                poolFee,
-                liquidity
+        int24 tickMin = tickParams.tickMin;
+        int24 tickMax = tickParams.tickMax;
+        int24 tick = _getAverageTick(pool_);
+        uint256 targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
+        (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
+        (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
+        uint256 token0 = erc20Tvl[0] + moneyTvl[0];
+        uint256 token1 = erc20Tvl[1] + moneyTvl[1];
+        uint256 priceX96 = _priceX96FromTick(tick);
+        uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
+        uint256 targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
+        bytes memory data;
+        if (targetToken0 < token0) {
+            uint256 amountIn = token0 - targetToken0;
+            uint256 amountOutMinimum = FullMath.mulDiv(amountIn, CommonLibrary.Q96, priceX96);
+            amountOutMinimum = FullMath.mulDiv(
+                amountOutMinimum,
+                DENOMINATOR - FullMath.mulDiv(oracleParams.maxSlippageD),
+                DENOMINATOR
             );
-        }
-        // If not enough tokens on ERC-20 balance
-        if (zeroForOne) {
-            if (amountIn > erc20Tvl[0]) {
-                address[] memory tokens = new address[](2);
-                tokens[0] = pool.token0();
-                tokens[1] = pool.token1();
-                uint256[] memory amounts = new uint256[](2);
-                amounts[0] = amountIn - erc20Tvl[0];
-                uint256[] memory actualAmounts = moneyVault.pull(address(erc20Vault), tokens, amounts, "");
-                uint256 newTvl = actualAmounts[0] + erc20Tvl[0];
-                // cut just in case
-                if (amountIn > newTvl) {
-                    amountIn = newTvl;
-                }
-            }
+            bytes memory params = ISwapRouter.ExactInputSingleParams({
+                tokenIn: token0,
+                tokenOut: token1,
+                fee: pool_.fee(),
+                recipient: address(erc20Vault),
+                deadline: block.timestamp + 1,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMinimum,
+                sqrtPriceLimitX96: 0
+            });
+            data = abi.encode(params);
         } else {
-            if (amountIn > erc20Tvl[1]) {
-                address[] memory tokens = new address[](2);
-                tokens[0] = pool.token0();
-                tokens[1] = pool.token1();
-
-                uint256[] memory amounts = new uint256[](2);
-                amounts[1] = amountIn - erc20Tvl[1];
-                uint256[] memory actualAmounts = moneyVault.pull(address(erc20Vault), tokens, amounts, "");
-                uint256 newTvl = actualAmounts[1] + erc20Tvl[1];
-                // cut just in case
-                if (amountIn > newTvl) {
-                    amountIn = newTvl;
-                }
-            }
+            uint256 amountIn = FullMath.mulDiv(targetToken0 - token0, CommonLibrary.Q96, priceX96);
         }
-        // ITrader.PathItem[] memory path = new ITrader.PathItem[](1);
-        // {
-        //     bytes memory poolOptions = new bytes(32);
-        //     assembly {
-        //         mstore(add(poolOptions, 32), poolFee)
-        //     }
-        //     (address tokenIn, address tokenOut) = (pool.token0(), pool.token1());
-        //     if (!zeroForOne) {
-        //         (tokenIn, tokenOut) = (tokenOut, tokenIn);
-        //     }
-
-        //     path[0] = ITrader.PathItem({token0: tokenIn, token1: tokenOut, options: poolOptions});
-        // }
-        // bytes memory bytesOptions = abi.encode(
-        //     IUniV3Trader.Options({
-        //         fee: uint24(poolFee),
-        //         sqrtPriceLimitX96: 0,
-        //         deadline: block.timestamp + 1800,
-        //         limitAmount: 0
-        //     })
-        // );
-        // erc20Vault.swapExactInput(0, amountIn, address(erc20Vault), path, bytesOptions);
+        erc20Vault.externalCall(abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data));
     }
 
-    function addVault(ImmutableParams memory immutableParams_, Params memory params_) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        address token0 = immutableParams_.token0;
-        address token1 = immutableParams_.token1;
-        require(immutableParams_.uniV3Pool.token0() == token0, ExceptionsLibrary.INVALID_TOKEN);
-        require(immutableParams_.uniV3Pool.token1() == token1, ExceptionsLibrary.INVALID_TOKEN);
-        require(paramsIndex[token0][token1] == 0, ExceptionsLibrary.DUPLICATE);
-        if (vaultImmutableParams.length > 0) {
-            require(vaultImmutableParams[0].erc20Vault != immutableParams_.erc20Vault, ExceptionsLibrary.DUPLICATE);
+    function _swapToTarget(
+        uint256 amountIn,
+        uint256 amountOutMinimum,
+        address tokenIn,
+        address tokenOut,
+        uint256 priceX96,
+        uint256 ercTvl,
+        IIntegrationVault erc20Vault_,
+        IIntegrationVault moneyVault_
+    ) external {
+        if (amountIn > ercTvl) {
+            moneyVault.pull()
         }
-        IIntegrationVault[2] memory vaults = [immutableParams_.erc20Vault, immutableParams_.moneyVault];
-        for (uint256 i = 0; i < vaults.length; i++) {
-            IIntegrationVault vault = vaults[i];
-            address[] memory tokens = vault.vaultTokens();
-            require(tokens[0] == token0, ExceptionsLibrary.INVALID_TOKEN);
-            require(tokens[1] == token1, ExceptionsLibrary.INVALID_TOKEN);
-        }
-        uint256 num = vaultParams.length;
-        vaultParams.push(params_);
-        vaultImmutableParams.push(immutableParams_);
-        paramsIndex[token0][token1] = num;
-        paramsIndex[token1][token0] = num;
-        emit VaultAdded(tx.origin, msg.sender, num, immutableParams_, params_);
     }
 
-    function disableVault(uint256 id, bool disabled_) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
-        disabled[id] = disabled_;
-        emit VaultDisabled(tx.origin, msg.sender, id, disabled_);
-    }
+    /// @notice Emitted when vault is swapped.
+    /// @param oldNft UniV3 nft that was burned
+    /// @param newNft UniV3 nft that was created
+    /// @param newTickLower Lower tick for created UniV3 nft
+    /// @param newTickUpper Upper tick for created UniV3 nft
+    event SwapVault(uint256 oldNft, uint256 newNft, int24 newTickLower, int24 newTickUpper);
 
-    function updateVaultParams(uint256 id, Params memory params) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        require(id < vaultCount(), ExceptionsLibrary.INVALID_VALUE);
-        require(!disabled[id], ExceptionsLibrary.DISABLED);
-        vaultParams[id] = params;
-        emit VaultParamsUpdated(tx.origin, msg.sender, id, params);
-    }
-
-    // --------------------------  EVENTS  --------------------------
-
-    event VaultAdded(
-        address indexed origin,
-        address indexed sender,
-        uint256 id,
-        ImmutableParams immutableParams,
-        Params params
+    /// @param fromVault The vault to pull liquidity from
+    /// @param toVault The vault to pull liquidity to
+    /// @param pulledAmounts amounts pulled from fromVault
+    /// @param pushedAmounts amounts pushed to toVault
+    /// @param liquidity The amount of liquidity. On overflow best effort pull is made
+    event RebalancedUniV3(
+        address fromVault,
+        address toVault,
+        uint256[] pulledAmounts,
+        uint256[] pushedAmounts,
+        uint128 liquidity
     );
-
-    event VaultDisabled(address indexed origin, address indexed sender, uint256 num, bool disabled);
-    event VaultParamsUpdated(address indexed origin, address indexed sender, uint256 id, Params params);
 }
