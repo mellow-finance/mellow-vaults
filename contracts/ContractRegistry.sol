@@ -71,7 +71,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
 
     /// @inheritdoc IContractRegistry
     function registerContract(address target) external {
-        require(governance.isOperator(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _requireAtLeastOperator();
         require(_addresses.add(target), ExceptionsLibrary.DUPLICATE);
 
         IContractMeta newContract = IContractMeta(target);
@@ -91,12 +91,19 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
 
-    function _latestVersion(bytes32 name) internal view returns (uint256) {
+    function _requireAtLeastOperator() private view {
+        require(
+            governance.isOperator(msg.sender) || governance.isAdmin(msg.sender), 
+            ExceptionsLibrary.FORBIDDEN
+        );
+    }
+
+    function _latestVersion(bytes32 name) private view returns (uint256) {
         uint256 versionsLength = _nameToVersions[name].length;
         return versionsLength != 0 ? _nameToVersions[name][versionsLength - 1] : 0;
     }
 
-    function _validateContractName(bytes32 name_) internal pure returns (bool) {
+    function _validateContractName(bytes32 name_) private pure returns (bool) {
         bytes memory name = SemverLibrary.shrinkToFit(abi.encodePacked(name_));
         for (uint256 i; i < name.length; ++i) {
             uint8 ascii = uint8(name[i]);
@@ -110,7 +117,7 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         return true;
     }
 
-    function _bytes32ToString(bytes32 text) internal pure returns (string memory) {
+    function _bytes32ToString(bytes32 text) private pure returns (string memory) {
         return string(SemverLibrary.shrinkToFit(abi.encodePacked((text))));
     }
 
