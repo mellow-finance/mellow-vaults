@@ -66,15 +66,28 @@ contract MStrategy is Multicall {
     RatioParams public ratioParams;
     OtherParams public otherParams;
 
-    // @notice Constructor for a new contract
-    // @param positionManager_ Reference to UniswapV3 positionManager
-    // @param erc20vault_ Reference to ERC20 Vault
-    // @param vault1_ Reference to Uniswap V3 Vault 1
-    // @param vault2_ Reference to Uniswap V3 Vault 2
-
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    function getAverageTick() external view returns (int24) {
+        return _getAverageTick(pool);
+    }
+
     // -------------------  EXTERNAL, MUTATING  -------------------
+
+    function rebalance() external returns (uint256[] memory amounts) {
+        IIntegrationVault erc20Vault_ = erc20Vault;
+        IIntegrationVault moneyVault_ = moneyVault;
+        address[] memory tokens_ = tokens;
+        IUniswapV3Pool pool_ = pool;
+        ISwapRouter router_ = router;
+        int256[] memory tokenAmounts = _rebalancePools(erc20Vault_, moneyVault_, tokens_);
+        (uint256 amountIn, uint8 index) = _rebalanceTokens(pool_, router_, erc20Vault_, moneyVault_, tokens_);
+        amounts = new uint256[](2);
+        for (uint256 i = 0; i < 2; i++) {
+            amounts[i] = tokenAmounts[i] > 0 ? uint256(tokenAmounts[i]) : uint256(-tokenAmounts[i]);
+        }
+        amounts[index] += amountIn;
+    }
 
     /// @notice Manually pull tokens from fromVault to toVault
     /// @param fromVault Pull tokens from this vault
@@ -131,11 +144,11 @@ contract MStrategy is Multicall {
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
         address[] memory tokens_
-    ) internal {
+    ) internal returns (int256[] memory tokenAmounts) {
         uint256 erc20MoneyRatioD = ratioParams.erc20MoneyRatioD;
         (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
         (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
-        int256[] memory tokenAmounts = new int256[](2);
+        tokenAmounts = new int256[](2);
         uint256 max = type(uint256).max / 2;
         for (uint256 i = 0; i < 2; i++) {
             uint256 targetErc20Token = FullMath.mulDiv(erc20Tvl[i] + moneyTvl[i], erc20MoneyRatioD, DENOMINATOR);
@@ -143,7 +156,7 @@ contract MStrategy is Multicall {
             tokenAmounts[i] = int256(targetErc20Token) - int256(erc20Tvl[i]);
         }
         if ((tokenAmounts[0] == 0) && (tokenAmounts[1] == 0)) {
-            return;
+            return tokenAmounts;
         } else if ((tokenAmounts[0] <= 0) && (tokenAmounts[1] <= 0)) {
             uint256[] memory amounts = new uint256[](2);
             amounts[0] = uint256(-tokenAmounts[0]);
@@ -175,7 +188,7 @@ contract MStrategy is Multicall {
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
         address[] memory tokens_
-    ) internal {
+    ) internal returns (uint256 amountIn, uint8 index) {
         int24 tickMin = tickParams.tickMin;
         int24 tickMax = tickParams.tickMax;
         int24 tick = _getAverageTick(pool_);
@@ -188,11 +201,13 @@ contract MStrategy is Multicall {
         uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
         uint256 targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
         if (targetToken0 < token0) {
-            uint256 amountIn = token0 - targetToken0;
-            _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
+            amountIn = token0 - targetToken0;
+            index = 0;
+            _swapToTarget(amountIn, tokens_, index, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
         } else {
-            uint256 amountIn = FullMath.mulDiv(targetToken0 - token0, priceX96, CommonLibrary.Q96);
-            _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
+            amountIn = FullMath.mulDiv(targetToken0 - token0, priceX96, CommonLibrary.Q96);
+            index = 1;
+            _swapToTarget(amountIn, tokens_, index, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
         }
     }
 
