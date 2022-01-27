@@ -111,7 +111,7 @@ contract MStrategy is Multicall {
     }
 
     function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick) {
-        uint16 oracleObservationDelta = tickParams.oracleObservationDelta;
+        uint16 oracleObservationDelta = oracleParams.oracleObservationDelta;
 
         (, , uint16 observationIndex, uint16 observationCardinality, , , ) = pool_.slot0();
         require(observationCardinality > oracleObservationDelta, ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -145,45 +145,52 @@ contract MStrategy is Multicall {
         uint256 priceX96 = _priceX96FromTick(tick);
         uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
         uint256 targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
-        bytes memory data;
+        address[] memory tokens_ = tokens;
         if (targetToken0 < token0) {
             uint256 amountIn = token0 - targetToken0;
-            uint256 amountOutMinimum = FullMath.mulDiv(amountIn, CommonLibrary.Q96, priceX96);
-            amountOutMinimum = FullMath.mulDiv(
-                amountOutMinimum,
-                DENOMINATOR - FullMath.mulDiv(oracleParams.maxSlippageD),
-                DENOMINATOR
-            );
-            bytes memory params = ISwapRouter.ExactInputSingleParams({
-                tokenIn: token0,
-                tokenOut: token1,
-                fee: pool_.fee(),
-                recipient: address(erc20Vault),
-                deadline: block.timestamp + 1,
-                amountIn: amountIn,
-                amountOutMinimum: amountOutMinimum,
-                sqrtPriceLimitX96: 0
-            });
-            data = abi.encode(params);
+            _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
         } else {
-            uint256 amountIn = FullMath.mulDiv(targetToken0 - token0, CommonLibrary.Q96, priceX96);
+            uint256 amountIn = FullMath.mulDiv(targetToken0 - token0, priceX96, CommonLibrary.Q96);
+            _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
         }
-        erc20Vault.externalCall(abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data));
     }
 
     function _swapToTarget(
         uint256 amountIn,
-        uint256 amountOutMinimum,
-        address tokenIn,
-        address tokenOut,
+        address[] memory tokens_,
+        uint8 tokenInIndex,
         uint256 priceX96,
-        uint256 ercTvl,
+        uint256[] memory erc20Tvl,
+        IUniswapV3Pool pool_,
+        ISwapRouter router_,
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_
-    ) external {
-        if (amountIn > ercTvl) {
-            moneyVault.pull()
+    ) internal {
+        if (amountIn > erc20Tvl[tokenInIndex]) {
+            uint256[] memory tokenAmounts = new uint256[](2);
+            tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
+            moneyVault_.pull(address(erc20Vault_), tokens_, tokenAmounts, "");
+            amountIn = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
         }
+        uint256 amountOutMinimum;
+        if (tokenInIndex == 1) {
+            amountOutMinimum = FullMath.mulDiv(amountIn, CommonLibrary.Q96, priceX96);
+        } else {
+            amountOutMinimum = FullMath.mulDiv(amountIn, priceX96, CommonLibrary.Q96);
+        }
+        amountOutMinimum = FullMath.mulDiv(amountOutMinimum, DENOMINATOR - oracleParams.maxSlippageD, DENOMINATOR);
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+            tokenIn: tokens_[tokenInIndex],
+            tokenOut: tokens_[1 - tokenInIndex],
+            fee: pool_.fee(),
+            recipient: address(erc20Vault),
+            deadline: block.timestamp + 1,
+            amountIn: amountIn,
+            amountOutMinimum: amountOutMinimum,
+            sqrtPriceLimitX96: 0
+        });
+        bytes memory data = abi.encode(params);
+        erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data));
     }
 
     /// @notice Emitted when vault is swapped.
