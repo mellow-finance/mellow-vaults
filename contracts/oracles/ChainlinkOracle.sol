@@ -63,23 +63,17 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
             ExceptionsLibrary.NOT_FOUND
         );
         (, int256 answer0, , , ) = chainlinkOracle0.latestRoundData(); // this can throw if there's no data
-        uint256 decimalsFactor0 = (
-            chainlinkOracle0.decimals() +
-            IERC20Metadata(token0).decimals()
-        );
+        uint256 decimalsFactor0 = (chainlinkOracle0.decimals() + IERC20Metadata(token0).decimals());
         (, int256 answer1, , , ) = chainlinkOracle1.latestRoundData();
-        uint256 decimalsFactor1 = (
-            chainlinkOracle1.decimals() + 
-            IERC20Metadata(token1).decimals()
-        );
+        uint256 decimalsFactor1 = (chainlinkOracle1.decimals() + IERC20Metadata(token1).decimals());
         uint256 price0 = uint256(answer0);
         uint256 price1 = uint256(answer1);
         if (decimalsFactor1 > decimalsFactor0) {
             uint256 decimalsDiff = decimalsFactor1 - decimalsFactor0;
-            price0 *= (10 ** decimalsDiff);
+            price0 *= (10**decimalsDiff);
         } else if (decimalsFactor0 > decimalsFactor1) {
             uint256 decimalsDiff = decimalsFactor0 - decimalsFactor1;
-            price1 *= (10 ** decimalsDiff);
+            price1 *= (10**decimalsDiff);
         }
         uint256 decimalsRatioX96 = FullMath.mulDiv(decimalsFactor1, CommonLibrary.Q96, decimalsFactor0);
         priceX96 = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
@@ -92,20 +86,14 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     // -------------------------  EXTERNAL, MUTATING  ------------------------------
 
     /// @inheritdoc IChainlinkOracle
-    function addChainlinkOracles(
-        address[] memory tokens,
-        address[] memory oracles
-    ) external {
+    function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _addChainlinkOracles(tokens, oracles);
     }
 
     // -------------------------  INTERNAL, MUTATING  ------------------------------
 
-    function _addChainlinkOracles(
-        address[] memory tokens,
-        address[] memory oracles
-    ) internal {
+    function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
         require(tokens.length == oracles.length, ExceptionsLibrary.INVALID_VALUE);
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
@@ -119,10 +107,5 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
 
     // --------------------------  EVENTS  --------------------------
 
-    event OraclesAdded(
-        address indexed origin,
-        address indexed sender,
-        address[] tokens,
-        address[] oracles
-    );
+    event OraclesAdded(address indexed origin, address indexed sender, address[] tokens, address[] oracles);
 }

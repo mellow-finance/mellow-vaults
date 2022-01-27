@@ -29,7 +29,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
 
-                    const { uniswapV3PositionManager } = await getNamedAccounts();
+                    const { uniswapV3PositionManager } =
+                        await getNamedAccounts();
 
                     const tokens = [this.weth.address, this.usdc.address]
                         .map((t) => t.toLowerCase())
@@ -46,7 +47,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         uniV3VaultNft,
                         "UniV3VaultGovernance",
                         {
-                            createVaultArgs: [tokens, this.deployer.address, uniV3PoolFee],
+                            createVaultArgs: [
+                                tokens,
+                                this.deployer.address,
+                                uniV3PoolFee,
+                            ],
                         }
                     );
                     await setupVault(
@@ -63,7 +68,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         erc20VaultNft + 1,
                         [erc20VaultNft, uniV3VaultNft],
                         this.deployer.address,
-                        this.deployer.address,
+                        this.deployer.address
                     );
                     const erc20Vault = await read(
                         "VaultRegistry",
@@ -138,7 +143,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         this.deployer.address,
                         BigNumber.from(10).pow(6).mul(3000)
                     );
-                    await mint("WETH", this.deployer.address, BigNumber.from(10).pow(18));
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        BigNumber.from(10).pow(18)
+                    );
 
                     await this.weth.approve(
                         this.subject.address,
@@ -170,7 +179,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
+                ](
+                    this.deployer.address,
+                    this.uniV3Vault.address,
+                    result.tokenId
+                );
                 expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
                     result.tokenId
                 );
@@ -192,7 +205,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
+                ](
+                    this.deployer.address,
+                    this.uniV3Vault.address,
+                    result.tokenId
+                );
                 await this.subject.deposit(
                     [
                         BigNumber.from(10).pow(6).mul(3000),
@@ -200,9 +217,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ],
                     0
                 );
-                expect(await this.subject.balanceOf(this.deployer.address)).to.deep.equals(
-                    BigNumber.from("1000000000000000000")
-                );
+                expect(
+                    await this.subject.balanceOf(this.deployer.address)
+                ).to.deep.equals(BigNumber.from("1000000000000000000"));
             });
 
             it("pulls univ3 to erc20 and collects earnings", async () => {
@@ -217,7 +234,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
+                ](
+                    this.deployer.address,
+                    this.uniV3Vault.address,
+                    result.tokenId
+                );
                 await this.subject.deposit(
                     [
                         BigNumber.from(10).pow(6).mul(3000),
@@ -319,7 +340,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "IMellowOracle",
                     address
                 );
-                console.log((await oracle.spotPrice(this.usdc.address, this.weth.address)).toString());
+                console.log(
+                    (
+                        await oracle.spotPrice(
+                            this.usdc.address,
+                            this.weth.address
+                        )
+                    ).toString()
+                );
             });
         });
     }
