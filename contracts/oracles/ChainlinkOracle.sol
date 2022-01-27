@@ -74,7 +74,6 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
             uint256 decimalsDiff = decimalsFactor0 - decimalsFactor1;
             price1 *= (10**decimalsDiff);
         }
-        uint256 decimalsRatioX96 = FullMath.mulDiv(decimalsFactor1, CommonLibrary.Q96, decimalsFactor0);
         priceX96 = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
     }
 
