@@ -12,6 +12,7 @@ import {
 } from "./0000_utils";
 import { ethers } from "ethers";
 import { deployments } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -29,6 +30,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
     log("Creating protocol governance finalizing tx");
     const txDatas: (string | undefined)[] = [];
+    await setUnitPrices(hre, txDatas);
     await registerGovernances(hre, txDatas);
     await registerTokens(hre, txDatas);
     await registerExternalProtocols(hre, txDatas);
@@ -188,6 +190,41 @@ async function registerExternalProtocols(
             txDatas.push(tx.data);
         }
     }
+}
+
+async function setUnitPrices(
+    hre: HardhatRuntimeEnvironment,
+    txDatas: (string | undefined)[]
+) {
+    const protocolGovernance = await hre.ethers.getContract(
+        "ProtocolGovernance"
+    );
+    const { admin, weth, wbtc, usdc } =
+        await hre.getNamedAccounts();
+    const txWETH =
+        await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
+            weth,
+            BigNumber.from(10).pow(18).div(2454)
+        );
+    txDatas.push(txWETH.data);
+    const txWBTC =
+        await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
+            wbtc,
+            ((BigNumber.from(10).pow(18)).mul(1492)).div(245400)
+        );
+    txDatas.push(txWBTC.data);
+    const txUSDC =
+        await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
+            usdc,
+            ((BigNumber.from(10).pow(18)).mul(42)).div(24540000)
+        );
+    txDatas.push(txUSDC.data);
+    const txWETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(weth);
+    txDatas.push(txWETHc.data);
+    const txWBTCc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(wbtc);
+    txDatas.push(txWBTCc.data);
+    const txUSDCc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(usdc);
+    txDatas.push(txUSDCc.data);
 }
 
 export default func;

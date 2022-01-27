@@ -12,6 +12,7 @@ import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -70,6 +71,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         for (uint256 i = 0; i < len; ++i) {
             _lpPriceHighWaterMarks.push(0);
         }
+        totalWithdrawnAmounts = new uint256[](len);
 
         lastFeeCharge = block.timestamp;
     }
@@ -124,6 +126,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         (uint256[] memory minTvl, ) = tvl();
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
+            console.log("min ", minTokenAmounts[i]);
+            console.log("amt ", tokenAmounts[i]);
             require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
         uint256[] memory actualTokenAmounts = _pull(address(this), tokenAmounts, "");

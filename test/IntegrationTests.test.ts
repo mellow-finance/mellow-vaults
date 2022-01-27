@@ -26,7 +26,7 @@ import {
     YearnVault,
     YearnVaultGovernance,
 } from "./types";
-import { Contract } from "ethers";
+import { Contract } from "@ethersproject/contracts";
 import { Address } from "hardhat-deploy/dist/types";
 import { CREATE_VAULT } from "./library/PermissionIdsLibrary";
 import { address, pit, RUNS } from "./library/property";
@@ -38,6 +38,7 @@ import {
 } from "./library/Constants";
 import { contract } from "./library/setup";
 import { PermissionIdsLibrary__factory } from "./types/factories/PermissionIdsLibrary__factory";
+import { BigNumber } from "@ethersproject/bignumber";
 
 type CustomContext = {
     ownerSigner: SignerWithAddress;
@@ -57,9 +58,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 async (_, options?: DeployOptions) => {
                     await deployments.fixture();
                     this.ownerSigner = await addSigner(randomAddress());
-                    await this.protocolGovernance.connect(this.admin).stagePermissionGrants(this.ownerSigner.address, [CREATE_VAULT]);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(this.ownerSigner.address, [
+                            CREATE_VAULT,
+                        ]);
                     await sleep(this.governanceDelay);
-                    await this.protocolGovernance.connect(this.admin).commitPermissionGrants(this.ownerSigner.address);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitPermissionGrants(this.ownerSigner.address);
                     const { vault: erc20VaultAddress, nft: nftERC20 } =
                         await this.erc20VaultGovernance.callStatic.createVault(
                             sortAddresses([
@@ -101,34 +108,50 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     await this.vaultRegistry
                         .connect(this.ownerSigner)
-                        .approve(this.erc20RootVaultGovernance.address, this.yearnNft);
+                        .approve(
+                            this.erc20RootVaultGovernance.address,
+                            this.yearnNft
+                        );
                     await this.vaultRegistry
                         .connect(this.ownerSigner)
-                        .approve(this.erc20RootVaultGovernance.address, this.erc20Nft);
+                        .approve(
+                            this.erc20RootVaultGovernance.address,
+                            this.erc20Nft
+                        );
 
                     const {
                         vault: erc20RootVaultAddress,
                         nft: nftERC20RootVault,
-                    } = await erc20RootVaultGovernance.connect(this.ownerSigner).callStatic.createVault(
-                        sortAddresses([this.usdc.address, this.wbtc.address]),
-                        this.mStrategy.address,
-                        [this.erc20Nft, this.yearnNft],
-                        this.ownerSigner.address
-                    );
+                    } = await erc20RootVaultGovernance
+                        .connect(this.ownerSigner)
+                        .callStatic.createVault(
+                            sortAddresses([
+                                this.usdc.address,
+                                this.wbtc.address,
+                            ]),
+                            this.mStrategy.address,
+                            [this.erc20Nft, this.yearnNft],
+                            this.ownerSigner.address
+                        );
 
-                    await erc20RootVaultGovernance.connect(this.ownerSigner).createVault(
-                        sortAddresses([this.usdc.address, this.wbtc.address]),
-                        this.mStrategy.address,
-                        [this.erc20Nft, this.yearnNft],
-                        this.ownerSigner.address
-                    );
+                    await erc20RootVaultGovernance
+                        .connect(this.ownerSigner)
+                        .createVault(
+                            sortAddresses([
+                                this.usdc.address,
+                                this.wbtc.address,
+                            ]),
+                            this.mStrategy.address,
+                            [this.erc20Nft, this.yearnNft],
+                            this.ownerSigner.address
+                        );
 
                     this.subject = await ethers.getContractAt(
                         "ERC20RootVault",
                         erc20RootVaultAddress
                     );
                     this.erc20RootNft = Number(nftERC20RootVault);
-                    
+
                     return this.subject;
                 }
             );
@@ -154,20 +177,33 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("#deposit + withdraw", () => {
-
                 it("does not fail", async () => {
-                    await this.subject.connect(this.admin).addDepositorsToAllowlist([this.ownerSigner.address]);
-                    await this.erc20RootVaultGovernance.connect(this.admin).setStrategyParams(this.erc20RootNft, {
-                        tokenLimitPerAddress: 1000,
-                        tokenLimit: 2000
-                    });
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([this.ownerSigner.address]);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .setStrategyParams(this.erc20RootNft, {
+                            tokenLimitPerAddress: 1000,
+                            tokenLimit: 2000,
+                        });
                     await mint("WBTC", this.ownerSigner.address, 1000);
                     await mint("USDC", this.ownerSigner.address, 1000);
-                    await this.wbtc.connect(this.ownerSigner).approve(this.subject.address, 1000);
-                    await this.usdc.connect(this.ownerSigner).approve(this.subject.address, 1000);
-                    await expect(this.subject.connect(this.ownerSigner).deposit([1000, 1000], 1)).to.not.be.reverted;
-                    
-                    await this.subject.connect(this.ownerSigner).withdraw(this.ownerSigner.address, await this.subject.balanceOf(this.ownerSigner.address), [1000, 1000]);
+                    await this.wbtc
+                        .connect(this.ownerSigner)
+                        .approve(this.subject.address, 1000);
+                    await this.usdc
+                        .connect(this.ownerSigner)
+                        .approve(this.subject.address, 1000);
+                    await expect(
+                        this.subject
+                            .connect(this.ownerSigner)
+                            .deposit([1000, 1000], 1)
+                    ).to.not.be.reverted;
+                    await this.subject
+                        .connect(this.ownerSigner)
+                        .withdraw(this.ownerSigner.address, 1, [1000, 1000]);
+                    console.log("withdraw");
                 });
             });
         });
