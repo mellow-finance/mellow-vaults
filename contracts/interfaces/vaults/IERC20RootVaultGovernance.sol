@@ -39,6 +39,12 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         uint256 protocolFee;
     }
 
+    /// @notice Params that could be changed by Operator role of Protocol Governance.
+    /// @param disableDeposit Disable deposit for all ERC20 vaults
+    struct OperatorParams {
+        bool disableDeposit;
+    }
+
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
@@ -60,6 +66,9 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @param nft VaultRegistry NFT of the vault
     function strategyParams(uint256 nft) external view returns (StrategyParams memory);
 
+    /// @notice Operator Params.
+    function operatorParams() external view returns (OperatorParams memory);
+
     /// @notice Delayed Strategy Params
     /// @param nft VaultRegistry NFT of the vault
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory);
@@ -72,6 +81,10 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @param nft Nft of the vault
     /// @param params New params
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external;
+
+    /// @notice Set Operator params, i.e. Params that could be changed by Operator or Protocol Governance immediately.
+    /// @param params New params
+    function setOperatorParams(OperatorParams calldata params) external;
 
     /// @notice Stage Delayed Protocol Per Vault Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param nft VaultRegistry NFT of the vault

@@ -31,6 +31,7 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
 
     mapping(uint256 => bytes) internal _strategyParams;
     bytes internal _protocolParams;
+    bytes internal _operatorParams;
 
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
@@ -109,6 +110,11 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
 
     function _requireProtocolAdmin() internal view {
         require(_internalParams.protocolGovernance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    }
+
+    function _requireAtLeastOperator() internal view {
+        IProtocolGovernance governance = _internalParams.protocolGovernance;
+        require(governance.isAdmin(msg.sender) || governance.isOperator(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -200,6 +206,13 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
     function _setStrategyParams(uint256 nft, bytes memory params) internal {
         _requireAtLeastStrategy(nft);
         _strategyParams[nft] = params;
+    }
+
+    /// @notice Set immediate protocol params
+    /// @param params New params
+    function _setOperatorParams(bytes memory params) internal {
+        _requireAtLeastOperator();
+        _protocolParams = params;
     }
 
     /// @notice Set immediate protocol params

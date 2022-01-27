@@ -80,6 +80,14 @@ contract ERC20RootVaultGovernance is IContractMeta, IERC20RootVaultGovernance, V
     }
 
     /// @inheritdoc IERC20RootVaultGovernance
+    function operatorParams() external view returns (OperatorParams memory) {
+        if (_operatorParams.length == 0) {
+            return OperatorParams({disableDeposit: false});
+        }
+        return abi.decode(_operatorParams, (OperatorParams));
+    }
+
+    /// @inheritdoc IERC20RootVaultGovernance
     function delayedStrategyParams(uint256 nft) external view returns (DelayedStrategyParams memory) {
         if (_delayedStrategyParams[nft].length == 0) {
             return
@@ -151,9 +159,16 @@ contract ERC20RootVaultGovernance is IContractMeta, IERC20RootVaultGovernance, V
         );
     }
 
+    /// @inheritdoc IERC20RootVaultGovernance
     function setStrategyParams(uint256 nft, StrategyParams calldata params) external {
         _setStrategyParams(nft, abi.encode(params));
         emit SetStrategyParams(tx.origin, msg.sender, nft, params);
+    }
+
+    /// @inheritdoc IERC20RootVaultGovernance
+    function setOperatorParams(OperatorParams calldata params) external {
+        _setOperatorParams(abi.encode(params));
+        emit SetOperatorParams(tx.origin, msg.sender, params);
     }
 
     /// @inheritdoc IERC20RootVaultGovernance
@@ -250,6 +265,12 @@ contract ERC20RootVaultGovernance is IContractMeta, IERC20RootVaultGovernance, V
     /// @param nft VaultRegistry NFT of the vault
     /// @param params New params that are set
     event SetStrategyParams(address indexed origin, address indexed sender, uint256 indexed nft, StrategyParams params);
+
+    /// @notice Emitted when new OperatorParams are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params New params that are set
+    event SetOperatorParams(address indexed origin, address indexed sender, OperatorParams params);
 
     /// @notice Emitted when new DelayedProtocolParams are staged for commit
     /// @param origin Origin of the transaction (tx.origin)
