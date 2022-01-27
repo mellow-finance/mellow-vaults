@@ -2,95 +2,19 @@ import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { mint, withSigner } from "../library/Helpers";
+import { mint, sleep, mintUniV3Position_USDC_WETH } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { UniV3Vault } from "../types/UniV3Vault";
 import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults } from "../../deploy/0000_utils";
-
-async function mintUniV3Position_USDC_WETH(options: {
-    tickLower: BigNumberish;
-    tickUpper: BigNumberish;
-    usdcAmount: BigNumberish;
-    wethAmount: BigNumberish;
-    fee: 3000 | 500;
-}): Promise<any> {
-    const { weth, usdc, deployer, uniswapV3PositionManager } =
-        await getNamedAccounts();
-
-    const wethContract = await ethers.getContractAt("WETH", weth);
-    const usdcContract = await ethers.getContractAt("ERC20Token", usdc);
-
-    const positionManagerContract = await ethers.getContractAt(
-        INonfungiblePositionManager,
-        uniswapV3PositionManager
-    );
-
-    await mint("WETH", deployer, options.wethAmount);
-    await mint("USDC", deployer, options.usdcAmount);
-
-    console.log(
-        "weth balance",
-        (await wethContract.balanceOf(deployer)).toString()
-    );
-    console.log(
-        "usdc balance",
-        (await usdcContract.balanceOf(deployer)).toString()
-    );
-
-    if (
-        (await wethContract.allowance(deployer, uniswapV3PositionManager)).eq(
-            BigNumber.from(0)
-        )
-    ) {
-        await wethContract.approve(
-            uniswapV3PositionManager,
-            ethers.constants.MaxUint256
-        );
-        console.log(
-            `approved weth at ${weth} to uniswapV3PositionManager at ${uniswapV3PositionManager}`
-        );
-    }
-    if (
-        (await usdcContract.allowance(deployer, uniswapV3PositionManager)).eq(
-            BigNumber.from(0)
-        )
-    ) {
-        await usdcContract.approve(
-            uniswapV3PositionManager,
-            ethers.constants.MaxUint256
-        );
-        console.log(
-            `approved usdc at ${usdc} to uniswapV3PositionManager at ${uniswapV3PositionManager}`
-        );
-    }
-
-    const mintParams = {
-        token0: usdc,
-        token1: weth,
-        fee: options.fee,
-        tickLower: options.tickLower,
-        tickUpper: options.tickUpper,
-        amount0Desired: options.usdcAmount,
-        amount1Desired: options.wethAmount,
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: deployer,
-        deadline: ethers.constants.MaxUint256,
-    };
-
-    console.log(`minting new uni v3 position for deployer at ${deployer} 
-    \n with params ${JSON.stringify(mintParams)}`);
-
-    const result = await positionManagerContract.callStatic.mint(mintParams);
-    await positionManagerContract.mint(mintParams);
-    return result;
-}
+import { expect } from "chai";
+import { Contract } from "@ethersproject/contracts";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
     uniV3Vault: UniV3Vault;
+    positionManager: Contract;
 };
 
 type DeployOptions = {};
@@ -104,7 +28,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
-                    const { deployer, weth, usdc } = await getNamedAccounts();
+                    const { deployer, weth, usdc, uniswapV3PositionManager } =
+                        await getNamedAccounts();
 
                     const tokens = [weth, usdc]
                         .map((t) => t.toLowerCase())
@@ -169,6 +94,44 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "UniV3Vault",
                         uniV3Vault
                     );
+                    this.positionManager = await ethers.getContractAt(
+                        INonfungiblePositionManager,
+                        uniswapV3PositionManager
+                    );
+
+                    // add depositor
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([deployer]);
+
+                    // configure unit prices
+                    await deployments.execute(
+                        "ProtocolGovernance",
+                        { from: this.admin.address, autoMine: true },
+                        "stageUnitPrice(address,uint256)",
+                        weth,
+                        BigNumber.from(10).pow(18)
+                    );
+                    await deployments.execute(
+                        "ProtocolGovernance",
+                        { from: this.admin.address, autoMine: true },
+                        "stageUnitPrice(address,uint256)",
+                        usdc,
+                        BigNumber.from(10).pow(18)
+                    );
+                    await sleep(86400);
+                    await deployments.execute(
+                        "ProtocolGovernance",
+                        { from: this.admin.address, autoMine: true },
+                        "commitUnitPrice(address)",
+                        weth
+                    );
+                    await deployments.execute(
+                        "ProtocolGovernance",
+                        { from: this.admin.address, autoMine: true },
+                        "commitUnitPrice(address)",
+                        usdc
+                    );
 
                     return this.subject;
                 }
@@ -179,17 +142,222 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe("#rebalance", () => {
-            it("initializes uniV3 vault with position nft", async () => {
+        describe("rebalance", () => {
+            it("initializes uniV3 vault with position nft and increases tvl respectivly", async () => {
                 const result = await mintUniV3Position_USDC_WETH({
                     fee: uniV3PoolFee,
-                    tickLower: -60,
-                    tickUpper: 60,
-                    usdcAmount: 300000000,
-                    wethAmount: 100000000,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
+                });
+
+                const { deployer, weth, usdc } = await getNamedAccounts();
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](deployer, this.uniV3Vault.address, result.tokenId);
+                expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
+                    result.tokenId
+                );
+                const uniV3Tvl = await this.uniV3Vault.tvl();
+                expect(uniV3Tvl).to.not.contain(0);
+                expect(await this.erc20Vault.tvl()).to.deep.equals([
+                    [BigNumber.from(0), BigNumber.from(0)],
+                    [BigNumber.from(0), BigNumber.from(0)],
+                ]);
+            });
+
+            it("deposits", async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: uniV3PoolFee,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
                 });
                 console.log(result.tokenId.toString());
+
+                const { deployer, weth, usdc } = await getNamedAccounts();
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](deployer, this.uniV3Vault.address, result.tokenId);
+                await mint(
+                    "USDC",
+                    deployer,
+                    BigNumber.from(10).pow(6).mul(3000)
+                );
+                await mint("WETH", deployer, BigNumber.from(10).pow(18));
+                const wethContract = await ethers.getContractAt(
+                    "ERC20Token",
+                    weth
+                );
+                const usdcContract = await ethers.getContractAt(
+                    "ERC20Token",
+                    usdc
+                );
+                await wethContract.approve(
+                    this.subject.address,
+                    ethers.constants.MaxUint256
+                );
+                await usdcContract.approve(
+                    this.subject.address,
+                    ethers.constants.MaxUint256
+                );
+                await this.subject.deposit(
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18),
+                    ],
+                    0
+                );
+                expect(await this.subject.balanceOf(deployer)).to.deep.equals(
+                    BigNumber.from("1000000000000000000")
+                );
+            });
+
+            it("pulls univ3 to erc20 and collects earnings", async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: uniV3PoolFee,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
+                });
+                console.log(result.tokenId.toString());
+
+                const { deployer, weth, usdc } = await getNamedAccounts();
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](deployer, this.uniV3Vault.address, result.tokenId);
+                await mint(
+                    "USDC",
+                    deployer,
+                    BigNumber.from(10).pow(6).mul(3000)
+                );
+                await mint("WETH", deployer, BigNumber.from(10).pow(18));
+                const wethContract = await ethers.getContractAt(
+                    "ERC20Token",
+                    weth
+                );
+                const usdcContract = await ethers.getContractAt(
+                    "ERC20Token",
+                    usdc
+                );
+                await wethContract.approve(
+                    this.subject.address,
+                    ethers.constants.MaxUint256
+                );
+                await usdcContract.approve(
+                    this.subject.address,
+                    ethers.constants.MaxUint256
+                );
+                await this.subject.deposit(
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18),
+                    ],
+                    0
+                );
+                await this.uniV3Vault.collectEarnings();
+                await this.uniV3Vault.pull(
+                    this.erc20Vault.address,
+                    [usdc, weth],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18),
+                    ],
+                    []
+                );
+                console.log((await this.erc20Vault.tvl()).toString());
+                console.log(
+                    "uniV3Vault tvl",
+                    (await this.uniV3Vault.tvl()).toString()
+                );
+            });
+
+            it("replaces univ3 position", async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: uniV3PoolFee,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
+                });
+
+                const { deployer, weth, usdc } = await getNamedAccounts();
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](deployer, this.uniV3Vault.address, result.tokenId);
+                expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
+                    result.tokenId
+                );
+                await this.uniV3Vault.pull(
+                    this.erc20Vault.address,
+                    [usdc, weth],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18),
+                    ],
+                    []
+                );
+                const result2 = await mintUniV3Position_USDC_WETH({
+                    fee: uniV3PoolFee,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
+                });
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](deployer, this.uniV3Vault.address, result2.tokenId);
+                expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
+                    result2.tokenId
+                );
+            });
+        });
+
+        describe("oracles", () => {
+            it("ChainlinkOracle", async () => {
+                const { weth, usdc } = await getNamedAccounts();
+                const { address } = await deployments.get("ChainlinkOracle");
+                const oracle = await ethers.getContractAt(
+                    "IChainlinkOracle",
+                    address
+                );
+                console.log((await oracle.spotPrice(usdc, weth)).toString());
+            });
+
+            it("UniV2Oracle", async () => {
+                const { weth, usdc } = await getNamedAccounts();
+                const { address } = await deployments.get("UniV2Oracle");
+                const oracle = await ethers.getContractAt(
+                    "IUniV2Oracle",
+                    address
+                );
+                console.log((await oracle.spotPrice(usdc, weth)).toString());
+            });
+
+            it("UniV3Oracle", async () => {
+                const { weth, usdc } = await getNamedAccounts();
+                const { address } = await deployments.get("UniV3Oracle");
+                const oracle = await ethers.getContractAt(
+                    "IUniV3Oracle",
+                    address
+                );
+                console.log((await oracle.prices(usdc, weth)).toString());
+            });
+
+            it("MellowOracle", async () => {
+                const { weth, usdc } = await getNamedAccounts();
+                const { address } = await deployments.get("MellowOracle");
+                const oracle = await ethers.getContractAt(
+                    "IMellowOracle",
+                    address
+                );
+                console.log((await oracle.spotPrice(usdc, weth)).toString());
             });
         });
     }
 );
+
+// 25863797976686853173170438698997765552
