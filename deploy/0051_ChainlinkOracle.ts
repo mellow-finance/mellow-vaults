@@ -21,7 +21,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [
             [weth, wbtc, usdc],
             [chainlinkEth, chainlinkBtc, chainlinkUsdc],
-            [18, 8, 6],
             admin,
         ],
         log: true,

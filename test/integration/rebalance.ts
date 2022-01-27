@@ -28,10 +28,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
-                    const { deployer, weth, usdc, uniswapV3PositionManager } =
-                        await getNamedAccounts();
 
-                    const tokens = [weth, usdc]
+                    const { uniswapV3PositionManager } = await getNamedAccounts();
+
+                    const tokens = [this.weth.address, this.usdc.address]
                         .map((t) => t.toLowerCase())
                         .sort();
                     const startNft =
@@ -46,7 +46,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         uniV3VaultNft,
                         "UniV3VaultGovernance",
                         {
-                            createVaultArgs: [tokens, deployer, uniV3PoolFee],
+                            createVaultArgs: [tokens, this.deployer.address, uniV3PoolFee],
                         }
                     );
                     await setupVault(
@@ -54,7 +54,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         erc20VaultNft,
                         "ERC20VaultGovernance",
                         {
-                            createVaultArgs: [tokens, deployer],
+                            createVaultArgs: [tokens, this.deployer.address],
                         }
                     );
 
@@ -62,8 +62,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         hre,
                         erc20VaultNft + 1,
                         [erc20VaultNft, uniV3VaultNft],
-                        deployer,
-                        deployer
+                        this.deployer.address,
+                        this.deployer.address,
                     );
                     const erc20Vault = await read(
                         "VaultRegistry",
@@ -102,21 +102,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     // add depositor
                     await this.subject
                         .connect(this.admin)
-                        .addDepositorsToAllowlist([deployer]);
+                        .addDepositorsToAllowlist([this.deployer.address]);
 
                     // configure unit prices
                     await deployments.execute(
                         "ProtocolGovernance",
                         { from: this.admin.address, autoMine: true },
                         "stageUnitPrice(address,uint256)",
-                        weth,
+                        this.weth.address,
                         BigNumber.from(10).pow(18)
                     );
                     await deployments.execute(
                         "ProtocolGovernance",
                         { from: this.admin.address, autoMine: true },
                         "stageUnitPrice(address,uint256)",
-                        usdc,
+                        this.usdc.address,
                         BigNumber.from(10).pow(18)
                     );
                     await sleep(86400);
@@ -124,13 +124,29 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "ProtocolGovernance",
                         { from: this.admin.address, autoMine: true },
                         "commitUnitPrice(address)",
-                        weth
+                        this.weth.address
                     );
                     await deployments.execute(
                         "ProtocolGovernance",
                         { from: this.admin.address, autoMine: true },
                         "commitUnitPrice(address)",
-                        usdc
+                        this.usdc.address
+                    );
+
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        BigNumber.from(10).pow(6).mul(3000)
+                    );
+                    await mint("WETH", this.deployer.address, BigNumber.from(10).pow(18));
+
+                    await this.weth.approve(
+                        this.subject.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.usdc.approve(
+                        this.subject.address,
+                        ethers.constants.MaxUint256
                     );
 
                     return this.subject;
@@ -152,10 +168,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     wethAmount: BigNumber.from(10).pow(18),
                 });
 
-                const { deployer, weth, usdc } = await getNamedAccounts();
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](deployer, this.uniV3Vault.address, result.tokenId);
+                ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
                 expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
                     result.tokenId
                 );
@@ -175,34 +190,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     usdcAmount: BigNumber.from(10).pow(6).mul(3000),
                     wethAmount: BigNumber.from(10).pow(18),
                 });
-                console.log(result.tokenId.toString());
-
-                const { deployer, weth, usdc } = await getNamedAccounts();
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](deployer, this.uniV3Vault.address, result.tokenId);
-                await mint(
-                    "USDC",
-                    deployer,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-                await mint("WETH", deployer, BigNumber.from(10).pow(18));
-                const wethContract = await ethers.getContractAt(
-                    "ERC20Token",
-                    weth
-                );
-                const usdcContract = await ethers.getContractAt(
-                    "ERC20Token",
-                    usdc
-                );
-                await wethContract.approve(
-                    this.subject.address,
-                    ethers.constants.MaxUint256
-                );
-                await usdcContract.approve(
-                    this.subject.address,
-                    ethers.constants.MaxUint256
-                );
+                ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
                 await this.subject.deposit(
                     [
                         BigNumber.from(10).pow(6).mul(3000),
@@ -210,7 +200,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ],
                     0
                 );
-                expect(await this.subject.balanceOf(deployer)).to.deep.equals(
+                expect(await this.subject.balanceOf(this.deployer.address)).to.deep.equals(
                     BigNumber.from("1000000000000000000")
                 );
             });
@@ -225,32 +215,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
                 console.log(result.tokenId.toString());
 
-                const { deployer, weth, usdc } = await getNamedAccounts();
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](deployer, this.uniV3Vault.address, result.tokenId);
-                await mint(
-                    "USDC",
-                    deployer,
-                    BigNumber.from(10).pow(6).mul(3000)
-                );
-                await mint("WETH", deployer, BigNumber.from(10).pow(18));
-                const wethContract = await ethers.getContractAt(
-                    "ERC20Token",
-                    weth
-                );
-                const usdcContract = await ethers.getContractAt(
-                    "ERC20Token",
-                    usdc
-                );
-                await wethContract.approve(
-                    this.subject.address,
-                    ethers.constants.MaxUint256
-                );
-                await usdcContract.approve(
-                    this.subject.address,
-                    ethers.constants.MaxUint256
-                );
+                ](this.deployer.address, this.uniV3Vault.address, result.tokenId);
                 await this.subject.deposit(
                     [
                         BigNumber.from(10).pow(6).mul(3000),
@@ -261,7 +228,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 await this.uniV3Vault.collectEarnings();
                 await this.uniV3Vault.pull(
                     this.erc20Vault.address,
-                    [usdc, weth],
+                    [this.usdc.address, this.weth.address],
                     [
                         BigNumber.from(10).pow(6).mul(3000),
                         BigNumber.from(10).pow(18),
@@ -344,17 +311,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "IUniV3Oracle",
                     address
                 );
-                console.log((await oracle.prices(usdc, weth)).toString());
             });
 
             it("MellowOracle", async () => {
-                const { weth, usdc } = await getNamedAccounts();
                 const { address } = await deployments.get("MellowOracle");
                 const oracle = await ethers.getContractAt(
                     "IMellowOracle",
                     address
                 );
-                console.log((await oracle.spotPrice(usdc, weth)).toString());
+                console.log((await oracle.spotPrice(this.usdc.address, this.weth.address)).toString());
             });
         });
     }
