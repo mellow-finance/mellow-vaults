@@ -32,7 +32,7 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
         });
 
         pit(
-            "stringifySemver(numberifySemver(x)) == x",
+            "(stringifySemver o numberifySemver)(x) = x",
             { numRuns: RUNS.low },
             uint8.filter((x) => x.gt(0) && x.lt(20)),
             uint8.filter((x) => x.lt(20)),
