@@ -101,7 +101,7 @@ contract LStrategy is Multicall {
     }
 
     /// @notice Target liquidity ratio for UniV3 vaults
-    function targetLiquidityRatio() public view returns (uint256 liquidityRatioD, bool isNegative) {
+    function targetUniV3LiquidityRatio() public view returns (uint256 liquidityRatioD, bool isNegative) {
         int24 targetTick_ = targetTick();
         (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
         int24 midTick = (tickUpper + tickLower) / 2;
@@ -167,6 +167,31 @@ contract LStrategy is Multicall {
         fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
     }
 
+    function rebalanceERC20UniV3Vaults() external {
+        uint256 linearLiquidityDelta;
+        bool isNegativeLinearLiquidityDelta;
+        uint256 priceX96 = _priceX96FromTick(targetTick());
+        uint256 erc20VaultLinearLiquidity = _getLinearLiquidity(priceX96, erc20Vault);
+        uint256 lowerVaultLinearLiquidity = _getLinearLiquidity(priceX96, lowerVault);
+        uint256 upperVaultLinearLiquidity = _getLinearLiquidity(priceX96, upperVault);
+        (linearLiquidityDelta, isNegativeLinearLiquidityDelta) = _liquidityDelta(
+            erc20VaultLinearLiquidity,
+            lowerVaultLinearLiquidity + upperVaultLinearLiquidity,
+            ratioParams.erc20UniV3RatioD
+        );
+        (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
+        (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
+        (uint256[] memory lowerVaultTvl, ) = lowerVault.tvl();
+        (uint256[] memory upperVaultTvl, ) = upperVault.tvl();
+        uint256 uniLiquidityRatio = FullMath.mulDiv(
+            lowerVaultLinearLiquidity,
+            lowerVaultLinearLiquidity + upperVaultLinearLiquidity,
+            DENOMINATOR
+        );
+        uint256 lowerVaultLiquidityDeltaRatioD = FullMath.mulDiv(a, b, denominator);
+        // if (isNegativeLinearLiquidityDelta) {}
+    }
+
     /// @notice Make a rebalance of UniV3 vaults
     /// @param minWithdrawTokens Min accepted tokenAmounts for withdrawal
     /// @param minDepositTokens Min accepted tokenAmounts for deposit
@@ -176,7 +201,7 @@ contract LStrategy is Multicall {
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) external {
-        (uint256 targetLiquidityRatioD, bool isNegativeLiquidityRatio) = targetLiquidityRatio();
+        (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio();
         // // we crossed the interval right to left
         if (isNegativeLiquidityRatio) {
             // pull all liquidity to other vault and swap intervals
@@ -192,7 +217,7 @@ contract LStrategy is Multicall {
             return;
         }
         // we crossed the interval left to right
-        if (targetLiquidityRatioD > DENOMINATOR) {
+        if (targetUniV3LiquidityRatioD > DENOMINATOR) {
             // pull all liquidity to other vault and swap intervals
             _rebalanceUniV3Liquidity(
                 lowerVault,
@@ -211,7 +236,7 @@ contract LStrategy is Multicall {
         (uint128 liquidityDelta, bool isNegativeLiquidityDelta) = _liquidityDelta(
             lowerLiquidity,
             upperLiquidity,
-            targetLiquidityRatioD
+            targetUniV3LiquidityRatioD
         );
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
@@ -226,6 +251,20 @@ contract LStrategy is Multicall {
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
+
+    /// @notice Calculate a pure (not Uniswap) liquidity
+    /// @param priceX96 Current price y / x
+    /// @param vault Vault for liquidity calculation
+    /// @return Vault liquidity = x * p + y
+    function _getLinearLiquidity(uint256 priceX96, IVault vault) internal view returns (uint256) {
+        (uint256[] memory tvl, ) = vault.tvl();
+        return FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96) + tvl[1];
+    }
+
+    function _priceX96FromTick(int24 _tick) internal pure returns (uint256) {
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
+        return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
+    }
 
     /// @notice The vault to get stats from
     /// @return tickLower Lower tick for the uniV3 poistion inside the vault
@@ -251,12 +290,14 @@ contract LStrategy is Multicall {
     /// @return delta Liquidity required to reach targetLiquidityRatioD
     /// @return isNegative If `true` then delta needs to be bought to reach targetLiquidityRatioD, o/w needs to be sold
     function _liquidityDelta(
-        uint128 lowerLiquidity,
-        uint128 upperLiquidity,
+        uint256 lowerLiquidity,
+        uint256 upperLiquidity,
         uint256 targetLiquidityRatioD
-    ) internal pure returns (uint128 delta, bool isNegative) {
-        uint128 targetLowerLiquidity = uint128(
-            FullMath.mulDiv(targetLiquidityRatioD, uint256(lowerLiquidity + upperLiquidity), DENOMINATOR)
+    ) internal pure returns (uint256 delta, bool isNegative) {
+        uint256 targetLowerLiquidity = FullMath.mulDiv(
+            targetLiquidityRatioD,
+            uint256(lowerLiquidity + upperLiquidity),
+            DENOMINATOR
         );
         if (targetLowerLiquidity > lowerLiquidity) {
             isNegative = true;
@@ -274,7 +315,7 @@ contract LStrategy is Multicall {
         pure
         returns (bytes memory options)
     {
-        options = new bytes(96);
+        options = new bytes(0x60);
         assembly {
             mstore(add(options, 0x60), deadline)
         }

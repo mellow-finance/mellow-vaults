@@ -20,7 +20,7 @@ contract CowswapValidator is Validator {
         address,
         uint256,
         bytes calldata data
-    ) external view {
+    ) external pure {
         bytes4 selector = CommonLibrary.getSelector(data);
         // we don't validate TRUSTED_STRATEGY here because it's validated at allowance level
         if (selector == PRE_SIGNATURE_SELECTOR) {
