@@ -20,7 +20,6 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
 
     mapping(address => address) public chainlinkOracles;
 
-    mapping(address => uint8) private _tokenDecimals;
     EnumerableSet.AddressSet private _tokenAllowlist;
 
     constructor(
