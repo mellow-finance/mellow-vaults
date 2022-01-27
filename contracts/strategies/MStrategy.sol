@@ -189,46 +189,84 @@ contract MStrategy is Multicall {
         IIntegrationVault moneyVault_,
         address[] memory tokens_
     ) internal returns (uint256 amountIn, uint8 index) {
-        uint256 priceX96;
-        uint256 targetTokenRatioD;
-        {
-            int24 tickMin = tickParams.tickMin;
-            int24 tickMax = tickParams.tickMax;
-            int24 tick = _getAverageTick(pool_);
-            priceX96 = _priceX96FromTick(tick);
-            targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
-        }
-        (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
         uint256 token0;
-        uint256 token1;
+        uint256 priceX96;
+        uint256 targetToken0;
+        uint256[] memory erc20Tvl;
         {
-            (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
-            token0 = erc20Tvl[0] + moneyTvl[0];
-            token1 = erc20Tvl[1] + moneyTvl[1];
-        }
+            uint256 targetTokenRatioD;
+            {
+                int24 tickMin = tickParams.tickMin;
+                int24 tickMax = tickParams.tickMax;
+                int24 tick = _getAverageTick(pool_);
+                priceX96 = _priceX96FromTick(tick);
+                targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
+            }
+            (erc20Tvl, ) = erc20Vault_.tvl();
+            uint256 token1;
+            {
+                (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
+                token0 = erc20Tvl[0] + moneyTvl[0];
+                token1 = erc20Tvl[1] + moneyTvl[1];
+            }
 
-        uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
-        uint256 targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
+            uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
+            targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
+        }
+        SwapToTargetParams memory params;
         if (targetToken0 < token0) {
-            amountIn = token0 - targetToken0;
-            _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
+            index = 0;
+            params = SwapToTargetParams({
+                amountIn: token0 - targetToken0,
+                tokens: tokens_,
+                tokenInIndex: index,
+                priceX96: priceX96,
+                erc20Tvl: erc20Tvl,
+                pool: pool_,
+                router: router_,
+                erc20Vault: erc20Vault_,
+                moneyVault: moneyVault_
+            });
         } else {
             amountIn = FullMath.mulDiv(targetToken0 - token0, priceX96, CommonLibrary.Q96);
-            _swapToTarget(amountIn, tokens_, 1, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
+            index = 1;
+            params = SwapToTargetParams({
+                amountIn: amountIn,
+                tokens: tokens_,
+                tokenInIndex: index,
+                priceX96: priceX96,
+                erc20Tvl: erc20Tvl,
+                pool: pool_,
+                router: router_,
+                erc20Vault: erc20Vault_,
+                moneyVault: moneyVault_
+            });
         }
+        _swapToTarget(params);
     }
 
-    function _swapToTarget(
-        uint256 amountIn,
-        address[] memory tokens_,
-        uint8 tokenInIndex,
-        uint256 priceX96,
-        uint256[] memory erc20Tvl,
-        IUniswapV3Pool pool_,
-        ISwapRouter router_,
-        IIntegrationVault erc20Vault_,
-        IIntegrationVault moneyVault_
-    ) internal {
+    struct SwapToTargetParams {
+        uint256 amountIn;
+        address[] tokens;
+        uint8 tokenInIndex;
+        uint256 priceX96;
+        uint256[] erc20Tvl;
+        IUniswapV3Pool pool;
+        ISwapRouter router;
+        IIntegrationVault erc20Vault;
+        IIntegrationVault moneyVault;
+    }
+
+    function _swapToTarget(SwapToTargetParams memory params) internal {
+        uint256 amountIn = params.amountIn;
+        address[] memory tokens_ = params.tokens;
+        uint8 tokenInIndex = params.tokenInIndex;
+        uint256 priceX96 = params.priceX96;
+        uint256[] memory erc20Tvl = params.erc20Tvl;
+        IUniswapV3Pool pool_ = params.pool;
+        ISwapRouter router_ = params.router;
+        IIntegrationVault erc20Vault_ = params.erc20Vault;
+        IIntegrationVault moneyVault_ = params.moneyVault;
         if (amountIn > erc20Tvl[tokenInIndex]) {
             uint256[] memory tokenAmounts = new uint256[](2);
             tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
@@ -242,7 +280,7 @@ contract MStrategy is Multicall {
             amountOutMinimum = FullMath.mulDiv(amountIn, priceX96, CommonLibrary.Q96);
         }
         amountOutMinimum = FullMath.mulDiv(amountOutMinimum, DENOMINATOR - oracleParams.maxSlippageD, DENOMINATOR);
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
+        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
             tokenIn: tokens_[tokenInIndex],
             tokenOut: tokens_[1 - tokenInIndex],
             fee: pool_.fee(),
@@ -252,7 +290,7 @@ contract MStrategy is Multicall {
             amountOutMinimum: amountOutMinimum,
             sqrtPriceLimitX96: 0
         });
-        bytes memory data = abi.encode(params);
+        bytes memory data = abi.encode(swapParams);
         erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data));
     }
 
