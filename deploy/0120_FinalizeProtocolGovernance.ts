@@ -61,7 +61,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         protocolTreasury,
         withdrawLimit: 200000,
     };
-    let tx = await protocolGovernance.populateTransaction.setPendingParams(
+    let tx = await protocolGovernance.populateTransaction.stageParams(
         params
     );
     txDatas.push(tx.data);
@@ -105,6 +105,7 @@ async function registerGovernances(
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
         "ERC20RootVaultGovernance",
+        "MellowVaultGovernance",
     ]) {
         const governance = await hre.deployments.getOrNull(name);
         if (!governance) {

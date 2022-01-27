@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/chainlink/IAggregatorV3.sol";
@@ -42,6 +43,15 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     }
 
     /// @inheritdoc IChainlinkOracle
+    function canTellSpotPrice(address token0, address token1) external view returns (bool) {
+        return
+            _tokenAllowlist.contains(token0) &&
+            _tokenAllowlist.contains(token1) &&
+            (chainlinkOracles[token0] != address(0)) &&
+            (chainlinkOracles[token1] != address(0));
+    }
+
+    /// @inheritdoc IChainlinkOracle
     function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
         require(_tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1), ExceptionsLibrary.ALLOWLIST);
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
@@ -51,7 +61,20 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
             (address(chainlinkOracle0) != address(0)) && (address(chainlinkOracle1) != address(0)),
             ExceptionsLibrary.NOT_FOUND
         );
-        priceX96 = _getChainlinkPrice(chainlinkOracle0, chainlinkOracle1);
+        (, int256 answer0, , , ) = chainlinkOracle0.latestRoundData(); // this can throw if there's no data
+        uint256 decimalsFactor0 = (chainlinkOracle0.decimals() + IERC20Metadata(token0).decimals());
+        (, int256 answer1, , , ) = chainlinkOracle1.latestRoundData();
+        uint256 decimalsFactor1 = (chainlinkOracle1.decimals() + IERC20Metadata(token1).decimals());
+        uint256 price0 = uint256(answer0);
+        uint256 price1 = uint256(answer1);
+        if (decimalsFactor1 > decimalsFactor0) {
+            uint256 decimalsDiff = decimalsFactor1 - decimalsFactor0;
+            price0 *= (10**decimalsDiff);
+        } else if (decimalsFactor0 > decimalsFactor1) {
+            uint256 decimalsDiff = decimalsFactor0 - decimalsFactor1;
+            price1 *= (10**decimalsDiff);
+        }
+        priceX96 = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -64,21 +87,6 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _addChainlinkOracles(tokens, oracles);
-    }
-
-    // -------------------------  INTERNAL, VIEW  ------------------------------
-
-    function _getChainlinkPrice(IAggregatorV3 chainlinkOracle0, IAggregatorV3 chainlinkOracle1)
-        internal
-        view
-        returns (uint256)
-    {
-        (, int256 answer0, , , ) = chainlinkOracle0.latestRoundData(); // this can throw if there's no data
-        uint256 decimalsFactor0 = 10**chainlinkOracle0.decimals();
-        (, int256 answer1, , , ) = chainlinkOracle1.latestRoundData();
-        uint256 decimalsFactor1 = 10**chainlinkOracle0.decimals();
-        uint256 decimalsRatioX96 = FullMath.mulDiv(decimalsFactor1, CommonLibrary.Q96, decimalsFactor0);
-        return FullMath.mulDiv(uint256(answer0), decimalsRatioX96, uint256(answer1));
     }
 
     // -------------------------  INTERNAL, MUTATING  ------------------------------

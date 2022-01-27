@@ -38,7 +38,13 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
 
     /// @notice Timestamp after which staged pending protocol parameters can be committed
     /// @return Zero if there are no staged parameters, timestamp otherwise.
-    function pendingParamsTimestamp() external view returns (uint256);
+    function stagedParamsTimestamp() external view returns (uint256);
+
+    /// @notice Staged pending protocol parameters.
+    function stagedParams() external view returns (Params memory);
+
+    /// @notice Current protocol parameters.
+    function params() external view returns (Params memory);
 
     /// @notice Addresses for which non-zero permissions are set.
     function permissionAddresses() external view returns (address[] memory);
@@ -136,8 +142,9 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @param target The given address.
     function commitPermissionGrants(address target) external;
 
-    /// @notice Commites all staged permission grants for which governance delay passed
-    function commitAllPermissionGrantsSurpassedDelay() external;
+    /// @notice Commites all staged permission grants for which governance delay passed.
+    /// @return An array of addresses for which permission grants were committed.
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory);
 
     /// @notice Revoke permission instantly from the given address.
     /// @param target The given address.
@@ -152,7 +159,7 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
 
     /// @notice Sets new pending params that could have been committed after governance delay expires.
     /// @param newParams New protocol parameters to set.
-    function setPendingParams(Params memory newParams) external;
+    function stageParams(Params memory newParams) external;
 
     /// @notice Stage granted permissions that could have been committed after governance delay expires.
     /// Resets commit delay and permissions if there are already staged permissions for this address.

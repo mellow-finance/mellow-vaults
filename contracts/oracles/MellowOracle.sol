@@ -63,7 +63,13 @@ contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
             len += 1;
         }
         if (address(chainlinkOracle) != address(0)) {
-            values[len] = chainlinkOracle.spotPrice(token0, token1);
+            if (chainlinkOracle.canTellSpotPrice(token0, token1)) {
+                values[len] = chainlinkOracle.spotPrice(token0, token1);
+                len += 1;
+            }
+        }
+        assembly {
+            mstore(values, len)
         }
         CommonLibrary.bubbleSortUint(values);
         priceX96 = 0;

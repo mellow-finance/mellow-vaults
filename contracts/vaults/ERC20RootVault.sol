@@ -68,15 +68,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
         uint256 len = vaultTokens_.length;
-        for (uint256 i = 0; i < len; ++i) {
-            _lpPriceHighWaterMarks.push(0);
-        }
+        _lpPriceHighWaterMarks = new uint256[](len);
         totalWithdrawnAmounts = new uint256[](len);
 
         lastFeeCharge = block.timestamp;
     }
 
-    function deposit(uint256[] calldata tokenAmounts, uint256 minLpTokens) external nonReentrant {
+    function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens)
+        external
+        nonReentrant
+        returns (uint256[] memory actualTokenAmounts)
+    {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(
@@ -94,7 +96,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
             IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
-        uint256[] memory actualTokenAmounts = _push(normalizedAmounts, "");
+        actualTokenAmounts = _push(normalizedAmounts, "");
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
@@ -118,8 +120,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        uint256[] calldata minTokenAmounts
-    ) external nonReentrant {
+        uint256[] memory minTokenAmounts
+    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 supply = totalSupply;
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
@@ -130,7 +132,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             console.log("amt ", tokenAmounts[i]);
             require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
-        uint256[] memory actualTokenAmounts = _pull(address(this), tokenAmounts, "");
+        actualTokenAmounts = _pull(address(this), tokenAmounts, "");
         uint256 vaultTokensLength = _vaultTokens.length;
         for (uint256 i = 0; i < vaultTokensLength; ++i) {
             if (actualTokenAmounts[i] == 0) {

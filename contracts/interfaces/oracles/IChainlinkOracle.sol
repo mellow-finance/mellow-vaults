@@ -17,6 +17,12 @@ interface IChainlinkOracle {
     /// @return Address of the chainlink oracle
     function chainlinkOracles(address token) external view returns (address);
 
+    /// @notice Tells if for the token pair
+    /// @param token0 Token with the lower address
+    /// @param token1 Token with the higher address
+    /// @return True if spot price can be queried, false otherwise
+    function canTellSpotPrice(address token0, address token1) external view returns (bool);
+
     /// @notice Current spot price for the tokens.
     /// @dev Throws if token is not allowed, or chainlink oracle doesn't have enough data. Required to have token1 > token0.
     /// @param token0 Token with the lower address

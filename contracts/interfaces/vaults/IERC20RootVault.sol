@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
 
-interface IERC20RootVault is IAggregateVault {
+interface IERC20RootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance
     /// @param nft_ NFT of the vault in the VaultRegistry
@@ -16,4 +17,14 @@ interface IERC20RootVault is IAggregateVault {
         address strategy_,
         uint256[] memory subvaultNfts_
     ) external;
+
+    function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens)
+        external
+        returns (uint256[] memory actualTokenAmounts);
+
+    function withdraw(
+        address to,
+        uint256 lpTokenAmount,
+        uint256[] memory minTokenAmounts
+    ) external returns (uint256[] memory actualTokenAmounts);
 }
