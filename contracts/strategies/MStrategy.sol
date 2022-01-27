@@ -46,8 +46,7 @@ contract MStrategy is Multicall {
     }
 
     struct RatioParams {
-        uint256 erc20UniV3RatioD;
-        uint256 erc20TokenRatioD;
+        uint256 erc20MoneyRatioD;
     }
     struct BotParams {
         uint256 maxBotAllowance;
@@ -64,7 +63,7 @@ contract MStrategy is Multicall {
 
     TickParams public tickParams;
     OracleParams public oracleParams;
-    BotParams public botParams;
+    RatioParams public ratioParams;
     OtherParams public otherParams;
 
     // @notice Constructor for a new contract
@@ -128,11 +127,54 @@ contract MStrategy is Multicall {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
+    function _rebalancePools(
+        IIntegrationVault erc20Vault_,
+        IIntegrationVault moneyVault_,
+        address[] memory tokens_
+    ) internal {
+        uint256 erc20MoneyRatioD = ratioParams.erc20MoneyRatioD;
+        (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
+        (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
+        int256[] memory tokenAmounts = new int256[](2);
+        uint256 max = type(uint256).max / 2;
+        for (uint256 i = 0; i < 2; i++) {
+            uint256 targetErc20Token = FullMath.mulDiv(erc20Tvl[i] + moneyTvl[i], erc20MoneyRatioD, DENOMINATOR);
+            require(targetErc20Token < max && erc20Tvl[i] < max, ExceptionsLibrary.LIMIT_OVERFLOW);
+            tokenAmounts[i] = int256(targetErc20Token) - int256(erc20Tvl[i]);
+        }
+        if ((tokenAmounts[0] == 0) && (tokenAmounts[1] == 0)) {
+            return;
+        } else if ((tokenAmounts[0] <= 0) && (tokenAmounts[1] <= 0)) {
+            uint256[] memory amounts = new uint256[](2);
+            amounts[0] = uint256(-tokenAmounts[0]);
+            amounts[1] = uint256(-tokenAmounts[1]);
+            erc20Vault_.pull(address(moneyVault_), tokens_, amounts, "");
+        } else if ((tokenAmounts[0] >= 0) && (tokenAmounts[1] >= 0)) {
+            uint256[] memory amounts = new uint256[](2);
+            amounts[0] = uint256(tokenAmounts[0]);
+            amounts[1] = uint256(tokenAmounts[1]);
+            moneyVault_.pull(address(erc20Vault_), tokens_, amounts, "");
+        } else {
+            for (uint256 i = 0; i < 2; i++) {
+                uint256[] memory amounts = new uint256[](2);
+                if (tokenAmounts[i] > 0) {
+                    amounts[i] = uint256(tokenAmounts[i]);
+                    moneyVault_.pull(address(erc20Vault_), tokens_, amounts, "");
+                } else {
+                    // cannot == 0 here
+                    amounts[i] = uint256(-tokenAmounts[i]);
+                    erc20Vault_.pull(address(moneyVault_), tokens_, amounts, "");
+                }
+            }
+        }
+    }
+
     function _rebalanceTokens(
         IUniswapV3Pool pool_,
         ISwapRouter router_,
         IIntegrationVault erc20Vault_,
-        IIntegrationVault moneyVault_
+        IIntegrationVault moneyVault_,
+        address[] memory tokens_
     ) internal {
         int24 tickMin = tickParams.tickMin;
         int24 tickMax = tickParams.tickMax;
@@ -145,7 +187,6 @@ contract MStrategy is Multicall {
         uint256 priceX96 = _priceX96FromTick(tick);
         uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
         uint256 targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
-        address[] memory tokens_ = tokens;
         if (targetToken0 < token0) {
             uint256 amountIn = token0 - targetToken0;
             _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
