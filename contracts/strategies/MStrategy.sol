@@ -189,25 +189,32 @@ contract MStrategy is Multicall {
         IIntegrationVault moneyVault_,
         address[] memory tokens_
     ) internal returns (uint256 amountIn, uint8 index) {
-        int24 tickMin = tickParams.tickMin;
-        int24 tickMax = tickParams.tickMax;
-        int24 tick = _getAverageTick(pool_);
-        uint256 targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
+        uint256 priceX96;
+        uint256 targetTokenRatioD;
+        {
+            int24 tickMin = tickParams.tickMin;
+            int24 tickMax = tickParams.tickMax;
+            int24 tick = _getAverageTick(pool_);
+            priceX96 = _priceX96FromTick(tick);
+            targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
+        }
         (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
-        (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
-        uint256 token0 = erc20Tvl[0] + moneyTvl[0];
-        uint256 token1 = erc20Tvl[1] + moneyTvl[1];
-        uint256 priceX96 = _priceX96FromTick(tick);
+        uint256 token0;
+        uint256 token1;
+        {
+            (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
+            token0 = erc20Tvl[0] + moneyTvl[0];
+            token1 = erc20Tvl[1] + moneyTvl[1];
+        }
+
         uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
         uint256 targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
         if (targetToken0 < token0) {
             amountIn = token0 - targetToken0;
-            index = 0;
-            _swapToTarget(amountIn, tokens_, index, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
+            _swapToTarget(amountIn, tokens_, 0, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
         } else {
             amountIn = FullMath.mulDiv(targetToken0 - token0, priceX96, CommonLibrary.Q96);
-            index = 1;
-            _swapToTarget(amountIn, tokens_, index, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
+            _swapToTarget(amountIn, tokens_, 1, priceX96, erc20Tvl, pool_, router_, erc20Vault_, moneyVault_);
         }
     }
 
