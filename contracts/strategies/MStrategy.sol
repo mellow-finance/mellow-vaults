@@ -39,6 +39,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
 
     struct OracleParams {
         uint16 oracleObservationDelta;
+        uint24 maxTickDeviation;
         uint256 maxSlippageD;
     }
 
@@ -190,10 +191,10 @@ contract MStrategy is Multicall, DefaultAccessControl {
         return (uint256(uint24(tick - tickMin)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
     }
 
-    function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick) {
+    function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick, int24 tickDeviation) {
         uint16 oracleObservationDelta = oracleParams.oracleObservationDelta;
 
-        (, , uint16 observationIndex, uint16 observationCardinality, , , ) = pool_.slot0();
+        (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = pool_.slot0();
         require(observationCardinality > oracleObservationDelta, ExceptionsLibrary.LIMIT_UNDERFLOW);
         (uint32 blockTimestamp, int56 tickCumulative, , ) = pool_.observations(observationIndex);
 
@@ -204,6 +205,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
 
         uint32 timespan = blockTimestamp - blockTimestampLast;
         averageTick = int24((int256(tickCumulative) - int256(tickCumulativeLast)) / int256(uint256(timespan)));
+        tickDeviation = tick - averageTick;
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -267,7 +269,9 @@ contract MStrategy is Multicall, DefaultAccessControl {
             {
                 int24 tickMin = ratioParams.tickMin;
                 int24 tickMax = ratioParams.tickMax;
-                int24 tick = _getAverageTick(pool_);
+                (int24 tick, int24 deviation) = _getAverageTick(pool_);
+                int24 maxDeviation = int24(oracleParams.maxTickDeviation);
+                require((deviation < maxDeviation) && (deviation > -maxDeviation), ExceptionsLibrary.INVARIANT);
                 priceX96 = _priceX96FromTick(tick);
                 targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
             }
