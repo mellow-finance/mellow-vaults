@@ -1,4 +1,4 @@
-on: []
+on: ["push", "pull_request"]
 
 name: tests
 

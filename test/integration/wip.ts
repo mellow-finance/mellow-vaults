@@ -153,7 +153,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
       await this.deploymentFixture();
     });
 
-    describe("when UniV3Vault position is empty", () => {
+    xdescribe("when UniV3Vault position is empty", () => {
       let cnt = 0;
       pit(
         "(withdraw o deposit) => tvl() = (0, 0) & balanceOf() = 0",
