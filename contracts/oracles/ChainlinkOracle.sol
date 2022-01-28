@@ -53,7 +53,7 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
 
     /// @inheritdoc IExactOracle
     function canTellExactPrice(address token) external view returns (bool) {
-        return _tokenAllowlist.contains(token) &&  (chainlinkOracles[token] != address(0));
+        return _tokenAllowlist.contains(token) && (chainlinkOracles[token] != address(0));
     }
 
     /// @inheritdoc IExactOracle
@@ -64,11 +64,7 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         (, int256 answer, , , ) = chainlinkOracle.latestRoundData();
         uint256 price = uint256(answer);
         uint256 decimalsFactor = (chainlinkOracle.decimals() + IERC20Metadata(token).decimals());
-        return FullMath.mulDiv(
-            price,
-            CommonLibrary.Q96,
-            10**decimalsFactor
-        );
+        return FullMath.mulDiv(price, CommonLibrary.Q96, 10**decimalsFactor);
     }
 
     /// @inheritdoc IChainlinkOracle

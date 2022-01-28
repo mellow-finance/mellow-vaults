@@ -53,8 +53,8 @@ contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
         uint256[] memory values = new uint256[](len);
         len = 0;
         if (address(univ3Oracle) != address(0)) {
-            (uint256 spotPriceX96, uint256 avgPriceX96) = univ3Oracle.pricesX96(token0, token1);
-            values[0] = spotPriceX96;
+            (uint256 spotPriceX96_, uint256 avgPriceX96) = univ3Oracle.pricesX96(token0, token1);
+            values[0] = spotPriceX96_;
             values[1] = avgPriceX96;
             len += 2;
         }

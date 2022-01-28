@@ -292,22 +292,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (performanceFee > 0) {
             uint256 lpPrice = _calcLpPriceHighWatermark(vg.delayedProtocolParams().oracle, baseTvls, baseSupply);
             if (lpPrice > lpPriceHighWatermark) {
-                uint256 growth = FullMath.mulDiv(
-                    lpPrice,
-                    CommonLibrary.DENOMINATOR,
-                    lpPriceHighWatermark
-                );
+                uint256 growth = FullMath.mulDiv(lpPrice, CommonLibrary.DENOMINATOR, lpPriceHighWatermark);
                 lpPriceHighWatermark = lpPrice;
-                uint256 toMint = FullMath.mulDiv(
-                    baseSupply,
-                    growth,
-                    CommonLibrary.DENOMINATOR
-                );
-                toMint = FullMath.mulDiv(
-                    toMint,
-                    performanceFee,
-                    CommonLibrary.DENOMINATOR
-                );
+                uint256 toMint = FullMath.mulDiv(baseSupply, growth, CommonLibrary.DENOMINATOR);
+                toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
                 address treasury = strategyParams.strategyPerformanceTreasury;
                 _mint(treasury, toMint);
                 emit PerformanceFeesCharged(treasury, performanceFee, toMint);
