@@ -23,7 +23,6 @@ contract MStrategy is Multicall, DefaultAccessControl {
     uint256 public constant DENOMINATOR = 10**9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
-    bytes4 public constant EXACT_OUTPUT_SINGLE_SELECTOR = ISwapRouter.exactOutputSingle.selector;
 
     address[] public tokens;
     IERC20Vault public erc20Vault;
