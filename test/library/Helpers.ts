@@ -21,7 +21,7 @@ import {
     IVaultGovernance,
     UniV3VaultGovernance,
     VaultRegistry,
-    ERC20,
+    ERC20Token as ERC20,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
