@@ -14,9 +14,9 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
-import "../utils/DefaultAccessControl.sol";
+import "../utils/DefaultAccessControlLateInit.sol";
 
-contract MStrategy is Multicall, DefaultAccessControl {
+contract MStrategy is Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -30,10 +30,6 @@ contract MStrategy is Multicall, DefaultAccessControl {
     IUniswapV3Pool public pool;
     INonfungiblePositionManager public positionManager;
     ISwapRouter public router;
-
-    // INTERNAL STATE
-
-    bool initialized;
 
     // MUTABLE PARAMS
 
@@ -55,9 +51,10 @@ contract MStrategy is Multicall, DefaultAccessControl {
     /// @notice Deploys a new contract
     /// @param positionManager_ Uniswap V3 position manager
     /// @param router_ Uniswap V3 swap router
-    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) DefaultAccessControl(address(this)) {
+    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) {
         positionManager = positionManager_;
         router = router_;
+        DefaultAccessControlLateInit.init(address(this));
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -79,16 +76,17 @@ contract MStrategy is Multicall, DefaultAccessControl {
     /// @param erc20Vault_ erc20Vault of the Strategy
     /// @param moneyVault_ moneyVault of the Strategy
     /// @param fee_ Uniswap V3 fee for the pool (needed for oracle and swaps)
+    /// @param admin_ Admin of the strategy
     function initialize(
         INonfungiblePositionManager positionManager_,
         ISwapRouter router_,
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
-        uint24 fee_
+        uint24 fee_,
+        address admin_
     ) external {
-        _requireAdmin();
-        require(!initialized, ExceptionsLibrary.INIT);
+        DefaultAccessControlLateInit.init(admin_); // call once is checked here
 
         address[] memory erc20Tokens = erc20Vault_.vaultTokens();
         address[] memory moneyTokens = moneyVault_.vaultTokens();
@@ -104,7 +102,6 @@ contract MStrategy is Multicall, DefaultAccessControl {
         IUniswapV3Factory factory = IUniswapV3Factory(positionManager_.factory());
         pool = IUniswapV3Pool(factory.getPool(tokens[0], tokens[1], fee_));
         require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        initialized = true;
     }
 
     /// @notice Deploy a new strategy.
@@ -116,14 +113,11 @@ contract MStrategy is Multicall, DefaultAccessControl {
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
-        uint24 fee_
+        uint24 fee_,
+        address admin_
     ) external returns (MStrategy strategy) {
-        // TODO: do we need admin here?
-        // _requireAdmin();
         strategy = MStrategy(Clones.clone(address(this)));
-        strategy.initialize(positionManager, router, tokens_, erc20Vault_, moneyVault_, fee_);
-        // strategy.grantRole(ADMIN_ROLE, msg.sender);
-        // strategy.renounceRole(ADMIN_ROLE, address(this));
+        strategy.initialize(positionManager, router, tokens_, erc20Vault_, moneyVault_, fee_, admin_);
     }
 
     /// @notice Perform a rebalance according to target ratios

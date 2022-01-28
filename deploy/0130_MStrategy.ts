@@ -19,49 +19,16 @@ const deployMStrategy = async function (
 ) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get, getOrNull } = deployments;
-    const { deployer, mStrategyAdmin } = await getNamedAccounts();
+    const { deployer, uniswapV3Router, uniswapV3PositionManager } =
+        await getNamedAccounts();
 
-    const proxyAdminDeployment = await deploy(`MStrategy${kind}ProxyAdmin`, {
+    await deploy(`MStrategy${kind}`, {
         from: deployer,
-        contract: "DefaultProxyAdmin",
-        args: [],
+        contract: "MStrategy",
+        args: [uniswapV3PositionManager, uniswapV3Router],
         log: true,
         autoMine: true,
     });
-
-    const mStrategyDeployment = await getOrNull(
-        `MStrategy${kind}_Implementation`
-    );
-    if (!mStrategyDeployment) {
-        await deploy(`MStrategy${kind}`, {
-            from: deployer,
-            contract: "MStrategy",
-            args: [],
-            log: true,
-            autoMine: true,
-            proxy: {
-                execute: { init: { methodName: "init", args: [deployer] } },
-                proxyContract: "DefaultProxy",
-                viaAdminContract: {
-                    name: `MStrategy${kind}ProxyAdmin`,
-                    artifact: "DefaultProxyAdmin",
-                },
-            },
-        });
-    }
-    const owner = await read(`MStrategy${kind}ProxyAdmin`, "owner");
-    if (owner != mStrategyAdmin) {
-        await execute(
-            `MStrategy${kind}ProxyAdmin`,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "transferOwnership",
-            mStrategyAdmin
-        );
-    }
 };
 
 const setupStrategy = async (
@@ -82,88 +49,70 @@ const setupStrategy = async (
         mStrategyAdmin,
     } = await getNamedAccounts();
     const mStrategyName = `MStrategy${kind}`;
+    const { address: mStrategyAddress } = await deployments.get(mStrategyName);
+    const mStrategy = await hre.ethers.getContractAt(
+        "MStrategy",
+        mStrategyAddress
+    );
 
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
+    const params = [tokens, erc20Vault, moneyVault, 3000, mStrategyAdmin];
+    const address = await mStrategy.callStatic.createStrategy(...params);
+    if (!(await deployments.getOrNull(`${mStrategyName}_WETH_USDC`))) {
+        return;
+    }
+    await mStrategy.createStrategy(...params);
+    await deployments.save(`${mStrategyName}_WETH_USDC`, {
+        abi: (await deployments.get(mStrategyName)).abi,
+        address,
+    });
+    const mStrategyWethUsdc = await hre.ethers.getContractAt(
+        mStrategyName,
+        address
+    );
 
-    const vaultCount = await read(mStrategyName, "vaultCount");
-    if (vaultCount.toNumber() === 0) {
-        log("Setting Strategy params");
-        const uniFactory = await hre.ethers.getContractAt(
-            "IUniswapV3Factory",
-            uniswapV3Factory
-        );
-        const uniV3Pool = await uniFactory.getPool(tokens[0], tokens[1], 3000);
-        const immutableParams = {
-            token0: tokens[0],
-            token1: tokens[1],
-            uniV3Pool,
-            uniV3Router: uniswapV3Router,
-            erc20Vault,
-            moneyVault,
-        };
-        const params = {
-            oraclePriceTimespan: 1800,
-            oracleLiquidityTimespan: 1800,
-            liquidToFixedRatioX96: BigNumber.from(2).pow(96 - 2),
-            sqrtPMinX96: BigNumber.from(
-                Math.round((1 / Math.sqrt(3000)) * 10 ** 6 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-            sqrtPMaxX96: BigNumber.from(
-                Math.round((1 / Math.sqrt(5000)) * 10 ** 6 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-            tokenRebalanceThresholdX96: BigNumber.from(
-                Math.round(1.1 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-            poolRebalanceThresholdX96: BigNumber.from(
-                Math.round(1.1 * 2 ** 20)
-            ).mul(BigNumber.from(2).pow(76)),
-        };
-        log(
-            `Immutable Params:`,
-            map((x) => x.toString(), immutableParams)
-        );
-        log(
-            `Params:`,
-            map((x) => x.toString(), params)
-        );
-        await execute(
-            mStrategyName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "addVault",
-            immutableParams,
-            params
-        );
-    }
-    const adminRole = await read(mStrategyName, "ADMIN_ROLE");
-    const deployerIsAdmin = await read(mStrategyName, "isAdmin", deployer);
-    if (deployerIsAdmin) {
-        await execute(
-            mStrategyName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "grantRole",
-            adminRole,
-            mStrategyAdmin
-        );
-        await execute(
-            mStrategyName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "renounceRole",
-            adminRole,
-            deployer
-        );
-    }
+    log("Setting Strategy params");
+
+    const oracleParams = {
+        oracleObservationDelta: 15,
+        maxTickDeviation: 50,
+        maxSlippageD: Math.round(0.1 * 10 ** 9),
+    };
+    const ratioParams = {
+        tickMin: 198240 - 5000,
+        tickMax: 198240 + 5000,
+        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+    };
+    const txs = [];
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("setOracleParams", [
+            oracleParams,
+        ])
+    );
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("setRatioParams", [
+            ratioParams,
+        ])
+    );
+
+    log(
+        `Oracle Params:`,
+        map((x) => x.toString(), oracleParams)
+    );
+    log(
+        `Ratio Params:`,
+        map((x) => x.toString(), ratioParams)
+    );
+    await execute(
+        `${mStrategyName}_WETH_USDC`,
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "multicall",
+        txs
+    );
 };
 
 export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
