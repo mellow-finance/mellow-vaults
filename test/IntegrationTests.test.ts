@@ -200,10 +200,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(this.ownerSigner)
                             .deposit([1000, 1000], 1)
                     ).to.not.be.reverted;
+                    for (var x in await this.subject.tvl()) {
+                        console.log(Number(x));
+                    }
                     await this.subject
                         .connect(this.ownerSigner)
-                        .withdraw(this.ownerSigner.address, 1, [1000, 1000]);
-                    console.log("withdraw");
+                        .withdraw(this.ownerSigner.address, 1, [1, 1]);
+                    for (var x in await this.subject.tvl()) {
+                        console.log(Number(x));
+                    }
                 });
             });
         });
