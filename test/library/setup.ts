@@ -6,7 +6,7 @@ import { equals, sortBy } from "ramda";
 import { addSigner, toObject } from "./Helpers";
 import {
     AaveVaultGovernance,
-    ERC20,
+    ERC20Token as ERC20,
     ERC20VaultGovernance,
     ERC20RootVaultGovernance,
     ProtocolGovernance,
