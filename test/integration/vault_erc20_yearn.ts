@@ -3,7 +3,7 @@ import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { mint, sleep } from "../library/Helpers";
 import { contract } from "../library/setup";
-import { pit, uint48, RUNS } from "../library/property";
+import { pit, RUNS } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { YearnVault } from "../types/YearnVault";
 import { ERC20Vault } from "../types/ERC20Vault";
@@ -141,6 +141,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
       await this.deploymentFixture();
     });
 
+    let pid = 0;
+
     pit(
       `
         (balanceOf o deposit) != 0
@@ -151,13 +153,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         (tvl_root o (pull_i o pull_i-1 o ...)) = const
         `,
       { numRuns: RUNS.mid },
-      integer({ min: 0, max: 86400 * 7 }),
+      integer({ min: 0, max: 86400 }),
       integer({ min: 1, max: 5 }),
       integer({ min: 1, max: 5 }),
-      uint48.filter((x) => x.gt(100_000) && x.lt(BigNumber.from(10).pow(16))),
-      uint48.filter(
-        (x) =>
-          x.gt(BigNumber.from(10).pow(11)) && x.lt(BigNumber.from(10).pow(16))
+      integer({ min: 100_000, max: 1_000_000 }).map((x) =>
+        BigNumber.from(x.toString())
+      ),
+      integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
+        BigNumber.from(x.toString())
       ),
       async (
         delay: number,
@@ -166,6 +169,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         amountUSDC: BigNumber,
         amountWETH: BigNumber
       ) => {
+        console.log(`test no ${++pid}`);
         await this.subject
           .connect(this.deployer)
           .deposit([amountUSDC, amountWETH], 0);
@@ -177,11 +181,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         let yearn_tvl = await this.yearnVault.tvl();
         let root_tvl = await this.subject.tvl();
 
-        expect(
-          erc20_tvl[0].map((x, i) => x.add(yearn_tvl[0][i]))
-        ).to.deep.equals(root_tvl[0]);
-
-        await sleep(1);
+        expect(erc20_tvl[0][0].add(yearn_tvl[0][0])).to.deep.equals(
+          root_tvl[0][0]
+        );
+        expect(erc20_tvl[0][1].add(yearn_tvl[0][1])).to.deep.equals(
+          root_tvl[0][1]
+        );
 
         await this.erc20Vault.pull(
           this.yearnVault.address,
@@ -193,16 +198,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
           []
         );
 
-        await sleep(1);
-
         let new_erc20_tvl = await this.erc20Vault.tvl();
         let new_yearn_tvl = await this.yearnVault.tvl();
         let new_root_tvl = await this.subject.tvl();
 
-        expect(
-          new_erc20_tvl[0].map((x, i) => x.add(new_yearn_tvl[0][i]))
-        ).to.deep.equals(root_tvl[0]);
-        expect(root_tvl).to.deep.equals(new_root_tvl);
+        expect(new_erc20_tvl[0][0].add(new_yearn_tvl[0][0])).to.deep.equals(
+          new_root_tvl[0][0]
+        );
+        expect(new_erc20_tvl[0][1].add(new_yearn_tvl[0][1])).to.deep.equals(
+          new_root_tvl[0][1]
+        );
 
         if (rebalanceRatioUSDC > 1) {
           expect(new_erc20_tvl[0][0].lt(erc20_tvl[0][0])).to.be.true;
