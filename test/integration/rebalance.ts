@@ -230,7 +230,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     usdcAmount: BigNumber.from(10).pow(6).mul(3000),
                     wethAmount: BigNumber.from(10).pow(18),
                 });
-                console.log(result.tokenId.toString());
 
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
@@ -255,11 +254,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(10).pow(18),
                     ],
                     []
-                );
-                console.log((await this.erc20Vault.tvl()).toString());
-                console.log(
-                    "uniV3Vault tvl",
-                    (await this.uniV3Vault.tvl()).toString()
                 );
             });
 
@@ -312,7 +306,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "IChainlinkOracle",
                     address
                 );
-                console.log((await oracle.spotPrice(usdc, weth)).toString());
             });
 
             it("UniV2Oracle", async () => {
@@ -322,7 +315,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "IUniV2Oracle",
                     address
                 );
-                console.log((await oracle.spotPrice(usdc, weth)).toString());
             });
 
             it("UniV3Oracle", async () => {
@@ -340,17 +332,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "IMellowOracle",
                     address
                 );
-                console.log(
-                    (
-                        await oracle.spotPrice(
-                            this.usdc.address,
-                            this.weth.address
-                        )
-                    ).toString()
-                );
             });
         });
     }
 );
-
-// 25863797976686853173170438698997765552
