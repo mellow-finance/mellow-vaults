@@ -225,27 +225,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         actualTokenAmounts[1] = amounts.a1;
     }
 
-    function _getLiquidityForAmounts(
-        uint160 sqrtRatioX96,
-        uint160 sqrtRatioAX96,
-        uint160 sqrtRatioBX96,
-        uint256 amount0,
-        uint256 amount1
-    ) internal pure returns (uint128 liquidity) {
-        if (sqrtRatioAX96 > sqrtRatioBX96) (sqrtRatioAX96, sqrtRatioBX96) = (sqrtRatioBX96, sqrtRatioAX96);
-
-        if (sqrtRatioX96 <= sqrtRatioAX96) {
-            liquidity = LiquidityAmounts.getLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
-        } else if (sqrtRatioX96 < sqrtRatioBX96) {
-            uint128 liquidity0 = LiquidityAmounts.getLiquidityForAmount0(sqrtRatioX96, sqrtRatioBX96, amount0);
-            uint128 liquidity1 = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioX96, amount1);
-
-            liquidity = liquidity0 < liquidity1 ? liquidity0 : liquidity1;
-        } else {
-            liquidity = LiquidityAmounts.getLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
-        }
-    }
-
     function _pullUniV3Nft(
         uint256[] memory tokenAmounts,
         address to,
