@@ -65,15 +65,23 @@ contract MStrategy is Multicall, DefaultAccessControl {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
+    /// @notice Set initial values.
+    /// @dev Can be only called once.
+    /// @param positionManager_ Uniswap V3 position manager
+    /// @param router_ Uniswap V3 swap router
+    /// @param tokens_ Tokens under management
+    /// @param erc20Vault_ erc20Vault of the Strategy
+    /// @param moneyVault_ moneyVault of the Strategy
+    /// @param fee_ Uniswap V3 fee for the pool (needed for oracle and swaps)
     function initialize(
         INonfungiblePositionManager positionManager_,
         ISwapRouter router_,
+        address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
-        address[] memory tokens_,
-        uint24 fee
+        uint24 fee_
     ) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _requireAdmin();
         require(!initialized, ExceptionsLibrary.INIT);
 
         address[] memory erc20Tokens = erc20Vault_.vaultTokens();
@@ -88,23 +96,31 @@ contract MStrategy is Multicall, DefaultAccessControl {
         moneyVault = moneyVault_;
         tokens = tokens_;
         IUniswapV3Factory factory = IUniswapV3Factory(positionManager_.factory());
-        pool = IUniswapV3Pool(factory.getPool(tokens[0], tokens[1], fee));
+        pool = IUniswapV3Pool(factory.getPool(tokens[0], tokens[1], fee_));
         require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         initialized = true;
     }
 
+    /// @notice Deploy a new strategy.
+    /// @param tokens_ Tokens under management
+    /// @param erc20Vault_ erc20Vault of the Strategy
+    /// @param moneyVault_ moneyVault of the Strategy
+    /// @param fee_ Uniswap V3 fee for the pool (needed for oracle and swaps)
     function createStrategy(
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
         uint24 fee_
     ) external returns (MStrategy strategy) {
+        // TODO: do we need admin here?
+        // _requireAdmin();
         strategy = MStrategy(Clones.clone(address(this)));
-        strategy.initialize(positionManager, router, erc20Vault_, moneyVault_, tokens_, fee_);
-        strategy.grantRole(ADMIN_ROLE, msg.sender);
-        strategy.renounceRole(ADMIN_ROLE, address(this));
+        strategy.initialize(positionManager, router, tokens_, erc20Vault_, moneyVault_, fee_);
+        // strategy.grantRole(ADMIN_ROLE, msg.sender);
+        // strategy.renounceRole(ADMIN_ROLE, address(this));
     }
 
+    /// @notice Perform a rebalance according to target ratios
     function rebalance() external returns (uint256[] memory poolAmounts, uint256[] memory tokenAmounts) {
         IIntegrationVault erc20Vault_ = erc20Vault;
         IIntegrationVault moneyVault_ = moneyVault;
@@ -130,7 +146,24 @@ contract MStrategy is Multicall, DefaultAccessControl {
         IIntegrationVault toVault,
         uint256[] memory tokenAmounts
     ) external {
+        _requireAdmin();
         fromVault.pull(address(toVault), tokens, tokenAmounts, "");
+    }
+
+    /// @notice Set new Oracle params
+    /// @param params Params to set
+    function setOracleParams(OracleParams memory params) external {
+        _requireAdmin();
+        oracleParams = params;
+        emit SetOracleParams(tx.origin, msg.sender, params);
+    }
+
+    /// @notice Set new Ratio params
+    /// @param params Params to set
+    function setRatioParams(RatioParams memory params) external {
+        _requireAdmin();
+        ratioParams = params;
+        emit SetRatioParams(tx.origin, msg.sender, params);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -212,6 +245,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
                 }
             }
         }
+        emit RebalancedPools(tokenAmounts);
     }
 
     function _rebalanceTokens(
@@ -275,6 +309,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
             });
         }
         _swapToTarget(params);
+        emit SwappedTokens(params);
     }
 
     struct SwapToTargetParams {
@@ -326,23 +361,24 @@ contract MStrategy is Multicall, DefaultAccessControl {
         erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data));
     }
 
-    /// @notice Emitted when vault is swapped.
-    /// @param oldNft UniV3 nft that was burned
-    /// @param newNft UniV3 nft that was created
-    /// @param newTickLower Lower tick for created UniV3 nft
-    /// @param newTickUpper Upper tick for created UniV3 nft
-    event SwapVault(uint256 oldNft, uint256 newNft, int24 newTickLower, int24 newTickUpper);
+    /// @notice Emitted when pool rebalance is initiated.
+    /// @param tokenAmounts Token amounts for rebalance, negative means erc20Vault => moneyVault and vice versa.
+    event RebalancedPools(int256[] tokenAmounts);
 
-    /// @param fromVault The vault to pull liquidity from
-    /// @param toVault The vault to pull liquidity to
-    /// @param pulledAmounts amounts pulled from fromVault
-    /// @param pushedAmounts amounts pushed to toVault
-    /// @param liquidity The amount of liquidity. On overflow best effort pull is made
-    event RebalancedUniV3(
-        address fromVault,
-        address toVault,
-        uint256[] pulledAmounts,
-        uint256[] pushedAmounts,
-        uint128 liquidity
-    );
+
+    /// @notice Emitted when swap is initiated.
+    /// @param params Swap params
+    event SwappedTokens(SwapToTargetParams params);
+
+    /// @notice Emitted when Oracle params are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params Updated params
+    event SetOracleParams(address indexed origin, address indexed sender, OracleParams params);
+
+    /// @notice Emitted when Ratio params are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params Updated params
+    event SetRatioParams(address indexed origin, address indexed sender, RatioParams params);
 }
