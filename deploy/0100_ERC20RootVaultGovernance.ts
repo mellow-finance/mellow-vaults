@@ -16,6 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
         autoMine: true,
     });
+    const { address: chainlinkOracleAddress } = await get("ChainlinkOracle");
     const { address: ERC20RootVaultGovernanceAddress } = await deploy(
         "ERC20RootVaultGovernance",
         {
@@ -26,7 +27,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                     registry: vaultRegistry.address,
                     singleton,
                 },
-                { managementFeeChargeDelay: 86400 },
+                { 
+                    managementFeeChargeDelay: 86400,
+                    oracle: chainlinkOracleAddress
+                },
             ],
             log: true,
             autoMine: true,
