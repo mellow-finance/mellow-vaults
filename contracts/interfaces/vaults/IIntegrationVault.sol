@@ -70,7 +70,5 @@ interface IIntegrationVault is IVault, IERC1271 {
     /// are whitelisted by Protocol Governance.
     /// @param to Address of the reward pool
     /// @param data Abi encoded call to the `from` address
-    /// @param pushOptions Additional options that could be needed for some vaults. 
-    /// E.g. for Uniswap this could be `deadline` param. For the exact bytes structure see concrete vault descriptions.
-    function externalCall(address to, bytes memory data, bytes memory pushOptions) external payable;
+    function externalCall(address to, bytes memory data) external payable;
 }
