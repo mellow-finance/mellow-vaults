@@ -1,13 +1,12 @@
 import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { mint, sleep, mintUniV3Position_USDC_WETH } from "./library/Helpers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { mint, sleep } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { ERC20Vault, ERC20RootVault, UniV3Vault } from "./types";
+import { ERC20Vault, ERC20RootVault } from "./types";
 import { setupVault, combineVaults } from "../deploy/0000_utils";
 import { expect } from "chai";
-import { Contract } from "@ethersproject/contracts";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -31,25 +30,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const tokens = [this.weth.address, this.usdc.address]
                         .map((t) => t.toLowerCase())
                         .sort();
-                    const startNft =
+                    const erc20VaultNft =
                         (
                             await read("VaultRegistry", "vaultsCount")
                         ).toNumber() + 1;
 
-                    let uniV3VaultNft = startNft;
-                    let erc20VaultNft = startNft + 1;
-                    await setupVault(
-                        hre,
-                        uniV3VaultNft,
-                        "UniV3VaultGovernance",
-                        {
-                            createVaultArgs: [
-                                tokens,
-                                this.deployer.address,
-                                uniV3PoolFee,
-                            ],
-                        }
-                    );
                     await setupVault(
                         hre,
                         erc20VaultNft,
@@ -62,7 +47,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await combineVaults(
                         hre,
                         erc20VaultNft + 1,
-                        [erc20VaultNft, uniV3VaultNft],
+                        [erc20VaultNft],
                         this.deployer.address,
                         this.deployer.address
                     );
@@ -70,11 +55,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "VaultRegistry",
                         "vaultForNft",
                         erc20VaultNft
-                    );
-                    const uniV3Vault = await read(
-                        "VaultRegistry",
-                        "vaultForNft",
-                        uniV3VaultNft
                     );
 
                     const erc20RootVault = await read(
@@ -90,10 +70,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.erc20Vault = await ethers.getContractAt(
                         "ERC20Vault",
                         erc20Vault
-                    );
-                    this.uniV3Vault = await ethers.getContractAt(
-                        "UniV3Vault",
-                        uniV3Vault
                     );
                     this.positionManager = await ethers.getContractAt(
                         INonfungiblePositionManager,
@@ -137,12 +113,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await mint(
                         "USDC",
                         this.deployer.address,
-                        BigNumber.from(10).pow(6).mul(3000)
+                        BigNumber.from(10).pow(18).mul(3000)
                     );
                     await mint(
                         "WETH",
                         this.deployer.address,
-                        BigNumber.from(10).pow(18)
+                        BigNumber.from(10).pow(18).mul(3000)
                     );
 
                     await this.weth.approve(
@@ -163,9 +139,26 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#roflan", () => {
-            it("initializes uniV3 vault with position nft", async () => {
-                await this.subject.deposit([321], 312);
+        describe("#chargeFees", () => {
+            it("check that fees has been charged", async () => {
+                let firstDepositValue = BigNumber.from(10).pow(18).mul(200);
+                let secondDepositValue = firstDepositValue.mul(3);
+                await this.subject.deposit([firstDepositValue.mul(2), firstDepositValue], 1);
+                await mint(
+                    "WETH",
+                    this.erc20Vault.address,
+                    BigNumber.from(10).pow(18).mul(3500)
+                );
+                await mint(
+                    "USDC",
+                    this.erc20Vault.address,
+                    BigNumber.from(10).pow(18).mul(3500)
+                );
+                await sleep(86400 * 30);
+                await expect(this.subject.deposit([secondDepositValue.mul(2), secondDepositValue.mul(3)], 50)).to.emit(
+                    this.subject,
+                    "PerformanceFeesCharged"
+                );
             });
         });
     }
