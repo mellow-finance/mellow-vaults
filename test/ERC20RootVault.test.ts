@@ -15,7 +15,7 @@ type CustomContext = {
 type DeployOptions = {};
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
-    "ERC20RootVault::chargefees",
+    "ERC20RootVault::chargeFees",
     function () {
         const uniV3PoolFee = 3000;
 
