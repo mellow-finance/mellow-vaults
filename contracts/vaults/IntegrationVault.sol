@@ -172,7 +172,11 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         return 0xffffffff;
     }
 
-    function externalCall(address to, bytes calldata data) external payable nonReentrant {
+    function externalCall(
+        address to,
+        bytes calldata data,
+        bytes calldata pushOptions
+    ) external payable nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
@@ -187,6 +191,12 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
                 revert(add(32, returndata), returndata_size)
             }
         }
+        uint256 length = _vaultTokens.length;
+        uint256[] memory pushAmounts = new uint256[](length);
+        for (uint256 i; i != length; ++i) {
+            pushAmounts[i] = IERC20(_vaultTokens[i]).balanceOf(address(this));
+        }
+        _push(pushAmounts, pushOptions);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
