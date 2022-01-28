@@ -12,5 +12,5 @@ interface IUniV2Oracle {
     /// @param token0 Token 0 for price
     /// @param token1 Token 1 for price
     /// @return spotPriceX96 Current UniV3 price
-    function spotPrice(address token0, address token1) external view returns (uint256 spotPriceX96);
+    function spotPriceX96(address token0, address token1) external view returns (uint256 spotPriceX96);
 }

@@ -17,7 +17,7 @@ interface IUniV3Oracle {
     /// @param token1 Token 1 for price
     /// @return spotPriceX96 Current UniV3 price
     /// @return avgPriceX96 Average UniV3 price in the observation range [-observationsForAverage, -1]. Calculated by averaging ticks and then calculating price.
-    function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96);
+    function pricesX96(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96);
 
     /// @notice Update number of observations for average price
     /// @param newObservationsForAverage New value for observations

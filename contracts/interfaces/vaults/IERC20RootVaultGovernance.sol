@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "./IERC20RootVault.sol";
 import "./IVaultGovernance.sol";
+import "../oracles/IExactOracle.sol";
 
 interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
@@ -23,6 +24,7 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @param managementFeeChargeDelay The minimal interval between management fee charges
     struct DelayedProtocolParams {
         uint256 managementFeeChargeDelay;
+        IExactOracle oracle;
     }
 
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.

@@ -10,6 +10,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
+import "../interfaces/oracles/IExactOracle.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
@@ -18,11 +19,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    uint256 public lpPriceHighWatermark;
     uint256 public lastFeeCharge;
     uint256 public totalWithdrawnAmountsTimestamp;
     uint256[] public totalWithdrawnAmounts;
 
-    uint256[] private _lpPriceHighWaterMarks;
     EnumerableSet.AddressSet private _depositorsAllowlist;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -67,7 +68,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
         uint256 len = vaultTokens_.length;
-        _lpPriceHighWaterMarks = new uint256[](len);
         totalWithdrawnAmounts = new uint256[](len);
 
         lastFeeCharge = block.timestamp;
@@ -238,26 +238,31 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - lastFeeCharge;
         uint256 tvlsLength = tvls.length;
-        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) return;
+        if (elapsed < vg.delayedProtocolParams().managementFeeChargeDelay) {
+            return;
+        }
 
         lastFeeCharge = block.timestamp;
         uint256 baseSupply = supply;
         if (isWithdraw) {
             baseSupply = 0;
-            if (supply > deltaSupply) baseSupply = supply - deltaSupply;
+            if (supply > deltaSupply) {
+                baseSupply = supply - deltaSupply;
+            }
         }
 
         if (baseSupply == 0) {
-            for (uint256 i = 0; i < tvlsLength; ++i)
-                _lpPriceHighWaterMarks[i] = (deltaTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / deltaSupply;
-
+            delete lpPriceHighWatermark;
             return;
         }
 
         uint256[] memory baseTvls = new uint256[](tvlsLength);
         for (uint256 i = 0; i < baseTvls.length; ++i) {
-            if (isWithdraw) baseTvls[i] = tvls[i] - deltaTvls[i];
-            else baseTvls[i] = tvls[i];
+            if (isWithdraw) {
+                baseTvls[i] = tvls[i] - deltaTvls[i];
+            } else {
+                baseTvls[i] = tvls[i];
+            }
         }
 
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
@@ -270,6 +275,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             _mint(strategyParams.strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyParams.strategyTreasury, strategyParams.managementFee, toMint);
         }
+
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         if (protocolFee > 0) {
             address treasury = vg.internalParams().protocolGovernance.protocolTreasury();
@@ -281,35 +287,31 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             _mint(treasury, toMint);
             emit ProtocolFeesCharged(treasury, protocolFee, toMint);
         }
+
         uint256 performanceFee = strategyParams.performanceFee;
         if (performanceFee > 0) {
-            uint256[] memory hwms = _lpPriceHighWaterMarks;
-            uint256 minLpPriceFactor = type(uint256).max;
-            for (uint256 i = 0; i < tvlsLength; ++i) {
-                uint256 hwm = hwms[i];
-                uint256 lpPrice = (baseTvls[i] * CommonLibrary.PRICE_DENOMINATOR) / baseSupply;
-                if (lpPrice > hwm) {
-                    uint256 delta = (lpPrice * CommonLibrary.DENOMINATOR) / hwm;
-                    if (delta < minLpPriceFactor) {
-                        minLpPriceFactor = delta;
-                    }
-                } else {
-                    // not eligible for performance fees
-                    return;
-                }
+            uint256 lpPrice = _calcLpPriceHighWatermark(vg.delayedProtocolParams().oracle, baseTvls, baseSupply);
+            if (lpPrice > lpPriceHighWatermark) {
+                uint256 growth = FullMath.mulDiv(
+                    lpPrice,
+                    CommonLibrary.DENOMINATOR,
+                    lpPriceHighWatermark
+                );
+                lpPriceHighWatermark = lpPrice;
+                uint256 toMint = FullMath.mulDiv(
+                    baseSupply,
+                    growth,
+                    CommonLibrary.DENOMINATOR
+                );
+                toMint = FullMath.mulDiv(
+                    toMint,
+                    performanceFee,
+                    CommonLibrary.DENOMINATOR
+                );
+                address treasury = strategyParams.strategyPerformanceTreasury;
+                _mint(treasury, toMint);
+                emit PerformanceFeesCharged(treasury, performanceFee, toMint);
             }
-            for (uint256 i = 0; i < tvlsLength; ++i)
-                _lpPriceHighWaterMarks[i] += FullMath.mulDiv(hwms[i], minLpPriceFactor, CommonLibrary.DENOMINATOR);
-
-            address treasury = strategyParams.strategyPerformanceTreasury;
-            uint256 toMint = FullMath.mulDiv(
-                baseSupply,
-                (minLpPriceFactor - CommonLibrary.DENOMINATOR),
-                CommonLibrary.DENOMINATOR
-            );
-            toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
-            _mint(treasury, toMint);
-            emit PerformanceFeesCharged(treasury, performanceFee, toMint);
         }
     }
 
@@ -332,6 +334,23 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             );
             totalWithdrawnAmounts[i] = withdrawn[i];
         }
+    }
+
+    function _calcLpPriceHighWatermark(
+        IExactOracle oracle,
+        uint256[] memory tvl_,
+        uint256 lp
+    ) internal view returns (uint256) {
+        uint256 totalTvlX96;
+        for (uint256 i; i != tvl_.length; ++i) {
+            address token = _vaultTokens[i];
+            if (oracle.canTellExactPrice(token)) {
+                totalTvlX96 += oracle.exactPriceX96(token) * tvl_[i];
+            } else {
+                return 0;
+            }
+        }
+        return FullMath.mulDiv(totalTvlX96, CommonLibrary.PRICE_DENOMINATOR, lp * CommonLibrary.Q96);
     }
 
     // --------------------------  EVENTS  --------------------------

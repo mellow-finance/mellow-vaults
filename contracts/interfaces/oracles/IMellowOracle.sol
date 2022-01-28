@@ -12,7 +12,7 @@ interface IMellowOracle {
     /// @return priceX96 Price estimation. The price is `token1 / token0`, i.e. how much token1 needed to buy one unit of token0. The price is in X96 format.
     /// @return minPriceX96 Lower price estimation. The price is `token1 / token0`, i.e. how much token1 needed to buy one unit of token0. The price is in X96 format.
     /// @return maxPriceX96 Upper price estimation. The price is `token1 / token0`, i.e. how much token1 needed to buy one unit of token0. The price is in X96 format.
-    function spotPrice(address token0, address token1)
+    function spotPriceX96(address token0, address token1)
         external
         view
         returns (

@@ -39,7 +39,10 @@ contract ERC20RootVaultGovernance is IContractMeta, IERC20RootVaultGovernance, V
     /// @inheritdoc IERC20RootVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
-            return DelayedProtocolParams({managementFeeChargeDelay: 0});
+            return DelayedProtocolParams({
+                managementFeeChargeDelay: 0,
+                oracle: IExactOracle(address(0))
+            });
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }

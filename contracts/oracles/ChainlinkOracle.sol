@@ -51,8 +51,28 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
             (chainlinkOracles[token1] != address(0));
     }
 
+    /// @inheritdoc IExactOracle
+    function canTellExactPrice(address token) external view returns (bool) {
+        return _tokenAllowlist.contains(token) &&  (chainlinkOracles[token] != address(0));
+    }
+
+    /// @inheritdoc IExactOracle
+    function exactPriceX96(address token) external view returns (uint256) {
+        require(_tokenAllowlist.contains(token), ExceptionsLibrary.ALLOWLIST);
+        IAggregatorV3 chainlinkOracle = IAggregatorV3(chainlinkOracles[token]);
+        require(address(chainlinkOracle) != address(0), ExceptionsLibrary.NOT_FOUND);
+        (, int256 answer, , , ) = chainlinkOracle.latestRoundData();
+        uint256 price = uint256(answer);
+        uint256 decimalsFactor = (chainlinkOracle.decimals() + IERC20Metadata(token).decimals());
+        return FullMath.mulDiv(
+            price,
+            CommonLibrary.Q96,
+            10**decimalsFactor
+        );
+    }
+
     /// @inheritdoc IChainlinkOracle
-    function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
+    function spotPriceX96(address token0, address token1) external view returns (uint256 priceX96) {
         require(_tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1), ExceptionsLibrary.ALLOWLIST);
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(chainlinkOracles[token0]);

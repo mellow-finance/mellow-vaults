@@ -31,7 +31,7 @@ contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
     /// @inheritdoc IMellowOracle
-    function spotPrice(address token0, address token1)
+    function spotPriceX96(address token0, address token1)
         external
         view
         returns (
@@ -53,18 +53,18 @@ contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
         uint256[] memory values = new uint256[](len);
         len = 0;
         if (address(univ3Oracle) != address(0)) {
-            (uint256 spotPriceX96, uint256 avgPriceX96) = univ3Oracle.prices(token0, token1);
+            (uint256 spotPriceX96, uint256 avgPriceX96) = univ3Oracle.pricesX96(token0, token1);
             values[0] = spotPriceX96;
             values[1] = avgPriceX96;
             len += 2;
         }
         if (address(univ2Oracle) != address(0)) {
-            values[len] = univ2Oracle.spotPrice(token0, token1);
+            values[len] = univ2Oracle.spotPriceX96(token0, token1);
             len += 1;
         }
         if (address(chainlinkOracle) != address(0)) {
             if (chainlinkOracle.canTellSpotPrice(token0, token1)) {
-                values[len] = chainlinkOracle.spotPrice(token0, token1);
+                values[len] = chainlinkOracle.spotPriceX96(token0, token1);
                 len += 1;
             }
         }

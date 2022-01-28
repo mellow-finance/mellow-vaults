@@ -30,7 +30,7 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
     /// @inheritdoc IUniV3Oracle
-    function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
+    function pricesX96(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
         address pool = factory.getPool(token0, token1, 3000);
         if (pool == address(0)) {

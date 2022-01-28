@@ -22,12 +22,12 @@ contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
     /// @inheritdoc IUniV2Oracle
-    function spotPrice(address token0, address token1) external view returns (uint256 spotPriceX96) {
+    function spotPriceX96(address token0, address token1) external view returns (uint256 spotPriceX96_) {
         require(token1 > token0, ExceptionsLibrary.INVARIANT);
         address pool = factory.getPair(token0, token1);
         require(pool != address(0), ExceptionsLibrary.NOT_FOUND);
         (uint112 reserve0, uint112 reserve1, ) = IUniswapV2Pair(pool).getReserves();
-        spotPriceX96 = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+        spotPriceX96_ = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {

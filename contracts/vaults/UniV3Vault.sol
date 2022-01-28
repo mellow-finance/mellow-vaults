@@ -69,7 +69,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             {
                 uint256 minPriceX96;
                 uint256 maxPriceX96;
-                (, minPriceX96, maxPriceX96) = params.oracle.spotPrice(_vaultTokens[0], _vaultTokens[1]);
+                (, minPriceX96, maxPriceX96) = params.oracle.spotPriceX96(_vaultTokens[0], _vaultTokens[1]);
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
