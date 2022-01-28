@@ -128,6 +128,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
 
     /// @notice Perform a rebalance according to target ratios
     function rebalance() external returns (uint256[] memory poolAmounts, uint256[] memory tokenAmounts) {
+        _requireAdmin();
         IIntegrationVault erc20Vault_ = erc20Vault;
         IIntegrationVault moneyVault_ = moneyVault;
         address[] memory tokens_ = tokens;
