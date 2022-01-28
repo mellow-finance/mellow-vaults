@@ -4,18 +4,19 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
+import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
-import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../utils/DefaultAccessControl.sol";
 
-contract MStrategy is Multicall {
+contract MStrategy is Multicall, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -27,18 +28,15 @@ contract MStrategy is Multicall {
     address[] public tokens;
     IERC20Vault public erc20Vault;
     IIntegrationVault public moneyVault;
-    INonfungiblePositionManager public positionManager;
     IUniswapV3Pool public pool;
+    INonfungiblePositionManager public positionManager;
     ISwapRouter public router;
 
     // INTERNAL STATE
 
-    // MUTABLE PARAMS
+    bool initialized;
 
-    struct TickParams {
-        int24 tickMin;
-        int24 tickMax;
-    }
+    // MUTABLE PARAMS
 
     struct OracleParams {
         uint16 oracleObservationDelta;
@@ -46,25 +44,18 @@ contract MStrategy is Multicall {
     }
 
     struct RatioParams {
+        int24 tickMin;
+        int24 tickMax;
         uint256 erc20MoneyRatioD;
     }
-    struct BotParams {
-        uint256 maxBotAllowance;
-        uint256 minBotWaitTime;
-    }
 
-    struct OtherParams {
-        uint16 intervalWidthInTicks;
-        uint256 lowerTickDeviation;
-        uint256 upperTickDeviation;
-        uint256 minToken0ForOpening;
-        uint256 minToken1ForOpening;
-    }
-
-    TickParams public tickParams;
     OracleParams public oracleParams;
     RatioParams public ratioParams;
-    OtherParams public otherParams;
+
+    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) DefaultAccessControl(address(this)) {
+        positionManager = positionManager_;
+        router = router_;
+    }
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -74,19 +65,60 @@ contract MStrategy is Multicall {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    function rebalance() external returns (uint256[] memory amounts) {
+    function initialize(
+        INonfungiblePositionManager positionManager_,
+        ISwapRouter router_,
+        IERC20Vault erc20Vault_,
+        IIntegrationVault moneyVault_,
+        address[] memory tokens_,
+        uint24 fee
+    ) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(!initialized, ExceptionsLibrary.INIT);
+
+        address[] memory erc20Tokens = erc20Vault_.vaultTokens();
+        address[] memory moneyTokens = moneyVault_.vaultTokens();
+        for (uint256 i = 0; i < 2; i++) {
+            require(erc20Tokens[i] == tokens_[i], ExceptionsLibrary.INVARIANT);
+            require(moneyTokens[i] == tokens_[i], ExceptionsLibrary.INVARIANT);
+        }
+        positionManager = positionManager_;
+        router = router_;
+        erc20Vault = erc20Vault_;
+        moneyVault = moneyVault_;
+        tokens = tokens_;
+        IUniswapV3Factory factory = IUniswapV3Factory(positionManager_.factory());
+        pool = IUniswapV3Pool(factory.getPool(tokens[0], tokens[1], fee));
+        require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        initialized = true;
+    }
+
+    function createStrategy(
+        address[] memory tokens_,
+        IERC20Vault erc20Vault_,
+        IIntegrationVault moneyVault_,
+        uint24 fee_
+    ) external returns (MStrategy strategy) {
+        strategy = MStrategy(Clones.clone(address(this)));
+        strategy.initialize(positionManager, router, erc20Vault_, moneyVault_, tokens_, fee_);
+        strategy.grantRole(ADMIN_ROLE, msg.sender);
+        strategy.renounceRole(ADMIN_ROLE, address(this));
+    }
+
+    function rebalance() external returns (uint256[] memory poolAmounts, uint256[] memory tokenAmounts) {
         IIntegrationVault erc20Vault_ = erc20Vault;
         IIntegrationVault moneyVault_ = moneyVault;
         address[] memory tokens_ = tokens;
         IUniswapV3Pool pool_ = pool;
         ISwapRouter router_ = router;
-        int256[] memory tokenAmounts = _rebalancePools(erc20Vault_, moneyVault_, tokens_);
+        int256[] memory poolAmountsI = _rebalancePools(erc20Vault_, moneyVault_, tokens_);
         (uint256 amountIn, uint8 index) = _rebalanceTokens(pool_, router_, erc20Vault_, moneyVault_, tokens_);
-        amounts = new uint256[](2);
+        poolAmounts = new uint256[](2);
+        tokenAmounts = new uint256[](2);
         for (uint256 i = 0; i < 2; i++) {
-            amounts[i] = tokenAmounts[i] > 0 ? uint256(tokenAmounts[i]) : uint256(-tokenAmounts[i]);
+            poolAmounts[i] = poolAmountsI[i] > 0 ? uint256(poolAmountsI[i]) : uint256(-poolAmountsI[i]);
         }
-        amounts[index] += amountIn;
+        tokenAmounts[index] = amountIn;
     }
 
     /// @notice Manually pull tokens from fromVault to toVault
@@ -196,8 +228,8 @@ contract MStrategy is Multicall {
         {
             uint256 targetTokenRatioD;
             {
-                int24 tickMin = tickParams.tickMin;
-                int24 tickMax = tickParams.tickMax;
+                int24 tickMin = ratioParams.tickMin;
+                int24 tickMax = ratioParams.tickMax;
                 int24 tick = _getAverageTick(pool_);
                 priceX96 = _priceX96FromTick(tick);
                 targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
