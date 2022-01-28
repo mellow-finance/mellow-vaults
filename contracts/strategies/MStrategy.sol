@@ -52,6 +52,9 @@ contract MStrategy is Multicall, DefaultAccessControl {
     OracleParams public oracleParams;
     RatioParams public ratioParams;
 
+    /// @notice Deploys a new contract
+    /// @param positionManager_ Uniswap V3 position manager
+    /// @param router_ Uniswap V3 swap router
     constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) DefaultAccessControl(address(this)) {
         positionManager = positionManager_;
         router = router_;
@@ -59,6 +62,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    /// @notice Returns average tick from UniV3 Oracle
     function getAverageTick() external view returns (int24) {
         return _getAverageTick(pool);
     }
@@ -358,13 +362,20 @@ contract MStrategy is Multicall, DefaultAccessControl {
             sqrtPriceLimitX96: 0
         });
         bytes memory data = abi.encode(swapParams);
-        erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data));
+        erc20Vault.externalCall(
+            tokens[tokenInIndex],
+            abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(address(router_), amountIn))
+        ); // approve
+        erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data)); //swap
+        erc20Vault.externalCall(
+            tokens[tokenInIndex],
+            abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(address(router_), 0))
+        ); // reset allowance
     }
 
     /// @notice Emitted when pool rebalance is initiated.
     /// @param tokenAmounts Token amounts for rebalance, negative means erc20Vault => moneyVault and vice versa.
     event RebalancedPools(int256[] tokenAmounts);
-
 
     /// @notice Emitted when swap is initiated.
     /// @param params Swap params
