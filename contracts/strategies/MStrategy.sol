@@ -193,6 +193,13 @@ contract MStrategy is Multicall, DefaultAccessControl {
         return (uint256(uint24(tick - tickMin)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
     }
 
+    function _getAverageTickChecked(IUniswapV3Pool pool_) internal view returns (int24) {
+        (int24 tick, int24 deviation) = _getAverageTick(pool_);
+        int24 maxDeviation = int24(oracleParams.maxTickDeviation);
+        require((deviation < maxDeviation) && (deviation > -maxDeviation), ExceptionsLibrary.INVARIANT);
+        return tick;
+    }
+
     function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick, int24 tickDeviation) {
         uint16 oracleObservationDelta = oracleParams.oracleObservationDelta;
 
@@ -271,9 +278,7 @@ contract MStrategy is Multicall, DefaultAccessControl {
             {
                 int24 tickMin = ratioParams.tickMin;
                 int24 tickMax = ratioParams.tickMax;
-                (int24 tick, int24 deviation) = _getAverageTick(pool_);
-                int24 maxDeviation = int24(oracleParams.maxTickDeviation);
-                require((deviation < maxDeviation) && (deviation > -maxDeviation), ExceptionsLibrary.INVARIANT);
+                int24 tick = _getAverageTickChecked(pool_);
                 priceX96 = _priceX96FromTick(tick);
                 targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
             }
@@ -334,38 +339,42 @@ contract MStrategy is Multicall, DefaultAccessControl {
     }
 
     function _swapToTarget(SwapToTargetParams memory params) internal {
-        uint256 amountIn = params.amountIn;
-        address[] memory tokens_ = params.tokens;
+        ISwapRouter.ExactInputSingleParams memory swapParams;
         uint8 tokenInIndex = params.tokenInIndex;
-        uint256 priceX96 = params.priceX96;
-        uint256[] memory erc20Tvl = params.erc20Tvl;
-        IUniswapV3Pool pool_ = params.pool;
+        uint256 amountIn = params.amountIn;
         ISwapRouter router_ = params.router;
-        IIntegrationVault erc20Vault_ = params.erc20Vault;
-        IIntegrationVault moneyVault_ = params.moneyVault;
-        if (amountIn > erc20Tvl[tokenInIndex]) {
-            uint256[] memory tokenAmounts = new uint256[](2);
-            tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
-            moneyVault_.pull(address(erc20Vault_), tokens_, tokenAmounts, "");
-            amountIn = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
+        {
+            address[] memory tokens_ = params.tokens;
+            uint256 priceX96 = params.priceX96;
+            uint256[] memory erc20Tvl = params.erc20Tvl;
+            IUniswapV3Pool pool_ = params.pool;
+            IIntegrationVault erc20Vault_ = params.erc20Vault;
+            IIntegrationVault moneyVault_ = params.moneyVault;
+
+            if (amountIn > erc20Tvl[tokenInIndex]) {
+                uint256[] memory tokenAmounts = new uint256[](2);
+                tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
+                moneyVault_.pull(address(erc20Vault_), tokens_, tokenAmounts, "");
+                amountIn = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
+            }
+            uint256 amountOutMinimum;
+            if (tokenInIndex == 1) {
+                amountOutMinimum = FullMath.mulDiv(amountIn, CommonLibrary.Q96, priceX96);
+            } else {
+                amountOutMinimum = FullMath.mulDiv(amountIn, priceX96, CommonLibrary.Q96);
+            }
+            amountOutMinimum = FullMath.mulDiv(amountOutMinimum, DENOMINATOR - oracleParams.maxSlippageD, DENOMINATOR);
+            swapParams = ISwapRouter.ExactInputSingleParams({
+                tokenIn: tokens_[tokenInIndex],
+                tokenOut: tokens_[1 - tokenInIndex],
+                fee: pool_.fee(),
+                recipient: address(erc20Vault),
+                deadline: block.timestamp + 1,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMinimum,
+                sqrtPriceLimitX96: 0
+            });
         }
-        uint256 amountOutMinimum;
-        if (tokenInIndex == 1) {
-            amountOutMinimum = FullMath.mulDiv(amountIn, CommonLibrary.Q96, priceX96);
-        } else {
-            amountOutMinimum = FullMath.mulDiv(amountIn, priceX96, CommonLibrary.Q96);
-        }
-        amountOutMinimum = FullMath.mulDiv(amountOutMinimum, DENOMINATOR - oracleParams.maxSlippageD, DENOMINATOR);
-        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: tokens_[tokenInIndex],
-            tokenOut: tokens_[1 - tokenInIndex],
-            fee: pool_.fee(),
-            recipient: address(erc20Vault),
-            deadline: block.timestamp + 1,
-            amountIn: amountIn,
-            amountOutMinimum: amountOutMinimum,
-            sqrtPriceLimitX96: 0
-        });
         bytes memory data = abi.encode(swapParams);
         erc20Vault.externalCall(
             tokens[tokenInIndex],
