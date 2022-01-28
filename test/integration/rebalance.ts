@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
+import { BigNumber } from "@ethersproject/bignumber";
 import { mint, sleep, mintUniV3Position_USDC_WETH } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
@@ -108,35 +108,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await this.subject
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
-
-                    // configure unit prices
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "stageUnitPrice(address,uint256)",
-                        this.weth.address,
-                        BigNumber.from(10).pow(18)
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "stageUnitPrice(address,uint256)",
-                        this.usdc.address,
-                        BigNumber.from(10).pow(18)
-                    );
-                    await sleep(86400);
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "commitUnitPrice(address)",
-                        this.weth.address
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "commitUnitPrice(address)",
-                        this.usdc.address
-                    );
 
                     await mint(
                         "USDC",
@@ -294,43 +265,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 ](deployer, this.uniV3Vault.address, result2.tokenId);
                 expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
                     result2.tokenId
-                );
-            });
-        });
-
-        describe("oracles", () => {
-            it("ChainlinkOracle", async () => {
-                const { weth, usdc } = await getNamedAccounts();
-                const { address } = await deployments.get("ChainlinkOracle");
-                const oracle = await ethers.getContractAt(
-                    "IChainlinkOracle",
-                    address
-                );
-            });
-
-            it("UniV2Oracle", async () => {
-                const { weth, usdc } = await getNamedAccounts();
-                const { address } = await deployments.get("UniV2Oracle");
-                const oracle = await ethers.getContractAt(
-                    "IUniV2Oracle",
-                    address
-                );
-            });
-
-            it("UniV3Oracle", async () => {
-                const { weth, usdc } = await getNamedAccounts();
-                const { address } = await deployments.get("UniV3Oracle");
-                const oracle = await ethers.getContractAt(
-                    "IUniV3Oracle",
-                    address
-                );
-            });
-
-            it("MellowOracle", async () => {
-                const { address } = await deployments.get("MellowOracle");
-                const oracle = await ethers.getContractAt(
-                    "IMellowOracle",
-                    address
                 );
             });
         });
