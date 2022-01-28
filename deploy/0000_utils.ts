@@ -264,7 +264,6 @@ export const combineVaults = async (
         expectedNft
     );
     if (PRIVATE_VAULT) {
-        log("Adding admin to depositors");
         const rootVaultContract = await hre.ethers.getContractAt(
             "ERC20RootVault",
             rootVault

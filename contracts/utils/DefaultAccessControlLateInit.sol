@@ -31,7 +31,7 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
 
     /// @notice Creates a new contract.
     /// @param admin Admin of the contract
-    function init(address admin) external {
+    function init(address admin) public {
         require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(!initialized, ExceptionsLibrary.INIT);
 
@@ -43,5 +43,11 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
         _setRoleAdmin(OPERATOR, ADMIN_DELEGATE_ROLE);
 
         initialized = true;
+    }
+
+    // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function _requireAdmin() internal view {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
 }
