@@ -248,11 +248,11 @@ const config: HardhatUserConfig = {
             optimism: "0xc326371d4D866C6Ff522E69298e36Fe75797D358",
         },
         chainlinkUsdc: {
-            default: "0x986b5e1e1755e3c2440e960477f25201b0a8bbd4",
+            default: "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6",
             kovan: "0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60",
             avalanche: "0xF096872672F44d6EBA71458D74fe67F9a77a23B9",
             polygon: "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
-            fantom: " 	0x2553f4eeb82d5A26427b8d1106C51499CBa5D99c",
+            fantom: "0x2553f4eeb82d5A26427b8d1106C51499CBa5D99c",
             bsc: "0x51597f405303C4377E36123cBc172b13269EA163",
             xdai: "0x26C31ac71010aF62E6B486D1132E266D6298857D",
             arbitrum: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",

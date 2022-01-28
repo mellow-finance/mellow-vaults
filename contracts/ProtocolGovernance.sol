@@ -155,6 +155,11 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
     /// @inheritdoc IProtocolGovernance
     function stageValidator(address target, address validator) external {
         _requireAdmin();
+        require(
+            target != address(0) &&
+            validator != address(0), 
+            ExceptionsLibrary.ADDRESS_ZERO
+        );
         _stagedValidatorsAddresses.add(target);
         stagedValidators[target] = validator;
         uint256 at = block.timestamp + _params.governanceDelay;
@@ -182,11 +187,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
         require(block.timestamp >= stagedToCommitAt, ExceptionsLibrary.TIMESTAMP);
         require(stagedToCommitAt != 0, ExceptionsLibrary.NULL);
         validators[stagedAddress] = stagedValidators[stagedAddress];
-        if (validators[stagedAddress] == address(0)) {
-            _validatorsAddresses.remove(stagedAddress);
-        } else {
-            _validatorsAddresses.add(stagedAddress);
-        }
+        _validatorsAddresses.add(stagedAddress);
         delete stagedValidators[stagedAddress];
         delete stagedValidatorsTimestamps[stagedAddress];
         _stagedValidatorsAddresses.remove(stagedAddress);
@@ -203,11 +204,7 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
             address stagedAddress = _stagedValidatorsAddresses.at(0);
             if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
                 validators[stagedAddress] = stagedValidators[stagedAddress];
-                if (validators[stagedAddress] == address(0)) {
-                    _validatorsAddresses.remove(stagedAddress);
-                } else {
-                    _validatorsAddresses.add(stagedAddress);
-                }
+                _validatorsAddresses.add(stagedAddress);
                 delete stagedValidators[stagedAddress];
                 delete stagedValidatorsTimestamps[stagedAddress];
                 _stagedValidatorsAddresses.remove(stagedAddress);

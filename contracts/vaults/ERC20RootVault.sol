@@ -67,9 +67,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
         uint256 len = vaultTokens_.length;
-        for (uint256 i = 0; i < len; ++i) {
-            _lpPriceHighWaterMarks.push(0);
-        }
+        _lpPriceHighWaterMarks = new uint256[](len);
+        totalWithdrawnAmounts = new uint256[](len);
 
         lastFeeCharge = block.timestamp;
     }
@@ -79,6 +78,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         nonReentrant
         returns (uint256[] memory actualTokenAmounts)
     {
+        require(
+            !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
+            ExceptionsLibrary.FORBIDDEN
+        );
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(

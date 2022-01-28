@@ -164,12 +164,18 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
             describe("access control", () => {
                 xit("allowed: operator (deployer)", async () => {});
                 xit("denied: random address", async () => {});
-                it("denied: protocol admin", async () => {
+                it("allowed: protocol admin", async () => {
+                    const semver = "1.0.1";
+                    const name = "Admin";
+                    const mockFactory = await ethers.getContractFactory(
+                        "ContractMetaMock"
+                    );
+                    const mock = await mockFactory.deploy(name, semver);
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .registerContract(randomAddress())
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                            .registerContract(mock.address)
+                    ).to.not.be.reverted;
                 });
             });
         });

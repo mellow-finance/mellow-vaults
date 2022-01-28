@@ -15,12 +15,13 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomBytes } from "crypto";
 import { ProtocolGovernance } from "./Types";
 import { Address } from "hardhat-deploy/dist/types";
+import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import {
     IVault,
     IVaultGovernance,
     UniV3VaultGovernance,
     VaultRegistry,
-    ERC20,
+    ERC20Token as ERC20,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -129,30 +130,6 @@ export const setTokenWhitelist = async (
     await sleep(Number(await protocolGovernance.governanceDelay()));
     await protocolGovernance.connect(admin).commitTokenWhitelistAdd();
 };
-
-export async function depositW9(
-    receiver: string,
-    amount: BigNumberish
-): Promise<void> {
-    const { weth } = await getNamedAccounts();
-    const w9 = await ethers.getContractAt("ERC20Token", weth);
-    const sender = randomAddress();
-    await withSigner(sender, async (signer) => {
-        await w9.connect(signer).deposit({ value: amount });
-        await w9.connect(signer).transfer(receiver, amount);
-    });
-}
-
-export async function depositWBTC(
-    receiver: string,
-    amount: BigNumberish
-): Promise<void> {
-    const { wbtcRichGuy, wbtc } = await getNamedAccounts();
-    const wbtcContract = await ethers.getContractAt("ERC20Token", wbtc);
-    await withSigner(wbtcRichGuy, async (signer) => {
-        await wbtcContract.connect(signer).transfer(receiver, amount);
-    });
-}
 
 export async function approveERC20(
     token: string,
@@ -388,3 +365,64 @@ export function zeroify<
 export const randomNft = () => {
     return Math.round(Math.random() * 1000000 + 100);
 };
+
+export async function mintUniV3Position_USDC_WETH(options: {
+    tickLower: BigNumberish;
+    tickUpper: BigNumberish;
+    usdcAmount: BigNumberish;
+    wethAmount: BigNumberish;
+    fee: 500 | 3000 | 10000;
+}): Promise<any> {
+    const { weth, usdc, deployer, uniswapV3PositionManager } =
+        await getNamedAccounts();
+
+    const wethContract = await ethers.getContractAt("ERC20Token", weth);
+    const usdcContract = await ethers.getContractAt("ERC20Token", usdc);
+
+    const positionManagerContract = await ethers.getContractAt(
+        INonfungiblePositionManager,
+        uniswapV3PositionManager
+    );
+
+    await mint("WETH", deployer, options.wethAmount);
+    await mint("USDC", deployer, options.usdcAmount);
+
+    if (
+        (await wethContract.allowance(deployer, uniswapV3PositionManager)).eq(
+            BigNumber.from(0)
+        )
+    ) {
+        await wethContract.approve(
+            uniswapV3PositionManager,
+            ethers.constants.MaxUint256
+        );
+    }
+    if (
+        (await usdcContract.allowance(deployer, uniswapV3PositionManager)).eq(
+            BigNumber.from(0)
+        )
+    ) {
+        await usdcContract.approve(
+            uniswapV3PositionManager,
+            ethers.constants.MaxUint256
+        );
+    }
+
+    const mintParams = {
+        token0: usdc,
+        token1: weth,
+        fee: options.fee,
+        tickLower: options.tickLower,
+        tickUpper: options.tickUpper,
+        amount0Desired: options.usdcAmount,
+        amount1Desired: options.wethAmount,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: deployer,
+        deadline: ethers.constants.MaxUint256,
+    };
+
+    const result = await positionManagerContract.callStatic.mint(mintParams);
+    await positionManagerContract.mint(mintParams);
+    return result;
+}
