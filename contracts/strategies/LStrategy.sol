@@ -188,7 +188,7 @@ contract LStrategy is Multicall {
             lowerVaultLinearLiquidity + upperVaultLinearLiquidity,
             DENOMINATOR
         );
-        uint256 lowerVaultLiquidityDeltaRatioD = FullMath.mulDiv(a, b, denominator);
+        // uint256 lowerVaultLiquidityDeltaRatioD = FullMath.mulDiv(a, b, denominator);
         // if (isNegativeLinearLiquidityDelta) {}
     }
 
@@ -233,7 +233,7 @@ contract LStrategy is Multicall {
 
         (, , uint128 lowerLiquidity) = _getVaultStats(lowerVault);
         (, , uint128 upperLiquidity) = _getVaultStats(upperVault);
-        (uint128 liquidityDelta, bool isNegativeLiquidityDelta) = _liquidityDelta(
+        (uint256 liquidityDelta, bool isNegativeLiquidityDelta) = _liquidityDelta(
             lowerLiquidity,
             upperLiquidity,
             targetUniV3LiquidityRatioD
@@ -247,7 +247,14 @@ contract LStrategy is Multicall {
             fromVault = lowerVault;
             toVault = upperVault;
         }
-        _rebalanceUniV3Liquidity(fromVault, toVault, liquidityDelta, minWithdrawTokens, minDepositTokens, deadline);
+        _rebalanceUniV3Liquidity(
+            fromVault,
+            toVault,
+            uint128(liquidityDelta),
+            minWithdrawTokens,
+            minDepositTokens,
+            deadline
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
