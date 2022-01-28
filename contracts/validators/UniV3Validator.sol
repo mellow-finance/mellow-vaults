@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/validators/IValidator.sol";
+import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
@@ -41,18 +42,19 @@ contract UniV3Validator is Validator {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
         bytes4 selector = CommonLibrary.getSelector(data);
+        IVault vault = IVault(msg.sender);
         if (selector == EXACT_INPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactInputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactInputSingleParams));
-            _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
+            _verifySingleCall(vault, params.recipient, params.tokenIn, params.tokenOut, params.fee);
         } else if (selector == EXACT_OUTPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactOutputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactOutputSingleParams));
-            _verifySingleCall(params.tokenIn, params.tokenOut, params.fee);
+            _verifySingleCall(vault, params.recipient, params.tokenIn, params.tokenOut, params.fee);
         } else if (selector == EXACT_INPUT_SELECTOR) {
             ISwapRouter.ExactInputParams memory params = abi.decode(data, (ISwapRouter.ExactInputParams));
-            _verifyMultiCall(params.path);
+            _verifyMultiCall(vault, params.recipient, params.path);
         } else if (selector == EXACT_OUTPUT_SELECTOR) {
             ISwapRouter.ExactOutputParams memory params = abi.decode(data, (ISwapRouter.ExactOutputParams));
-            _verifyMultiCall(params.path);
+            _verifyMultiCall(vault, params.recipient, params.path);
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
@@ -60,7 +62,11 @@ contract UniV3Validator is Validator {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _verifyMultiCall(bytes memory path) private view {
+    function _verifyMultiCall(
+        IVault vault,
+        address recipient,
+        bytes memory path
+    ) private view {
         uint256 i;
         address token0;
         address token1;
@@ -78,12 +84,26 @@ contract UniV3Validator is Validator {
                 d := mload(add(o, 23))
                 token1 := shr(96, d)
             }
-            _verifySingleCall(token0, token1, fee);
+            _verifyPathItem(token0, token1, fee);
             i += 23;
         }
+        require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
+        require(vault.isVaultToken(token1), ExceptionsLibrary.INVALID_TOKEN);
     }
 
     function _verifySingleCall(
+        IVault vault,
+        address recipient,
+        address tokenIn,
+        address tokenOut,
+        uint24 fee
+    ) private view {
+        require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
+        require(vault.isVaultToken(tokenOut), ExceptionsLibrary.INVALID_TOKEN);
+        _verifyPathItem(tokenIn, tokenOut, fee);
+    }
+
+    function _verifyPathItem(
         address tokenIn,
         address tokenOut,
         uint24 fee
