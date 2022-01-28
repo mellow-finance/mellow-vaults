@@ -9,6 +9,9 @@ import {
     ALL_NETWORKS,
     PermissionIdsLibrary,
     PRIVATE_VAULT,
+    WBTC_PRICE,
+    USDC_PRICE,
+    WETH_PRICE
 } from "./0000_utils";
 import { ethers } from "ethers";
 import { deployments } from "hardhat";
@@ -205,19 +208,19 @@ async function setUnitPrices(
     const txWETH =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
             weth,
-            BigNumber.from(10).pow(18).div(2454)
+            WETH_PRICE
         );
     txDatas.push(txWETH.data);
     const txWBTC =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
             wbtc,
-            ((BigNumber.from(10).pow(18)).mul(1492)).div(245400)
+            WBTC_PRICE
         );
     txDatas.push(txWBTC.data);
     const txUSDC =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
             usdc,
-            ((BigNumber.from(10).pow(18)).mul(42)).div(24540000)
+            USDC_PRICE
         );
     txDatas.push(txUSDC.data);
     const txWETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(weth);
