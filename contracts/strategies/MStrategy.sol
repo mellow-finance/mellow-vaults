@@ -62,8 +62,10 @@ contract MStrategy is Multicall, DefaultAccessControl {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @notice Returns average tick from UniV3 Oracle
-    function getAverageTick() external view returns (int24) {
+    /// @notice UniV3 pool price stats
+    /// @return averageTick Average tick according to oracle and oracleParams.maxTickDeviation
+    /// @return deviation Current pool tick - average tick
+    function getAverageTick() external view returns (int24 averageTick, int24 deviation) {
         return _getAverageTick(pool);
     }
 
