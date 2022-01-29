@@ -95,19 +95,6 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
 
-    function _spotPrice(IUniswapV3Pool pool)
-        external
-        view
-        returns (
-            bool success,
-            uint256 priceX96,
-            uint256 priceMinX96,
-            uint256 priceMaxX96
-        )
-    {
-        (uint256 spotSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
-    }
-
     function _obsForSafety(uint256 safety) internal pure returns (uint16) {
         if (safety == 2) {
             return LOW_OBS;
