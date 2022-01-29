@@ -48,9 +48,9 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     function price(
         address token0,
         address token1,
-        uint256[] calldata safetyIndices
+        uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices) {
-        if (safetyIndices.length != 1 && safetyIndices[0] != 5) {
+        if (safetyIndicesSet >> 5 != 1) {
             return (pricesX96, actualSafetyIndices);
         }
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(oraclesIndex[token0]);

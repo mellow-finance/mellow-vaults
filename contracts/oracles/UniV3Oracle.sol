@@ -27,7 +27,7 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
 
     constructor(
         IUniswapV3Factory factory_,
-        address[] pools,
+        IUniswapV3Pool[] memory pools,
         address admin
     ) DefaultAccessControl(admin) {
         factory = factory_;
@@ -40,42 +40,47 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
     function price(
         address token0,
         address token1,
-        uint256[] calldata safetyIndices
+        uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices) {
-        uint256[] memory safetyIndicesIdx = new uint256[](5);
-        for (uint256 i = 0; i < safetyIndices.length; i++) {
-            safetyIndicesIdx[safetyIndices[]]
+        IUniswapV3Pool pool = poolsIndex[token0][token1];
+        if (address(pool) == address(0)) {
+            return (pricesX96, actualSafetyIndices);
         }
-    }
-
-    /// @inheritdoc IUniV3Oracle
-    function prices(address token0, address token1) external view returns (uint256 spotPriceX96, uint256 avgPriceX96) {
-        require(token1 > token0, ExceptionsLibrary.INVARIANT);
-        address pool = factory.getPool(token0, token1, 3000);
-        if (pool == address(0)) {
-            pool = factory.getPool(token0, token1, 500);
-        }
-        if (pool == address(0)) {
-            pool = factory.getPool(token0, token1, 10000);
-        }
-        require(pool != address(0), ExceptionsLibrary.NOT_FOUND);
-
+        pricesX96 = new uint256[](4);
+        actualSafetyIndices = new uint256[](4);
+        uint256 len = 0;
         (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
             pool
         ).slot0();
-        uint16 bfAvg = observationsForAverage;
-        require(observationCardinality > bfAvg, ExceptionsLibrary.INVALID_VALUE);
-        uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
-            uint256(observationCardinality);
-        uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
-            uint256(observationCardinality);
-        (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
-        (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
-        uint256 timespan = timestamp1 - timestamp0;
-        int256 tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
-        uint256 avgSqrtPriceX96 = TickMath.getSqrtRatioAtTick(int24(tickAverage));
-        avgPriceX96 = FullMath.mulDiv(avgSqrtPriceX96, avgSqrtPriceX96, CommonLibrary.Q96);
-        spotPriceX96 = FullMath.mulDiv(spotSqrtPriceX96, spotSqrtPriceX96, CommonLibrary.Q96);
+        if (safetyIndicesSet & 0x2 == 1) {
+            pricesX96[len] = spotSqrtPriceX96;
+            actualSafetyIndices[len] = 1;
+        }
+        for (uint256 i = 2; i < 5; i++) {
+            if (safetyIndicesSet & (1 << i) == 1) {
+                uint16 bfAvg = _obsForSafety(i);
+                if (observationCardinality > bfAvg) {
+                    continue;
+                }
+                uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
+                    uint256(observationCardinality);
+                uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
+                    uint256(observationCardinality);
+                (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
+                (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
+                uint256 timespan = timestamp1 - timestamp0;
+                int256 tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
+                pricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
+                actualSafetyIndices[len] = i;
+            }
+        }
+        bool revTokens = token1 > token0;
+        for (uint256 i = 0; i < len; i++) {
+            pricesX96[i] = FullMath.mulDiv(pricesX96[i], pricesX96[i], CommonLibrary.Q96);
+            if (revTokens) {
+                pricesX96[i] = FullMath.mulDiv(1, CommonLibrary.Q96, pricesX96[i]);
+            }
+        }
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -103,7 +108,7 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
         (uint256 spotSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
     }
 
-    function obsForSafety(uint8 safety) internal view returns (uint16) {
+    function _obsForSafety(uint8 safety) internal view returns (uint16) {
         if (safety == 2) {
             return LOW_OBS;
         } else if (safety == 3) {

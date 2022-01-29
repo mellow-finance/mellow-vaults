@@ -13,12 +13,12 @@ interface IOracle {
     /// 5 - safe - this is typically a chailink oracle
     /// @param token0 Reference to token0
     /// @param token1 Reference to token1
-    /// @param safetyIndices Safety indices that are allowed for the return prices
+    /// @param safetyIndicesSet Bitmask of safety indices that are allowed for the return prices
     /// @return pricesX96 Prices that satisfy safetyIndex and tokens
     /// @return actualSafetyIndices Safety indices for those prices
     function price(
         address token0,
         address token1,
-        uint256[] calldata safetyIndices
+        uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices);
 }
