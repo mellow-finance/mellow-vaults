@@ -7,10 +7,10 @@ import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
-import "../interfaces/oracles/IMellowOracle.sol";
+import "../interfaces/oracles/IOracle.sol";
 import "../libraries/CommonLibrary.sol";
 
-contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
+contract MellowOracle is IContractMeta, IOracle, ERC165 {
     bytes32 public constant CONTRACT_NAME = "MellowOracle";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
@@ -30,58 +30,57 @@ contract MellowOracle is IContractMeta, IMellowOracle, ERC165 {
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
-    /// @inheritdoc IMellowOracle
-    function spotPrice(address token0, address token1)
-        external
-        view
-        returns (
-            uint256 priceX96,
-            uint256 minPriceX96,
-            uint256 maxPriceX96
-        )
-    {
+    function price(
+        address token0,
+        address token1,
+        uint256 safetyIndicesSet
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices) {
+        IOracle[] memory oracles = _oracles();
+        pricesX96 = new uint256[](6);
+        actualSafetyIndices = new uint256[](6);
         uint256 len;
-        if (address(univ3Oracle) != address(0)) {
-            len += 2;
-        }
-        if (address(univ2Oracle) != address(0)) {
-            len += 1;
-        }
-        if (address(chainlinkOracle) != address(0)) {
-            len += 1;
-        }
-        uint256[] memory values = new uint256[](len);
-        len = 0;
-        if (address(univ3Oracle) != address(0)) {
-            (uint256 spotPriceX96, uint256 avgPriceX96) = univ3Oracle.prices(token0, token1);
-            values[0] = spotPriceX96;
-            values[1] = avgPriceX96;
-            len += 2;
-        }
-        if (address(univ2Oracle) != address(0)) {
-            values[len] = univ2Oracle.spotPrice(token0, token1);
-            len += 1;
-        }
-        if (address(chainlinkOracle) != address(0)) {
-            if (chainlinkOracle.canTellSpotPrice(token0, token1)) {
-                values[len] = chainlinkOracle.spotPrice(token0, token1);
+        for (uint256 i = 0; i < oracles.length; i++) {
+            IOracle oracle = oracles[i];
+            (uint256[] memory oPrices, uint256[] memory oSafetyIndixes) = oracle.price(
+                token0,
+                token1,
+                safetyIndicesSet
+            );
+            for (uint256 j = 0; j < oPrices.length; j++) {
+                pricesX96[len] = oPrices[j];
+                actualSafetyIndices[len] = oSafetyIndixes[j];
                 len += 1;
             }
         }
         assembly {
-            mstore(values, len)
+            mstore(pricesX96, len)
+            mstore(actualSafetyIndices, len)
         }
-        CommonLibrary.bubbleSortUint(values);
-        priceX96 = 0;
-        for (uint256 i = 0; i < values.length; i++) {
-            priceX96 += values[i];
-        }
-        priceX96 /= values.length;
-        minPriceX96 = values[0];
-        maxPriceX96 = values[values.length - 1];
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
-        return super.supportsInterface(interfaceId) || type(IMellowOracle).interfaceId == interfaceId;
+        return super.supportsInterface(interfaceId) || type(IOracle).interfaceId == interfaceId;
+    }
+
+    // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function _oracles() internal view returns (IOracle[] memory oracles) {
+        oracles = new IOracle[](3);
+        uint256 len;
+        if (address(univ2Oracle) != address(0)) {
+            oracles[len] = univ2Oracle;
+            len += 1;
+        }
+        if (address(univ3Oracle) != address(0)) {
+            oracles[len] = univ3Oracle;
+            len += 1;
+        }
+        if (address(chainlinkOracle) != address(0)) {
+            oracles[len] = chainlinkOracle;
+            len += 1;
+        }
+        assembly {
+            mstore(oracles, len)
+        }
     }
 }
