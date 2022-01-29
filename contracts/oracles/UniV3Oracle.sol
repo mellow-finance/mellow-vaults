@@ -108,7 +108,7 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
         (uint256 spotSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
     }
 
-    function _obsForSafety(uint8 safety) internal view returns (uint16) {
+    function _obsForSafety(uint256 safety) internal pure returns (uint16) {
         if (safety == 2) {
             return LOW_OBS;
         } else if (safety == 3) {
@@ -120,13 +120,13 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
     }
 
     function _addUniV3Pools(IUniswapV3Pool[] memory pools) internal {
-        address[] memory replaced = new address[](pools.length);
+        IUniswapV3Pool[] memory replaced = new IUniswapV3Pool[](pools.length);
         uint256 j;
         for (uint256 i = 0; i < pools.length; i++) {
             IUniswapV3Pool pool = pools[i];
             address token0 = pool.token0();
             address token1 = pool.token1();
-            _pools.add(pool);
+            _pools.add(address(pool));
             IUniswapV3Pool currentPool = poolsIndex[token0][token1];
             if (address(currentPool) != address(0)) {
                 replaced[j] = currentPool;
@@ -143,5 +143,10 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
 
     // --------------------------  EVENTS  --------------------------
 
-    event PoolsAdded(address indexed origin, address indexed sender, address[] pools, address[] replacedPools);
+    event PoolsAdded(
+        address indexed origin,
+        address indexed sender,
+        IUniswapV3Pool[] pools,
+        IUniswapV3Pool[] replacedPools
+    );
 }
