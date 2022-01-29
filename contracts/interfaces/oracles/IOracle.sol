@@ -13,22 +13,12 @@ interface IOracle {
     /// 5 - safe - this is typically a chailink oracle
     /// @param token0 Reference to token0
     /// @param token1 Reference to token1
-    /// @param minSafetyIndex Mimimal safety of the oracle, all observations with lower safety index are ignored
-    /// @return success `True` if data for the arguments can be retrieved
-    /// @return priceX96 Price of the oracle
-    /// @return priceMinX96 Estimate for the lower possible price based on oracle
-    /// @return priceMaxX96 Estimate for the upper possible price based on oracle
+    /// @param safetyIndices Safety indices that are allowed for the return prices
+    /// @return pricesX96 Prices that satisfy safetyIndex and tokens
+    /// @return actualSafetyIndices Safety indices for those prices
     function price(
         address token0,
         address token1,
-        uint8 minSafetyIndex
-    )
-        external
-        view
-        returns (
-            bool success,
-            uint256 priceX96,
-            uint256 priceMinX96,
-            uint256 priceMaxX96
-        );
+        uint256[] calldata safetyIndices
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices);
 }

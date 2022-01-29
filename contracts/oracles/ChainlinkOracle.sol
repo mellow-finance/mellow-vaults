@@ -48,34 +48,26 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     function price(
         address token0,
         address token1,
-        uint8 minSafetyIndex
-    )
-        external
-        view
-        returns (
-            bool success,
-            uint256 priceX96,
-            uint256 priceMinX96,
-            uint256 priceMaxX96
-        )
-    {
-        if (minSafetyIndex > 3) {
-            return (false, 0, 0, 0);
+        uint256[] calldata safetyIndices
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices) {
+        if (safetyIndices.length != 1 && safetyIndices[0] != 5) {
+            return (pricesX96, actualSafetyIndices);
         }
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(oraclesIndex[token0]);
         IAggregatorV3 chainlinkOracle1 = IAggregatorV3(oraclesIndex[token1]);
         if ((address(chainlinkOracle0) != address(0)) || (address(chainlinkOracle1) != address(0))) {
-            return (false, 0, 0, 0);
+            return (pricesX96, actualSafetyIndices);
         }
         uint256 price0;
         uint256 price1;
+        bool success;
         (success, price0) = _queryChainlinkOracle(chainlinkOracle0);
         if (!success) {
-            return (false, 0, 0, 0);
+            return (pricesX96, actualSafetyIndices);
         }
         (success, price1) = _queryChainlinkOracle(chainlinkOracle1);
         if (!success) {
-            return (false, 0, 0, 0);
+            return (pricesX96, actualSafetyIndices);
         }
 
         int256 decimals0 = decimalsIndex[token0];
@@ -85,9 +77,10 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         } else if (decimals0 > decimals1) {
             price0 *= 10**(uint256(decimals0 - decimals1));
         }
-        priceX96 = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
-        priceMinX96 = priceX96;
-        priceMaxX96 = priceX96;
+        pricesX96 = new uint256[](1);
+        actualSafetyIndices = new uint256[](1);
+        pricesX96[0] = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
+        actualSafetyIndices[0] = 5;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -119,7 +112,6 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
             address oracle = oracles[i];
-            require(!_tokens.contains(token), ExceptionsLibrary.DUPLICATE);
             _tokens.add(token);
             oraclesIndex[token] = oracle;
             decimalsIndex[token] = int256(
