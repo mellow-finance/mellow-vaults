@@ -2,9 +2,13 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "./Validator.sol";
 
-contract AllowAllValidator is Validator {
+contract AllowAllValidator is IContractMeta, Validator {
+    bytes32 public constant CONTRACT_NAME = "AllowAllValidator";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------

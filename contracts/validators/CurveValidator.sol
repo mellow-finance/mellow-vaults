@@ -6,13 +6,16 @@ import "../interfaces/external/curve/I3Pool.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./Validator.sol";
 
-contract CurveValidator is Validator {
+contract CurveValidator is IContractMeta, Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
+    bytes32 public constant CONTRACT_NAME = "CurveValidator";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
     bytes4 public constant EXCHANGE_SELECTOR = 0x3df02124;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}

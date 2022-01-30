@@ -7,13 +7,16 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./Validator.sol";
 
-contract UniV3Validator is Validator {
+contract UniV3Validator is IContractMeta, Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
+    bytes32 public constant CONTRACT_NAME = "UniV3Validator";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     bytes4 public constant EXACT_INPUT_SELECTOR = ISwapRouter.exactInput.selector;
     bytes4 public constant EXACT_OUTPUT_SINGLE_SELECTOR = ISwapRouter.exactOutputSingle.selector;

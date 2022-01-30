@@ -6,13 +6,17 @@ import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/external/univ2/IUniswapV2Router01.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./Validator.sol";
 
-contract UniV2Validator is Validator {
+contract UniV2Validator is IContractMeta, Validator {
+    bytes32 public constant CONTRACT_NAME = "UniV2Validator";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     struct TokenInput {
         uint256 amount;
         uint256 amountMax;
