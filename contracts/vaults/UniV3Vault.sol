@@ -64,7 +64,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             {
                 uint256 minPriceX96;
                 uint256 maxPriceX96;
-                (, minPriceX96, maxPriceX96) = params.oracle.spotPrice(_vaultTokens[0], _vaultTokens[1]);
+                (minPriceX96, maxPriceX96) = _getMinMaxPrice(params.oracle);
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -184,6 +184,14 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
+        (uint256[] memory prices, ) = oracle.price(_vaultTokens[0], _vaultTokens[1], 0x16);
+        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+        CommonLibrary.bubbleSort(prices);
+        minPriceX96 = prices[0];
+        maxPriceX96 = prices[prices.length - 1];
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

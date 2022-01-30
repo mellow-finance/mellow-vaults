@@ -41,20 +41,20 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
         address token0,
         address token1,
         uint256 safetyIndicesSet
-    ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices) {
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
         IUniswapV3Pool pool = poolsIndex[token0][token1];
         if (address(pool) == address(0)) {
-            return (pricesX96, actualSafetyIndices);
+            return (pricesX96, safetyIndices);
         }
         pricesX96 = new uint256[](4);
-        actualSafetyIndices = new uint256[](4);
+        safetyIndices = new uint256[](4);
         uint256 len = 0;
         (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
             pool
         ).slot0();
         if (safetyIndicesSet & 0x2 == 1) {
             pricesX96[len] = spotSqrtPriceX96;
-            actualSafetyIndices[len] = 1;
+            safetyIndices[len] = 1;
         }
         for (uint256 i = 2; i < 5; i++) {
             if (safetyIndicesSet & (1 << i) == 1) {
@@ -71,7 +71,7 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
                 uint256 timespan = timestamp1 - timestamp0;
                 int256 tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
                 pricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
-                actualSafetyIndices[len] = i;
+                safetyIndices[len] = i;
             }
         }
         bool revTokens = token1 > token0;

@@ -15,10 +15,10 @@ interface IOracle {
     /// @param token1 Reference to token1
     /// @param safetyIndicesSet Bitmask of safety indices that are allowed for the return prices
     /// @return pricesX96 Prices that satisfy safetyIndex and tokens
-    /// @return actualSafetyIndices Safety indices for those prices
+    /// @return safetyIndices Safety indices for those prices
     function price(
         address token0,
         address token1,
         uint256 safetyIndicesSet
-    ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices);
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices);
 }

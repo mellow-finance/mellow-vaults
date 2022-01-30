@@ -34,10 +34,10 @@ contract MellowOracle is IContractMeta, IOracle, ERC165 {
         address token0,
         address token1,
         uint256 safetyIndicesSet
-    ) external view returns (uint256[] memory pricesX96, uint256[] memory actualSafetyIndices) {
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
         IOracle[] memory oracles = _oracles();
         pricesX96 = new uint256[](6);
-        actualSafetyIndices = new uint256[](6);
+        safetyIndices = new uint256[](6);
         uint256 len;
         for (uint256 i = 0; i < oracles.length; i++) {
             IOracle oracle = oracles[i];
@@ -48,13 +48,13 @@ contract MellowOracle is IContractMeta, IOracle, ERC165 {
             );
             for (uint256 j = 0; j < oPrices.length; j++) {
                 pricesX96[len] = oPrices[j];
-                actualSafetyIndices[len] = oSafetyIndixes[j];
+                safetyIndices[len] = oSafetyIndixes[j];
                 len += 1;
             }
         }
         assembly {
             mstore(pricesX96, len)
-            mstore(actualSafetyIndices, len)
+            mstore(safetyIndices, len)
         }
     }
 
