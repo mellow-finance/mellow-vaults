@@ -115,7 +115,7 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
             _tokens.add(token);
             oraclesIndex[token] = oracle;
             decimalsIndex[token] = int256(
-                int8(IERC20Metadata(token).decimals()) - int8(IAggregatorV3(oracle).decimals())
+                -int8(IERC20Metadata(token).decimals()) - int8(IAggregatorV3(oracle).decimals())
             );
         }
         emit OraclesAdded(tx.origin, msg.sender, tokens, oracles);
