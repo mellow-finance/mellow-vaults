@@ -15,12 +15,14 @@ import "../utils/DefaultAccessControl.sol";
 contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    uint8 public constant safetyIndex = 5;
     bytes32 public constant CONTRACT_NAME = "ChainlinkOracle";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
-    mapping(address => address) public chainlinkOracles;
-
-    EnumerableSet.AddressSet private _tokenAllowlist;
+    /// @inheritdoc IChainlinkOracle
+    mapping(address => address) public oraclesIndex;
+    mapping(address => int256) public decimalsIndex;
+    EnumerableSet.AddressSet private _tokens;
 
     constructor(
         address[] memory tokens,
@@ -33,48 +35,52 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
     /// @inheritdoc IChainlinkOracle
-    function isAllowedToken(address token) external view returns (bool) {
-        return _tokenAllowlist.contains(token);
+    function hasOracle(address token) external view returns (bool) {
+        return _tokens.contains(token);
     }
 
     /// @inheritdoc IChainlinkOracle
-    function tokenAllowlist() external view returns (address[] memory) {
-        return _tokenAllowlist.values();
+    function supportedTokens() external view returns (address[] memory) {
+        return _tokens.values();
     }
 
-    /// @inheritdoc IChainlinkOracle
-    function canTellSpotPrice(address token0, address token1) external view returns (bool) {
-        return
-            _tokenAllowlist.contains(token0) &&
-            _tokenAllowlist.contains(token1) &&
-            (chainlinkOracles[token0] != address(0)) &&
-            (chainlinkOracles[token1] != address(0));
-    }
-
-    /// @inheritdoc IChainlinkOracle
-    function spotPrice(address token0, address token1) external view returns (uint256 priceX96) {
-        require(_tokenAllowlist.contains(token0) && _tokenAllowlist.contains(token1), ExceptionsLibrary.ALLOWLIST);
-        require(token1 > token0, ExceptionsLibrary.INVARIANT);
-        IAggregatorV3 chainlinkOracle0 = IAggregatorV3(chainlinkOracles[token0]);
-        IAggregatorV3 chainlinkOracle1 = IAggregatorV3(chainlinkOracles[token1]);
-        require(
-            (address(chainlinkOracle0) != address(0)) && (address(chainlinkOracle1) != address(0)),
-            ExceptionsLibrary.NOT_FOUND
-        );
-        (, int256 answer0, , , ) = chainlinkOracle0.latestRoundData(); // this can throw if there's no data
-        uint256 decimalsFactor0 = (chainlinkOracle0.decimals() + IERC20Metadata(token0).decimals());
-        (, int256 answer1, , , ) = chainlinkOracle1.latestRoundData();
-        uint256 decimalsFactor1 = (chainlinkOracle1.decimals() + IERC20Metadata(token1).decimals());
-        uint256 price0 = uint256(answer0);
-        uint256 price1 = uint256(answer1);
-        if (decimalsFactor1 > decimalsFactor0) {
-            uint256 decimalsDiff = decimalsFactor1 - decimalsFactor0;
-            price0 *= (10**decimalsDiff);
-        } else if (decimalsFactor0 > decimalsFactor1) {
-            uint256 decimalsDiff = decimalsFactor0 - decimalsFactor1;
-            price1 *= (10**decimalsDiff);
+    /// @inheritdoc IOracle
+    function price(
+        address token0,
+        address token1,
+        uint256 safetyIndicesSet
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
+        if (safetyIndicesSet >> 5 != 1) {
+            return (pricesX96, safetyIndices);
         }
-        priceX96 = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
+        IAggregatorV3 chainlinkOracle0 = IAggregatorV3(oraclesIndex[token0]);
+        IAggregatorV3 chainlinkOracle1 = IAggregatorV3(oraclesIndex[token1]);
+        if ((address(chainlinkOracle0) != address(0)) || (address(chainlinkOracle1) != address(0))) {
+            return (pricesX96, safetyIndices);
+        }
+        uint256 price0;
+        uint256 price1;
+        bool success;
+        (success, price0) = _queryChainlinkOracle(chainlinkOracle0);
+        if (!success) {
+            return (pricesX96, safetyIndices);
+        }
+        (success, price1) = _queryChainlinkOracle(chainlinkOracle1);
+        if (!success) {
+            return (pricesX96, safetyIndices);
+        }
+
+        int256 decimals0 = decimalsIndex[token0];
+        int256 decimals1 = decimalsIndex[token1];
+        if (decimals1 > decimals0) {
+            price1 *= 10**(uint256(decimals1 - decimals0));
+        } else if (decimals0 > decimals1) {
+            price0 *= 10**(uint256(decimals0 - decimals1));
+        }
+        pricesX96 = new uint256[](1);
+        safetyIndices = new uint256[](1);
+        pricesX96[0] = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
+        safetyIndices[0] = 5;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
@@ -89,6 +95,16 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         _addChainlinkOracles(tokens, oracles);
     }
 
+    // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function _queryChainlinkOracle(IAggregatorV3 oracle) internal view returns (bool success, uint256 answer) {
+        try oracle.latestRoundData() returns (uint80, int256 ans, uint256, uint256, uint80) {
+            return (true, uint256(ans));
+        } catch (bytes memory) {
+            return (false, 0);
+        }
+    }
+
     // -------------------------  INTERNAL, MUTATING  ------------------------------
 
     function _addChainlinkOracles(address[] memory tokens, address[] memory oracles) internal {
@@ -96,9 +112,11 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         for (uint256 i = 0; i < tokens.length; i++) {
             address token = tokens[i];
             address oracle = oracles[i];
-            require(!_tokenAllowlist.contains(token), ExceptionsLibrary.DUPLICATE);
-            _tokenAllowlist.add(token);
-            chainlinkOracles[token] = oracle;
+            _tokens.add(token);
+            oraclesIndex[token] = oracle;
+            decimalsIndex[token] = int256(
+                int8(IERC20Metadata(token).decimals()) - int8(IAggregatorV3(oracle).decimals())
+            );
         }
         emit OraclesAdded(tx.origin, msg.sender, tokens, oracles);
     }

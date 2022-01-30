@@ -21,13 +21,28 @@ contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
-    /// @inheritdoc IUniV2Oracle
-    function spotPrice(address token0, address token1) external view returns (uint256 spotPriceX96) {
-        require(token1 > token0, ExceptionsLibrary.INVARIANT);
-        address pool = factory.getPair(token0, token1);
-        require(pool != address(0), ExceptionsLibrary.NOT_FOUND);
-        (uint112 reserve0, uint112 reserve1, ) = IUniswapV2Pair(pool).getReserves();
-        spotPriceX96 = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+    /// @inheritdoc IOracle
+    function price(
+        address token0,
+        address token1,
+        uint256 safetyIndicesSet
+    ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
+        if (safetyIndicesSet & 0x1 != 1) {
+            return (pricesX96, safetyIndices);
+        }
+        IUniswapV2Pair pool = IUniswapV2Pair(factory.getPair(token0, token1));
+        if (address(pool) == address(0)) {
+            return (pricesX96, safetyIndices);
+        }
+        (uint112 reserve0, uint112 reserve1, ) = pool.getReserves();
+        pricesX96 = new uint256[](1);
+        safetyIndices = new uint256[](1);
+        if (token0 < token1) {
+            pricesX96[0] = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+        } else {
+            pricesX96[0] = FullMath.mulDiv(reserve0, CommonLibrary.Q96, reserve1);
+        }
+        safetyIndices[0] = 1;
     }
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
