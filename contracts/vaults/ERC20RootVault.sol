@@ -228,14 +228,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
     function _getTokenName(bytes memory prefix, uint256 nft_) internal pure returns (string memory) {
         bytes memory number = bytes(Strings.toString(nft_));
-        bytes memory res = new bytes(prefix.length + number.length);
-        for (uint256 i = 0; i < prefix.length; i++) {
-            res[i] = prefix[i];
-        }
-        for (uint256 i = 0; i < number.length; i++) {
-            res[i + prefix.length] = number[i];
-        }
-        return string(res);
+        return string(abi.encodePacked(prefix, number));
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
