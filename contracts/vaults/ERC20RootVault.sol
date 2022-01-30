@@ -155,7 +155,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     ) internal view returns (uint256 tvl0) {
         tvl0 = tvls[0];
         for (uint256 i = 1; i < tvls.length; i++) {
-            (uint256[] memory prices, ) = oracle.price(tokens[0], tokens[1], 0x18);
+            (uint256[] memory prices, ) = oracle.price(tokens[0], tokens[1], 0x28);
             require(prices.length > 0, ExceptionsLibrary.VALUE_ZERO);
             uint256 price;
             for (uint256 j = 0; j < prices.length; i++) {
