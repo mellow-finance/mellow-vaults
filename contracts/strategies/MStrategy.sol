@@ -10,16 +10,19 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 
-contract MStrategy is Multicall, DefaultAccessControlLateInit {
+contract MStrategy is IContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
+    bytes32 public constant CONTRACT_NAME = "MStrategy";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
     uint256 public constant DENOMINATOR = 10**9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;

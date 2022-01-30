@@ -8,13 +8,17 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 
-contract LStrategy is Multicall {
+contract LStrategy is IContractMeta, Multicall {
     using SafeERC20 for IERC20;
+
+    bytes32 public constant CONTRACT_NAME = "LStrategy";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;

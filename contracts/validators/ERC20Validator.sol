@@ -4,12 +4,16 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./Validator.sol";
 
-contract ERC20Validator is Validator {
+contract ERC20Validator is IContractMeta, Validator {
     bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
+    bytes32 public constant CONTRACT_NAME = "ERC20Validator";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+    bytes4 public constant EXCHANGE_SELECTOR = 0x3df02124;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
