@@ -55,6 +55,7 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
         if (safetyIndicesSet & 0x2 == 1) {
             pricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
+            len += 1;
         }
         for (uint256 i = 2; i < 5; i++) {
             if (safetyIndicesSet & (1 << i) == 1) {
@@ -66,12 +67,16 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
                     uint256(observationCardinality);
                 uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
                     uint256(observationCardinality);
-                (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
-                (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
-                uint256 timespan = timestamp1 - timestamp0;
-                int256 tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
+                int256 tickAverage;
+                {
+                    (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
+                    (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
+                    uint256 timespan = timestamp1 - timestamp0;
+                    tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
+                }
                 pricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
                 safetyIndices[len] = i;
+                len += 1;
             }
         }
         bool revTokens = token1 > token0;
