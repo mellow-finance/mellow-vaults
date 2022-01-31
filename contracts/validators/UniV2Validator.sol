@@ -6,12 +6,17 @@ import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/external/univ2/IUniswapV2Router01.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/utils/IContractMeta.sol";
+import "../interfaces/vaults/IVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./Validator.sol";
 
-contract UniV2Validator is Validator {
+contract UniV2Validator is IContractMeta, Validator {
+    bytes32 public constant CONTRACT_NAME = "UniV2Validator";
+    bytes32 public constant CONTRACT_VERSION = "1.0.0";
+
     struct TokenInput {
         uint256 amount;
         uint256 amountMax;
@@ -55,10 +60,13 @@ contract UniV2Validator is Validator {
         bytes calldata data
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
+        IVault vault = IVault(msg.sender);
+
         bytes4 selector = CommonLibrary.getSelector(data);
         if ((selector == EXACT_ETH_INPUT_SELECTOR) || (selector == EXACT_TOKENS_OUTPUT_SELECTOR)) {
-            (, address[] memory path, , ) = abi.decode(data, (uint256, address[], address, uint256));
-            _verifyPath(path);
+            (, address[] memory path, address to, ) = abi.decode(data, (uint256, address[], address, uint256));
+            _verifyPath(vault, path);
+            require(to == msg.sender);
         } else if (
             (selector == EXACT_ETH_OUTPUT_SELECTOR) ||
             (selector == EXACT_TOKENS_INPUT_SELECTOR) ||
@@ -66,9 +74,12 @@ contract UniV2Validator is Validator {
             (selector == EXACT_OUTPUT_SELECTOR)
         ) {
             require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-            (, , address[] memory path, , ) = abi.decode(data, (uint256, uint256, address[], address, uint256));
-            _verifyPath(path);
-            return;
+            (, , address[] memory path, address to, ) = abi.decode(
+                data,
+                (uint256, uint256, address[], address, uint256)
+            );
+            _verifyPath(vault, path);
+            require(to == msg.sender);
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
@@ -76,7 +87,8 @@ contract UniV2Validator is Validator {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function _verifyPath(address[] memory path) private view {
+    function _verifyPath(IVault vault, address[] memory path) private view {
+        require(path.length > 1, ExceptionsLibrary.INVALID_LENGTH);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         for (uint256 i = 0; i < path.length - 1; i++) {
             address token0 = path[i];
@@ -88,5 +100,6 @@ contract UniV2Validator is Validator {
                 ExceptionsLibrary.FORBIDDEN
             );
         }
+        require(vault.isVaultToken(path[path.length - 1]), ExceptionsLibrary.INVALID_TOKEN);
     }
 }

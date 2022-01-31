@@ -264,7 +264,6 @@ export const combineVaults = async (
         expectedNft
     );
     if (PRIVATE_VAULT) {
-        log("Adding admin to depositors");
         const rootVaultContract = await hre.ethers.getContractAt(
             "ERC20RootVault",
             rootVault
@@ -314,6 +313,12 @@ export class PermissionIdsLibrary {
     static ERC20_APPROVE_RESTRICTED: number = 6;
     static ERC20_TRUSTED_STRATEGY: number = 7;
 }
+
+export const WEI_ETH_PRICE = BigNumber.from(10).pow(18);
+export const ETH_USD_PRICE = 2454;
+export const WETH_PRICE = WEI_ETH_PRICE.div(ETH_USD_PRICE);
+export const WBTC_PRICE = WEI_ETH_PRICE.mul(1492).div(100).div(ETH_USD_PRICE);
+export const USDC_PRICE = WEI_ETH_PRICE.mul(42).div(10000).div(ETH_USD_PRICE);
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;

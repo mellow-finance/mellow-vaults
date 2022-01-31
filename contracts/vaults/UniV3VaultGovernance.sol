@@ -37,7 +37,7 @@ contract UniV3VaultGovernance is IContractMeta, IUniV3VaultGovernance, VaultGove
             return
                 DelayedProtocolParams({
                     positionManager: INonfungiblePositionManager(address(0)),
-                    oracle: IMellowOracle(address(0))
+                    oracle: IOracle(address(0))
                 });
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));

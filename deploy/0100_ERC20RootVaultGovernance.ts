@@ -9,6 +9,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, log, execute, read } = deployments;
     const protocolGovernance = await get("ProtocolGovernance");
     const vaultRegistry = await get("VaultRegistry");
+    const { address: oracle } = await get("MellowOracle");
     const { deployer, aaveLendingPool } = await getNamedAccounts();
     const { address: singleton } = await deploy("ERC20RootVault", {
         from: deployer,
@@ -26,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                     registry: vaultRegistry.address,
                     singleton,
                 },
-                { managementFeeChargeDelay: 86400 },
+                { managementFeeChargeDelay: 86400, oracle },
             ],
             log: true,
             autoMine: true,
@@ -55,4 +56,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.tags = ["ERC20RootVaultGovernance", "core", ...ALL_NETWORKS];
-func.dependencies = ["ProtocolGovernance", "VaultRegistry"];
+func.dependencies = ["ProtocolGovernance", "VaultRegistry", "MellowOracle"];

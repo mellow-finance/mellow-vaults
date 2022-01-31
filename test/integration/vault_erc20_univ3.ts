@@ -109,35 +109,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    // configure unit prices
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "stageUnitPrice(address,uint256)",
-                        this.weth.address,
-                        BigNumber.from(10).pow(18)
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "stageUnitPrice(address,uint256)",
-                        this.usdc.address,
-                        BigNumber.from(10).pow(18)
-                    );
-                    await sleep(86400);
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "commitUnitPrice(address)",
-                        this.weth.address
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "commitUnitPrice(address)",
-                        this.usdc.address
-                    );
-
                     await mint(
                         "USDC",
                         this.deployer.address,
@@ -230,7 +201,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     usdcAmount: BigNumber.from(10).pow(6).mul(3000),
                     wethAmount: BigNumber.from(10).pow(18),
                 });
-                console.log(result.tokenId.toString());
 
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
@@ -255,11 +225,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(10).pow(18),
                     ],
                     []
-                );
-                console.log((await this.erc20Vault.tvl()).toString());
-                console.log(
-                    "uniV3Vault tvl",
-                    (await this.uniV3Vault.tvl()).toString()
                 );
             });
 

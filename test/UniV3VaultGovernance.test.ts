@@ -27,7 +27,7 @@ import {
     InternalParamsStruct,
     InternalParamsStructOutput,
 } from "./types/IVaultGovernance";
-import { ERC20, IUniswapV3Pool, UniV3Vault } from "./types";
+import { ERC20Token as ERC20, IUniswapV3Pool, UniV3Vault } from "./types";
 import { Signer } from "ethers";
 
 type CustomContext = {

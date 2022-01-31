@@ -258,6 +258,9 @@ const config: HardhatUserConfig = {
             arbitrum: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
             optimism: "0x",
         },
+        cowswap: {
+            default: "0x9008D19f58AAbD9eD0D60971565AA8510560ab41",
+        },
     },
 
     solidity: {

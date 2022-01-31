@@ -21,7 +21,7 @@ import {
     IVaultGovernance,
     UniV3VaultGovernance,
     VaultRegistry,
-    ERC20,
+    ERC20Token as ERC20,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -425,15 +425,6 @@ export async function mintUniV3Position_USDC_WETH(options: {
     await mint("WETH", deployer, options.wethAmount);
     await mint("USDC", deployer, options.usdcAmount);
 
-    console.log(
-        "weth balance",
-        (await wethContract.balanceOf(deployer)).toString()
-    );
-    console.log(
-        "usdc balance",
-        (await usdcContract.balanceOf(deployer)).toString()
-    );
-
     if (
         (await wethContract.allowance(deployer, uniswapV3PositionManager)).eq(
             BigNumber.from(0)
@@ -442,9 +433,6 @@ export async function mintUniV3Position_USDC_WETH(options: {
         await wethContract.approve(
             uniswapV3PositionManager,
             ethers.constants.MaxUint256
-        );
-        console.log(
-            `approved weth at ${weth} to uniswapV3PositionManager at ${uniswapV3PositionManager}`
         );
     }
     if (
@@ -455,9 +443,6 @@ export async function mintUniV3Position_USDC_WETH(options: {
         await usdcContract.approve(
             uniswapV3PositionManager,
             ethers.constants.MaxUint256
-        );
-        console.log(
-            `approved usdc at ${usdc} to uniswapV3PositionManager at ${uniswapV3PositionManager}`
         );
     }
 
@@ -474,9 +459,6 @@ export async function mintUniV3Position_USDC_WETH(options: {
         recipient: deployer,
         deadline: ethers.constants.MaxUint256,
     };
-
-    console.log(`minting new uni v3 position for deployer at ${deployer} 
-    \n with params ${JSON.stringify(mintParams)}`);
 
     const result = await positionManagerContract.callStatic.mint(mintParams);
     await positionManagerContract.mint(mintParams);

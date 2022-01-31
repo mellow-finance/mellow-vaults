@@ -17,7 +17,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import Exceptions from "../library/Exceptions";
 import { delayedProtocolParamsBehavior } from "./vaultGovernanceDelayedProtocolParams";
 import { InternalParamsStruct } from "../types/IVaultGovernance";
-import { ERC20, IVault, Vault, VaultGovernance } from "../types";
+import { ERC20Token as ERC20, IVault, Vault, VaultGovernance } from "../types";
 import { InternalParamsStructOutput } from "../types/VaultGovernance";
 import { deployments, ethers } from "hardhat";
 import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";

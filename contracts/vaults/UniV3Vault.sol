@@ -15,11 +15,6 @@ import "./IntegrationVault.sol";
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
     using SafeERC20 for IERC20;
-    struct Options {
-        uint256 amount0Min;
-        uint256 amount1Min;
-        uint256 deadline;
-    }
 
     struct Pair {
         uint256 a0;
@@ -69,7 +64,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             {
                 uint256 minPriceX96;
                 uint256 maxPriceX96;
-                (, minPriceX96, maxPriceX96) = params.oracle.spotPrice(_vaultTokens[0], _vaultTokens[1]);
+                (minPriceX96, maxPriceX96) = _getMinMaxPrice(params.oracle);
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -103,6 +98,22 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     /// @inheritdoc IUniV3Vault
     function positionManager() external view returns (INonfungiblePositionManager) {
         return _positionManager;
+    }
+
+    /// @inheritdoc IUniV3Vault
+    function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
+        tokenAmounts = new uint256[](2);
+        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
+
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
+            sqrtPriceX96,
+            sqrtPriceAX96,
+            sqrtPriceBX96,
+            liquidity
+        );
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -173,6 +184,14 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
+        (uint256[] memory prices, ) = oracle.price(_vaultTokens[0], _vaultTokens[1], 0x26);
+        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+        CommonLibrary.bubbleSortUint(prices);
+        minPriceX96 = prices[0];
+        maxPriceX96 = prices[prices.length - 1];
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
