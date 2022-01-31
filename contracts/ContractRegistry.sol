@@ -109,7 +109,7 @@ contract ContractRegistry is ContractMeta, IContractRegistry, Multicall {
     }
 
     function _validateContractName(bytes32 name_) private pure returns (bool) {
-        bytes memory name = SemverLibrary.shrinkToFit(abi.encodePacked(name_));
+        bytes memory name = bytes(_bytes32ToString(name_));
         for (uint256 i; i < name.length; ++i) {
             uint8 ascii = uint8(name[i]);
             bool isAlphanumeric = ((0x61 <= ascii && ascii <= 0x7a) ||
