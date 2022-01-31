@@ -5,16 +5,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/IContractRegistry.sol";
-import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/SemverLibrary.sol";
+import "./utils/ContractMeta.sol";
 
-contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
+contract ContractRegistry is ContractMeta, IContractRegistry, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
-
-    bytes32 public constant CONTRACT_NAME = "ContractRegistry";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     IProtocolGovernance public governance;
 
@@ -75,9 +72,9 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         require(_addresses.add(target), ExceptionsLibrary.DUPLICATE);
 
         IContractMeta newContract = IContractMeta(target);
-        bytes32 newContractName = newContract.CONTRACT_NAME();
-        bytes32 newContractVersionRaw = newContract.CONTRACT_VERSION();
-        uint256 newContractVersion = SemverLibrary.numberifySemver(_bytes32ToString(newContractVersionRaw));
+        bytes32 newContractName = newContract.contractNameBytes();
+        bytes32 newContractVersionRaw = newContract.contractVersionBytes();
+        uint256 newContractVersion = SemverLibrary.numberifySemver(newContract.contractVersion());
 
         require(_validateContractName(newContractName), ExceptionsLibrary.INVALID_VALUE);
         require(newContractVersion > _latestVersion(newContractName), ExceptionsLibrary.INVARIANT);
@@ -90,6 +87,14 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function CONTRACT_NAME() internal pure override returns (bytes32) {
+        return bytes32("ContractRegistry");
+    }
+
+    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     function _requireAtLeastOperator() private view {
         require(
@@ -115,10 +120,6 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
             }
         }
         return true;
-    }
-
-    function _bytes32ToString(bytes32 text) private pure returns (string memory) {
-        return string(SemverLibrary.shrinkToFit(abi.encodePacked((text))));
     }
 
     // --------------------------  EVENTS  --------------------------

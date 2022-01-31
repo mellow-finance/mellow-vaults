@@ -8,17 +8,14 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../utils/ContractMeta.sol";
 
-contract LStrategy is IContractMeta, Multicall {
+contract LStrategy is ContractMeta, Multicall {
     using SafeERC20 for IERC20;
-
-    bytes32 public constant CONTRACT_NAME = "LStrategy";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;
@@ -262,6 +259,14 @@ contract LStrategy is IContractMeta, Multicall {
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
+
+    function CONTRACT_NAME() internal pure override returns (bytes32) {
+        return bytes32("LStrategy");
+    }
+
+    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     /// @notice Calculate a pure (not Uniswap) liquidity
     /// @param priceX96 Current price y / x

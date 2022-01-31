@@ -3,21 +3,19 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/chainlink/IAggregatorV3.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
+import "../utils/ContractMeta.sol";
 
 /// @notice Contract for getting chainlink data
-contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessControl {
+contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint8 public constant safetyIndex = 5;
-    bytes32 public constant CONTRACT_NAME = "ChainlinkOracle";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     /// @inheritdoc IChainlinkOracle
     mapping(address => address) public oraclesIndex;
@@ -103,6 +101,14 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
         } catch (bytes memory) {
             return (false, 0);
         }
+    }
+
+    function CONTRACT_NAME() internal pure override returns (bytes32) {
+        return bytes32("ChainlinkOracle");
+    }
+
+    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
     }
 
     // -------------------------  INTERNAL, MUTATING  ------------------------------

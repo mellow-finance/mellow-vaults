@@ -3,17 +3,14 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../interfaces/oracles/IOracle.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 
-contract MellowOracle is IContractMeta, IOracle, ERC165 {
-    bytes32 public constant CONTRACT_NAME = "MellowOracle";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract MellowOracle is ContractMeta, IOracle, ERC165 {
     IUniV2Oracle public immutable univ2Oracle;
     IUniV3Oracle public immutable univ3Oracle;
     IChainlinkOracle public immutable chainlinkOracle;
@@ -63,6 +60,14 @@ contract MellowOracle is IContractMeta, IOracle, ERC165 {
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function CONTRACT_NAME() internal pure override returns (bytes32) {
+        return bytes32("MellowOracle");
+    }
+
+    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     function _oracles() internal view returns (IOracle[] memory oracles) {
         oracles = new IOracle[](3);

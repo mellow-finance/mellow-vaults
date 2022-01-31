@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
-contract AaveVaultGovernance is IContractMeta, IAaveVaultGovernance, VaultGovernance {
-    bytes32 public constant CONTRACT_NAME = "AaveVaultGovernance";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGovernance {
     uint256 public immutable MAX_ESTIMATED_AAVE_APY;
 
     /// @notice Creates a new contract.
@@ -76,6 +73,16 @@ contract AaveVaultGovernance is IContractMeta, IAaveVaultGovernance, VaultGovern
         (vaddr, nft) = _createVault(owner_);
         vault = IAaveVault(vaddr);
         vault.initialize(nft, vaultTokens_);
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function CONTRACT_NAME() internal pure override returns (bytes32) {
+        return bytes32("AaveVaultGovernance");
+    }
+
+    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
     }
 
     // --------------------------  EVENTS  --------------------------

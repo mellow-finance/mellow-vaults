@@ -3,15 +3,12 @@ pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IUniV3VaultGovernance.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all UniV3 Vaults params and can deploy a new UniV3 Vault.
-contract UniV3VaultGovernance is IContractMeta, IUniV3VaultGovernance, VaultGovernance {
-    bytes32 public constant CONTRACT_NAME = "UniV3VaultGovernance";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGovernance {
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
@@ -75,6 +72,16 @@ contract UniV3VaultGovernance is IContractMeta, IUniV3VaultGovernance, VaultGove
         (vaddr, nft) = _createVault(owner_);
         vault = IUniV3Vault(vaddr);
         vault.initialize(nft, vaultTokens_, fee_);
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function CONTRACT_NAME() internal pure override returns (bytes32) {
+        return bytes32("UniV3VaultGovernance");
+    }
+
+    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
     }
 
     // --------------------------  EVENTS  --------------------------
