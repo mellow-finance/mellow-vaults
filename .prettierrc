@@ -11,12 +11,6 @@
       "options": {
         "tabWidth": 4
       }
-    },
-    {
-      "files": "test/integration/*.ts",
-      "options": {
-        "tabWidth": 2
-      }
     }
   ]
 }
