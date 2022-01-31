@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
@@ -11,12 +10,11 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
+import "../utils/ContractMeta.sol";
 
-contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
+contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    bytes32 public constant CONTRACT_NAME = "UniV3Oracle";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
     uint16 public constant LOW_OBS = 10; // >= 2.5 min
     uint16 public constant MID_OBS = 30; // >= 7.5 min
     uint16 public constant HIGH_OBS = 100; // >= 30 min
@@ -99,6 +97,14 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("UniV3Oracle");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     function _obsForSafety(uint256 safety) internal pure returns (uint16) {
         if (safety == 2) {

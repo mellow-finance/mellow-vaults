@@ -6,17 +6,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 library SemverLibrary {
     uint8 internal constant ASCII_ZERO = 48;
 
-    function shrinkToFit(bytes memory array) internal pure returns (bytes memory result) {
-        uint256 i;
-        while (i != array.length && array[i] != 0) {
-            ++i;
-        }
-        result = new bytes(i);
-        for (uint256 j; j != i; ++j) {
-            result[j] = array[j];
-        }
-    }
-
     function numberifySemver(string memory _semver) internal pure returns (uint256) {
         uint256[3] memory res;
         uint256 semverIndex;

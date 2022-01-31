@@ -6,17 +6,14 @@ import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/external/univ2/IUniswapV2Router01.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
-contract UniV2Validator is IContractMeta, Validator {
-    bytes32 public constant CONTRACT_NAME = "UniV2Validator";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract UniV2Validator is ContractMeta, Validator {
     struct TokenInput {
         uint256 amount;
         uint256 amountMax;
@@ -86,6 +83,14 @@ contract UniV2Validator is IContractMeta, Validator {
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("UniV2Validator");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     function _verifyPath(IVault vault, address[] memory path) private view {
         require(path.length > 1, ExceptionsLibrary.INVALID_LENGTH);

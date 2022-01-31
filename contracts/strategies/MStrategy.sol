@@ -10,19 +10,17 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
+import "../utils/ContractMeta.sol";
 
-contract MStrategy is IContractMeta, Multicall, DefaultAccessControlLateInit {
+contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
-    bytes32 public constant CONTRACT_NAME = "MStrategy";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
     uint256 public constant DENOMINATOR = 10**9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
@@ -171,6 +169,14 @@ contract MStrategy is IContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("MStrategy");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     function _priceX96FromTick(int24 _tick) internal pure returns (uint256) {
         uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
