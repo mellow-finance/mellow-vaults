@@ -4,21 +4,21 @@ pragma solidity 0.8.9;
 import "../utils/ContractMeta.sol";
 
 contract ContractMetaMock is ContractMeta {
-    bytes32 private _contractName;
-    bytes32 private _contractVersion;
+    bytes32 private _inputContractName;
+    bytes32 private _inputContractVersion;
 
     constructor(string memory name_, string memory version_) {
-        _contractName = bytes32(abi.encodePacked(name_));
-        _contractVersion = bytes32(abi.encodePacked(version_));
+        _inputContractName = bytes32(abi.encodePacked(name_));
+        _inputContractVersion = bytes32(abi.encodePacked(version_));
     }
 
-    function CONTRACT_NAME() internal pure override returns (bytes32) {
+    function _contractName() internal pure override returns (bytes32) {
 //        return _contractName;
         return bytes32("mock");
     }
 
-    function CONTRACT_VERSION() internal pure override returns (bytes32) {
-//        return _contractVersion;
+    function _contractVersion() internal pure override returns (bytes32) {
+//        return __contractVersion;
         return bytes32("mock");
     }
 }

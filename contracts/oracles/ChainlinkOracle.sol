@@ -103,11 +103,11 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         }
     }
 
-    function CONTRACT_NAME() internal pure override returns (bytes32) {
+    function _contractName() internal pure override returns (bytes32) {
         return bytes32("ChainlinkOracle");
     }
 
-    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+    function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
     }
 

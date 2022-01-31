@@ -8,26 +8,26 @@ abstract contract ContractMeta is IContractMeta {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function contractName() external pure returns (string memory) {
-        return _bytes32ToString(CONTRACT_NAME());
+        return _bytes32ToString(_contractName());
     }
 
     function contractNameBytes() external pure returns (bytes32) {
-        return CONTRACT_NAME();
+        return _contractName();
     }
 
     function contractVersion() external pure returns (string memory) {
-        return _bytes32ToString(CONTRACT_VERSION());
+        return _bytes32ToString(_contractVersion());
     }
 
     function contractVersionBytes() external pure returns (bytes32) {
-        return CONTRACT_VERSION();
+        return _contractVersion();
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function CONTRACT_NAME() internal pure virtual returns (bytes32);
+    function _contractName() internal pure virtual returns (bytes32);
 
-    function CONTRACT_VERSION() internal pure virtual returns (bytes32);
+    function _contractVersion() internal pure virtual returns (bytes32);
 
     function _bytes32ToString(bytes32 b) internal pure returns (string memory s) {
         s = new string(32);

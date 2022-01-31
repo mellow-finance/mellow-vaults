@@ -205,11 +205,11 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function CONTRACT_NAME() internal pure override returns (bytes32) {
+    function _contractName() internal pure override returns (bytes32) {
         return bytes32("ERC20RootVaultGovernance");
     }
 
-    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+    function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
     }
 

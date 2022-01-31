@@ -92,11 +92,11 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function CONTRACT_NAME() internal pure override returns (bytes32) {
+    function _contractName() internal pure override returns (bytes32) {
         return bytes32("YearnVaultGovernance");
     }
 
-    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+    function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
     }
 

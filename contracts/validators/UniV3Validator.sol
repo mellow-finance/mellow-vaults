@@ -63,11 +63,11 @@ contract UniV3Validator is ContractMeta, Validator {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    function CONTRACT_NAME() internal pure override returns (bytes32) {
+    function _contractName() internal pure override returns (bytes32) {
         return bytes32("UniV3Validator");
     }
 
-    function CONTRACT_VERSION() internal pure override returns (bytes32) {
+    function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
     }
 
