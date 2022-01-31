@@ -9,10 +9,11 @@ import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
 
 /// @notice Contract for getting chainlink data
-contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessControl {
+contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint8 public constant safetyIndex = 5;
@@ -85,6 +86,14 @@ contract ChainlinkOracle is IContractMeta, IChainlinkOracle, DefaultAccessContro
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------------  EXTERNAL, MUTATING  ------------------------------

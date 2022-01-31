@@ -7,10 +7,11 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
+import "./utils/ContractMeta.sol";
 import "./UnitPricesGovernance.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
-contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
+contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes32 public constant CONTRACT_NAME = "ProtocolGovernance";
@@ -148,6 +149,14 @@ contract ProtocolGovernance is IContractMeta, IProtocolGovernance, ERC165, UnitP
         returns (bool)
     {
         return (interfaceId == type(IProtocolGovernance).interfaceId) || super.supportsInterface(interfaceId);
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

@@ -11,9 +11,10 @@ import "../interfaces/vaults/IVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
-contract UniV2Validator is IContractMeta, Validator {
+contract UniV2Validator is ContractMeta, Validator {
     bytes32 public constant CONTRACT_NAME = "UniV2Validator";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
@@ -83,6 +84,14 @@ contract UniV2Validator is IContractMeta, Validator {
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

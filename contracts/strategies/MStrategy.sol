@@ -10,14 +10,14 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
+import "../utils/ContractMeta.sol";
 
-contract MStrategy is IContractMeta, Multicall, DefaultAccessControlLateInit {
+contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -67,6 +67,14 @@ contract MStrategy is IContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @return deviation Current pool tick - average tick
     function getAverageTick() external view returns (int24 averageTick, int24 deviation) {
         return _getAverageTick(pool);
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

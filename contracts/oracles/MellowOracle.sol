@@ -3,14 +3,14 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../interfaces/oracles/IOracle.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 
-contract MellowOracle is IContractMeta, IOracle, ERC165 {
+contract MellowOracle is ContractMeta, IOracle, ERC165 {
     bytes32 public constant CONTRACT_NAME = "MellowOracle";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
@@ -60,6 +60,14 @@ contract MellowOracle is IContractMeta, IOracle, ERC165 {
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IOracle).interfaceId == interfaceId;
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------------  INTERNAL, VIEW  ------------------------------

@@ -8,8 +8,9 @@ import "./interfaces/IContractRegistry.sol";
 import "./interfaces/utils/IContractMeta.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/SemverLibrary.sol";
+import "./utils/ContractMeta.sol";
 
-contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
+contract ContractRegistry is ContractMeta, IContractRegistry, Multicall {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -65,6 +66,14 @@ contract ContractRegistry is IContractMeta, IContractRegistry, Multicall {
         bytes32 name = bytes32(abi.encodePacked(name_));
         uint256 version = _latestVersion(name);
         return (string(SemverLibrary.stringifySemver(version)), _nameToVersionToAddress[name][version]);
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

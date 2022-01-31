@@ -7,9 +7,10 @@ import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
-contract ERC20Validator is IContractMeta, Validator {
+contract ERC20Validator is ContractMeta, Validator {
     bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
     bytes32 public constant CONTRACT_NAME = "ERC20Validator";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
@@ -38,6 +39,14 @@ contract ERC20Validator is IContractMeta, Validator {
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

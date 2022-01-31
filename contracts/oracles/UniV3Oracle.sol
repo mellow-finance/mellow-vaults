@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
@@ -10,9 +9,10 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
+contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes32 public constant CONTRACT_NAME = "UniV3Oracle";
@@ -90,6 +90,14 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV3Oracle).interfaceId == interfaceId;
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------------  EXTERNAL, MUTATING  ------------------------------

@@ -6,13 +6,13 @@ import "../interfaces/external/curve/I3Pool.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
-contract CurveValidator is IContractMeta, Validator {
+contract CurveValidator is ContractMeta, Validator {
     using EnumerableSet for EnumerableSet.AddressSet;
     bytes32 public constant CONTRACT_NAME = "CurveValidator";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
@@ -44,5 +44,13 @@ contract CurveValidator is IContractMeta, Validator {
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 }

@@ -8,13 +8,13 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../utils/ContractMeta.sol";
 
-contract LStrategy is IContractMeta, Multicall {
+contract LStrategy is ContractMeta, Multicall {
     using SafeERC20 for IERC20;
 
     bytes32 public constant CONTRACT_NAME = "LStrategy";
@@ -123,6 +123,14 @@ contract LStrategy is IContractMeta, Multicall {
                 uint256(uint24((tickUpper - tickLower) / 2))
             );
         }
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------

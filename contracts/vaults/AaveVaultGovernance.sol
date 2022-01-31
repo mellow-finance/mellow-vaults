@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
-contract AaveVaultGovernance is IContractMeta, IAaveVaultGovernance, VaultGovernance {
+contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGovernance {
     bytes32 public constant CONTRACT_NAME = "AaveVaultGovernance";
     bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
@@ -46,6 +46,14 @@ contract AaveVaultGovernance is IContractMeta, IAaveVaultGovernance, VaultGovern
             return DelayedProtocolParams({lendingPool: ILendingPool(address(0)), estimatedAaveAPY: 0});
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
+    }
+
+    function CONTRACT_NAME_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_NAME));
+    }
+
+    function CONTRACT_VERSION_READABLE() external pure override returns (string memory) {
+        return string(abi.encodePacked(CONTRACT_VERSION));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
