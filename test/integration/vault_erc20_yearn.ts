@@ -96,34 +96,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    // configure unit prices
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "stageUnitPrice(address,uint256)",
-                        this.weth.address,
-                        BigNumber.from(10).pow(18)
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "stageUnitPrice(address,uint256)",
-                        this.usdc.address,
-                        BigNumber.from(10).pow(18)
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "commitUnitPrice(address)",
-                        this.weth.address
-                    );
-                    await deployments.execute(
-                        "ProtocolGovernance",
-                        { from: this.admin.address, autoMine: true },
-                        "commitUnitPrice(address)",
-                        this.usdc.address
-                    );
-
                     await mint(
                         "USDC",
                         this.deployer.address,
