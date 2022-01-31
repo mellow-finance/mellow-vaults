@@ -138,6 +138,10 @@ contract LStrategy is IContractMeta, Multicall {
         bytes calldata uuid,
         bool signed
     ) external {
+        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L134
+        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L228
+        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/mixins/GPv2Signing.sol#L154
+        // https://etherscan.io/address/0x9008d19f58aabd9ed0d60971565aa8510560ab41#readContract - DOMAIN SEPARATOR
         bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, allowance));
         erc20Vault.externalCall(tokens[tokenNumber], approveData);
         bytes memory setPresignatureData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
