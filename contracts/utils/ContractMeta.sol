@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "../interfaces/utils/IContractMeta.sol";
 
 abstract contract ContractMeta is IContractMeta {
-
     // -------------------  EXTERNAL, VIEW  -------------------
 
     function contractName() external pure returns (string memory) {
@@ -32,7 +31,7 @@ abstract contract ContractMeta is IContractMeta {
     function _bytes32ToString(bytes32 b) internal pure returns (string memory s) {
         s = new string(32);
         uint256 len = 32;
-        for (uint i = 0; i < 32; ++i) {
+        for (uint256 i = 0; i < 32; ++i) {
             if (uint8(b[i]) == 0) {
                 len = i;
                 break;

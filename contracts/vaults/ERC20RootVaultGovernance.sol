@@ -9,7 +9,6 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
-
     uint256 public immutable MAX_PROTOCOL_FEE;
     uint256 public immutable MAX_MANAGEMENT_FEE;
     uint256 public immutable MAX_PERFORMANCE_FEE;
