@@ -3,7 +3,13 @@ import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { mint } from "../library/Helpers";
 import { contract } from "../library/setup";
-import { ERC20RootVault, YearnVault, ERC20Vault, MStrategy, ProtocolGovernance } from "../types";
+import {
+    ERC20RootVault,
+    YearnVault,
+    ERC20Vault,
+    MStrategy,
+    ProtocolGovernance,
+} from "../types";
 import { setupVault, combineVaults } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
@@ -165,7 +171,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         this.deployer.address,
                         BigNumber.from(10).pow(18)
                     );
-                    
+
                     /*
                      * Approve USDC and WETH to ERC20RootVault
                      */

@@ -198,13 +198,6 @@ library CommonLibrary {
         return (r < r1 ? r : r1);
     }
 
-    function getSelector(bytes calldata data) internal pure returns (bytes4 selector) {
-        selector = bytes4(data[0] & 0xff);
-        selector |= bytes4(data[1] & 0xff) >> 8;
-        selector |= bytes4(data[2] & 0xff) >> 16;
-        selector |= bytes4(data[3] & 0xff) >> 24;
-    }
-
     function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) internal pure returns (address) {
         (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
 

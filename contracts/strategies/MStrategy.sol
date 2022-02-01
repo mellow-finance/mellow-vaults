@@ -374,15 +374,9 @@ contract MStrategy is IContractMeta, Multicall, DefaultAccessControlLateInit {
             });
         }
         bytes memory data = abi.encode(swapParams);
-        erc20Vault.externalCall(
-            tokens[tokenInIndex],
-            abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(address(router_), amountIn))
-        ); // approve
-        erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data)); //swap
-        erc20Vault.externalCall(
-            tokens[tokenInIndex],
-            abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(address(router_), 0))
-        ); // reset allowance
+        erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), amountIn)); // approve
+        erc20Vault.externalCall(address(router_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
+        erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), 0)); // reset allowance
     }
 
     /// @notice Emitted when pool rebalance is initiated.

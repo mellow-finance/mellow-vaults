@@ -15,6 +15,8 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
         uniV3: [
+            "0xe592427a0aece92de3edee1f18e0157c05861564", // SwapRouter
+
             "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8", // USDC-ETH 0.3%
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
             "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%

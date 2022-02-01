@@ -57,12 +57,12 @@ contract UniV2Validator is IContractMeta, Validator {
         address,
         address addr,
         uint256 value,
+        bytes4 selector,
         bytes calldata data
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         IVault vault = IVault(msg.sender);
 
-        bytes4 selector = CommonLibrary.getSelector(data);
         if ((selector == EXACT_ETH_INPUT_SELECTOR) || (selector == EXACT_TOKENS_OUTPUT_SELECTOR)) {
             (, address[] memory path, address to, ) = abi.decode(data, (uint256, address[], address, uint256));
             _verifyPath(vault, path);

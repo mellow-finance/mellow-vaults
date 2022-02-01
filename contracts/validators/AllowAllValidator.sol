@@ -18,6 +18,7 @@ contract AllowAllValidator is IContractMeta, Validator {
         address,
         address,
         uint256,
+        bytes4,
         bytes calldata
     ) external view {}
 }
