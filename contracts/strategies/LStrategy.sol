@@ -49,7 +49,7 @@ contract LStrategy is IContractMeta, Multicall {
     }
 
     struct RatioParams {
-        uint256 erc20UniV3RatioD;
+        uint256 erc20UniV3CapitalRatioD;
         uint256 erc20TokenRatioD;
     }
     struct BotParams {
@@ -195,29 +195,57 @@ contract LStrategy is IContractMeta, Multicall {
         fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
     }
 
-    function rebalanceERC20UniV3Vaults() external {
-        uint256 linearLiquidityDelta;
-        bool isNegativeLinearLiquidityDelta;
+    function rebalanceERC20UniV3Vaults(
+        uint256[] memory minLowerVaultTokens,
+        uint256[] memory minUpperVaultTokens,
+        uint256 deadline
+    ) external {
+        uint256 capitalDelta;
+        bool isNegativeCapitalDelta;
         uint256 priceX96 = targetPrice(tokens, tradingParams);
-        uint256 erc20VaultLinearLiquidity = _getLinearLiquidity(priceX96, erc20Vault);
-        uint256 lowerVaultLinearLiquidity = _getLinearLiquidity(priceX96, lowerVault);
-        uint256 upperVaultLinearLiquidity = _getLinearLiquidity(priceX96, upperVault);
-        (linearLiquidityDelta, isNegativeLinearLiquidityDelta) = _liquidityDelta(
-            erc20VaultLinearLiquidity,
-            lowerVaultLinearLiquidity + upperVaultLinearLiquidity,
-            ratioParams.erc20UniV3RatioD
+        uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
+        uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
+        uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
+        (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
+            erc20VaultCapital,
+            erc20VaultCapital + lowerVaultCapital + upperVaultCapital,
+            ratioParams.erc20UniV3CapitalRatioD
         );
+        uint256 percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, lowerVaultCapital + upperVaultCapital);
         (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
         (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
-        (uint256[] memory lowerVaultTvl, ) = lowerVault.tvl();
-        (uint256[] memory upperVaultTvl, ) = upperVault.tvl();
-        uint256 uniLiquidityRatio = FullMath.mulDiv(
-            lowerVaultLinearLiquidity,
-            lowerVaultLinearLiquidity + upperVaultLinearLiquidity,
-            DENOMINATOR
-        );
-        // uint256 lowerVaultLiquidityDeltaRatioD = FullMath.mulDiv(a, b, denominator);
-        // if (isNegativeLinearLiquidityDelta) {}
+        uint256 lowerVaultDelta = FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR);
+        uint256 upperVaultDelta = FullMath.mulDiv(percentageIncreaseD, upperVaultLiquidity, DENOMINATOR);
+        uint256[] memory lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(uint128(lowerVaultDelta));
+        uint256[] memory upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
+
+        if (!isNegativeCapitalDelta) {
+            erc20Vault.pull(
+                address(lowerVault),
+                tokens,
+                lowerTokenAmounts,
+                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
+            );
+            erc20Vault.pull(
+                address(lowerVault),
+                tokens,
+                upperTokenAmounts,
+                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
+            );
+        } else {
+            lowerVault.pull(
+                address(erc20Vault),
+                tokens,
+                lowerTokenAmounts,
+                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
+            );
+            upperVault.pull(
+                address(erc20Vault),
+                tokens,
+                upperTokenAmounts,
+                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
+            );
+        }
     }
 
     /// @notice Make a rebalance of UniV3 vaults
@@ -289,11 +317,11 @@ contract LStrategy is IContractMeta, Multicall {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    /// @notice Calculate a pure (not Uniswap) liquidity
+    /// @notice Calculate capital (token1 equivalent)
     /// @param priceX96 Current price y / x
     /// @param vault Vault for liquidity calculation
-    /// @return Vault liquidity = x * p + y
-    function _getLinearLiquidity(uint256 priceX96, IVault vault) internal view returns (uint256) {
+    /// @return Capital = x * p + y
+    function _getCapital(uint256 priceX96, IVault vault) internal view returns (uint256) {
         (uint256[] memory tvl, ) = vault.tvl();
         return FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96) + tvl[1];
     }
@@ -403,7 +431,7 @@ contract LStrategy is IContractMeta, Multicall {
         // Then the actual tokens in the vault are shouldDepositTokenAmountsD * l, shouldWithdrawTokenAmountsD * l
         // So the equation could be built: erc20 balances + l * shouldWithdrawTokenAmountsD >= l * shouldDepositTokenAmountsD and l tweaked so this inequality holds
         (uint256[] memory availableBalances, ) = erc20Vault.tvl();
-        uint256[] memory shouldDepositTokenAmountsD = toVault.liquidityToTokPUenAmounts(uint128(DENOMINATOR));
+        uint256[] memory shouldDepositTokenAmountsD = toVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
         uint256[] memory shouldWithdrawTokenAmountsD = fromVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
         for (uint256 i = 0; i < 2; i++) {
             uint256 availableBalance = availableBalances[i] +
