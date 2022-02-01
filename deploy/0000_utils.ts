@@ -311,13 +311,13 @@ export const toObject = (obj: any) =>
     )(obj);
 
 export class PermissionIdsLibrary {
-    static REGISTER_VAULT: number = 1;
-    static CREATE_VAULT: number = 2;
-    static ERC20_TRANSFER: number = 3;
-    static ERC20_VAULT_TOKEN = 4;
-    static ERC20_APPROVE: number = 5;
-    static ERC20_APPROVE_RESTRICTED: number = 6;
-    static ERC20_TRUSTED_STRATEGY: number = 7;
+    static REGISTER_VAULT: number = 0;
+    static CREATE_VAULT: number = 1;
+    static ERC20_TRANSFER: number = 2;
+    static ERC20_VAULT_TOKEN = 3;
+    static ERC20_APPROVE: number = 4;
+    static ERC20_APPROVE_RESTRICTED: number = 5;
+    static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
 export const WEI_ETH_PRICE = BigNumber.from(10).pow(18);
