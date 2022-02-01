@@ -3,7 +3,7 @@ import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { mint } from "../library/Helpers";
 import { contract } from "../library/setup";
-import { ERC20RootVault, YearnVault, ERC20Vault, MStrategy } from "../types";
+import { ERC20RootVault, YearnVault, ERC20Vault, MStrategy, ProtocolGovernance } from "../types";
 import { setupVault, combineVaults } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
@@ -13,6 +13,7 @@ type CustomContext = {
     yearnVault: YearnVault;
     erc20RootVault: ERC20RootVault;
     positionManager: Contract;
+    protocolGovernance: ProtocolGovernance;
 };
 
 type DeployOptions = {};
@@ -28,11 +29,14 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     const tokens = [this.weth.address, this.usdc.address]
                         .map((t) => t.toLowerCase())
                         .sort();
+
+                    /*
+                     * Configure & deploy subvaults
+                     */
                     const startNft =
                         (
                             await read("VaultRegistry", "vaultsCount")
                         ).toNumber() + 1;
-
                     let yearnVaultNft = startNft;
                     let erc20VaultNft = startNft + 1;
                     await setupVault(
@@ -51,7 +55,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             createVaultArgs: [tokens, this.deployer.address],
                         }
                     );
-
                     const erc20Vault = await read(
                         "VaultRegistry",
                         "vaultForNft",
@@ -67,7 +70,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         "vaultForNft",
                         erc20VaultNft + 1
                     );
-
                     this.erc20RootVault = await ethers.getContractAt(
                         "ERC20RootVault",
                         erc20RootVault
@@ -81,13 +83,14 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         yearnVault
                     );
 
+                    /*
+                     * Deploy MStrategy
+                     */
                     const { uniswapV3PositionManager, uniswapV3Router } =
                         await getNamedAccounts();
-
                     const mStrategy = await (
                         await ethers.getContractFactory("MStrategy")
                     ).deploy(uniswapV3PositionManager, uniswapV3Router);
-
                     const params = [
                         tokens,
                         erc20Vault,
@@ -104,6 +107,9 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         address
                     );
 
+                    /*
+                     * Configure oracles for the MStrategy
+                     */
                     const oracleParams = {
                         oracleObservationDelta: 15,
                         maxTickDeviation: 50,
@@ -114,7 +120,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         tickMax: 198240 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     };
-                    const txs = [];
+                    let txs = [];
                     txs.push(
                         this.subject.interface.encodeFunctionData(
                             "setOracleParams",
@@ -127,7 +133,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             [ratioParams]
                         )
                     );
-
                     await this.subject
                         .connect(this.mStrategyAdmin)
                         .functions["multicall"](txs);
@@ -140,11 +145,16 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         this.deployer.address
                     );
 
-                    // add depositor
+                    /*
+                     * Allow deployer to make deposits
+                     */
                     await this.erc20RootVault
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
+                    /*
+                     * Mint USDC and WETH to deployer
+                     */
                     await mint(
                         "USDC",
                         this.deployer.address,
@@ -155,7 +165,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         this.deployer.address,
                         BigNumber.from(10).pow(18)
                     );
-
+                    
+                    /*
+                     * Approve USDC and WETH to ERC20RootVault
+                     */
                     await this.weth.approve(
                         this.subject.address,
                         ethers.constants.MaxUint256
