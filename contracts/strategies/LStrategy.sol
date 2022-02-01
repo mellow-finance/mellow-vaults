@@ -145,7 +145,31 @@ contract LStrategy is IContractMeta, Multicall {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    // function postPreOrder()
+    function postPreOrder() external {
+        (uint256[] memory tvl, ) = erc20Vault.tvl();
+        (uint256 tokenDelta, bool isNegative) = _liquidityDelta(tvl[0], tvl[0] + tvl[1], ratioParams.erc20TokenRatioD);
+        TradingParams memory tradingParams_ = tradingParams;
+        uint256 priceX96 = targetPrice(tokens, tradingParams_);
+        if (isNegative) {
+            uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
+            minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
+            preOrder = PreOrder({
+                tokenIn: tokens[1],
+                amountIn: tokenDelta,
+                minAmountOut: minAmountOut,
+                deadline: block.timestamp + tradingParams_.orderDeadline
+            });
+        } else {
+            uint256 minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
+            minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
+            preOrder = PreOrder({
+                tokenIn: tokens[1],
+                amountIn: tokenDelta,
+                minAmountOut: minAmountOut,
+                deadline: block.timestamp + tradingParams_.orderDeadline
+            });
+        }
+    }
 
     /// Sign Cowswap order
     /// @param tokenNumber The number of the token to swap
