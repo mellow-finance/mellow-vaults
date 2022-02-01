@@ -183,7 +183,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IValidator validator = IValidator(protocolGovernance.validators(to));
         require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
         validator.validate(msg.sender, to, msg.value, selector, data);
-        (bool res, bytes memory returndata) = to.call{value: msg.value}(abi.encodeWithSelector(selector, data));
+        (bool res, bytes memory returndata) = to.call{value: msg.value}(abi.encodePacked(selector, data));
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)
