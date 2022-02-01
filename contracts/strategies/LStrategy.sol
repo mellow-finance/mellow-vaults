@@ -9,6 +9,7 @@ import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/utils/IContractMeta.sol";
+import "../interfaces/oracles/IOracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -34,13 +35,17 @@ contract LStrategy is IContractMeta, Multicall {
 
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
+    uint256 public lastUniV3RebalanceTimestamp;
     uint256 public tickPointTimestamp;
 
     // MUTABLE PARAMS
 
-    struct TickParams {
-        int24 tickPoint;
-        int24 annualTickGrowth;
+    struct TradingParams {
+        uint256 maxSlippageD;
+        uint256 minRebalanceWaitTime;
+        uint32 orderDeadline;
+        uint8 oracleSafety;
+        IOracle oracle;
     }
 
     struct RatioParams {
@@ -60,10 +65,18 @@ contract LStrategy is IContractMeta, Multicall {
         uint256 minToken1ForOpening;
     }
 
-    TickParams public tickParams;
+    struct PreOrder {
+        address tokenIn;
+        uint256 amountIn;
+        uint256 minAmountOut;
+        uint256 deadline;
+    }
+
+    TradingParams public tradingParams;
     RatioParams public ratioParams;
     BotParams public botParams;
     OtherParams public otherParams;
+    PreOrder public preOrder;
 
     // @notice Constructor for a new contract
     // @param positionManager_ Reference to UniswapV3 positionManager
@@ -88,25 +101,30 @@ contract LStrategy is IContractMeta, Multicall {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @notice Target tick based on mutable params
-    function targetTick() public view returns (int24) {
-        uint256 timeDelta = block.timestamp - tickPointTimestamp;
-        int24 annualTickGrowth = tickParams.annualTickGrowth;
-        int24 tickPoint = tickParams.tickPoint;
-        if (annualTickGrowth > 0) {
-            return
-                tickPoint +
-                int24(uint24(FullMath.mulDiv(uint256(uint24(annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
-        } else {
-            return
-                tickPoint -
-                int24(uint24(FullMath.mulDiv(uint256(uint24(-annualTickGrowth)), timeDelta, CommonLibrary.YEAR)));
+    /// @notice Target price based on mutable params
+    function targetPrice(address[] memory tokens_, TradingParams memory tradingParams_)
+        public
+        view
+        returns (uint256 priceX96)
+    {
+        (uint256[] memory prices, ) = tradingParams_.oracle.price(
+            tokens_[0],
+            tokens_[1],
+            1 << tradingParams_.oracleSafety
+        );
+        require(prices.length > 0, ExceptionsLibrary.INVALID_LENGTH);
+        for (uint256 i = 0; i < prices.length; i++) {
+            priceX96 += prices[i];
         }
+        priceX96 /= prices.length;
     }
 
     /// @notice Target liquidity ratio for UniV3 vaults
-    function targetUniV3LiquidityRatio() public view returns (uint256 liquidityRatioD, bool isNegative) {
-        int24 targetTick_ = targetTick();
+    function targetUniV3LiquidityRatio(int24 targetTick_)
+        public
+        view
+        returns (uint256 liquidityRatioD, bool isNegative)
+    {
         (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
         int24 midTick = (tickUpper + tickLower) / 2;
         isNegative = midTick > targetTick_;
@@ -126,6 +144,8 @@ contract LStrategy is IContractMeta, Multicall {
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
+
+    // function postPreOrder()
 
     /// Sign Cowswap order
     /// @param tokenNumber The number of the token to swap
@@ -178,7 +198,7 @@ contract LStrategy is IContractMeta, Multicall {
     function rebalanceERC20UniV3Vaults() external {
         uint256 linearLiquidityDelta;
         bool isNegativeLinearLiquidityDelta;
-        uint256 priceX96 = _priceX96FromTick(targetTick());
+        uint256 priceX96 = targetPrice(tokens, tradingParams);
         uint256 erc20VaultLinearLiquidity = _getLinearLiquidity(priceX96, erc20Vault);
         uint256 lowerVaultLinearLiquidity = _getLinearLiquidity(priceX96, lowerVault);
         uint256 upperVaultLinearLiquidity = _getLinearLiquidity(priceX96, upperVault);
@@ -209,7 +229,9 @@ contract LStrategy is IContractMeta, Multicall {
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) external {
-        (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio();
+        uint256 targetPriceX96 = targetPrice(tokens, tradingParams);
+        int24 targetTick = _tickFromPriceX96(targetPriceX96);
+        (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
         // // we crossed the interval right to left
         if (isNegativeLiquidityRatio) {
             // pull all liquidity to other vault and swap intervals
@@ -274,6 +296,12 @@ contract LStrategy is IContractMeta, Multicall {
     function _getLinearLiquidity(uint256 priceX96, IVault vault) internal view returns (uint256) {
         (uint256[] memory tvl, ) = vault.tvl();
         return FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96) + tvl[1];
+    }
+
+    /// @notice Target tick based on mutable params
+    function _tickFromPriceX96(uint256 priceX96) internal pure returns (int24) {
+        uint256 sqrtPriceX96 = CommonLibrary.sqrtX96(priceX96);
+        return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }
 
     function _priceX96FromTick(int24 _tick) internal pure returns (uint256) {
@@ -349,7 +377,7 @@ contract LStrategy is IContractMeta, Multicall {
     /// @notice Pull liquidity from `fromVault` and put into `toVault`
     /// @param fromVault The vault to pull liquidity from
     /// @param toVault The vault to pull liquidity to
-    /// @param liquidity The amount of liquidity. On overflow best effort pull is made
+    /// @param desiredLiquidity The amount of liquidity desired for rebalance. This could be cut to available erc20 vault balance and available uniV3 vault liquidity.
     /// @param minWithdrawTokens Min accepted tokenAmounts for withdrawal
     /// @param minDepositTokens Min accepted tokenAmounts for deposit
     /// @param deadline Timestamp after which the transaction reverts
@@ -358,30 +386,66 @@ contract LStrategy is IContractMeta, Multicall {
     function _rebalanceUniV3Liquidity(
         IUniV3Vault fromVault,
         IUniV3Vault toVault,
-        uint128 liquidity,
+        uint128 desiredLiquidity,
         uint256[] memory minWithdrawTokens,
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) internal returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
         address[] memory tokens_ = tokens;
-        uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
+        uint128 liquidity = desiredLiquidity;
+
+        // Cut for available liquidity in the vault
         (, , uint128 fromVaultLiquidity) = _getVaultStats(fromVault);
+        liquidity = fromVaultLiquidity > liquidity ? liquidity : fromVaultLiquidity;
+
+        //--- Cut rebalance to available token balances on ERC20 Vault
+        // The rough idea is to translate one unit of liquituty into tokens for each interval shouldDepositTokenAmountsD, shouldWithdrawTokenAmountsD
+        // Then the actual tokens in the vault are shouldDepositTokenAmountsD * l, shouldWithdrawTokenAmountsD * l
+        // So the equation could be built: erc20 balances + l * shouldWithdrawTokenAmountsD >= l * shouldDepositTokenAmountsD and l tweaked so this inequality holds
+        (uint256[] memory availableBalances, ) = erc20Vault.tvl();
+        uint256[] memory shouldDepositTokenAmountsD = toVault.liquidityToTokPUenAmounts(uint128(DENOMINATOR));
+        uint256[] memory shouldWithdrawTokenAmountsD = fromVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
+        for (uint256 i = 0; i < 2; i++) {
+            uint256 availableBalance = availableBalances[i] +
+                FullMath.mulDiv(shouldWithdrawTokenAmountsD[i], liquidity, DENOMINATOR);
+            uint256 requiredBalance = FullMath.mulDiv(shouldDepositTokenAmountsD[i], liquidity, DENOMINATOR);
+            if (availableBalance < requiredBalance) {
+                // since balances >= 0, this case means that shouldWithdrawTokenAmountsD < shouldDepositTokenAmountsD
+                // this also means that liquidity on the line below will decrease compared to the liqiduity above
+                liquidity = uint128(
+                    FullMath.mulDiv(
+                        availableBalances[i],
+                        shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i],
+                        DENOMINATOR
+                    )
+                );
+            }
+        }
+        //--- End cut
+
+        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(liquidity);
+        uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
         pulledAmounts = fromVault.pull(
             address(erc20Vault),
             tokens_,
             withdrawTokenAmounts,
             _makeUniswapVaultOptions(minWithdrawTokens, deadline)
         );
-        // Approximately `liquidity` will be pulled unless `liquidity` is more than total liquidity in the vault
-        uint128 actualLiqudity = fromVaultLiquidity > liquidity ? liquidity : fromVaultLiquidity;
-        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(actualLiqudity);
+        // The pull is on best effort so we don't worry on overflow
         pushedAmounts = erc20Vault.pull(
             address(toVault),
             tokens_,
             depositTokenAmounts,
             _makeUniswapVaultOptions(minDepositTokens, deadline)
         );
-        emit RebalancedUniV3(address(fromVault), address(toVault), pulledAmounts, pushedAmounts, liquidity);
+        emit RebalancedUniV3(
+            address(fromVault),
+            address(toVault),
+            pulledAmounts,
+            pushedAmounts,
+            desiredLiquidity,
+            liquidity
+        );
     }
 
     /// @notice Closes position with zero liquidity and creates a new one.
@@ -468,12 +532,14 @@ contract LStrategy is IContractMeta, Multicall {
     /// @param toVault The vault to pull liquidity to
     /// @param pulledAmounts amounts pulled from fromVault
     /// @param pushedAmounts amounts pushed to toVault
-    /// @param liquidity The amount of liquidity. On overflow best effort pull is made
+    /// @param desiredLiquidity The amount of liquidity desired for rebalance. This could be cut to available erc20 vault balance and available uniV3 vault liquidity.
+    /// @param liquidity The actual amount of liquidity rebalanced.
     event RebalancedUniV3(
         address fromVault,
         address toVault,
         uint256[] pulledAmounts,
         uint256[] pushedAmounts,
+        uint128 desiredLiquidity,
         uint128 liquidity
     );
 }
