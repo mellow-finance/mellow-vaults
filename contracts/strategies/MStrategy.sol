@@ -48,6 +48,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 tickMax;
         uint256 erc20MoneyRatioD;
         int24 minTickRebalanceThreshold;
+        int24 tickNeiborhood;
+        int24 tickIncrease;
     }
 
     OracleParams public oracleParams;
@@ -295,6 +297,13 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 int24 tickMin = ratioParams.tickMin;
                 int24 tickMax = ratioParams.tickMax;
                 int24 tick = _getAverageTickChecked(pool_);
+                if (ratioParams.tickMin + ratioParams.tickNeiborhood > tick) {
+                    ratioParams.tickMin = tick - ratioParams.tickIncrease;
+                }
+                if (ratioParams.tickMax - ratioParams.tickNeiborhood < tick) {
+                    ratioParams.tickMax = tick + ratioParams.tickIncrease;
+                }
+
                 require(
                     (tick > lastRebalanceTick + minTickRebalanceThreshold_) ||
                         (tick < lastRebalanceTick - minTickRebalanceThreshold_),
