@@ -2,16 +2,13 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
-contract CowswapValidator is IContractMeta, Validator {
-    bytes32 public constant CONTRACT_NAME = "CowswapValidator";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract CowswapValidator is ContractMeta, Validator {
     bytes4 public constant PRE_SIGNATURE_SELECTOR = 0xec6cb13f;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
@@ -32,5 +29,15 @@ contract CowswapValidator is IContractMeta, Validator {
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("CowswapValidator");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
     }
 }

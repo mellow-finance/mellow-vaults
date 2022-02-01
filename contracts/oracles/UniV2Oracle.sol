@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../interfaces/utils/IContractMeta.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/external/univ2/IUniswapV2Pair.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
+import "../utils/ContractMeta.sol";
 
-contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
-    bytes32 public constant CONTRACT_NAME = "UniV2Oracle";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
     IUniswapV2Factory public immutable factory;
 
     constructor(IUniswapV2Factory factory_) {
@@ -47,5 +44,15 @@ contract UniV2Oracle is IContractMeta, IUniV2Oracle, ERC165 {
 
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("UniV2Oracle");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
     }
 }

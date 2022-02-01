@@ -14,12 +14,10 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../utils/ContractMeta.sol";
 
-contract LStrategy is IContractMeta, Multicall {
+contract LStrategy is ContractMeta, Multicall {
     using SafeERC20 for IERC20;
-
-    bytes32 public constant CONTRACT_NAME = "LStrategy";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
 
     // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;
@@ -348,7 +346,15 @@ contract LStrategy is IContractMeta, Multicall {
 
     // -------------------  INTERNAL, VIEW  -------------------
 
-    /// @notice Calculate capital (token1 equivalent)
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("LStrategy");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
+
+    /// @notice Calculate a pure (not Uniswap) liquidity
     /// @param priceX96 Current price y / x
     /// @param vault Vault for liquidity calculation
     /// @return Capital = x * p + y

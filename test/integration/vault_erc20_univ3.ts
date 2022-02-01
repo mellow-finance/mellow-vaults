@@ -20,7 +20,7 @@ type CustomContext = {
 type DeployOptions = {};
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
-    "Integration__UniV3_ERC20_rebalance",
+    "Integration__erc20_univ3",
     function () {
         const uniV3PoolFee = 3000;
 

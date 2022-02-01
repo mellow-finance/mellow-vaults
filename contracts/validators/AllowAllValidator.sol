@@ -2,13 +2,10 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IProtocolGovernance.sol";
-import "../interfaces/utils/IContractMeta.sol";
+import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
-contract AllowAllValidator is IContractMeta, Validator {
-    bytes32 public constant CONTRACT_NAME = "AllowAllValidator";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract AllowAllValidator is ContractMeta, Validator {
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -20,4 +17,14 @@ contract AllowAllValidator is IContractMeta, Validator {
         uint256,
         bytes calldata
     ) external view {}
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("AllowAllValidator");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 }

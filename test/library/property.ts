@@ -84,6 +84,18 @@ export function pit<T0, T1, T2, T3, T4>(
     f: (c0: T0, c1: T1, c2: T2, c3: T3, c4: T4) => Promise<boolean>
 ): void;
 
+export function pit<T0, T1, T2, T3, T4, T5>(
+    description: string,
+    options: PropertyOptions,
+    a0: LazyArbitrary<T0>,
+    a1: LazyArbitrary<T1>,
+    a2: LazyArbitrary<T2>,
+    a3: LazyArbitrary<T3>,
+    a4: LazyArbitrary<T4>,
+    a5: LazyArbitrary<T5>,
+    f: (c0: T0, c1: T1, c2: T2, c3: T3, c4: T4, c5: T5) => Promise<boolean>
+): void;
+
 // TODO: reset to checkpoint after each test
 export function pit(
     description: string,

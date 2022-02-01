@@ -3,15 +3,12 @@ pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IYearnVaultGovernance.sol";
 import "../interfaces/vaults/IYearnVault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
-contract YearnVaultGovernance is IContractMeta, IYearnVaultGovernance, VaultGovernance {
-    bytes32 public constant CONTRACT_NAME = "YearnVaultGovernance";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGovernance {
     mapping(address => address) private _yTokens;
 
     /// @notice Creates a new contract
@@ -91,6 +88,16 @@ contract YearnVaultGovernance is IContractMeta, IYearnVaultGovernance, VaultGove
         (vaddr, nft) = _createVault(owner_);
         vault = IYearnVault(vaddr);
         vault.initialize(nft, vaultTokens_);
+    }
+
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("YearnVaultGovernance");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
     }
 
     // --------------------------  EVENTS  --------------------------

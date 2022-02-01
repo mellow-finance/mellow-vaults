@@ -366,6 +366,44 @@ export const randomNft = () => {
     return Math.round(Math.random() * 1000000 + 100);
 };
 
+export async function withFunds(
+    from: SignerWithAddress,
+    token: string,
+    amount: BigNumberish,
+    approveTo: string,
+    f: () => Promise<any>
+) {
+    const { weth, usdc, wbtc } = await getNamedAccounts();
+    await mint(token, from.address, amount);
+    let c: Contract;
+    switch (token) {
+        case "WETH":
+            c = await ethers.getContractAt("ERC20Token", weth);
+            break;
+        case "USDC":
+            c = await ethers.getContractAt("ERC20Token", usdc);
+            break;
+        case "WBTC":
+            c = await ethers.getContractAt("ERC20Token", wbtc);
+            break;
+        default:
+            throw `Unknown token: ${token}`;
+    }
+    await c.connect(from).approve(approveTo, amount);
+
+    let result: any = await f();
+
+    await c
+        .connect(from)
+        .transfer(
+            ethers.constants.AddressZero,
+            await c.balanceOf(from.address)
+        );
+    await c.connect(from).approve(approveTo, BigNumber.from(0));
+
+    return result;
+}
+
 export async function mintUniV3Position_USDC_WETH(options: {
     tickLower: BigNumberish;
     tickUpper: BigNumberish;

@@ -5,16 +5,13 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "./interfaces/IProtocolGovernance.sol";
 import "./interfaces/vaults/IVault.sol";
-import "./interfaces/utils/IContractMeta.sol";
 import "./interfaces/IVaultRegistry.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./libraries/PermissionIdsLibrary.sol";
+import "./utils/ContractMeta.sol";
 
 /// @notice This contract is used to manage ERC721 NFT for all Vaults.
-contract VaultRegistry is IContractMeta, IVaultRegistry, ERC721 {
-    bytes32 public constant CONTRACT_NAME = "VaultRegistry";
-    bytes32 public constant CONTRACT_VERSION = "1.0.0";
-
+contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
     uint256 private _stagedProtocolGovernanceTimestamp;
     IProtocolGovernance private _protocolGovernance;
     IProtocolGovernance private _stagedProtocolGovernance;
@@ -135,6 +132,14 @@ contract VaultRegistry is IContractMeta, IVaultRegistry, ERC721 {
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
+
+    function _contractName() internal pure override returns (bytes32) {
+        return bytes32("VaultRegistry");
+    }
+
+    function _contractVersion() internal pure override returns (bytes32) {
+        return bytes32("1.0.0");
+    }
 
     function _isProtocolAdmin(address sender) internal view returns (bool) {
         return _protocolGovernance.isAdmin(sender);
