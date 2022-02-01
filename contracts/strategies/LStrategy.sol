@@ -262,30 +262,37 @@ contract LStrategy is IContractMeta, Multicall {
         (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
         // // we crossed the interval right to left
         if (isNegativeLiquidityRatio) {
-            // pull all liquidity to other vault and swap intervals
-            _rebalanceUniV3Liquidity(
-                upperVault,
-                lowerVault,
-                type(uint128).max,
-                minWithdrawTokens,
-                minDepositTokens,
-                deadline
-            );
-            _swapVaults(false, deadline);
+            (, , uint128 liquidity) = _getVaultStats(upperVault);
+            if (liquidity > 0) {
+                // pull all liquidity to other vault and swap intervals
+                _rebalanceUniV3Liquidity(
+                    upperVault,
+                    lowerVault,
+                    type(uint128).max,
+                    minWithdrawTokens,
+                    minDepositTokens,
+                    deadline
+                );
+            } else {
+                _swapVaults(false, deadline);
+            }
             return;
         }
         // we crossed the interval left to right
         if (targetUniV3LiquidityRatioD > DENOMINATOR) {
-            // pull all liquidity to other vault and swap intervals
-            _rebalanceUniV3Liquidity(
-                lowerVault,
-                upperVault,
-                type(uint128).max,
-                minWithdrawTokens,
-                minDepositTokens,
-                deadline
-            );
-            _swapVaults(true, deadline);
+            (, , uint128 liquidity) = _getVaultStats(lowerVault);
+            if (liquidity > 0) {
+                _rebalanceUniV3Liquidity(
+                    lowerVault,
+                    upperVault,
+                    type(uint128).max,
+                    minWithdrawTokens,
+                    minDepositTokens,
+                    deadline
+                );
+            } else {
+                _swapVaults(true, deadline);
+            }
             return;
         }
 
