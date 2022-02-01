@@ -8,6 +8,9 @@ import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "../interfaces/external/curve/I3Pool.sol";
+import "hardhat/console.sol";
+import "../utils/ContractMeta.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is IERC20Vault, IntegrationVault {
@@ -93,5 +96,28 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
                 actualTokenAmounts[i] -= reclaimed[i];
             }
         }
+    }
+
+    function _bytes32ToString(bytes32 b) internal returns (string memory s) {
+        s = new string(32);
+        uint256 len = 32;
+        for (uint256 i = 0; i < 32; ++i) {
+            if (uint8(b[i]) == 0) {
+                len = i;
+                break;
+            } else {
+                console.log("%s", uint8(b[i]));
+            }
+        }
+        assembly {
+            mstore(s, len)
+            mstore(add(s, 0x20), b)
+        }
+    }
+
+    function ok() public {
+        console.log(
+            _bytes32ToString(bytes32(I3Pool.exchange.selector))
+        );
     }
 }

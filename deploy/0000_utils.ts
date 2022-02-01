@@ -23,6 +23,8 @@ export const ALLOWED_APPROVE_LIST = {
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
         ],
         uniV2: [
+            "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // SwapRouter
+
             "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc", // USDC-ETH
             "0xbb2b8038a1640196fbe3e38816f3e67cba72d940", // WBTC-ETH
         ],
