@@ -159,7 +159,7 @@ async function registerExternalProtocols(
         name = "mainnet";
     }
     // @ts-ignore
-    const data = ALLOWED_APPROVE_LIST[hre.network.name];
+    const data = ALLOWED_APPROVE_LIST[name];
     if (!data) {
         return;
     }
@@ -181,6 +181,7 @@ async function registerExternalProtocols(
         uniV3: "UniV3Validator",
         uniV2: "UniV2Validator",
         curve: "CurveValidator",
+        erc20: "ERC20Validator",
     };
     for (const key in validators) {
         // @ts-ignore
