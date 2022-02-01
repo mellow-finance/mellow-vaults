@@ -199,11 +199,10 @@ library CommonLibrary {
     }
 
     function getSelector(bytes calldata data) internal pure returns (bytes4 selector) {
-        assembly {
-            let s := calldataload(data.offset)
-            s := shr(224, selector)
-            selector := s
-        }
+        selector = bytes4(data[0] & 0xff);
+        selector |= bytes4(data[1] & 0xff) >> 8;
+        selector |= bytes4(data[2] & 0xff) >> 16;
+        selector |= bytes4(data[3] & 0xff) >> 24;
     }
 
     function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) internal pure returns (address) {
