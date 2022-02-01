@@ -172,14 +172,18 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         return 0xffffffff;
     }
 
-    function externalCall(address to, bytes calldata data) external payable nonReentrant {
+    function externalCall(
+        address to,
+        bytes4 selector,
+        bytes calldata data
+    ) external payable nonReentrant {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
         IValidator validator = IValidator(protocolGovernance.validators(to));
         require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
-        validator.validate(msg.sender, to, msg.value, data);
-        (bool res, bytes memory returndata) = to.call{value: msg.value}(data);
+        validator.validate(msg.sender, to, msg.value, selector, data);
+        (bool res, bytes memory returndata) = to.call{value: msg.value}(abi.encodeWithSelector(selector, data));
         if (!res) {
             assembly {
                 let returndata_size := mload(returndata)

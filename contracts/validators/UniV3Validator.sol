@@ -38,11 +38,11 @@ contract UniV3Validator is ContractMeta, Validator {
         address,
         address addr,
         uint256 value,
+        bytes4 selector,
         bytes calldata data
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-        bytes4 selector = CommonLibrary.getSelector(data);
         IVault vault = IVault(msg.sender);
         if (selector == EXACT_INPUT_SINGLE_SELECTOR) {
             ISwapRouter.ExactInputSingleParams memory params = abi.decode(data, (ISwapRouter.ExactInputSingleParams));

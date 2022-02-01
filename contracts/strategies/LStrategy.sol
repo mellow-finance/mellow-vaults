@@ -135,15 +135,12 @@ contract LStrategy is ContractMeta, Multicall {
         bytes calldata uuid,
         bool signed
     ) external {
-        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, allowance));
-        erc20Vault.externalCall(tokens[tokenNumber], approveData);
-        bytes memory setPresignatureData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
-        erc20Vault.externalCall(cowswap, setPresignatureData);
+        erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, abi.encode(cowswap, allowance));
+        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
     }
 
     function resetCowswapAllowance(uint8 tokenNumber) external {
-        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
-        erc20Vault.externalCall(tokens[tokenNumber], approveData);
+        erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, abi.encode(cowswap, 0));
     }
 
     /// @notice Collect Uniswap pool fees to erc20 vault
