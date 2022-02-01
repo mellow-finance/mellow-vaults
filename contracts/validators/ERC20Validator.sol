@@ -54,8 +54,8 @@ contract ERC20Validator is ContractMeta, Validator {
         address spender
     ) private view {
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
-        if (protocolGovernance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER)) {
-            return;
+        if (!protocolGovernance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER)) {
+            revert(ExceptionsLibrary.FORBIDDEN);
         }
         if (protocolGovernance.hasPermission(spender, PermissionIdsLibrary.ERC20_APPROVE)) {
             return;
