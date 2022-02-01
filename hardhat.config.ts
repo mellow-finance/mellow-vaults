@@ -18,7 +18,7 @@ const config: HardhatUserConfig = {
             forking: process.env["MAINNET_RPC"]
                 ? {
                       url: process.env["MAINNET_RPC"],
-                      blockNumber: 13268999,
+                      blockNumber: 13000000,
                   }
                 : undefined,
 
