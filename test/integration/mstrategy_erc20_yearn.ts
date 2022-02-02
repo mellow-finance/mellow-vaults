@@ -200,7 +200,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
         pit(
             `
-        rebalances some times ☆*:.｡.o(≧▽≦)o.｡.:*☆
+        rebalances some times
         `,
             { numRuns: 0 },
             integer({ min: 0, max: 86400 }),
