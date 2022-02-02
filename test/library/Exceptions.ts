@@ -21,4 +21,5 @@ export default class Exceptions {
     static readonly DISABLED: string = "DIS";
     static readonly UNEXISTING_TOKEN: string =
         "ERC721: owner query for nonexistent token";
+    static readonly SAFE_TRANSFER_FROM_FAILED: string = "STF";
 }

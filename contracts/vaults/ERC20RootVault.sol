@@ -157,8 +157,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         for (uint256 i = 1; i < tvls.length; i++) {
             (uint256[] memory prices, ) = oracle.price(tokens[0], tokens[1], 0x28);
             require(prices.length > 0, ExceptionsLibrary.VALUE_ZERO);
-            uint256 price;
-            for (uint256 j = 0; j < prices.length; i++) {
+            uint256 price = 0;
+            for (uint256 j = 0; j < prices.length; j++) {
                 price += prices[j];
             }
             price /= prices.length;
@@ -207,7 +207,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
 
         // normalize amount
-        uint256 res = FullMath.mulDiv(tvl_, lpAmount, CommonLibrary.D18);
+        uint256 res = FullMath.mulDiv(tvl_, lpAmount, supply);
         if (res > amount) {
             res = amount;
         }
@@ -275,6 +275,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             elapsed,
             baseSupply
         );
+
         _chargePerformanceFees(
             baseSupply,
             baseTvls,
@@ -301,7 +302,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 baseSupply = supply - deltaSupply;
             }
         }
-
         baseTvls = new uint256[](tvls.length);
         for (uint256 i = 0; i < baseTvls.length; ++i) {
             if (isWithdraw) baseTvls[i] = tvls[i] - deltaTvls[i];
@@ -354,7 +354,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (lpPriceD18 <= hwmsD18) {
             return;
         }
-        uint256 toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
+        uint256 toMint;
+        if (hwmsD18 > 0) {
+            toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
+            toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
+        }
         lpPriceHighWaterMarkD18 = lpPriceD18;
         _mint(treasury, toMint);
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);

@@ -22,15 +22,14 @@ contract ERC20Validator is ContractMeta, Validator {
         address sender,
         address addr,
         uint256 value,
+        bytes4 selector,
         bytes calldata data
     ) external view {
         require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-        bytes4 selector = CommonLibrary.getSelector(data);
         if (selector == APPROVE_SELECTOR) {
             address spender;
             assembly {
-                spender := calldataload(add(data.offset, 4))
-                spender := shr(96, addr)
+                spender := calldataload(data.offset)
             }
             _verifyApprove(sender, addr, spender);
         } else {

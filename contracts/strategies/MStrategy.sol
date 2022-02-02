@@ -32,6 +32,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     INonfungiblePositionManager public positionManager;
     ISwapRouter public router;
 
+    // INTERNAL STATE
+    int24 public lastRebalanceTick;
+
     // MUTABLE PARAMS
 
     struct OracleParams {
@@ -44,6 +47,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 tickMin;
         int24 tickMax;
         uint256 erc20MoneyRatioD;
+        int24 minTickRebalanceThreshold;
+        int24 tickNeiborhood;
+        int24 tickIncrease;
     }
 
     OracleParams public oracleParams;
@@ -130,7 +136,14 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniswapV3Pool pool_ = pool;
         ISwapRouter router_ = router;
         int256[] memory poolAmountsI = _rebalancePools(erc20Vault_, moneyVault_, tokens_);
-        (uint256 amountIn, uint8 index) = _rebalanceTokens(pool_, router_, erc20Vault_, moneyVault_, tokens_);
+        (uint256 amountIn, uint8 index) = _rebalanceTokens(
+            pool_,
+            router_,
+            erc20Vault_,
+            moneyVault_,
+            tokens_,
+            ratioParams.minTickRebalanceThreshold
+        );
         poolAmounts = new uint256[](2);
         tokenAmounts = new uint256[](2);
         for (uint256 i = 0; i < 2; i++) {
@@ -271,7 +284,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         ISwapRouter router_,
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
-        address[] memory tokens_
+        address[] memory tokens_,
+        int24 minTickRebalanceThreshold_
     ) internal returns (uint256 amountIn, uint8 index) {
         uint256 token0;
         uint256 priceX96;
@@ -280,11 +294,22 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         {
             uint256 targetTokenRatioD;
             {
-                int24 tickMin = ratioParams.tickMin;
-                int24 tickMax = ratioParams.tickMax;
                 int24 tick = _getAverageTickChecked(pool_);
+                if (ratioParams.tickMin + ratioParams.tickNeiborhood > tick) {
+                    ratioParams.tickMin = tick - ratioParams.tickIncrease;
+                }
+                if (ratioParams.tickMax - ratioParams.tickNeiborhood < tick) {
+                    ratioParams.tickMax = tick + ratioParams.tickIncrease;
+                }
+
+                require(
+                    (tick > lastRebalanceTick + minTickRebalanceThreshold_) ||
+                        (tick < lastRebalanceTick - minTickRebalanceThreshold_),
+                    ExceptionsLibrary.LIMIT_UNDERFLOW
+                );
+                lastRebalanceTick = tick;
                 priceX96 = _priceX96FromTick(tick);
-                targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
+                targetTokenRatioD = _targetTokenRatioD(tick, ratioParams.tickMin, ratioParams.tickMax);
             }
             (erc20Tvl, ) = erc20Vault_.tvl();
             uint256 token1;
@@ -326,8 +351,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 moneyVault: moneyVault_
             });
         }
-        _swapToTarget(params);
-        emit SwappedTokens(params);
+        if (amountIn != 0) {
+            _swapToTarget(params);
+            emit SwappedTokens(params);
+        }
     }
 
     struct SwapToTargetParams {
@@ -380,15 +407,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             });
         }
         bytes memory data = abi.encode(swapParams);
-        erc20Vault.externalCall(
-            tokens[tokenInIndex],
-            abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(address(router_), amountIn))
-        ); // approve
-        erc20Vault.externalCall(address(router_), abi.encodeWithSelector(EXACT_INPUT_SINGLE_SELECTOR, data)); //swap
-        erc20Vault.externalCall(
-            tokens[tokenInIndex],
-            abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(address(router_), 0))
-        ); // reset allowance
+        erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), amountIn)); // approve
+        erc20Vault.externalCall(address(router_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
+        erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), 0)); // reset allowance
     }
 
     /// @notice Emitted when pool rebalance is initiated.

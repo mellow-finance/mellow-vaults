@@ -357,8 +357,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
 
         PreOrder memory preOrder_ = preOrder;
         if (!signed) {
-            bytes memory resetData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, uuid, false);
-            erc20Vault.externalCall(cowswap, resetData);
+            bytes memory resetData = abi.encodePacked(uuid, false);
+            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, resetData);
             return;
         }
         require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
@@ -373,9 +373,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         require(order.buyAmount >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(order.validTo <= preOrder_.deadline, ExceptionsLibrary.TIMESTAMP);
         bytes memory approveData = abi.encode(cowswap, order.sellAmount);
-        // erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
+        erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
         bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
-        // erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
+        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
         orderDeadline = order.validTo;
         delete preOrder;
         emit OrderSigned(tx.origin, msg.sender, uuid, order, preOrder, signed);
@@ -383,8 +383,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
 
     function resetCowswapAllowance(uint8 tokenNumber) external {
         _requireAtLeastOperator();
-        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
-        erc20Vault.externalCall(tokens[tokenNumber], approveData);
+        bytes memory approveData = abi.encodePacked(cowswap, uint256(0));
+        erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, approveData);
         emit CowswapAllowanceReset(tx.origin, msg.sender);
     }
 
