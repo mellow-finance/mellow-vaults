@@ -294,8 +294,6 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         {
             uint256 targetTokenRatioD;
             {
-                int24 tickMin = ratioParams.tickMin;
-                int24 tickMax = ratioParams.tickMax;
                 int24 tick = _getAverageTickChecked(pool_);
                 if (ratioParams.tickMin + ratioParams.tickNeiborhood > tick) {
                     ratioParams.tickMin = tick - ratioParams.tickIncrease;
@@ -311,7 +309,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 );
                 lastRebalanceTick = tick;
                 priceX96 = _priceX96FromTick(tick);
-                targetTokenRatioD = _targetTokenRatioD(tick, tickMin, tickMax);
+                targetTokenRatioD = _targetTokenRatioD(tick, ratioParams.tickMin, ratioParams.tickMax);
             }
             (erc20Tvl, ) = erc20Vault_.tvl();
             uint256 token1;
