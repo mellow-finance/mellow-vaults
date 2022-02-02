@@ -15,8 +15,9 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../utils/ContractMeta.sol";
+import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is ContractMeta, Multicall {
+contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -93,8 +94,9 @@ contract LStrategy is ContractMeta, Multicall {
         address cowswap_,
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,
-        IUniV3Vault vault2_
-    ) {
+        IUniV3Vault vault2_,
+        address admin_
+    ) DefaultAccessControl(admin_) {
         positionManager = positionManager_;
         erc20Vault = erc20vault_;
         lowerVault = vault1_;
