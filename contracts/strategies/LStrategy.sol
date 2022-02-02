@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
+import "../interfaces/external/cowswap/ICowswapSettlement.sol";
 import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
@@ -14,6 +15,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/GPv2Order.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
 
@@ -69,13 +71,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
 
     struct PreOrder {
         address tokenIn;
-        uint256 amountIn;
-        uint256 minAmountOut;
-        uint256 deadline;
-    }
-
-    struct CowswapOrder {
-        address tokenIn;
+        address tokenOut;
         uint256 amountIn;
         uint256 minAmountOut;
         uint256 deadline;
@@ -163,23 +159,32 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         _requireAtLeastOperator();
         uint256 capitalDelta;
         bool isNegativeCapitalDelta;
-        uint256 priceX96 = targetPrice(tokens, tradingParams);
-        uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
-        uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
-        uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
-        (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
-            erc20VaultCapital,
-            erc20VaultCapital + lowerVaultCapital + upperVaultCapital,
-            ratioParams.erc20UniV3CapitalRatioD,
-            ratioParams.minErc20UniV3CapitalRatioDeviationD
-        );
-        uint256 percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, lowerVaultCapital + upperVaultCapital);
-        (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
-        (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
-        uint256 lowerVaultDelta = FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR);
-        uint256 upperVaultDelta = FullMath.mulDiv(percentageIncreaseD, upperVaultLiquidity, DENOMINATOR);
-        uint256[] memory lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(uint128(lowerVaultDelta));
-        uint256[] memory upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
+        uint256[] memory lowerTokenAmounts;
+        uint256[] memory upperTokenAmounts;
+        {
+            uint256 priceX96 = targetPrice(tokens, tradingParams);
+            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
+            uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
+            uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
+            (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
+                erc20VaultCapital,
+                erc20VaultCapital + lowerVaultCapital + upperVaultCapital,
+                ratioParams.erc20UniV3CapitalRatioD,
+                ratioParams.minErc20UniV3CapitalRatioDeviationD
+            );
+            uint256 percentageIncreaseD = FullMath.mulDiv(
+                DENOMINATOR,
+                capitalDelta,
+                lowerVaultCapital + upperVaultCapital
+            );
+            (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
+            (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
+            uint256 lowerVaultDelta = FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR);
+            uint256 upperVaultDelta = FullMath.mulDiv(percentageIncreaseD, upperVaultLiquidity, DENOMINATOR);
+            lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(uint128(lowerVaultDelta));
+            upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
+        }
+
         uint256[] memory totalPulledAmounts = new uint256[](2);
         uint256[] memory pulledAmounts = new uint256[](2);
         if (!isNegativeCapitalDelta) {
@@ -266,15 +271,18 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             }
             return;
         }
-
-        (, , uint128 lowerLiquidity) = _getVaultStats(lowerVault);
-        (, , uint128 upperLiquidity) = _getVaultStats(upperVault);
-        (uint256 liquidityDelta, bool isNegativeLiquidityDelta) = _liquidityDelta(
-            lowerLiquidity,
-            upperLiquidity,
-            targetUniV3LiquidityRatioD,
-            ratioParams.minUniV3LiquidityRatioDeviationD
-        );
+        uint256 liquidityDelta;
+        bool isNegativeLiquidityDelta;
+        {
+            (, , uint128 lowerLiquidity) = _getVaultStats(lowerVault);
+            (, , uint128 upperLiquidity) = _getVaultStats(upperVault);
+            (liquidityDelta, isNegativeLiquidityDelta) = _liquidityDelta(
+                lowerLiquidity,
+                upperLiquidity,
+                targetUniV3LiquidityRatioD,
+                ratioParams.minUniV3LiquidityRatioDeviationD
+            );
+        }
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
         if (isNegativeLiquidityDelta) {
@@ -312,6 +320,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
             preOrder_ = PreOrder({
                 tokenIn: tokens[1],
+                tokenOut: tokens[0],
                 amountIn: tokenDelta,
                 minAmountOut: minAmountOut,
                 deadline: block.timestamp + tradingParams_.orderDeadline
@@ -320,7 +329,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             uint256 minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
             preOrder_ = PreOrder({
-                tokenIn: tokens[1],
+                tokenIn: tokens[0],
+                tokenOut: tokens[1],
                 amountIn: tokenDelta,
                 minAmountOut: minAmountOut,
                 deadline: block.timestamp + tradingParams_.orderDeadline
@@ -330,13 +340,12 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         emit PreOrderPosted(tx.origin, msg.sender, preOrder_);
     }
 
-    /// Sign Cowswap order
-    /// @param tokenNumber The number of the token to swap
-    /// @param allowance Allowance to set for cowswap
+    /// @notice Sign offchain cowswap order onchain
+    /// @param order Cowswap order data
     /// @param uuid Cowswap order id
     /// @param signed To sign order set to `true`
     function signOrder(
-        CowswapOrder memory order,
+        GPv2Order.Data memory order,
         bytes calldata uuid,
         bool signed
     ) external {
@@ -354,20 +363,20 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         }
         require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
 
-        bytes32 orderHash;
-        assembly {
-            mstore(orderHash, uuid.offset)
-        }
-        // take it from gnosis lib
-        require(order.hash == orderHash, ExceptionsLibrary.INVARIANT);
-        require(order.tokenIn == preOrder_.tokenIn, ExceptionsLibrary.INVALID_TOKEN);
-        require(order.amountIn == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
-        require(order.minAmountOut >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        bytes memory approveData = abi.encode(cowswap, order.amountIn);
-        erc20Vault.externalCall(order.tokenIn, APPROVE_SELECTOR, approveData);
+        (bytes32 orderHashFromUid, , ) = GPv2Order.extractOrderUidParams(uuid);
+        bytes32 domainSeparator = ICowswapSettlement(cowswap).domainSeparator();
+        bytes32 orderHash = GPv2Order.hash(order, domainSeparator);
+        require(orderHash == orderHashFromUid, ExceptionsLibrary.INVARIANT);
+        require(address(order.sellToken) == preOrder_.tokenIn, ExceptionsLibrary.INVALID_TOKEN);
+        require(address(order.buyToken) == preOrder_.tokenOut, ExceptionsLibrary.INVALID_TOKEN);
+        require(order.sellAmount == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
+        require(order.buyAmount >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(order.validTo <= preOrder_.deadline, ExceptionsLibrary.TIMESTAMP);
+        bytes memory approveData = abi.encode(cowswap, order.sellAmount);
+        // erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
         bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
-        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
-        orderDeadline = order.deadline;
+        // erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
+        orderDeadline = order.validTo;
         delete preOrder;
         emit OrderSigned(tx.origin, msg.sender, uuid, order, preOrder, signed);
     }
@@ -382,8 +391,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @notice Collect Uniswap pool fees to erc20 vault
     function collectUniFees() external {
         _requireAtLeastOperator();
-        uint256 totalCollectedEarnings = new uint256[](2);
-        uint256 collectedEarnings = new uint256[](2);
+        uint256[] memory totalCollectedEarnings = new uint256[](2);
+        uint256[] memory collectedEarnings = new uint256[](2);
         totalCollectedEarnings = lowerVault.collectEarnings();
         collectedEarnings = upperVault.collectEarnings();
         for (uint256 i = 0; i < 2; i++) {
@@ -548,42 +557,45 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         // The rough idea is to translate one unit of liquituty into tokens for each interval shouldDepositTokenAmountsD, shouldWithdrawTokenAmountsD
         // Then the actual tokens in the vault are shouldDepositTokenAmountsD * l, shouldWithdrawTokenAmountsD * l
         // So the equation could be built: erc20 balances + l * shouldWithdrawTokenAmountsD >= l * shouldDepositTokenAmountsD and l tweaked so this inequality holds
-        (uint256[] memory availableBalances, ) = erc20Vault.tvl();
-        uint256[] memory shouldDepositTokenAmountsD = toVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
-        uint256[] memory shouldWithdrawTokenAmountsD = fromVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
-        for (uint256 i = 0; i < 2; i++) {
-            uint256 availableBalance = availableBalances[i] +
-                FullMath.mulDiv(shouldWithdrawTokenAmountsD[i], liquidity, DENOMINATOR);
-            uint256 requiredBalance = FullMath.mulDiv(shouldDepositTokenAmountsD[i], liquidity, DENOMINATOR);
-            if (availableBalance < requiredBalance) {
-                // since balances >= 0, this case means that shouldWithdrawTokenAmountsD < shouldDepositTokenAmountsD
-                // this also means that liquidity on the line below will decrease compared to the liqiduity above
-                liquidity = uint128(
-                    FullMath.mulDiv(
-                        availableBalances[i],
-                        shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i],
-                        DENOMINATOR
-                    )
-                );
+        {
+            (uint256[] memory availableBalances, ) = erc20Vault.tvl();
+            uint256[] memory shouldDepositTokenAmountsD = toVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
+            uint256[] memory shouldWithdrawTokenAmountsD = fromVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
+            for (uint256 i = 0; i < 2; i++) {
+                uint256 availableBalance = availableBalances[i] +
+                    FullMath.mulDiv(shouldWithdrawTokenAmountsD[i], liquidity, DENOMINATOR);
+                uint256 requiredBalance = FullMath.mulDiv(shouldDepositTokenAmountsD[i], liquidity, DENOMINATOR);
+                if (availableBalance < requiredBalance) {
+                    // since balances >= 0, this case means that shouldWithdrawTokenAmountsD < shouldDepositTokenAmountsD
+                    // this also means that liquidity on the line below will decrease compared to the liqiduity above
+                    liquidity = uint128(
+                        FullMath.mulDiv(
+                            availableBalances[i],
+                            shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i],
+                            DENOMINATOR
+                        )
+                    );
+                }
             }
         }
         //--- End cut
-
-        uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(liquidity);
-        uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
-        pulledAmounts = fromVault.pull(
-            address(erc20Vault),
-            tokens_,
-            withdrawTokenAmounts,
-            _makeUniswapVaultOptions(minWithdrawTokens, deadline)
-        );
-        // The pull is on best effort so we don't worry on overflow
-        pushedAmounts = erc20Vault.pull(
-            address(toVault),
-            tokens_,
-            depositTokenAmounts,
-            _makeUniswapVaultOptions(minDepositTokens, deadline)
-        );
+        {
+            uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(liquidity);
+            uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
+            pulledAmounts = fromVault.pull(
+                address(erc20Vault),
+                tokens_,
+                withdrawTokenAmounts,
+                _makeUniswapVaultOptions(minWithdrawTokens, deadline)
+            );
+            // The pull is on best effort so we don't worry on overflow
+            pushedAmounts = erc20Vault.pull(
+                address(toVault),
+                tokens_,
+                depositTokenAmounts,
+                _makeUniswapVaultOptions(minDepositTokens, deadline)
+            );
+        }
         emit RebalancedUniV3(
             tx.origin,
             msg.sender,
@@ -685,7 +697,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         address indexed origin,
         address indexed sender,
         bytes uuid,
-        CowswapOrder order,
+        GPv2Order.Data order,
         PreOrder preOrder,
         bool signed
     );
@@ -708,11 +720,11 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @param newTickUpper Upper tick for created UniV3 nft
     event SwapVault(uint256 oldNft, uint256 newNft, int24 newTickLower, int24 newTickUpper);
 
-    /// @param fromVault The vault to pull liquidity from
+    /// @notice Emitted when rebalance from UniV3 to ERC20 or vice versa happens
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param fromErc20 `true` if the rebalance is made
     /// @param pulledAmounts amounts pulled from fromVault
-    /// @param pushedAmounts amounts pushed to toVault
-    /// @param desiredLiquidity The amount of liquidity desired for rebalance. This could be cut to available erc20 vault balance and available uniV3 vault liquidity.
-    /// @param liquidity The actual amount of liquidity rebalanced.
     event RebalancedErc20UniV3(address indexed origin, address indexed sender, bool fromErc20, uint256[] pulledAmounts);
 
     /// @param fromVault The vault to pull liquidity from
