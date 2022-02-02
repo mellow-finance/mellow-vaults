@@ -70,6 +70,13 @@ contract LStrategy is ContractMeta, Multicall {
         uint256 deadline;
     }
 
+    struct CowswapOrder {
+        address tokenIn;
+        uint256 amountIn;
+        uint256 minAmountOut;
+        uint256 deadline;
+    }
+
     TradingParams public tradingParams;
     RatioParams public ratioParams;
     BotParams public botParams;
@@ -175,8 +182,7 @@ contract LStrategy is ContractMeta, Multicall {
     /// @param uuid Cowswap order id
     /// @param signed To sign order set to `true`
     function signOrder(
-        uint8 tokenNumber,
-        uint256 allowance,
+        CowswapOrder memory order,
         bytes calldata uuid,
         bool signed
     ) external {
@@ -184,10 +190,28 @@ contract LStrategy is ContractMeta, Multicall {
         // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L228
         // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/mixins/GPv2Signing.sol#L154
         // https://etherscan.io/address/0x9008d19f58aabd9ed0d60971565aa8510560ab41#readContract - DOMAIN SEPARATOR
-        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, allowance));
-        erc20Vault.externalCall(tokens[tokenNumber], approveData);
-        bytes memory setPresignatureData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
-        erc20Vault.externalCall(cowswap, setPresignatureData);
+
+        PreOrder memory preOrder_ = preOrder;
+        require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
+        if (!signed) {
+            bytes memory resetData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, uuid, false);
+            erc20Vault.externalCall(cowswap, resetData);
+            return;
+        }
+
+        bytes32 orderHash;
+        assembly {
+            mstore(orderHash, uuid.offset)
+        }
+        // take it from gnosis lib
+        require(order.hash == orderHash, ExceptionsLibrary.INVARIANT);
+        require(order.tokenIn == preOrder_.tokenIn, ExceptionsLibrary.INVALID_TOKEN);
+        require(order.amountIn == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
+        require(order.minAmountOut >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        bytes memory approveData = abi.encode(cowswap, order.amountIn);
+        erc20Vault.externalCall(order.tokenIn, APPROVE_SELECTOR, approveData);
+        bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
+        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
     }
 
     function resetCowswapAllowance(uint8 tokenNumber) external {
