@@ -326,8 +326,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 moneyVault: moneyVault_
             });
         }
-        _swapToTarget(params);
-        emit SwappedTokens(params);
+        if (amountIn != 0) {
+            _swapToTarget(params);
+            emit SwappedTokens(params);
+        }
     }
 
     struct SwapToTargetParams {
