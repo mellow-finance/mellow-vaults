@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint } from "../library/Helpers";
+import { mint, sleep, withSigner } from "../library/Helpers";
 import { contract } from "../library/setup";
 import {
     ERC20RootVault,
@@ -13,6 +13,8 @@ import {
 import { setupVault, combineVaults } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
+import { pit, RUNS } from "../library/property";
+import { integer } from "fast-check";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -193,8 +195,39 @@ contract<MStrategy, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        xit("rebalances", async () => {
-            await this.subject.connect(this.mStrategyAdmin).rebalance();
-        });
+        pit(
+            `
+        rebalances some times ☆*:.｡.o(≧▽≦)o.｡.:*☆
+        `,
+            { numRuns: 0 },
+            integer({ min: 0, max: 86400 }),
+            integer({ min: 100_000, max: 1_000_000 }).map((x) =>
+                BigNumber.from(x.toString())
+            ),
+            integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
+                BigNumber.from(x.toString())
+            ),
+            async (
+                delay: number,
+                amountUSDC: BigNumber,
+                amountWETH: BigNumber
+            ) => {
+                await this.erc20RootVault
+                    .connect(this.deployer)
+                    .deposit([amountUSDC, amountWETH], 0);
+
+                await sleep(delay);
+
+                console.log(
+                    (
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .callStatic.rebalance()
+                    ).toString()
+                );
+
+                return true;
+            }
+        );
     }
 );
