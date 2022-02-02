@@ -153,6 +153,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     function postPreOrder() external {
+        _requireAtLeastOperator();
         (uint256[] memory tvl, ) = erc20Vault.tvl();
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(tvl[0], tvl[0] + tvl[1], ratioParams.erc20TokenRatioD);
         TradingParams memory tradingParams_ = tradingParams;
@@ -188,6 +189,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         bytes calldata uuid,
         bool signed
     ) external {
+        _requireAtLeastOperator();
         // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L134
         // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L228
         // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/mixins/GPv2Signing.sol#L154
@@ -217,12 +219,14 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     }
 
     function resetCowswapAllowance(uint8 tokenNumber) external {
+        _requireAtLeastOperator();
         bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
         erc20Vault.externalCall(tokens[tokenNumber], approveData);
     }
 
     /// @notice Collect Uniswap pool fees to erc20 vault
     function collectUniFees() external {
+        _requireAtLeastOperator();
         lowerVault.collectEarnings();
         upperVault.collectEarnings();
     }
@@ -240,6 +244,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory minTokensAmounts,
         uint256 deadline
     ) external {
+        _requireAdmin();
         fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
     }
 
@@ -248,6 +253,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory minUpperVaultTokens,
         uint256 deadline
     ) external {
+        _requireAtLeastOperator();
         uint256 capitalDelta;
         bool isNegativeCapitalDelta;
         uint256 priceX96 = targetPrice(tokens, tradingParams);
@@ -305,6 +311,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) external {
+        _requireAtLeastOperator();
         uint256 targetPriceX96 = targetPrice(tokens, tradingParams);
         int24 targetTick = _tickFromPriceX96(targetPriceX96);
         (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
