@@ -155,7 +155,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory minLowerVaultTokens,
         uint256[] memory minUpperVaultTokens,
         uint256 deadline
-    ) external {
+    ) external returns (uint256[] memory totalPulledAmounts) {
         _requireAtLeastOperator();
         uint256 capitalDelta;
         bool isNegativeCapitalDelta;
@@ -185,7 +185,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
         }
 
-        uint256[] memory totalPulledAmounts = new uint256[](2);
         uint256[] memory pulledAmounts = new uint256[](2);
         if (!isNegativeCapitalDelta) {
             totalPulledAmounts = erc20Vault.pull(
@@ -231,7 +230,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory minWithdrawTokens,
         uint256[] memory minDepositTokens,
         uint256 deadline
-    ) external {
+    ) external returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
         _requireAtLeastOperator();
         uint256 targetPriceX96 = targetPrice(tokens, tradingParams);
         int24 targetTick = _tickFromPriceX96(targetPriceX96);
@@ -241,39 +240,44 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             (, , uint128 liquidity) = _getVaultStats(upperVault);
             if (liquidity > 0) {
                 // pull all liquidity to other vault and swap intervals
-                _rebalanceUniV3Liquidity(
-                    upperVault,
-                    lowerVault,
-                    type(uint128).max,
-                    minWithdrawTokens,
-                    minDepositTokens,
-                    deadline
-                );
+                return
+                    _rebalanceUniV3Liquidity(
+                        upperVault,
+                        lowerVault,
+                        type(uint128).max,
+                        minWithdrawTokens,
+                        minDepositTokens,
+                        deadline
+                    );
             } else {
                 _swapVaults(false, deadline);
+                return (new uint256[](2), new uint256[](2));
             }
-            return;
         }
         // we crossed the interval left to right
         if (targetUniV3LiquidityRatioD > DENOMINATOR) {
             (, , uint128 liquidity) = _getVaultStats(lowerVault);
             if (liquidity > 0) {
-                _rebalanceUniV3Liquidity(
-                    lowerVault,
-                    upperVault,
-                    type(uint128).max,
-                    minWithdrawTokens,
-                    minDepositTokens,
-                    deadline
-                );
+                return
+                    _rebalanceUniV3Liquidity(
+                        lowerVault,
+                        upperVault,
+                        type(uint128).max,
+                        minWithdrawTokens,
+                        minDepositTokens,
+                        deadline
+                    );
             } else {
                 _swapVaults(true, deadline);
+                return (new uint256[](2), new uint256[](2));
             }
-            return;
         }
         uint256 liquidityDelta;
-        bool isNegativeLiquidityDelta;
+        IUniV3Vault fromVault;
+        IUniV3Vault toVault;
+
         {
+            bool isNegativeLiquidityDelta;
             (, , uint128 lowerLiquidity) = _getVaultStats(lowerVault);
             (, , uint128 upperLiquidity) = _getVaultStats(upperVault);
             (liquidityDelta, isNegativeLiquidityDelta) = _liquidityDelta(
@@ -282,27 +286,26 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 targetUniV3LiquidityRatioD,
                 ratioParams.minUniV3LiquidityRatioDeviationD
             );
+            if (isNegativeLiquidityDelta) {
+                fromVault = upperVault;
+                toVault = lowerVault;
+            } else {
+                fromVault = lowerVault;
+                toVault = upperVault;
+            }
         }
-        IUniV3Vault fromVault;
-        IUniV3Vault toVault;
-        if (isNegativeLiquidityDelta) {
-            fromVault = upperVault;
-            toVault = lowerVault;
-        } else {
-            fromVault = lowerVault;
-            toVault = upperVault;
-        }
-        _rebalanceUniV3Liquidity(
-            fromVault,
-            toVault,
-            uint128(liquidityDelta),
-            minWithdrawTokens,
-            minDepositTokens,
-            deadline
-        );
+        return
+            _rebalanceUniV3Liquidity(
+                fromVault,
+                toVault,
+                uint128(liquidityDelta),
+                minWithdrawTokens,
+                minDepositTokens,
+                deadline
+            );
     }
 
-    function postPreOrder() external {
+    function postPreOrder() external returns (PreOrder memory preOrder_) {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
@@ -314,7 +317,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         );
         TradingParams memory tradingParams_ = tradingParams;
         uint256 priceX96 = targetPrice(tokens, tradingParams_);
-        PreOrder memory preOrder_;
         if (isNegative) {
             uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
@@ -389,9 +391,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     }
 
     /// @notice Collect Uniswap pool fees to erc20 vault
-    function collectUniFees() external {
+    function collectUniFees() external returns (uint256[] memory totalCollectedEarnings) {
         _requireAtLeastOperator();
-        uint256[] memory totalCollectedEarnings = new uint256[](2);
+        totalCollectedEarnings = new uint256[](2);
         uint256[] memory collectedEarnings = new uint256[](2);
         totalCollectedEarnings = lowerVault.collectEarnings();
         collectedEarnings = upperVault.collectEarnings();
