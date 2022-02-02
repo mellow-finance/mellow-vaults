@@ -52,15 +52,15 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
         (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
             pool
         ).slot0();
-        if (safetyIndicesSet & 0x2 == 1) {
+        if (safetyIndicesSet & 0x2 > 0) {
             pricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
             len += 1;
         }
         for (uint256 i = 2; i < 5; i++) {
-            if (safetyIndicesSet & (1 << i) == 1) {
+            if (safetyIndicesSet & (1 << i) > 0) {
                 uint16 bfAvg = _obsForSafety(i);
-                if (observationCardinality > bfAvg) {
+                if (observationCardinality < bfAvg) {
                     continue;
                 }
                 uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
@@ -79,12 +79,15 @@ contract UniV3Oracle is IContractMeta, IUniV3Oracle, DefaultAccessControl {
                 len += 1;
             }
         }
+        assembly {
+            mstore(pricesX96, len)
+        }
         bool revTokens = token1 > token0;
         for (uint256 i = 0; i < len; i++) {
-            pricesX96[i] = FullMath.mulDiv(pricesX96[i], pricesX96[i], CommonLibrary.Q96);
             if (revTokens) {
-                pricesX96[i] = FullMath.mulDiv(1, CommonLibrary.Q96, pricesX96[i]);
+                pricesX96[i] = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, pricesX96[i]);
             }
+            pricesX96[i] = FullMath.mulDiv(pricesX96[i], pricesX96[i], CommonLibrary.Q96);
         }
     }
 
