@@ -15,6 +15,7 @@ contract AllowAllValidator is ContractMeta, Validator {
         address,
         address,
         uint256,
+        bytes4,
         bytes calldata
     ) external view {}
 

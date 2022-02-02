@@ -42,6 +42,7 @@ export interface TestContext<T, F> extends Suite {
     usdc: ERC20;
     weth: ERC20;
     wbtc: ERC20;
+    dai: ERC20;
     tokens: ERC20[];
     deployer: SignerWithAddress;
     admin: SignerWithAddress;
@@ -112,13 +113,14 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         const signer = await addSigner(address);
         this[name] = signer;
     }
-    const { usdc, weth, wbtc } = namedAccounts;
+    const { usdc, weth, wbtc, dai } = namedAccounts;
     this.usdc = await ethers.getContractAt("ERC20Token", usdc);
     this.weth = await ethers.getContractAt("ERC20Token", weth);
     this.wbtc = await ethers.getContractAt("ERC20Token", wbtc);
+    this.dai = await ethers.getContractAt("ERC20Token", dai);
     this.tokens = sortBy(
         (c: ERC20) => c.address.toLowerCase(),
-        [this.usdc, this.weth, this.wbtc]
+        [this.usdc, this.weth, this.wbtc, this.dai]
     );
     this.governanceDelay = (
         await this.protocolGovernance.governanceDelay()
