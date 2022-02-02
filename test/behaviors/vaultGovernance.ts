@@ -22,6 +22,7 @@ import { InternalParamsStructOutput } from "../types/VaultGovernance";
 import { deployments, ethers } from "hardhat";
 import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";
 import { create } from "domain";
+import { PermissionIdsLibrary } from "../../deploy/0000_utils";
 
 const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
 
@@ -207,7 +208,7 @@ export function vaultGovernanceBehavior<
                         .connect(this.admin)
                         .stageParams({
                             ...params,
-                            forceAllowMask: 2 ** 2,
+                            forceAllowMask: 1 << PermissionIdsLibrary.CREATE_VAULT,
                         });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance

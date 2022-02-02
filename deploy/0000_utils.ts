@@ -36,28 +36,29 @@ export const ALLOWED_APPROVE_LIST = {
         erc20: [
             "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // WETH
             "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
+            "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
         ]
     },
 };
 
 export const PRIVATE_VAULT = true;
 
-export const ALLOW_ALL_REGISTER_VAULT = 1 << 0;
-export const ALLOW_ALL_CREATE_VAULT = 1 << 1;
-export const ALLOW_ALL_ERC20_TRANSFER = 1 << 2;
-export const ALLOW_ALL_ERC20_VAULT_TOKEN = 1 << 3;
-export const ALLOW_ALL_ERC20_APPROVE = 1 << 4;
-export const ALLOW_ALL_ERC20_APPROVE_RESTRICTED = 1 << 5;
-export const ALLOW_ALL_TRUSTED_STRATEGY = 1 << 6;
+export const ALLOW_ALL_REGISTER_VAULT = 0;
+export const ALLOW_ALL_CREATE_VAULT = 0;
+export const ALLOW_ALL_ERC20_TRANSFER = 0;
+export const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
+export const ALLOW_ALL_ERC20_APPROVE = 0;
+export const ALLOW_ALL_ERC20_APPROVE_RESTRICTED = 0;
+export const ALLOW_ALL_TRUSTED_STRATEGY = 0;
 
 export const ALLOW_MASK =
-    ALLOW_ALL_REGISTER_VAULT +
-    ALLOW_ALL_CREATE_VAULT +
-    ALLOW_ALL_ERC20_TRANSFER +
-    ALLOW_ALL_ERC20_VAULT_TOKEN +
-    ALLOW_ALL_ERC20_APPROVE +
-    ALLOW_ALL_ERC20_APPROVE_RESTRICTED +
-    ALLOW_ALL_TRUSTED_STRATEGY;
+    (ALLOW_ALL_REGISTER_VAULT << 0) +
+    (ALLOW_ALL_CREATE_VAULT << 1) +
+    (ALLOW_ALL_ERC20_TRANSFER << 2) +
+    (ALLOW_ALL_ERC20_VAULT_TOKEN << 3) +
+    (ALLOW_ALL_ERC20_APPROVE << 4) +
+    (ALLOW_ALL_ERC20_APPROVE_RESTRICTED << 5) +
+    (ALLOW_ALL_TRUSTED_STRATEGY << 6);
 
 export const ALL_NETWORKS = [
     "hardhat",
@@ -313,13 +314,13 @@ export const toObject = (obj: any) =>
     )(obj);
 
 export class PermissionIdsLibrary {
-    static REGISTER_VAULT: number = 1;
-    static CREATE_VAULT: number = 2;
-    static ERC20_TRANSFER: number = 3;
-    static ERC20_VAULT_TOKEN = 4;
-    static ERC20_APPROVE: number = 5;
-    static ERC20_APPROVE_RESTRICTED: number = 6;
-    static ERC20_TRUSTED_STRATEGY: number = 7;
+    static REGISTER_VAULT: number = 0;
+    static CREATE_VAULT: number = 1;
+    static ERC20_TRANSFER: number = 2;
+    static ERC20_VAULT_TOKEN = 3;
+    static ERC20_APPROVE: number = 4;
+    static ERC20_APPROVE_RESTRICTED: number = 5;
+    static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
 export const WEI_ETH_PRICE = BigNumber.from(10).pow(18);
