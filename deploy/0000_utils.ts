@@ -31,7 +31,11 @@ export const ALLOWED_APPROVE_LIST = {
             "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022", // ETH-STETH
         ],
         cowswap: ["0xC92E8bdf79f0507f65a392b0ab4667716BFE0110"],
-        erc20: []
+        erc20: [
+            "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // WETH
+            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
+            "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
+        ]
     },
 };
 

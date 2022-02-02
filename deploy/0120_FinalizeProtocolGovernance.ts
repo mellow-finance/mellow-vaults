@@ -17,12 +17,13 @@ import { ethers } from "ethers";
 import { deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 
+// TODO: refactor this
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, getOrNull } = deployments;
     const { deployer, admin, protocolTreasury, weth, wbtc, usdc } =
         await getNamedAccounts();
-    const tokens = [weth, wbtc, usdc].map((t) => t.toLowerCase()).sort();
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
@@ -56,7 +57,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             await protocolGovernance.populateTransaction.commitAllValidatorsSurpassedDelay();
         txDatas.push(tx.data);
     }
-
     const params = {
         forceAllowMask: ALLOW_MASK,
         maxTokensPerVault: 10,
@@ -92,6 +92,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "multicall",
         txDatas
     );
+    const res = await read("ProtocolGovernance", "hasPermission", admin, PermissionIdsLibrary.CREATE_VAULT);
+    console.log("admin has permission to create vault", res);
 };
 
 async function registerGovernances(
@@ -140,7 +142,6 @@ async function registerTokens(
                 [
                     PermissionIdsLibrary.ERC20_VAULT_TOKEN,
                     PermissionIdsLibrary.ERC20_TRANSFER,
-                    PermissionIdsLibrary.ERC20_APPROVE,
                 ]
             );
         txDatas.push(tx.data);
@@ -169,6 +170,7 @@ async function registerExternalProtocols(
     );
 
     for (const key in data) {
+        if (key == "erc20") { continue; }
         for (const address of data[key]) {
             let tx =
                 await protocolGovernance.populateTransaction.stagePermissionGrants(
