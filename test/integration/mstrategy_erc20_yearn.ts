@@ -127,6 +127,9 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                        minTickRebalanceThreshold: 180,
+                        tickNeiborhood: 60,
+                        tickIncrease: 180,
                     };
                     let txs = [];
                     txs.push(
