@@ -35,6 +35,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
     uint256 public lastUniV3RebalanceTimestamp;
+    uint256 public orderDeadline;
 
     // MUTABLE PARAMS
 
@@ -179,34 +180,42 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256 upperVaultDelta = FullMath.mulDiv(percentageIncreaseD, upperVaultLiquidity, DENOMINATOR);
         uint256[] memory lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(uint128(lowerVaultDelta));
         uint256[] memory upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
-
+        uint256[] memory totalPulledAmounts = new uint256[](2);
+        uint256[] memory pulledAmounts = new uint256[](2);
         if (!isNegativeCapitalDelta) {
-            erc20Vault.pull(
+            totalPulledAmounts = erc20Vault.pull(
                 address(lowerVault),
                 tokens,
                 lowerTokenAmounts,
                 _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
             );
-            erc20Vault.pull(
+            pulledAmounts = erc20Vault.pull(
                 address(lowerVault),
                 tokens,
                 upperTokenAmounts,
                 _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
             );
+            for (uint256 i = 0; i < 2; i++) {
+                totalPulledAmounts[i] += pulledAmounts[i];
+            }
         } else {
-            lowerVault.pull(
+            totalPulledAmounts = lowerVault.pull(
                 address(erc20Vault),
                 tokens,
                 lowerTokenAmounts,
                 _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
             );
-            upperVault.pull(
+            pulledAmounts = upperVault.pull(
                 address(erc20Vault),
                 tokens,
                 upperTokenAmounts,
                 _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
             );
+            for (uint256 i = 0; i < 2; i++) {
+                totalPulledAmounts[i] += pulledAmounts[i];
+            }
         }
+        emit RebalancedErc20UniV3(tx.origin, msg.sender, !isNegativeCapitalDelta, totalPulledAmounts);
     }
 
     /// @notice Make a rebalance of UniV3 vaults
@@ -287,6 +296,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
 
     function postPreOrder() external {
         _requireAtLeastOperator();
+        require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
             tvl[0],
@@ -296,10 +306,11 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         );
         TradingParams memory tradingParams_ = tradingParams;
         uint256 priceX96 = targetPrice(tokens, tradingParams_);
+        PreOrder memory preOrder_;
         if (isNegative) {
             uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
-            preOrder = PreOrder({
+            preOrder_ = PreOrder({
                 tokenIn: tokens[1],
                 amountIn: tokenDelta,
                 minAmountOut: minAmountOut,
@@ -308,13 +319,15 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         } else {
             uint256 minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
-            preOrder = PreOrder({
+            preOrder_ = PreOrder({
                 tokenIn: tokens[1],
                 amountIn: tokenDelta,
                 minAmountOut: minAmountOut,
                 deadline: block.timestamp + tradingParams_.orderDeadline
             });
         }
+        preOrder = preOrder_;
+        emit PreOrderPosted(tx.origin, msg.sender, preOrder_);
     }
 
     /// Sign Cowswap order
@@ -334,12 +347,12 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         // https://etherscan.io/address/0x9008d19f58aabd9ed0d60971565aa8510560ab41#readContract - DOMAIN SEPARATOR
 
         PreOrder memory preOrder_ = preOrder;
-        require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
         if (!signed) {
             bytes memory resetData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, uuid, false);
             erc20Vault.externalCall(cowswap, resetData);
             return;
         }
+        require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
 
         bytes32 orderHash;
         assembly {
@@ -354,19 +367,29 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         erc20Vault.externalCall(order.tokenIn, APPROVE_SELECTOR, approveData);
         bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
         erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
+        orderDeadline = order.deadline;
+        delete preOrder;
+        emit OrderSigned(tx.origin, msg.sender, uuid, order, preOrder, signed);
     }
 
     function resetCowswapAllowance(uint8 tokenNumber) external {
         _requireAtLeastOperator();
         bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
         erc20Vault.externalCall(tokens[tokenNumber], approveData);
+        emit CowswapAllowanceReset(tx.origin, msg.sender);
     }
 
     /// @notice Collect Uniswap pool fees to erc20 vault
     function collectUniFees() external {
         _requireAtLeastOperator();
-        lowerVault.collectEarnings();
-        upperVault.collectEarnings();
+        uint256 totalCollectedEarnings = new uint256[](2);
+        uint256 collectedEarnings = new uint256[](2);
+        totalCollectedEarnings = lowerVault.collectEarnings();
+        collectedEarnings = upperVault.collectEarnings();
+        for (uint256 i = 0; i < 2; i++) {
+            totalCollectedEarnings[i] += collectedEarnings[i];
+        }
+        emit FeesCollected(tx.origin, msg.sender, totalCollectedEarnings);
     }
 
     /// @notice Manually pull tokens from fromVault to toVault
@@ -381,9 +404,15 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory tokenAmounts,
         uint256[] memory minTokensAmounts,
         uint256 deadline
-    ) external {
+    ) external returns (uint256[] memory actualTokenAmounts) {
         _requireAdmin();
-        fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
+        actualTokenAmounts = fromVault.pull(
+            address(toVault),
+            tokens,
+            tokenAmounts,
+            _makeUniswapVaultOptions(minTokensAmounts, deadline)
+        );
+        emit ManualPull(tx.origin, msg.sender, tokenAmounts, actualTokenAmounts);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -556,6 +585,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             _makeUniswapVaultOptions(minDepositTokens, deadline)
         );
         emit RebalancedUniV3(
+            tx.origin,
+            msg.sender,
             address(fromVault),
             address(toVault),
             pulledAmounts,
@@ -638,6 +669,38 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         IERC20(tokens[1]).safeApprove(address(positionManager), 0);
     }
 
+    /// @notice Emitted when a new cowswap preOrder is posted.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param preOrder Preorder that was posted
+    event PreOrderPosted(address indexed origin, address indexed sender, PreOrder preOrder);
+
+    /// @notice Emitted when cowswap preOrder was signed onchain.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param order Cowswap order
+    /// @param preOrder PreOrder that the order fulfills
+    /// @param signed Singned or unsigned
+    event OrderSigned(
+        address indexed origin,
+        address indexed sender,
+        bytes uuid,
+        CowswapOrder order,
+        PreOrder preOrder,
+        bool signed
+    );
+
+    /// @notice Emitted when manual pull from vault is executed.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tokenAmounts The amounts of tokens that were
+    event ManualPull(
+        address indexed origin,
+        address indexed sender,
+        uint256[] tokenAmounts,
+        uint256[] actualTokenAmounts
+    );
+
     /// @notice Emitted when vault is swapped.
     /// @param oldNft UniV3 nft that was burned
     /// @param newNft UniV3 nft that was created
@@ -646,12 +709,21 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     event SwapVault(uint256 oldNft, uint256 newNft, int24 newTickLower, int24 newTickUpper);
 
     /// @param fromVault The vault to pull liquidity from
+    /// @param pulledAmounts amounts pulled from fromVault
+    /// @param pushedAmounts amounts pushed to toVault
+    /// @param desiredLiquidity The amount of liquidity desired for rebalance. This could be cut to available erc20 vault balance and available uniV3 vault liquidity.
+    /// @param liquidity The actual amount of liquidity rebalanced.
+    event RebalancedErc20UniV3(address indexed origin, address indexed sender, bool fromErc20, uint256[] pulledAmounts);
+
+    /// @param fromVault The vault to pull liquidity from
     /// @param toVault The vault to pull liquidity to
     /// @param pulledAmounts amounts pulled from fromVault
     /// @param pushedAmounts amounts pushed to toVault
     /// @param desiredLiquidity The amount of liquidity desired for rebalance. This could be cut to available erc20 vault balance and available uniV3 vault liquidity.
     /// @param liquidity The actual amount of liquidity rebalanced.
     event RebalancedUniV3(
+        address indexed origin,
+        address indexed sender,
         address fromVault,
         address toVault,
         uint256[] pulledAmounts,
@@ -659,4 +731,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint128 desiredLiquidity,
         uint128 liquidity
     );
+
+    event CowswapAllowanceReset(address indexed origin, address indexed sender);
+    event FeesCollected(address indexed origin, address indexed sender, uint256[] collectedEarnings);
 }
