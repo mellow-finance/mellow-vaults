@@ -35,7 +35,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
     uint256 public lastUniV3RebalanceTimestamp;
-    uint256 public tickPointTimestamp;
 
     // MUTABLE PARAMS
 
@@ -50,6 +49,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     struct RatioParams {
         uint256 erc20UniV3CapitalRatioD;
         uint256 erc20TokenRatioD;
+        uint256 minErc20UniV3CapitalRatioDeviationD;
+        uint256 minErc20TokenRatioDeviationD;
+        uint256 minUniV3LiquidityRatioDeviationD;
     }
     struct BotParams {
         uint256 maxBotAllowance;
@@ -152,102 +154,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    function postPreOrder() external {
-        _requireAtLeastOperator();
-        (uint256[] memory tvl, ) = erc20Vault.tvl();
-        (uint256 tokenDelta, bool isNegative) = _liquidityDelta(tvl[0], tvl[0] + tvl[1], ratioParams.erc20TokenRatioD);
-        TradingParams memory tradingParams_ = tradingParams;
-        uint256 priceX96 = targetPrice(tokens, tradingParams_);
-        if (isNegative) {
-            uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
-            minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
-            preOrder = PreOrder({
-                tokenIn: tokens[1],
-                amountIn: tokenDelta,
-                minAmountOut: minAmountOut,
-                deadline: block.timestamp + tradingParams_.orderDeadline
-            });
-        } else {
-            uint256 minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
-            minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
-            preOrder = PreOrder({
-                tokenIn: tokens[1],
-                amountIn: tokenDelta,
-                minAmountOut: minAmountOut,
-                deadline: block.timestamp + tradingParams_.orderDeadline
-            });
-        }
-    }
-
-    /// Sign Cowswap order
-    /// @param tokenNumber The number of the token to swap
-    /// @param allowance Allowance to set for cowswap
-    /// @param uuid Cowswap order id
-    /// @param signed To sign order set to `true`
-    function signOrder(
-        CowswapOrder memory order,
-        bytes calldata uuid,
-        bool signed
-    ) external {
-        _requireAtLeastOperator();
-        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L134
-        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L228
-        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/mixins/GPv2Signing.sol#L154
-        // https://etherscan.io/address/0x9008d19f58aabd9ed0d60971565aa8510560ab41#readContract - DOMAIN SEPARATOR
-
-        PreOrder memory preOrder_ = preOrder;
-        require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
-        if (!signed) {
-            bytes memory resetData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, uuid, false);
-            erc20Vault.externalCall(cowswap, resetData);
-            return;
-        }
-
-        bytes32 orderHash;
-        assembly {
-            mstore(orderHash, uuid.offset)
-        }
-        // take it from gnosis lib
-        require(order.hash == orderHash, ExceptionsLibrary.INVARIANT);
-        require(order.tokenIn == preOrder_.tokenIn, ExceptionsLibrary.INVALID_TOKEN);
-        require(order.amountIn == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
-        require(order.minAmountOut >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        bytes memory approveData = abi.encode(cowswap, order.amountIn);
-        erc20Vault.externalCall(order.tokenIn, APPROVE_SELECTOR, approveData);
-        bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
-        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
-    }
-
-    function resetCowswapAllowance(uint8 tokenNumber) external {
-        _requireAtLeastOperator();
-        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
-        erc20Vault.externalCall(tokens[tokenNumber], approveData);
-    }
-
-    /// @notice Collect Uniswap pool fees to erc20 vault
-    function collectUniFees() external {
-        _requireAtLeastOperator();
-        lowerVault.collectEarnings();
-        upperVault.collectEarnings();
-    }
-
-    /// @notice Manually pull tokens from fromVault to toVault
-    /// @param fromVault Pull tokens from this vault
-    /// @param toVault Pull tokens to this vault
-    /// @param tokenAmounts Token amounts to pull
-    /// @param minTokensAmounts Minimal token amounts to pull
-    /// @param deadline Timestamp after which the transaction is invalid
-    function manualPull(
-        IIntegrationVault fromVault,
-        IIntegrationVault toVault,
-        uint256[] memory tokenAmounts,
-        uint256[] memory minTokensAmounts,
-        uint256 deadline
-    ) external {
-        _requireAdmin();
-        fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
-    }
-
     function rebalanceERC20UniV3Vaults(
         uint256[] memory minLowerVaultTokens,
         uint256[] memory minUpperVaultTokens,
@@ -263,7 +169,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
             erc20VaultCapital,
             erc20VaultCapital + lowerVaultCapital + upperVaultCapital,
-            ratioParams.erc20UniV3CapitalRatioD
+            ratioParams.erc20UniV3CapitalRatioD,
+            ratioParams.minErc20UniV3CapitalRatioDeviationD
         );
         uint256 percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, lowerVaultCapital + upperVaultCapital);
         (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
@@ -356,7 +263,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         (uint256 liquidityDelta, bool isNegativeLiquidityDelta) = _liquidityDelta(
             lowerLiquidity,
             upperLiquidity,
-            targetUniV3LiquidityRatioD
+            targetUniV3LiquidityRatioD,
+            ratioParams.minUniV3LiquidityRatioDeviationD
         );
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
@@ -375,6 +283,107 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             minDepositTokens,
             deadline
         );
+    }
+
+    function postPreOrder() external {
+        _requireAtLeastOperator();
+        (uint256[] memory tvl, ) = erc20Vault.tvl();
+        (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
+            tvl[0],
+            tvl[0] + tvl[1],
+            ratioParams.erc20TokenRatioD,
+            ratioParams.minErc20TokenRatioDeviationD
+        );
+        TradingParams memory tradingParams_ = tradingParams;
+        uint256 priceX96 = targetPrice(tokens, tradingParams_);
+        if (isNegative) {
+            uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
+            minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
+            preOrder = PreOrder({
+                tokenIn: tokens[1],
+                amountIn: tokenDelta,
+                minAmountOut: minAmountOut,
+                deadline: block.timestamp + tradingParams_.orderDeadline
+            });
+        } else {
+            uint256 minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
+            minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
+            preOrder = PreOrder({
+                tokenIn: tokens[1],
+                amountIn: tokenDelta,
+                minAmountOut: minAmountOut,
+                deadline: block.timestamp + tradingParams_.orderDeadline
+            });
+        }
+    }
+
+    /// Sign Cowswap order
+    /// @param tokenNumber The number of the token to swap
+    /// @param allowance Allowance to set for cowswap
+    /// @param uuid Cowswap order id
+    /// @param signed To sign order set to `true`
+    function signOrder(
+        CowswapOrder memory order,
+        bytes calldata uuid,
+        bool signed
+    ) external {
+        _requireAtLeastOperator();
+        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L134
+        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/libraries/GPv2Order.sol#L228
+        // https://github.com/gnosis/gp-v2-contracts/blob/main/src/contracts/mixins/GPv2Signing.sol#L154
+        // https://etherscan.io/address/0x9008d19f58aabd9ed0d60971565aa8510560ab41#readContract - DOMAIN SEPARATOR
+
+        PreOrder memory preOrder_ = preOrder;
+        require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
+        if (!signed) {
+            bytes memory resetData = abi.encodeWithSelector(SET_PRESIGNATURE_SELECTOR, uuid, false);
+            erc20Vault.externalCall(cowswap, resetData);
+            return;
+        }
+
+        bytes32 orderHash;
+        assembly {
+            mstore(orderHash, uuid.offset)
+        }
+        // take it from gnosis lib
+        require(order.hash == orderHash, ExceptionsLibrary.INVARIANT);
+        require(order.tokenIn == preOrder_.tokenIn, ExceptionsLibrary.INVALID_TOKEN);
+        require(order.amountIn == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
+        require(order.minAmountOut >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        bytes memory approveData = abi.encode(cowswap, order.amountIn);
+        erc20Vault.externalCall(order.tokenIn, APPROVE_SELECTOR, approveData);
+        bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
+        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
+    }
+
+    function resetCowswapAllowance(uint8 tokenNumber) external {
+        _requireAtLeastOperator();
+        bytes memory approveData = abi.encodeWithSelector(APPROVE_SELECTOR, abi.encode(cowswap, 0));
+        erc20Vault.externalCall(tokens[tokenNumber], approveData);
+    }
+
+    /// @notice Collect Uniswap pool fees to erc20 vault
+    function collectUniFees() external {
+        _requireAtLeastOperator();
+        lowerVault.collectEarnings();
+        upperVault.collectEarnings();
+    }
+
+    /// @notice Manually pull tokens from fromVault to toVault
+    /// @param fromVault Pull tokens from this vault
+    /// @param toVault Pull tokens to this vault
+    /// @param tokenAmounts Token amounts to pull
+    /// @param minTokensAmounts Minimal token amounts to pull
+    /// @param deadline Timestamp after which the transaction is invalid
+    function manualPull(
+        IIntegrationVault fromVault,
+        IIntegrationVault toVault,
+        uint256[] memory tokenAmounts,
+        uint256[] memory minTokensAmounts,
+        uint256 deadline
+    ) external {
+        _requireAdmin();
+        fromVault.pull(address(toVault), tokens, tokenAmounts, _makeUniswapVaultOptions(minTokensAmounts, deadline));
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -433,13 +442,23 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     function _liquidityDelta(
         uint256 lowerLiquidity,
         uint256 upperLiquidity,
-        uint256 targetLiquidityRatioD
+        uint256 targetLiquidityRatioD,
+        uint256 minDeviation
     ) internal pure returns (uint256 delta, bool isNegative) {
         uint256 targetLowerLiquidity = FullMath.mulDiv(
             targetLiquidityRatioD,
-            uint256(lowerLiquidity + upperLiquidity),
+            lowerLiquidity + upperLiquidity,
             DENOMINATOR
         );
+        if (minDeviation > 0) {
+            uint256 liquidityRatioD = FullMath.mulDiv(lowerLiquidity, lowerLiquidity + upperLiquidity, DENOMINATOR);
+            uint256 deviation = targetLiquidityRatioD > liquidityRatioD
+                ? targetLiquidityRatioD - liquidityRatioD
+                : liquidityRatioD - targetLiquidityRatioD;
+            if (deviation < minDeviation) {
+                return (0, false);
+            }
+        }
         if (targetLowerLiquidity > lowerLiquidity) {
             isNegative = true;
             delta = targetLowerLiquidity - lowerLiquidity;
