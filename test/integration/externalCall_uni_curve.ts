@@ -1,10 +1,7 @@
 import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import {
-    mint,
-    encodeToBytes,
-} from "../library/Helpers";
+import { mint, encodeToBytes } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20Vault } from "../types";
 import { setupVault } from "../../deploy/0000_utils";
@@ -38,10 +35,15 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
 
                     this.uniswapV3Router = uniswapV3Router;
                     this.uniswapV2Router02 = uniswapV2Router02;
-                    this.curveRouter = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
+                    this.curveRouter =
+                        "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
 
                     await this.protocolGovernance.validators(this.curveRouter);
-                    const tokens = [this.weth.address, this.usdc.address, this.dai.address]
+                    const tokens = [
+                        this.weth.address,
+                        this.usdc.address,
+                        this.dai.address,
+                    ]
                         .map((t) => t.toLowerCase())
                         .sort();
                     let erc20VaultNft =
@@ -84,7 +86,11 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                         );
                     }
 
-                    for (let routerAddress of [this.uniswapV3Router, this.uniswapV2Router02, this.curveRouter]) {
+                    for (let routerAddress of [
+                        this.uniswapV3Router,
+                        this.uniswapV2Router02,
+                        this.curveRouter,
+                    ]) {
                         await this.subject.externalCall(
                             this.weth.address,
                             APPROVE_SELECTOR,
@@ -111,10 +117,14 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("correct swap", () => {
+        describe("correct swap", () => {
             it("uniswapV3", async () => {
-                let startBalanceUSDC = await this.usdc.balanceOf(this.subject.address);
-                let startBalanceWETH = await this.weth.balanceOf(this.subject.address);
+                let startBalanceUSDC = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                let startBalanceWETH = await this.weth.balanceOf(
+                    this.subject.address
+                );
 
                 let swapParams = {
                     tokenIn: this.weth.address,
@@ -146,15 +156,23 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                     )
                 );
 
-                let currentBalanceUSDC = await this.usdc.balanceOf(this.subject.address);
-                let currentBalanceWETH = await this.weth.balanceOf(this.subject.address);
+                let currentBalanceUSDC = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                let currentBalanceWETH = await this.weth.balanceOf(
+                    this.subject.address
+                );
                 expect(currentBalanceUSDC > startBalanceUSDC);
                 expect(currentBalanceWETH < startBalanceWETH);
             });
 
             it("uniswapV2", async () => {
-                let startBalanceUSDC = await this.usdc.balanceOf(this.subject.address);
-                let startBalanceWETH = await this.weth.balanceOf(this.subject.address);
+                let startBalanceUSDC = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                let startBalanceWETH = await this.weth.balanceOf(
+                    this.subject.address
+                );
 
                 await this.subject.externalCall(
                     this.uniswapV2Router02,
@@ -171,15 +189,23 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                     )
                 );
 
-                let currentBalanceUSDC = await this.usdc.balanceOf(this.subject.address);
-                let currentBalanceWETH = await this.weth.balanceOf(this.subject.address);
+                let currentBalanceUSDC = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                let currentBalanceWETH = await this.weth.balanceOf(
+                    this.subject.address
+                );
                 expect(currentBalanceUSDC > startBalanceUSDC);
                 expect(currentBalanceWETH < startBalanceWETH);
             });
 
             it("curve", async () => {
-                let startBalanceUSDC = await this.usdc.balanceOf(this.subject.address);
-                let startBalanceDAI = await this.dai.balanceOf(this.subject.address);
+                let startBalanceUSDC = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                let startBalanceDAI = await this.dai.balanceOf(
+                    this.subject.address
+                );
 
                 await this.subject.externalCall(
                     this.curveRouter,
@@ -190,11 +216,15 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                     )
                 );
 
-                let currentBalanceUSDC = await this.usdc.balanceOf(this.subject.address);
-                let currentBalanceDAI = await this.dai.balanceOf(this.subject.address);
+                let currentBalanceUSDC = await this.usdc.balanceOf(
+                    this.subject.address
+                );
+                let currentBalanceDAI = await this.dai.balanceOf(
+                    this.subject.address
+                );
                 expect(currentBalanceUSDC < startBalanceUSDC);
                 expect(currentBalanceDAI > startBalanceDAI);
-            })
+            });
         });
 
         describe.only("reverted swap", () => {
@@ -211,53 +241,74 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                         sqrtPriceLimitX96: 0,
                     };
 
-                    await expect(this.subject.externalCall(
-                        this.uniswapV3Router,
-                        EXACT_INPUT_SINGLE_SELECTOR,
-                        encodeToBytes(
-                            [
-                                "tuple(" +
-                                    "address tokenIn, " +
-                                    "address tokenOut, " +
-                                    "uint24 fee, " +
-                                    "address recipient, " +
-                                    "uint256 deadline, " +
-                                    "uint256 amountIn, " +
-                                    "uint256 amountOutMinimum, " +
-                                    "uint160 sqrtPriceLimitX96)",
-                            ],
-                            [swapParams]
+                    await expect(
+                        this.subject.externalCall(
+                            this.uniswapV3Router,
+                            EXACT_INPUT_SINGLE_SELECTOR,
+                            encodeToBytes(
+                                [
+                                    "tuple(" +
+                                        "address tokenIn, " +
+                                        "address tokenOut, " +
+                                        "uint24 fee, " +
+                                        "address recipient, " +
+                                        "uint256 deadline, " +
+                                        "uint256 amountIn, " +
+                                        "uint256 amountOutMinimum, " +
+                                        "uint160 sqrtPriceLimitX96)",
+                                ],
+                                [swapParams]
+                            )
                         )
-                    )).to.be.revertedWith("Too little received");
+                    ).to.be.revertedWith("Too little received");
                 });
 
                 it("uniswapV2", async () => {
-                    await expect(this.subject.externalCall(
-                        this.uniswapV2Router02,
-                        SWAP_EXACT_TOKENS_FOR_TOKENS_SELECTOR,
-                        encodeToBytes(
-                            ["uint", "uint", "address[]", "address", "uint"],
-                            [
-                                BigNumber.from(10).pow(18).mul(1),
-                                ethers.constants.MaxUint256,
-                                [this.weth.address, this.usdc.address],
-                                this.subject.address,
-                                ethers.constants.MaxUint256,
-                            ]
+                    await expect(
+                        this.subject.externalCall(
+                            this.uniswapV2Router02,
+                            SWAP_EXACT_TOKENS_FOR_TOKENS_SELECTOR,
+                            encodeToBytes(
+                                [
+                                    "uint",
+                                    "uint",
+                                    "address[]",
+                                    "address",
+                                    "uint",
+                                ],
+                                [
+                                    BigNumber.from(10).pow(18).mul(1),
+                                    ethers.constants.MaxUint256,
+                                    [this.weth.address, this.usdc.address],
+                                    this.subject.address,
+                                    ethers.constants.MaxUint256,
+                                ]
+                            )
                         )
-                    )).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+                    ).to.be.revertedWith(
+                        "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
+                    );
                 });
 
                 it("curve", async () => {
-                    await expect(this.subject.externalCall(
-                        this.curveRouter,
-                        CURVE_EXCHANGE_SELECTOR,
-                        encodeToBytes(
-                            ["int128", "int128", "uint256", "uint256"],
-                            [1, 0, BigNumber.from(10).pow(6).mul(1), ethers.constants.MaxUint256]
+                    await expect(
+                        this.subject.externalCall(
+                            this.curveRouter,
+                            CURVE_EXCHANGE_SELECTOR,
+                            encodeToBytes(
+                                ["int128", "int128", "uint256", "uint256"],
+                                [
+                                    1,
+                                    0,
+                                    BigNumber.from(10).pow(6).mul(1),
+                                    ethers.constants.MaxUint256,
+                                ]
+                            )
                         )
-                    )).to.be.revertedWith("Exchange resulted in fewer coins than expected");
-                })
+                    ).to.be.revertedWith(
+                        "Exchange resulted in fewer coins than expected"
+                    );
+                });
             });
 
             describe("early deadline", () => {
@@ -273,41 +324,51 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                         sqrtPriceLimitX96: 0,
                     };
 
-                    await expect(this.subject.externalCall(
-                        this.uniswapV3Router,
-                        EXACT_INPUT_SINGLE_SELECTOR,
-                        encodeToBytes(
-                            [
-                                "tuple(" +
-                                    "address tokenIn, " +
-                                    "address tokenOut, " +
-                                    "uint24 fee, " +
-                                    "address recipient, " +
-                                    "uint256 deadline, " +
-                                    "uint256 amountIn, " +
-                                    "uint256 amountOutMinimum, " +
-                                    "uint160 sqrtPriceLimitX96)",
-                            ],
-                            [swapParams]
+                    await expect(
+                        this.subject.externalCall(
+                            this.uniswapV3Router,
+                            EXACT_INPUT_SINGLE_SELECTOR,
+                            encodeToBytes(
+                                [
+                                    "tuple(" +
+                                        "address tokenIn, " +
+                                        "address tokenOut, " +
+                                        "uint24 fee, " +
+                                        "address recipient, " +
+                                        "uint256 deadline, " +
+                                        "uint256 amountIn, " +
+                                        "uint256 amountOutMinimum, " +
+                                        "uint160 sqrtPriceLimitX96)",
+                                ],
+                                [swapParams]
+                            )
                         )
-                    )).to.be.revertedWith("Transaction too old");
+                    ).to.be.revertedWith("Transaction too old");
                 });
 
                 it("uniswapV2", async () => {
-                    await expect(this.subject.externalCall(
-                        this.uniswapV2Router02,
-                        SWAP_EXACT_TOKENS_FOR_TOKENS_SELECTOR,
-                        encodeToBytes(
-                            ["uint", "uint", "address[]", "address", "uint"],
-                            [
-                                BigNumber.from(10).pow(18).mul(1),
-                                0,
-                                [this.weth.address, this.usdc.address],
-                                this.subject.address,
-                                0,
-                            ]
+                    await expect(
+                        this.subject.externalCall(
+                            this.uniswapV2Router02,
+                            SWAP_EXACT_TOKENS_FOR_TOKENS_SELECTOR,
+                            encodeToBytes(
+                                [
+                                    "uint",
+                                    "uint",
+                                    "address[]",
+                                    "address",
+                                    "uint",
+                                ],
+                                [
+                                    BigNumber.from(10).pow(18).mul(1),
+                                    0,
+                                    [this.weth.address, this.usdc.address],
+                                    this.subject.address,
+                                    0,
+                                ]
+                            )
                         )
-                    )).to.be.revertedWith("UniswapV2Router: EXPIRED");
+                    ).to.be.revertedWith("UniswapV2Router: EXPIRED");
                 });
             });
 
@@ -324,55 +385,68 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                         sqrtPriceLimitX96: 0,
                     };
 
-                    await expect(this.subject.externalCall(
-                        this.uniswapV3Router,
-                        EXACT_INPUT_SINGLE_SELECTOR,
-                        encodeToBytes(
-                            [
-                                "tuple(" +
-                                    "address tokenIn, " +
-                                    "address tokenOut, " +
-                                    "uint24 fee, " +
-                                    "address recipient, " +
-                                    "uint256 deadline, " +
-                                    "uint256 amountIn, " +
-                                    "uint256 amountOutMinimum, " +
-                                    "uint160 sqrtPriceLimitX96)",
-                            ],
-                            [swapParams]
+                    await expect(
+                        this.subject.externalCall(
+                            this.uniswapV3Router,
+                            EXACT_INPUT_SINGLE_SELECTOR,
+                            encodeToBytes(
+                                [
+                                    "tuple(" +
+                                        "address tokenIn, " +
+                                        "address tokenOut, " +
+                                        "uint24 fee, " +
+                                        "address recipient, " +
+                                        "uint256 deadline, " +
+                                        "uint256 amountIn, " +
+                                        "uint256 amountOutMinimum, " +
+                                        "uint160 sqrtPriceLimitX96)",
+                                ],
+                                [swapParams]
+                            )
                         )
-                    )).to.be.revertedWith(Exceptions.SAFE_TRANSFER_FROM_FAILED);
+                    ).to.be.revertedWith(Exceptions.SAFE_TRANSFER_FROM_FAILED);
                 });
 
                 it("uniswapV2", async () => {
-                    await expect(this.subject.externalCall(
-                        this.uniswapV2Router02,
-                        SWAP_EXACT_TOKENS_FOR_TOKENS_SELECTOR,
-                        encodeToBytes(
-                            ["uint", "uint", "address[]", "address", "uint"],
-                            [
-                                BigNumber.from(10).pow(18).mul(10000),
-                                0,
-                                [this.weth.address, this.usdc.address],
-                                this.subject.address,
-                                ethers.constants.MaxUint256,
-                            ]
+                    await expect(
+                        this.subject.externalCall(
+                            this.uniswapV2Router02,
+                            SWAP_EXACT_TOKENS_FOR_TOKENS_SELECTOR,
+                            encodeToBytes(
+                                [
+                                    "uint",
+                                    "uint",
+                                    "address[]",
+                                    "address",
+                                    "uint",
+                                ],
+                                [
+                                    BigNumber.from(10).pow(18).mul(10000),
+                                    0,
+                                    [this.weth.address, this.usdc.address],
+                                    this.subject.address,
+                                    ethers.constants.MaxUint256,
+                                ]
+                            )
                         )
-                    )).to.be.revertedWith("TransferHelper: TRANSFER_FROM_FAILED");
+                    ).to.be.revertedWith(
+                        "TransferHelper: TRANSFER_FROM_FAILED"
+                    );
                 });
 
                 it("curve", async () => {
-                    await expect(this.subject.externalCall(
-                        this.curveRouter,
-                        CURVE_EXCHANGE_SELECTOR,
-                        encodeToBytes(
-                            ["int128", "int128", "uint256", "uint256"],
-                            [1, 0, BigNumber.from(10).pow(18).mul(1), 0]
+                    await expect(
+                        this.subject.externalCall(
+                            this.curveRouter,
+                            CURVE_EXCHANGE_SELECTOR,
+                            encodeToBytes(
+                                ["int128", "int128", "uint256", "uint256"],
+                                [1, 0, BigNumber.from(10).pow(18).mul(1), 0]
+                            )
                         )
-                    )).to.be.reverted;
-                })
+                    ).to.be.reverted;
+                });
             });
         });
-
     }
 );
