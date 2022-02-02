@@ -23,6 +23,8 @@ export const ALLOWED_APPROVE_LIST = {
             "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35", // WBTC-USDC 0.3%
         ],
         uniV2: [
+            "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D", // SwapRouter
+
             "0xb4e16d0168e52d35cacd2c6185b44281ec28c9dc", // USDC-ETH
             "0xbb2b8038a1640196fbe3e38816f3e67cba72d940", // WBTC-ETH
         ],
@@ -35,6 +37,7 @@ export const ALLOWED_APPROVE_LIST = {
             "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // WETH
             "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
             "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
+            "0x6b175474e89094c44da98b954eedeac495271d0f", // DAI
         ]
     },
 };
@@ -95,6 +98,7 @@ export const setupVault = async (
     const { deployer, admin } = await getNamedAccounts();
     const currentNft = await read("VaultRegistry", "vaultsCount");
     if (currentNft <= expectedNft) {
+        console.log("3515135");
         log(`Deploying ${contractName.replace("Governance", "")}...`);
         await execute(
             contractName,
@@ -107,7 +111,9 @@ export const setupVault = async (
             ...createVaultArgs
         );
         log(`Done, nft = ${expectedNft}`);
+        console.log("3515135");
     } else {
+        console.log("3515136");
         log(
             `${contractName.replace(
                 "Governance",
