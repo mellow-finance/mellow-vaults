@@ -15,6 +15,8 @@ import { BigNumber, BigNumberish, ethers } from "ethers";
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
         uniV3: [
+            "0xe592427a0aece92de3edee1f18e0157c05861564", // SwapRouter
+
             "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8", // USDC-ETH 0.3%
             "0xcbcdf9626bc03e24f779434178a73a0b4bad62ed", // WBTC-ETH 0.3%
             "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", // USDC-ETH 0.05%
@@ -29,27 +31,32 @@ export const ALLOWED_APPROVE_LIST = {
             "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022", // ETH-STETH
         ],
         cowswap: ["0xC92E8bdf79f0507f65a392b0ab4667716BFE0110"],
+        erc20: [
+            "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", // WETH
+            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // USDC
+            "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599", // WBTC
+        ]
     },
 };
 
 export const PRIVATE_VAULT = true;
 
-const ALLOW_ALL_REGISTER_VAULT = 0;
+export const ALLOW_ALL_REGISTER_VAULT = 0;
 export const ALLOW_ALL_CREATE_VAULT = 0;
-const ALLOW_ALL_ERC20_TRANSFER = 0;
-const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
-const ALLOW_ALL_ERC20_APPROVE = 0;
-const ALLOW_ALL_ERC20_APPROVE_RESTRICTED = 0;
-const ALLOW_ALL_TRUSTED_STRATEGY = 0;
+export const ALLOW_ALL_ERC20_TRANSFER = 0;
+export const ALLOW_ALL_ERC20_VAULT_TOKEN = 0;
+export const ALLOW_ALL_ERC20_APPROVE = 0;
+export const ALLOW_ALL_ERC20_APPROVE_RESTRICTED = 0;
+export const ALLOW_ALL_TRUSTED_STRATEGY = 0;
 
 export const ALLOW_MASK =
-    (ALLOW_ALL_REGISTER_VAULT << 1) +
-    (ALLOW_ALL_CREATE_VAULT << 2) +
-    (ALLOW_ALL_ERC20_TRANSFER << 3) +
-    (ALLOW_ALL_ERC20_VAULT_TOKEN << 4) +
-    (ALLOW_ALL_ERC20_APPROVE << 5) +
-    (ALLOW_ALL_ERC20_APPROVE_RESTRICTED << 6) +
-    (ALLOW_ALL_TRUSTED_STRATEGY << 7);
+    (ALLOW_ALL_REGISTER_VAULT << 0) +
+    (ALLOW_ALL_CREATE_VAULT << 1) +
+    (ALLOW_ALL_ERC20_TRANSFER << 2) +
+    (ALLOW_ALL_ERC20_VAULT_TOKEN << 3) +
+    (ALLOW_ALL_ERC20_APPROVE << 4) +
+    (ALLOW_ALL_ERC20_APPROVE_RESTRICTED << 5) +
+    (ALLOW_ALL_TRUSTED_STRATEGY << 6);
 
 export const ALL_NETWORKS = [
     "hardhat",
@@ -305,13 +312,13 @@ export const toObject = (obj: any) =>
     )(obj);
 
 export class PermissionIdsLibrary {
-    static REGISTER_VAULT: number = 1;
-    static CREATE_VAULT: number = 2;
-    static ERC20_TRANSFER: number = 3;
-    static ERC20_VAULT_TOKEN = 4;
-    static ERC20_APPROVE: number = 5;
-    static ERC20_APPROVE_RESTRICTED: number = 6;
-    static ERC20_TRUSTED_STRATEGY: number = 7;
+    static REGISTER_VAULT: number = 0;
+    static CREATE_VAULT: number = 1;
+    static ERC20_TRANSFER: number = 2;
+    static ERC20_VAULT_TOKEN = 3;
+    static ERC20_APPROVE: number = 4;
+    static ERC20_APPROVE_RESTRICTED: number = 5;
+    static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
 export const WEI_ETH_PRICE = BigNumber.from(10).pow(18);

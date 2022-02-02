@@ -14,6 +14,7 @@ interface IValidator is IBaseValidator, IERC165 {
         address sender,
         address addr,
         uint256 value,
+        bytes4 selector,
         bytes calldata data
     ) external view;
 }

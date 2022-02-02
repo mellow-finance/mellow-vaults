@@ -20,9 +20,9 @@ contract CowswapValidator is ContractMeta, Validator {
         address,
         address,
         uint256,
-        bytes calldata data
+        bytes4 selector,
+        bytes calldata
     ) external pure {
-        bytes4 selector = CommonLibrary.getSelector(data);
         // we don't validate TRUSTED_STRATEGY here because it's validated at allowance level
         if (selector == PRE_SIGNATURE_SELECTOR) {
             return;
