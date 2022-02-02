@@ -92,8 +92,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "multicall",
         txDatas
     );
-    const res = await read("ProtocolGovernance", "hasPermission", admin, PermissionIdsLibrary.CREATE_VAULT);
-    console.log("admin has permission to create vault", res);
 };
 
 async function registerGovernances(
