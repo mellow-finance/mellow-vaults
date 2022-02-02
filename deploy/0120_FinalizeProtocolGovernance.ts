@@ -140,7 +140,6 @@ async function registerTokens(
                 [
                     PermissionIdsLibrary.ERC20_VAULT_TOKEN,
                     PermissionIdsLibrary.ERC20_TRANSFER,
-                    PermissionIdsLibrary.ERC20_APPROVE,
                 ]
             );
         txDatas.push(tx.data);

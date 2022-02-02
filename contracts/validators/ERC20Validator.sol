@@ -29,8 +29,7 @@ contract ERC20Validator is ContractMeta, Validator {
         if (selector == APPROVE_SELECTOR) {
             address spender;
             assembly {
-                spender := calldataload(add(data.offset, 4))
-                spender := shr(96, addr)
+                spender := calldataload(data.offset)
             }
             _verifyApprove(sender, addr, spender);
         } else {

@@ -98,7 +98,6 @@ export const setupVault = async (
     const { deployer, admin } = await getNamedAccounts();
     const currentNft = await read("VaultRegistry", "vaultsCount");
     if (currentNft <= expectedNft) {
-        console.log("3515135");
         log(`Deploying ${contractName.replace("Governance", "")}...`);
         await execute(
             contractName,
@@ -111,9 +110,7 @@ export const setupVault = async (
             ...createVaultArgs
         );
         log(`Done, nft = ${expectedNft}`);
-        console.log("3515135");
     } else {
-        console.log("3515136");
         log(
             `${contractName.replace(
                 "Governance",
