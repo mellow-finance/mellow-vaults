@@ -3,6 +3,7 @@ pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "hardhat/console.sol";
 
 contract ERC20Token is IERC20 {
     bytes32 public constant PERMIT_TYPEHASH =
@@ -131,8 +132,11 @@ contract ERC20Token is IERC20 {
     }
 
     function _burn(address from, uint256 amount) internal virtual {
+        console.log("\nbalance before", balanceOf[from]);
+        console.log("amount", amount);
         balanceOf[from] -= amount;
-
+        console.log("balance after", balanceOf[from]);
+        console.log("\n");
         unchecked {
             totalSupply -= amount;
         }

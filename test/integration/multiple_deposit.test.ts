@@ -125,169 +125,114 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        it("multiple deposit works", async () => {
-            let delay = 86400;
-            let numDeposits = 3;
-            let numWithdraws = 4;
-            let amountUSDC = BigNumber.from(10).pow(3);
-            let amountWETH = BigNumber.from(10).pow(3);
-
-            for (var i = 0; i < numDeposits; ++i) {
-                await this.subject
-                    .connect(this.deployer)
-                    .deposit(
-                        [
-                            BigNumber.from(amountUSDC).div(numDeposits),
-                            BigNumber.from(amountWETH).div(numDeposits),
-                        ],
-                        0
+        pit("multiple assymetric deposit + withdraw",
+            { numRuns: RUNS.verylow },
+            integer({ min: 0, max: 86400 }),
+            integer({ min: 1, max: 10 }),
+            integer({ min: 1, max: 10 }),
+            integer({ min: 100_000, max: 1_000_000 }).map((x) =>
+                BigNumber.from(x.toString())
+            ),
+            integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
+                BigNumber.from(x.toString())
+            ),
+            async (
+                delay: number,
+                numDeposits: number,
+                numWithdraws: number,
+                amountUSDC: BigNumber,
+                amountWETH: BigNumber
+            ) => {
+                for (var i = 0; i < numDeposits; ++i) {
+                    await this.subject
+                        .connect(this.deployer)
+                        .deposit(
+                            [
+                                BigNumber.from(amountUSDC).div(numDeposits),
+                                BigNumber.from(amountWETH).div(numDeposits),
+                            ],
+                            0
+                        );
+                }
+                if (
+                    !BigNumber.from(amountUSDC)
+                        .mod(numDeposits)
+                        .eq(BigNumber.from(0)) ||
+                    !BigNumber.from(amountWETH)
+                        .mod(numDeposits)
+                        .eq(BigNumber.from(0))
+                ) {
+                    await this.subject
+                        .connect(this.deployer)
+                        .deposit(
+                            [
+                                BigNumber.from(amountUSDC).mod(numDeposits),
+                                BigNumber.from(amountWETH).mod(numDeposits),
+                            ],
+                            0
+                        );
+                }
+                const lpTokensAmount = await this.subject.balanceOf(
+                    this.deployer.address
+                );
+                expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
+    
+                let erc20_tvl = await this.erc20Vault.tvl();
+                let yearn_tvl = await this.yearnVault.tvl();
+                let root_tvl = await this.subject.tvl();
+    
+                expect(erc20_tvl[0][0].add(yearn_tvl[0][0])).to.deep.equals(
+                    root_tvl[0][0]
+                );
+                expect(erc20_tvl[0][1].add(yearn_tvl[0][1])).to.deep.equals(
+                    root_tvl[0][1]
+                );
+                console.log("\n\n\nNEXT DEPOSIT DONE\n\n");
+                await sleep(delay);
+    
+                let tokenAmounts = [0, 0];
+                for (var i = 0; i < numWithdraws; ++i) {
+                    console.log("\niteration\n");
+                    let amounts = await this.subject.callStatic.withdraw(
+                        this.deployer.address,
+                        BigNumber.from(lpTokensAmount).div(numWithdraws),
+                        [0, 0]
                     );
-            }
-            if (
-                !BigNumber.from(amountUSDC)
-                    .mod(numDeposits)
-                    .eq(BigNumber.from(0)) ||
-                !BigNumber.from(amountWETH)
-                    .mod(numDeposits)
-                    .eq(BigNumber.from(0))
-            ) {
-                await this.subject
-                    .connect(this.deployer)
-                    .deposit(
-                        [
-                            BigNumber.from(amountUSDC).mod(numDeposits),
-                            BigNumber.from(amountWETH).mod(numDeposits),
-                        ],
-                        0
+                    tokenAmounts[0] += Number(amounts[0]);
+                    tokenAmounts[1] += Number(amounts[1]);
+                    await this.subject.withdraw(
+                        this.deployer.address,
+                        BigNumber.from(lpTokensAmount).div(numWithdraws),
+                        [0, 0]
                     );
+                }
+                console.log("\nafter cycle\n");
+                if (
+                    !BigNumber.from(lpTokensAmount)
+                        .mod(numWithdraws)
+                        .eq(BigNumber.from(0))
+                ) {
+                    console.log("wthdraw extra time");
+                    let amounts = await this.subject.callStatic.withdraw(
+                        this.deployer.address,
+                        BigNumber.from(lpTokensAmount).div(numWithdraws),
+                        [0, 0]
+                    );
+                    tokenAmounts[0] += Number(amounts[0]);
+                    tokenAmounts[1] += Number(amounts[1]);
+                    await this.subject.callStatic.withdraw(
+                        this.deployer.address,
+                        BigNumber.from(lpTokensAmount).div(numWithdraws),
+                        [0, 0]
+                    );
+                }
+                console.log("\nafter cycle passed\n");
+                expect(
+                    await this.subject.balanceOf(this.deployer.address)
+                ).to.deep.equals(BigNumber.from(0));
+                console.log("\nreturn\n");
+                return true;
             }
-            const lpTokensAmount = await this.subject.balanceOf(
-                this.deployer.address
-            );
-            expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
-
-            let erc20_tvl = await this.erc20Vault.tvl();
-            let yearn_tvl = await this.yearnVault.tvl();
-            let root_tvl = await this.subject.tvl();
-
-            expect(erc20_tvl[0][0].add(yearn_tvl[0][0])).to.deep.equals(
-                root_tvl[0][0]
-            );
-            expect(erc20_tvl[0][1].add(yearn_tvl[0][1])).to.deep.equals(
-                root_tvl[0][1]
-            );
-
-            await sleep(delay);
-
-            let tokenAmounts = [0, 0];
-            for (var i = 0; i < numWithdraws; ++i) {
-                let amounts = await this.subject.callStatic.withdraw(
-                    this.deployer.address,
-                    BigNumber.from(lpTokensAmount).div(numWithdraws),
-                    [0, 0]
-                );
-                tokenAmounts[0] += Number(amounts[0]);
-                tokenAmounts[1] += Number(amounts[1]);
-                await this.subject.withdraw(
-                    this.deployer.address,
-                    BigNumber.from(lpTokensAmount).div(numWithdraws),
-                    [0, 0]
-                );
-            }
-
-            if (
-                !BigNumber.from(lpTokensAmount)
-                    .mod(numWithdraws)
-                    .eq(BigNumber.from(0))
-            ) {
-                let amounts = await this.subject.callStatic.withdraw(
-                    this.deployer.address,
-                    BigNumber.from(lpTokensAmount).div(numWithdraws),
-                    [0, 0]
-                );
-                tokenAmounts[0] += Number(amounts[0]);
-                tokenAmounts[1] += Number(amounts[1]);
-                await this.subject.callStatic.withdraw(
-                    this.deployer.address,
-                    BigNumber.from(lpTokensAmount).div(numWithdraws),
-                    [0, 0]
-                );
-            }
-
-            expect(
-                await this.subject.balanceOf(this.deployer.address)
-            ).to.deep.equals(BigNumber.from(0));
-        });
-
-        //TODO
-        // pit(
-        //     `
-        // (balanceOf o deposit) != 0
-        // (balanceOf o withdraw o sleep o pull o deposit) = 0
-        // erc20_pull => yearn_tvl↑, erc20_tvl↓
-        // yearn_pull => erc20_tvl↑, yearn_tvl↓
-        // tvl_erc20 + tvl_yearn = tvl_root
-        // (tvl_root o (pull_i o pull_i-1 o ...)) = const
-        // `,
-        // //TODO
-        //     { numRuns: 1 },
-        //     integer({ min: 0, max: 86400 }),
-        //     integer({ min: 1, max: 10 }),
-        //     integer({ min: 1, max: 10 }),
-        //     integer({ min: 100_000, max: 1_000_000 }).map((x) =>
-        //         BigNumber.from(x.toString())
-        //     ),
-        //     integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
-        //         BigNumber.from(x.toString())
-        //     ),
-        //     async (
-        //         delay: number,
-        //         numDeposits: number,
-        //         numWithdraws: number,
-        //         amountUSDC: BigNumber,
-        //         amountWETH: BigNumber
-        //     ) => {
-        //         for (var i = 0; i < numDeposits; ++i) {
-        //             console.log("in cycle");
-        //             await this.subject
-        //             .connect(this.deployer)
-        //             .deposit([BigNumber.from(amountUSDC).div(numDeposits), BigNumber.from(amountWETH).div(numDeposits)], 0);
-        //         }
-        //         console.log("cycle passed");
-        //         await this.subject
-        //             .connect(this.deployer)
-        //             .deposit([BigNumber.from(amountUSDC).mod(numDeposits), BigNumber.from(amountWETH).mod(numDeposits)], 0);
-
-        //         const lpTokensAmount = await this.subject.balanceOf(
-        //             this.deployer.address
-        //         );
-        //         console.log("LpAmt: ", Number(lpTokensAmount));
-        //         expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
-
-        //         let erc20_tvl = await this.erc20Vault.tvl();
-        //         let yearn_tvl = await this.yearnVault.tvl();
-        //         let root_tvl = await this.subject.tvl();
-
-        //         expect(erc20_tvl[0][0].add(yearn_tvl[0][0])).to.deep.equals(
-        //             root_tvl[0][0]
-        //         );
-        //         expect(erc20_tvl[0][1].add(yearn_tvl[0][1])).to.deep.equals(
-        //             root_tvl[0][1]
-        //         );
-
-        //         //await sleep(delay);
-
-        //         await this.subject.withdraw(
-        //             this.deployer.address,
-        //             lpTokensAmount,
-        //             [0, 0]
-        //         );
-        //         expect(
-        //             await this.subject.balanceOf(this.deployer.address)
-        //         ).to.deep.equals(BigNumber.from(0));
-
-        //         return true;
-        //     }
-        // );
+        );
     }
 );
