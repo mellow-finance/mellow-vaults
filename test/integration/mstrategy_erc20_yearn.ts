@@ -73,15 +73,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         "vaultForNft",
                         yearnVaultNft
                     );
-                    const erc20RootVault = await read(
-                        "VaultRegistry",
-                        "vaultForNft",
-                        erc20VaultNft + 1
-                    );
-                    this.erc20RootVault = await ethers.getContractAt(
-                        "ERC20RootVault",
-                        erc20RootVault
-                    );
+
                     this.erc20Vault = await ethers.getContractAt(
                         "ERC20Vault",
                         erc20Vault
@@ -156,6 +148,17 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         this.deployer.address
                     );
 
+                    const erc20RootVault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20VaultNft + 1
+                    );
+
+                    this.erc20RootVault = await ethers.getContractAt(
+                        "ERC20RootVault",
+                        erc20RootVault
+                    );
+
                     /*
                      * Allow deployer to make deposits
                      */
@@ -181,11 +184,11 @@ contract<MStrategy, DeployOptions, CustomContext>(
                      * Approve USDC and WETH to ERC20RootVault
                      */
                     await this.weth.approve(
-                        this.subject.address,
+                        this.erc20RootVault.address,
                         ethers.constants.MaxUint256
                     );
                     await this.usdc.approve(
-                        this.subject.address,
+                        this.erc20RootVault.address,
                         ethers.constants.MaxUint256
                     );
 
@@ -202,7 +205,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             `
         rebalances some times
         `,
-            { numRuns: 0 },
+            { numRuns: 1 },
             integer({ min: 0, max: 86400 }),
             integer({ min: 100_000, max: 1_000_000 }).map((x) =>
                 BigNumber.from(x.toString())
@@ -221,12 +224,26 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
                 await sleep(delay);
 
-                console.log(
-                    (
-                        await this.subject
-                            .connect(this.mStrategyAdmin)
-                            .callStatic.rebalance()
-                    ).toString()
+                let tvl = (await this.yearnVault.tvl())[0];
+
+                const { poolAmounts, tokenAmounts } = await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .callStatic.rebalance();
+
+                expect(poolAmounts).to.not.contain(BigNumber.from(0));
+                expect(tokenAmounts).to.not.contain(BigNumber.from(0));
+
+                await this.subject.connect(this.mStrategyAdmin).rebalance();
+
+                tvl = (await this.yearnVault.tvl())[0];
+                expect(tvl).to.not.contain(BigNumber.from(0));
+
+                // cleanup
+                // deployer is also a treasury
+                await this.erc20RootVault.withdraw(
+                    this.deployer.address,
+                    await this.erc20RootVault.balanceOf(this.deployer.address),
+                    [0, 0]
                 );
 
                 return true;
