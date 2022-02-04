@@ -124,29 +124,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let erc20RootVaultGovernance: ERC20RootVaultGovernance =
                         await ethers.getContract("ERC20RootVaultGovernance");
                     this.erc20RootVaultNft = yearnVaultNft + 1;
-                    // console.log(
-                    //     await this.erc20RootVaultGovernance.delayedStrategyParams(
-                    //         this.erc20RootVaultNft
-                    //     )
-                    // );
-                    // console.log(
-                    //     Number(
-                    //         (
-                    //             await erc20RootVaultGovernance.delayedStrategyParams(
-                    //                 this.erc20RootVaultNft
-                    //             )
-                    //         ).managementFee
-                    //     )
-                    // );
-                    // console.log(
-                    //     Number(
-                    //         (
-                    //             await erc20RootVaultGovernance.delayedStrategyParams(
-                    //                 this.erc20RootVaultNft
-                    //             )
-                    //         ).performanceFee
-                    //     )
-                    // );
 
                     this.strategyTreasury = randomAddress();
                     this.strategyPerformanceTreasury = randomAddress();
@@ -155,7 +132,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .stageDelayedStrategyParams(this.erc20RootVaultNft, {
                             strategyTreasury: this.strategyTreasury,
-                            strategyPerformanceTreasury: this.strategyPerformanceTreasury,
+                            strategyPerformanceTreasury:
+                                this.strategyPerformanceTreasury,
                             privateVault: true,
                             managementFee: 0,
                             performanceFee: 0,
@@ -164,22 +142,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await this.erc20RootVaultGovernance
                         .connect(this.admin)
                         .commitDelayedStrategyParams(this.erc20RootVaultNft);
-                    console.log(
-                        await erc20RootVaultGovernance.delayedStrategyParams(
-                            this.erc20RootVaultNft
-                        )
-                    );
-                    // let strategyTreasury = (await this.erc20RootVaultGovernance.delayedStrategyParams(this.erc20RootVaultNft)).strategyTreasury;
-                    // let strategyPerformanceTreasury = (await this.erc20RootVaultGovernance.delayedStrategyParams(this.erc20RootVaultNft)).strategyPerformanceTreasury;
-                    // let protocolTreasury = await this.protocolGovernance.protocolTreasury();
-                    // console.log("\n\nprotocol fee ", Number((await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(this.erc20RootVaultNft)).protocolFee));
-                    // console.log("protocol treasury ", await this.protocolGovernance.protocolTreasury());
-                    // console.log(Number(await this.weth.balanceOf(strategyTreasury)));
-                    // console.log(Number(await this.weth.balanceOf(strategyPerformanceTreasury)));
-                    // console.log(Number(await this.weth.balanceOf(protocolTreasury)));
-                    // console.log(Number(await this.usdc.balanceOf(strategyTreasury)));
-                    // console.log(Number(await this.usdc.balanceOf(strategyPerformanceTreasury)));
-                    // console.log(Number(await this.usdc.balanceOf(protocolTreasury)));
                     return this.subject;
                 }
             );
@@ -211,10 +173,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 amountUSDC: BigNumber,
                 amountWETH: BigNumber
             ) => {
-                console.log("\nnumDeposits ", numDeposits);
-                console.log("numWithdraws ", numWithdraws);
-                console.log("amountUSDC ", Number(amountUSDC));
-                console.log("amountWETH ", Number(amountWETH));
                 for (var i = 0; i < numDeposits; ++i) {
                     await this.subject
                         .connect(this.deployer)
@@ -230,7 +188,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const lpTokensAmount = await this.subject.balanceOf(
                     this.deployer.address
                 );
-                console.log("got lp amount ", Number(lpTokensAmount));
                 expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
 
                 let erc20_tvl = await this.erc20Vault.tvl();
@@ -301,8 +258,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await erc20RootVaultGovernance
                 .connect(this.admin)
                 .stageDelayedStrategyParams(this.erc20RootVaultNft, {
-                    strategyTreasury:
-                        this.strategyTreasury,
+                    strategyTreasury: this.strategyTreasury,
                     strategyPerformanceTreasury:
                         this.strategyPerformanceTreasury,
                     privateVault: true,
@@ -338,16 +294,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 amountWETH: BigNumber
             ) => {
                 await setFeesFixture();
-                // console.log("\n\nNEXT ROUND");
-                // console.log("weth ", Number(amountWETH));
-                // console.log("usdc ", Number(amountUSDC));
-                // console.log("deposits ", numDeposits);
-                // console.log("withdrawals ", numWithdraws);
-                // console.log(
-                //     await this.erc20RootVaultGovernance.delayedStrategyParams(
-                //         this.erc20RootVaultNft
-                //     )
-                // );
                 for (var i = 0; i < numDeposits; ++i) {
                     await this.subject
                         .connect(this.deployer)
@@ -360,29 +306,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         );
                 }
 
-                // console.log("\n\nAFTER CYCLE DEPOSIT ", Number(this.wethSupply) - Number(await this.weth.balanceOf(this.deployer.address)));
-                // console.log("MOD ", Number(amountWETH.mod(numDeposits)));
-                let strategyTreasury = (await this.erc20RootVaultGovernance.delayedStrategyParams(this.erc20RootVaultNft)).strategyTreasury;
-                let strategyPerformanceTreasury = (await this.erc20RootVaultGovernance.delayedStrategyParams(this.erc20RootVaultNft)).strategyPerformanceTreasury;
-                let protocolTreasury = await this.protocolGovernance.protocolTreasury();
-                // console.log("protocol fee ", Number((await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(this.erc20RootVaultNft)).protocolFee));
-                // console.log("protocol treasury ", await this.protocolGovernance.protocolTreasury());
-                // console.log("\nWETH\n");
-                // console.log(Number(await this.weth.balanceOf(this.deployer.address)));
-                // console.log(Number(await this.weth.balanceOf(strategyTreasury)));
-                // console.log(Number(await this.weth.balanceOf(strategyPerformanceTreasury)));
-                // console.log(Number(await this.weth.balanceOf(protocolTreasury)));
-                // console.log("\nUSDC\n");
-                // console.log(Number(await this.usdc.balanceOf(this.deployer.address)));
-                // console.log(Number(await this.usdc.balanceOf(strategyTreasury)));
-                // console.log(Number(await this.usdc.balanceOf(strategyPerformanceTreasury)));
-                // console.log(Number(await this.usdc.balanceOf(protocolTreasury)));
-                // console.log("\nLP\n");
-                // console.log(Number(await this.subject.balanceOf(this.deployer.address)));
-                // console.log(Number(await this.subject.balanceOf(strategyTreasury)));
-                // console.log(Number(await this.subject.balanceOf(strategyPerformanceTreasury)));
-                // console.log(Number(await this.subject.balanceOf(protocolTreasury)));
-                
+                let strategyTreasury = (
+                    await this.erc20RootVaultGovernance.delayedStrategyParams(
+                        this.erc20RootVaultNft
+                    )
+                ).strategyTreasury;
+                let strategyPerformanceTreasury = (
+                    await this.erc20RootVaultGovernance.delayedStrategyParams(
+                        this.erc20RootVaultNft
+                    )
+                ).strategyPerformanceTreasury;
+                let protocolTreasury =
+                    await this.protocolGovernance.protocolTreasury();
+
                 const lpTokensAmount = await this.subject.balanceOf(
                     this.deployer.address
                 );
@@ -433,7 +369,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         [0, 0]
                     );
                 }
-                if ((await this.subject.balanceOf(strategyPerformanceTreasury)).gt(0)) {
+                if (
+                    (
+                        await this.subject.balanceOf(
+                            strategyPerformanceTreasury
+                        )
+                    ).gt(0)
+                ) {
                     await this.subject.withdraw(
                         strategyPerformanceTreasury,
                         BigNumber.from(2).pow(256).sub(1),
@@ -447,33 +389,29 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         [0, 0]
                     );
                 }
-                // console.log("\nFINISH\n");
-                // console.log("protocol fee ", Number((await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(this.erc20RootVaultNft)).protocolFee));
-                // console.log("protocol treasury ", await this.protocolGovernance.protocolTreasury());
-                // console.log("\nWETH\n");
-                // console.log(Number(await this.weth.balanceOf(this.deployer.address)));
-                // console.log(Number(await this.weth.balanceOf(strategyTreasury)));
-                // console.log(Number(await this.weth.balanceOf(strategyPerformanceTreasury)));
-                // console.log(Number(await this.weth.balanceOf(protocolTreasury)));
-                // console.log("\nUSDC\n");
-                // console.log(Number(await this.usdc.balanceOf(this.deployer.address)));
-                // console.log(Number(await this.usdc.balanceOf(strategyTreasury)));
-                // console.log(Number(await this.usdc.balanceOf(strategyPerformanceTreasury)));
-                // console.log(Number(await this.usdc.balanceOf(protocolTreasury)));
-                // console.log("\nLP\n");
-                // console.log(Number(await this.subject.balanceOf(this.deployer.address)));
-                // console.log(Number(await this.subject.balanceOf(strategyTreasury)));
-                // console.log(Number(await this.subject.balanceOf(strategyPerformanceTreasury)));
-                // console.log(Number(await this.subject.balanceOf(protocolTreasury)));
-                
+
                 expect(
-                    (await this.subject.balanceOf(this.deployer.address))
+                    await this.subject.balanceOf(this.deployer.address)
                 ).to.deep.equals(BigNumber.from(0));
                 expect(
-                    (await this.weth.balanceOf(this.deployer.address)).add(await this.weth.balanceOf(strategyTreasury)).add(await this.weth.balanceOf(strategyPerformanceTreasury)).add(await this.weth.balanceOf(protocolTreasury))
+                    (await this.weth.balanceOf(this.deployer.address))
+                        .add(await this.weth.balanceOf(strategyTreasury))
+                        .add(
+                            await this.weth.balanceOf(
+                                strategyPerformanceTreasury
+                            )
+                        )
+                        .add(await this.weth.balanceOf(protocolTreasury))
                 ).to.be.equal(this.wethSupply);
                 expect(
-                    (await this.usdc.balanceOf(this.deployer.address)).add(await this.usdc.balanceOf(strategyTreasury)).add(await this.usdc.balanceOf(strategyPerformanceTreasury)).add(await this.usdc.balanceOf(protocolTreasury))
+                    (await this.usdc.balanceOf(this.deployer.address))
+                        .add(await this.usdc.balanceOf(strategyTreasury))
+                        .add(
+                            await this.usdc.balanceOf(
+                                strategyPerformanceTreasury
+                            )
+                        )
+                        .add(await this.usdc.balanceOf(protocolTreasury))
                 ).to.be.equal(this.usdcSupply);
                 return true;
             }

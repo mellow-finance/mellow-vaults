@@ -12,7 +12,6 @@ import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -96,21 +95,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
-            console.log("norm amounts ", normalizedAmounts[i]);
-            console.log(msg.sender);
-            console.log(address(this));
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
         actualTokenAmounts = _push(normalizedAmounts, "");
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
-        // if (lpAmount == 0) {
-        //     console.log("\n\nZERO");
-        //     console.log("maxTvl ", maxTvl[0], maxTvl[1]);
-        //     console.log("supply ", supply);
-        //     console.log("norm amounts ", normalizedAmounts[0], normalizedAmounts[1]);
-        //     console.log("preLpAmount ", preLpAmount);
-        //     console.log("token amounts ", tokenAmounts[0], tokenAmounts[1]);
-        // }
         // require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
@@ -155,8 +143,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         if (balanceOf[msg.sender] < lpTokenAmount) {
-            console.log("balanceOf ", balanceOf[msg.sender]);
-            console.log("lpTokenAmount ", lpTokenAmount);
             lpTokenAmount = balanceOf[msg.sender];
         }
         _burn(msg.sender, lpTokenAmount);
@@ -223,16 +209,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             // skip normalization on init
             return amount;
         }
-        // console.log("\ntvl ", tvl_);
-        // console.log("amount ", amount);
-        // console.log("lpAmount ", lpAmount);
-        // console.log("supply ", supply);
         // normalize amount
         uint256 res = FullMath.mulDiv(tvl_, lpAmount, supply);
         if (res > amount) {
             res = amount;
         }
-        //console.log("res ", res);
         return res;
     }
 
@@ -344,7 +325,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
-            console.log("management fees charge ", toMint);
             _mint(strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
@@ -354,7 +334,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
-            console.log("protocol management fees charge ", toMint);
             _mint(protocolTreasury, toMint);
             emit ProtocolFeesCharged(protocolTreasury, protocolFee, toMint);
         }
@@ -383,7 +362,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        console.log("performance fees charge ", toMint);
         _mint(treasury, toMint);
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }

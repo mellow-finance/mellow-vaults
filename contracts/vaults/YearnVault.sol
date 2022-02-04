@@ -5,7 +5,6 @@ import "../interfaces/external/yearn/IYearnProtocolVault.sol";
 import "../interfaces/vaults/IYearnVaultGovernance.sol";
 import "../interfaces/vaults/IYearnVault.sol";
 import "./IntegrationVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces Yearn protocol in the integration layer.
 /// @dev Notes:
@@ -99,14 +98,10 @@ contract YearnVault is IYearnVault, IntegrationVault {
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         uint256 maxLoss = options.length > 0 ? abi.decode(options, (uint256)) : DEFAULT_MAX_LOSS;
-        console.log("\n\nYEARN VAULT\n");
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0) continue;
 
             IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
-            console.log("token amount ", tokenAmounts[i]);
-            console.log("10**yToken.decimals() ", 10**yToken.decimals());
-            console.log("yToken.pricePerShare() ", yToken.pricePerShare());
             uint256 balance = yToken.balanceOf(address(this));
             uint256 yTokenAmount = FullMath.mulDiv(tokenAmounts[i], (10**yToken.decimals()), yToken.pricePerShare());
             if (yTokenAmount > balance) {
