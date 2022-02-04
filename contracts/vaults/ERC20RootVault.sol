@@ -96,6 +96,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
+            console.log("norm amounts ", normalizedAmounts[i]);
+            console.log(msg.sender);
+            console.log(address(this));
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
         actualTokenAmounts = _push(normalizedAmounts, "");
@@ -154,6 +157,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (balanceOf[msg.sender] < lpTokenAmount) {
             console.log("balanceOf ", balanceOf[msg.sender]);
             console.log("lpTokenAmount ", lpTokenAmount);
+            lpTokenAmount = balanceOf[msg.sender];
         }
         _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
@@ -340,6 +344,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
+            console.log("management fees charge ", toMint);
             _mint(strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
@@ -349,6 +354,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
+            console.log("protocol management fees charge ", toMint);
             _mint(protocolTreasury, toMint);
             emit ProtocolFeesCharged(protocolTreasury, protocolFee, toMint);
         }
@@ -377,6 +383,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
+        console.log("performance fees charge ", toMint);
         _mint(treasury, toMint);
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
