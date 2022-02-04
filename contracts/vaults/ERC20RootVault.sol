@@ -99,7 +99,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         actualTokenAmounts = _push(normalizedAmounts, "");
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
-        // require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
             .strategyParams(thisNft);
@@ -198,13 +198,12 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
-    //TODO
     function _getNormalizedAmount(
         uint256 tvl_,
         uint256 amount,
         uint256 lpAmount,
         uint256 supply
-    ) internal view returns (uint256) {
+    ) internal pure returns (uint256) {
         if (supply == 0) {
             // skip normalization on init
             return amount;
