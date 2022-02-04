@@ -1,13 +1,23 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import {now, randomAddress, sleep, sleepTo, toObject, withSigner} from "./library/Helpers";
+import {
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    toObject,
+    withSigner,
+} from "./library/Helpers";
 import Exceptions from "./library/Exceptions";
 import { contract } from "./library/setup";
 import { ParamsStruct, IProtocolGovernance } from "./types/IProtocolGovernance";
 import { address, uint8, uint256, pit, RUNS } from "./library/property";
 import { Arbitrary, tuple, integer } from "fast-check";
 import { BigNumber } from "ethers";
-import {PROTOCOL_GOVERNANCE_INTERFACE_ID, VAULT_INTERFACE_ID} from "./library/Constants";
+import {
+    PROTOCOL_GOVERNANCE_INTERFACE_ID,
+    VAULT_INTERFACE_ID,
+} from "./library/Constants";
 
 const MAX_GOVERNANCE_DELAY = BigNumber.from(60 * 60 * 24 * 7);
 
@@ -933,7 +943,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await this.subject
                         .connect(this.admin)
                         .commitPermissionGrants(target);
-                    expect(await this.subject.hasAllPermissions(target, [0, 1, 2])).to.be.true;
+                    expect(
+                        await this.subject.hasAllPermissions(target, [0, 1, 2])
+                    ).to.be.true;
                     return true;
                 }
             );
@@ -944,7 +956,12 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     async (target: string) => {
-                        expect(await this.subject.hasAllPermissions(target, [0, 1, 2])).to.be.false;
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                target,
+                                [0, 1, 2]
+                            )
+                        ).to.be.false;
                         return true;
                     }
                 );
@@ -954,10 +971,16 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8.filter((x) => x.lt(20)),
                     uint8.filter((x) => x.gt(20)),
-                    async (target: string, grantedPermissionId: BigNumber, stagedPermissionId: BigNumber) => {
+                    async (
+                        target: string,
+                        grantedPermissionId: BigNumber,
+                        stagedPermissionId: BigNumber
+                    ) => {
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [grantedPermissionId]);
+                            .stagePermissionGrants(target, [
+                                grantedPermissionId,
+                            ]);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
@@ -965,10 +988,21 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [stagedPermissionId]);
+                            .stagePermissionGrants(target, [
+                                stagedPermissionId,
+                            ]);
 
-                        expect(await this.subject.hasAllPermissions(target, [grantedPermissionId])).to.be.true;
-                        expect(await this.subject.hasAllPermissions(target, [grantedPermissionId, stagedPermissionId])).to.be.false;
+                        expect(
+                            await this.subject.hasAllPermissions(target, [
+                                grantedPermissionId,
+                            ])
+                        ).to.be.true;
+                        expect(
+                            await this.subject.hasAllPermissions(target, [
+                                grantedPermissionId,
+                                stagedPermissionId,
+                            ])
+                        ).to.be.false;
                         return true;
                     }
                 );
@@ -978,17 +1012,27 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8.filter((x) => x.gt(0)),
                     async (target: string, grantedPermissionId: BigNumber) => {
-                        expect(await this.subject.hasAllPermissions(target, [grantedPermissionId])).to.be.false;
+                        expect(
+                            await this.subject.hasAllPermissions(target, [
+                                grantedPermissionId,
+                            ])
+                        ).to.be.false;
 
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [grantedPermissionId]);
+                            .stagePermissionGrants(target, [
+                                grantedPermissionId,
+                            ]);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
                             .commitPermissionGrants(target);
 
-                        expect(await this.subject.hasAllPermissions(target, [grantedPermissionId])).to.be.true;
+                        expect(
+                            await this.subject.hasAllPermissions(target, [
+                                grantedPermissionId,
+                            ])
+                        ).to.be.true;
                         return true;
                     }
                 );
@@ -998,16 +1042,29 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8.filter((x) => x.gt(0) && x.lt(20)),
                     paramsArb,
-                    async (target: string, permissionsCount: BigNumber, params: ParamsStruct) => {
-                        params.forceAllowMask = BigNumber.from(2).pow(permissionsCount).sub(1);
-                        await this.subject.connect(this.admin).stageParams(params);
+                    async (
+                        target: string,
+                        permissionsCount: BigNumber,
+                        params: ParamsStruct
+                    ) => {
+                        params.forceAllowMask = BigNumber.from(2)
+                            .pow(permissionsCount)
+                            .sub(1);
+                        await this.subject
+                            .connect(this.admin)
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject.connect(this.admin).commitParams();
                         let permissionIdList = [];
                         for (let i = 0; permissionsCount.gt(i); ++i) {
                             permissionIdList.push(i);
                         }
-                        expect(await this.subject.hasAllPermissions(target, permissionIdList)).to.be.ok;
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                target,
+                                permissionIdList
+                            )
+                        ).to.be.ok;
                         return true;
                     }
                 );
@@ -1021,7 +1078,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     async (signerAddress: string) => {
                         await withSigner(signerAddress, async (signer) => {
                             await expect(
-                                this.subject.connect(signer).hasAllPermissions(signerAddress, [])
+                                this.subject
+                                    .connect(signer)
+                                    .hasAllPermissions(signerAddress, [])
                             ).to.not.be.reverted;
                         });
                         return true;
@@ -1059,7 +1118,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await expect(
                             this.subject
                                 .connect(s)
-                                .supportsInterface(PROTOCOL_GOVERNANCE_INTERFACE_ID)
+                                .supportsInterface(
+                                    PROTOCOL_GOVERNANCE_INTERFACE_ID
+                                )
                         ).to.not.be.reverted;
                     });
                 });
@@ -1127,7 +1188,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     async (signerAddress: string) => {
-                        await withSigner(signerAddress, async(signer) => {
+                        await withSigner(signerAddress, async (signer) => {
                             await expect(
                                 this.subject
                                     .connect(signer)
@@ -1249,11 +1310,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     async (signerAddress: string) => {
-                        await withSigner(signerAddress, async(signer) => {
+                        await withSigner(signerAddress, async (signer) => {
                             await expect(
                                 this.subject
                                     .connect(signer)
-                                    .stagePermissionGrants(this.deployer.address, [0])
+                                    .stagePermissionGrants(
+                                        this.deployer.address,
+                                        [0]
+                                    )
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         });
                         return true;
@@ -1355,36 +1419,48 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             describe("access control", () => {
                 pit(
                     `allowed: protocol admin`,
-                    {numRuns: 1},
+                    { numRuns: 1 },
                     paramsArb,
                     async (params: ParamsStruct) => {
-                        await this.subject.connect(this.admin).stageParams(params);
+                        await this.subject
+                            .connect(this.admin)
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
-                        await expect(this.subject.connect(this.admin).commitParams()).to.not.be.reverted;
+                        await expect(
+                            this.subject.connect(this.admin).commitParams()
+                        ).to.not.be.reverted;
                         return true;
                     }
                 );
                 pit(
                     `denied: deployer`,
-                    {numRuns: 1},
+                    { numRuns: 1 },
                     paramsArb,
                     async (params: ParamsStruct) => {
-                        await this.subject.connect(this.admin).stageParams(params);
+                        await this.subject
+                            .connect(this.admin)
+                            .stageParams(params);
                         await sleep(await this.subject.governanceDelay());
-                        await expect(this.subject.connect(this.deployer).commitParams()).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        await expect(
+                            this.subject.connect(this.deployer).commitParams()
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         return true;
                     }
                 );
                 pit(
                     `denied: random address`,
-                    {numRuns: RUNS.verylow},
+                    { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     paramsArb,
                     async (signerAddress: string, params: ParamsStruct) => {
-                        await withSigner(signerAddress, async(signer) => {
-                            await this.subject.connect(this.admin).stageParams(params);
+                        await withSigner(signerAddress, async (signer) => {
+                            await this.subject
+                                .connect(this.admin)
+                                .stageParams(params);
                             await sleep(await this.subject.governanceDelay());
-                            await expect(this.subject.connect(signer).commitParams()).to.be.revertedWith(Exceptions.FORBIDDEN);
+                            await expect(
+                                this.subject.connect(signer).commitParams()
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         });
                         return true;
                     }
@@ -1450,11 +1526,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     async (signerAddress: string) => {
-                        await withSigner(signerAddress, async(signer) => {
+                        await withSigner(signerAddress, async (signer) => {
                             await expect(
                                 this.subject
                                     .connect(signer)
-                                    .stagePermissionGrants(this.deployer.address, [])
+                                    .stagePermissionGrants(
+                                        this.deployer.address,
+                                        []
+                                    )
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         });
                         return true;
@@ -1539,7 +1618,9 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     { numRuns: 1 },
                     paramsArb,
                     async (params: ParamsStruct) => {
-                        await expect(this.subject.connect(this.admin).stageParams(params)).to.not.be.reverted;
+                        await expect(
+                            this.subject.connect(this.admin).stageParams(params)
+                        ).to.not.be.reverted;
                         return true;
                     }
                 );
@@ -1549,7 +1630,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     paramsArb,
                     async (signerAddress: string, params: ParamsStruct) => {
-                        await withSigner(signerAddress, async(signer) => {
+                        await withSigner(signerAddress, async (signer) => {
                             await expect(
                                 this.subject.connect(signer).stageParams(params)
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
