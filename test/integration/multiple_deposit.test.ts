@@ -240,12 +240,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(
                     await this.subject.balanceOf(this.deployer.address)
                 ).to.deep.equals(BigNumber.from(0));
+
                 expect(
                     await this.weth.balanceOf(this.deployer.address)
                 ).to.be.equal(this.wethSupply);
+
                 expect(
                     await this.usdc.balanceOf(this.deployer.address)
                 ).to.be.equal(this.usdcSupply);
+                
                 return true;
             }
         );
