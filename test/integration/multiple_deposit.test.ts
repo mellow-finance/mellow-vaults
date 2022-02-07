@@ -106,8 +106,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethSupply = BigNumber.from(10).pow(6).mul(5);
-                    this.usdcSupply = BigNumber.from(10).pow(6).mul(5);
+                    this.wethSupply = BigNumber.from(10).pow(20).mul(5);
+                    this.usdcSupply = BigNumber.from(10).pow(20).mul(5);
 
                     await mint("USDC", this.deployer.address, this.usdcSupply);
                     await mint("WETH", this.deployer.address, this.wethSupply);
@@ -160,10 +160,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             integer({ min: 0, max: 86400 }),
             integer({ min: 1, max: 10 }),
             integer({ min: 1, max: 10 }),
-            integer({ min: 100, max: 1_000 }).map((x) =>
+            integer({ min: 100_000, max: 1_000_000 }).map((x) =>
                 BigNumber.from(x.toString())
             ),
-            integer({ min: 10 ** 4, max: 10 ** 5 }).map((x) =>
+            integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
                 BigNumber.from(x.toString())
             ),
             async (
@@ -248,7 +248,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(
                     await this.usdc.balanceOf(this.deployer.address)
                 ).to.be.equal(this.usdcSupply);
-                
+
                 return true;
             }
         );
@@ -283,10 +283,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             integer({ min: 0, max: 86400 }),
             integer({ min: 3, max: 10 }),
             integer({ min: 3, max: 10 }),
-            integer({ min: 100, max: 1_000 }).map((x) =>
+            integer({ min: 100_000, max: 1_000_000 }).map((x) =>
                 BigNumber.from(x.toString())
             ),
-            integer({ min: 10 ** 4, max: 10 ** 5 }).map((x) =>
+            integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
                 BigNumber.from(x.toString())
             ),
             async (
