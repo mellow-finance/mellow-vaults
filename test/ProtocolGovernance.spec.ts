@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import {
+    generateSingleParams,
     now,
     randomAddress,
     sleep,
@@ -12,12 +13,13 @@ import Exceptions from "./library/Exceptions";
 import { contract } from "./library/setup";
 import { ParamsStruct, IProtocolGovernance } from "./types/IProtocolGovernance";
 import { address, uint8, uint256, pit, RUNS } from "./library/property";
-import { Arbitrary, tuple, integer } from "fast-check";
+import { Arbitrary, tuple, integer, Random } from "fast-check";
 import { BigNumber } from "ethers";
 import {
     PROTOCOL_GOVERNANCE_INTERFACE_ID,
     VAULT_INTERFACE_ID,
 } from "./library/Constants";
+import assert from "assert";
 
 const MAX_GOVERNANCE_DELAY = BigNumber.from(60 * 60 * 24 * 7);
 
@@ -152,22 +154,18 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: 1 },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (target: string, signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .stagedPermissionGrantsTimestamps(target)
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagedPermissionGrantsTimestamps(
+                                    randomAddress()
+                                )
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -246,22 +244,16 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: 1 },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (target: string, signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .stagedPermissionGrantsMasks(target)
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagedPermissionGrantsMasks(randomAddress())
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -337,22 +329,16 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: 1 },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (target: string, signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .permissionMasks(target)
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .permissionMasks(randomAddress())
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -397,21 +383,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: 1 },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .stagedParamsTimestamp()
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer).stagedParamsTimestamp()
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -450,19 +429,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject.connect(signer).stagedParams()
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer).stagedParams()
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -501,18 +475,13 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 );
             });
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(this.subject.connect(signer).params())
-                                .to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(this.subject.connect(signer).params()).to
+                            .not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -594,21 +563,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x != ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .permissionAddresses()
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer).permissionAddresses()
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -701,21 +663,16 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .stagedPermissionGrantsAddresses()
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagedPermissionGrantsAddresses()
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -791,22 +748,18 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (signerAddress: string, permissionId: BigNumber) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .addressesByPermission(permissionId)
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .addressesByPermission(
+                                    generateSingleParams(uint8)
+                                )
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -906,27 +859,19 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (
-                        target: string,
-                        signerAddress: string,
-                        permissionId: BigNumber
-                    ) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .hasPermission(target, permissionId)
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .hasPermission(
+                                    randomAddress(),
+                                    generateSingleParams(uint8)
+                                )
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
         });
 
@@ -935,16 +880,24 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 `checks if an address has all permissions set to true`,
                 { numRuns: RUNS.verylow },
                 address.filter((x) => x !== ethers.constants.AddressZero),
-                async (target: string) => {
+                uint8,
+                async (target: string, permissionId: BigNumber) => {
+                    expect(
+                        await this.subject.hasAllPermissions(target, [
+                            permissionId,
+                        ])
+                    ).to.be.false;
                     await this.subject
                         .connect(this.admin)
-                        .stagePermissionGrants(target, [0, 1, 2]);
+                        .stagePermissionGrants(target, [permissionId]);
                     await sleep(await this.subject.governanceDelay());
                     await this.subject
                         .connect(this.admin)
                         .commitPermissionGrants(target);
                     expect(
-                        await this.subject.hasAllPermissions(target, [0, 1, 2])
+                        await this.subject.hasAllPermissions(target, [
+                            permissionId,
+                        ])
                     ).to.be.true;
                     return true;
                 }
@@ -952,29 +905,30 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
             describe("properties", () => {
                 pit(
-                    `@property: returns false on random address`,
+                    `returns false on random address`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (target: string) => {
+                    uint8,
+                    async (target: string, permissionId: BigNumber) => {
                         expect(
-                            await this.subject.hasAllPermissions(
-                                target,
-                                [0, 1, 2]
-                            )
+                            await this.subject.hasAllPermissions(target, [
+                                permissionId,
+                            ])
                         ).to.be.false;
                         return true;
                     }
                 );
                 pit(
-                    `@property: is not affected by staged permissions`,
+                    `is not affected by staged permissions`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8.filter((x) => x.lt(20)),
-                    uint8.filter((x) => x.gt(20)),
+                    tuple(uint8, uint8).filter(([x, y]) => x != y),
                     async (
                         target: string,
-                        grantedPermissionId: BigNumber,
-                        stagedPermissionId: BigNumber
+                        [grantedPermissionId, stagedPermissionId]: [
+                            BigNumber,
+                            BigNumber
+                        ]
                     ) => {
                         await this.subject
                             .connect(this.admin)
@@ -1007,16 +961,17 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     }
                 );
                 pit(
-                    `@property: is affected by committed permissions`,
+                    `is affected by committed permissions`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8.filter((x) => x.gt(0)),
+                    uint8,
                     async (target: string, grantedPermissionId: BigNumber) => {
-                        expect(
-                            await this.subject.hasAllPermissions(target, [
+                        assert(
+                            !(await this.subject.hasAllPermissions(target, [
                                 grantedPermissionId,
-                            ])
-                        ).to.be.false;
+                            ])),
+                            "Target address mustn't have permission with index grantedPermissionId"
+                        );
 
                         await this.subject
                             .connect(this.admin)
@@ -1037,14 +992,17 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     }
                 );
                 pit(
-                    `@property: returns true for any address when forceAllowMask is set to true`,
+                    `returns true for any address when forceAllowMask is set to true`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8.filter((x) => x.gt(0) && x.lt(20)),
+                    tuple(uint8, uint8).filter(([x, y]) => x.gt(y)),
                     paramsArb,
                     async (
                         target: string,
-                        permissionsCount: BigNumber,
+                        [permissionsCount, grantedPermissionId]: [
+                            BigNumber,
+                            BigNumber
+                        ],
                         params: ParamsStruct
                     ) => {
                         params.forceAllowMask = BigNumber.from(2)
@@ -1060,32 +1018,33 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             permissionIdList.push(i);
                         }
                         expect(
+                            await this.subject.hasAllPermissions(target, [
+                                grantedPermissionId,
+                            ])
+                        ).to.be.true;
+                        expect(
                             await this.subject.hasAllPermissions(
                                 target,
                                 permissionIdList
                             )
-                        ).to.be.ok;
+                        ).to.be.true;
                         return true;
                     }
                 );
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: any address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .hasAllPermissions(signerAddress, [])
-                            ).to.not.be.reverted;
-                        });
-                        return true;
-                    }
-                );
+                it("allowed: any address", async () => {
+                    let signerAddress = randomAddress();
+                    await withSigner(signerAddress, async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .hasAllPermissions(signerAddress, [])
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
             });
 
             describe("edge cases", () => {
@@ -1104,7 +1063,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         xdescribe("#forceAllowMask", () => {});
 
         describe("#supportsInterface", () => {
-            it("returns true if this contract supports a certain interface", async () => {
+            it(`returns true for IProtocolGovernance interface (${PROTOCOL_GOVERNANCE_INTERFACE_ID})`, async () => {
                 expect(
                     await this.subject.supportsInterface(
                         PROTOCOL_GOVERNANCE_INTERFACE_ID
@@ -1183,21 +1142,16 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .rollbackAllPermissionGrants()
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
-                pit(
-                    `denied: random address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .rollbackAllPermissionGrants()
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        });
-                        return true;
-                    }
-                );
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .rollbackAllPermissionGrants()
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                });
             });
         });
 
@@ -1305,24 +1259,18 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stagePermissionGrants(this.deployer.address, [0])
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
-                pit(
-                    `denied: random address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .stagePermissionGrants(
-                                        this.deployer.address,
-                                        [0]
-                                    )
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        });
-                        return true;
-                    }
-                );
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagePermissionGrants(this.deployer.address, [
+                                    0,
+                                ])
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                });
             });
         });
 
@@ -1417,54 +1365,38 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: protocol admin`,
-                    { numRuns: 1 },
-                    paramsArb,
-                    async (params: ParamsStruct) => {
+                it("allowed: protocol admin", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageParams(generateSingleParams(paramsArb));
+                    await sleep(await this.subject.governanceDelay());
+                    await expect(
+                        this.subject.connect(this.admin).commitParams()
+                    ).to.not.be.reverted;
+                    return true;
+                });
+                it("denied: deployer", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageParams(generateSingleParams(paramsArb));
+                    await sleep(await this.subject.governanceDelay());
+                    await expect(
+                        this.subject.connect(this.deployer).commitParams()
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    return true;
+                });
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
                         await this.subject
                             .connect(this.admin)
-                            .stageParams(params);
+                            .stageParams(generateSingleParams(paramsArb));
                         await sleep(await this.subject.governanceDelay());
                         await expect(
-                            this.subject.connect(this.admin).commitParams()
-                        ).to.not.be.reverted;
-                        return true;
-                    }
-                );
-                pit(
-                    `denied: deployer`,
-                    { numRuns: 1 },
-                    paramsArb,
-                    async (params: ParamsStruct) => {
-                        await this.subject
-                            .connect(this.admin)
-                            .stageParams(params);
-                        await sleep(await this.subject.governanceDelay());
-                        await expect(
-                            this.subject.connect(this.deployer).commitParams()
+                            this.subject.connect(signer).commitParams()
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        return true;
-                    }
-                );
-                pit(
-                    `denied: random address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    paramsArb,
-                    async (signerAddress: string, params: ParamsStruct) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await this.subject
-                                .connect(this.admin)
-                                .stageParams(params);
-                            await sleep(await this.subject.governanceDelay());
-                            await expect(
-                                this.subject.connect(signer).commitParams()
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        });
-                        return true;
-                    }
-                );
+                    });
+                    return true;
+                });
             });
         });
 
@@ -1521,24 +1453,18 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stagePermissionGrants(this.deployer.address, [])
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
-                pit(
-                    `denied: random address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    async (signerAddress: string) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .stagePermissionGrants(
-                                        this.deployer.address,
-                                        []
-                                    )
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        });
-                        return true;
-                    }
-                );
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagePermissionGrants(
+                                    this.deployer.address,
+                                    []
+                                )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
             });
         });
 
@@ -1613,31 +1539,24 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("access control", () => {
-                pit(
-                    `allowed: admin`,
-                    { numRuns: 1 },
-                    paramsArb,
-                    async (params: ParamsStruct) => {
+                it("allowed: admin", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageParams(generateSingleParams(paramsArb))
+                    ).to.not.be.reverted;
+                    return true;
+                });
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
                         await expect(
-                            this.subject.connect(this.admin).stageParams(params)
-                        ).to.not.be.reverted;
-                        return true;
-                    }
-                );
-                pit(
-                    `denied: random address`,
-                    { numRuns: RUNS.verylow },
-                    address.filter((x) => x !== ethers.constants.AddressZero),
-                    paramsArb,
-                    async (signerAddress: string, params: ParamsStruct) => {
-                        await withSigner(signerAddress, async (signer) => {
-                            await expect(
-                                this.subject.connect(signer).stageParams(params)
-                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                        });
-                        return true;
-                    }
-                );
+                            this.subject
+                                .connect(signer)
+                                .stageParams(generateSingleParams(paramsArb))
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                });
             });
         });
     }
