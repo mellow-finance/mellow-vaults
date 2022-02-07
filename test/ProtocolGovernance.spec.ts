@@ -525,7 +525,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 pit(
                     `doesn't update when committed permission grant for an existing address`,
                     { numRuns: RUNS.verylow },
-                    address.filter((x) => x != ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8.filter((x) => x.lt(100)),
                     uint8.filter((x) => x.gte(100)),
                     async (
@@ -677,7 +677,26 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#addressesByPermission", () => {
-            xit("returns addresses that has the given raw permission set to true", async () => {});
+            pit(
+                `returns addresses that has the given permission set to true`,
+                { numRuns: RUNS.verylow },
+                address.filter((x) => x !== ethers.constants.AddressZero),
+                uint8,
+                async (targetAddress: string, permissionId: BigNumber) => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stagePermissionGrants(targetAddress, [permissionId]);
+                    await sleep(await this.subject.governanceDelay());
+                    await this.subject
+                        .connect(this.admin)
+                        .commitPermissionGrants(targetAddress);
+
+                    expect(
+                        await this.subject.addressesByPermission(permissionId)
+                    ).to.contain(targetAddress);
+                    return true;
+                }
+            );
 
             describe("properties", () => {
                 pit(
@@ -903,7 +922,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 }
             );
 
-            describe.only("properties", () => {
+            describe("properties", () => {
                 pit(
                     `returns false on random address`,
                     { numRuns: RUNS.verylow },
@@ -1049,18 +1068,93 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
             describe("edge cases", () => {
                 describe("on unknown permission id", () => {
-                    xit("returns false", async () => {});
+                    pit(
+                        `returns false`,
+                        { numRuns: RUNS.verylow },
+                        address.filter(
+                            (x) => x !== ethers.constants.AddressZero
+                        ),
+                        uint8.filter((x) => x.gt(240)),
+                        async (target: string, permissionId: BigNumber) => {
+                            expect(
+                                await this.subject.hasAllPermissions(target, [
+                                    permissionId,
+                                ])
+                            ).to.be.false;
+                            return true;
+                        }
+                    );
                 });
             });
         });
 
-        xdescribe("#maxTokensPerVault", () => {});
+        describe("#maxTokensPerVault", () => {
+            pit(
+                `returns correct value`,
+                { numRuns: RUNS.verylow },
+                paramsArb,
+                async (params: ParamsStruct) => {
+                    await this.subject.connect(this.admin).stageParams(params);
+                    await sleep(await this.subject.governanceDelay());
+                    await this.subject.connect(this.admin).commitParams();
+                    expect(
+                        await this.subject.maxTokensPerVault()
+                    ).to.deep.equal(params.maxTokensPerVault);
+                    return true;
+                }
+            );
+        });
 
-        xdescribe("#governanceDelay", () => {});
+        describe("#governanceDelay", () => {
+            pit(
+                `returns correct value`,
+                { numRuns: RUNS.verylow },
+                paramsArb,
+                async (params: ParamsStruct) => {
+                    await this.subject.connect(this.admin).stageParams(params);
+                    await sleep(await this.subject.governanceDelay());
+                    await this.subject.connect(this.admin).commitParams();
+                    expect(await this.subject.governanceDelay()).to.deep.equal(
+                        params.governanceDelay
+                    );
+                    return true;
+                }
+            );
+        });
 
-        xdescribe("#protocolTreasury", () => {});
+        describe("#protocolTreasury", () => {
+            pit(
+                `returns correct value`,
+                { numRuns: RUNS.verylow },
+                paramsArb,
+                async (params: ParamsStruct) => {
+                    await this.subject.connect(this.admin).stageParams(params);
+                    await sleep(await this.subject.governanceDelay());
+                    await this.subject.connect(this.admin).commitParams();
+                    expect(await this.subject.protocolTreasury()).to.deep.equal(
+                        params.protocolTreasury
+                    );
+                    return true;
+                }
+            );
+        });
 
-        xdescribe("#forceAllowMask", () => {});
+        describe("#forceAllowMask", () => {
+            pit(
+                `returns correct value`,
+                { numRuns: RUNS.verylow },
+                paramsArb,
+                async (params: ParamsStruct) => {
+                    await this.subject.connect(this.admin).stageParams(params);
+                    await sleep(await this.subject.governanceDelay());
+                    await this.subject.connect(this.admin).commitParams();
+                    expect(await this.subject.forceAllowMask()).to.deep.equal(
+                        params.forceAllowMask
+                    );
+                    return true;
+                }
+            );
+        });
 
         describe("#supportsInterface", () => {
             it(`returns true for IProtocolGovernance interface (${PROTOCOL_GOVERNANCE_INTERFACE_ID})`, async () => {
