@@ -903,7 +903,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 }
             );
 
-            describe("properties", () => {
+            describe.only("properties", () => {
                 pit(
                     `returns false on random address`,
                     { numRuns: RUNS.verylow },
@@ -922,7 +922,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `is not affected by staged permissions`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    tuple(uint8, uint8).filter(([x, y]) => x != y),
+                    tuple(uint8, uint8).filter(([x, y]) => !x.eq(y)),
                     async (
                         target: string,
                         [grantedPermissionId, stagedPermissionId]: [
