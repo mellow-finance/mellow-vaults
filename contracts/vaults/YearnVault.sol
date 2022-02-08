@@ -102,8 +102,8 @@ contract YearnVault is IYearnVault, IntegrationVault {
             if (tokenAmounts[i] == 0) continue;
 
             IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
-            uint256 balance = yToken.balanceOf(address(this));
             uint256 yTokenAmount = FullMath.mulDiv(tokenAmounts[i], (10**yToken.decimals()), yToken.pricePerShare());
+            uint256 balance = yToken.balanceOf(address(this));
             if (yTokenAmount > balance) {
                 yTokenAmount = balance;
             }

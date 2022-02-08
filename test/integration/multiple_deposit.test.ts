@@ -20,8 +20,8 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     yearnVault: YearnVault;
     erc20RootVaultNft: number;
-    usdcSupply: BigNumber;
-    wethSupply: BigNumber;
+    usdcDeveloperSupply: BigNumber;
+    wethDeveloperSupply: BigNumber;
     strategyTreasury: Address;
     strategyPerformanceTreasury: Address;
 };
@@ -106,11 +106,23 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethSupply = BigNumber.from(10).pow(20).mul(5);
-                    this.usdcSupply = BigNumber.from(10).pow(20).mul(5);
+                    this.wethDeveloperSupply = BigNumber.from(10)
+                        .pow(20)
+                        .mul(5);
+                    this.usdcDeveloperSupply = BigNumber.from(10)
+                        .pow(20)
+                        .mul(5);
 
-                    await mint("USDC", this.deployer.address, this.usdcSupply);
-                    await mint("WETH", this.deployer.address, this.wethSupply);
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        this.usdcDeveloperSupply
+                    );
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        this.wethDeveloperSupply
+                    );
 
                     await this.weth.approve(
                         this.subject.address,
@@ -153,11 +165,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         pit(
             `
-            multiple assymetric deposit + multiple assymetric withdraw with zero fees\n
-            sum of deposit[i] = sum of withdraw[j]
+            when fees are zero, sum of deposit[i] = sum of withdraw[j]
         `,
-            { numRuns: RUNS.verylow, endOnFailure: true },
-            integer({ min: 0, max: 86400 }),
+            { numRuns: RUNS.mid, endOnFailure: true },
             integer({ min: 1, max: 10 }),
             integer({ min: 1, max: 10 }),
             integer({ min: 100_000, max: 1_000_000 }).map((x) =>
@@ -167,12 +177,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 BigNumber.from(x.toString())
             ),
             async (
-                delay: number,
                 numDeposits: number,
                 numWithdraws: number,
                 amountUSDC: BigNumber,
                 amountWETH: BigNumber
             ) => {
+                let lpAmounts: BigNumber[] = [];
+                expect(
+                    await this.subject.balanceOf(this.deployer.address)
+                ).to.deep.equal(BigNumber.from(0));
                 for (var i = 0; i < numDeposits; ++i) {
                     await this.subject
                         .connect(this.deployer)
@@ -183,6 +196,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             ],
                             0
                         );
+                    lpAmounts.push(
+                        await this.subject.balanceOf(this.deployer.address)
+                    );
+                }
+
+                for (var i = 1; i < numDeposits; ++i) {
+                    expect(lpAmounts[i].sub(lpAmounts[i - 1])).to.be.equal(
+                        lpAmounts[0]
+                    );
                 }
 
                 const lpTokensAmount = await this.subject.balanceOf(
@@ -200,8 +222,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(erc20_tvl[0][1].add(yearn_tvl[0][1])).to.deep.equals(
                     root_tvl[0][1]
                 );
-
-                await sleep(delay);
 
                 let tokenAmounts = [0, 0];
                 for (var i = 0; i < numWithdraws; ++i) {
@@ -243,11 +263,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 expect(
                     await this.weth.balanceOf(this.deployer.address)
-                ).to.be.equal(this.wethSupply);
+                ).to.be.equal(this.wethDeveloperSupply);
 
                 expect(
                     await this.usdc.balanceOf(this.deployer.address)
-                ).to.be.equal(this.usdcSupply);
+                ).to.be.equal(this.usdcDeveloperSupply);
 
                 return true;
             }
@@ -276,10 +296,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         pit(
             `
-        multiple assymetric deposit + multiple assymetric withdraw with non-zero fees\n
-        sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
+        when feez are not zero, sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
         `,
-            { numRuns: RUNS.verylow, endOnFailure: true },
+            { numRuns: RUNS.mid, endOnFailure: true },
             integer({ min: 0, max: 86400 }),
             integer({ min: 3, max: 10 }),
             integer({ min: 3, max: 10 }),
@@ -328,10 +347,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
                 expect(
                     await this.weth.balanceOf(this.deployer.address)
-                ).to.not.be.equal(this.wethSupply);
+                ).to.not.be.equal(this.wethDeveloperSupply);
                 expect(
                     await this.usdc.balanceOf(this.deployer.address)
-                ).to.not.be.equal(this.usdcSupply);
+                ).to.not.be.equal(this.usdcDeveloperSupply);
 
                 let erc20_tvl = await this.erc20Vault.tvl();
                 let yearn_tvl = await this.yearnVault.tvl();
@@ -405,7 +424,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                         )
                         .add(await this.weth.balanceOf(protocolTreasury))
-                ).to.be.equal(this.wethSupply);
+                ).to.be.equal(this.wethDeveloperSupply);
                 expect(
                     (await this.usdc.balanceOf(this.deployer.address))
                         .add(await this.usdc.balanceOf(strategyTreasury))
@@ -415,7 +434,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                         )
                         .add(await this.usdc.balanceOf(protocolTreasury))
-                ).to.be.equal(this.usdcSupply);
+                ).to.be.equal(this.usdcDeveloperSupply);
                 return true;
             }
         );

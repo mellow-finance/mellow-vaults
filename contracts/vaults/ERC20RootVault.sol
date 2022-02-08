@@ -208,11 +208,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             // skip normalization on init
             return amount;
         }
+
         // normalize amount
         uint256 res = FullMath.mulDiv(tvl_, lpAmount, supply);
         if (res > amount) {
             res = amount;
         }
+
         return res;
     }
 
