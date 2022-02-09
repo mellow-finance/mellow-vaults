@@ -591,15 +591,18 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             it("returns correct value", async () => {
                 let targetAddress = randomAddress();
                 let validatorAddress = randomAddress();
-                let validatorIndex = (await this.subject.validatorsAddresses()).length;
+                let validatorIndex = (await this.subject.validatorsAddresses())
+                    .length;
                 await this.subject
-                            .connect(this.admin)
-                            .stageValidator(targetAddress, validatorAddress);
+                    .connect(this.admin)
+                    .stageValidator(targetAddress, validatorAddress);
                 await sleep(await this.subject.governanceDelay());
                 await this.subject
                     .connect(this.admin)
                     .commitValidator(targetAddress);
-                expect(await this.subject.validatorsAddress(validatorIndex)).to.deep.equal(targetAddress);
+                expect(
+                    await this.subject.validatorsAddress(validatorIndex)
+                ).to.deep.equal(targetAddress);
             });
         });
 
@@ -1389,8 +1392,12 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 await this.subject.connect(this.admin).stageParams(params);
                 await sleep(await this.subject.governanceDelay());
                 await this.subject.connect(this.admin).commitParams();
-                expect(await this.subject.withdrawLimit(this.usdc.address)).to.deep.equal(
-                    BigNumber.from(params.withdrawLimit).mul(BigNumber.from(10).pow(6))
+                expect(
+                    await this.subject.withdrawLimit(this.usdc.address)
+                ).to.deep.equal(
+                    BigNumber.from(params.withdrawLimit).mul(
+                        BigNumber.from(10).pow(6)
+                    )
                 );
                 return true;
             });
@@ -2093,9 +2100,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await expect(
                             this.subject
                                 .connect(this.admin)
-                                .revokeValidator(
-                                    ethers.constants.AddressZero,
-                                )
+                                .revokeValidator(ethers.constants.AddressZero)
                         ).to.be.revertedWith(Exceptions.NULL);
                         return true;
                     });
