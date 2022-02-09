@@ -34,6 +34,16 @@ function maskByPermissionIds(permissionIds: BigNumber[]): BigNumber {
     return mask;
 }
 
+function permissionIdsByMask(mask: BigNumber): BigNumber[] {
+    let permissionIds = [];
+    for (let permissionId = 0; permissionId < 256; ++permissionId) {
+        if (mask.shr(permissionId).and(1).eq(1)) {
+            permissionIds.push(BigNumber.from(permissionId));
+        }
+    }
+    return permissionIds;
+}
+
 const paramsArb: Arbitrary<ParamsStruct> = tuple(
     integer({ min: 1, max: 100 }),
     integer({ min: 1, max: 86400 }),
@@ -343,34 +353,28 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#stagedParamsTimestamp", () => {
-            pit(
-                `timestamp equals #stageParams's block.timestamp + governanceDelay`,
-                { numRuns: 1 },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    const governanceDelay: BigNumber =
-                        await this.subject.governanceDelay();
-                    await this.subject.connect(this.admin).stageParams(params);
-                    expect(await this.subject.stagedParamsTimestamp()).to.eql(
-                        governanceDelay.add(this.startTimestamp).add(1)
-                    );
-                    return true;
-                }
-            );
-            pit(
-                `clears by #commitParams`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).stageParams(params);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject.connect(this.admin).commitParams();
-                    expect(
-                        await this.subject.stagedParamsTimestamp()
-                    ).to.deep.equal(BigNumber.from(0));
-                    return true;
-                }
-            );
+            it("timestamp equals #stageParams's block.timestamp + governanceDelay", async () => {
+                const governanceDelay: BigNumber =
+                    await this.subject.governanceDelay();
+                await this.subject
+                    .connect(this.admin)
+                    .stageParams(generateSingleParams(paramsArb));
+                expect(await this.subject.stagedParamsTimestamp()).to.eql(
+                    governanceDelay.add(this.startTimestamp).add(1)
+                );
+                return true;
+            });
+            it("clears by #commitParams", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageParams(generateSingleParams(paramsArb));
+                await sleep(await this.subject.governanceDelay());
+                await this.subject.connect(this.admin).commitParams();
+                expect(
+                    await this.subject.stagedParamsTimestamp()
+                ).to.deep.equal(BigNumber.from(0));
+                return true;
+            });
 
             describe("edge cases", () => {
                 describe("when nothing is set", () => {
@@ -499,13 +503,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `updates when committed permission grant for a new address`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (target: string, permissionId: BigNumber) => {
+                    uint256.filter((x) => x.gt(0)),
+                    async (target: string, permissionMask: BigNumber) => {
                         const initialPermissionAddresses =
                             await this.subject.permissionAddresses();
+                        let permissionIds = permissionIdsByMask(permissionMask);
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId]);
+                            .stagePermissionGrants(target, permissionIds);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
@@ -515,7 +520,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         );
                         await this.subject
                             .connect(this.admin)
-                            .revokePermissions(target, [permissionId]);
+                            .revokePermissions(target, permissionIds);
                         expect(await this.subject.permissionAddresses()).to.eql(
                             initialPermissionAddresses
                         );
@@ -526,18 +531,25 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `doesn't update when committed permission grant for an existing address`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8.filter((x) => x.lt(100)),
-                    uint8.filter((x) => x.gte(100)),
+                    tuple(uint256, uint256).filter(
+                        ([x, y]) => !x.or(y).eq(x) && x.gt(0)
+                    ),
                     async (
                         target: string,
-                        permissionId: BigNumber,
-                        anotherPermissionId: BigNumber
+                        [permissionMask, anotherPermissionMask]: [
+                            BigNumber,
+                            BigNumber
+                        ]
                     ) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
+                        let anotherPermissionIds = permissionIdsByMask(
+                            anotherPermissionMask
+                        );
                         const initialPermissionAddresses =
                             await this.subject.permissionAddresses();
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId]);
+                            .stagePermissionGrants(target, permissionIds);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
@@ -547,9 +559,10 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         );
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [
-                                anotherPermissionId,
-                            ]);
+                            .stagePermissionGrants(
+                                target,
+                                anotherPermissionIds
+                            );
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
@@ -574,17 +587,97 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
+        describe("#validatorsAddresses", () => {
+            describe("properties", () => {
+                pit(
+                    `updates when committed validator grant for a new address`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (target: string, validatorAddress: string) => {
+                        const initialValidatorsAddresses =
+                            await this.subject.validatorsAddresses();
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, validatorAddress);
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitValidator(target);
+                        expect(await this.subject.validatorsAddresses()).to.eql(
+                            initialValidatorsAddresses.concat([target])
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .revokeValidator(target);
+                        expect(await this.subject.validatorsAddresses()).to.eql(
+                            initialValidatorsAddresses
+                        );
+                        return true;
+                    }
+                );
+                pit(
+                    `doesn't update when committed validator grant for an existing address`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (
+                        target: string,
+                        validatorAddress: string,
+                        anotherValidatorAddress: string
+                    ) => {
+                        const initialValidatorsAddresses =
+                            await this.subject.validatorsAddresses();
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, validatorAddress);
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitValidator(target);
+                        expect(await this.subject.validatorsAddresses()).to.eql(
+                            initialValidatorsAddresses.concat([target])
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, anotherValidatorAddress);
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitValidator(target);
+                        expect(await this.subject.validatorsAddresses()).to.eql(
+                            initialValidatorsAddresses.concat([target])
+                        );
+                        return true;
+                    }
+                );
+            });
+
+            describe("access control", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer).validatorsAddresses()
+                        ).to.not.be.reverted;
+                    });
+                    return true;
+                });
+            });
+        });
+
         describe("#stagedPermissionGrantsAddresses", () => {
             describe("properties", () => {
                 pit(
                     `updates when staged permission grant for a new address`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (target: string, permissionId: BigNumber) => {
+                    uint256.filter((x) => x.gt(0)),
+                    async (target: string, permissionMask: BigNumber) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId]);
+                            .stagePermissionGrants(target, permissionIds);
                         expect(
                             await this.subject.stagedPermissionGrantsAddresses()
                         ).to.contain(target);
@@ -595,31 +688,40 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `doesn't update when staged permission grant for an existing address`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8.filter((x) => x.lt(100)),
-                    uint8.filter((x) => x.gte(100)),
+                    tuple(uint256, uint256).filter(
+                        ([x, y]) => !x.or(y).eq(x) && x.gt(0)
+                    ),
                     async (
                         target: string,
-                        permissionId: BigNumber,
-                        anotherPermissionId: BigNumber
+                        [stagedPermissionMask, anotherStagedPermissionMask]: [
+                            BigNumber,
+                            BigNumber
+                        ]
                     ) => {
-                        const initialPermissionAddresses =
-                            await this.subject.stagedPermissionGrantsAddresses();
+                        let stagedPermissionIds =
+                            permissionIdsByMask(stagedPermissionMask);
+                        let anotherStagedPermissionIds = permissionIdsByMask(
+                            anotherStagedPermissionMask
+                        );
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId]);
+                            .stagePermissionGrants(target, stagedPermissionIds);
                         expect(
                             await this.subject.stagedPermissionGrantsAddresses()
                         ).to.contain(target);
+                        const currentPermissionAddresses =
+                            await this.subject.stagedPermissionGrantsAddresses();
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [
-                                anotherPermissionId,
-                            ]);
-                        const permissionAddresses =
-                            await this.subject.permissionAddresses();
-                        expect(permissionAddresses.length).to.eql(
-                            permissionAddresses.length
-                        );
+                            .stagePermissionGrants(
+                                target,
+                                anotherStagedPermissionIds
+                            );
+                        expect(
+                            (
+                                await this.subject.stagedPermissionGrantsAddresses()
+                            ).length
+                        ).to.eql(currentPermissionAddresses.length);
                         return true;
                     }
                 );
@@ -627,11 +729,12 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `clears by #commitPermissionGrants`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (target: string, permissionId: BigNumber) => {
+                    uint256.filter((x) => x.gt(0)),
+                    async (target: string, permissionMask: BigNumber) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId]);
+                            .stagePermissionGrants(target, permissionIds);
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
@@ -646,11 +749,12 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `clears by #rollbackAllPermissionGrants`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (target: string, permissionId: BigNumber) => {
+                    uint256.filter((x) => x.gt(0)),
+                    async (target: string, permissionMask: BigNumber) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId]);
+                            .stagePermissionGrants(target, permissionIds);
                         await this.subject
                             .connect(this.admin)
                             .rollbackAllPermissionGrants();
@@ -676,27 +780,122 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#addressesByPermission", () => {
-            pit(
-                `returns addresses that has the given permission set to true`,
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8,
-                async (targetAddress: string, permissionId: BigNumber) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stagePermissionGrants(targetAddress, [permissionId]);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject
-                        .connect(this.admin)
-                        .commitPermissionGrants(targetAddress);
+        describe("#stagedValidatorsAddresses", () => {
+            describe("properties", () => {
+                pit(
+                    `updates when validator grant for a new address`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (target: string, validatorAddress: string) => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, validatorAddress);
+                        expect(
+                            await this.subject.stagedValidatorsAddresses()
+                        ).to.contain(target);
+                        return true;
+                    }
+                );
+                pit(
+                    `doesn't update when staged validator grant for an existing address`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (
+                        target: string,
+                        validatorAddress: string,
+                        anotherValidatorAddress: string
+                    ) => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, validatorAddress);
+                        expect(
+                            await this.subject.stagedValidatorsAddresses()
+                        ).to.contain(target);
+                        const currentValidatorAddresses =
+                            await this.subject.stagedValidatorsAddresses();
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, anotherValidatorAddress);
+                        expect(
+                            (await this.subject.stagedValidatorsAddresses())
+                                .length
+                        ).to.eql(currentValidatorAddresses.length);
+                        return true;
+                    }
+                );
+                pit(
+                    `clears by #commitValidator`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (target: string, validatorAddress: string) => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, validatorAddress);
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitValidator(target);
+                        expect(
+                            await this.subject.stagedValidatorsAddresses()
+                        ).to.eql([]);
+                        return true;
+                    }
+                );
+                pit(
+                    `clears by #rollbackStagedValidators`,
+                    { numRuns: RUNS.verylow },
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (target: string, validatorAddress: string) => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(target, validatorAddress);
+                        await this.subject
+                            .connect(this.admin)
+                            .rollbackStagedValidators();
+                        expect(
+                            await this.subject.stagedValidatorsAddresses()
+                        ).to.eql([]);
+                        return true;
+                    }
+                );
+            });
 
-                    expect(
-                        await this.subject.addressesByPermission(permissionId)
-                    ).to.contain(targetAddress);
+            describe("access control", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagedValidatorsAddresses()
+                        ).to.not.be.reverted;
+                    });
                     return true;
-                }
-            );
+                });
+            });
+        });
+
+        describe("#addressesByPermission", () => {
+            it("returns addresses that has the given permission set to true", async () => {
+                let targetAddress = randomAddress();
+                let permissionId = generateSingleParams(uint8);
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, [permissionId]);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitPermissionGrants(targetAddress);
+
+                expect(
+                    await this.subject.addressesByPermission(permissionId)
+                ).to.contain(targetAddress);
+                return true;
+            });
 
             describe("properties", () => {
                 pit(
@@ -803,12 +1002,15 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `returns false on known address for unknown permissionId`,
                     { numRuns: RUNS.verylow },
                     address,
-                    uint8.filter((x) => x.lte(100)),
-                    uint8.filter((x) => x.gt(100)),
+                    tuple(uint8, uint8).filter(
+                        ([x, y]) => !x.eq(y) && y.gt(100)
+                    ),
                     async (
                         target: string,
-                        permissionId: BigNumber,
-                        anotherPermissionId: BigNumber
+                        [permissionId, anotherPermissionId]: [
+                            BigNumber,
+                            BigNumber
+                        ]
                     ) => {
                         await this.subject
                             .connect(this.admin)
@@ -895,44 +1097,46 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#hasAllPermissions", () => {
-            pit(
-                `checks if an address has all permissions set to true`,
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8,
-                async (target: string, permissionId: BigNumber) => {
-                    expect(
-                        await this.subject.hasAllPermissions(target, [
-                            permissionId,
-                        ])
-                    ).to.be.false;
-                    await this.subject
-                        .connect(this.admin)
-                        .stagePermissionGrants(target, [permissionId]);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject
-                        .connect(this.admin)
-                        .commitPermissionGrants(target);
-                    expect(
-                        await this.subject.hasAllPermissions(target, [
-                            permissionId,
-                        ])
-                    ).to.be.true;
-                    return true;
-                }
-            );
+            it(`checks if an address has all permissions set to true`, async () => {
+                let targetAddress = randomAddress();
+                let permissionIds = permissionIdsByMask(
+                    generateSingleParams(uint256.filter((x) => x.gt(0)))
+                );
+                expect(
+                    await this.subject.hasAllPermissions(
+                        targetAddress,
+                        permissionIds
+                    )
+                ).to.be.false;
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, permissionIds);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitPermissionGrants(targetAddress);
+                expect(
+                    await this.subject.hasAllPermissions(
+                        targetAddress,
+                        permissionIds
+                    )
+                ).to.be.true;
+                return true;
+            });
 
             describe("properties", () => {
                 pit(
                     `returns false on random address`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (target: string, permissionId: BigNumber) => {
+                    uint256.filter((x) => x.gt(0)),
+                    async (target: string, permissionMask: BigNumber) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
                         expect(
-                            await this.subject.hasAllPermissions(target, [
-                                permissionId,
-                            ])
+                            await this.subject.hasAllPermissions(
+                                target,
+                                permissionIds
+                            )
                         ).to.be.false;
                         return true;
                     }
@@ -941,19 +1145,27 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `is not affected by staged permissions`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    tuple(uint8, uint8).filter(([x, y]) => !x.eq(y)),
+                    tuple(uint256, uint256).filter(
+                        ([x, y]) => !x.or(y).eq(x) && x.gt(0)
+                    ),
                     async (
                         target: string,
-                        [grantedPermissionId, stagedPermissionId]: [
+                        [grantedPermissionMask, stagedPermissionMask]: [
                             BigNumber,
                             BigNumber
                         ]
                     ) => {
+                        let grantedPermissionIds = permissionIdsByMask(
+                            grantedPermissionMask
+                        );
+                        let stagedPermissionIds =
+                            permissionIdsByMask(stagedPermissionMask);
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [
-                                grantedPermissionId,
-                            ]);
+                            .stagePermissionGrants(
+                                target,
+                                grantedPermissionIds
+                            );
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
@@ -961,20 +1173,23 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [
-                                stagedPermissionId,
-                            ]);
+                            .stagePermissionGrants(target, stagedPermissionIds);
 
                         expect(
-                            await this.subject.hasAllPermissions(target, [
-                                grantedPermissionId,
-                            ])
+                            await this.subject.hasAllPermissions(
+                                target,
+                                grantedPermissionIds
+                            )
                         ).to.be.true;
                         expect(
-                            await this.subject.hasAllPermissions(target, [
-                                grantedPermissionId,
-                                stagedPermissionId,
-                            ])
+                            await this.subject.hasAllPermissions(
+                                target,
+                                permissionIdsByMask(
+                                    grantedPermissionMask.or(
+                                        stagedPermissionMask
+                                    )
+                                )
+                            )
                         ).to.be.false;
                         return true;
                     }
@@ -983,29 +1198,38 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `is affected by committed permissions`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint8,
-                    async (target: string, grantedPermissionId: BigNumber) => {
+                    uint256,
+                    async (
+                        target: string,
+                        grantedPermissionMask: BigNumber
+                    ) => {
+                        let grantedPermissionIds = permissionIdsByMask(
+                            grantedPermissionMask
+                        );
                         assert(
-                            !(await this.subject.hasAllPermissions(target, [
-                                grantedPermissionId,
-                            ])),
+                            !(await this.subject.hasAllPermissions(
+                                target,
+                                grantedPermissionIds
+                            )),
                             "Target address mustn't have permission with index grantedPermissionId"
                         );
 
                         await this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(target, [
-                                grantedPermissionId,
-                            ]);
+                            .stagePermissionGrants(
+                                target,
+                                grantedPermissionIds
+                            );
                         await sleep(await this.subject.governanceDelay());
                         await this.subject
                             .connect(this.admin)
                             .commitPermissionGrants(target);
 
                         expect(
-                            await this.subject.hasAllPermissions(target, [
-                                grantedPermissionId,
-                            ])
+                            await this.subject.hasAllPermissions(
+                                target,
+                                grantedPermissionIds
+                            )
                         ).to.be.true;
                         return true;
                     }
@@ -1014,16 +1238,21 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `returns true for any address when forceAllowMask is set to true`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    tuple(uint8, uint8).filter(([x, y]) => x.gt(y)),
+                    tuple(uint8, uint256).filter(([x, y]) =>
+                        BigNumber.from(1).shl(Number(x)).gt(y)
+                    ),
                     paramsArb,
                     async (
                         target: string,
-                        [permissionsCount, grantedPermissionId]: [
+                        [permissionsCount, grantedPermissionMask]: [
                             BigNumber,
                             BigNumber
                         ],
                         params: ParamsStruct
                     ) => {
+                        let grantedPermissionIds = permissionIdsByMask(
+                            grantedPermissionMask
+                        );
                         params.forceAllowMask = BigNumber.from(2)
                             .pow(permissionsCount)
                             .sub(1);
@@ -1037,9 +1266,10 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             permissionIdList.push(i);
                         }
                         expect(
-                            await this.subject.hasAllPermissions(target, [
-                                grantedPermissionId,
-                            ])
+                            await this.subject.hasAllPermissions(
+                                target,
+                                grantedPermissionIds
+                            )
                         ).to.be.true;
                         expect(
                             await this.subject.hasAllPermissions(
@@ -1068,92 +1298,73 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
             describe("edge cases", () => {
                 describe("on unknown permission id", () => {
-                    pit(
-                        `returns false`,
-                        { numRuns: RUNS.verylow },
-                        address.filter(
-                            (x) => x !== ethers.constants.AddressZero
-                        ),
-                        uint8.filter((x) => x.gt(240)),
-                        async (target: string, permissionId: BigNumber) => {
-                            expect(
-                                await this.subject.hasAllPermissions(target, [
-                                    permissionId,
-                                ])
-                            ).to.be.false;
-                            return true;
-                        }
-                    );
+                    it("returns false", async () => {
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                randomAddress(),
+                                [
+                                    generateSingleParams(
+                                        uint8.filter((x) => x.gt(240))
+                                    ),
+                                ]
+                            )
+                        ).to.be.false;
+                        return true;
+                    });
                 });
             });
         });
 
         describe("#maxTokensPerVault", () => {
-            pit(
-                `returns correct value`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).stageParams(params);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject.connect(this.admin).commitParams();
-                    expect(
-                        await this.subject.maxTokensPerVault()
-                    ).to.deep.equal(params.maxTokensPerVault);
-                    return true;
-                }
-            );
+            it("returns correct value", async () => {
+                let params = generateSingleParams(paramsArb);
+                await this.subject.connect(this.admin).stageParams(params);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject.connect(this.admin).commitParams();
+                expect(await this.subject.maxTokensPerVault()).to.deep.equal(
+                    params.maxTokensPerVault
+                );
+                return true;
+            });
         });
 
         describe("#governanceDelay", () => {
-            pit(
-                `returns correct value`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).stageParams(params);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject.connect(this.admin).commitParams();
-                    expect(await this.subject.governanceDelay()).to.deep.equal(
-                        params.governanceDelay
-                    );
-                    return true;
-                }
-            );
+            it("returns correct value", async () => {
+                let params = generateSingleParams(paramsArb);
+                await this.subject.connect(this.admin).stageParams(params);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject.connect(this.admin).commitParams();
+                expect(await this.subject.governanceDelay()).to.deep.equal(
+                    params.governanceDelay
+                );
+                return true;
+            });
         });
 
         describe("#protocolTreasury", () => {
-            pit(
-                `returns correct value`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).stageParams(params);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject.connect(this.admin).commitParams();
-                    expect(await this.subject.protocolTreasury()).to.deep.equal(
-                        params.protocolTreasury
-                    );
-                    return true;
-                }
-            );
+            it("returns correct value", async () => {
+                let params = generateSingleParams(paramsArb);
+                await this.subject.connect(this.admin).stageParams(params);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject.connect(this.admin).commitParams();
+                expect(await this.subject.protocolTreasury()).to.deep.equal(
+                    params.protocolTreasury
+                );
+                return true;
+            });
         });
 
         describe("#forceAllowMask", () => {
-            pit(
-                `returns correct value`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).stageParams(params);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject.connect(this.admin).commitParams();
-                    expect(await this.subject.forceAllowMask()).to.deep.equal(
-                        params.forceAllowMask
-                    );
-                    return true;
-                }
-            );
+            it("returns correct value", async () => {
+                let params = generateSingleParams(paramsArb);
+                await this.subject.connect(this.admin).stageParams(params);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject.connect(this.admin).commitParams();
+                expect(await this.subject.forceAllowMask()).to.deep.equal(
+                    params.forceAllowMask
+                );
+                return true;
+            });
         });
 
         describe("#supportsInterface", () => {
@@ -1193,26 +1404,27 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#rollbackAllPermissionGrants", () => {
-            pit(
-                "rolls back all staged permission grants",
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8,
-                async (target: string, permissionId: BigNumber) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stagePermissionGrants(target, [permissionId]);
-                    await this.subject
-                        .connect(this.admin)
-                        .rollbackAllPermissionGrants();
-                    expect(await this.subject.stagedPermissionGrantsAddresses())
-                        .to.be.empty;
-                    expect(
-                        await this.subject.stagedPermissionGrantsMasks(target)
-                    ).to.deep.equal(BigNumber.from(0));
-                    return true;
-                }
-            );
+            it("rolls back all staged permission grants", async () => {
+                let targetAddress = randomAddress();
+                let permissionIds = permissionIdsByMask(
+                    generateSingleParams(uint256.filter((x) => x.gt(0)))
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, permissionIds);
+                await this.subject
+                    .connect(this.admin)
+                    .rollbackAllPermissionGrants();
+                expect(await this.subject.stagedPermissionGrantsAddresses()).to
+                    .be.empty;
+                expect(
+                    await this.subject.stagedPermissionGrantsMasks(
+                        targetAddress
+                    )
+                ).to.deep.equal(BigNumber.from(0));
+                return true;
+            });
+
             it("emits AllPermissionGrantsRolledBack event", async () => {
                 await expect(
                     this.subject
@@ -1249,47 +1461,96 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#commitPermissionGrants", () => {
-            pit(
-                `commits staged permission grants`,
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8.filter((x) => x.gt(100)),
-                async (target: string, permissionId: BigNumber) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stagePermissionGrants(target, [permissionId]);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject
-                        .connect(this.admin)
-                        .commitPermissionGrants(target);
-                    expect(
-                        await this.subject.hasPermission(target, permissionId)
-                    ).to.be.true;
-                    expect(
-                        await this.subject.permissionMasks(target)
-                    ).to.deep.equal(maskByPermissionIds([permissionId]));
-                    return true;
-                }
-            );
-            pit(
-                `emits PermissionGrantsCommitted event`,
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8.filter((x) => x.gt(100)),
-                async (target: string, permissionId: BigNumber) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stagePermissionGrants(target, [permissionId]);
-                    await sleep(await this.subject.governanceDelay());
+        describe("#rollbackStagedValidators", () => {
+            it("rolls back all staged validators", async () => {
+                let targetAddress = randomAddress();
+                let validatorAddress = randomAddress();
+                await this.subject
+                    .connect(this.admin)
+                    .stageValidator(targetAddress, validatorAddress);
+                await this.subject
+                    .connect(this.admin)
+                    .rollbackStagedValidators();
+                expect(await this.subject.stagedValidatorsAddresses()).to.be
+                    .empty;
+                return true;
+            });
+
+            it("emits AllStagedValidatorsRolledBack event", async () => {
+                await expect(
+                    this.subject.connect(this.admin).rollbackStagedValidators()
+                ).to.emit(this.subject, "AllStagedValidatorsRolledBack");
+            });
+
+            describe("access control", () => {
+                it("allowed: admin", async () => {
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .commitPermissionGrants(target)
-                    ).to.emit(this.subject, "PermissionGrantsCommitted");
+                            .rollbackStagedValidators()
+                    ).to.not.be.reverted;
+                });
+                it("denied: deployer", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .rollbackStagedValidators()
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .rollbackStagedValidators()
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
                     return true;
-                }
-            );
+                });
+            });
+        });
+
+        describe("#commitPermissionGrants", () => {
+            it("commits staged permission grants", async () => {
+                let targetAddress = randomAddress();
+                let permissionMask = generateSingleParams(
+                    uint256.filter((x) => x.gt(0))
+                );
+                let permissionIds = permissionIdsByMask(permissionMask);
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, permissionIds);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitPermissionGrants(targetAddress);
+                expect(
+                    await this.subject.hasAllPermissions(
+                        targetAddress,
+                        permissionIds
+                    )
+                ).to.be.true;
+                expect(
+                    await this.subject.permissionMasks(targetAddress)
+                ).to.deep.equal(permissionMask);
+                return true;
+            });
+            it("emits PermissionGrantsCommitted event", async () => {
+                let targetAddress = randomAddress();
+                let permissionIds = permissionIdsByMask(
+                    generateSingleParams(uint256.filter((x) => x.gt(0)))
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, permissionIds);
+                await sleep(await this.subject.governanceDelay());
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .commitPermissionGrants(targetAddress)
+                ).to.emit(this.subject, "PermissionGrantsCommitted");
+                return true;
+            });
 
             describe("edge cases", () => {
                 describe("when attempting to commit permissions for zero address", () => {
@@ -1304,7 +1565,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     });
                 });
 
-                describe("when nothigh is staged for the given address", () => {
+                describe("when nothing is staged for the given address", () => {
                     it(`reverts with ${Exceptions.NULL}`, async () => {
                         await expect(
                             this.subject
@@ -1315,26 +1576,293 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 });
 
                 describe("when attempting to commit permissions too early", () => {
-                    pit(
-                        `reverts with ${Exceptions.TIMESTAMP}`,
-                        { numRuns: 1 },
-                        address.filter(
-                            (x) => x !== ethers.constants.AddressZero
-                        ),
-                        uint8,
-                        async (target: string, permissionId: BigNumber) => {
-                            await this.subject
+                    it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
+                        let targetAddress = randomAddress();
+                        let permissionIds = permissionIdsByMask(
+                            generateSingleParams(uint256.filter((x) => x.gt(0)))
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(
+                                targetAddress,
+                                permissionIds
+                            );
+                        await sleep(1);
+                        await expect(
+                            this.subject
                                 .connect(this.admin)
-                                .stagePermissionGrants(target, [permissionId]);
-                            await sleep(1);
-                            await expect(
-                                this.subject
-                                    .connect(this.admin)
-                                    .commitPermissionGrants(target)
-                            ).to.be.revertedWith(Exceptions.TIMESTAMP);
-                            return true;
-                        }
+                                .commitPermissionGrants(targetAddress)
+                        ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                        return true;
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allowed: admin", async () => {
+                    let targetAddress = randomAddress();
+                    let permissionIds = permissionIdsByMask(
+                        generateSingleParams(uint256.filter((x) => x.gt(0)))
                     );
+                    await this.subject
+                        .connect(this.admin)
+                        .stagePermissionGrants(targetAddress, permissionIds);
+                    await sleep(await this.subject.governanceDelay());
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitPermissionGrants(targetAddress)
+                    ).to.not.be.reverted;
+                });
+                it("denied: deployer", async () => {
+                    let targetAddress = randomAddress();
+                    let permissionIds = permissionIdsByMask(
+                        generateSingleParams(uint256.filter((x) => x.gt(0)))
+                    );
+                    await this.subject
+                        .connect(this.admin)
+                        .stagePermissionGrants(targetAddress, permissionIds);
+                    await sleep(await this.subject.governanceDelay());
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .commitPermissionGrants(targetAddress)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+                it("denied: random address", async () => {
+                    let targetAddress = randomAddress();
+                    let permissionIds = permissionIdsByMask(
+                        generateSingleParams(uint256.filter((x) => x.gt(0)))
+                    );
+                    await this.subject
+                        .connect(this.admin)
+                        .stagePermissionGrants(targetAddress, permissionIds);
+                    await sleep(await this.subject.governanceDelay());
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .commitPermissionGrants(targetAddress)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                });
+            });
+        });
+
+        describe("#commitValidator", () => {
+            it("commits staged validators", async () => {
+                let targetAddress = randomAddress();
+                let validatorAddress = randomAddress();
+                await this.subject
+                    .connect(this.admin)
+                    .stageValidator(targetAddress, validatorAddress);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitValidator(targetAddress);
+                expect(await this.subject.validatorsAddresses()).to.contain(
+                    targetAddress
+                );
+                return true;
+            });
+            it("emits ValidatorCommitted event", async () => {
+                let targetAddress = randomAddress();
+                let validatorAddress = randomAddress();
+                await this.subject
+                    .connect(this.admin)
+                    .stageValidator(targetAddress, validatorAddress);
+                await sleep(await this.subject.governanceDelay());
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .commitValidator(targetAddress)
+                ).to.emit(this.subject, "ValidatorCommitted");
+                return true;
+            });
+
+            describe("edge cases", () => {
+                describe("when attempting to commit validator for zero address", () => {
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .commitValidator(ethers.constants.AddressZero)
+                        ).to.be.revertedWith(Exceptions.NULL);
+                    });
+                });
+
+                describe("when nothing is staged for the given address", () => {
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .commitValidator(this.subject.address)
+                        ).to.be.revertedWith(Exceptions.NULL);
+                    });
+                });
+
+                describe("when attempting to commit validator too early", () => {
+                    it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
+                        let targetAddress = randomAddress();
+                        let validatorAddress = randomAddress();
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(targetAddress, validatorAddress);
+                        await sleep(1);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .commitValidator(targetAddress)
+                        ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                        return true;
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allowed: admin", async () => {
+                    let targetAddress = randomAddress();
+                    let validatorAddress = randomAddress();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageValidator(targetAddress, validatorAddress);
+                    await sleep(await this.subject.governanceDelay());
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitValidator(targetAddress)
+                    ).to.not.be.reverted;
+                });
+                it("denied: deployer", async () => {
+                    let targetAddress = randomAddress();
+                    let validatorAddress = randomAddress();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageValidator(targetAddress, validatorAddress);
+                    await sleep(await this.subject.governanceDelay());
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .commitValidator(targetAddress)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+                it("denied: random address", async () => {
+                    let targetAddress = randomAddress();
+                    let validatorAddress = randomAddress();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageValidator(targetAddress, validatorAddress);
+                    await sleep(await this.subject.governanceDelay());
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .commitValidator(targetAddress)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                });
+            });
+        });
+
+        describe("#commitAllPermissionGrantsSurpassedDelay", () => {
+            it("emits PermissionGrantsCommitted event", async () => {
+                let targetAddress = randomAddress();
+                let permissionIds = permissionIdsByMask(
+                    generateSingleParams(uint256.filter((x) => x.gt(0)))
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, permissionIds);
+                await sleep(await this.subject.governanceDelay());
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .commitAllPermissionGrantsSurpassedDelay()
+                ).to.emit(this.subject, "PermissionGrantsCommitted");
+                return true;
+            });
+
+            describe("properties", () => {
+                pit(
+                    `commits all staged permission grants`,
+                    { numRuns: RUNS.verylow },
+                    tuple(address, address).filter(
+                        ([x, y]) =>
+                            x !== y &&
+                            x !== ethers.constants.AddressZero &&
+                            y !== ethers.constants.AddressZero
+                    ),
+                    uint256.filter((x) => x.gt(0)),
+                    uint256.filter((x) => x.gt(0)),
+                    async (
+                        [targetAddress, anotherTargetAddress]: [string, string],
+                        permissionMask: BigNumber,
+                        anotherPermissionMask: BigNumber
+                    ) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
+                        let anotherPermissionIds = permissionIdsByMask(
+                            anotherPermissionMask
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(
+                                targetAddress,
+                                permissionIds
+                            );
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(
+                                anotherTargetAddress,
+                                anotherPermissionIds
+                            );
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllPermissionGrantsSurpassedDelay();
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                targetAddress,
+                                permissionIds
+                            )
+                        ).to.be.true;
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                anotherTargetAddress,
+                                anotherPermissionIds
+                            )
+                        ).to.be.true;
+                        return true;
+                    }
+                );
+            });
+
+            describe("edge cases", () => {
+                describe("when attempting to commit permissions too early", () => {
+                    it(`does not commit permission`, async () => {
+                        let targetAddress = randomAddress();
+                        let permissionIds = permissionIdsByMask(
+                            generateSingleParams(uint256.filter((x) => x.gt(0)))
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(
+                                targetAddress,
+                                permissionIds
+                            );
+                        await sleep(1);
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllPermissionGrantsSurpassedDelay();
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                targetAddress,
+                                permissionIds
+                            )
+                        ).to.be.false;
+                        return true;
+                    });
                 });
             });
 
@@ -1343,14 +1871,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .stagePermissionGrants(this.deployer.address, [0])
+                            .commitAllPermissionGrantsSurpassedDelay()
                     ).to.not.be.reverted;
                 });
                 it("denied: deployer", async () => {
                     await expect(
                         this.subject
                             .connect(this.deployer)
-                            .stagePermissionGrants(this.deployer.address, [0])
+                            .commitAllPermissionGrantsSurpassedDelay()
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
                 it("denied: random address", async () => {
@@ -1358,9 +1886,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .stagePermissionGrants(this.deployer.address, [
-                                    0,
-                                ])
+                                .commitAllPermissionGrantsSurpassedDelay()
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
@@ -1368,84 +1894,195 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        xdescribe("#commitAllPermissionGrantsSurpassedDelay", () => {});
+        describe("#commitAllValidatorsSurpassedDelay", () => {
+            it("emits ValidatorCommitted event", async () => {
+                let targetAddress = randomAddress();
+                let validatorAddress = randomAddress();
+                await this.subject
+                    .connect(this.admin)
+                    .stageValidator(targetAddress, validatorAddress);
+                await sleep(await this.subject.governanceDelay());
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .commitAllValidatorsSurpassedDelay()
+                ).to.emit(this.subject, "ValidatorCommitted");
+                return true;
+            });
 
-        describe("#revokePermissions", () => {
-            pit(
-                `emits PermissionRevoked event`,
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8.filter((x) => x.gt(100)),
-                async (target: string, permissionId: BigNumber) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stagePermissionGrants(target, [permissionId]);
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject
-                        .connect(this.admin)
-                        .commitPermissionGrants(target);
+            describe("properties", () => {
+                pit(
+                    `commits all staged validators`,
+                    { numRuns: RUNS.verylow },
+                    tuple(address, address).filter(
+                        ([x, y]) =>
+                            x !== y &&
+                            x !== ethers.constants.AddressZero &&
+                            y !== ethers.constants.AddressZero
+                    ),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    address.filter((x) => x !== ethers.constants.AddressZero),
+                    async (
+                        [targetAddress, anotherTargetAddress]: [string, string],
+                        validatorAddress: string,
+                        anotherValidatorAddress: string
+                    ) => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(targetAddress, validatorAddress);
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(
+                                anotherTargetAddress,
+                                anotherValidatorAddress
+                            );
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllValidatorsSurpassedDelay();
+                        expect(
+                            await this.subject.validatorsAddresses()
+                        ).to.contain(targetAddress);
+                        expect(
+                            await this.subject.validatorsAddresses()
+                        ).to.contain(anotherTargetAddress);
+                        return true;
+                    }
+                );
+            });
+
+            describe("edge cases", () => {
+                describe("when attempting to commit validators too early", () => {
+                    it(`does not commit validator`, async () => {
+                        let targetAddress = randomAddress();
+                        let validatorAddress = randomAddress();
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(targetAddress, validatorAddress);
+                        await sleep(1);
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllValidatorsSurpassedDelay();
+                        expect(
+                            await this.subject.validatorsAddresses()
+                        ).to.not.contain(validatorAddress);
+                        return true;
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allowed: admin", async () => {
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .revokePermissions(target, [permissionId])
-                    ).to.emit(this.subject, "PermissionsRevoked");
+                            .commitAllValidatorsSurpassedDelay()
+                    ).to.not.be.reverted;
+                });
+                it("denied: deployer", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .commitAllValidatorsSurpassedDelay()
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .commitAllValidatorsSurpassedDelay()
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
                     return true;
-                }
-            );
-            describe("edge cases", () => {
-                describe("when attempting to revoke from zero address", () => {
-                    pit(
-                        `reverts with ${Exceptions.NULL}`,
-                        { numRuns: RUNS.verylow },
-                        uint8,
-                        async (permissionId: BigNumber) => {
-                            await expect(
-                                this.subject
-                                    .connect(this.admin)
-                                    .revokePermissions(
-                                        ethers.constants.AddressZero,
-                                        [permissionId]
-                                    )
-                            ).to.be.revertedWith(Exceptions.NULL);
-                            return true;
-                        }
-                    );
                 });
             });
         });
 
+        describe("#revokePermissions", () => {
+            it("emits PermissionRevoked event", async () => {
+                let targetAddress = randomAddress();
+                let permissionIds = permissionIdsByMask(
+                    generateSingleParams(uint256.filter((x) => x.gt(0)))
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .stagePermissionGrants(targetAddress, permissionIds);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitPermissionGrants(targetAddress);
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .revokePermissions(targetAddress, permissionIds)
+                ).to.emit(this.subject, "PermissionsRevoked");
+                return true;
+            });
+            describe("edge cases", () => {
+                describe("when attempting to revoke from zero address", () => {
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
+                        let permissionIds = permissionIdsByMask(
+                            generateSingleParams(uint256.filter((x) => x.gt(0)))
+                        );
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .revokePermissions(
+                                    ethers.constants.AddressZero,
+                                    permissionIds
+                                )
+                        ).to.be.revertedWith(Exceptions.NULL);
+                        return true;
+                    });
+                });
+            });
+        });
+
+        describe("#revokeValidator", () => {
+            it("emits ValidatorRevoked event", async () => {
+                let targetAddress = randomAddress();
+                let validatorAddress = randomAddress();
+                await this.subject
+                    .connect(this.admin)
+                    .stageValidator(targetAddress, validatorAddress);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitValidator(targetAddress);
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .revokeValidator(targetAddress)
+                ).to.emit(this.subject, "ValidatorRevoked");
+                return true;
+            });
+        });
+
         describe("#commitParams", () => {
-            pit(
-                `emits ParamsCommitted event`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
-                    await this.subject.connect(this.admin).stageParams(params);
-                    await sleep(await this.subject.governanceDelay());
-                    await expect(
-                        this.subject.connect(this.admin).commitParams()
-                    ).to.emit(this.subject, "ParamsCommitted");
-                    return true;
-                }
-            );
+            it("emits ParamsCommitted event", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageParams(generateSingleParams(paramsArb));
+                await sleep(await this.subject.governanceDelay());
+                await expect(
+                    this.subject.connect(this.admin).commitParams()
+                ).to.emit(this.subject, "ParamsCommitted");
+                return true;
+            });
 
             describe("edge cases", () => {
                 describe("when attempting to commit params too early", () => {
-                    pit(
-                        `reverts with ${Exceptions.TIMESTAMP}`,
-                        { numRuns: 1 },
-                        paramsArb,
-                        async (params: ParamsStruct) => {
-                            await this.subject
-                                .connect(this.admin)
-                                .stageParams(params);
-                            await sleep(1);
-                            await expect(
-                                this.subject.connect(this.admin).commitParams()
-                            ).to.be.revertedWith(Exceptions.TIMESTAMP);
-                            return true;
-                        }
-                    );
+                    it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageParams(generateSingleParams(paramsArb));
+                        await sleep(1);
+                        await expect(
+                            this.subject.connect(this.admin).commitParams()
+                        ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                        return true;
+                    });
                 });
 
                 describe("when attempting to commit params without setting pending params", () => {
@@ -1495,40 +2132,39 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#stagePermissionGrants", () => {
-            pit(
-                `emits PermissionGrantsStaged event`,
-                { numRuns: RUNS.verylow },
-                address.filter((x) => x !== ethers.constants.AddressZero),
-                uint8,
-                async (target: string, permissionId: BigNumber) => {
-                    await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .stagePermissionGrants(target, [permissionId])
-                    ).to.emit(this.subject, "PermissionGrantsStaged");
-                    return true;
-                }
-            );
+            it("emits PermissionGrantsStaged event", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .stagePermissionGrants(
+                            randomAddress(),
+                            permissionIdsByMask(
+                                generateSingleParams(
+                                    uint256.filter((x) => x.gt(0))
+                                )
+                            )
+                        )
+                ).to.emit(this.subject, "PermissionGrantsStaged");
+                return true;
+            });
 
             describe("edge cases", () => {
                 describe("when attempting to stage grant to zero address", () => {
-                    it("reverts with NULL", async () => {});
-                    pit(
-                        `reverts with ${Exceptions.NULL}`,
-                        { numRuns: RUNS.verylow },
-                        uint8,
-                        async (permissionId: BigNumber) => {
-                            await expect(
-                                this.subject
-                                    .connect(this.admin)
-                                    .stagePermissionGrants(
-                                        ethers.constants.AddressZero,
-                                        [permissionId]
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .stagePermissionGrants(
+                                    ethers.constants.AddressZero,
+                                    permissionIdsByMask(
+                                        generateSingleParams(
+                                            uint256.filter((x) => x.gt(0))
+                                        )
                                     )
-                            ).to.be.revertedWith(Exceptions.NULL);
-                            return true;
-                        }
-                    );
+                                )
+                        ).to.be.revertedWith(Exceptions.NULL);
+                        return true;
+                    });
                 });
             });
 
@@ -1562,72 +2198,124 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#stageParams", () => {
-            pit(
-                `emits ParamsStaged event`,
-                { numRuns: RUNS.verylow },
-                paramsArb,
-                async (params: ParamsStruct) => {
+        describe("#stageValidator", () => {
+            it("emits ValidatorStaged event", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .stageValidator(randomAddress(), randomAddress())
+                ).to.emit(this.subject, "ValidatorStaged");
+                return true;
+            });
+
+            describe("edge cases", () => {
+                describe("when attempting to stage grant to zero address", () => {
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO} when target has zero address`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .stageValidator(
+                                    ethers.constants.AddressZero,
+                                    randomAddress()
+                                )
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                        return true;
+                    });
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO} when validator has zero address`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .stageValidator(
+                                    randomAddress(),
+                                    ethers.constants.AddressZero
+                                )
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                        return true;
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allowed: admin", async () => {
                     await expect(
-                        this.subject.connect(this.admin).stageParams(params)
-                    ).to.emit(this.subject, "ParamsStaged");
-                    return true;
-                }
-            );
+                        this.subject
+                            .connect(this.admin)
+                            .stageValidator(randomAddress(), randomAddress())
+                    ).to.not.be.reverted;
+                });
+                it("denied: deployer", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .stageValidator(randomAddress(), randomAddress())
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+                it("denied: random address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stageValidator(
+                                    randomAddress(),
+                                    randomAddress()
+                                )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#stageParams", () => {
+            it("emits ParamsStaged event", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .stageParams(generateSingleParams(paramsArb))
+                ).to.emit(this.subject, "ParamsStaged");
+                return true;
+            });
 
             describe("edge cases", () => {
                 describe("when given invalid params", () => {
                     describe("when maxTokensPerVault is zero", () => {
-                        pit(
-                            `reverts with ${Exceptions.NULL}`,
-                            { numRuns: RUNS.verylow },
-                            paramsArb,
-                            async (params: ParamsStruct) => {
-                                params.maxTokensPerVault = BigNumber.from(0);
-                                await expect(
-                                    this.subject
-                                        .connect(this.admin)
-                                        .stageParams(params)
-                                ).to.be.revertedWith(Exceptions.NULL);
-                                return true;
-                            }
-                        );
+                        it(`reverts with ${Exceptions.NULL}`, async () => {
+                            let params = generateSingleParams(paramsArb);
+                            params.maxTokensPerVault = BigNumber.from(0);
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .stageParams(params)
+                            ).to.be.revertedWith(Exceptions.NULL);
+                            return true;
+                        });
                     });
 
                     describe("when governanceDelay is zero", () => {
-                        pit(
-                            `reverts with ${Exceptions.NULL}`,
-                            { numRuns: RUNS.verylow },
-                            paramsArb,
-                            async (params: ParamsStruct) => {
-                                params.governanceDelay = BigNumber.from(0);
-                                await expect(
-                                    this.subject
-                                        .connect(this.admin)
-                                        .stageParams(params)
-                                ).to.be.revertedWith(Exceptions.NULL);
-                                return true;
-                            }
-                        );
+                        it(`reverts with ${Exceptions.NULL}`, async () => {
+                            let params = generateSingleParams(paramsArb);
+                            params.governanceDelay = BigNumber.from(0);
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .stageParams(params)
+                            ).to.be.revertedWith(Exceptions.NULL);
+                            return true;
+                        });
                     });
 
                     describe("when governanceDelay exceeds MAX_GOVERNANCE_DELAY", () => {
-                        pit(
-                            `reverts with ${Exceptions.LIMIT_OVERFLOW}`,
-                            { numRuns: RUNS.verylow },
-                            paramsArb,
-                            async (params: ParamsStruct) => {
-                                params.governanceDelay = BigNumber.from(
-                                    MAX_GOVERNANCE_DELAY.add(1)
-                                );
-                                await expect(
-                                    this.subject
-                                        .connect(this.admin)
-                                        .stageParams(params)
-                                ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
-                                return true;
-                            }
-                        );
+                        it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                            let params = generateSingleParams(paramsArb);
+                            params.governanceDelay = BigNumber.from(
+                                MAX_GOVERNANCE_DELAY.add(1)
+                            );
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .stageParams(params)
+                            ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                            return true;
+                        });
                     });
                 });
             });
