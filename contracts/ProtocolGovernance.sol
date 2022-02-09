@@ -225,7 +225,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     }
 
     /// @inheritdoc IProtocolGovernance
-    function rollbackAllPermissionGrants() external {
+    function rollbackStagedPermissionGrants() external {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
         for (uint256 i; i != length; ++i) {
@@ -234,7 +234,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
             delete stagedPermissionGrantsTimestamps[target];
             _stagedPermissionGrantsAddresses.remove(target);
         }
-        emit AllPermissionGrantsRolledBack(tx.origin, msg.sender);
+        emit AllStagedPermissionGrantsRolledBack(tx.origin, msg.sender);
     }
 
     /// @inheritdoc IProtocolGovernance
@@ -416,7 +416,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     /// @notice Emitted when staged permissions are rolled back
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    event AllPermissionGrantsRolledBack(address indexed origin, address indexed sender);
+    event AllStagedPermissionGrantsRolledBack(address indexed origin, address indexed sender);
 
     /// @notice Emitted when staged permissions are comitted for specific address
     /// @param origin Origin of the transaction (tx.origin)

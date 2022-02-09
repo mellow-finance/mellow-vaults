@@ -135,7 +135,7 @@ interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     function commitAllValidatorsSurpassedDelay() external returns (address[] memory);
 
     /// @notice Rollback all staged granted permission grant.
-    function rollbackAllPermissionGrants() external;
+    function rollbackStagedPermissionGrants() external;
 
     /// @notice Commits permission grants for the given address.
     /// @dev Reverts if governance delay has not passed yet.
