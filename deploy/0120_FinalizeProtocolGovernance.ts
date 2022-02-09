@@ -62,7 +62,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         maxTokensPerVault: 10,
         governanceDelay: 86400,
         protocolTreasury,
-        withdrawLimit: 200000,
+        withdrawLimit: 20000000,
     };
     let tx = await protocolGovernance.populateTransaction.stageParams(
         params
