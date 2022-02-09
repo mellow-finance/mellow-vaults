@@ -13,7 +13,7 @@ import Exceptions from "./library/Exceptions";
 import { contract } from "./library/setup";
 import { ParamsStruct, IProtocolGovernance } from "./types/IProtocolGovernance";
 import { address, uint8, uint256, pit, RUNS } from "./library/property";
-import { Arbitrary, tuple, integer, Random } from "fast-check";
+import { Arbitrary, tuple, integer, Random, bigUintN } from "fast-check";
 import { BigNumber } from "ethers";
 import {
     PROTOCOL_GOVERNANCE_INTERFACE_ID,
@@ -1387,8 +1387,13 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
         });
 
         describe("#withdrawLimit", () => {
-            xit("returns correct value", async () => {
+            it("returns correct value", async () => {
                 let params = generateSingleParams(paramsArb);
+                params.withdrawLimit = generateSingleParams(
+                    bigUintN(160)
+                        .map((x: bigint) => BigNumber.from(x.toString()))
+                        .filter((x) => x.gt(200_000))
+                );
                 await this.subject.connect(this.admin).stageParams(params);
                 await sleep(await this.subject.governanceDelay());
                 await this.subject.connect(this.admin).commitParams();
