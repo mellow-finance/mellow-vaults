@@ -587,6 +587,22 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
+        describe("#validatorsAddress", () => {
+            it("returns correct value", async () => {
+                let targetAddress = randomAddress();
+                let validatorAddress = randomAddress();
+                let validatorIndex = (await this.subject.validatorsAddresses()).length;
+                await this.subject
+                            .connect(this.admin)
+                            .stageValidator(targetAddress, validatorAddress);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject
+                    .connect(this.admin)
+                    .commitValidator(targetAddress);
+                expect(await this.subject.validatorsAddress(validatorIndex)).to.deep.equal(targetAddress);
+            });
+        });
+
         describe("#validatorsAddresses", () => {
             describe("properties", () => {
                 pit(
@@ -1367,6 +1383,19 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
+        describe("#withdrawLimit", () => {
+            xit("returns correct value", async () => {
+                let params = generateSingleParams(paramsArb);
+                await this.subject.connect(this.admin).stageParams(params);
+                await sleep(await this.subject.governanceDelay());
+                await this.subject.connect(this.admin).commitParams();
+                expect(await this.subject.withdrawLimit(this.usdc.address)).to.deep.equal(
+                    BigNumber.from(params.withdrawLimit).mul(BigNumber.from(10).pow(6))
+                );
+                return true;
+            });
+        });
+
         describe("#supportsInterface", () => {
             it(`returns true for IProtocolGovernance interface (${PROTOCOL_GOVERNANCE_INTERFACE_ID})`, async () => {
                 expect(
@@ -2056,6 +2085,21 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         .revokeValidator(targetAddress)
                 ).to.emit(this.subject, "ValidatorRevoked");
                 return true;
+            });
+
+            describe("edge cases", () => {
+                describe("when attempting to revoke from zero address", () => {
+                    xit(`reverts with ${Exceptions.NULL}`, async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .revokeValidator(
+                                    ethers.constants.AddressZero,
+                                )
+                        ).to.be.revertedWith(Exceptions.NULL);
+                        return true;
+                    });
+                });
             });
         });
 
