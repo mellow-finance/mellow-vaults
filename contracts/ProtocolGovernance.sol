@@ -218,6 +218,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     /// @inheritdoc IProtocolGovernance
     function revokeValidator(address target) external {
         _requireAdmin();
+        require(target != address(0), ExceptionsLibrary.NULL);
         delete validators[target];
         _validatorsAddresses.remove(target);
         emit ValidatorRevoked(tx.origin, msg.sender, target);
