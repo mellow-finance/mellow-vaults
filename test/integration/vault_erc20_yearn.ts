@@ -10,7 +10,7 @@ import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { integer } from "fast-check";
-import {ParamsStruct} from "../types/ProtocolGovernance";
+import { ParamsStruct } from "../types/ProtocolGovernance";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -103,11 +103,17 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         governanceDelay: currentParams.governanceDelay,
                         protocolTreasury: currentParams.protocolTreasury,
                         forceAllowMask: currentParams.forceAllowMask,
-                        withdrawLimit: BigNumber.from(20_000_000)
+                        withdrawLimit: BigNumber.from(20_000_000),
                     };
-                    await this.protocolGovernance.connect(this.admin).stageParams(params);
-                    await sleep(await this.protocolGovernance.governanceDelay());
-                    await this.protocolGovernance.connect(this.admin).commitParams();
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageParams(params);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitParams();
 
                     await mint(
                         "USDC",

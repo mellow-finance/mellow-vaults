@@ -4,13 +4,19 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { mint, sleep } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { pit, RUNS } from "../library/property";
-import {ERC20RootVault, AaveVault, ERC20Vault, ProtocolGovernance, VaultGovernance } from "../types/";
+import {
+    ERC20RootVault,
+    AaveVault,
+    ERC20Vault,
+    ProtocolGovernance,
+    VaultGovernance,
+} from "../types/";
 import { setupVault, combineVaults } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { integer } from "fast-check";
 import Exceptions from "../library/Exceptions";
-import {ParamsStruct} from "../types/ProtocolGovernance";
-import {BigNumberish} from "ethers";
+import { ParamsStruct } from "../types/ProtocolGovernance";
+import { BigNumberish } from "ethers";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -98,11 +104,17 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         governanceDelay: currentParams.governanceDelay,
                         protocolTreasury: currentParams.protocolTreasury,
                         forceAllowMask: currentParams.forceAllowMask,
-                        withdrawLimit: BigNumber.from(20_000_000)
+                        withdrawLimit: BigNumber.from(20_000_000),
                     };
-                    await this.protocolGovernance.connect(this.admin).stageParams(params);
-                    await sleep(await this.protocolGovernance.governanceDelay());
-                    await this.protocolGovernance.connect(this.admin).commitParams();
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageParams(params);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitParams();
 
                     await mint(
                         "USDC",
