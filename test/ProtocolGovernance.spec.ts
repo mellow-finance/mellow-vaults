@@ -1217,7 +1217,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     `is affected by committed permissions`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
-                    uint256,
+                    uint256.filter((x) => x.gt(0)),
                     async (
                         target: string,
                         grantedPermissionMask: BigNumber
