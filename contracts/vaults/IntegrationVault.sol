@@ -13,6 +13,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
+import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -58,8 +59,12 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_)); // Also checks that the token exists
         uint256 ownerNft = vaultRegistry.nftForVault(address(ownerVault));
         require(ownerNft != 0, ExceptionsLibrary.NOT_FOUND); // require deposits only through Vault
+        console.log("token length :: %s", tokens.length);
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
+        console.log("pTokensAmounts LENGTH :: %s ", pTokenAmounts.length);
+        console.log(pTokenAmounts[0], pTokenAmounts[1]);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
+        console.log("ACTUAL TOKEN AMOUNT :: %s %s", pActualTokenAmounts[0], pActualTokenAmounts[1]);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Push(pActualTokenAmounts);
     }

@@ -11,6 +11,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -212,6 +213,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         Options memory opts = _parseOptions(options);
         Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
         Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
+        console.log(amounts.a0, amounts.a1);
         (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
             INonfungiblePositionManager.IncreaseLiquidityParams({
                 tokenId: uniV3Nft,
