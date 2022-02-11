@@ -299,9 +299,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 console.log("\n\n NEXT ROUND --------------------------------");
                 console.log("numDeposits ", numDeposits);
                 console.log("numWithdraws ", numWithdraws);
+                console.log("delay ", delay);
                 let usdcDepositAmounts = [];
                 let wethDepositAmounts = [];
-                let startTimestamp = 0;
                 if (ratioWETH + ratioUSDC == 0) {
                     return true;
                 }
@@ -355,10 +355,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             [usdcDepositAmounts[i], wethDepositAmounts[i]],
                             0
                         );
-                    if (i == 0) {
-                        startTimestamp = now();
-                        await sleepTo(startTimestamp);
-                    }
                 }
                 console.log("set deposits");
                 let strategyTreasury = (
@@ -409,7 +405,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     root_tvl[0][1]
                 );
 
+                // sleep delay and then earn management fees on the next withdraw
                 await sleep(delay);
+                console.log("\n\nTOTAL LP SUPPLY ", Number(lpTokensAmount));
 
                 let withdrawAmounts: BigNumber[] = [];
                 let withdrawSum: BigNumber = BigNumber.from(0);
@@ -424,27 +422,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 }
                 withdrawAmounts.push(lpTokensAmount.sub(withdrawSum));
                 for (var i = 0; i < numWithdraws; ++i) {
+                    console.log("withdraw lp amount", Number(withdrawAmounts[0]));
                     await this.subject.withdraw(
                         this.deployer.address,
-                        BigNumber.from(lpTokensAmount).div(numWithdraws),
-                        [0, 0]
-                    );
-                }
-
-                if (
-                    !BigNumber.from(lpTokensAmount)
-                        .mod(numWithdraws)
-                        .eq(BigNumber.from(0))
-                ) {
-                    await this.subject.withdraw(
-                        this.deployer.address,
-                        BigNumber.from(lpTokensAmount).mod(numWithdraws),
+                        withdrawAmounts[i],
                         [0, 0]
                     );
                 }
 
                 console.log("BALANCES\n");
                 //expect(await this.weth.balanceOf(strategyTreasury)).to.be.equal();
+
+                // lp 88311400000000000
+                // w 2006973707540000
                 console.log(
                     Number(await this.subject.balanceOf(strategyTreasury))
                 );
@@ -460,22 +450,26 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 console.log(
                     Number(await this.subject.balanceOf(protocolTreasury))
                 );
-                console.log("delay ", delay);
 
-                let currentTimestamp = now();
-                expect(
-                    await this.subject.balanceOf(strategyTreasury)
-                ).to.be.equal(
-                    (
+                if (BigNumber.from(delay).gt((await this.erc20RootVaultGovernance.delayedProtocolParams()).managementFeeChargeDelay)) {
+                    let expectedManagementFee = (
                         await this.erc20RootVaultGovernance.delayedStrategyParams(
                             this.erc20RootVaultNft
                         )
                     ).managementFee
-                        .mul(currentTimestamp - startTimestamp)
-                        .mul(lpTokensAmount)
-                        .div(BigNumber.from(10).pow(9).mul(24).mul(3600).mul(365))
-                );
+                        .mul(delay)
+                        .mul(lpTokensAmount.sub(withdrawAmounts[0]))
+                        .div(BigNumber.from(10).pow(9).mul(24).mul(3600).mul(365));
+                    let realManagementFee = await this.subject.balanceOf(strategyTreasury);
 
+                    let managementFeeAbsDifference = (expectedManagementFee.sub(realManagementFee)).abs();
+                    console.log("expected fee ", Number(expectedManagementFee));
+                    console.log("real fee ", Number(realManagementFee));
+                    console.log("abs dif ", Number(managementFeeAbsDifference));
+                    console.log("frac ", Number(managementFeeAbsDifference.div(realManagementFee)));
+                    expect(managementFeeAbsDifference.sub(realManagementFee.div(10000)).lte(0)).to.be.true;
+                }
+                
                 if ((await this.subject.balanceOf(strategyTreasury)).gt(0)) {
                     await this.subject.withdraw(
                         strategyTreasury,
