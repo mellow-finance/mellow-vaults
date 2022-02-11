@@ -1891,7 +1891,10 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     ),
                     async (
                         [targetAddress, anotherTargetAddress]: [string, string],
-                        [permissionMask, anotherPermissionMask]: [BigNumber, BigNumber],
+                        [permissionMask, anotherPermissionMask]: [
+                            BigNumber,
+                            BigNumber
+                        ]
                     ) => {
                         let permissionIds = permissionIdsByMask(permissionMask);
                         let anotherPermissionIds = permissionIdsByMask(
@@ -2002,39 +2005,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 return true;
             });
 
-            it(`commits all staged validators after delay`, async () => {
-                    let targetAddress = randomAddress();
-                    let anotherTargetAddress = randomAddress();
-                    while ((await this.subject.validatorsAddresses()).includes(targetAddress)) {
-                        targetAddress = randomAddress();
-                    }
-                    while ((await this.subject.validatorsAddresses()).includes(anotherTargetAddress)) {
-                        anotherTargetAddress = randomAddress();
-                    }
-                    await this.subject
-                        .connect(this.admin)
-                        .stageValidator(targetAddress, randomAddress());
-                    await sleep(await this.subject.governanceDelay());
-                    await this.subject
-                        .connect(this.admin)
-                        .stageValidator(
-                            anotherTargetAddress,
-                            randomAddress()
-                        );
-
-                    await this.subject
-                        .connect(this.admin)
-                        .commitAllValidatorsSurpassedDelay();
-                    expect(
-                        await this.subject.validatorsAddresses()
-                    ).to.contain(targetAddress);
-                    expect(
-                        await this.subject.validatorsAddresses()
-                    ).to.not.contain(anotherTargetAddress);
-                    return true;
-                });
-
-            describe("properties", () => {
+            describe.only("properties", () => {
                 pit(
                     `commits all staged validators`,
                     { numRuns: RUNS.verylow },
@@ -2070,6 +2041,62 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         expect(
                             await this.subject.validatorsAddresses()
                         ).to.contain(anotherTargetAddress);
+                        return true;
+                    }
+                );
+                pit(
+                    `commits all staged validators after delay`,
+                    { numRuns: RUNS.verylow },
+                    tuple(address, address).filter(
+                        ([x, y]) =>
+                            x !== y &&
+                            x !== ethers.constants.AddressZero &&
+                            y !== ethers.constants.AddressZero
+                    ),
+                    async ([targetAddress, anotherTargetAddress]: [
+                        string,
+                        string
+                    ]) => {
+                        while (
+                            (await this.subject.validatorsAddresses()).includes(
+                                targetAddress
+                            )
+                        ) {
+                            targetAddress = randomAddress();
+                        }
+                        while (
+                            (await this.subject.validatorsAddresses()).includes(
+                                anotherTargetAddress
+                            )
+                        ) {
+                            anotherTargetAddress = randomAddress();
+                        }
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllValidatorsSurpassedDelay();
+                        await expect(
+                            await this.subject.stagedValidatorsAddresses()
+                        ).to.be.empty;
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(targetAddress, randomAddress());
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .stageValidator(
+                                anotherTargetAddress,
+                                randomAddress()
+                            );
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllValidatorsSurpassedDelay();
+                        expect(
+                            await this.subject.validatorsAddresses()
+                        ).to.contain(targetAddress);
+                        expect(
+                            await this.subject.validatorsAddresses()
+                        ).to.not.contain(anotherTargetAddress);
                         return true;
                     }
                 );
