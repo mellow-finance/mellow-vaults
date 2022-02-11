@@ -12,6 +12,7 @@ import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -251,7 +252,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - lastFeeCharge;
         IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
+        console.log("\nis withdraw ", isWithdraw);
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
+            console.log("ELAPSED TOO LOW\n");
             return;
         }
         (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
@@ -264,6 +267,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = block.timestamp;
         // don't charge on initial deposit as well as on the last withdraw
         if (baseSupply == 0) {
+            console.log("\nINITIAL DEPOSIT OR LAST WITHDRAW\n");
+            console.log("lastFeeCharge ", lastFeeCharge);
             return;
         }
 
@@ -326,6 +331,12 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
+            console.log("\nMINTED ", toMint);
+            console.log("elapsed ", elapsed);
+            console.log("fee ", managementFee);
+            console.log("lpSupply ", lpSupply);
+            console.log("lastFeeCharge ", lastFeeCharge);
+            console.log("block timestamp ", block.timestamp);
             _mint(strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
