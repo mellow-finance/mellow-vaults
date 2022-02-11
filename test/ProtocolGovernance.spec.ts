@@ -1877,6 +1877,57 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         return true;
                     }
                 );
+                pit(
+                    `commits all staged permission grants after delay`,
+                    { numRuns: RUNS.verylow },
+                    tuple(address, address).filter(
+                        ([x, y]) =>
+                            x !== y &&
+                            x !== ethers.constants.AddressZero &&
+                            y !== ethers.constants.AddressZero
+                    ),
+                    tuple(uint256, uint256).filter(
+                        ([x, y]) => !x.or(y).eq(x) && x.gt(0)
+                    ),
+                    async (
+                        [targetAddress, anotherTargetAddress]: [string, string],
+                        [permissionMask, anotherPermissionMask]: [BigNumber, BigNumber],
+                    ) => {
+                        let permissionIds = permissionIdsByMask(permissionMask);
+                        let anotherPermissionIds = permissionIdsByMask(
+                            anotherPermissionMask
+                        );
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(
+                                targetAddress,
+                                permissionIds
+                            );
+                        await sleep(await this.subject.governanceDelay());
+                        await this.subject
+                            .connect(this.admin)
+                            .stagePermissionGrants(
+                                anotherTargetAddress,
+                                anotherPermissionIds
+                            );
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllPermissionGrantsSurpassedDelay();
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                targetAddress,
+                                permissionIds
+                            )
+                        ).to.be.true;
+                        expect(
+                            await this.subject.hasAllPermissions(
+                                anotherTargetAddress,
+                                anotherPermissionIds
+                            )
+                        ).to.be.false;
+                        return true;
+                    }
+                );
             });
 
             describe("edge cases", () => {
@@ -1950,6 +2001,38 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 ).to.emit(this.subject, "ValidatorCommitted");
                 return true;
             });
+
+            it(`commits all staged validators after delay`, async () => {
+                    let targetAddress = randomAddress();
+                    let anotherTargetAddress = randomAddress();
+                    while ((await this.subject.validatorsAddresses()).includes(targetAddress)) {
+                        targetAddress = randomAddress();
+                    }
+                    while ((await this.subject.validatorsAddresses()).includes(anotherTargetAddress)) {
+                        anotherTargetAddress = randomAddress();
+                    }
+                    await this.subject
+                        .connect(this.admin)
+                        .stageValidator(targetAddress, randomAddress());
+                    await sleep(await this.subject.governanceDelay());
+                    await this.subject
+                        .connect(this.admin)
+                        .stageValidator(
+                            anotherTargetAddress,
+                            randomAddress()
+                        );
+
+                    await this.subject
+                        .connect(this.admin)
+                        .commitAllValidatorsSurpassedDelay();
+                    expect(
+                        await this.subject.validatorsAddresses()
+                    ).to.contain(targetAddress);
+                    expect(
+                        await this.subject.validatorsAddresses()
+                    ).to.not.contain(anotherTargetAddress);
+                    return true;
+                });
 
             describe("properties", () => {
                 pit(
