@@ -2005,7 +2005,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 return true;
             });
 
-            describe.only("properties", () => {
+            describe("properties", () => {
                 pit(
                     `commits all staged validators`,
                     { numRuns: RUNS.verylow },
