@@ -24,18 +24,6 @@ import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyP
 import { create } from "domain";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
 
-const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
-
-export function generateParams<T extends Object>(
-    params: Arbitrary<T>
-): { someParams: T; noneParams: T } {
-    const someParams: T = params
-        .filter((x: T) => !equals(x, zeroify(x)))
-        .generate(random).value;
-    const noneParams: T = zeroify(someParams);
-    return { someParams, noneParams };
-}
-
 export type VaultGovernanceContext<S extends Contract, F> = TestContext<
     S,
     F

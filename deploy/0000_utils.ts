@@ -324,11 +324,10 @@ export class PermissionIdsLibrary {
     static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
-export const WEI_ETH_PRICE = BigNumber.from(10).pow(18);
-export const ETH_USD_PRICE = 2454;
-export const WETH_PRICE = WEI_ETH_PRICE.div(ETH_USD_PRICE);
-export const WBTC_PRICE = WEI_ETH_PRICE.mul(1492).div(100).div(ETH_USD_PRICE);
-export const USDC_PRICE = WEI_ETH_PRICE.mul(42).div(10000).div(ETH_USD_PRICE);
+export const USDC_PRICE = BigNumber.from(10).pow(6);
+export const WETH_PRICE = USDC_PRICE.mul(3000);
+export const WBTC_PRICE = USDC_PRICE.mul(45000);
+
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
 export default func;
