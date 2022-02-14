@@ -2,6 +2,7 @@ import { BigNumber, Contract, ethers, Signer } from "ethers";
 import { Arbitrary, nat, Random } from "fast-check";
 import { type } from "os";
 import {
+    generateParams,
     randomAddress,
     sleep,
     toObject,
@@ -13,7 +14,7 @@ import { equals } from "ramda";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import Exceptions from "../library/Exceptions";
-import { generateParams, VaultGovernanceContext } from "./vaultGovernance";
+import { VaultGovernanceContext } from "./vaultGovernance";
 import { deployments } from "hardhat";
 
 export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
