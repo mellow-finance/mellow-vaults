@@ -1478,14 +1478,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .rollbackAllPermissionGrants()
+                            .rollbackStagedPermissionGrants()
                     ).to.not.be.reverted;
                 });
                 it("denied: deployer", async () => {
                     await expect(
                         this.subject
                             .connect(this.deployer)
-                            .rollbackAllPermissionGrants()
+                            .rollbackStagedPermissionGrants()
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
                 it("denied: random address", async () => {
@@ -1493,7 +1493,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .rollbackAllPermissionGrants()
+                                .rollbackStagedPermissionGrants()
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
@@ -2210,7 +2210,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
             describe("edge cases", () => {
                 describe("when attempting to revoke from zero address", () => {
-                    xit(`reverts with ${Exceptions.NULL}`, async () => {
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
                         await expect(
                             this.subject
                                 .connect(this.admin)
