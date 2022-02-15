@@ -219,7 +219,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     }
                 );
                 pit(
-                    `clears when #rollbackAllPermissionGrants is called`,
+                    `clears when #rollbackStagedPermissionGrants is called`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8,
@@ -229,7 +229,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stagePermissionGrants(target, [permissionId]);
                         await this.subject
                             .connect(this.admin)
-                            .rollbackAllPermissionGrants();
+                            .rollbackStagedPermissionGrants();
                         expect(
                             await this.subject.stagedPermissionGrantsMasks(
                                 target
@@ -285,7 +285,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     }
                 );
                 pit(
-                    `is not affected by #rollbackAllPermissionGrants`,
+                    `is not affected by #rollbackStagedPermissionGrants`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint8,
@@ -299,7 +299,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .commitPermissionGrants(target);
                         await this.subject
                             .connect(this.admin)
-                            .rollbackAllPermissionGrants();
+                            .rollbackStagedPermissionGrants();
                         expect(
                             await this.subject.permissionMasks(target)
                         ).to.deep.equal(maskByPermissionIds([permissionId]));
@@ -765,7 +765,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     }
                 );
                 pit(
-                    `clears by #rollbackAllPermissionGrants`,
+                    `clears by #rollbackStagedPermissionGrants`,
                     { numRuns: RUNS.verylow },
                     address.filter((x) => x !== ethers.constants.AddressZero),
                     uint256.filter((x) => x.gt(0)),
@@ -776,7 +776,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             .stagePermissionGrants(target, permissionIds);
                         await this.subject
                             .connect(this.admin)
-                            .rollbackAllPermissionGrants();
+                            .rollbackStagedPermissionGrants();
                         expect(
                             await this.subject.stagedPermissionGrantsAddresses()
                         ).to.eql([]);
@@ -1444,7 +1444,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
         });
 
-        describe("#rollbackAllPermissionGrants", () => {
+        describe("#rollbackStagedPermissionGrants", () => {
             it("rolls back all staged permission grants", async () => {
                 let targetAddress = randomAddress();
                 let permissionIds = permissionIdsByMask(
@@ -1455,7 +1455,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     .stagePermissionGrants(targetAddress, permissionIds);
                 await this.subject
                     .connect(this.admin)
-                    .rollbackAllPermissionGrants();
+                    .rollbackStagedPermissionGrants();
                 expect(await this.subject.stagedPermissionGrantsAddresses()).to
                     .be.empty;
                 expect(
@@ -1466,12 +1466,12 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 return true;
             });
 
-            it("emits AllPermissionGrantsRolledBack event", async () => {
+            it("emits AllStagedPermissionGrantsRolledBack event", async () => {
                 await expect(
                     this.subject
                         .connect(this.admin)
-                        .rollbackAllPermissionGrants()
-                ).to.emit(this.subject, "AllPermissionGrantsRolledBack");
+                        .rollbackStagedPermissionGrants()
+                ).to.emit(this.subject, "AllStagedPermissionGrantsRolledBack");
             });
 
             describe("access control", () => {
@@ -1479,14 +1479,14 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     await expect(
                         this.subject
                             .connect(this.admin)
-                            .rollbackAllPermissionGrants()
+                            .rollbackStagedPermissionGrants()
                     ).to.not.be.reverted;
                 });
                 it("denied: deployer", async () => {
                     await expect(
                         this.subject
                             .connect(this.deployer)
-                            .rollbackAllPermissionGrants()
+                            .rollbackStagedPermissionGrants()
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
                 it("denied: random address", async () => {
@@ -1494,7 +1494,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .rollbackAllPermissionGrants()
+                                .rollbackStagedPermissionGrants()
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                     return true;
@@ -2211,7 +2211,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
             describe("edge cases", () => {
                 describe("when attempting to revoke from zero address", () => {
-                    xit(`reverts with ${Exceptions.NULL}`, async () => {
+                    it(`reverts with ${Exceptions.NULL}`, async () => {
                         await expect(
                             this.subject
                                 .connect(this.admin)
