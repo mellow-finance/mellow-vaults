@@ -1456,7 +1456,8 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                 await this.subject
                     .connect(this.admin)
                     .rollbackStagedPermissionGrants();
-                expect(await this.subject.stagedPermissionGrantsAddresses()).to.be.empty;
+                expect(await this.subject.stagedPermissionGrantsAddresses()).to
+                    .be.empty;
                 expect(
                     await this.subject.stagedPermissionGrantsMasks(
                         targetAddress
