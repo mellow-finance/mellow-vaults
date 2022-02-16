@@ -3,8 +3,10 @@ import { BigNumber, Contract } from "ethers";
 import { TestContext } from "../library/setup";
 import Exceptions from "../library/Exceptions";
 import {
+    encodeToBytes,
     mintUniV3Position_USDC_WETH,
     randomAddress,
+    sleep,
     withSigner,
 } from "../library/Helpers";
 import {
@@ -13,6 +15,8 @@ import {
 } from "../library/Constants";
 import { ERC20RootVault, ERC20Vault } from "../types";
 import { ethers } from "hardhat";
+import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
+import { PermissionIdsLibrary } from "../../deploy/0000_utils";
 
 export type IntegrationVaultContext<S extends Contract, F> = TestContext<
     S,
@@ -20,12 +24,14 @@ export type IntegrationVaultContext<S extends Contract, F> = TestContext<
 > & {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
+    curveRouter: string;
 };
 
 export function integrationVaultBehavior<S extends Contract>(
     this: IntegrationVaultContext<S, {}>,
     {}: {}
 ) {
+    const APPROVE_SELECTOR = "0x095ea7b3";
     describe("#push", () => {
         it("emits Push event", async () => {
             await expect(
@@ -72,34 +78,27 @@ export function integrationVaultBehavior<S extends Contract>(
                     )
                 ).to.be.revertedWith(Exceptions.INIT);
             });
-            xit("reverts when ownerNft is 0", async () => {
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    this.subject.address,
-                    "0x4",
+            it("reverts when owner's nft is 0", async () => {
+                let address = `0x${this.erc20RootVault.address
+                    .substr(2)
+                    .padStart(64, "0")}`;
+                await ethers.provider.send("hardhat_setStorageAt", [
+                    this.vaultRegistry.address,
+                    ethers.utils.keccak256(
+                        encodeToBytes(
+                            ["bytes32", "uint256"],
+                            [address, BigNumber.from(10)]
+                        )
+                    ), // setting _nftIndex[this.erc20RootVault.address] = 0
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
                 ]);
-                console.log(tokenId);
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (signer) => {
-                        await this.vaultRegistry
-                            .connect(signer)
-                            .approve(ethers.constants.AddressZero, tokenId);
-                        await this.vaultRegistry
-                            .connect(signer)
-                            .transferFrom(
-                                this.erc20RootVault.address,
-                                ethers.constants.AddressZero,
-                                tokenId
-                            );
-                    }
-                );
                 await expect(
                     this.subject.push(
                         [this.usdc.address],
                         [BigNumber.from(1)],
                         []
                     )
-                ).to.be.revertedWith(Exceptions.INIT);
+                ).to.be.revertedWith(Exceptions.NOT_FOUND);
             });
             it("reverts when tokens and tokenAmounts lengths do not match", async () => {
                 await expect(
@@ -232,6 +231,29 @@ export function integrationVaultBehavior<S extends Contract>(
                         []
                     )
                 ).to.be.revertedWith(Exceptions.INIT);
+            });
+            it("reverts when owner's nft is 0", async () => {
+                let address = `0x${this.erc20RootVault.address
+                    .substr(2)
+                    .padStart(64, "0")}`;
+                await ethers.provider.send("hardhat_setStorageAt", [
+                    this.vaultRegistry.address,
+                    ethers.utils.keccak256(
+                        encodeToBytes(
+                            ["bytes32", "uint256"],
+                            [address, BigNumber.from(10)]
+                        )
+                    ), // setting _nftIndex[this.erc20RootVault.address] = 0
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                ]);
+                await expect(
+                    this.subject.transferAndPush(
+                        this.deployer.address,
+                        [this.usdc.address],
+                        [BigNumber.from(1)],
+                        []
+                    )
+                ).to.be.revertedWith(Exceptions.NOT_FOUND);
             });
             it("reverts when tokens and tokenAmounts lengths do not match", async () => {
                 await expect(
@@ -370,6 +392,12 @@ export function integrationVaultBehavior<S extends Contract>(
                 this.usdc.address,
                 this.weth.address,
             ]);
+            expect(
+                await this.usdc.balanceOf(this.subject.address)
+            ).to.deep.equal(BigNumber.from(0));
+            expect(
+                await this.weth.balanceOf(this.subject.address)
+            ).to.deep.equal(BigNumber.from(0));
         });
 
         describe("edge cases:", () => {
@@ -434,15 +462,17 @@ export function integrationVaultBehavior<S extends Contract>(
                 [],
             ];
             await this.subject.push(...args);
-            await expect(await this.subject.pull(
-                this.erc20Vault.address,
-                [this.usdc.address],
-                [BigNumber.from(10).pow(6).mul(3000)],
-                []
-            )).to.not.be.reverted;
+            await expect(
+                await this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [BigNumber.from(10).pow(6).mul(3000)],
+                    []
+                )
+            ).to.not.be.reverted;
         });
 
-        describe.only("edge cases:", () => {
+        describe("edge cases:", () => {
             it("nothing is pulled when nothing is pushed", async () => {
                 const pulledAmounts = await this.subject.callStatic.pull(
                     this.erc20Vault.address,
@@ -470,24 +500,149 @@ export function integrationVaultBehavior<S extends Contract>(
         });
 
         describe("access control:", () => {
-            it("allowed: any address", async () => {
-                await withSigner(randomAddress(), async (s) => {
+            it("allowed: owner", async () => {
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .pull(
+                                    this.erc20Vault.address,
+                                    [this.usdc.address],
+                                    [BigNumber.from(1)],
+                                    []
+                                )
+                        ).to.not.be.reverted;
+                    }
+                );
+            });
+            it("allowed: approved address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(signer.address, tokenId);
+                        }
+                    );
                     await expect(
                         this.subject
-                            .connect(s)
+                            .connect(signer)
                             .pull(
-                                s.address,
+                                this.erc20Vault.address,
                                 [this.usdc.address],
-                                BigNumber.from(1),
+                                [BigNumber.from(1)],
                                 []
                             )
                     ).to.not.be.reverted;
+                });
+            });
+            it("not allowed: admin", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .pull(
+                            this.erc20Vault.address,
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .pull(
+                                this.erc20Vault.address,
+                                [this.usdc.address],
+                                [BigNumber.from(1)],
+                                []
+                            )
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
     });
 
     describe("#isValidSignature", () => {
+        describe.only("edge cases:", () => {
+            it("returns 0xffffffff when nft is 0", async () => {
+                await ethers.provider.send("hardhat_setStorageAt", [
+                    this.subject.address,
+                    "0x4", // address of _nft
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                ]);
+                expect(
+                    await this.subject.isValidSignature(
+                        randomHash(),
+                        INTEGRATION_VAULT_INTERFACE_ID
+                    )
+                ).to.deep.equal("0xffffffff");
+            });
+            it("returns 0xffffffff when strategy has no permission", async () => {
+                let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                    this.subject.address,
+                    "0x4", // address of _nft
+                ]);
+                let strategy = await this.vaultRegistry.getApproved(tokenId);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .revokePermissions(strategy, [
+                        PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                    ]);
+                expect(
+                    await this.subject.isValidSignature(
+                        randomHash(),
+                        INTEGRATION_VAULT_INTERFACE_ID
+                    )
+                ).to.deep.equal("0xffffffff");
+            });
+            xit("returns 0xffffffff when codesize is 0", async () => {
+                // ???????????????
+                let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                    this.subject.address,
+                    "0x4", // address of _nft
+                ]);
+                let address = randomAddress();
+                console.log(address);
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(address, tokenId);
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .stagePermissionGrants(address, [
+                                PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                            ]);
+                        await sleep(
+                            await this.protocolGovernance.governanceDelay()
+                        );
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .commitPermissionGrants(address);
+                        expect(
+                            await this.subject.isValidSignature(
+                                randomHash(),
+                                INTEGRATION_VAULT_INTERFACE_ID
+                            )
+                        ).to.deep.equal("0xffffffff");
+                    }
+                );
+            });
+        });
         describe("access control:", () => {
             it("allowed: any address", async () => {
                 await withSigner(randomAddress(), async (s) => {
@@ -495,10 +650,148 @@ export function integrationVaultBehavior<S extends Contract>(
                         this.subject
                             .connect(s)
                             .isValidSignature(
-                                randomAddress(),
+                                randomHash(),
                                 INTEGRATION_VAULT_INTERFACE_ID
                             )
                     ).to.not.be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#externalCall", () => {
+        it("works correctly", async () => {
+            await this.subject.externalCall(
+                this.usdc.address,
+                APPROVE_SELECTOR,
+                encodeToBytes(
+                    ["address", "uint256"],
+                    [this.curveRouter, ethers.constants.MaxUint256]
+                )
+            );
+            expect(
+                await this.usdc.allowance(
+                    this.subject.address,
+                    this.curveRouter
+                )
+            ).to.be.equal(ethers.constants.MaxUint256);
+        });
+
+        describe("edge cases:", () => {
+            it("reverts when nft is 0", async () => {
+                await ethers.provider.send("hardhat_setStorageAt", [
+                    this.subject.address,
+                    "0x4", // address of _nft
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                ]);
+                await expect(
+                    this.subject.externalCall(randomAddress(), "0x00000000", [])
+                ).to.be.revertedWith(Exceptions.INIT);
+            });
+            it("reverts when not approved", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .externalCall(randomAddress(), "0x00000000", [])
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+            it("reverts when there is no validator", async () => {
+                await expect(
+                    this.subject.externalCall(randomAddress(), "0x00000000", [])
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+        });
+
+        describe("access control:", () => {
+            it("allowed: owner", async () => {
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .externalCall(
+                                    this.usdc.address,
+                                    APPROVE_SELECTOR,
+                                    encodeToBytes(
+                                        ["address", "uint256"],
+                                        [
+                                            this.curveRouter,
+                                            ethers.constants.MaxUint256,
+                                        ]
+                                    )
+                                )
+                        ).to.not.be.reverted;
+                    }
+                );
+            });
+            it("allowed: approved address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(signer.address, tokenId);
+                        }
+                    );
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .externalCall(
+                                this.usdc.address,
+                                APPROVE_SELECTOR,
+                                encodeToBytes(
+                                    ["address", "uint256"],
+                                    [
+                                        this.curveRouter,
+                                        ethers.constants.MaxUint256,
+                                    ]
+                                )
+                            )
+                    ).to.not.be.reverted;
+                });
+            });
+            it("not allowed: admin", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .externalCall(
+                            this.usdc.address,
+                            APPROVE_SELECTOR,
+                            encodeToBytes(
+                                ["address", "uint256"],
+                                [this.curveRouter, ethers.constants.MaxUint256]
+                            )
+                        )
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .externalCall(
+                                this.usdc.address,
+                                APPROVE_SELECTOR,
+                                encodeToBytes(
+                                    ["address", "uint256"],
+                                    [
+                                        this.curveRouter,
+                                        ethers.constants.MaxUint256,
+                                    ]
+                                )
+                            )
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });

@@ -11,6 +11,7 @@ import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifa
 type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
+    curveRouter: string;
 };
 
 type DeployOptions = {};
@@ -24,7 +25,9 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 await deployments.fixture();
                 const { read } = deployments;
 
-                const { uniswapV3PositionManager } = await getNamedAccounts();
+                const { uniswapV3PositionManager, curveRouter } =
+                    await getNamedAccounts();
+                this.curveRouter = curveRouter;
 
                 this.positionManager = await ethers.getContractAt(
                     INonfungiblePositionManager,
