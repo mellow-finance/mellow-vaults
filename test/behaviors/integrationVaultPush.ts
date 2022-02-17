@@ -1,20 +1,17 @@
-import {IntegrationVaultContext} from "./integrationVault";
-import {BigNumber, Contract} from "ethers";
-import {expect} from "chai";
-import {ethers} from "hardhat";
+import { IntegrationVaultContext } from "./integrationVault";
+import { BigNumber, Contract } from "ethers";
+import { expect } from "chai";
+import { ethers } from "hardhat";
 import Exceptions from "../library/Exceptions";
-import {encodeToBytes} from "../library/Helpers";
+import { encodeToBytes } from "../library/Helpers";
 
 export function integrationVaultPushBehavior<S extends Contract>(
-    this: IntegrationVaultContext<S, {}>,
-    pushFunction: any,
-    staticCallPushFunction: any,
-    prefixArgs: any[],
+    this: IntegrationVaultContext<S, {}>
 ) {
     it("emits Push event", async () => {
         await expect(
-            pushFunction(
-                ...prefixArgs,
+            this.pushFunction(
+                ...this.prefixArgs,
                 [this.usdc.address],
                 [BigNumber.from(1)],
                 []
@@ -24,7 +21,7 @@ export function integrationVaultPushBehavior<S extends Contract>(
     it("pushes tokens to the underlying protocol", async () => {
         await this.preparePush();
         const args = [
-            ...prefixArgs,
+            ...this.prefixArgs,
             [this.usdc.address, this.weth.address],
             [
                 BigNumber.from(10).pow(6).mul(3000),
@@ -32,31 +29,12 @@ export function integrationVaultPushBehavior<S extends Contract>(
             ],
             [],
         ];
-        const amounts = await staticCallPushFunction(
-            ...args
-        );
-        await pushFunction(...args);
-        expect(amounts[0]).to.deep.equal(
-            BigNumber.from(10).pow(6).mul(3000)
-        );
+        const amounts = await this.staticCallPushFunction(...args);
+        await this.pushFunction(...args);
+        expect(amounts[0]).to.deep.equal(BigNumber.from(10).pow(6).mul(3000));
     });
 
     describe("edge cases", () => {
-        describe("when not enough balance",() => {
-            it("reverts", async () => {
-                const deployerBalance = await this.usdc.balanceOf(
-                    this.deployer.address
-                );
-                await expect(
-                    pushFunction(
-                        ...prefixArgs,
-                        [this.usdc.address],
-                        [BigNumber.from(deployerBalance).mul(2)],
-                        []
-                    )
-                ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-            });
-        });
         describe("when vault's nft is 0", () => {
             it(`reverts with ${Exceptions.INIT}`, async () => {
                 await ethers.provider.send("hardhat_setStorageAt", [
@@ -65,8 +43,8 @@ export function integrationVaultPushBehavior<S extends Contract>(
                     "0x0000000000000000000000000000000000000000000000000000000000000000",
                 ]);
                 await expect(
-                    pushFunction(
-                        ...prefixArgs,
+                    this.pushFunction(
+                        ...this.prefixArgs,
                         [this.usdc.address],
                         [BigNumber.from(1)],
                         []
@@ -90,8 +68,8 @@ export function integrationVaultPushBehavior<S extends Contract>(
                     "0x0000000000000000000000000000000000000000000000000000000000000000",
                 ]);
                 await expect(
-                    pushFunction(
-                        ...prefixArgs,
+                    this.pushFunction(
+                        ...this.prefixArgs,
                         [this.usdc.address],
                         [BigNumber.from(1)],
                         []
@@ -99,11 +77,11 @@ export function integrationVaultPushBehavior<S extends Contract>(
                 ).to.be.revertedWith(Exceptions.NOT_FOUND);
             });
         });
-        describe("when tokens and tokenAmounts lengths do not match",  () => {
+        describe("when tokens and tokenAmounts lengths do not match", () => {
             it("reverts", async () => {
                 await expect(
-                    pushFunction(
-                        ...prefixArgs,
+                    this.pushFunction(
+                        ...this.prefixArgs,
                         [this.usdc.address],
                         [BigNumber.from(1), BigNumber.from(1)],
                         []
@@ -111,11 +89,11 @@ export function integrationVaultPushBehavior<S extends Contract>(
                 ).to.be.reverted;
             });
         });
-        describe("when tokens are not sorted",  () => {
+        describe("when tokens are not sorted", () => {
             it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                 await expect(
-                    pushFunction(
-                        ...prefixArgs,
+                    this.pushFunction(
+                        ...this.prefixArgs,
                         [this.weth.address, this.usdc.address],
                         [BigNumber.from(1), BigNumber.from(1)],
                         []
@@ -126,8 +104,8 @@ export function integrationVaultPushBehavior<S extends Contract>(
         describe("when tokens are not unique", () => {
             it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                 await expect(
-                    pushFunction(
-                        ...prefixArgs,
+                    this.pushFunction(
+                        ...this.prefixArgs,
                         [this.usdc.address, this.usdc.address],
                         [BigNumber.from(1), BigNumber.from(1)],
                         []
@@ -138,8 +116,8 @@ export function integrationVaultPushBehavior<S extends Contract>(
         describe("when tokens not sorted nor unique", () => {
             it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                 await expect(
-                    pushFunction(
-                        ...prefixArgs,
+                    this.pushFunction(
+                        ...this.prefixArgs,
                         [
                             this.weth.address,
                             this.usdc.address,

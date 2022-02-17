@@ -1,4 +1,5 @@
 import hre from "hardhat";
+import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { mint, mintUniV3Position_USDC_WETH } from "./library/Helpers";
@@ -143,6 +144,21 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
 
     beforeEach(async () => {
         await this.deploymentFixture();
+    });
+
+    describe("#collectEarnings", () => {
+        it("emits CollectedEarnings event", async () => {
+            await expect(this.subject.collectEarnings()).to.emit(
+                this.subject,
+                "CollectedEarnings"
+            );
+        });
+
+        describe("access control:", () => {
+            it("allowed: all addresses", async () => {
+                await expect(this.subject.collectEarnings()).to.not.be.reverted;
+            });
+        });
     });
 
     integrationVaultBehavior.call(this, {});

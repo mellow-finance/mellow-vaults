@@ -109,7 +109,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         }
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
-        console.log(pActualTokenAmounts[0]);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
     }

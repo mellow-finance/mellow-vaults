@@ -16,7 +16,7 @@ import { ERC20RootVault, ERC20Vault } from "../types";
 import { ethers } from "hardhat";
 import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
-import {integrationVaultPushBehavior} from "./integrationVaultPush";
+import { integrationVaultPushBehavior } from "./integrationVaultPush";
 
 export type IntegrationVaultContext<S extends Contract, F> = TestContext<
     S,
@@ -34,122 +34,13 @@ export function integrationVaultBehavior<S extends Contract>(
 ) {
     const APPROVE_SELECTOR = "0x095ea7b3";
     describe("#push", () => {
-        it("emits Push event", async () => {
-            await expect(
-                this.subject.push([this.usdc.address], [BigNumber.from(1)], [])
-            ).to.emit(this.subject, "Push");
-        });
-        it("pushes tokens to the underlying protocol", async () => {
-            await this.preparePush();
-            const args = [
-                [this.usdc.address, this.weth.address],
-                [
-                    BigNumber.from(10).pow(6).mul(3000),
-                    BigNumber.from(10).pow(18).mul(1),
-                ],
-                [],
-            ];
-            const amounts = await this.subject.callStatic.push(...args);
-            await this.subject.push(...args);
-            expect(amounts[0]).to.deep.equal(
-                BigNumber.from(10).pow(6).mul(3000)
-            );
+        beforeEach(async () => {
+            this.pushFunction = this.subject.push;
+            this.staticCallPushFunction = this.subject.callStatic.push;
+            this.prefixArgs = [];
         });
 
-        describe("edge cases", () => {
-            it("reverts when not enough balance", async () => {
-                const deployerBalance = await this.usdc.balanceOf(
-                    this.deployer.address
-                );
-                await expect(
-                    this.subject.push(
-                        [this.usdc.address],
-                        [BigNumber.from(deployerBalance).mul(2)],
-                        []
-                    )
-                ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-            });
-            it("reverts when vault's nft is 0", async () => {
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.push(
-                        [this.usdc.address],
-                        [BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INIT);
-            });
-            it("reverts when owner's nft is 0", async () => {
-                let address = `0x${this.erc20RootVault.address
-                    .substr(2)
-                    .padStart(64, "0")}`;
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.vaultRegistry.address,
-                    ethers.utils.keccak256(
-                        encodeToBytes(
-                            ["bytes32", "uint256"],
-                            [address, BigNumber.from(10)]
-                        )
-                    ), // setting _nftIndex[this.erc20RootVault.address] = 0
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.push(
-                        [this.usdc.address],
-                        [BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.NOT_FOUND);
-            });
-            it("reverts when tokens and tokenAmounts lengths do not match", async () => {
-                await expect(
-                    this.subject.push(
-                        [this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-            });
-            it("reverts when tokens are not sorted", async () => {
-                await expect(
-                    this.subject.push(
-                        [this.weth.address, this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("reverts when tokens are not unique", async () => {
-                await expect(
-                    this.subject.push(
-                        [this.usdc.address, this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("reverts when tokens not sorted nor unique", async () => {
-                await expect(
-                    this.subject.push(
-                        [
-                            this.weth.address,
-                            this.usdc.address,
-                            this.weth.address,
-                        ],
-                        [
-                            BigNumber.from(1),
-                            BigNumber.from(1),
-                            BigNumber.from(1),
-                        ],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-        });
+        integrationVaultPushBehavior.call(this);
 
         describe("access control", () => {
             it("allowed: any address", async () => {
@@ -169,144 +60,31 @@ export function integrationVaultBehavior<S extends Contract>(
         });
     });
 
-    describe.only("#transferAndPush", () => {
-        integrationVaultPushBehavior.call(
-            this,
-            this.subject.transferAndPush,
-            this.subject.callStatic.transferAndPush,
-            [this.deployer.address],
-        );
-        // it("emits Push event", async () => {
-        //     await expect(
-        //         this.subject.transferAndPush(
-        //             this.deployer.address,
-        //             [this.usdc.address],
-        //             [BigNumber.from(1)],
-        //             []
-        //         )
-        //     ).to.emit(this.subject, "Push");
-        // });
-        // it("pushes tokens to the underlying protocol", async () => {
-        //     await this.preparePush();
-        //     const args = [
-        //         this.deployer.address,
-        //         [this.usdc.address, this.weth.address],
-        //         [
-        //             BigNumber.from(10).pow(6).mul(3000),
-        //             BigNumber.from(10).pow(18).mul(1),
-        //         ],
-        //         [],
-        //     ];
-        //     const amounts = await this.subject.callStatic.transferAndPush(
-        //         ...args
-        //     );
-        //     await this.subject.callStatic.transferAndPush(...args);
-        //     expect(amounts[0]).to.deep.equal(
-        //         BigNumber.from(10).pow(6).mul(3000)
-        //     );
-        // });
-        //
-        // describe("edge cases", () => {
-        //     it("reverts when not enough balance", async () => {
-        //         const deployerBalance = await this.usdc.balanceOf(
-        //             this.deployer.address
-        //         );
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [this.usdc.address],
-        //                 [BigNumber.from(deployerBalance).mul(2)],
-        //                 []
-        //             )
-        //         ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-        //     });
-        //     it("reverts when vault's nft is 0", async () => {
-        //         await ethers.provider.send("hardhat_setStorageAt", [
-        //             this.subject.address,
-        //             "0x4", // address of _nft
-        //             "0x0000000000000000000000000000000000000000000000000000000000000000",
-        //         ]);
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [this.usdc.address],
-        //                 [BigNumber.from(1)],
-        //                 []
-        //             )
-        //         ).to.be.revertedWith(Exceptions.INIT);
-        //     });
-        //     it("reverts when owner's nft is 0", async () => {
-        //         let address = `0x${this.erc20RootVault.address
-        //             .substr(2)
-        //             .padStart(64, "0")}`;
-        //         await ethers.provider.send("hardhat_setStorageAt", [
-        //             this.vaultRegistry.address,
-        //             ethers.utils.keccak256(
-        //                 encodeToBytes(
-        //                     ["bytes32", "uint256"],
-        //                     [address, BigNumber.from(10)]
-        //                 )
-        //             ), // setting _nftIndex[this.erc20RootVault.address] = 0
-        //             "0x0000000000000000000000000000000000000000000000000000000000000000",
-        //         ]);
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [this.usdc.address],
-        //                 [BigNumber.from(1)],
-        //                 []
-        //             )
-        //         ).to.be.revertedWith(Exceptions.NOT_FOUND);
-        //     });
-        //     it("reverts when tokens and tokenAmounts lengths do not match", async () => {
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [this.usdc.address],
-        //                 [BigNumber.from(1), BigNumber.from(1)],
-        //                 []
-        //             )
-        //         ).to.be.reverted;
-        //     });
-        //     it("reverts when tokens are not sorted", async () => {
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [this.weth.address, this.usdc.address],
-        //                 [BigNumber.from(1), BigNumber.from(1)],
-        //                 []
-        //             )
-        //         ).to.be.revertedWith(Exceptions.INVARIANT);
-        //     });
-        //     it("reverts when tokens are not unique", async () => {
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [this.usdc.address, this.usdc.address],
-        //                 [BigNumber.from(1), BigNumber.from(1)],
-        //                 []
-        //             )
-        //         ).to.be.revertedWith(Exceptions.INVARIANT);
-        //     });
-        //     it("reverts when tokens not sorted nor unique", async () => {
-        //         await expect(
-        //             this.subject.transferAndPush(
-        //                 this.deployer.address,
-        //                 [
-        //                     this.weth.address,
-        //                     this.usdc.address,
-        //                     this.weth.address,
-        //                 ],
-        //                 [
-        //                     BigNumber.from(1),
-        //                     BigNumber.from(1),
-        //                     BigNumber.from(1),
-        //                 ],
-        //                 []
-        //             )
-        //         ).to.be.revertedWith(Exceptions.INVARIANT);
-        //     });
-        // });
+    describe("#transferAndPush", () => {
+        beforeEach(async () => {
+            this.pushFunction = this.subject.transferAndPush;
+            this.staticCallPushFunction =
+                this.subject.callStatic.transferAndPush;
+            this.prefixArgs = [this.deployer.address];
+        });
+
+        integrationVaultPushBehavior.call(this);
+
+        describe("when not enough balance", () => {
+            it("reverts", async () => {
+                const deployerBalance = await this.usdc.balanceOf(
+                    this.deployer.address
+                );
+                await expect(
+                    this.pushFunction(
+                        ...this.prefixArgs,
+                        [this.usdc.address],
+                        [BigNumber.from(deployerBalance).mul(2)],
+                        []
+                    )
+                ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+            });
+        });
 
         describe("access control", () => {
             it("allowed: any address", async () => {
@@ -395,20 +173,24 @@ export function integrationVaultBehavior<S extends Contract>(
         });
 
         describe("edge cases:", () => {
-            it("reverts when vault's nft is 0", async () => {
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.reclaimTokens([randomAddress()])
-                ).to.be.revertedWith(Exceptions.INIT);
+            describe("when vault's nft is 0", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    ]);
+                    await expect(
+                        this.subject.reclaimTokens([randomAddress()])
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
             });
-            it("reverts when passed never allowed token", async () => {
-                await expect(
-                    this.subject.reclaimTokens([randomAddress()])
-                ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+            describe("when passed never allowed token", () => {
+                it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                    await expect(
+                        this.subject.reclaimTokens([randomAddress()])
+                    ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                });
             });
         });
 
@@ -471,20 +253,22 @@ export function integrationVaultBehavior<S extends Contract>(
                 await this.subject.pull(...args);
                 expect(pulledAmounts[0]).to.equal(BigNumber.from(0));
             });
-            it("reverts when vault's nft is 0", async () => {
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.pull(
-                        this.deployer.address,
-                        [this.usdc.address],
-                        [BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INIT);
+            describe("when vault's nft is 0", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    ]);
+                    await expect(
+                        this.subject.pull(
+                            this.deployer.address,
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
             });
         });
 
@@ -565,71 +349,127 @@ export function integrationVaultBehavior<S extends Contract>(
     });
 
     describe("#isValidSignature", () => {
+        xit("validates signature", async () => {
+            const address = this.deployer.address;
+            let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+            ]);
+            await withSigner(
+                this.erc20RootVault.address,
+                async (erc20RootVaultSigner) => {
+                    await this.vaultRegistry
+                        .connect(erc20RootVaultSigner)
+                        .approve(address, tokenId);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(address, [
+                            PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                        ]);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitPermissionGrants(address);
+
+                    const messageHash = ethers.utils.hashMessage(
+                        `\x19Ethereum Signed Message:\n${this.deployer.address.length}\n${this.deployer.address}`
+                    );
+                    const signature = await this.deployer.signMessage(
+                        messageHash
+                    );
+                    expect(
+                        await this.subject.isValidSignature(
+                            messageHash,
+                            signature
+                        )
+                    ).to.deep.equal("0x1626ba7e");
+                }
+            );
+        });
         describe("edge cases:", () => {
-            it("returns 0xffffffff when nft is 0", async () => {
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                expect(
-                    await this.subject.isValidSignature(
-                        randomHash(),
-                        INTEGRATION_VAULT_INTERFACE_ID
-                    )
-                ).to.deep.equal("0xffffffff");
-            });
-            it("returns 0xffffffff when strategy has no permission", async () => {
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                ]);
-                let strategy = await this.vaultRegistry.getApproved(tokenId);
-                await this.protocolGovernance
-                    .connect(this.admin)
-                    .revokePermissions(strategy, [
-                        PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+            describe("when nft is 0", () => {
+                it("returns 0xffffffff", async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000000",
                     ]);
-                expect(
-                    await this.subject.isValidSignature(
-                        randomHash(),
-                        INTEGRATION_VAULT_INTERFACE_ID
-                    )
-                ).to.deep.equal("0xffffffff");
+                    expect(
+                        await this.subject.isValidSignature(
+                            randomHash(),
+                            INTEGRATION_VAULT_INTERFACE_ID
+                        )
+                    ).to.deep.equal("0xffffffff");
+                });
             });
-            xit("returns 0xffffffff when codesize is 0", async () => {
-                // ???????????????
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                ]);
-                let address = randomAddress();
-                console.log(address);
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(address, tokenId);
-                        await this.protocolGovernance
-                            .connect(this.admin)
-                            .stagePermissionGrants(address, [
-                                PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
-                            ]);
-                        await sleep(
-                            await this.protocolGovernance.governanceDelay()
-                        );
-                        await this.protocolGovernance
-                            .connect(this.admin)
-                            .commitPermissionGrants(address);
-                        expect(
-                            await this.subject.isValidSignature(
-                                randomHash(),
-                                INTEGRATION_VAULT_INTERFACE_ID
-                            )
-                        ).to.deep.equal("0xffffffff");
-                    }
-                );
+            describe("when strategy has no permission", () => {
+                it("returns 0xffffffff", async () => {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    let strategy = await this.vaultRegistry.getApproved(
+                        tokenId
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .revokePermissions(strategy, [
+                            PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                        ]);
+                    expect(
+                        await this.subject.isValidSignature(
+                            randomHash(),
+                            INTEGRATION_VAULT_INTERFACE_ID
+                        )
+                    ).to.deep.equal("0xffffffff");
+                });
+            });
+            describe("when signer could not be recovered", () => {
+                it("returns 0xffffffff", async () => {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(this.deployer.address, tokenId);
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(this.deployer.address, [
+                                    PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .commitPermissionGrants(this.deployer.address);
+                            const messageHash = await ethers.utils.hashMessage(
+                                "random message"
+                            );
+                            const signature = await this.deployer.signMessage(
+                                messageHash
+                            );
+                            expect(
+                                await this.subject.isValidSignature(
+                                    messageHash,
+                                    signature
+                                )
+                            ).to.deep.equal("0xffffffff");
+                        }
+                    );
+                });
             });
         });
         describe("access control:", () => {
@@ -667,29 +507,43 @@ export function integrationVaultBehavior<S extends Contract>(
         });
 
         describe("edge cases:", () => {
-            it("reverts when nft is 0", async () => {
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.externalCall(randomAddress(), "0x00000000", [])
-                ).to.be.revertedWith(Exceptions.INIT);
-            });
-            it("reverts when not approved", async () => {
-                await withSigner(randomAddress(), async (signer) => {
+            describe("when vault's nft is 0", () => {
+                it(`reverts ${Exceptions.FORBIDDEN}`, async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000000",
+                    ]);
                     await expect(
-                        this.subject
-                            .connect(signer)
-                            .externalCall(randomAddress(), "0x00000000", [])
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        this.subject.externalCall(
+                            randomAddress(),
+                            "0x00000000",
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INIT);
                 });
             });
-            it("reverts when there is no validator", async () => {
-                await expect(
-                    this.subject.externalCall(randomAddress(), "0x00000000", [])
-                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            describe("when not approved", () => {
+                it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .externalCall(randomAddress(), "0x00000000", [])
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+            describe("when there is no validator", () => {
+                it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                    await expect(
+                        this.subject.externalCall(
+                            randomAddress(),
+                            "0x00000000",
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
             });
         });
 
