@@ -431,10 +431,10 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
         require(
-            newTradingParams.maxSlippageD <= DENOMINATOR &&
-                newTradingParams.oracleSafety <= 5 &&
-                newTradingParams.minRebalanceWaitTime <= 86400 * 30 &&
-                newTradingParams.orderDeadline <= 86400 * 30,
+            (newTradingParams.maxSlippageD <= DENOMINATOR) &&
+                (newTradingParams.oracleSafety <= 5) &&
+                (newTradingParams.minRebalanceWaitTime <= 86400 * 30) &&
+                (newTradingParams.orderDeadline <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         require(address(oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -447,7 +447,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     function updateRatioParams(RatioParams calldata newRatioParams) external {
         _requireAdmin();
         require(
-            newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR && newRatioParams.erc20TokenRatioD <= DENOMINATOR,
+            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) && (newRatioParams.erc20TokenRatioD <= DENOMINATOR),
             ExceptionsLibrary.INVARIANT
         );
         ratioParams = newRatioParams;
