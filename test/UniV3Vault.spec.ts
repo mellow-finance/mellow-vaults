@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint } from "./library/Helpers";
+import { mint, mintUniV3Position_USDC_WETH } from "./library/Helpers";
 import { contract } from "./library/setup";
 import { ERC20RootVault, ERC20Vault, UniV3Vault } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
@@ -12,6 +12,7 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
     curveRouter: string;
+    preparePush: () => any;
 };
 
 type DeployOptions = {};
@@ -33,6 +34,23 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     INonfungiblePositionManager,
                     uniswapV3PositionManager
                 );
+
+                this.preparePush = async () => {
+                    const result = await mintUniV3Position_USDC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wethAmount: BigNumber.from(10).pow(18),
+                    });
+                    await this.positionManager.functions[
+                        "safeTransferFrom(address,address,uint256)"
+                    ](
+                        this.deployer.address,
+                        this.subject.address,
+                        result.tokenId
+                    );
+                };
 
                 const tokens = [this.weth.address, this.usdc.address]
                     .map((t) => t.toLowerCase())

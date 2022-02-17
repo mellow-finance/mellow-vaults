@@ -4,7 +4,6 @@ import { TestContext } from "../library/setup";
 import Exceptions from "../library/Exceptions";
 import {
     encodeToBytes,
-    mintUniV3Position_USDC_WETH,
     randomAddress,
     sleep,
     withSigner,
@@ -17,6 +16,7 @@ import { ERC20RootVault, ERC20Vault } from "../types";
 import { ethers } from "hardhat";
 import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
+import {integrationVaultPushBehavior} from "./integrationVaultPush";
 
 export type IntegrationVaultContext<S extends Contract, F> = TestContext<
     S,
@@ -25,6 +25,7 @@ export type IntegrationVaultContext<S extends Contract, F> = TestContext<
     erc20Vault: ERC20Vault;
     erc20RootVault: ERC20RootVault;
     curveRouter: string;
+    preparePush: () => any;
 };
 
 export function integrationVaultBehavior<S extends Contract>(
@@ -38,17 +39,8 @@ export function integrationVaultBehavior<S extends Contract>(
                 this.subject.push([this.usdc.address], [BigNumber.from(1)], [])
             ).to.emit(this.subject, "Push");
         });
-        it("passes when tokens transferred", async () => {
-            const result = await mintUniV3Position_USDC_WETH({
-                fee: 3000,
-                tickLower: -887220,
-                tickUpper: 887220,
-                usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                wethAmount: BigNumber.from(10).pow(18),
-            });
-            await this.positionManager.functions[
-                "safeTransferFrom(address,address,uint256)"
-            ](this.deployer.address, this.subject.address, result.tokenId);
+        it("pushes tokens to the underlying protocol", async () => {
+            await this.preparePush();
             const args = [
                 [this.usdc.address, this.weth.address],
                 [
@@ -58,12 +50,25 @@ export function integrationVaultBehavior<S extends Contract>(
                 [],
             ];
             const amounts = await this.subject.callStatic.push(...args);
+            await this.subject.push(...args);
             expect(amounts[0]).to.deep.equal(
                 BigNumber.from(10).pow(6).mul(3000)
             );
         });
 
         describe("edge cases", () => {
+            it("reverts when not enough balance", async () => {
+                const deployerBalance = await this.usdc.balanceOf(
+                    this.deployer.address
+                );
+                await expect(
+                    this.subject.push(
+                        [this.usdc.address],
+                        [BigNumber.from(deployerBalance).mul(2)],
+                        []
+                    )
+                ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+            });
             it("reverts when vault's nft is 0", async () => {
                 await ethers.provider.send("hardhat_setStorageAt", [
                     this.subject.address,
@@ -164,146 +169,144 @@ export function integrationVaultBehavior<S extends Contract>(
         });
     });
 
-    describe("#transferAndPush", () => {
-        it("emits Push event", async () => {
-            await expect(
-                this.subject.transferAndPush(
-                    this.deployer.address,
-                    [this.usdc.address],
-                    [BigNumber.from(1)],
-                    []
-                )
-            ).to.emit(this.subject, "Push");
-        });
-        it("passes when tokens transferred", async () => {
-            const result = await mintUniV3Position_USDC_WETH({
-                fee: 3000,
-                tickLower: -887220,
-                tickUpper: 887220,
-                usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                wethAmount: BigNumber.from(10).pow(18),
-            });
-            await this.positionManager.functions[
-                "safeTransferFrom(address,address,uint256)"
-            ](this.deployer.address, this.subject.address, result.tokenId);
-            const args = [
-                this.deployer.address,
-                [this.usdc.address, this.weth.address],
-                [
-                    BigNumber.from(10).pow(6).mul(3000),
-                    BigNumber.from(10).pow(18).mul(1),
-                ],
-                [],
-            ];
-            const amounts = await this.subject.callStatic.transferAndPush(
-                ...args
-            );
-            expect(amounts[0]).to.deep.equal(
-                BigNumber.from(10).pow(6).mul(3000)
-            );
-        });
-        it("reverts when not enough balance", async () => {
-            const deployerBalance = await this.usdc.balanceOf(
-                this.deployer.address
-            );
-            await expect(
-                this.subject.transferAndPush(
-                    this.deployer.address,
-                    [this.usdc.address],
-                    [BigNumber.from(deployerBalance).mul(2)],
-                    []
-                )
-            ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
-        });
-
-        describe("edge cases", () => {
-            it("reverts when vault's nft is 0", async () => {
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.subject.address,
-                    "0x4", // address of _nft
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.transferAndPush(
-                        this.deployer.address,
-                        [this.usdc.address],
-                        [BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INIT);
-            });
-            it("reverts when owner's nft is 0", async () => {
-                let address = `0x${this.erc20RootVault.address
-                    .substr(2)
-                    .padStart(64, "0")}`;
-                await ethers.provider.send("hardhat_setStorageAt", [
-                    this.vaultRegistry.address,
-                    ethers.utils.keccak256(
-                        encodeToBytes(
-                            ["bytes32", "uint256"],
-                            [address, BigNumber.from(10)]
-                        )
-                    ), // setting _nftIndex[this.erc20RootVault.address] = 0
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                ]);
-                await expect(
-                    this.subject.transferAndPush(
-                        this.deployer.address,
-                        [this.usdc.address],
-                        [BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.NOT_FOUND);
-            });
-            it("reverts when tokens and tokenAmounts lengths do not match", async () => {
-                await expect(
-                    this.subject.transferAndPush(
-                        this.deployer.address,
-                        [this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.reverted;
-            });
-            it("reverts when tokens are not sorted", async () => {
-                await expect(
-                    this.subject.transferAndPush(
-                        this.deployer.address,
-                        [this.weth.address, this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("reverts when tokens are not unique", async () => {
-                await expect(
-                    this.subject.transferAndPush(
-                        this.deployer.address,
-                        [this.usdc.address, this.usdc.address],
-                        [BigNumber.from(1), BigNumber.from(1)],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("reverts when tokens not sorted nor unique", async () => {
-                await expect(
-                    this.subject.transferAndPush(
-                        this.deployer.address,
-                        [
-                            this.weth.address,
-                            this.usdc.address,
-                            this.weth.address,
-                        ],
-                        [
-                            BigNumber.from(1),
-                            BigNumber.from(1),
-                            BigNumber.from(1),
-                        ],
-                        []
-                    )
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-        });
+    describe.only("#transferAndPush", () => {
+        integrationVaultPushBehavior.call(
+            this,
+            this.subject.transferAndPush,
+            this.subject.callStatic.transferAndPush,
+            [this.deployer.address],
+        );
+        // it("emits Push event", async () => {
+        //     await expect(
+        //         this.subject.transferAndPush(
+        //             this.deployer.address,
+        //             [this.usdc.address],
+        //             [BigNumber.from(1)],
+        //             []
+        //         )
+        //     ).to.emit(this.subject, "Push");
+        // });
+        // it("pushes tokens to the underlying protocol", async () => {
+        //     await this.preparePush();
+        //     const args = [
+        //         this.deployer.address,
+        //         [this.usdc.address, this.weth.address],
+        //         [
+        //             BigNumber.from(10).pow(6).mul(3000),
+        //             BigNumber.from(10).pow(18).mul(1),
+        //         ],
+        //         [],
+        //     ];
+        //     const amounts = await this.subject.callStatic.transferAndPush(
+        //         ...args
+        //     );
+        //     await this.subject.callStatic.transferAndPush(...args);
+        //     expect(amounts[0]).to.deep.equal(
+        //         BigNumber.from(10).pow(6).mul(3000)
+        //     );
+        // });
+        //
+        // describe("edge cases", () => {
+        //     it("reverts when not enough balance", async () => {
+        //         const deployerBalance = await this.usdc.balanceOf(
+        //             this.deployer.address
+        //         );
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [this.usdc.address],
+        //                 [BigNumber.from(deployerBalance).mul(2)],
+        //                 []
+        //             )
+        //         ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+        //     });
+        //     it("reverts when vault's nft is 0", async () => {
+        //         await ethers.provider.send("hardhat_setStorageAt", [
+        //             this.subject.address,
+        //             "0x4", // address of _nft
+        //             "0x0000000000000000000000000000000000000000000000000000000000000000",
+        //         ]);
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [this.usdc.address],
+        //                 [BigNumber.from(1)],
+        //                 []
+        //             )
+        //         ).to.be.revertedWith(Exceptions.INIT);
+        //     });
+        //     it("reverts when owner's nft is 0", async () => {
+        //         let address = `0x${this.erc20RootVault.address
+        //             .substr(2)
+        //             .padStart(64, "0")}`;
+        //         await ethers.provider.send("hardhat_setStorageAt", [
+        //             this.vaultRegistry.address,
+        //             ethers.utils.keccak256(
+        //                 encodeToBytes(
+        //                     ["bytes32", "uint256"],
+        //                     [address, BigNumber.from(10)]
+        //                 )
+        //             ), // setting _nftIndex[this.erc20RootVault.address] = 0
+        //             "0x0000000000000000000000000000000000000000000000000000000000000000",
+        //         ]);
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [this.usdc.address],
+        //                 [BigNumber.from(1)],
+        //                 []
+        //             )
+        //         ).to.be.revertedWith(Exceptions.NOT_FOUND);
+        //     });
+        //     it("reverts when tokens and tokenAmounts lengths do not match", async () => {
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [this.usdc.address],
+        //                 [BigNumber.from(1), BigNumber.from(1)],
+        //                 []
+        //             )
+        //         ).to.be.reverted;
+        //     });
+        //     it("reverts when tokens are not sorted", async () => {
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [this.weth.address, this.usdc.address],
+        //                 [BigNumber.from(1), BigNumber.from(1)],
+        //                 []
+        //             )
+        //         ).to.be.revertedWith(Exceptions.INVARIANT);
+        //     });
+        //     it("reverts when tokens are not unique", async () => {
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [this.usdc.address, this.usdc.address],
+        //                 [BigNumber.from(1), BigNumber.from(1)],
+        //                 []
+        //             )
+        //         ).to.be.revertedWith(Exceptions.INVARIANT);
+        //     });
+        //     it("reverts when tokens not sorted nor unique", async () => {
+        //         await expect(
+        //             this.subject.transferAndPush(
+        //                 this.deployer.address,
+        //                 [
+        //                     this.weth.address,
+        //                     this.usdc.address,
+        //                     this.weth.address,
+        //                 ],
+        //                 [
+        //                     BigNumber.from(1),
+        //                     BigNumber.from(1),
+        //                     BigNumber.from(1),
+        //                 ],
+        //                 []
+        //             )
+        //         ).to.be.revertedWith(Exceptions.INVARIANT);
+        //     });
+        // });
 
         describe("access control", () => {
             it("allowed: any address", async () => {
@@ -369,16 +372,7 @@ export function integrationVaultBehavior<S extends Contract>(
             ).to.emit(this.subject, "ReclaimTokens");
         });
         it("reclaims successfully", async () => {
-            const result = await mintUniV3Position_USDC_WETH({
-                fee: 3000,
-                tickLower: -887220,
-                tickUpper: 887220,
-                usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                wethAmount: BigNumber.from(10).pow(18),
-            });
-            await this.positionManager.functions[
-                "safeTransferFrom(address,address,uint256)"
-            ](this.deployer.address, this.subject.address, result.tokenId);
+            await this.preparePush();
             const args = [
                 [this.usdc.address, this.weth.address],
                 [
@@ -443,16 +437,7 @@ export function integrationVaultBehavior<S extends Contract>(
             ).to.emit(this.subject, "Pull");
         });
         it("pulls tokens", async () => {
-            const result = await mintUniV3Position_USDC_WETH({
-                fee: 3000,
-                tickLower: -887220,
-                tickUpper: 887220,
-                usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                wethAmount: BigNumber.from(10).pow(18),
-            });
-            await this.positionManager.functions[
-                "safeTransferFrom(address,address,uint256)"
-            ](this.deployer.address, this.subject.address, result.tokenId);
+            await this.preparePush();
             const args = [
                 [this.usdc.address, this.weth.address],
                 [
@@ -474,12 +459,16 @@ export function integrationVaultBehavior<S extends Contract>(
 
         describe("edge cases:", () => {
             it("nothing is pulled when nothing is pushed", async () => {
-                const pulledAmounts = await this.subject.callStatic.pull(
+                const args = [
                     this.erc20Vault.address,
                     [this.usdc.address],
                     [BigNumber.from(10).pow(6).mul(3000)],
-                    []
+                    [],
+                ];
+                const pulledAmounts = await this.subject.callStatic.pull(
+                    ...args
                 );
+                await this.subject.pull(...args);
                 expect(pulledAmounts[0]).to.equal(BigNumber.from(0));
             });
             it("reverts when vault's nft is 0", async () => {
@@ -546,7 +535,7 @@ export function integrationVaultBehavior<S extends Contract>(
                     ).to.not.be.reverted;
                 });
             });
-            it("not allowed: admin", async () => {
+            it("forbidden: admin", async () => {
                 await expect(
                     this.subject
                         .connect(this.admin)
@@ -576,7 +565,7 @@ export function integrationVaultBehavior<S extends Contract>(
     });
 
     describe("#isValidSignature", () => {
-        describe.only("edge cases:", () => {
+        describe("edge cases:", () => {
             it("returns 0xffffffff when nft is 0", async () => {
                 await ethers.provider.send("hardhat_setStorageAt", [
                     this.subject.address,
@@ -660,7 +649,7 @@ export function integrationVaultBehavior<S extends Contract>(
     });
 
     describe("#externalCall", () => {
-        it("works correctly", async () => {
+        it("makes a call on behalf of the vault", async () => {
             await this.subject.externalCall(
                 this.usdc.address,
                 APPROVE_SELECTOR,
@@ -761,7 +750,7 @@ export function integrationVaultBehavior<S extends Contract>(
                     ).to.not.be.reverted;
                 });
             });
-            it("not allowed: admin", async () => {
+            it("forbidden: admin", async () => {
                 await expect(
                     this.subject
                         .connect(this.admin)
