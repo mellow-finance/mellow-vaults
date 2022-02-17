@@ -430,7 +430,13 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @param newTradingParams New trading parameters to set
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
-        require(newTradingParams.maxSlippageD <= DENOMINATOR && newTradingParams.oracleSafety <= 5 && newTradingParams.minRebalanceWaitTime <= 86400 * 30 && newTradingParams.orderDeadline <= 86400 * 30, ExceptionsLibrary.INVARIANT);
+        require(
+            newTradingParams.maxSlippageD <= DENOMINATOR &&
+                newTradingParams.oracleSafety <= 5 &&
+                newTradingParams.minRebalanceWaitTime <= 86400 * 30 &&
+                newTradingParams.orderDeadline <= 86400 * 30,
+            ExceptionsLibrary.INVARIANT
+        );
         require(address(oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         tradingParams = newTradingParams;
         emit TradingParamsUpdated(tx.origin, msg.sender, tradingParams);
@@ -440,7 +446,10 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @param newRatioParams New ratio parameters to set
     function updateRatioParams(RatioParams calldata newRatioParams) external {
         _requireAdmin();
-        require(newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR && newRatioParams.erc20TokenRatioD <= DENOMINATOR, ExceptionsLibrary.INVARIANT);
+        require(
+            newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR && newRatioParams.erc20TokenRatioD <= DENOMINATOR,
+            ExceptionsLibrary.INVARIANT
+        );
         ratioParams = newRatioParams;
         emit RatioParamsUpdated(tx.origin, msg.sender, ratioParams);
     }
