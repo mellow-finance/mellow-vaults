@@ -437,7 +437,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 (newTradingParams.orderDeadline <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
-        require(address(oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(newTradingParams.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         tradingParams = newTradingParams;
         emit TradingParamsUpdated(tx.origin, msg.sender, tradingParams);
     }
