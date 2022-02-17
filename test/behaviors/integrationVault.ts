@@ -230,7 +230,7 @@ export function integrationVaultBehavior<S extends Contract>(
             ];
             await this.subject.push(...args);
             await expect(
-                await this.subject.pull(
+                this.subject.pull(
                     this.erc20Vault.address,
                     [this.usdc.address],
                     [BigNumber.from(10).pow(6).mul(3000)],

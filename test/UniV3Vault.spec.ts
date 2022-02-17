@@ -146,7 +146,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         await this.deploymentFixture();
     });
 
-    describe("#collectEarnings", () => {
+    xdescribe("#collectEarnings", () => {
         it("emits CollectedEarnings event", async () => {
             await expect(this.subject.collectEarnings()).to.emit(
                 this.subject,
