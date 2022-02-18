@@ -163,7 +163,28 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
     });
 
     describe("#tvl", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc.connect(signer).approve(this.deployer.address, ethers.constants.MaxUint256);
+                await this.weth.connect(signer).approve(this.deployer.address, ethers.constants.MaxUint256);
+
+                await this.usdc.connect(signer).transfer(this.deployer.address, await this.usdc.balanceOf(this.subject.address));
+                await this.weth.connect(signer).transfer(this.deployer.address, await this.weth.balanceOf(this.subject.address));
+            });
+        });
+
         it("returns total value locked", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+
             await this.preparePush();
             await this.subject.push(
                 [this.usdc.address, this.weth.address],
@@ -176,7 +197,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             const result = await this.subject.tvl();
             for (let amountsId = 0; amountsId < 2; ++amountsId) {
                 for (let tokenId = 0; tokenId < 2; ++tokenId) {
-                    expect(result[amountsId][tokenId].gt(0));
+                    expect(result[amountsId][tokenId]).gt(0);
                 }
             }
         });
@@ -187,7 +208,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     const result = await this.subject.tvl();
                     for (let amountsId = 0; amountsId < 2; ++amountsId) {
                         for (let tokenId = 0; tokenId < 2; ++tokenId) {
-                            expect(result[amountsId][tokenId].eq(0));
+                            expect(result[amountsId][tokenId]).eq(0);
                         }
                     }
                 });
@@ -205,7 +226,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     const result = await this.subject.tvl();
                     for (let amountsId = 0; amountsId < 2; ++amountsId) {
                         for (let tokenId = 0; tokenId < 2; ++tokenId) {
-                            expect(result[amountsId][tokenId].eq(0));
+                            expect(result[amountsId][tokenId]).equal(0);
                         }
                     }
                 });
@@ -455,7 +476,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                 });
             });
-            describe("when setting zero nft", () => {
+            describe("when token has no permission to become a vault token", () => {
                 it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                     await this.protocolGovernance
                         .connect(this.admin)
