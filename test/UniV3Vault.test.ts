@@ -165,11 +165,31 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
     describe("#tvl", () => {
         beforeEach(async () => {
             await withSigner(this.subject.address, async (signer) => {
-                await this.usdc.connect(signer).approve(this.deployer.address, ethers.constants.MaxUint256);
-                await this.weth.connect(signer).approve(this.deployer.address, ethers.constants.MaxUint256);
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+                await this.weth
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
 
-                await this.usdc.connect(signer).transfer(this.deployer.address, await this.usdc.balanceOf(this.subject.address));
-                await this.weth.connect(signer).transfer(this.deployer.address, await this.weth.balanceOf(this.subject.address));
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+                await this.weth
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.weth.balanceOf(this.subject.address)
+                    );
             });
         });
 
