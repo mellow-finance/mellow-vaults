@@ -349,7 +349,7 @@ export function integrationVaultBehavior<S extends Contract>(
     });
 
     describe("#isValidSignature", () => {
-        xit("validates signature", async () => {
+        it("validates signature", async () => {
             const address = this.deployer.address;
             let tokenId = await ethers.provider.send("eth_getStorageAt", [
                 this.subject.address,
@@ -373,15 +373,21 @@ export function integrationVaultBehavior<S extends Contract>(
                         .connect(this.admin)
                         .commitPermissionGrants(address);
 
-                    const messageHash = ethers.utils.hashMessage(
-                        `\x19Ethereum Signed Message:\n${this.deployer.address.length}\n${this.deployer.address}`
-                    );
+                    const messageHash = ethers.utils
+                        .hashMessage(this.deployer.address)
+                        .substr(2);
+                    console.log(this.deployer.address);
                     const signature = await this.deployer.signMessage(
                         messageHash
                     );
                     expect(
                         await this.subject.isValidSignature(
-                            messageHash,
+                            ethers.utils.keccak256(
+                                Array.from(
+                                    `\x19Ethereum Signed Message:\n${messageHash.length.toString()}${messageHash}`,
+                                    (x) => x.charCodeAt(0)
+                                )
+                            ),
                             signature
                         )
                     ).to.deep.equal("0x1626ba7e");
