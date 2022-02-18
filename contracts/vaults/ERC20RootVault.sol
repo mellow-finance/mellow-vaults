@@ -125,6 +125,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory minTokenAmounts
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 supply = totalSupply;
+        console.log("supply ", supply);
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
@@ -134,15 +135,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
-            console.log("lpTokenAmount ", lpTokenAmount);
-            console.log("minTvl[i] ", minTvl[i]);
-            console.log("supply ", supply);
-            console.log("\nREAL TOKEN AMOUNT[i] ", tokenAmounts[i]);
             require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
         actualTokenAmounts = _pull(address(this), tokenAmounts, "");
         for (uint256 i = 0; i < tokens.length; ++i) {
-            console.log("\nactualTokenAmounts[i] ", actualTokenAmounts[i]);
+            console.log("actualTokenAMounts[i] ", actualTokenAmounts[i]);
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
@@ -164,8 +161,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     ) internal view returns (uint256 tvl0) {
         tvl0 = tvls[0];
         for (uint256 i = 1; i < tvls.length; i++) {
-            console.log("\n\ngetTvlToken0");
-            console.log(tokens[0], tokens[1]);
             (uint256[] memory prices, ) = oracle.price(tokens[0], tokens[1], 0x28);
             require(prices.length > 0, ExceptionsLibrary.VALUE_ZERO);
             uint256 price = 0;
