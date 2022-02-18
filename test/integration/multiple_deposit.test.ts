@@ -1,20 +1,30 @@
-import hre from "hardhat";
+import hre, { getNamedAccounts } from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, now, randomAddress, sleep, sleepTo } from "../library/Helpers";
+import {
+    mint,
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    withSigner,
+} from "../library/Helpers";
 import { contract } from "../library/setup";
 import { pit, RUNS } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { YearnVault } from "../types/YearnVault";
 import { ERC20Vault } from "../types/ERC20Vault";
-import { setupVault, combineVaults } from "../../deploy/0000_utils";
+import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { integer } from "fast-check";
-import { ERC20RootVaultGovernance } from "../types";
+import { ERC20RootVaultGovernance, MellowOracle } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
 import { randomInt } from "crypto";
 import { deposit } from "../../tasks/vaults";
+import { Runnable } from "mocha";
+import { min } from "ramda";
+import { LOADIPHLPAPI } from "dns";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -24,6 +34,7 @@ type CustomContext = {
     wethDeployerSupply: BigNumber;
     strategyTreasury: Address;
     strategyPerformanceTreasury: Address;
+    mellowOracle: MellowOracle;
 };
 
 type DeployOptions = {};
@@ -35,7 +46,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
-
+                    const { protocolTreasury } = await getNamedAccounts();
                     const tokens = [this.weth.address, this.usdc.address]
                         .map((t) => t.toLowerCase())
                         .sort();
@@ -106,8 +117,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethDeployerSupply = BigNumber.from(10).pow(20).mul(5);
-                    this.usdcDeployerSupply = BigNumber.from(10).pow(20).mul(5);
+                    this.wethDeployerSupply = BigNumber.from(10).pow(18).mul(5);
+                    this.usdcDeployerSupply = BigNumber.from(10).pow(18).mul(5);
 
                     await mint(
                         "USDC",
@@ -150,6 +161,27 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await this.erc20RootVaultGovernance
                         .connect(this.admin)
                         .commitDelayedStrategyParams(this.erc20RootVaultNft);
+                    const params = {
+                        forceAllowMask: ALLOW_MASK,
+                        maxTokensPerVault: 10,
+                        governanceDelay: 86400,
+                        protocolTreasury,
+                        withdrawLimit: BigNumber.from(10).pow(20),
+                    };
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageParams(params);
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitParams();
+                    this.mellowOracle = await ethers.getContract(
+                        "MellowOracle"
+                    );
+                    assert(
+                        this.mellowOracle.address !==
+                            ethers.constants.AddressZero
+                    );
                     return this.subject;
                 }
             );
@@ -278,14 +310,34 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 .commitDelayedStrategyParams(this.erc20RootVaultNft);
         });
 
+        const calculateExcepctedPerformanceFees = (
+            baseSupply: BigNumber,
+            baseTvls: BigNumber[],
+            tvlToken0: BigNumber,
+            lpPriceHighWaterMarkD18: BigNumber,
+            performanceFee: BigNumber
+        ) => {
+            let denominator18 = BigNumber.from(10).pow(10);
+            let lpPriceD18 = tvlToken0.mul(denominator18).div(baseSupply);
+            let toMint = BigNumber.from(0);
+            if (lpPriceHighWaterMarkD18.gt(0)) {
+                toMint = baseSupply.mul(lpPriceD18.sub(lpPriceHighWaterMarkD18)).div(lpPriceHighWaterMarkD18);
+                console.log("toMint1 ", toMint);
+                toMint = toMint.mul(performanceFee).div(BigNumber.from(10).pow(9));
+                console.log("toMint2 ", toMint);
+            }
+            return toMint;
+        };
+
+        //FIXME
         pit(
             `
-        when feez are not zero, sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
+        when fees are not zero, sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
         `,
-            { numRuns: RUNS.mid, endOnFailure: true },
-            integer({ min: 0, max: 5 * 86400 }),
-            integer({ min: 3, max: 10 }),
-            integer({ min: 3, max: 10 }),
+            { numRuns: 1, endOnFailure: true },
+            integer({ min: 86401, max: 5 * 86400 }),
+            integer({ min: 2, max: 10 }),
+            integer({ min: 2, max: 10 }),
             integer({ min: 0, max: 10 }),
             integer({ min: 0, max: 10 }),
             async (
@@ -340,7 +392,29 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 }
                 console.log("ratio ", ratioUSDC, " ", ratioWETH);
                 console.log("given amounts\n");
-                for (var i = 0; i < numDeposits; ++i) {
+                console.log(
+                    "deposit ",
+                    0,
+                    " ",
+                    Number(usdcDepositAmounts[0]),
+                    " ",
+                    Number(wethDepositAmounts[0])
+                );
+                await this.subject
+                    .connect(this.deployer)
+                    .deposit([usdcDepositAmounts[0], wethDepositAmounts[0]], 0);
+                const lpTokenAmountAfterFirstDeposit =
+                    await this.subject.balanceOf(this.deployer.address);
+                
+                //FullMath.mulDiv(tvlToken0, CommonLibrary.D18, baseSupply);
+                let lpPriceHighWaterMarkD18 = BigNumber.from(usdcDepositAmounts[0]).mul(BigNumber.from(10).pow(18)).div(lpTokenAmountAfterFirstDeposit);
+                console.log("\ncalculated lpPriceHighWaterMarkD18 ", Number(lpPriceHighWaterMarkD18));
+
+                await sleep(delay);
+
+                // earn management fees
+                // does not earn performance fees
+                for (var i = 1; i < numDeposits; ++i) {
                     console.log(
                         "deposit ",
                         i,
@@ -405,9 +479,109 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     root_tvl[0][1]
                 );
 
-                // sleep delay and then earn management fees on the next withdraw
-                await sleep(delay);
                 console.log("\n\nTOTAL LP SUPPLY ", Number(lpTokensAmount));
+
+                const wethAmountOnERC20Vault = await this.weth.balanceOf(
+                    this.erc20Vault.address
+                );
+                const usdcAmountOnERC20Vault = await this.usdc.balanceOf(
+                    this.erc20Vault.address
+                );
+                const wethAmountOnYearnVault = await this.weth.balanceOf(
+                    this.yearnVault.address
+                );
+                const usdcAmountOnYearnVault = await this.usdc.balanceOf(
+                    this.yearnVault.address
+                );
+                console.log(
+                    "wethAmountOnERC20Vault ",
+                    Number(wethAmountOnERC20Vault)
+                );
+                console.log(
+                    "usdcAmountOnERC20Vault ",
+                    Number(usdcAmountOnERC20Vault)
+                );
+                console.log(
+                    "wethAmountOnYearnVault ",
+                    Number(wethAmountOnYearnVault)
+                );
+                console.log(
+                    "usdcAmountOnYearnVault ",
+                    Number(usdcAmountOnYearnVault)
+                );
+                const additionalUsdcAmount = usdcAmountOnERC20Vault.add(
+                    usdcAmountOnYearnVault
+                );
+                const additionalWethAmount = wethAmountOnERC20Vault.add(
+                    wethAmountOnYearnVault
+                );
+                if (additionalUsdcAmount.gt(0)) {
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        additionalUsdcAmount
+                    );
+                }
+                if (additionalWethAmount.gt(0)) {
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        additionalWethAmount
+                    );
+                }
+                console.log("minted");
+                await this.weth
+                    .connect(this.deployer)
+                    .transfer(this.erc20Vault.address, wethAmountOnERC20Vault);
+                await this.usdc
+                    .connect(this.deployer)
+                    .transfer(this.erc20Vault.address, usdcAmountOnERC20Vault);
+
+                await this.weth
+                    .connect(this.deployer)
+                    .transfer(this.yearnVault.address, wethAmountOnYearnVault);
+                await this.usdc
+                    .connect(this.deployer)
+                    .transfer(this.yearnVault.address, usdcAmountOnYearnVault);
+
+                console.log("\nTRANSFERED");
+                console.log(
+                    "weth check ",
+                    Number(await this.weth.balanceOf(this.deployer.address))
+                );
+                console.log(
+                    "usdc check ",
+                    Number(await this.usdc.balanceOf(this.deployer.address))
+                );
+                console.log(
+                    "lp check ",
+                    Number(await this.subject.balanceOf(this.deployer.address))
+                );
+
+                // earn management fees on the next withdraw
+                // earn performance fees
+                await sleep(delay);
+                console.log("\n\nTOTAL LP SUPPLY 2 ", Number(lpTokensAmount));
+                console.log("weth ", this.weth.address);
+                console.log("usdc ", this.usdc.address);
+                let pricesResult = await this.mellowOracle.price(
+                    this.usdc.address,
+                    this.weth.address,
+                    0x28
+                );
+                let pricesX96 = pricesResult.pricesX96;
+                let averagePrice = BigNumber.from(0);
+                for (var i = 0; i < pricesX96.length; ++i) {
+                    averagePrice = averagePrice.add(pricesX96[i]);
+                }
+                averagePrice = averagePrice.div(pricesX96.length);
+                console.log("\nAverage price ", Number(averagePrice));
+
+                let tvls = await this.subject.tvl();
+                let minTvl = tvls[0];
+                let maxTvl = tvls[1];
+                console.log("\nminTvl ", Number(minTvl[0]), Number(minTvl[1]));
+                console.log("\nmaxTvl ", Number(maxTvl[0]), Number(maxTvl[1]));
 
                 let withdrawAmounts: BigNumber[] = [];
                 let withdrawSum: BigNumber = BigNumber.from(0);
@@ -421,8 +595,51 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     withdrawSum.add(withdrawAmounts[i]);
                 }
                 withdrawAmounts.push(lpTokensAmount.sub(withdrawSum));
+
+                let tokenAmounts = [];
+                let managementFees = await this.subject.balanceOf(
+                    this.strategyTreasury
+                );
+                let performanceFees = await this.subject.balanceOf(
+                    this.strategyPerformanceTreasury
+                );
+                tokenAmounts.push(
+                    withdrawAmounts[0]
+                        .mul(minTvl[0])
+                        .div(
+                            Number(
+                                lpTokensAmount
+                                    .add(managementFees)
+                                    .add(performanceFees)
+                            )
+                        )
+                );
+                tokenAmounts.push(
+                    withdrawAmounts[0]
+                        .mul(minTvl[1])
+                        .div(
+                            Number(
+                                lpTokensAmount
+                                    .add(managementFees)
+                                    .add(performanceFees)
+                            )
+                        )
+                );
+
+                console.log(
+                    "TOTAL LP SUPPLY ",
+                    Number(
+                        lpTokensAmount.add(managementFees).add(performanceFees)
+                    )
+                );
+                console.log("BASE SUPPLY ", lpTokensAmount.sub(withdrawAmounts[0]));
+                console.log("WITHDRAWING FIRST LP AMOUNT ", Number(withdrawAmounts[0]));
+
                 for (var i = 0; i < numWithdraws; ++i) {
-                    console.log("withdraw lp amount", Number(withdrawAmounts[0]));
+                    console.log(
+                        "withdraw lp amount",
+                        Number(withdrawAmounts[i])
+                    );
                     await this.subject.withdraw(
                         this.deployer.address,
                         withdrawAmounts[i],
@@ -431,15 +648,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 }
 
                 console.log("BALANCES\n");
-                //expect(await this.weth.balanceOf(strategyTreasury)).to.be.equal();
-
-                // lp 88311400000000000
-                // w 2006973707540000
                 console.log(
+                    "strategy management ",
                     Number(await this.subject.balanceOf(strategyTreasury))
                 );
 
                 console.log(
+                    "strategy performance ",
                     Number(
                         await this.subject.balanceOf(
                             strategyPerformanceTreasury
@@ -448,35 +663,71 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
 
                 console.log(
+                    "protocol ",
                     Number(await this.subject.balanceOf(protocolTreasury))
                 );
 
-                if (BigNumber.from(delay).gt((await this.erc20RootVaultGovernance.delayedProtocolParams()).managementFeeChargeDelay)) {
+                if (
+                    BigNumber.from(delay).gt(
+                        (
+                            await this.erc20RootVaultGovernance.delayedProtocolParams()
+                        ).managementFeeChargeDelay
+                    )
+                ) {
                     let expectedManagementFee = (
                         await this.erc20RootVaultGovernance.delayedStrategyParams(
                             this.erc20RootVaultNft
                         )
                     ).managementFee
                         .mul(delay)
-                        .mul(lpTokensAmount.sub(withdrawAmounts[0]))
-                        .div(BigNumber.from(10).pow(9).mul(24).mul(3600).mul(365));
-                    let realManagementFee = await this.subject.balanceOf(strategyTreasury);
+                        .mul(
+                            lpTokensAmount
+                                .sub(withdrawAmounts[0])
+                                .add(lpTokenAmountAfterFirstDeposit)
+                        )
+                        .div(
+                            BigNumber.from(10).pow(9).mul(24).mul(3600).mul(365)
+                        );
+                    let realManagementFee = await this.subject.balanceOf(
+                        strategyTreasury
+                    );
 
-                    let managementFeeAbsDifference = (expectedManagementFee.sub(realManagementFee)).abs();
-                    console.log("expected fee ", Number(expectedManagementFee));
+                    let managementFeeAbsDifference = expectedManagementFee
+                        .sub(realManagementFee)
+                        .abs();
+
                     console.log("real fee ", Number(realManagementFee));
+                    console.log("expected fee ", Number(expectedManagementFee));
                     console.log("abs dif ", Number(managementFeeAbsDifference));
-                    console.log("frac ", Number(managementFeeAbsDifference.div(realManagementFee)));
-                    expect(managementFeeAbsDifference.sub(realManagementFee.div(10000)).lte(0)).to.be.true;
+                    console.log(
+                        "calculations ",
+                        Number(
+                            managementFeeAbsDifference
+                                .mul(5000)
+                                .sub(realManagementFee)
+                        )
+                    );
+
+                    expect(
+                        managementFeeAbsDifference
+                            .mul(1000)
+                            .sub(realManagementFee)
+                            .lte(0)
+                    ).to.be.true;
                 }
-                
+
+                console.log("management fee passed");
+
                 if ((await this.subject.balanceOf(strategyTreasury)).gt(0)) {
+                    console.log("\nnon zero management fees");
                     await this.subject.withdraw(
                         strategyTreasury,
                         BigNumber.from(2).pow(256).sub(1),
                         [0, 0]
                     );
+                    console.log("\nstrategy treasury withdraw done");
                 }
+                console.log("management fee collected");
                 if (
                     (
                         await this.subject.balanceOf(
@@ -484,19 +735,52 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         )
                     ).gt(0)
                 ) {
+                    console.log("\nnon zero performance fees");
                     await this.subject.withdraw(
                         strategyPerformanceTreasury,
                         BigNumber.from(2).pow(256).sub(1),
                         [0, 0]
                     );
+                    console.log("strategy performance treasury withdraw done");
                 }
+                console.log("performance fee collected");
                 if ((await this.subject.balanceOf(protocolTreasury)).gt(0)) {
+                    console.log("\nnon zero protocol fees");
                     await this.subject.withdraw(
                         protocolTreasury,
                         BigNumber.from(2).pow(256).sub(1),
                         [0, 0]
                     );
+                    console.log("protocol treasury withdraw done");
                 }
+                console.log("protocol fee collected");
+
+                console.log("collected fees and final checks");
+
+                console.log("\nFINAL BALANCES\n");
+                console.log(
+                    "strategy management ",
+                    Number(await this.subject.balanceOf(strategyTreasury))
+                );
+
+                console.log(
+                    "strategy performance ",
+                    Number(
+                        await this.subject.balanceOf(
+                            strategyPerformanceTreasury
+                        )
+                    )
+                );
+
+                console.log(
+                    "protocol ",
+                    Number(await this.subject.balanceOf(protocolTreasury))
+                );
+
+                console.log(
+                    "deployer ",
+                    Number(await this.subject.balanceOf(this.deployer.address))
+                );
 
                 expect(
                     await this.subject.balanceOf(this.deployer.address)
@@ -510,7 +794,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                         )
                         .add(await this.weth.balanceOf(protocolTreasury))
-                ).to.be.equal(this.wethDeployerSupply);
+                ).to.be.equal(
+                    this.wethDeployerSupply.add(additionalWethAmount)
+                );
+                console.log("weth correct");
                 expect(
                     (await this.usdc.balanceOf(this.deployer.address))
                         .add(await this.usdc.balanceOf(strategyTreasury))
@@ -520,7 +807,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                         )
                         .add(await this.usdc.balanceOf(protocolTreasury))
-                ).to.be.equal(this.usdcDeployerSupply);
+                ).to.be.equal(
+                    this.usdcDeployerSupply.add(additionalUsdcAmount)
+                );
+                console.log("usdc correct");
                 return true;
             }
         );
