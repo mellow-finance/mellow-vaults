@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
+    encodeToBytes,
     mint,
     mintUniV3Position_USDC_WETH,
     randomAddress,
@@ -212,7 +213,14 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     BigNumber.from(10).pow(6).mul(3000),
                     BigNumber.from(10).pow(18).mul(1),
                 ],
-                []
+                encodeToBytes(
+                    ["uint256", "uint256", "uint256"],
+                    [
+                        ethers.constants.Zero,
+                        ethers.constants.Zero,
+                        ethers.constants.MaxUint256,
+                    ]
+                )
             );
             const result = await this.subject.tvl();
             for (let amountsId = 0; amountsId < 2; ++amountsId) {

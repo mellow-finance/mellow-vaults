@@ -1,339 +1,421 @@
-// import { expect } from "chai";
-// import { deployments, getNamedAccounts, ethers } from "hardhat";
-// import { AaveVault } from "./types/AaveVault";
-// import { BigNumber } from "@ethersproject/bignumber";
-// import {
-//     withSigner,
-//     depositW9,
-//     depositWBTC,
-//     sleep,
-//     randomAddress,
-//     deployVault,
-// } from "./library/Helpers";
-// import Exceptions from "./library/Exceptions";
-// import {
-//     AaveVaultGovernance,
-//     ERC20,
-//     ERC20VaultGovernance,
-//     VaultRegistry,
-// } from "./types";
-// import { CONTRACTS } from "../plugins/contracts/constants";
+import hre from "hardhat";
+import { expect } from "chai";
+import { ethers, getNamedAccounts, deployments } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
+import {
+    encodeToBytes,
+    mint,
+    randomAddress,
+    sleep,
+    withSigner,
+} from "./library/Helpers";
+import { contract } from "./library/setup";
+import { ERC20RootVault, ERC20Vault, AaveVault } from "./types";
+import {
+    combineVaults,
+    PermissionIdsLibrary,
+    setupVault,
+} from "../deploy/0000_utils";
+import { integrationVaultBehavior } from "./behaviors/integrationVault";
+import {
+    AAVE_VAULT_INTERFACE_ID,
+    INTEGRATION_VAULT_INTERFACE_ID,
+} from "./library/Constants";
+import Exceptions from "./library/Exceptions";
 
-// xdescribe("AaveVault", () => {
-//     let aaveVaultNft: number;
-//     let aaveVault: string;
-//     let gatewayVaultNft: number;
-//     let gatewayVault: string;
-//     let erc20Vault: string;
-//     let erc20VaultNft: number;
-//     let tokens: string[];
-//     let aaveVaultContract: AaveVault;
-//     let deploymentFixture: Function;
+type CustomContext = {
+    erc20Vault: ERC20Vault;
+    erc20RootVault: ERC20RootVault;
+    curveRouter: string;
+    preparePush: () => any;
+};
 
-//     before(async () => {
-//         deploymentFixture = deployments.createFixture(async () => {
-//             await deployments.fixture();
-//             const { deployer, weth, usdc } = await getNamedAccounts();
-//             tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
-//             ({ nft: aaveVaultNft, address: aaveVault } = await deployVault({
-//                 name: "AaveVault",
-//                 vaultTokens: tokens,
-//                 nftOwner: deployer,
-//             }));
-//             aaveVaultContract = await ethers.getContractAt(
-//                 "AaveVault",
-//                 aaveVault
-//             );
-//             ({ nft: erc20VaultNft, address: erc20Vault } = await deployVault({
-//                 name: "ERC20Vault",
-//                 vaultTokens: tokens,
-//                 nftOwner: deployer,
-//             }));
-//             ({ nft: gatewayVaultNft, address: gatewayVault } =
-//                 await deployVault({
-//                     name: "GatewayVault",
-//                     subvaultNfts: [aaveVaultNft, erc20VaultNft],
-//                     strategyParams: {
-//                         limits: [
-//                             ethers.constants.MaxUint256,
-//                             ethers.constants.MaxUint256,
-//                         ],
-//                     },
-//                     delayedStrategyParams: { redirects: [] },
-//                     vaultTokens: tokens,
-//                     nftOwner: deployer,
-//                 }));
-//         });
-//     });
+type DeployOptions = {};
 
-//     beforeEach(async () => {
-//         await deploymentFixture();
-//     });
+contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
+    before(async () => {
+        this.deploymentFixture = deployments.createFixture(
+            async (_, __?: DeployOptions) => {
+                await deployments.fixture();
+                const { read } = deployments;
 
-//     describe("#constructor", () => {
-//         it("creates a new contract", async () => {
-//             const { deploy, get } = deployments;
-//             const { deployer } = await getNamedAccounts();
-//             const vaultGovernance = await get("AaveVaultGovernance");
-//             await deploy("AaveVault", {
-//                 from: deployer,
-//                 autoMine: true,
-//                 args: [vaultGovernance.address, tokens],
-//             });
-//         });
+                const { curveRouter } = await getNamedAccounts();
+                this.curveRouter = curveRouter;
+                this.preparePush = async () => {
+                    await sleep(0);
+                };
 
-//         describe("when passed invalid tokens", () => {
-//             it("reverts", async () => {
-//                 const { deploy, get } = deployments;
-//                 const { deployer } = await getNamedAccounts();
-//                 const vaultGovernance = await get("AaveVaultGovernance");
-//                 const tokens = [randomAddress(), randomAddress()]
-//                     .map((x) => x.toLowerCase())
-//                     .sort();
-//                 await expect(
-//                     deploy("AaveVault", {
-//                         from: deployer,
-//                         args: [vaultGovernance.address, tokens],
-//                     })
-//                 ).to.be.reverted;
-//             });
-//         });
-//     });
+                const tokens = [this.weth.address, this.usdc.address]
+                    .map((t) => t.toLowerCase())
+                    .sort();
 
-//     describe("#tvl", () => {
-//         describe("when has not initial funds", () => {
-//             it("returns zero tvl", async () => {
-//                 expect(await aaveVaultContract.tvl()).to.eql([
-//                     ethers.constants.Zero,
-//                     ethers.constants.Zero,
-//                 ]);
-//             });
-//         });
-//     });
+                const startNft =
+                    (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
-//     describe("#updateTvls", () => {
-//         describe("when tvl had not change", () => {
-//             it("returns the same tvl", async () => {
-//                 await expect(aaveVaultContract.updateTvls()).to.not.be.reverted;
-//                 expect(await aaveVaultContract.tvl()).to.eql([
-//                     ethers.constants.Zero,
-//                     ethers.constants.Zero,
-//                 ]);
-//             });
-//         });
+                this.aUsdc = await ethers.getContractAt(
+                    "ERC20Token",
+                    "0xbcca60bb61934080951369a648fb03df4f96263c" // aUSDC address
+                );
+                this.aWeth = await ethers.getContractAt(
+                    "ERC20Token",
+                    "0x030ba81f1c18d280636f32af80b9aad02cf0854e" // aWETH address
+                );
 
-//         describe("when tvl changed by direct token transfer", () => {
-//             it("tvl remains unchanged before `updateTvls`", async () => {
-//                 await depositW9(aaveVault, ethers.utils.parseEther("1"));
-//                 expect(await aaveVaultContract.tvl()).to.eql([
-//                     ethers.constants.Zero,
-//                     ethers.constants.Zero,
-//                 ]);
-//             });
-//         });
-//     });
+                let aaveVaultNft = startNft;
+                let erc20VaultNft = startNft + 1;
 
-//     describe("#push", () => {
-//         describe("when pushed zeroes", () => {
-//             it("pushes", async () => {
-//                 await withSigner(gatewayVault, async (signer) => {
-//                     const { weth, wbtc } = await getNamedAccounts();
-//                     const tokens = [weth, wbtc]
-//                         .map((t) => t.toLowerCase())
-//                         .sort();
-//                     await aaveVaultContract
-//                         .connect(signer)
-//                         .push(tokens, [0, 0], []);
-//                 });
-//             });
-//         });
+                await setupVault(hre, aaveVaultNft, "AaveVaultGovernance", {
+                    createVaultArgs: [tokens, this.deployer.address],
+                });
+                await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+                    createVaultArgs: [tokens, this.deployer.address],
+                });
 
-//         describe("when pushed smth", () => {
-//             const amountWBTC = BigNumber.from(10).pow(9);
-//             const amount = BigNumber.from(ethers.utils.parseEther("1"));
-//             beforeEach(async () => {
-//                 await depositW9(aaveVault, amount);
-//                 await depositWBTC(aaveVault, amountWBTC.toString());
-//             });
+                await combineVaults(
+                    hre,
+                    erc20VaultNft + 1,
+                    [erc20VaultNft, aaveVaultNft],
+                    this.deployer.address,
+                    this.deployer.address
+                );
+                const erc20Vault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft
+                );
+                const aaveVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    aaveVaultNft
+                );
+                const erc20RootVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft + 1
+                );
 
-//             describe("happy case", () => {
-//                 it("approves deposits to lendingPool and updates tvl", async () => {
-//                     await withSigner(gatewayVault, async (signer) => {
-//                         await expect(
-//                             aaveVaultContract
-//                                 .connect(signer)
-//                                 .push(tokens, [0, amount], [])
-//                         ).to.not.be.reverted;
-//                         expect(await aaveVaultContract.tvl()).to.eql([
-//                             ethers.constants.Zero,
-//                             amount,
-//                         ]);
-//                     });
-//                 });
+                this.erc20Vault = await ethers.getContractAt(
+                    "ERC20Vault",
+                    erc20Vault
+                );
 
-//                 xit("tvl raises with time", async () => {
-//                     const { deployer, test } = await getNamedAccounts();
-//                     const amounts: BigNumber[] = [];
-//                     await withSigner(test, async (s) => {
-//                         for (const token of tokens) {
-//                             const contract: ERC20 = await ethers.getContractAt(
-//                                 "ERC20Token",
-//                                 token
-//                             );
-//                             const balance = await contract.balanceOf(test);
-//                             await contract
-//                                 .connect(s)
-//                                 .transfer(gatewayVault, balance);
-//                             amounts.push(balance);
-//                         }
-//                     });
-//                     await withSigner(gatewayVault, async (signer) => {
-//                         for (const token of tokens) {
-//                             const contract: ERC20 = await ethers.getContractAt(
-//                                 "ERC20Token",
-//                                 token
-//                             );
-//                             await contract
-//                                 .connect(signer)
-//                                 .approve(
-//                                     aaveVault,
-//                                     ethers.constants.MaxUint256
-//                                 );
-//                         }
-//                         await aaveVaultContract
-//                             .connect(signer)
-//                             .push(tokens, amounts, []);
-//                         const [tvlWBTC, tvlWeth] =
-//                             await aaveVaultContract.tvl();
-//                         // check initial tvls
-//                         expect(tvlWBTC.toString()).to.be.equal(
-//                             amounts[0].toString()
-//                         );
-//                         expect(tvlWeth.toString()).to.be.equal(
-//                             amounts[1].toString()
-//                         );
-//                         // wait
-//                         await sleep(1000 * 1000 * 1000);
-//                         // update tvl
-//                         await aaveVaultContract.connect(signer).updateTvls();
-//                         const newAmounts = await aaveVaultContract.tvl();
-//                         expect(newAmounts[0].gt(amounts[0])).to.be.true;
-//                         expect(newAmounts[1].gt(amounts[1])).to.be.true;
-//                     });
-//                 });
-//             });
+                this.subject = await ethers.getContractAt(
+                    "AaveVault",
+                    aaveVault
+                );
 
-//             describe("when called twice", () => {
-//                 it("not performs approve the second time", async () => {
-//                     const amount = ethers.utils.parseEther("1");
-//                     await withSigner(gatewayVault, async (signer) => {
-//                         await expect(
-//                             aaveVaultContract
-//                                 .connect(signer)
-//                                 .push(tokens, [0, amount], [])
-//                         ).to.not.be.reverted;
-//                         const { aaveLendingPool } = await getNamedAccounts();
-//                         const wethContract: ERC20 = await ethers.getContractAt(
-//                             "WERC20Test",
-//                             tokens[1]
-//                         );
-//                         // allowance increased
-//                         expect(
-//                             await wethContract.allowance(
-//                                 aaveVault,
-//                                 aaveLendingPool
-//                             )
-//                         ).to.be.equal(ethers.constants.MaxUint256);
-//                         // insure coverage of _approveIfNessesary
-//                         await depositW9(aaveVault, amount);
-//                         await expect(
-//                             aaveVaultContract
-//                                 .connect(signer)
-//                                 .push(tokens, [0, amount], [])
-//                         ).to.not.be.reverted;
-//                     });
-//                 });
-//             });
-//         });
-//     });
+                this.erc20RootVault = await ethers.getContractAt(
+                    "ERC20RootVault",
+                    erc20RootVault
+                );
 
-//     describe("#pull", () => {
-//         const w9Amount = ethers.utils.parseEther("10");
+                for (let address of [
+                    this.deployer.address,
+                    this.subject.address,
+                    this.erc20Vault.address,
+                ]) {
+                    await mint(
+                        "USDC",
+                        address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await mint(
+                        "WETH",
+                        address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await this.weth.approve(
+                        address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.usdc.approve(
+                        address,
+                        ethers.constants.MaxUint256
+                    );
+                }
 
-//         beforeEach(async () => {
-//             await deployments.fixture();
-//             await depositW9(aaveVault, w9Amount);
-//         });
+                return this.subject;
+            }
+        );
+    });
 
-//         describe("when nothing is pushed", () => {
-//             it("nothing is pulled", async () => {
-//                 await withSigner(gatewayVault, async (signer) => {
-//                     await aaveVaultContract
-//                         .connect(signer)
-//                         .pull(erc20Vault, tokens, [0, 0], []);
+    beforeEach(async () => {
+        await this.deploymentFixture();
+    });
 
-//                     await expect(
-//                         aaveVaultContract
-//                             .connect(signer)
-//                             .pull(erc20Vault, tokens, [0, 0], [])
-//                     ).to.not.be.reverted;
-//                     const wethContract = await ethers.getContractAt(
-//                         "WERC20Test",
-//                         tokens[1]
-//                     );
-//                     expect(await wethContract.balanceOf(aaveVault)).to.eql(
-//                         w9Amount
-//                     );
-//                 });
-//             });
-//         });
+    describe("#tvl", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+                await this.weth
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
 
-//         describe("when pushed smth", () => {
-//             const amount = ethers.utils.parseEther("1");
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+                await this.weth
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.weth.balanceOf(this.subject.address)
+                    );
+            });
+        });
 
-//             beforeEach(async () => {
-//                 await deployments.fixture();
-//                 await depositW9(aaveVault, amount);
-//                 await withSigner(gatewayVault, async (signer) => {
-//                     await expect(
-//                         aaveVaultContract
-//                             .connect(signer)
-//                             .push(tokens, [0, amount], [])
-//                     ).to.not.be.reverted;
-//                 });
-//             });
+        it("returns total value locked", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
 
-//             xit("smth pulled", async () => {
-//                 await withSigner(gatewayVault, async (signer) => {
-//                     await aaveVaultContract
-//                         .connect(signer)
-//                         .pull(erc20Vault, tokens, [0, amount], []);
-//                     const wethContract: ERC20 = await ethers.getContractAt(
-//                         "ERC20Token",
-//                         tokens[1]
-//                     );
-//                     expect(await wethContract.balanceOf(erc20Vault)).to.eql(
-//                         amount
-//                     );
-//                 });
-//             });
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                encodeToBytes(["uint256"], [BigNumber.from(1)])
+            );
+            const result = await this.subject.tvl();
+            for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                    expect(result[amountsId][tokenId]).gt(0);
+                }
+            }
+        });
 
-//             describe("when pull amount is greater then actual balance", () => {
-//                 xit("executes", async () => {
-//                     await withSigner(gatewayVault, async (signer) => {
-//                         await expect(
-//                             aaveVaultContract
-//                                 .connect(signer)
-//                                 .pull(
-//                                     erc20Vault,
-//                                     tokens,
-//                                     [0, amount.mul(2)],
-//                                     []
-//                                 )
-//                         ).to.be.revertedWith("5"); // aave lending pool: insufficient balance
-//                     });
-//                 });
-//             });
-//         });
-//     });
-// });
+        describe("edge cases:", () => {
+            describe("when there are no initial funds", () => {
+                it("returns zeroes", async () => {
+                    const result = await this.subject.tvl();
+                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                        for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                            expect(result[amountsId][tokenId]).eq(0);
+                        }
+                    }
+                });
+            });
+        });
+    });
+
+    describe("#lendingPool", () => {
+        it("returns ILendingPool", async () => {
+            const { aaveLendingPool } = await getNamedAccounts();
+            expect(await this.subject.lendingPool()).to.be.equal(
+                aaveLendingPool
+            );
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(this.subject.connect(s).lendingPool()).to.not
+                        .be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#updateTvls", () => {
+        it("updates total value locked", async () => {
+            await this.subject.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                []
+            );
+            await withSigner(this.subject.address, async (signer) => {
+                for (let token of [this.aUsdc, this.aWeth]) {
+                    await token
+                        .connect(signer)
+                        .approve(
+                            this.deployer.address,
+                            ethers.constants.MaxUint256
+                        );
+                    await token
+                        .connect(signer)
+                        .transfer(
+                            this.deployer.address,
+                            await token.balanceOf(signer.address)
+                        );
+                }
+            });
+            await this.subject.updateTvls();
+            const oldTvls = await this.subject.tvl();
+            await this.aUsdc.approve(
+                this.subject.address,
+                ethers.constants.MaxUint256
+            );
+            await this.aUsdc.transfer(
+                this.subject.address,
+                BigNumber.from(10).pow(6).mul(3000)
+            );
+            expect(await this.subject.tvl()).to.be.deep.equal(oldTvls);
+            await this.subject.updateTvls();
+            const newTvls = await this.subject.tvl();
+            for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                expect(newTvls[amountsId][0].sub(oldTvls[amountsId][0])).gte(
+                    BigNumber.from(10).pow(6).mul(3000)
+                );
+            }
+        });
+    });
+
+    describe("#initialize", () => {
+        beforeEach(async () => {
+            this.nft = await ethers.provider.send("eth_getStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+            ]);
+            await ethers.provider.send("hardhat_setStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ]);
+        });
+
+        it("emits Initialized event", async () => {
+            await withSigner(
+                this.aaveVaultGovernance.address,
+                async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .initialize(this.nft, [
+                                this.usdc.address,
+                                this.weth.address,
+                            ])
+                    ).to.emit(this.subject, "Initialized");
+                }
+            );
+        });
+        it("initializes contract successfully", async () => {
+            await withSigner(
+                this.aaveVaultGovernance.address,
+                async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .initialize(this.nft, [
+                                this.usdc.address,
+                                this.weth.address,
+                            ])
+                    ).to.not.be.reverted;
+                }
+            );
+        });
+
+        describe("edge cases:", () => {
+            describe("when vault's nft is not 0", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    ]);
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.usdc.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+            describe("when tokens are not sorted", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.weth.address,
+                            this.usdc.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when tokens are not unique", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.weth.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when setting zero nft", () => {
+                it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                    await expect(
+                        this.subject.initialize(0, [
+                            this.usdc.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                });
+            });
+            describe("when token has no permission to become a vault token", () => {
+                it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .revokePermissions(this.usdc.address, [
+                            PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                        ]);
+                    await withSigner(
+                        this.aaveVaultGovernance.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(this.nft, [
+                                        this.usdc.address,
+                                        this.weth.address,
+                                    ])
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        }
+                    );
+                });
+            });
+        });
+    });
+
+    describe("#supportsInterface", () => {
+        it(`returns true if this contract supports ${AAVE_VAULT_INTERFACE_ID} interface`, async () => {
+            expect(
+                await this.subject.supportsInterface(AAVE_VAULT_INTERFACE_ID)
+            ).to.be.true;
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .supportsInterface(INTEGRATION_VAULT_INTERFACE_ID)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+    });
+
+    integrationVaultBehavior.call(this, {});
+});
