@@ -209,7 +209,7 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
             const tokensResult = await this.subject.callStatic.reclaimTokens([
                 this.usdc.address,
                 this.weth.address,
-            ])
+            ]);
             await this.subject.reclaimTokens([
                 this.usdc.address,
                 this.weth.address,
