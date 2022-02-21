@@ -206,12 +206,17 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
 
     describe("#reclaimTokens", () => {
         it("returns nothing", async () => {
-            expect(
-                await this.subject.reclaimTokens([
-                    this.usdc.address,
-                    this.weth.address,
-                ])
-            ).to.be.deep.equal([ethers.constants.Zero, ethers.constants.Zero]);
+            const tokensResult = await this.subject.callStatic.reclaimTokens([
+                this.usdc.address,
+                this.weth.address,
+            ])
+            await this.subject.reclaimTokens([
+                this.usdc.address,
+                this.weth.address,
+            ]);
+            for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                expect(tokensResult[tokenId]).equal(ethers.constants.Zero);
+            }
         });
     });
 
