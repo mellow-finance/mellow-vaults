@@ -287,6 +287,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             delayedProtocolParams.oracle
         );
     }
+
     //FIX
     function _getBaseParamsForFees(
         uint256[] memory tvls,

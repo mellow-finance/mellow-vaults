@@ -1,13 +1,7 @@
 import hre, { getNamedAccounts } from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import {
-    mint,
-    now,
-    randomAddress,
-    sleep,
-    sleepTo,
-} from "../library/Helpers";
+import { mint, now, randomAddress, sleep, sleepTo } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { pit, RUNS } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
@@ -313,8 +307,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             let lpPriceD18 = tvlToken0.mul(denominator18).div(baseSupply);
             let toMint = BigNumber.from(0);
             if (lpPriceHighWaterMarkD18.gt(0)) {
-                toMint = baseSupply.mul(lpPriceD18.sub(lpPriceHighWaterMarkD18)).div(lpPriceHighWaterMarkD18);
-                toMint = toMint.mul(performanceFee).div(BigNumber.from(10).pow(9));
+                toMint = baseSupply
+                    .mul(lpPriceD18.sub(lpPriceHighWaterMarkD18))
+                    .div(lpPriceHighWaterMarkD18);
+                toMint = toMint
+                    .mul(performanceFee)
+                    .div(BigNumber.from(10).pow(9));
             }
             return toMint;
         };
@@ -382,8 +380,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .deposit([usdcDepositAmounts[0], wethDepositAmounts[0]], 0);
                 const lpTokenAmountAfterFirstDeposit =
                     await this.subject.balanceOf(this.deployer.address);
-                
-                let lpPriceHighWaterMarkD18 = BigNumber.from(usdcDepositAmounts[0]).mul(BigNumber.from(10).pow(18)).div(lpTokenAmountAfterFirstDeposit);
+
+                let lpPriceHighWaterMarkD18 = BigNumber.from(
+                    usdcDepositAmounts[0]
+                )
+                    .mul(BigNumber.from(10).pow(18))
+                    .div(lpTokenAmountAfterFirstDeposit);
 
                 if (delay > 86400) {
                     await sleepTo(currentTimestamp + delay);
@@ -550,10 +552,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                         )
                 );
-                
-                let baseSupply = lpTokensAmount.add(managementFees).add(performanceFees).sub(withdrawAmounts[0]);
-                let baseTvls = [minTvl[0].sub(tokenAmounts[0]), minTvl[1].sub(tokenAmounts[1])];
-                let expectdPerformanceFee = calculateExcepctedPerformanceFees(baseSupply, baseTvls[0], lpPriceHighWaterMarkD18, BigNumber.from(200000000));
+
+                let baseSupply = lpTokensAmount
+                    .add(managementFees)
+                    .add(performanceFees)
+                    .sub(withdrawAmounts[0]);
+                let baseTvls = [
+                    minTvl[0].sub(tokenAmounts[0]),
+                    minTvl[1].sub(tokenAmounts[1]),
+                ];
+                let expectdPerformanceFee = calculateExcepctedPerformanceFees(
+                    baseSupply,
+                    baseTvls[0],
+                    lpPriceHighWaterMarkD18,
+                    BigNumber.from(200000000)
+                );
 
                 if (delay > 86400) {
                     await sleepTo(currentTimestamp + 2 * delay);
@@ -586,26 +599,38 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             this.erc20RootVaultNft
                         )
                     ).managementFee;
-                    let realPerformanceFee = await this.subject.balanceOf(strategyPerformanceTreasury);
+                    let realPerformanceFee = await this.subject.balanceOf(
+                        strategyPerformanceTreasury
+                    );
                     let realManagementFee = await this.subject.balanceOf(
                         strategyTreasury
                     );
-                    let expectedManagementFeeFirst = vaultGovernanceManagementFee
-                        .mul(delay)
-                        .mul(lpTokenAmountAfterFirstDeposit)
-                        .div(
-                            BigNumber.from(10).pow(9).mul(24).mul(3600).mul(365)
-                        );
-                    let expectedManagementFeeSecond = vaultGovernanceManagementFee
-                    .mul(delay)
-                    .mul(
-                        baseSupply
-                    )
-                    .div(
-                        BigNumber.from(10).pow(9).mul(24).mul(3600).mul(365)
+                    let expectedManagementFeeFirst =
+                        vaultGovernanceManagementFee
+                            .mul(delay)
+                            .mul(lpTokenAmountAfterFirstDeposit)
+                            .div(
+                                BigNumber.from(10)
+                                    .pow(9)
+                                    .mul(24)
+                                    .mul(3600)
+                                    .mul(365)
+                            );
+                    let expectedManagementFeeSecond =
+                        vaultGovernanceManagementFee
+                            .mul(delay)
+                            .mul(baseSupply)
+                            .div(
+                                BigNumber.from(10)
+                                    .pow(9)
+                                    .mul(24)
+                                    .mul(3600)
+                                    .mul(365)
+                            );
+                    let expectedManagementFee = expectedManagementFeeFirst.add(
+                        expectedManagementFeeSecond
                     );
-                    let expectedManagementFee = expectedManagementFeeFirst.add(expectedManagementFeeSecond);
-                    
+
                     let managementFeeAbsDifference = expectedManagementFee
                         .sub(realManagementFee)
                         .abs();
@@ -617,8 +642,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .lte(0)
                     ).to.be.true;
 
-                    
-                    expect(expectdPerformanceFee).to.be.equal(realPerformanceFee);
+                    expect(expectdPerformanceFee).to.be.equal(
+                        realPerformanceFee
+                    );
                 }
 
                 if ((await this.subject.balanceOf(strategyTreasury)).gt(0)) {
