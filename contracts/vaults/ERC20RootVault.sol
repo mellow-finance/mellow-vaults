@@ -12,7 +12,6 @@ import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -125,7 +124,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory minTokenAmounts
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 supply = totalSupply;
-        console.log("supply ", supply);
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
@@ -139,7 +137,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         actualTokenAmounts = _pull(address(this), tokenAmounts, "");
         for (uint256 i = 0; i < tokens.length; ++i) {
-            console.log("actualTokenAMounts[i] ", actualTokenAmounts[i]);
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
@@ -254,9 +251,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - lastFeeCharge;
         IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
-        console.log("\nis withdraw ", isWithdraw);
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
-            console.log("ELAPSED TOO LOW\n");
             return;
         }
         (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
@@ -269,11 +264,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = block.timestamp;
         // don't charge on initial deposit as well as on the last withdraw
         if (baseSupply == 0) {
-            console.log("\nINITIAL DEPOSIT OR LAST WITHDRAW\n");
-            console.log("lastFeeCharge ", lastFeeCharge);
             return;
         }
-
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
@@ -295,14 +287,14 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             delayedProtocolParams.oracle
         );
     }
-
+    //FIX
     function _getBaseParamsForFees(
         uint256[] memory tvls,
         uint256 supply,
         uint256[] memory deltaTvls,
         uint256 deltaSupply,
         bool isWithdraw
-    ) internal pure returns (uint256 baseSupply, uint256[] memory baseTvls) {
+    ) internal view returns (uint256 baseSupply, uint256[] memory baseTvls) {
         // the base for lp Supply charging. postSupply for deposit, preSupply for withdraw,
         // thus always lower lpPrice for performance fees
         baseSupply = supply;
@@ -333,12 +325,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
-            console.log("\nMINTED ", toMint);
-            console.log("elapsed ", elapsed);
-            console.log("fee ", managementFee);
-            console.log("lpSupply ", lpSupply);
-            console.log("lastFeeCharge ", lastFeeCharge);
-            console.log("block timestamp ", block.timestamp);
             _mint(strategyTreasury, toMint);
             emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
@@ -361,36 +347,21 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens,
         IOracle oracle
     ) internal {
-        console.log("\nPERFORMANCE FEES\n");
         if ((performanceFee == 0) || (baseSupply == 0)) {
-            console.log("\nzero value");
-            console.log("performance fee ", performanceFee);
-            console.log("base supply ", baseSupply);
             return;
         }
-        console.log("baseSupply ", baseSupply);
-        console.log("baseTvls ", baseTvls[0], baseTvls[1]);
         uint256 tvlToken0 = _getTvlToken0(baseTvls, tokens, oracle);
         uint256 lpPriceD18 = FullMath.mulDiv(tvlToken0, CommonLibrary.D18, baseSupply);
-        console.log("initial lpPriceHighWaterMarkD18 ", lpPriceHighWaterMarkD18);
         uint256 hwmsD18 = lpPriceHighWaterMarkD18;
-        console.log("tvl token 0 ", tvlToken0);
-        console.log("lpPriceD18 ", lpPriceD18);
-        console.log("hwmsD18 ", hwmsD18);
         if (lpPriceD18 <= hwmsD18) {
-            console.log("\nlpPriceD18 <= hwmsD18\n");
             return;
         }
         uint256 toMint;
         if (hwmsD18 > 0) {
             toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
-            console.log("toMint1 ", toMint);
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
-            console.log("toMint2 ", toMint);
         }
-        console.log("final toMint ", toMint);
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        console.log("lpPriceHighWaterMarkD18 ", lpPriceHighWaterMarkD18);
         _mint(treasury, toMint);
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
