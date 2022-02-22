@@ -288,14 +288,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         );
     }
 
-    //FIX
     function _getBaseParamsForFees(
         uint256[] memory tvls,
         uint256 supply,
         uint256[] memory deltaTvls,
         uint256 deltaSupply,
         bool isWithdraw
-    ) internal view returns (uint256 baseSupply, uint256[] memory baseTvls) {
+    ) internal pure returns (uint256 baseSupply, uint256[] memory baseTvls) {
         // the base for lp Supply charging. postSupply for deposit, preSupply for withdraw,
         // thus always lower lpPrice for performance fees
         baseSupply = supply;

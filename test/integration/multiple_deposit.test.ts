@@ -203,7 +203,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(0)
                     )
                 );
-                for (var i = 0; i < numDeposits; ++i) {
+                for (let i = 0; i < numDeposits; ++i) {
                     await this.subject
                         .connect(this.deployer)
                         .deposit(
@@ -218,7 +218,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
                 }
 
-                for (var i = 1; i < numDeposits; ++i) {
+                for (let i = 1; i < numDeposits; ++i) {
                     expect(lpAmounts[i].sub(lpAmounts[i - 1])).to.be.equal(
                         lpAmounts[0]
                     );
@@ -240,7 +240,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     root_tvl[0][1]
                 );
 
-                for (var i = 0; i < numWithdraws; ++i) {
+                for (let i = 0; i < numWithdraws; ++i) {
                     await this.subject.withdraw(
                         this.deployer.address,
                         BigNumber.from(lpTokensAmount).div(numWithdraws),
@@ -341,7 +341,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     return true;
                 }
                 if (ratioWETH == 0) {
-                    for (var i = 0; i < numDeposits; ++i) {
+                    for (let i = 0; i < numDeposits; ++i) {
                         usdcDepositAmounts.push(
                             BigNumber.from(Math.round(Math.random() * 10 ** 6))
                                 .mul(this.usdcDeployerSupply)
@@ -351,7 +351,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         wethDepositAmounts.push(0);
                     }
                 } else if (ratioUSDC == 0) {
-                    for (var i = 0; i < numDeposits; ++i) {
+                    for (let i = 0; i < numDeposits; ++i) {
                         wethDepositAmounts.push(
                             BigNumber.from(Math.round(Math.random() * 10 ** 6))
                                 .mul(this.wethDeployerSupply)
@@ -361,7 +361,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         usdcDepositAmounts.push(0);
                     }
                 } else {
-                    for (var i = 0; i < numDeposits; ++i) {
+                    for (let i = 0; i < numDeposits; ++i) {
                         wethDepositAmounts.push(
                             BigNumber.from(Math.round(Math.random() * 10 ** 6))
                                 .mul(this.wethDeployerSupply)
@@ -393,7 +393,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await sleep(delay);
                 }
 
-                for (var i = 1; i < numDeposits; ++i) {
+                for (let i = 1; i < numDeposits; ++i) {
                     await this.subject
                         .connect(this.deployer)
                         .deposit(
@@ -502,7 +502,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 let pricesX96 = pricesResult.pricesX96;
                 let averagePrice = BigNumber.from(0);
-                for (var i = 0; i < pricesX96.length; ++i) {
+                for (let i = 0; i < pricesX96.length; ++i) {
                     averagePrice = averagePrice.add(pricesX96[i]);
                 }
                 averagePrice = averagePrice.div(pricesX96.length);
@@ -512,7 +512,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 let withdrawAmounts: BigNumber[] = [];
                 let withdrawSum: BigNumber = BigNumber.from(0);
-                for (var i = 0; i < numWithdraws - 1; ++i) {
+                for (let i = 0; i < numWithdraws - 1; ++i) {
                     withdrawAmounts.push(
                         BigNumber.from(Math.round(Math.random() * 10 ** 6))
                             .mul(lpTokensAmount)
@@ -579,7 +579,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     [0, 0]
                 );
 
-                for (var i = 1; i < numWithdraws; ++i) {
+                for (let i = 1; i < numWithdraws; ++i) {
                     await this.subject.withdraw(
                         this.deployer.address,
                         withdrawAmounts[i],
