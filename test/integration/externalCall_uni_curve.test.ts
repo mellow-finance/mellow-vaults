@@ -117,7 +117,7 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("correct swap", () => {
+        describe("correct swap", () => {
             it("uniswapV3", async () => {
                 let startBalanceUSDC = await this.usdc.balanceOf(
                     this.subject.address
@@ -227,7 +227,7 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("reverted swap", () => {
+        describe("reverted swap", () => {
             describe("huge amountOutMinimum", () => {
                 it("uniswapV3", async () => {
                     let swapParams = {

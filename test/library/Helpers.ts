@@ -29,6 +29,26 @@ import {
     StrategyParamsStruct as ERC20RootVaultStrategyParamsStruct,
     ERC20RootVaultGovernance,
 } from "../types/ERC20RootVaultGovernance";
+import { Arbitrary, Random } from "fast-check";
+import { mersenne } from "pure-rand";
+
+const random = new Random(mersenne(Math.floor(Math.random() * 100000)));
+
+export function generateSingleParams<T extends Object>(
+    params: Arbitrary<T>
+): T {
+    return params.generate(random).value;
+}
+
+export function generateParams<T extends Object>(
+    params: Arbitrary<T>
+): { someParams: T; noneParams: T } {
+    const someParams: T = params
+        .filter((x: T) => !equals(x, zeroify(x)))
+        .generate(random).value;
+    const noneParams: T = zeroify(someParams);
+    return { someParams, noneParams };
+}
 
 export const randomAddress = () => {
     const id = randomBytes(32).toString("hex");
