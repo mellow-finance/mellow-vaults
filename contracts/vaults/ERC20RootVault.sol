@@ -128,6 +128,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
+        if (lpTokenAmount > balanceOf[to]) {
+            lpTokenAmount = balanceOf[to];
+        }
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
             require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
@@ -142,10 +145,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
-        if (balanceOf[msg.sender] < lpTokenAmount) {
-            lpTokenAmount = balanceOf[msg.sender];
-        }
-        _burn(msg.sender, lpTokenAmount);
+        _burn(to, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
