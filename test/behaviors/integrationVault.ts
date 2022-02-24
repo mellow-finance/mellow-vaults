@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import hre from "hardhat";
 import { BigNumber, Contract } from "ethers";
 import { TestContext } from "../library/setup";
 import Exceptions from "../library/Exceptions";
@@ -143,69 +144,70 @@ export function integrationVaultBehavior<S extends Contract>(
         });
     });
 
-    describe("#reclaimTokens", () => {
-        it("emits ReclaimTokens event", async () => {
-            await expect(
-                this.subject.reclaimTokens([this.usdc.address])
-            ).to.emit(this.subject, "ReclaimTokens");
-        });
-        it("reclaims successfully", async () => {
-            await this.preparePush();
-            const args = [
-                [this.usdc.address, this.weth.address],
-                [
-                    BigNumber.from(10).pow(6).mul(3000),
-                    BigNumber.from(10).pow(18).mul(1),
-                ],
-                [],
-            ];
-            await this.subject.push(...args);
-            await this.subject.reclaimTokens([
-                this.usdc.address,
-                this.weth.address,
-            ]);
-            expect(
-                await this.usdc.balanceOf(this.subject.address)
-            ).to.deep.equal(BigNumber.from(0));
-            expect(
-                await this.weth.balanceOf(this.subject.address)
-            ).to.deep.equal(BigNumber.from(0));
-        });
+    this.skipReclaimTokensTest &&
+        describe("#reclaimTokens", () => {
+            it("emits ReclaimTokens event", async () => {
+                await expect(
+                    this.subject.reclaimTokens([this.usdc.address])
+                ).to.emit(this.subject, "ReclaimTokens");
+            });
+            it("reclaims successfully", async () => {
+                await this.preparePush();
+                const args = [
+                    [this.usdc.address, this.weth.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18).mul(1),
+                    ],
+                    [],
+                ];
+                await this.subject.push(...args);
+                await this.subject.reclaimTokens([
+                    this.usdc.address,
+                    this.weth.address,
+                ]);
+                expect(
+                    await this.usdc.balanceOf(this.subject.address)
+                ).to.deep.equal(BigNumber.from(0));
+                expect(
+                    await this.weth.balanceOf(this.subject.address)
+                ).to.deep.equal(BigNumber.from(0));
+            });
 
-        describe("edge cases:", () => {
-            describe("when vault's nft is 0", () => {
-                it(`reverts with ${Exceptions.INIT}`, async () => {
-                    await ethers.provider.send("hardhat_setStorageAt", [
-                        this.subject.address,
-                        "0x4", // address of _nft
-                        "0x0000000000000000000000000000000000000000000000000000000000000000",
-                    ]);
-                    await expect(
-                        this.subject.reclaimTokens([randomAddress()])
-                    ).to.be.revertedWith(Exceptions.INIT);
+            describe("edge cases:", () => {
+                describe("when vault's nft is 0", () => {
+                    it(`reverts with ${Exceptions.INIT}`, async () => {
+                        await ethers.provider.send("hardhat_setStorageAt", [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        ]);
+                        await expect(
+                            this.subject.reclaimTokens([randomAddress()])
+                        ).to.be.revertedWith(Exceptions.INIT);
+                    });
+                });
+                describe("when passed never allowed token", () => {
+                    it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                        await expect(
+                            this.subject.reclaimTokens([randomAddress()])
+                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                    });
                 });
             });
-            describe("when passed never allowed token", () => {
-                it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
-                    await expect(
-                        this.subject.reclaimTokens([randomAddress()])
-                    ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                });
-            });
-        });
 
-        describe("access control:", () => {
-            it("allowed: any address", async () => {
-                await withSigner(randomAddress(), async (s) => {
-                    await expect(
-                        this.subject
-                            .connect(s)
-                            .reclaimTokens([this.usdc.address])
-                    ).to.not.be.reverted;
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .reclaimTokens([this.usdc.address])
+                        ).to.not.be.reverted;
+                    });
                 });
             });
         });
-    });
 
     describe("#pull", () => {
         it("emits Pull event", async () => {
@@ -240,6 +242,34 @@ export function integrationVaultBehavior<S extends Contract>(
         });
 
         describe("edge cases:", () => {
+            beforeEach(async () => {
+                let dumpAddress = randomAddress();
+                for (let signerAddress of [
+                    this.erc20Vault.address,
+                    this.subject.address,
+                ]) {
+                    await withSigner(signerAddress, async (signer) => {
+                        await this.usdc
+                            .connect(signer)
+                            .approve(dumpAddress, ethers.constants.MaxUint256);
+                        await this.weth
+                            .connect(signer)
+                            .approve(dumpAddress, ethers.constants.MaxUint256);
+                        await this.usdc
+                            .connect(signer)
+                            .transfer(
+                                dumpAddress,
+                                await this.usdc.balanceOf(signer.address)
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .transfer(
+                                dumpAddress,
+                                await this.weth.balanceOf(signer.address)
+                            );
+                    });
+                }
+            });
             it("nothing is pulled when nothing is pushed", async () => {
                 const args = [
                     this.erc20Vault.address,
@@ -376,7 +406,7 @@ export function integrationVaultBehavior<S extends Contract>(
                     const messageHash = ethers.utils
                         .hashMessage(this.deployer.address)
                         .substr(2);
-                    console.log(this.deployer.address);
+
                     const signature = await this.deployer.signMessage(
                         messageHash
                     );
@@ -395,6 +425,160 @@ export function integrationVaultBehavior<S extends Contract>(
             );
         });
         describe("edge cases:", () => {
+            describe("when strategy does not support IERC1271", () => {
+                beforeEach(async () => {
+                    const { deployments } = hre;
+                    const { deploy } = deployments;
+                    const res = await deploy("MockERC165", {
+                        from: this.deployer.address,
+                        log: true,
+                        autoMine: true,
+                    });
+                    this.mockStrategy = await ethers.getContractAt(
+                        "MockERC165",
+                        res.address
+                    );
+                    const address = this.mockStrategy.address;
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(address, tokenId);
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(address, [
+                                    PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .commitPermissionGrants(address);
+                        }
+                    );
+                });
+                it("returns 0xffffffff", async () => {
+                    const messageHash = ethers.utils
+                        .hashMessage(this.deployer.address)
+                        .substr(2);
+
+                    const signature = await this.deployer.signMessage(
+                        messageHash
+                    );
+                    expect(
+                        await this.subject.isValidSignature(
+                            ethers.utils.keccak256(
+                                Array.from(
+                                    `\x19Ethereum Signed Message:\n${messageHash.length.toString()}${messageHash}`,
+                                    (x) => x.charCodeAt(0)
+                                )
+                            ),
+                            signature
+                        )
+                    ).to.deep.equal("0xffffffff");
+                });
+            });
+            describe("when strategy's code size is not 0", () => {
+                beforeEach(async () => {
+                    const { deployments } = hre;
+                    const { deploy } = deployments;
+                    const res = await deploy("MockERC1271", {
+                        from: this.deployer.address,
+                        log: true,
+                        autoMine: true,
+                    });
+                    this.mockStrategy = await ethers.getContractAt(
+                        "MockERC1271",
+                        res.address
+                    );
+                    const address = this.mockStrategy.address;
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(address, tokenId);
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(address, [
+                                    PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .commitPermissionGrants(address);
+                        }
+                    );
+                });
+                describe("if signature is valid", () => {
+                    it("returns 0x1626ba7e", async () => {
+                        await this.mockStrategy.setSigner(
+                            this.deployer.address
+                        );
+
+                        const messageHash = ethers.utils
+                            .hashMessage(this.deployer.address)
+                            .substr(2);
+
+                        const signature = await this.deployer.signMessage(
+                            messageHash
+                        );
+                        expect(
+                            await this.subject.isValidSignature(
+                                ethers.utils.keccak256(
+                                    Array.from(
+                                        `\x19Ethereum Signed Message:\n${messageHash.length.toString()}${messageHash}`,
+                                        (x) => x.charCodeAt(0)
+                                    )
+                                ),
+                                signature
+                            )
+                        ).to.deep.equal("0x1626ba7e");
+                    });
+                });
+                describe("if signature is not valid", () => {
+                    it("returns 0xffffffff", async () => {
+                        await this.mockStrategy.setSigner(randomAddress());
+
+                        const messageHash = ethers.utils
+                            .hashMessage(this.deployer.address)
+                            .substr(2);
+
+                        const signature = await this.deployer.signMessage(
+                            messageHash
+                        );
+                        expect(
+                            await this.subject.isValidSignature(
+                                ethers.utils.keccak256(
+                                    Array.from(
+                                        `\x19Ethereum Signed Message:\n${messageHash.length.toString()}${messageHash}`,
+                                        (x) => x.charCodeAt(0)
+                                    )
+                                ),
+                                signature
+                            )
+                        ).to.deep.equal("0xffffffff");
+                    });
+                });
+            });
             describe("when nft is 0", () => {
                 it("returns 0xffffffff", async () => {
                     await ethers.provider.send("hardhat_setStorageAt", [
