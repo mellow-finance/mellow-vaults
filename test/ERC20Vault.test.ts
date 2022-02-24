@@ -1,391 +1,339 @@
-// import { expect } from "chai";
-// import { ethers, deployments } from "hardhat";
-// import { BigNumber, Signer } from "ethers";
-// import {
-//     ERC20,
-//     ERC20Vault,
-//     VaultRegistry,
-//     ERC20VaultGovernance,
-// } from "./library/Types";
-// import { deployERC20Tokens, deploySubVaultSystem } from "./library/Deployments";
-// import Exceptions from "./library/Exceptions";
+import hre from "hardhat";
+import { expect } from "chai";
+import { ethers, getNamedAccounts, deployments } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
+import { encodeToBytes, mint, sleep, withSigner } from "./library/Helpers";
+import { contract } from "./library/setup";
+import { ERC20RootVault, ERC20Vault } from "./types";
+import {
+    combineVaults,
+    PermissionIdsLibrary,
+    setupVault,
+} from "../deploy/0000_utils";
+import { integrationVaultBehavior } from "./behaviors/integrationVault";
+import Exceptions from "./library/Exceptions";
 
-// describe("ERC20Vault", function () {
-//     describe("when permissionless is set to true", () => {
-//         let deployer: Signer;
-//         let user: Signer;
-//         let stranger: Signer;
-//         let treasury: Signer;
-//         let protocolGovernanceAdmin: Signer;
+type CustomContext = {
+    erc20Vault: ERC20Vault;
+    erc20RootVault: ERC20RootVault;
+    curveRouter: string;
+    preparePush: () => any;
+};
 
-//         let tokens: ERC20[];
-//         let ERC20Vault: ERC20Vault;
-//         let ERC20VaultGovernance: ERC20VaultGovernance;
-//         let vaultRegistry: VaultRegistry;
-//         let nftERC20: number;
-//         let deployment: Function;
+type DeployOptions = {};
 
-//         before(async () => {
-//             [deployer, user, stranger, treasury, protocolGovernanceAdmin] =
-//                 await ethers.getSigners();
+contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
+    before(async () => {
+        this.deploymentFixture = deployments.createFixture(
+            async (_, __?: DeployOptions) => {
+                await deployments.fixture();
+                const { read } = deployments;
+                this.skipReclaimTokensTest = true;
 
-//             deployment = deployments.createFixture(async () => {
-//                 await deployments.fixture();
-//                 return await deploySubVaultSystem({
-//                     tokensCount: 2,
-//                     adminSigner: deployer,
-//                     treasury: await treasury.getAddress(),
-//                     vaultOwner: await deployer.getAddress(),
-//                 });
-//             });
-//         });
+                const { curveRouter } = await getNamedAccounts();
+                this.curveRouter = curveRouter;
+                this.preparePush = async () => {
+                    await sleep(0);
+                };
 
-//         beforeEach(async () => {
-//             ({
-//                 vaultRegistry,
-//                 ERC20VaultGovernance,
-//                 tokens,
-//                 ERC20Vault,
-//                 nftERC20,
-//             } = await deployment());
-//             // approve all tokens to the ERC20Vault
-//             for (let i: number = 0; i < tokens.length; ++i) {
-//                 await tokens[i].connect(deployer).approve(
-//                     ERC20Vault.address,
-//                     BigNumber.from(10 ** 4)
-//                         .mul(BigNumber.from(10 ** 4))
-//                         .mul(BigNumber.from(10 ** 4))
-//                 );
-//             }
-//             await vaultRegistry
-//                 .connect(deployer)
-//                 .approve(await protocolGovernanceAdmin.getAddress(), nftERC20);
-//         });
+                const tokens = [this.weth.address, this.usdc.address]
+                    .map((t) => t.toLowerCase())
+                    .sort();
 
-//         describe("constructor", () => {
-//             it("has correct vaultGovernance address", async () => {
-//                 expect(await ERC20Vault.vaultGovernance()).to.equal(
-//                     ERC20VaultGovernance.address
-//                 );
-//             });
+                const startNft =
+                    (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
-//             it("has zero tvl", async () => {
-//                 expect(await ERC20Vault.tvl()).to.deep.equal([
-//                     BigNumber.from(0),
-//                     BigNumber.from(0),
-//                 ]);
-//             });
+                let erc20MainVaultNft = startNft;
+                let erc20VaultNft = startNft + 1;
 
-//             it("has correct nftERC20 owner", async () => {
-//                 expect(await vaultRegistry.ownerOf(nftERC20)).to.equals(
-//                     await deployer.getAddress()
-//                 );
-//             });
+                await setupVault(
+                    hre,
+                    erc20MainVaultNft,
+                    "ERC20VaultGovernance",
+                    {
+                        createVaultArgs: [tokens, this.deployer.address],
+                    }
+                );
+                await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+                    createVaultArgs: [tokens, this.deployer.address],
+                });
 
-//             describe("when tokens are not sorted", () => {
-//                 it.only("reverts", async () => {
-//                     const factory = await ethers.getContractFactory(
-//                         "ERC20Vault"
-//                     );
-//                     await expect(
-//                         factory.deploy(ERC20VaultGovernance.address, [
-//                             tokens[1].address,
-//                             tokens[0].address,
-//                         ])
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                     await expect(
-//                         factory.deploy(ERC20VaultGovernance.address, [
-//                             tokens[0].address,
-//                             tokens[0].address,
-//                         ])
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
-//         });
+                await combineVaults(
+                    hre,
+                    erc20VaultNft + 1,
+                    [erc20VaultNft, erc20MainVaultNft],
+                    this.deployer.address,
+                    this.deployer.address
+                );
+                const erc20Vault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft
+                );
+                const erc20MainVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20MainVaultNft
+                );
+                const erc20RootVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft + 1
+                );
 
-//         describe("push", () => {
-//             describe("when not approved not owner", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.connect(stranger).push(
-//                             [tokens[0].address],
-//                             [BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
-//                 });
-//             });
+                this.erc20Vault = await ethers.getContractAt(
+                    "ERC20Vault",
+                    erc20Vault
+                );
 
-//             describe("when tokens and tokenAmounts lengthes do not match", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.push(
-//                             [tokens[0].address],
-//                             [BigNumber.from(1), BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-//                 });
-//             });
+                this.subject = await ethers.getContractAt(
+                    "ERC20Vault",
+                    erc20MainVault
+                );
 
-//             describe("when tokens are not sorted", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.push(
-//                             [tokens[1].address, tokens[0].address],
-//                             [BigNumber.from(1), BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
+                this.erc20RootVault = await ethers.getContractAt(
+                    "ERC20RootVault",
+                    erc20RootVault
+                );
 
-//             describe("when tokens are not unique", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.push(
-//                             [tokens[0].address, tokens[0].address],
-//                             [BigNumber.from(1), BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
+                for (let address of [
+                    this.deployer.address,
+                    this.subject.address,
+                    this.erc20Vault.address,
+                ]) {
+                    await mint(
+                        "USDC",
+                        address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await mint(
+                        "WETH",
+                        address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await this.weth.approve(
+                        address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.usdc.approve(
+                        address,
+                        ethers.constants.MaxUint256
+                    );
+                }
 
-//             describe("when tokens not sorted nor unique", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.push(
-//                             [
-//                                 tokens[1].address,
-//                                 tokens[0].address,
-//                                 tokens[1].address,
-//                             ],
-//                             [
-//                                 BigNumber.from(1),
-//                                 BigNumber.from(1),
-//                                 BigNumber.from(1),
-//                             ],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
+                return this.subject;
+            }
+        );
+    });
 
-//             // FIXME: Should NOT pass when amounts do not match actual balance!
-//             it("passes when no tokens transferred", async () => {
-//                 const amounts = await ERC20Vault.callStatic.push(
-//                     [tokens[0].address],
-//                     [BigNumber.from(10 ** 4)],
-//                     []
-//                 );
-//                 expect(amounts).to.deep.equal([BigNumber.from(10 ** 4)]);
-//             });
+    beforeEach(async () => {
+        await this.deploymentFixture();
+    });
 
-//             it("passes when tokens transferred", async () => {
-//                 await tokens[1].transfer(
-//                     ERC20Vault.address,
-//                     BigNumber.from(100 * 10 ** 4)
-//                 );
-//                 const args = [
-//                     [tokens[1].address],
-//                     [BigNumber.from(100 * 10 ** 4)],
-//                     [],
-//                 ];
-//                 const amounts = await ERC20Vault.callStatic.push(...args);
-//                 const tx = await ERC20Vault.push(...args);
-//                 await tx.wait();
-//                 expect(amounts).to.deep.equal([BigNumber.from(100 * 10 ** 4)]);
-//             });
-//         });
+    describe("#tvl", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+                await this.weth
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
 
-//         describe("transferAndPush", () => {
-//             describe("when not approved nor owner", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.connect(stranger).transferAndPush(
-//                             await deployer.getAddress(),
-//                             [tokens[0].address],
-//                             [BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
-//                 });
-//             });
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+                await this.weth
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.weth.balanceOf(this.subject.address)
+                    );
+            });
+        });
 
-//             describe("when tokens and tokenAmounts lengthes do not match", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.transferAndPush(
-//                             await deployer.getAddress(),
-//                             [tokens[0].address],
-//                             [BigNumber.from(1), BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-//                 });
-//             });
+        it("returns total value locked", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
 
-//             describe("when tokens are not sorted", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.transferAndPush(
-//                             await deployer.getAddress(),
-//                             [tokens[1].address, tokens[0].address],
-//                             [BigNumber.from(1), BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                encodeToBytes(["uint256"], [BigNumber.from(1)])
+            );
+            const result = await this.subject.tvl();
+            for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                    expect(result[amountsId][tokenId]).gt(0);
+                }
+            }
+        });
 
-//             describe("when tokens are not unique", () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.transferAndPush(
-//                             await deployer.getAddress(),
-//                             [tokens[0].address, tokens[0].address],
-//                             [BigNumber.from(1), BigNumber.from(1)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
+        describe("edge cases:", () => {
+            describe("when there are no initial funds", () => {
+                it("returns zeroes", async () => {
+                    const result = await this.subject.tvl();
+                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                        for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                            expect(result[amountsId][tokenId]).eq(0);
+                        }
+                    }
+                });
+            });
+        });
+    });
 
-//             describe("when tokens are not sorted nor unique", async () => {
-//                 it("reverts", async () => {
-//                     await expect(
-//                         ERC20Vault.transferAndPush(
-//                             await deployer.getAddress(),
-//                             [
-//                                 tokens[1].address,
-//                                 tokens[0].address,
-//                                 tokens[1].address,
-//                             ],
-//                             [
-//                                 BigNumber.from(1),
-//                                 BigNumber.from(1),
-//                                 BigNumber.from(1),
-//                             ],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVARIANT);
-//                 });
-//             });
+    describe("#reclaimTokens", () => {
+        it("returns nothing", async () => {
+            const tokensResult = await this.subject.callStatic.reclaimTokens([
+                this.usdc.address,
+                this.weth.address,
+            ]);
+            await this.subject.reclaimTokens([
+                this.usdc.address,
+                this.weth.address,
+            ]);
+            for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                expect(tokensResult[tokenId]).equal(ethers.constants.Zero);
+            }
+        });
+    });
 
-//             describe("when all tokenAmounts != 0", () => {
-//                 it("passes", async () => {
-//                     expect(
-//                         await ERC20Vault.callStatic.transferAndPush(
-//                             await deployer.getAddress(),
-//                             [tokens[0].address],
-//                             [BigNumber.from(10 ** 4)],
-//                             []
-//                         )
-//                     ).to.deep.equal([BigNumber.from(10 ** 4)]);
-//                 });
-//             });
+    describe("#initialize", () => {
+        beforeEach(async () => {
+            this.nft = await ethers.provider.send("eth_getStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+            ]);
+            await ethers.provider.send("hardhat_setStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ]);
+        });
 
-//             describe("when not all tokenAmounts != 0", () => {
-//                 it("passes", async () => {
-//                     expect(
-//                         await ERC20Vault.callStatic.transferAndPush(
-//                             await deployer.getAddress(),
-//                             [tokens[0].address, tokens[1].address],
-//                             [BigNumber.from(10 ** 4), BigNumber.from(0)],
-//                             []
-//                         )
-//                     ).to.deep.equal([
-//                         BigNumber.from(10 ** 4),
-//                         BigNumber.from(0),
-//                     ]);
-//                 });
-//             });
+        it("emits Initialized event", async () => {
+            await withSigner(
+                this.erc20VaultGovernance.address,
+                async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .initialize(this.nft, [
+                                this.usdc.address,
+                                this.weth.address,
+                            ])
+                    ).to.emit(this.subject, "Initialized");
+                }
+            );
+        });
+        it("initializes contract successfully", async () => {
+            await withSigner(
+                this.erc20VaultGovernance.address,
+                async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .initialize(this.nft, [
+                                this.usdc.address,
+                                this.weth.address,
+                            ])
+                    ).to.not.be.reverted;
+                }
+            );
+        });
 
-//             describe("when not enough balance", () => {
-//                 it("reverts", async () => {
-//                     await tokens[0].transfer(
-//                         await user.getAddress(),
-//                         BigNumber.from(10 ** 3)
-//                     );
-//                     await tokens[0]
-//                         .connect(user)
-//                         .approve(ERC20Vault.address, BigNumber.from(10 ** 3));
-//                     await expect(
-//                         ERC20Vault.transferAndPush(
-//                             await user.getAddress(),
-//                             [tokens[0].address],
-//                             [BigNumber.from(10 ** 4)],
-//                             []
-//                         )
-//                     ).to.be.revertedWith(Exceptions.SAFE_ERC20);
-//                 });
-//             });
-//         });
+        describe("edge cases:", () => {
+            describe("when vault's nft is not 0", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    ]);
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.usdc.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+            describe("when tokens are not sorted", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.weth.address,
+                            this.usdc.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when tokens are not unique", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.weth.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when setting zero nft", () => {
+                it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                    await expect(
+                        this.subject.initialize(0, [
+                            this.usdc.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                });
+            });
+            describe("when token has no permission to become a vault token", () => {
+                it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .revokePermissions(this.usdc.address, [
+                            PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                        ]);
+                    await withSigner(
+                        this.erc20VaultGovernance.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(this.nft, [
+                                        this.usdc.address,
+                                        this.weth.address,
+                                    ])
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        }
+                    );
+                });
+            });
+        });
+    });
 
-//         describe("tvl", () => {
-//             before(async () => {
-//                 for (let i: number = 0; i < tokens.length; ++i) {
-//                     await tokens[i].connect(deployer).approve(
-//                         ERC20Vault.address,
-//                         BigNumber.from(10 ** 4)
-//                             .mul(BigNumber.from(10 ** 4))
-//                             .mul(BigNumber.from(10 ** 4))
-//                     );
-//                 }
-//             });
-
-//             it("passes", async () => {
-//                 await ERC20Vault.transferAndPush(
-//                     await deployer.getAddress(),
-//                     [tokens[0].address],
-//                     [BigNumber.from(10 ** 4)],
-//                     []
-//                 );
-
-//                 expect(await ERC20Vault.tvl()).to.deep.equal([
-//                     BigNumber.from(10 ** 4),
-//                     BigNumber.from(0),
-//                 ]);
-//             });
-//         });
-
-//         describe("reclaimTokens", () => {
-//             let anotherToken: ERC20;
-
-//             before(async () => {
-//                 anotherToken = (await deployERC20Tokens(1))[0];
-//                 await anotherToken
-//                     .connect(deployer)
-//                     .transfer(ERC20Vault.address, BigNumber.from(10 ** 4));
-//             });
-
-//             describe("when passed never allowed token", () => {
-//                 it("reverts", async () => {
-//                     let anotherToken = (await deployERC20Tokens(1))[0];
-//                     await expect(
-//                         ERC20Vault.reclaimTokens(await deployer.getAddress(), [
-//                             anotherToken.address,
-//                         ])
-//                     ).to.be.revertedWith("EAT");
-//                 });
-//             });
-//         });
-
-//         describe("_postReclaimTokens", () => {
-//             describe("passed some not vault tokens", () => {
-//                 it("reverts", async () => {
-//                     let anotherToken = (await deployERC20Tokens(1))[0];
-//                     let arg = tokens.map((t) => t.address);
-//                     arg.push(anotherToken.address);
-//                     await expect(
-//                         ERC20Vault.__postReclaimTokens(
-//                             ethers.constants.AddressZero,
-//                             arg
-//                         )
-//                     ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-//                 });
-//             });
-//         });
-//     });
-// });
+    integrationVaultBehavior.call(this, {});
+});

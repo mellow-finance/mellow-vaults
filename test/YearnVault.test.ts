@@ -1,453 +1,353 @@
-// import { assert, expect } from "chai";
-// import {
-//     ethers,
-//     deployments,
-//     getNamedAccounts,
-//     getExternalContract,
-// } from "hardhat";
-// import { now, randomAddress, sleepTo, withSigner } from "./library/Helpers";
-// import { BigNumber } from "@ethersproject/bignumber";
-// import { Contract } from "@ethersproject/contracts";
-// import { equals } from "ramda";
-// import Exceptions from "./library/Exceptions";
+import hre from "hardhat";
+import { expect } from "chai";
+import { ethers, getNamedAccounts, deployments } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
+import {
+    encodeToBytes,
+    mint,
+    randomAddress,
+    sleep,
+    withSigner,
+} from "./library/Helpers";
+import { contract } from "./library/setup";
+import { ERC20RootVault, ERC20Vault, YearnVault } from "./types";
+import {
+    combineVaults,
+    PermissionIdsLibrary,
+    setupVault,
+} from "../deploy/0000_utils";
+import { integrationVaultBehavior } from "./behaviors/integrationVault";
+import {
+    INTEGRATION_VAULT_INTERFACE_ID,
+    YEARN_VAULT_INTERFACE_ID,
+} from "./library/Constants";
+import Exceptions from "./library/Exceptions";
 
-// describe("YearnVault", () => {
-//     let deploymentFixture: Function;
-//     let deployer: string;
-//     let admin: string;
-//     let stranger: string;
-//     let yearnVaultRegistry: string;
-//     let protocolGovernance: string;
-//     let vaultRegistry: string;
-//     let yearnVaultGovernance: string;
-//     let startTimestamp: number;
-//     let yearnVault: Contract;
-//     let nft: number;
-//     let vaultOwner: string;
-//     let tokens: string[];
+type CustomContext = {
+    erc20Vault: ERC20Vault;
+    erc20RootVault: ERC20RootVault;
+    curveRouter: string;
+    preparePush: () => any;
+};
 
-//     before(async () => {
-//         const {
-//             deployer: d,
-//             admin: a,
-//             yearnVaultRegistry: y,
-//             stranger: s,
-//         } = await getNamedAccounts();
-//         [deployer, admin, yearnVaultRegistry, stranger] = [d, a, y, s];
+type DeployOptions = {};
 
-//         deploymentFixture = deployments.createFixture(async () => {
-//             await deployments.fixture();
+contract<YearnVault, DeployOptions, CustomContext>("YearnVault", function () {
+    before(async () => {
+        this.deploymentFixture = deployments.createFixture(
+            async (_, __?: DeployOptions) => {
+                await deployments.fixture();
+                const { read } = deployments;
 
-//             const { execute, get, read } = deployments;
-//             protocolGovernance = (await get("ProtocolGovernance")).address;
-//             vaultRegistry = (await get("VaultRegistry")).address;
-//             yearnVaultGovernance = (await get("YearnVaultGovernance")).address;
-//             const { weth, usdc, wbtc, test } = await getNamedAccounts();
-//             vaultOwner = test;
-//             tokens = [weth, usdc, wbtc].map((t) => t.toLowerCase()).sort();
-//             await execute(
-//                 "YearnVaultGovernance",
-//                 {
-//                     from: deployer,
-//                     autoMine: true,
-//                 },
-//                 "deployVault",
-//                 tokens,
-//                 yearnVaultGovernance,
-//                 vaultOwner
-//             );
-//             nft = (await read("VaultRegistry", "vaultsCount")).toNumber();
-//             await withSigner(yearnVaultGovernance, async (s) => {
-//                 // this is a hack to avoid checking that the owner of vault NFT is a Vault
-//                 // we're saying here that vaultOwner is a legal registered vault
-//                 const vaultRegistryContract = await ethers.getContractAt(
-//                     "VaultRegistry",
-//                     vaultRegistry
-//                 );
-//                 await vaultRegistryContract
-//                     .connect(s)
-//                     .registerVault(vaultOwner, vaultOwner);
-//             });
+                const { curveRouter } = await getNamedAccounts();
+                this.curveRouter = curveRouter;
+                this.preparePush = async () => {
+                    await sleep(0);
+                };
 
-//             const address = await read("VaultRegistry", "vaultForNft", nft);
+                const tokens = [this.weth.address, this.usdc.address]
+                    .map((t) => t.toLowerCase())
+                    .sort();
 
-//             const contracts: Contract[] = [];
-//             for (const token of tokens) {
-//                 contracts.push(await getExternalContract(token));
-//             }
-//             yearnVault = await ethers.getContractAt("YearnVault", address);
+                const startNft =
+                    (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
-//             await withSigner(vaultOwner, async (s) => {
-//                 for (const contract of contracts) {
-//                     await contract
-//                         .connect(s)
-//                         .approve(
-//                             yearnVault.address,
-//                             ethers.constants.MaxUint256
-//                         );
-//                 }
-//             });
-//         });
-//     });
+                let yearnVaultNft = startNft;
+                let erc20VaultNft = startNft + 1;
 
-//     beforeEach(async () => {
-//         await deploymentFixture();
-//         startTimestamp =
-//             (await ethers.provider.getBlock("latest")).timestamp + 1000;
-//         await sleepTo(startTimestamp);
-//     });
+                await setupVault(hre, yearnVaultNft, "YearnVaultGovernance", {
+                    createVaultArgs: [tokens, this.deployer.address],
+                });
+                await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+                    createVaultArgs: [tokens, this.deployer.address],
+                });
 
-//     describe("constructor", () => {
-//         it("creates a new contract", async () => {
-//             const { deploy, get } = deployments;
-//             const { deployer } = await getNamedAccounts();
-//             const vaultGovernance = await get("YearnVaultGovernance");
-//             await deploy("YearnVault", {
-//                 from: deployer,
-//                 autoMine: true,
-//                 args: [vaultGovernance.address, tokens],
-//             });
-//         });
-//         describe("when one of tokens is missing in Yearn", () => {
-//             it("reverts", async () => {
-//                 const { deploy, get } = deployments;
-//                 const { deployer } = await getNamedAccounts();
-//                 const vaultGovernance = await get("YearnVaultGovernance");
-//                 const newTokens = [...tokens, randomAddress()]
-//                     .map((x) => x.toLowerCase())
-//                     .sort();
-//                 await expect(
-//                     deploy("YearnVault", {
-//                         from: deployer,
-//                         autoMine: true,
-//                         args: [vaultGovernance.address, newTokens],
-//                     })
-//                 ).to.be.revertedWith(Exceptions.ADDRESS_ZEROS);
-//             });
-//         });
-//     });
+                await combineVaults(
+                    hre,
+                    erc20VaultNft + 1,
+                    [erc20VaultNft, yearnVaultNft],
+                    this.deployer.address,
+                    this.deployer.address
+                );
+                const erc20Vault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft
+                );
+                const yearnVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    yearnVaultNft
+                );
+                const erc20RootVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft + 1
+                );
 
-//     describe("tvl", () => {
-//         it("retuns cached tvl", async () => {
-//             const amounts = [1000, 2000, 3000];
-//             await withSigner(vaultOwner, async (s) => {
-//                 await yearnVault
-//                     .connect(s)
-//                     .transferAndPush(vaultOwner, tokens, amounts, []);
-//             });
+                this.erc20Vault = await ethers.getContractAt(
+                    "ERC20Vault",
+                    erc20Vault
+                );
 
-//             expect(
-//                 (await yearnVault.tvl()).map((x: BigNumber) => x.toNumber())
-//             ).to.eql(amounts.map((x: number) => x - 1));
-//         });
+                this.subject = await ethers.getContractAt(
+                    "YearnVault",
+                    yearnVault
+                );
 
-//         describe("when no deposits are made", () => {
-//             it("returns 0", async () => {
-//                 expect(
-//                     (await yearnVault.tvl()).map((x: BigNumber) => x.toNumber())
-//                 ).to.eql([0, 0, 0]);
-//             });
-//         });
-//     });
+                this.erc20RootVault = await ethers.getContractAt(
+                    "ERC20RootVault",
+                    erc20RootVault
+                );
 
-//     describe("push", () => {
-//         let yTokenContracts: Contract[];
-//         beforeEach(async () => {
-//             assert(
-//                 equals(
-//                     (await yearnVault.tvl()).map((x: any) => x.toNumber()),
-//                     [0, 0, 0]
-//                 ),
-//                 "Zero TVL"
-//             );
-//             const yTokens = await yearnVault.yTokens();
-//             yTokenContracts = [];
-//             for (const yToken of yTokens) {
-//                 const contract = await ethers.getContractAt("LpIssuer", yToken); // just use ERC20 interface here
-//                 yTokenContracts.push(contract);
-//                 assert(
-//                     (
-//                         await contract.balanceOf(yearnVault.address)
-//                     ).toNumber() === 0,
-//                     "Zero balance"
-//                 );
-//             }
-//         });
-//         it("pushes tokens into yearn", async () => {
-//             const amounts = [1000, 2000, 3000];
-//             await withSigner(vaultOwner, async (s) => {
-//                 await yearnVault
-//                     .connect(s)
-//                     .transferAndPush(vaultOwner, tokens, amounts, []);
-//             });
-//             for (const yToken of yTokenContracts) {
-//                 const balance = await yToken.balanceOf(yearnVault.address);
-//                 expect(balance.toNumber()).to.gt(0);
-//             }
-//             const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                 x.toNumber()
-//             );
-//             for (const tvl of tvls) {
-//                 expect(tvl).to.gt(0);
-//             }
-//         });
+                for (let address of [
+                    this.deployer.address,
+                    this.subject.address,
+                    this.erc20Vault.address,
+                ]) {
+                    await mint(
+                        "USDC",
+                        address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await mint(
+                        "WETH",
+                        address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await this.weth.approve(
+                        address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.usdc.approve(
+                        address,
+                        ethers.constants.MaxUint256
+                    );
+                }
 
-//         describe("when one of pushed tokens equals 0", () => {
-//             it("doesn't push that token", async () => {
-//                 const amounts = [1000, 0, 3000];
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault
-//                         .connect(s)
-//                         .transferAndPush(vaultOwner, tokens, amounts, []);
-//                 });
-//                 const balance = await yTokenContracts[1].balanceOf(
-//                     yearnVault.address
-//                 );
-//                 expect(balance.toNumber()).to.eq(0);
-//                 const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                     x.toNumber()
-//                 );
-//                 expect(tvls[1]).to.eq(0);
-//             });
-//         });
+                return this.subject;
+            }
+        );
+    });
 
-//         describe("when pushed twice", () => {
-//             it("succeeds", async () => {
-//                 const amounts = [1000, 2000, 3000];
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault
-//                         .connect(s)
-//                         .transferAndPush(vaultOwner, tokens, amounts, []);
-//                 });
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault
-//                         .connect(s)
-//                         .transferAndPush(vaultOwner, tokens, amounts, []);
-//                 });
+    beforeEach(async () => {
+        await this.deploymentFixture();
+    });
 
-//                 for (const yToken of yTokenContracts) {
-//                     const balance = await yToken.balanceOf(yearnVault.address);
-//                     expect(balance.toNumber()).to.gt(0);
-//                 }
-//                 const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                     x.toNumber()
-//                 );
-//                 for (const tvl of tvls) {
-//                     expect(tvl).to.gt(0);
-//                 }
-//             });
-//         });
-//     });
+    describe("#tvl", () => {
+        beforeEach(async () => {
+            await withSigner(this.subject.address, async (signer) => {
+                await this.usdc
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
+                await this.weth
+                    .connect(signer)
+                    .approve(
+                        this.deployer.address,
+                        ethers.constants.MaxUint256
+                    );
 
-//     describe("pull", () => {
-//         let yTokenContracts: Contract[];
-//         let setup: Function;
-//         let amounts: number[];
+                await this.usdc
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.usdc.balanceOf(this.subject.address)
+                    );
+                await this.weth
+                    .connect(signer)
+                    .transfer(
+                        this.deployer.address,
+                        await this.weth.balanceOf(this.subject.address)
+                    );
+            });
+        });
 
-//         before(async () => {
-//             setup = deployments.createFixture(async () => {
-//                 assert(
-//                     equals(
-//                         (await yearnVault.tvl()).map((x: any) => x.toNumber()),
-//                         [0, 0, 0]
-//                     ),
-//                     "Zero TVL"
-//                 );
-//                 const yTokens = await yearnVault.yTokens();
-//                 yTokenContracts = [];
-//                 for (const yToken of yTokens) {
-//                     const contract = await ethers.getContractAt(
-//                         "LpIssuer",
-//                         yToken
-//                     ); // just using ERC20 interface here
-//                     yTokenContracts.push(contract);
-//                     assert(
-//                         (
-//                             await contract.balanceOf(yearnVault.address)
-//                         ).toNumber() === 0,
-//                         "Zero balance"
-//                     );
-//                 }
-//                 amounts = [1000000, 2000000, 3000000];
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault
-//                         .connect(s)
-//                         .transferAndPush(vaultOwner, tokens, amounts, []);
-//                 });
-//             });
-//         });
+        it("returns total value locked", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
 
-//         beforeEach(async () => {
-//             await setup();
-//         });
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                encodeToBytes(["uint256"], [BigNumber.from(1)])
+            );
+            const result = await this.subject.tvl();
+            for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                    expect(result[amountsId][tokenId]).gt(0);
+                }
+            }
+        });
 
-//         it("pulls the fund to address", async () => {
-//             const { stranger } = await getNamedAccounts();
-//             for (const token of tokens) {
-//                 const contract = await getExternalContract(token);
-//                 assert(
-//                     (await contract.balanceOf(stranger)) == 0,
-//                     "Zero balance for stranger"
-//                 );
-//             }
-//             await withSigner(vaultOwner, async (s) => {
-//                 await yearnVault
-//                     .connect(s)
-//                     .pull(
-//                         stranger,
-//                         tokens,
-//                         amounts,
-//                         "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                     );
-//             });
-//             const balances = [];
-//             for (const token of tokens) {
-//                 const contract = await getExternalContract(token);
-//                 balances.push((await contract.balanceOf(stranger)).toNumber());
-//             }
-//             expect(balances).to.eql(amounts.map((x) => x - 1));
-//         });
+        describe("edge cases:", () => {
+            describe("when there are no initial funds", () => {
+                it("returns zeroes", async () => {
+                    const result = await this.subject.tvl();
+                    for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                        for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                            expect(result[amountsId][tokenId]).eq(0);
+                        }
+                    }
+                });
+            });
+        });
+    });
 
-//         describe("when the pull amounts are greater than balances", () => {
-//             it("pulls all tokens from balance", async () => {
-//                 const { stranger } = await getNamedAccounts();
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     assert(
-//                         (await contract.balanceOf(stranger)) == 0,
-//                         "Zero balance for stranger"
-//                     );
-//                 }
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault.connect(s).pull(
-//                         stranger,
-//                         tokens,
-//                         amounts.map((x) => x * 10),
-//                         "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                     );
-//                 });
-//                 const balances = [];
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     balances.push(
-//                         (await contract.balanceOf(stranger)).toNumber()
-//                     );
-//                 }
-//                 expect(balances).to.eql(amounts.map((x) => x - 1));
-//                 const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                     x.toNumber()
-//                 );
-//                 expect(tvls).to.eql([0, 0, 0]);
-//             });
-//         });
+    describe("#yTokens", () => {
+        it("returns list of yTokens", async () => {
+            expect((await this.subject.yTokens()).length).to.be.equal(2);
+        });
+    });
 
-//         describe("when pulled twice", () => {
-//             it("succeeds", async () => {
-//                 const { stranger } = await getNamedAccounts();
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     assert(
-//                         (await contract.balanceOf(stranger)) == 0,
-//                         "Zero balance for stranger"
-//                     );
-//                 }
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault.connect(s).pull(
-//                         stranger,
-//                         tokens,
-//                         amounts.map((x) => x / 2),
-//                         "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                     );
-//                     await yearnVault.connect(s).pull(
-//                         stranger,
-//                         tokens,
-//                         amounts.map((x) => x / 2 + 1),
-//                         "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                     );
-//                 });
-//                 const balances = [];
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     balances.push(
-//                         (await contract.balanceOf(stranger)).toNumber()
-//                     );
-//                 }
-//                 for (let i = 0; i < balances.length; i++) {
-//                     expect(balances[i]).to.gte(amounts[i] - 2);
-//                 }
-//                 const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                     x.toNumber()
-//                 );
-//                 expect(tvls).to.eql([0, 0, 0]);
-//             });
-//         });
+    describe("#initialize", () => {
+        beforeEach(async () => {
+            this.nft = await ethers.provider.send("eth_getStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+            ]);
+            await ethers.provider.send("hardhat_setStorageAt", [
+                this.subject.address,
+                "0x4", // address of _nft
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
+            ]);
+        });
 
-//         describe("when 0 is pulled", () => {
-//             it("nothing is pulled", async () => {
-//                 const { stranger } = await getNamedAccounts();
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     assert(
-//                         (await contract.balanceOf(stranger)) == 0,
-//                         "Zero balance for stranger"
-//                     );
-//                 }
-//                 await withSigner(vaultOwner, async (s) => {
-//                     await yearnVault.connect(s).pull(
-//                         stranger,
-//                         tokens,
-//                         amounts.map((x) => 0),
-//                         "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                     );
-//                 });
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     expect(await contract.balanceOf(stranger)).to.eq(0);
-//                 }
-//             });
-//         });
+        it("emits Initialized event", async () => {
+            await withSigner(
+                this.yearnVaultGovernance.address,
+                async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .initialize(this.nft, [
+                                this.usdc.address,
+                                this.weth.address,
+                            ])
+                    ).to.emit(this.subject, "Initialized");
+                }
+            );
+        });
+        it("initializes contract successfully", async () => {
+            await withSigner(
+                this.yearnVaultGovernance.address,
+                async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .initialize(this.nft, [
+                                this.usdc.address,
+                                this.weth.address,
+                            ])
+                    ).to.not.be.reverted;
+                }
+            );
+        });
 
-//         describe("when contract has 0 balance", () => {
-//             it("nothing is pulled", async () => {
-//                 const { stranger } = await getNamedAccounts();
-//                 for (const token of tokens) {
-//                     const contract = await getExternalContract(token);
-//                     assert(
-//                         (await contract.balanceOf(stranger)) == 0,
-//                         "Zero balance for stranger"
-//                     );
-//                 }
-//                 await withSigner(vaultOwner, async (s) => {
-//                     // pull everything
-//                     await yearnVault
-//                         .connect(s)
-//                         .pull(
-//                             stranger,
-//                             tokens,
-//                             amounts,
-//                             "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                         );
-//                 });
-//                 const tvls = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                     x.toNumber()
-//                 );
-//                 assert(equals(tvls, [0, 0, 0]));
-//                 await withSigner(vaultOwner, async (s) => {
-//                     // pull everything
-//                     await yearnVault
-//                         .connect(s)
-//                         .pull(
-//                             stranger,
-//                             tokens,
-//                             amounts,
-//                             "0x0000000000000000000000000000000000000000000000000000000000001001"
-//                         );
-//                 });
-//                 const tvlsAfter = (await yearnVault.tvl()).map((x: BigNumber) =>
-//                     x.toNumber()
-//                 );
-//                 assert(equals(tvlsAfter, [0, 0, 0]));
-//             });
-//         });
-//     });
-// });
+        describe("edge cases:", () => {
+            describe("when vault's nft is not 0", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0x4", // address of _nft
+                        "0x0000000000000000000000000000000000000000000000000000000000000007",
+                    ]);
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.usdc.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+            describe("when tokens are not sorted", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.weth.address,
+                            this.usdc.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when tokens are not unique", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    await expect(
+                        this.subject.initialize(this.nft, [
+                            this.weth.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when setting zero nft", () => {
+                it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                    await expect(
+                        this.subject.initialize(0, [
+                            this.usdc.address,
+                            this.weth.address,
+                        ])
+                    ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                });
+            });
+            describe("when token has no permission to become a vault token", () => {
+                it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .revokePermissions(this.usdc.address, [
+                            PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                        ]);
+                    await withSigner(
+                        this.yearnVaultGovernance.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(this.nft, [
+                                        this.usdc.address,
+                                        this.weth.address,
+                                    ])
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        }
+                    );
+                });
+            });
+        });
+    });
+
+    describe("#supportsInterface", () => {
+        it(`returns true if this contract supports ${YEARN_VAULT_INTERFACE_ID} interface`, async () => {
+            expect(
+                await this.subject.supportsInterface(YEARN_VAULT_INTERFACE_ID)
+            ).to.be.true;
+        });
+
+        describe("access control:", () => {
+            it("allowed: any address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .supportsInterface(INTEGRATION_VAULT_INTERFACE_ID)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+    });
+
+    integrationVaultBehavior.call(this, {});
+});
