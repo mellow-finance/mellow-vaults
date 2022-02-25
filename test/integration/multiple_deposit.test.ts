@@ -13,6 +13,7 @@ import { integer, float, boolean } from "fast-check";
 import { ERC20RootVaultGovernance, MellowOracle } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
+import { min } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -843,17 +844,64 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     /* 
                         --------------------- COLLECT ALL FEES ---------------------------
+                        withdraw all fees as LpTokens and get USDC and WETH
+                        make sure that received USDC/WETH equals expected USDC/WETH
                     */
 
                     // collect management fees
                     if (
                         (await this.subject.balanceOf(strategyTreasury)).gt(0)
                     ) {
+                        let managementFee = await this.subject.balanceOf(
+                            strategyTreasury
+                        );
+                        let performanceFee = await this.subject.balanceOf(
+                            strategyPerformanceTreasury
+                        );
+
+                        let currentDeployerBalance = await this.subject.balanceOf(this.deployer.address);
+                        let totalLpSupply = Number(currentDeployerBalance.add(managementFee).add(performanceFee));
+                        let tvls = (await this.subject.tvl())[0];
+
+                        /*
+                            tokenFee / tokenTvl = lpTokenBalance[strategyTreasury] / totalLpTokenSupply
+                        */
+                        // calculate expected fees
+
+                        let usdcFee = managementFee.mul(tvls[0]).div(totalLpSupply);
+                        let wethFee = managementFee.mul(tvls[1]).div(totalLpSupply);
+
+                        // --------------------- WITHDRAW ---------------------------
                         await this.subject.withdraw(
                             strategyTreasury,
                             BigNumber.from(2).pow(256).sub(1),
                             [0, 0]
                         );
+
+                        let usdcBalanceStrategyTreasury =
+                            await this.usdc.balanceOf(this.strategyTreasury);
+                        let wethBalanceStrategyTreasury =
+                            await this.weth.balanceOf(this.strategyTreasury);
+
+                        let usdcFeeAbsDifference = usdcFee
+                            .sub(usdcBalanceStrategyTreasury)
+                            .abs();
+                        let wethFeeAbsDifference = wethFee
+                            .sub(wethBalanceStrategyTreasury)
+                            .abs();
+
+                        expect(
+                            usdcFeeAbsDifference
+                                .mul(10000)
+                                .sub(usdcBalanceStrategyTreasury)
+                                .lte(0)
+                        ).to.be.true;
+                        expect(
+                            wethFeeAbsDifference
+                                .mul(10000)
+                                .sub(wethBalanceStrategyTreasury)
+                                .lte(0)
+                        ).to.be.true;
                     }
 
                     // collect performance fees
@@ -864,11 +912,53 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                         ).gt(0)
                     ) {
+                        let performanceFee = await this.subject.balanceOf(
+                            strategyPerformanceTreasury
+                        );
+
+                        let currentDeployerBalance = await this.subject.balanceOf(this.deployer.address);
+                        let totalLpSupply = Number(currentDeployerBalance.add(performanceFee));
+                        let tvls = (await this.subject.tvl())[0];
+
+                        // --------------------- WITHDRAW ---------------------------
                         await this.subject.withdraw(
                             strategyPerformanceTreasury,
                             BigNumber.from(2).pow(256).sub(1),
                             [0, 0]
                         );
+
+                        /*
+                            tokenFee / tokenTvl = lpTokenBalance[strategyTreasury] / totalLpTokenSupply
+                        */
+                        // calculate expected fees
+
+                        let usdcFee = performanceFee.mul(tvls[0]).div(totalLpSupply);
+                        let wethFee = performanceFee.mul(tvls[1]).div(totalLpSupply);
+
+                        let usdcBalanceStrategyPerformanceTreasury =
+                            await this.usdc.balanceOf(this.strategyPerformanceTreasury);
+                        let wethBalanceStrategyPerformanceTreasury =
+                            await this.weth.balanceOf(this.strategyPerformanceTreasury);
+
+                        let usdcFeeAbsDifference = usdcFee
+                            .sub(usdcBalanceStrategyPerformanceTreasury)
+                            .abs();
+                        let wethFeeAbsDifference = wethFee
+                            .sub(wethBalanceStrategyPerformanceTreasury)
+                            .abs();
+
+                        expect(
+                            usdcFeeAbsDifference
+                                .mul(10000)
+                                .sub(usdcBalanceStrategyPerformanceTreasury)
+                                .lte(0)
+                        ).to.be.true;
+                        expect(
+                            wethFeeAbsDifference
+                                .mul(10000)
+                                .sub(wethBalanceStrategyPerformanceTreasury)
+                                .lte(0)
+                        ).to.be.true;
                     }
 
                     // collect protocol fees
