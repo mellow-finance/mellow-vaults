@@ -379,8 +379,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     invertRatio: boolean
                 ) => {
                     await setNonZeroFeesFixture();
-                    let usdcDepositAmounts: BigNumber[] = [];
-                    let wethDepositAmounts: BigNumber[] = [];
                     if (invertRatio) {
                         tokensDepositRatio = 1 - tokensDepositRatio;
                     }
@@ -389,7 +387,31 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         Math.round(tokensDepositRatio * 10 ** 3)
                     );
 
-                    if (roundedTokensDepositRatio.eq(10 ** 3)) {
+                    let tokensDepositRatioEqualsOne: boolean =
+                        roundedTokensDepositRatio.eq(10 ** 3);
+                    let tokensDepositRatioEqualsZero: boolean =
+                        roundedTokensDepositRatio.eq(0);
+
+                    let usdcDepositAmounts: BigNumber[] = [];
+                    let wethDepositAmounts: BigNumber[] = [];
+
+                    /* 
+                        --------------------- SET DEPOSIT AMOUNTS ---------------------------
+                        R -> ratio
+                        U -> usdcDepositAmounts[i]
+                        W -> wethDepositAmounts[i]
+
+                        R = U / (U + W), R in range [0, 1]
+                        let W be a random value, than
+
+                        R * U + R * W = U
+                        U * (1 - R) = W * R
+                        U = W * (R / (1 - R))
+                        R == 1 is an exclusive case, so we treat it with another "if" statement
+                        (U is a random value, W = 0)
+                    */
+
+                    if (tokensDepositRatioEqualsOne) {
                         for (let i = 0; i < numDeposits; ++i) {
                             usdcDepositAmounts.push(
                                 BigNumber.from(
@@ -423,6 +445,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         }
                     }
 
+                    /* 
+                        --------------------- MAKE DEPOSITS ---------------------------
+                        deposit U and W numDeposit times
+                        set lpPriceHighWaterMarkD18
+                        get lpToken balance after first deposit
+                    */
+
                     let currentTimestamp = now() + 10 ** 6;
                     await sleepTo(currentTimestamp);
                     await this.subject
@@ -454,6 +483,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 0
                             );
                     }
+
+                    /* 
+                        --------------------- CHECK THAT SMTH HAS BEEN DEPOSITED TO VAULTS --------
+                    */
+
                     let strategyTreasury = (
                         await this.erc20RootVaultGovernance.delayedStrategyParams(
                             this.erc20RootVaultNft
@@ -470,18 +504,34 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const lpTokensAmount = await this.subject.balanceOf(
                         this.deployer.address
                     );
+
+                    // make sure that we aquired some lpTokens
                     expect(lpTokensAmount).to.not.deep.equals(
                         BigNumber.from(0)
                     );
 
-                    if (roundedTokensDepositRatio.eq(10 ** 3)) {
+                    /*
+                        if token ratio == 1
+                            weth balance remains const
+                            usdc balance must be different
+                        
+                        if token ratio == 0
+                            usdc balance remains const
+                            weth balance must be different
+                        
+                        else 
+                            usdc balance must be different
+                            weth balance must be different
+                    */
+
+                    if (tokensDepositRatioEqualsOne) {
                         expect(
                             await this.weth.balanceOf(this.deployer.address)
                         ).to.be.equal(this.wethDeployerSupply);
                         expect(
                             await this.usdc.balanceOf(this.deployer.address)
                         ).to.not.be.equal(this.usdcDeployerSupply);
-                    } else if (roundedTokensDepositRatio.eq(0)) {
+                    } else if (tokensDepositRatioEqualsZero) {
                         expect(
                             await this.weth.balanceOf(this.deployer.address)
                         ).to.not.be.equal(this.wethDeployerSupply);
@@ -496,6 +546,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             await this.usdc.balanceOf(this.deployer.address)
                         ).to.not.be.equal(this.usdcDeployerSupply);
                     }
+
+                    /* 
+                        --------------------- CHECK TVLS ---------------------------
+                        minTvl == maxTvl in case we do not have UniV3 vault in vault system
+                        rootVaultTvls == yearnVaultTvls + erc20VaultTvls
+                    */
 
                     let erc20_tvl = await this.erc20Vault.tvl();
                     let yearn_tvl = await this.yearnVault.tvl();
@@ -513,6 +569,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     expect(erc20_tvl[1][1].add(yearn_tvl[1][1])).to.deep.equals(
                         root_tvl[1][1]
                     );
+
+                    /* 
+                        --------------------- EARN PERFORMANCE FEES ---------------------------
+                        get WETH and USDC balances on each vault
+                        donate the same balances to vaults using transfer
+
+                        LpTokenAmount remains constant => it`s price increases
+                    */
 
                     const wethAmountOnERC20Vault = await this.weth.balanceOf(
                         this.erc20Vault.address
@@ -532,6 +596,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const additionalWethAmount = wethAmountOnERC20Vault.add(
                         wethAmountOnYearnVault
                     );
+
+                    // mint additional amounts
                     if (additionalUsdcAmount.gt(0)) {
                         await mint(
                             "USDC",
@@ -546,6 +612,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             additionalWethAmount
                         );
                     }
+
+                    // transfer amounts on vaults
                     await this.weth
                         .connect(this.deployer)
                         .transfer(
@@ -572,6 +640,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             usdcAmountOnYearnVault
                         );
 
+                    /* 
+                        --------------------- CALCULATE SOME PARAMETERS FOR PERFORMANCE FEES ---------------------------
+                        get average pricee for USDC to WETH
+                        get Tvls
+                    */
+
                     let pricesResult = await this.mellowOracle.price(
                         this.usdc.address,
                         this.weth.address,
@@ -587,6 +661,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let tvls = await this.subject.tvl();
                     let minTvl = tvls[0];
 
+                    /* 
+                        --------------------- SET RANDOMISED WITHDRAW AMOUNTS ---------------------------
+                        set randomised withdrawAmounts
+                    */
+
                     let withdrawAmounts: BigNumber[] = [];
                     let withdrawSum: BigNumber = BigNumber.from(0);
                     for (let i = 0; i < numWithdraws - 1; ++i) {
@@ -600,13 +679,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
                     withdrawAmounts.push(lpTokensAmount.sub(withdrawSum));
 
-                    let tokenAmounts = [];
+                    /* 
+                        --------------------- CALCULATE SOME PARAMETERS FOR MANAGEMENT FEES ---------------------------
+                        get real management and performance fees
+                        management fees will be earned on the first withdraw after delay
+
+                        calculate actual token amounts using Tvls
+                        calculate baseSupply = lpBalance[deployer] + managementFees + performanceFees
+                        calculate baseTvls = Tvls - actualTokenAmounts
+                    */
+
                     let managementFees = await this.subject.balanceOf(
                         this.strategyTreasury
                     );
                     let performanceFees = await this.subject.balanceOf(
                         this.strategyPerformanceTreasury
                     );
+
+                    let tokenAmounts = [];
                     tokenAmounts.push(
                         withdrawAmounts[0]
                             .mul(minTvl[0])
@@ -626,6 +716,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                     );
 
+                    // get baseSupply and baseTvls
                     let baseSupply = lpTokensAmount
                         .add(managementFees)
                         .add(performanceFees)
@@ -634,6 +725,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         minTvl[0].sub(tokenAmounts[0]),
                         minTvl[1].sub(tokenAmounts[1]),
                     ];
+
+                    // calculate expected performance fees
                     let expectdPerformanceFee =
                         calculateExpectedPerformanceFees(
                             baseSupply,
@@ -647,6 +740,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     } else {
                         await sleep(delay);
                     }
+
+                    /* 
+                        --------------------- MAKE WITHDRAWS ---------------------------
+                        make randomised withdraws numWithdraws times
+                    */
+
                     await this.subject.withdraw(
                         this.deployer.address,
                         withdrawAmounts[0],
@@ -660,6 +759,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             [0, 0]
                         );
                     }
+
+                    /* 
+                        --------------------- COMPARE REAL FEES WITH EXPECTED FEES ---------------------------
+                        if delay > governance.managementFeeChargeDelay 
+                        assert (realFee - expectedFee) < (0.01 * 1%) * realFee
+
+                    */
 
                     if (
                         BigNumber.from(delay).gt(
@@ -679,6 +785,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         let realManagementFee = await this.subject.balanceOf(
                             strategyTreasury
                         );
+
+                        // calculate expected management fee after second deposit
                         let expectedManagementFeeFirst =
                             vaultGovernanceManagementFee
                                 .mul(delay)
@@ -690,6 +798,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                         .mul(3600)
                                         .mul(365)
                                 );
+
+                        // calculate expected management fee after first withdraw
                         let expectedManagementFeeSecond =
                             vaultGovernanceManagementFee
                                 .mul(delay)
@@ -701,6 +811,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                         .mul(3600)
                                         .mul(365)
                                 );
+
+                        // expected management fee = first fee + second fee
                         let expectedManagementFee =
                             expectedManagementFeeFirst.add(
                                 expectedManagementFeeSecond
@@ -710,6 +822,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .sub(realManagementFee)
                             .abs();
 
+                        /* 
+                            MANAGEMENT FEES
+                            dif <= 0.01 * 1% * fee
+                            dif * 100 * 100 <= fee
+                            dif * (10 ** 4) - fee <= 0
+                        */
                         expect(
                             managementFeeAbsDifference
                                 .mul(10000)
@@ -717,11 +835,17 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .lte(0)
                         ).to.be.true;
 
+                        // PERFORMANCE FEES
                         expect(expectdPerformanceFee).to.be.equal(
                             realPerformanceFee
                         );
                     }
 
+                    /* 
+                        --------------------- COLLECT ALL FEES ---------------------------
+                    */
+
+                    // collect management fees
                     if (
                         (await this.subject.balanceOf(strategyTreasury)).gt(0)
                     ) {
@@ -731,6 +855,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             [0, 0]
                         );
                     }
+
+                    // collect performance fees
                     if (
                         (
                             await this.subject.balanceOf(
@@ -744,6 +870,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             [0, 0]
                         );
                     }
+
+                    // collect protocol fees
                     if (
                         (await this.subject.balanceOf(protocolTreasury)).gt(0)
                     ) {
@@ -754,9 +882,25 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         );
                     }
 
+                    /* 
+                        --------------------- CHECK BALANCES EQUALITY ---------------------------
+                        assert lpTokenBalance[deployer] == 0
+                        assert usdcSupply + usdcAdditionalAmount == 
+                                    usdcBalance[deployer] + 
+                                    + usdcBalance[strategyTreeasury] 
+                                    + usdcBalance[strategyPerformanceTreasury]
+                                    + usdcBalance[protocolTreasury]
+                        assert  wethSupply + wethAdditionalAmount == 
+                                    wethBalance[deployer] + 
+                                    + wethBalance[strategyTreeasury] 
+                                    + wethBalance[strategyPerformanceTreasury]
+                                    + wethBalance[protocolTreasury]
+                    */
+
                     expect(
                         await this.subject.balanceOf(this.deployer.address)
                     ).to.deep.equals(BigNumber.from(0));
+
                     expect(
                         (await this.weth.balanceOf(this.deployer.address))
                             .add(await this.weth.balanceOf(strategyTreasury))
@@ -769,6 +913,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ).to.be.equal(
                         this.wethDeployerSupply.add(additionalWethAmount)
                     );
+
                     expect(
                         (await this.usdc.balanceOf(this.deployer.address))
                             .add(await this.usdc.balanceOf(strategyTreasury))
