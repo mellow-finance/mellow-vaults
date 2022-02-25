@@ -56,15 +56,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256 minErc20TokenRatioDeviationD;
         uint256 minUniV3LiquidityRatioDeviationD;
     }
-    struct BotParams {
-        uint256 maxBotAllowance;
-        uint256 minBotWaitTime;
-    }
 
     struct OtherParams {
         uint16 intervalWidthInTicks;
-        uint256 lowerTickDeviation;
-        uint256 upperTickDeviation;
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
     }
@@ -79,7 +73,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
 
     TradingParams public tradingParams;
     RatioParams public ratioParams;
-    BotParams public botParams;
     OtherParams public otherParams;
     PreOrder public preOrder;
 
@@ -433,6 +426,42 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         emit ManualPull(tx.origin, msg.sender, tokenAmounts, actualTokenAmounts);
     }
 
+    /// @notice Sets new trading params
+    /// @param newTradingParams New trading parameters to set
+    function updateTradingParams(TradingParams calldata newTradingParams) external {
+        _requireAdmin();
+        require(
+            (newTradingParams.maxSlippageD <= DENOMINATOR) &&
+                (newTradingParams.oracleSafety <= 5) &&
+                (newTradingParams.minRebalanceWaitTime <= 86400 * 30) &&
+                (newTradingParams.orderDeadline <= 86400 * 30),
+            ExceptionsLibrary.INVARIANT
+        );
+        require(address(newTradingParams.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        tradingParams = newTradingParams;
+        emit TradingParamsUpdated(tx.origin, msg.sender, tradingParams);
+    }
+
+    /// @notice Sets new ratio params
+    /// @param newRatioParams New ratio parameters to set
+    function updateRatioParams(RatioParams calldata newRatioParams) external {
+        _requireAdmin();
+        require(
+            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) && (newRatioParams.erc20TokenRatioD <= DENOMINATOR),
+            ExceptionsLibrary.INVARIANT
+        );
+        ratioParams = newRatioParams;
+        emit RatioParamsUpdated(tx.origin, msg.sender, ratioParams);
+    }
+
+    /// @notice Sets new other params
+    /// @param newOtherParams New other parameters to set
+    function updateOtherParams(OtherParams calldata newOtherParams) external {
+        _requireAdmin();
+        otherParams = newOtherParams;
+        emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
+    }
+
     // -------------------  INTERNAL, VIEW  -------------------
 
     function _contractName() internal pure override returns (bytes32) {
@@ -752,6 +781,24 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint128 desiredLiquidity,
         uint128 liquidity
     );
+
+    /// @notice Emitted when trading params were updated
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tradingParams New trading parameters
+    event TradingParamsUpdated(address indexed origin, address indexed sender, TradingParams tradingParams);
+
+    /// @notice Emitted when ratio params were updated
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param ratioParams New ratio parameters
+    event RatioParamsUpdated(address indexed origin, address indexed sender, RatioParams ratioParams);
+
+    /// @notice Emitted when other params were updated
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param otherParams New trading parameters
+    event OtherParamsUpdated(address indexed origin, address indexed sender, OtherParams otherParams);
 
     event CowswapAllowanceReset(address indexed origin, address indexed sender);
     event FeesCollected(address indexed origin, address indexed sender, uint256[] collectedEarnings);
