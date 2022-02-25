@@ -18,6 +18,7 @@ export default class Exceptions {
     static readonly INVALID_TOKEN: string = "INVTO";
     static readonly LOCK: string = "LCKD";
     static readonly INVALID_INTERFACE: string = "INVI";
+    static readonly INVALID_LENGTH: string = "INVL";
     static readonly DISABLED: string = "DIS";
     static readonly UNEXISTING_TOKEN: string =
         "ERC721: owner query for nonexistent token";
