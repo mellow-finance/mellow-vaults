@@ -6,6 +6,7 @@ import { contract } from "./library/setup";
 import { ERC20Vault, LStrategy, UniV3Vault } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import {
+    decodeFromBytes,
     mint,
     mintUniV3Position_USDC_WETH,
     randomAddress,
@@ -13,13 +14,14 @@ import {
     withSigner,
 } from "./library/Helpers";
 import { BigNumber } from "ethers";
-import { combineVaults, setupVault } from "../deploy/0000_utils";
+import {combineVaults, PermissionIdsLibrary, setupVault} from "../deploy/0000_utils";
 import Exceptions from "./library/Exceptions";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
     uniV3UpperVault: UniV3Vault;
     erc20Vault: ERC20Vault;
+    cowswap: string;
 };
 
 type DeployOptions = {};
@@ -210,7 +212,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateRatioParams({
-                    erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR,
+                    erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
                     erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
                     minErc20UniV3CapitalRatioDeviationD:
                         BigNumber.from(10).pow(7),
@@ -486,7 +488,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe.only("#targetPrice", () => {
+    describe("#targetPrice", () => {
         it("returns target price for specific trading params", async () => {
             let params = {
                 maxSlippageD: BigNumber.from(10).pow(6),
@@ -499,8 +501,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 (await this.subject.targetPrice(
                     [this.weth.address, this.usdc.address],
                     params
-                ))
-            ).to.not.be.reverted;
+                )).shr(96)
+            ).to.be.gt(0);
         });
 
         describe("edge cases:", () => {
@@ -515,27 +517,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     };
                     await expect(
                         this.subject.targetPrice(
-                            [this.weth.address, this.usdc.address],
+                            [this.usdc.address, this.weth.address],
                             params
                         )
                     ).to.be.reverted;
-                });
-            });
-            describe("when there is no existing pair", async () => {
-                it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
-                    let params = {
-                        maxSlippageD: BigNumber.from(10).pow(6),
-                        minRebalanceWaitTime: 86400,
-                        orderDeadline: 86400 * 30,
-                        oracleSafety: 1,
-                        oracle: ethers.constants.AddressZero,
-                    };
-                    await expect(
-                        this.subject.targetPrice(
-                            [this.weth.address, this.usdc.address],
-                            params
-                        )
-                    ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
                 });
             });
         });
@@ -544,7 +529,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     describe("#targetUniV3LiquidityRatio", () => {
         describe("returns target liquidity ratio", () => {
             describe("when target tick is more, than mid tick", () => {
-                xit("returns isNegative false", async () => {
+                it("returns isNegative false", async () => {
                     await this.preparePush({ vault: this.uniV3LowerVault });
                     const result = await this.subject.targetUniV3LiquidityRatio(
                         1
@@ -553,12 +538,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(result.liquidityRatioD).to.be.equal(
                         BigNumber.from(10)
                             .pow(9)
-                            .div(887220 * 2)
-                    ); // muldiv???????????????
+                            .div(887220)
+                    );
                 });
             });
             describe("when target tick is less, than mid tick", () => {
-                xit("returns isNegative true", async () => {
+                it("returns isNegative true", async () => {
                     await this.preparePush({ vault: this.uniV3LowerVault });
                     const result = await this.subject.targetUniV3LiquidityRatio(
                         -1
@@ -567,7 +552,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(result.liquidityRatioD).to.be.equal(
                         BigNumber.from(10)
                             .pow(9)
-                            .div(887220 * 2)
+                            .div(887220)
                     );
                 });
             });
@@ -581,6 +566,54 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ).to.be.revertedWith("Invalid token ID");
                 });
             });
+        });
+    });
+
+    describe.only("#resetCowswapAllowance", () => {
+        it("resets allowance from erc20Vault to cowswap", async () => {
+            await withSigner(this.erc20Vault.address, async (signer) => {
+                await this.usdc.connect(signer).approve(this.cowswap, BigNumber.from(10).pow(18));
+            });
+            let tokenId = await ethers.provider.send(
+                "eth_getStorageAt",
+                [
+                    this.erc20Vault.address,
+                    "0x4", // address of _nft
+                ]
+            );
+            console.log("TOKEN :: %s", tokenId);
+            console.log("TOKEN OWNER :: %s", await this.vaultRegistry.ownerOf(tokenId));
+            console.log("!!!!!!!!!!!!!!!!!!!!! %s", this.erc20Vault.address);
+            console.log("cowswap: %s", this.cowswap);
+            await withSigner(
+                this.erc20RootVault.address,
+                async (erc20RootVaultSigner) => {
+                    await this.vaultRegistry
+                        .connect(erc20RootVaultSigner)
+                        .approve(this.subject.address, tokenId);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(this.subject.address, [
+                            PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
+                        ]);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitPermissionGrants(this.subject.address);
+                }
+            );
+            // console.log("ADMIN: %s\nERC20: %s\nDEPLOYER: %s\nSUBJECT: %s", this.admin.address, this.erc20Vault.address, this.deployer.address, this.subject.address);
+            await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), this.deployer.address);
+            // await this.subject.grantRole(await this.subject.OPERATOR(), this.subject.address);
+            // await this.subject.grantRole(await this.subject.OPERATOR(), this.erc20Vault.address);
+
+            await this.subject.resetCowswapAllowance(0);
+            expect(await this.usdc.allowance(this.erc20Vault.address, this.cowswap)).to.be.equal(0);
+        });
+        it("emits CowswapAllowanceReset event", async () => {
+            await expect(this.subject.connect(this.admin).resetCowswapAllowance(0)).to.emit(this.subject, "CowswapAllowanceReset");
         });
     });
 });

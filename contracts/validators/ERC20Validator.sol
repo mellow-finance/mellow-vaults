@@ -8,6 +8,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
+import "hardhat/console.sol";
 
 contract ERC20Validator is ContractMeta, Validator {
     bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
@@ -52,6 +53,7 @@ contract ERC20Validator is ContractMeta, Validator {
         address token,
         address spender
     ) private view {
+        console.log("_verifyApprove:\nSENDER: %s\nTOKEN: %s\nSPENDER: %s", sender, token, spender);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         if (!protocolGovernance.hasPermission(token, PermissionIdsLibrary.ERC20_TRANSFER)) {
             revert(ExceptionsLibrary.FORBIDDEN);
