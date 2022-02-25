@@ -30,13 +30,12 @@ contract<ERC20Vault, DeployOptions, CustomContext>(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
 
-                    const { uniswapV3Router, uniswapV2Router02 } =
+                    const { uniswapV3Router, uniswapV2Router02, curveRouter } =
                         await getNamedAccounts();
 
                     this.uniswapV3Router = uniswapV3Router;
                     this.uniswapV2Router02 = uniswapV2Router02;
-                    this.curveRouter =
-                        "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
+                    this.curveRouter = curveRouter;
 
                     await this.protocolGovernance.validators(this.curveRouter);
                     const tokens = [

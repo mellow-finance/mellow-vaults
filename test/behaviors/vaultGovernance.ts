@@ -196,7 +196,8 @@ export function vaultGovernanceBehavior<
                         .connect(this.admin)
                         .stageParams({
                             ...params,
-                            forceAllowMask: 1 << PermissionIdsLibrary.CREATE_VAULT,
+                            forceAllowMask:
+                                1 << PermissionIdsLibrary.CREATE_VAULT,
                         });
                     await sleep(this.governanceDelay);
                     await this.protocolGovernance
