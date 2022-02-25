@@ -384,7 +384,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @param tokenNumber The number of token in LStrategy
     function resetCowswapAllowance(uint8 tokenNumber) external {
         _requireAtLeastOperator();
-        bytes memory approveData = abi.encodePacked(cowswap, uint256(0));
+        bytes memory approveData = abi.encode(cowswap, uint256(0));
         erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, approveData);
         emit CowswapAllowanceReset(tx.origin, msg.sender);
     }
