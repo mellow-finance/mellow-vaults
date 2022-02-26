@@ -13,7 +13,6 @@ import { integer, float, boolean } from "fast-check";
 import { ERC20RootVaultGovernance, MellowOracle } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
-import { min } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -859,8 +858,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             strategyPerformanceTreasury
                         );
 
-                        let currentDeployerBalance = await this.subject.balanceOf(this.deployer.address);
-                        let totalLpSupply = Number(currentDeployerBalance.add(managementFee).add(performanceFee));
+                        let currentDeployerBalance =
+                            await this.subject.balanceOf(this.deployer.address);
+                        let totalLpSupply = Number(
+                            currentDeployerBalance
+                                .add(managementFee)
+                                .add(performanceFee)
+                        );
                         let tvls = (await this.subject.tvl())[0];
 
                         /*
@@ -868,8 +872,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         */
                         // calculate expected fees
 
-                        let usdcFee = managementFee.mul(tvls[0]).div(totalLpSupply);
-                        let wethFee = managementFee.mul(tvls[1]).div(totalLpSupply);
+                        let usdcFee = managementFee
+                            .mul(tvls[0])
+                            .div(totalLpSupply);
+                        let wethFee = managementFee
+                            .mul(tvls[1])
+                            .div(totalLpSupply);
 
                         // --------------------- WITHDRAW ---------------------------
                         await this.subject.withdraw(
@@ -916,8 +924,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             strategyPerformanceTreasury
                         );
 
-                        let currentDeployerBalance = await this.subject.balanceOf(this.deployer.address);
-                        let totalLpSupply = Number(currentDeployerBalance.add(performanceFee));
+                        let currentDeployerBalance =
+                            await this.subject.balanceOf(this.deployer.address);
+                        let totalLpSupply = Number(
+                            currentDeployerBalance.add(performanceFee)
+                        );
                         let tvls = (await this.subject.tvl())[0];
 
                         // --------------------- WITHDRAW ---------------------------
@@ -932,13 +943,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         */
                         // calculate expected fees
 
-                        let usdcFee = performanceFee.mul(tvls[0]).div(totalLpSupply);
-                        let wethFee = performanceFee.mul(tvls[1]).div(totalLpSupply);
+                        let usdcFee = performanceFee
+                            .mul(tvls[0])
+                            .div(totalLpSupply);
+                        let wethFee = performanceFee
+                            .mul(tvls[1])
+                            .div(totalLpSupply);
 
                         let usdcBalanceStrategyPerformanceTreasury =
-                            await this.usdc.balanceOf(this.strategyPerformanceTreasury);
+                            await this.usdc.balanceOf(
+                                this.strategyPerformanceTreasury
+                            );
                         let wethBalanceStrategyPerformanceTreasury =
-                            await this.weth.balanceOf(this.strategyPerformanceTreasury);
+                            await this.weth.balanceOf(
+                                this.strategyPerformanceTreasury
+                            );
 
                         let usdcFeeAbsDifference = usdcFee
                             .sub(usdcBalanceStrategyPerformanceTreasury)
