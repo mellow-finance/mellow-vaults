@@ -103,8 +103,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethDeployerSupply = BigNumber.from(10).pow(18).mul(5);
-                    this.usdcDeployerSupply = BigNumber.from(10).pow(18).mul(5);
+                    this.wethDeployerSupply = BigNumber.from(10).pow(10).mul(5);
+                    this.usdcDeployerSupply = BigNumber.from(10).pow(10).mul(5);
 
                     await mint(
                         "USDC",
@@ -192,7 +192,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 integer({ min: 100_000, max: 1_000_000 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
-                integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
+                integer({ min: 10 ** 5, max: 10 ** 9 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
                 async (
