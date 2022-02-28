@@ -27,6 +27,7 @@ import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IERC20RootVaultGovernance";
 import { IOracle } from "./types";
 import { BigNumber, BigNumberish } from "ethers";
+import { randomInt } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -213,23 +214,23 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
         describe("#delayedProtocolPerVaultParams", () => {
             it("returns delayedProtocolPerVaultParams", async () => {
-                const nft = BigNumber.from(4);
-                // this.object._delayedProtocolPerVaultParamsTimestamp[nft.toNumber()] =
-                //     nft.toNumber()
-                // fix exceptions:
-                //     _delayedProtocolPerVaultParamsTimestamp[nft] != 0, ExceptionsLibrary.NULL
-                //     block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP
+                const nft = randomInt(100);
                 const expected: DelayedProtocolPerVaultParamsStruct = {
-                    protocolFee: BigNumber.from(3),
+                    protocolFee: BigNumber.from(randomInt(10 ** 6)),
                 };
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolPerVaultParams(nft, expected);
+                await sleep(this.governanceDelay);
                 await this.subject
                     .connect(this.admin)
                     .commitDelayedProtocolPerVaultParams(nft);
 
-                // expect(
-                //     toObject(await this.subject
-                //     .delayedProtocolPerVaultParams(nft))
-                // ).to.be.equivalent(expected);
+                expect(
+                    toObject(
+                        await this.subject.delayedProtocolPerVaultParams(nft)
+                    )
+                ).to.be.equivalent(expected);
             });
 
             describe("edge cases", () => {
