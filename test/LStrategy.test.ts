@@ -5,8 +5,8 @@ import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { contract } from "./library/setup";
 import { ERC20Vault, LStrategy, UniV3Vault } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
+import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import {
-    decodeFromBytes,
     mint,
     mintUniV3Position_USDC_WETH,
     randomAddress,
@@ -16,6 +16,7 @@ import {
 import { BigNumber } from "ethers";
 import {combineVaults, PermissionIdsLibrary, setupVault} from "../deploy/0000_utils";
 import Exceptions from "./library/Exceptions";
+import {init} from "ramda";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -569,51 +570,331 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe.only("#resetCowswapAllowance", () => {
+    describe("#resetCowswapAllowance", () => {
+        beforeEach(async () => {
+            this.grantPermissions = async () => {
+                let tokenId = await ethers.provider.send(
+                    "eth_getStorageAt",
+                    [
+                        this.erc20Vault.address,
+                        "0x4", // address of _nft
+                    ]
+                );
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(this.subject.address, tokenId);
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .stagePermissionGrants(this.cowswap, [
+                                PermissionIdsLibrary.ERC20_APPROVE,
+                            ]);
+                        await sleep(
+                            await this.protocolGovernance.governanceDelay()
+                        );
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .commitPermissionGrants(this.cowswap);
+                    }
+                );
+            };
+        });
+
         it("resets allowance from erc20Vault to cowswap", async () => {
             await withSigner(this.erc20Vault.address, async (signer) => {
                 await this.usdc.connect(signer).approve(this.cowswap, BigNumber.from(10).pow(18));
             });
-            let tokenId = await ethers.provider.send(
-                "eth_getStorageAt",
-                [
-                    this.erc20Vault.address,
-                    "0x4", // address of _nft
-                ]
-            );
-            console.log("TOKEN :: %s", tokenId);
-            console.log("TOKEN OWNER :: %s", await this.vaultRegistry.ownerOf(tokenId));
-            console.log("!!!!!!!!!!!!!!!!!!!!! %s", this.erc20Vault.address);
-            console.log("cowswap: %s", this.cowswap);
-            await withSigner(
-                this.erc20RootVault.address,
-                async (erc20RootVaultSigner) => {
-                    await this.vaultRegistry
-                        .connect(erc20RootVaultSigner)
-                        .approve(this.subject.address, tokenId);
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(this.subject.address, [
-                            PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY,
-                        ]);
-                    await sleep(
-                        await this.protocolGovernance.governanceDelay()
-                    );
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .commitPermissionGrants(this.subject.address);
-                }
-            );
-            // console.log("ADMIN: %s\nERC20: %s\nDEPLOYER: %s\nSUBJECT: %s", this.admin.address, this.erc20Vault.address, this.deployer.address, this.subject.address);
+            await this.grantPermissions();
             await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), this.deployer.address);
-            // await this.subject.grantRole(await this.subject.OPERATOR(), this.subject.address);
-            // await this.subject.grantRole(await this.subject.OPERATOR(), this.erc20Vault.address);
-
             await this.subject.resetCowswapAllowance(0);
             expect(await this.usdc.allowance(this.erc20Vault.address, this.cowswap)).to.be.equal(0);
         });
         it("emits CowswapAllowanceReset event", async () => {
-            await expect(this.subject.connect(this.admin).resetCowswapAllowance(0)).to.emit(this.subject, "CowswapAllowanceReset");
+            await this.grantPermissions();
+            await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), this.deployer.address);
+            await expect(this.subject.resetCowswapAllowance(0)).to.emit(this.subject, "CowswapAllowanceReset");
+        });
+
+        describe("edge cases:", () => {
+            describe("when permissions are not set", () => {
+                it("reverts", async () => {
+                    await expect(this.subject.connect(this.admin).resetCowswapAllowance(0)).to.be.reverted;
+                });
+            });
+        });
+
+        describe("access control:", () => {
+            it("allowed: admin", async () => {
+                await this.grantPermissions();
+                await expect(this.subject.connect(this.admin).resetCowswapAllowance(0)).to.not.be.reverted;
+            });
+            it("allowed: operator", async () => {
+                await this.grantPermissions();
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), signer.address);
+                    await expect(this.subject.connect(signer).resetCowswapAllowance(0)).to.not.be.reverted;
+                });
+            });
+            it("not allowed: any address", async () => {
+                await this.grantPermissions();
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).resetCowswapAllowance(0)).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
         });
     });
+
+    describe("#collectUniFees", () => {
+        it("collect fees from both univ3 vaults", async () => {
+            await this.preparePush({vault: this.uniV3LowerVault});
+            await this.preparePush({vault: this.uniV3UpperVault});
+            await this.uniV3UpperVault.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                []
+            )
+            await this.uniV3LowerVault.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                []
+            )
+
+            const { uniswapV3Router } = await getNamedAccounts();
+            let swapRouter = await ethers.getContractAt(
+                ISwapRouter,
+                uniswapV3Router
+            );
+            await this.usdc.approve(
+                swapRouter.address,
+                ethers.constants.MaxUint256
+            );
+            let params = {
+                tokenIn: this.usdc.address,
+                tokenOut: this.weth.address,
+                fee: uniV3PoolFee,
+                recipient: this.deployer.address,
+                deadline: ethers.constants.MaxUint256,
+                amountIn: BigNumber.from(10).pow(6).mul(5000),
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+            };
+            await swapRouter.exactInputSingle(params);
+
+            let lowerVaultFees = await this.uniV3LowerVault.callStatic.collectEarnings();
+            let upperVaultFees = await this.uniV3UpperVault.callStatic.collectEarnings();
+            for (let i = 0; i < 2; ++i) {
+                lowerVaultFees[i].add(upperVaultFees[i]);
+            }
+            let sumFees = await this.subject.connect(this.admin).callStatic.collectUniFees();
+            expect(sumFees == lowerVaultFees);
+            await expect(this.subject.connect(this.admin).collectUniFees()).to.not.be.reverted;
+        });
+        it("emits FeesCollected event", async () => {
+            await this.preparePush({vault: this.uniV3LowerVault});
+            await this.preparePush({vault: this.uniV3UpperVault});
+            await expect(this.subject.connect(this.admin).collectUniFees()).to.emit(this.subject, "FeesCollected");
+        });
+
+        describe("edge cases:", () => {
+            describe("when there is no minted position", () => {
+               it("reverts", async () => {
+                   await expect(this.subject.connect(this.admin).collectUniFees()).to.be.reverted;
+               });
+            });
+            describe("when there were no swaps", () => {
+                it("returns zeroes", async () => {
+                    await this.preparePush({vault: this.uniV3LowerVault});
+                    await this.preparePush({vault: this.uniV3UpperVault});
+                    await this.uniV3UpperVault.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
+                        ],
+                        []
+                    )
+                    await this.uniV3LowerVault.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
+                        ],
+                        []
+                    )
+
+                    let lowerVaultFees = await this.uniV3LowerVault.callStatic.collectEarnings();
+                    let upperVaultFees = await this.uniV3UpperVault.callStatic.collectEarnings();
+                    for (let i = 0; i < 2; ++i) {
+                        lowerVaultFees[i].add(upperVaultFees[i]);
+                    }
+                    let sumFees = await this.subject.connect(this.admin).callStatic.collectUniFees();
+                    expect(sumFees == [ethers.constants.Zero, ethers.constants.Zero]);
+                    await expect(this.subject.connect(this.admin).collectUniFees()).to.not.be.reverted;
+                });
+            });
+        });
+
+        describe("access control:", () => {
+            it("allowed: admin", async () => {
+                await this.preparePush({vault: this.uniV3LowerVault});
+                await this.preparePush({vault: this.uniV3UpperVault});
+                await expect(this.subject.connect(this.admin).collectUniFees()).to.not.be.reverted;
+            });
+            it("allowed: operator", async() => {
+                await this.preparePush({vault: this.uniV3LowerVault});
+                await this.preparePush({vault: this.uniV3UpperVault});
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), signer.address);
+                    await expect(this.subject.connect(signer).collectUniFees()).to.not.be.reverted;
+                });
+            });
+            it("not allowed: any address", async() => {
+                await this.preparePush({vault: this.uniV3LowerVault});
+                await this.preparePush({vault: this.uniV3UpperVault});
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).collectUniFees()).to.be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#manualPull", () => {
+        beforeEach(async () => {
+            await withSigner(this.erc20Vault.address, async (signer) => {
+                await this.usdc.connect(signer).approve(this.uniV3UpperVault.address, ethers.constants.MaxUint256);
+            });
+            this.grantPermissions = async () => {
+                let tokenId = await ethers.provider.send(
+                    "eth_getStorageAt",
+                    [
+                        this.erc20Vault.address,
+                        "0x4", // address of _nft
+                    ]
+                );
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(this.subject.address, tokenId);
+                    }
+                );
+            };
+        });
+
+        it("pulls tokens from one vault to another", async () => {
+            await this.grantPermissions();
+            await this.subject.connect(this.admin).manualPull(
+                this.erc20Vault.address,
+                this.uniV3UpperVault.address,
+                [BigNumber.from(10).pow(18).mul(3000), BigNumber.from(10).pow(18).mul(3000)],
+                [ethers.constants.Zero, ethers.constants.Zero],
+                ethers.constants.MaxUint256
+            );
+            let endBalances = [
+                [await this.usdc.balanceOf(this.erc20Vault.address), await this.weth.balanceOf(this.erc20Vault.address)],
+                [await this.usdc.balanceOf(this.uniV3UpperVault.address), await this.weth.balanceOf(this.uniV3UpperVault.address)],
+            ]
+            expect(endBalances == [
+                [BigNumber.from(10).pow(18).mul(6000), BigNumber.from(10).pow(18).mul(6000)],
+                [ethers.constants.Zero, ethers.constants.Zero]
+            ])
+        });
+        it("emits ManualPull event", async () => {
+            await this.grantPermissions();
+            await expect(this.subject.connect(this.admin).manualPull(
+                this.erc20Vault.address,
+                this.uniV3UpperVault.address,
+                [BigNumber.from(10).pow(6).mul(3000), BigNumber.from(10).pow(18).mul(1)],
+                [ethers.constants.Zero, ethers.constants.Zero],
+                ethers.constants.MaxUint256
+            )).to.emit(this.subject, "ManualPull");
+        });
+
+        describe("access control:", () => {
+            it("allowed: admin", async () => {
+                await this.grantPermissions();
+                await this.subject.connect(this.admin).manualPull(
+                    this.erc20Vault.address,
+                    this.uniV3UpperVault.address,
+                    [BigNumber.from(10).pow(6).mul(3000), BigNumber.from(10).pow(18).mul(1)],
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    ethers.constants.MaxUint256
+                );
+            });
+            it("not allowed: operator", async() => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), signer.address);
+                    await expect(this.subject.connect(signer).manualPull(
+                        this.erc20Vault.address,
+                        this.uniV3UpperVault.address,
+                        [BigNumber.from(10).pow(6).mul(3000), BigNumber.from(10).pow(18).mul(1)],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )).to.be.reverted;
+                });
+            });
+            it("not allowed: any address", async() => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).manualPull(
+                        this.erc20Vault.address,
+                        this.uniV3UpperVault.address,
+                        [BigNumber.from(10).pow(6).mul(3000), BigNumber.from(10).pow(18).mul(1)],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )).to.be.reverted;
+                });
+            });
+        });
+    });
+
+    xdescribe("#rebalanceERC20UniV3Vaults", () => {
+        describe("access control:", () => {
+            beforeEach(async () => {
+                this.preparePush({vault: this.uniV3LowerVault});
+                this.preparePush({vault: this.uniV3UpperVault});
+            });
+
+            it("allowed: admin", async () => {
+                await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    ethers.constants.MaxUint256
+                );
+            });
+            it("not allowed: operator", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), signer.address);
+                    await expect(this.subject.connect(signer).rebalanceERC20UniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )).to.be.reverted;
+                });
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).rebalanceERC20UniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )).to.be.reverted;
+                });
+            });
+        });
+    });
+
+    xdescribe("#rebalanceUniV3Vaults", () => {});
+
+    xdescribe("#postPreOrder", () => {});
+
+    xdescribe("#signOrder", () => {});
 });
