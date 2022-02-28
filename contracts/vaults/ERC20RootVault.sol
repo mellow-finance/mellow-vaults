@@ -266,7 +266,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (baseSupply == 0) {
             return;
         }
-
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
