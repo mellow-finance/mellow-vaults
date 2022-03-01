@@ -25,7 +25,11 @@ import { address, pit } from "./library/property";
 import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
-import { InternalParamsStruct } from "./types/IERC20RootVaultGovernance";
+import {
+    InternalParamsStruct,
+    OperatorParamsStruct,
+    StrategyParamsStruct,
+} from "./types/IERC20RootVaultGovernance";
 import { IOracle } from "./types";
 import { BigNumber, BigNumberish } from "ethers";
 import { randomInt } from "crypto";
@@ -51,7 +55,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 async (_, options?: DeployOptions) => {
                     await deployments.fixture();
                     this.delayedProtocolParams = {
-                        managementFeeChargeDelay: BigNumber.from(86400), // use randomInt
+                        managementFeeChargeDelay: BigNumber.from(86400), // BigNumber.from(randomInt(10 ** 6))
                         oracle: mellowOracle.address,
                     };
                     const {
@@ -215,7 +219,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
         describe("#delayedProtocolPerVaultParams", () => {
             it("returns delayedProtocolPerVaultParams", async () => {
-                const nft = randomInt(100);
+                const nft = BigNumber.from(randomInt(100));
                 const expected: DelayedProtocolPerVaultParamsStruct = {
                     protocolFee: BigNumber.from(randomInt(10 ** 6)),
                 };
@@ -253,13 +257,12 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
             describe("access control", () => {
                 it("allow any address", async () => {
+                    const nft = BigNumber.from(randomInt(100));
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .delayedProtocolPerVaultParams(
-                                    BigNumber.from(2)
-                                )
+                                .delayedProtocolPerVaultParams(nft)
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
@@ -268,9 +271,9 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
         describe("#stagedDelayedProtocolPerVaultParams", () => {
             it("returns stagedDelayedProtocolPerVaultParams", async () => {
-                const nft = BigNumber.from(5);
+                const nft = BigNumber.from(randomInt(100));
                 const expected: DelayedProtocolPerVaultParamsStruct = {
-                    protocolFee: BigNumber.from(3),
+                    protocolFee: BigNumber.from(randomInt(10 ** 6)),
                 };
                 await this.subject
                     .connect(this.admin)
@@ -287,13 +290,14 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             describe("edge cases", () => {
                 describe("length of stagedDelayedProtocolPerVaultParams equals to zero", () => {
                     it("returns object with zero protocol fee", async () => {
+                        const nft = BigNumber.from(randomInt(100));
                         const expected: DelayedProtocolPerVaultParamsStruct = {
                             protocolFee: BigNumber.from(0),
                         };
                         expect(
                             toObject(
                                 await this.subject.stagedDelayedProtocolPerVaultParams(
-                                    BigNumber.from(1)
+                                    nft
                                 )
                             )
                         ).to.be.equivalent(expected);
@@ -303,13 +307,12 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
             describe("access control", () => {
                 it("allow any address", async () => {
+                    const nft = BigNumber.from(randomInt(100));
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .stagedDelayedProtocolPerVaultParams(
-                                    BigNumber.from(2)
-                                )
+                                .stagedDelayedProtocolPerVaultParams(nft)
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
@@ -318,37 +321,83 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
         describe("#stagedDelayedStrategyParams", () => {
             it("returns stagedDelayedStrategyParams", async () => {
-                const nft = BigNumber.from(5);
-                const expected : DelayedStrategyParamsStruct = {
+                const nft = BigNumber.from(randomInt(100));
+                const expected: DelayedStrategyParamsStruct = {
                     strategyTreasury: randomAddress(),
                     strategyPerformanceTreasury: randomAddress(),
                     privateVault: false,
-                    managementFee: 2,
-                    performanceFee: 2
+                    managementFee: BigNumber.from(randomInt(10 ** 6)),
+                    performanceFee: BigNumber.from(randomInt(10 ** 6)),
                 };
 
                 await this.subject
                     .connect(this.admin)
                     .stageDelayedStrategyParams(nft, expected);
                 expect(
-                    toObject(await this.subject
-                    .stagedDelayedStrategyParams(nft))
+                    toObject(
+                        await this.subject.stagedDelayedStrategyParams(nft)
+                    )
                 ).to.be.equivalent(expected);
             });
 
             describe("edge cases", () => {
                 describe("length of stagedDelayedStrategyParams equals to zero", () => {
                     it("returns zero object", async () => {
-                        const expected : DelayedStrategyParamsStruct = {
+                        const nft = BigNumber.from(randomInt(100));
+                        const expected: DelayedStrategyParamsStruct = {
                             strategyTreasury: ethers.constants.AddressZero,
-                            strategyPerformanceTreasury: ethers.constants.AddressZero,
+                            strategyPerformanceTreasury:
+                                ethers.constants.AddressZero,
                             privateVault: false,
-                            managementFee: 0,
-                            performanceFee: 0
+                            managementFee: BigNumber.from(0),
+                            performanceFee: BigNumber.from(0),
                         };
                         expect(
-                            toObject(await this.subject
-                            .stagedDelayedStrategyParams(BigNumber.from(2)))
+                            toObject(
+                                await this.subject.stagedDelayedStrategyParams(
+                                    nft
+                                )
+                            )
+                        ).to.be.equivalent(expected);
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allow any address", async () => {
+                    const nft = BigNumber.from(randomInt(100));
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stagedDelayedStrategyParams(nft)
+                        ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#operatorParams", () => {
+            it("returns operatorParams", async () => {
+                const expected: OperatorParamsStruct = {
+                    disableDeposit: false,
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .setOperatorParams(expected);
+                expect(
+                    toObject(await this.subject.operatorParams())
+                ).to.be.equivalent(expected);
+            });
+
+            describe("edge cases", () => {
+                describe("length of operatorParams equals to zero", () => {
+                    it("returns zero object", async () => {
+                        const expected: OperatorParamsStruct = {
+                            disableDeposit: false,
+                        };
+                        expect(
+                            toObject(await this.subject.operatorParams())
                         ).to.be.equivalent(expected);
                     });
                 });
@@ -358,8 +407,107 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 it("allow any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
-                            this.subject.connect(signer)
-                            .stagedDelayedStrategyParams(BigNumber.from(3))
+                            this.subject.connect(signer).operatorParams()
+                        ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#delayedStrategyParams", () => {
+            it("returns delayedStrategyParams", async () => {
+                const nft = BigNumber.from(randomInt(100));
+                const expected: DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                    strategyPerformanceTreasury: randomAddress(),
+                    privateVault: false,
+                    managementFee: BigNumber.from(randomInt(10 ** 6)),
+                    performanceFee: BigNumber.from(randomInt(10 ** 6)),
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedStrategyParams(nft, expected);
+                await sleep(this.governanceDelay);
+                await this.subject
+                    .connect(this.admin)
+                    .commitDelayedStrategyParams(nft);
+
+                expect(
+                    toObject(await this.subject.delayedStrategyParams(nft))
+                ).to.be.equivalent(expected);
+            });
+
+            describe("edge cases", () => {
+                describe("length of delayedStrategyParams equals to zero", () => {
+                    it("returns zero object", async () => {
+                        const nft = BigNumber.from(randomInt(100));
+                        const expected: DelayedStrategyParamsStruct = {
+                            strategyTreasury: ethers.constants.AddressZero,
+                            strategyPerformanceTreasury:
+                                ethers.constants.AddressZero,
+                            privateVault: false,
+                            managementFee: BigNumber.from(0),
+                            performanceFee: BigNumber.from(0),
+                        };
+                        expect(
+                            toObject(
+                                await this.subject.delayedStrategyParams(nft)
+                            )
+                        ).to.be.equivalent(expected);
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allow any address", async () => {
+                    const nft = BigNumber.from(randomInt(100));
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .delayedStrategyParams(nft)
+                        ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#strategyParams", () => {
+            it("returns strategyParams", async () => {
+                const nft = BigNumber.from(randomInt(100));
+                const expected: StrategyParamsStruct = {
+                    tokenLimitPerAddress: BigNumber.from(randomInt(10 ** 6)),
+                    tokenLimit: BigNumber.from(randomInt(10 ** 6)),
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .setStrategyParams(nft, expected);
+                expect(
+                    toObject(await this.subject.strategyParams(nft))
+                ).to.be.equivalent(expected);
+            });
+
+            describe("edge cases", () => {
+                describe("length of delayedStrategyParams equals to zero", () => {
+                    it("returns zero object", async () => {
+                        const nft = BigNumber.from(randomInt(100));
+                        const expected: StrategyParamsStruct = {
+                            tokenLimitPerAddress: BigNumber.from(0),
+                            tokenLimit: BigNumber.from(0),
+                        };
+                        expect(
+                            toObject(await this.subject.strategyParams(nft))
+                        ).to.be.equivalent(expected);
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allow any address", async () => {
+                    const nft = BigNumber.from(randomInt(100));
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer).strategyParams(nft)
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
