@@ -17,6 +17,7 @@ import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import {
     DelayedProtocolParamsStruct,
     DelayedProtocolPerVaultParamsStruct,
+    DelayedStrategyParamsStruct,
     ERC20RootVaultGovernance,
 } from "./types/ERC20RootVaultGovernance";
 import { contract, setupDefaultContext, TestContext } from "./library/setup";
@@ -290,6 +291,56 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.connect(signer)
                             .stagedDelayedProtocolPerVaultParams(BigNumber.from(2))
+                        ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#stagedDelayedStrategyParams", () => {
+            it("returns stagedDelayedStrategyParams", async () => {
+                const nft = BigNumber.from(5);
+                const expected : DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                    strategyPerformanceTreasury: randomAddress(),
+                    privateVault: false,
+                    managementFee: 2,
+                    performanceFee: 2
+                };
+
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedStrategyParams(nft, expected);
+                expect(
+                    toObject(await this.subject
+                    .stagedDelayedStrategyParams(nft))
+                ).to.be.equivalent(expected);
+            });
+
+            describe("edge cases", () => {
+                describe("length of stagedDelayedStrategyParams equals to zero", () => {
+                    it("returns zero object", async () => {
+                        const expected : DelayedStrategyParamsStruct = {
+                            strategyTreasury: ethers.constants.AddressZero,
+                            strategyPerformanceTreasury: ethers.constants.AddressZero,
+                            privateVault: false,
+                            managementFee: 0,
+                            performanceFee: 0
+                        };
+                        expect(
+                            toObject(await this.subject
+                            .stagedDelayedStrategyParams(BigNumber.from(2)))
+                        ).to.be.equivalent(expected);
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allow any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer)
+                            .stagedDelayedStrategyParams(BigNumber.from(3))
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
