@@ -28,6 +28,7 @@ import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IERC20RootVaultGovernance";
 import { IOracle } from "./types";
 import { BigNumber, BigNumberish } from "ethers";
+import { randomInt } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -186,12 +187,14 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             describe("edge cases", () => {
                 describe("length of stagedDelayedProtocolParams equals to zero", () => {
                     it("returns object with zero values", async () => {
-                        const expected : DelayedProtocolParamsStruct = {
+                        const expected: DelayedProtocolParamsStruct = {
                             managementFeeChargeDelay: BigNumber.from(0),
                             oracle: ethers.constants.AddressZero,
                         };
                         expect(
-                            toObject(await this.subject.stagedDelayedProtocolParams())
+                            toObject(
+                                await this.subject.stagedDelayedProtocolParams()
+                            )
                         ).to.be.equivalent(expected);
                     });
                 });
@@ -201,44 +204,48 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 it("allow any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
-                            this.subject.connect(signer).stagedDelayedProtocolParams()
+                            this.subject
+                                .connect(signer)
+                                .stagedDelayedProtocolParams()
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
-            
         });
 
         describe("#delayedProtocolPerVaultParams", () => {
             it("returns delayedProtocolPerVaultParams", async () => {
-                const nft = BigNumber.from(4);
-                // this.object._delayedProtocolPerVaultParamsTimestamp[nft.toNumber()] =
-                //     nft.toNumber()
-                // fix exceptions:
-                //     _delayedProtocolPerVaultParamsTimestamp[nft] != 0, ExceptionsLibrary.NULL
-                //     block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP
-                const expected : DelayedProtocolPerVaultParamsStruct = {
-                    protocolFee: BigNumber.from(3),
+                const nft = randomInt(100);
+                const expected: DelayedProtocolPerVaultParamsStruct = {
+                    protocolFee: BigNumber.from(randomInt(10 ** 6)),
                 };
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolPerVaultParams(nft, expected);
+                await sleep(this.governanceDelay);
                 await this.subject
                     .connect(this.admin)
                     .commitDelayedProtocolPerVaultParams(nft);
 
-                // expect(
-                //     toObject(await this.subject
-                //     .delayedProtocolPerVaultParams(nft))
-                // ).to.be.equivalent(expected);
+                expect(
+                    toObject(
+                        await this.subject.delayedProtocolPerVaultParams(nft)
+                    )
+                ).to.be.equivalent(expected);
             });
 
             describe("edge cases", () => {
                 describe("length of delayedProtocolPerVaultParams equals to zero", () => {
                     it("returns object with zero protocol fee", async () => {
-                        const expected : DelayedProtocolPerVaultParamsStruct = {
+                        const expected: DelayedProtocolPerVaultParamsStruct = {
                             protocolFee: BigNumber.from(0),
                         };
                         expect(
-                            toObject(await this.subject
-                            .delayedProtocolPerVaultParams(BigNumber.from(1)))
+                            toObject(
+                                await this.subject.delayedProtocolPerVaultParams(
+                                    BigNumber.from(1)
+                                )
+                            )
                         ).to.be.equivalent(expected);
                     });
                 });
@@ -248,8 +255,11 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 it("allow any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
-                            this.subject.connect(signer)
-                            .delayedProtocolPerVaultParams(BigNumber.from(2))
+                            this.subject
+                                .connect(signer)
+                                .delayedProtocolPerVaultParams(
+                                    BigNumber.from(2)
+                                )
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
@@ -259,27 +269,33 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
         describe("#stagedDelayedProtocolPerVaultParams", () => {
             it("returns stagedDelayedProtocolPerVaultParams", async () => {
                 const nft = BigNumber.from(5);
-                const expected : DelayedProtocolPerVaultParamsStruct = {
+                const expected: DelayedProtocolPerVaultParamsStruct = {
                     protocolFee: BigNumber.from(3),
                 };
                 await this.subject
                     .connect(this.admin)
                     .stageDelayedProtocolPerVaultParams(nft, expected);
                 expect(
-                    toObject(await this.subject
-                    .stagedDelayedProtocolPerVaultParams(nft))
+                    toObject(
+                        await this.subject.stagedDelayedProtocolPerVaultParams(
+                            nft
+                        )
+                    )
                 ).to.be.equivalent(expected);
             });
 
             describe("edge cases", () => {
                 describe("length of stagedDelayedProtocolPerVaultParams equals to zero", () => {
                     it("returns object with zero protocol fee", async () => {
-                        const expected : DelayedProtocolPerVaultParamsStruct = {
+                        const expected: DelayedProtocolPerVaultParamsStruct = {
                             protocolFee: BigNumber.from(0),
                         };
                         expect(
-                            toObject(await this.subject
-                            .stagedDelayedProtocolPerVaultParams(BigNumber.from(1)))
+                            toObject(
+                                await this.subject.stagedDelayedProtocolPerVaultParams(
+                                    BigNumber.from(1)
+                                )
+                            )
                         ).to.be.equivalent(expected);
                     });
                 });
@@ -289,8 +305,11 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 it("allow any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
-                            this.subject.connect(signer)
-                            .stagedDelayedProtocolPerVaultParams(BigNumber.from(2))
+                            this.subject
+                                .connect(signer)
+                                .stagedDelayedProtocolPerVaultParams(
+                                    BigNumber.from(2)
+                                )
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
@@ -355,11 +374,6 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
         //         });
         //     });
         // });
-
-
-
-
-
 
         //     it("successfully deployed", async () => {
         //         await deployments.fixture();
