@@ -23,6 +23,7 @@ import { deployments, ethers } from "hardhat";
 import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";
 import { create } from "domain";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
+import { REGISTER_VAULT, CREATE_VAULT } from "../library/PermissionIdsLibrary";
 
 export type VaultGovernanceContext<S extends Contract, F> = TestContext<
     S,
@@ -54,6 +55,7 @@ export function vaultGovernanceBehavior<
         delayedProtocolParams,
         protocolParams,
         defaultCreateVault,
+        rootVaultGovernance,
     }: {
         delayedStrategyParams?: Arbitrary<DSP>;
         strategyParams?: Arbitrary<SP>;
@@ -66,6 +68,7 @@ export function vaultGovernanceBehavior<
             owner: string,
             ...args: any[]
         ) => Promise<void>;
+        rootVaultGovernance?: boolean;
     }
 ) {
     describe("#constructor", () => {
@@ -122,31 +125,116 @@ export function vaultGovernanceBehavior<
         let createVaultFixture: Function;
         let lastNft: number;
         let nft: number;
+        let subVaultNfts: BigNumber[];
         let createVault: (
-            deployer: Signer,
+            deployer: SignerWithAddress,
             tokenAddresses: string[],
             owner: string
         ) => Promise<void>;
+
         before(async () => {
+            let isRootVaultGovernance = rootVaultGovernance ?? false;
             createVault = async (
-                deployer: Signer,
+                deployer: SignerWithAddress,
                 tokenAddresses: string[],
                 owner: string
             ) => {
                 if (defaultCreateVault) {
                     await defaultCreateVault(deployer, tokenAddresses, owner);
                 } else {
-                    await this.subject
-                        .connect(deployer)
-                        .createVault(tokenAddresses, this.ownerSigner.address);
+                    if (isRootVaultGovernance) {
+                        subVaultNfts = await setSubVaultNfts(
+                            deployer,
+                            tokenAddresses
+                        );
+                        await this.subject
+                            .connect(deployer)
+                            .createVault(
+                                tokenAddresses,
+                                this.strategySigner.address,
+                                subVaultNfts,
+                                this.ownerSigner.address
+                            );
+                    } else {
+                        await this.subject
+                            .connect(deployer)
+                            .createVault(
+                                tokenAddresses,
+                                this.ownerSigner.address
+                            );
+                    }
                 }
             };
+
+            const setSubVaultNfts = async (
+                ownerSigner: SignerWithAddress,
+                tokens: string[]
+            ) => {
+                const { nft: nftERC20Vault } = await this.erc20VaultGovernance
+                    .connect(ownerSigner)
+                    .callStatic.createVault(tokens, ownerSigner.address);
+                await this.erc20VaultGovernance
+                    .connect(ownerSigner)
+                    .createVault(tokens, ownerSigner.address);
+
+                const { nft: nftYearnVault } = await this.yearnVaultGovernance
+                    .connect(ownerSigner)
+                    .callStatic.createVault(tokens, ownerSigner.address);
+                await this.yearnVaultGovernance
+                    .connect(ownerSigner)
+                    .createVault(tokens, ownerSigner.address);
+
+                let subVaultNfts = [nftERC20Vault, nftYearnVault];
+
+                for (let i = 0; i < subVaultNfts.length; ++i) {
+                    await this.vaultRegistry
+                        .connect(ownerSigner)
+                        .approve(this.subject.address, subVaultNfts[i]);
+                }
+                return subVaultNfts;
+            };
+
+            const setPermissionsRegisterAndCreateVault = async (
+                ownerSigner: SignerWithAddress
+            ) => {
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(ownerSigner.address, [CREATE_VAULT]);
+                await sleep(this.governanceDelay);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(ownerSigner.address);
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(ownerSigner.address, [
+                        REGISTER_VAULT,
+                    ]);
+                await sleep(this.governanceDelay);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(ownerSigner.address);
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(this.subject.address, [
+                        REGISTER_VAULT,
+                    ]);
+                await sleep(this.governanceDelay);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(this.subject.address);
+            };
+
             createVaultFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 lastNft = (await this.vaultRegistry.vaultsCount()).toNumber();
                 const tokenAddresses = this.tokens
                     .slice(0, 2)
                     .map((x: ERC20) => x.address);
+
+                await setPermissionsRegisterAndCreateVault(this.ownerSigner);
+
                 await createVault(
                     this.deployer,
                     tokenAddresses,
@@ -215,12 +303,11 @@ export function vaultGovernanceBehavior<
                                 this.ownerSigner.address
                             );
                         } else {
-                            await this.subject
-                                .connect(s)
-                                .createVault(
-                                    tokenAddresses,
-                                    this.ownerSigner.address
-                                );
+                            await createVault(
+                                s,
+                                tokenAddresses,
+                                this.ownerSigner.address
+                            );
                         }
                     });
                 });
@@ -251,7 +338,6 @@ export function vaultGovernanceBehavior<
                         const tokenAddresses = this.tokens.map(
                             (x: ERC20) => x.address
                         );
-
                         await expect(
                             createVault(
                                 s,
