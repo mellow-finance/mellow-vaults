@@ -22,7 +22,7 @@ import {
 } from "./types/ERC20RootVaultGovernance";
 import { contract, setupDefaultContext, TestContext } from "./library/setup";
 import { address, pit } from "./library/property";
-import { Arbitrary } from "fast-check";
+import { Arbitrary, integer } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import {
@@ -169,11 +169,41 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
         });
 
+        // describe("#supportsInterface", () => {
+        //     it(`returns true if this contract supports ${ERC20ROOT_VAULT_INTERFACE_ID} interface`, async () => {
+        //         expect(
+        //             await this.subject.supportsInterface(AAVE_VAULT_INTERFACE_ID)
+        //         ).to.be.true;
+        //     });
+
+        //     describe("access control:", () => {
+        //         it("allowed: any address", async () => {
+        //             await withSigner(randomAddress(), async (s) => {
+        //                 await expect(
+        //                     this.subject
+        //                         .connect(s)
+        //                         .supportsInterface(INTEGRATION_VAULT_INTERFACE_ID)
+        //                 ).to.not.be.reverted;
+        //             });
+        //         });
+        //     });
+        // });
+
         describe("#delayedProtocolParams", () => {
             it("successfully get delayedProtocolParams", async () => {
                 expect(
                     toObject(await this.subject.delayedProtocolParams())
                 ).to.be.equivalent(this.delayedProtocolParams);
+            });
+
+            describe("access control", () => {
+                it("allow any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject.connect(signer).delayedProtocolParams()
+                        ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
             });
         });
 
@@ -514,14 +544,112 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
         });
 
-        // describe("#stageDelayedProtocolParams", () => {
-        //     describe("access control", () => {
-        //         it(`reverted with ${Exceptions.FORBIDDEN}`, () => {
-        //             expect(await this.subject.stageDelayedProtocolParams(expected))
-        //             .to.be.;
-        //         });
-        //     });
-        // });
+        // other tests insert here
+
+        describe("#setStrategyParams", () => {
+            it("sets strategyParams", async () => {
+                const nft = BigNumber.from(randomInt(100));
+                const expected: StrategyParamsStruct = {
+                    tokenLimitPerAddress: BigNumber.from(randomInt(10 ** 6)),
+                    tokenLimit: BigNumber.from(randomInt(10 ** 6)),
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .setStrategyParams(nft, expected);
+                expect(
+                    toObject(await this.subject.strategyParams(nft))
+                ).to.be.equivalent(expected);
+            });
+
+            describe("access control", () => {
+                it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    const nft = BigNumber.from(randomInt(100));
+                    const params: StrategyParamsStruct = {
+                        tokenLimitPerAddress: BigNumber.from(
+                            randomInt(10 ** 6)
+                        ),
+                        tokenLimit: BigNumber.from(randomInt(10 ** 6)),
+                    };
+                    await expect(
+                        this.subject.setStrategyParams(nft, params)
+                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+        });
+
+        describe("#setOperatorParams", () => {
+            it("stages delayedProtocloParams", async () => {
+                const expected: OperatorParamsStruct = {
+                    disableDeposit: false,
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .setOperatorParams(expected);
+                expect(
+                    toObject(await this.subject.operatorParams())
+                ).to.be.equivalent(expected);
+            });
+
+            describe("access control", () => {
+                it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    const params: OperatorParamsStruct = {
+                        disableDeposit: false,
+                    };
+                    await expect(
+                        this.subject.setOperatorParams(params)
+                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+        });
+
+        describe("#stageDelayedProtocolParams", () => {
+            it("stages delayedProtocloParams", async () => {
+                const expected: DelayedProtocolParamsStruct = {
+                    managementFeeChargeDelay: BigNumber.from(
+                        randomInt(10 ** 6)
+                    ),
+                    oracle: randomAddress(),
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolParams(expected);
+                expect(
+                    toObject(await this.subject.stagedDelayedProtocolParams())
+                ).to.be.equivalent(expected);
+            });
+
+            describe("access control", () => {
+                describe("allow only protocol admin", () => {
+                    it("passes", async () => {
+                        const params: DelayedProtocolParamsStruct = {
+                            managementFeeChargeDelay: BigNumber.from(
+                                randomInt(10 ** 6)
+                            ),
+                            oracle: randomAddress(),
+                        };
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .stageDelayedProtocolParams(params)
+                        ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+
+                describe("any user denied: any non admin address", () => {
+                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                        const params: DelayedProtocolParamsStruct = {
+                            managementFeeChargeDelay: BigNumber.from(
+                                randomInt(10 ** 6)
+                            ),
+                            oracle: randomAddress(),
+                        };
+                        await expect(
+                            this.subject.stageDelayedProtocolParams(params)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
 
         //     it("successfully deployed", async () => {
         //         await deployments.fixture();
@@ -586,8 +714,20 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
         //     });
         // });
 
+        // const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> = {
+        //     managementFeeChargeDelay: randomInt(100),
+        //     oracle: randomAddress()
+        // };
+
+        // // const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> = {
+        // //     address.map((yearnVaultRegistry) => ({
+        // //         yearnVaultRegistry,
+        // //     })),
+        // //     integer({ min: , max: } )
+        // // };
+
         // vaultGovernanceBehavior.call(this, {
-        //     delayedProtocolParams,
+        //     this.delayedProtocolParams,
         //     ...this,
         // });
     }
