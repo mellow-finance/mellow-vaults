@@ -39,6 +39,8 @@ type CustomContext = {
     strategySigner: SignerWithAddress;
     ownerSigner: SignerWithAddress;
     delayedProtocolParams: DelayedProtocolParamsStruct;
+    MAX_MANAGEMENT_FEE: BigNumber;
+    MAX_PERFORMANCE_FEE: BigNumber;
 };
 
 type DeployOptions = {
@@ -540,6 +542,97 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                             this.subject.connect(signer).strategyParams(nft)
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
+                });
+            });
+        });
+
+        // setters
+
+        describe("#stageDelayedStrategyParams", () => {
+            it("stages delayedStrategyParams", async () => {
+                const nft = BigNumber.from(randomInt(100));
+                const expected: DelayedStrategyParamsStruct = {
+                    strategyTreasury: randomAddress(),
+                    strategyPerformanceTreasury: randomAddress(),
+                    privateVault: false,
+                    managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
+                    performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                };
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedStrategyParams(nft, expected);
+                expect(
+                    toObject(
+                        await this.subject.stagedDelayedStrategyParams(nft)
+                    )
+                ).to.be.equivalent(expected);
+            });
+
+            describe("edge cases", () => {
+                describe("managementFee exceeds MAX_MANAGEMENT_FEE", () => {
+                    it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        const nft = BigNumber.from(randomInt(100));
+                        const params: DelayedStrategyParamsStruct = {
+                            strategyTreasury: randomAddress(),
+                            strategyPerformanceTreasury: randomAddress(),
+                            privateVault: false,
+                            managementFee: BigNumber.from(10 * 10 ** 9 + 1), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
+                            performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                        };
+
+                        await expect(
+                            this.subject.stageDelayedStrategyParams(nft, params)
+                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                    });
+                });
+
+                describe("performanceFee exceeds MAX_PERFORMANCE_FEE", () => {
+                    it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        const nft = BigNumber.from(randomInt(100));
+                        const params: DelayedStrategyParamsStruct = {
+                            strategyTreasury: randomAddress(),
+                            strategyPerformanceTreasury: randomAddress(),
+                            privateVault: false,
+                            managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
+                            performanceFee: BigNumber.from(50 * 10 ** 9 + 1), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                        };
+
+                        await expect(
+                            this.subject.stageDelayedStrategyParams(nft, params)
+                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                    });
+                });
+            });
+
+            describe("access control", () => {
+                it("allow only protocol admin", async () => {
+                    const nft = BigNumber.from(randomInt(100));
+                    const params: DelayedStrategyParamsStruct = {
+                        strategyTreasury: randomAddress(),
+                        strategyPerformanceTreasury: randomAddress(),
+                        privateVault: false,
+                        managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
+                        performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                    };
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(nft, params)
+                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+
+                it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    const nft = BigNumber.from(randomInt(100));
+                    const params: DelayedStrategyParamsStruct = {
+                        strategyTreasury: randomAddress(),
+                        strategyPerformanceTreasury: randomAddress(),
+                        privateVault: false,
+                        managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
+                        performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                    };
+                    await expect(
+                        this.subject.stageDelayedStrategyParams(nft, params)
+                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
