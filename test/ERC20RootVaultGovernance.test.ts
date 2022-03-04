@@ -18,10 +18,11 @@ import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { contract } from "./library/setup";
 import { address } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
-import { Arbitrary, integer, tuple } from "fast-check";
+import { Arbitrary, integer, tuple, boolean } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IVaultGovernance";
+import { DelayedStrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
 
 type CustomContext = {
     nft: number;
@@ -79,9 +80,16 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
         beforeEach(async () => {
             await this.deploymentFixture();
-            ``;
             this.startTimestamp = now();
             await sleepTo(this.startTimestamp);
+        });
+
+        describe("#constructor", () => {
+            it("deploys a new contract", async () => {
+                expect(ethers.constants.AddressZero).to.not.eq(
+                    this.subject.address
+                );
+            });
         });
 
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
@@ -92,15 +100,31 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 })
             );
 
-        describe("#constructor", () => {
-            it("deploys a new contract", async () => {
-                expect(ethers.constants.AddressZero).to.not.eq(
-                    this.subject.address
-                );
-            });
-        });
+        const delayedStrategyParams: Arbitrary<DelayedStrategyParamsStruct> =
+            tuple(
+                address,
+                address,
+                boolean(),
+                integer({ min: 0, max: 10 ** 6 }),
+                integer({ min: 0, max: 10 ** 6 })
+            ).map(
+                ([
+                    strategyTreasury,
+                    strategyPerformanceTreasury,
+                    privateVault,
+                    numManagementFee,
+                    numPerformanceFee,
+                ]) => ({
+                    strategyTreasury,
+                    strategyPerformanceTreasury,
+                    privateVault,
+                    managementFee: BigNumber.from(numManagementFee),
+                    performanceFee: BigNumber.from(numPerformanceFee),
+                })
+            );
 
         vaultGovernanceBehavior.call(this, {
+            delayedStrategyParams,
             delayedProtocolParams,
             rootVaultGovernance: true,
             ...this,

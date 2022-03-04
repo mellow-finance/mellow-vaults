@@ -147,6 +147,17 @@ export function vaultGovernanceBehavior<
                             deployer,
                             tokenAddresses
                         );
+                        const { nft } = await this.subject
+                            .connect(deployer)
+                            .callStatic.createVault(
+                                tokenAddresses,
+                                this.strategySigner.address,
+                                subVaultNfts,
+                                this.ownerSigner.address
+                            );
+
+                        this.nft = nft;
+
                         await this.subject
                             .connect(deployer)
                             .createVault(
