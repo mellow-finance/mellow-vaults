@@ -543,6 +543,19 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
+
+                // it("allow approved strategySigner", async () => {
+                //     const nft = BigNumber.from(randomInt(100));
+                //     // const nft = get nft from vault vaultRegistry, vault count
+                //     await this.vaultRegistry
+                //         .connect(this.ownerSigner)
+                //         .approve(this.strategySigner.address, nft);
+                //     await withSigner(randomAddress(), async (signer) => {
+                //         await expect(
+                //             this.subject.connect(signer).strategyParams(nft)
+                //         ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                //     });
+                // });
             });
         });
 
@@ -555,8 +568,18 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                     strategyTreasury: randomAddress(),
                     strategyPerformanceTreasury: randomAddress(),
                     privateVault: false,
-                    managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
-                    performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                    managementFee: BigNumber.from(
+                        randomInt(
+                            (await this.subject.MAX_MANAGEMENT_FEE()).toNumber()
+                        )
+                    ),
+                    performanceFee: BigNumber.from(
+                        randomInt(
+                            (
+                                await this.subject.MAX_PERFORMANCE_FEE()
+                            ).toNumber()
+                        )
+                    ),
                 };
                 await this.subject
                     .connect(this.admin)
@@ -576,10 +599,19 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                             strategyTreasury: randomAddress(),
                             strategyPerformanceTreasury: randomAddress(),
                             privateVault: false,
-                            managementFee: BigNumber.from(10 * 10 ** 9 + 1), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
-                            performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                            managementFee: BigNumber.from(
+                                (
+                                    await this.subject.MAX_MANAGEMENT_FEE()
+                                ).toNumber() + 1
+                            ),
+                            performanceFee: BigNumber.from(
+                                randomInt(
+                                    (
+                                        await this.subject.MAX_PERFORMANCE_FEE()
+                                    ).toNumber()
+                                )
+                            ),
                         };
-
                         await expect(
                             this.subject.stageDelayedStrategyParams(nft, params)
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
@@ -593,10 +625,19 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                             strategyTreasury: randomAddress(),
                             strategyPerformanceTreasury: randomAddress(),
                             privateVault: false,
-                            managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
-                            performanceFee: BigNumber.from(50 * 10 ** 9 + 1), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                            managementFee: BigNumber.from(
+                                randomInt(
+                                    (
+                                        await this.subject.MAX_MANAGEMENT_FEE()
+                                    ).toNumber()
+                                )
+                            ),
+                            performanceFee: BigNumber.from(
+                                (
+                                    await this.subject.MAX_PERFORMANCE_FEE()
+                                ).toNumber() + 1
+                            ),
                         };
-
                         await expect(
                             this.subject.stageDelayedStrategyParams(nft, params)
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
@@ -611,8 +652,20 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                         strategyTreasury: randomAddress(),
                         strategyPerformanceTreasury: randomAddress(),
                         privateVault: false,
-                        managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
-                        performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                        managementFee: BigNumber.from(
+                            randomInt(
+                                (
+                                    await this.subject.MAX_MANAGEMENT_FEE()
+                                ).toNumber()
+                            )
+                        ),
+                        performanceFee: BigNumber.from(
+                            randomInt(
+                                (
+                                    await this.subject.MAX_PERFORMANCE_FEE()
+                                ).toNumber()
+                            )
+                        ),
                     };
                     await expect(
                         this.subject
@@ -622,17 +675,35 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 });
 
                 it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
-                    const nft = BigNumber.from(randomInt(100));
+                    const nft = BigNumber.from(
+                        await this.vaultRegistry.vaultsCount()
+                    );
                     const params: DelayedStrategyParamsStruct = {
                         strategyTreasury: randomAddress(),
                         strategyPerformanceTreasury: randomAddress(),
                         privateVault: false,
-                        managementFee: BigNumber.from(randomInt(10 ** 6)), // 10 * 10**9 / 100 this.object.MAX_MANAGEMENT_FEE)),
-                        performanceFee: BigNumber.from(randomInt(10 ** 6)), // 50 * 10**9 / 100 this.object.MAX_PERFORMANCE_FEE)),
+                        managementFee: BigNumber.from(
+                            randomInt(
+                                (
+                                    await this.subject.MAX_MANAGEMENT_FEE()
+                                ).toNumber()
+                            )
+                        ),
+                        performanceFee: BigNumber.from(
+                            randomInt(
+                                (
+                                    await this.subject.MAX_PERFORMANCE_FEE()
+                                ).toNumber()
+                            )
+                        ),
                     };
-                    await expect(
-                        this.subject.stageDelayedStrategyParams(nft, params)
-                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .stageDelayedStrategyParams(nft, params)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
                 });
             });
         });
@@ -656,7 +727,9 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
 
             describe("access control", () => {
                 it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
-                    const nft = BigNumber.from(randomInt(100));
+                    const nft = BigNumber.from(
+                        await this.vaultRegistry.vaultsCount()
+                    );
                     const params: StrategyParamsStruct = {
                         tokenLimitPerAddress: BigNumber.from(
                             randomInt(10 ** 6)
@@ -665,7 +738,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                     };
                     await expect(
                         this.subject.setStrategyParams(nft, params)
-                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
@@ -684,13 +757,35 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
 
             describe("access control", () => {
-                it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                it("admin protocol passes", async () => {
                     const params: OperatorParamsStruct = {
                         disableDeposit: false,
                     };
                     await expect(
-                        this.subject.setOperatorParams(params)
+                        this.subject
+                            .connect(this.admin)
+                            .setOperatorParams(params)
                     ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+
+                it("operator protocol passes", async () => {
+                    const params: OperatorParamsStruct = {
+                        disableDeposit: false,
+                    };
+                    // TODO
+                });
+
+                it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    const params: OperatorParamsStruct = {
+                        disableDeposit: false,
+                    };
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .setOperatorParams(params)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
                 });
             });
         });
