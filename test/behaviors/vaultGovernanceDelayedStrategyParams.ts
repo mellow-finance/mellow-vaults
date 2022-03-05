@@ -3,13 +3,10 @@ import { Arbitrary, nat, Random } from "fast-check";
 import { type } from "os";
 import {
     generateParams,
-    now,
     randomAddress,
     sleep,
-    sleepTo,
     toObject,
     withSigner,
-    zeroify,
 } from "../library/Helpers";
 import { address, pit, RUNS } from "../library/property";
 import { equals } from "ramda";
@@ -343,6 +340,48 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
         });
 
         describe("edge cases", () => {
+            describe("when managementFee is exceeds MAX_MANAGEMENT_FEE", () => {
+                it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                    const someParams = {
+                        strategyTreasury: randomAddress(),
+                        strategyPerformanceTreasury: randomAddress(),
+                        privateVault: true,
+                        managementFee: (
+                            await this.subject.MAX_MANAGEMENT_FEE()
+                        ).add(1),
+                        performanceFee: BigNumber.from(
+                            Math.round(Math.random() * 10 ** 6)
+                        ),
+                    };
+
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(this.nft, someParams)
+                    ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                });
+            });
+            describe("when performnaceFee is exceeds MAX_PERFORMANCE_FEE", () => {
+                it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                    const someParams = {
+                        strategyTreasury: randomAddress(),
+                        strategyPerformanceTreasury: randomAddress(),
+                        privateVault: true,
+                        managementFee: BigNumber.from(
+                            Math.round(Math.random() * 10 ** 6)
+                        ),
+                        performanceFee: (
+                            await this.subject.MAX_PERFORMANCE_FEE()
+                        ).add(1),
+                    };
+
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(this.nft, someParams)
+                    ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                });
+            });
             describe("when called twice", () => {
                 it("succeeds with the last value", async () => {
                     const { someParams: someOtherParams } =
