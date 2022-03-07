@@ -16,7 +16,7 @@ import {
 import { BigNumber } from "ethers";
 import {combineVaults, PermissionIdsLibrary, setupVault} from "../deploy/0000_utils";
 import Exceptions from "./library/Exceptions";
-import {init} from "ramda";
+import {ERC20} from "./library/Types";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -28,22 +28,53 @@ type CustomContext = {
 type DeployOptions = {};
 
 contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
-    const uniV3PoolFee = 3000;
+    const uniV3PoolFee = 500;
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
                 const { read } = deployments;
 
-                const { uniswapV3PositionManager, curveRouter, cowswap } =
+                const { uniswapV3PositionManager, cowswap, uniswapV3Router } =
                     await getNamedAccounts();
 
                 this.cowswap = cowswap;
+
+                this.swapRouter = await ethers.getContractAt(
+                    ISwapRouter,
+                    uniswapV3Router
+                );
 
                 this.positionManager = await ethers.getContractAt(
                     INonfungiblePositionManager,
                     uniswapV3PositionManager
                 );
+
+                this.swapTokens = async (
+                    senderAddress: string,
+                    recipientAddress: string,
+                    tokenIn: ERC20,
+                    tokenOut: ERC20,
+                    amountIn: BigNumber
+                ) => {
+                    await withSigner(senderAddress, async (senderSigner) => {
+                        await tokenIn.connect(senderSigner).approve(
+                            this.swapRouter.address,
+                            ethers.constants.MaxUint256
+                        );
+                        let params = {
+                            tokenIn: tokenIn.address,
+                            tokenOut: tokenOut.address,
+                            fee: uniV3PoolFee,
+                            recipient: recipientAddress,
+                            deadline: ethers.constants.MaxUint256,
+                            amountIn: amountIn,
+                            amountOutMinimum: 0,
+                            sqrtPriceLimitX96: 0,
+                        };
+                        await this.swapRouter.connect(senderSigner).exactInputSingle(params);
+                    });
+                };
 
                 this.preparePush = async ({
                     vault,
@@ -70,10 +101,21 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ](this.deployer.address, vault.address, result.tokenId);
                 };
 
-                const tokens = [this.weth.address, this.usdc.address]
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(this.wsteth.address, [
+                        PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                    ]);
+                await sleep(
+                    await this.protocolGovernance.governanceDelay()
+                );
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(this.wsteth.address);
+
+                const tokens = [this.weth.address, this.wsteth.address]
                     .map((t) => t.toLowerCase())
                     .sort();
-
                 const startNft =
                     (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
@@ -185,20 +227,22 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     this.erc20Vault.address,
                 ]) {
                     await mint(
-                        "USDC",
-                        address,
-                        BigNumber.from(10).pow(18).mul(3000)
-                    );
-                    await mint(
                         "WETH",
                         address,
-                        BigNumber.from(10).pow(18).mul(3000)
+                        BigNumber.from(10).pow(18).mul(4000)
+                    );
+                    await this.swapTokens(
+                        address,
+                        address,
+                        this.weth,
+                        this.wsteth,
+                        BigNumber.from(10).pow(17).mul(5)
                     );
                     await this.weth.approve(
                         address,
                         ethers.constants.MaxUint256
                     );
-                    await this.usdc.approve(
+                    await this.wsteth.approve(
                         address,
                         ethers.constants.MaxUint256
                     );
@@ -216,9 +260,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
                     erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
                     minErc20UniV3CapitalRatioDeviationD:
-                        BigNumber.from(10).pow(7),
-                    minErc20TokenRatioDeviationD: BigNumber.from(10).pow(7),
-                    minUniV3LiquidityRatioDeviationD: BigNumber.from(10).pow(7),
+                        BigNumber.from(10).pow(8),
+                    minErc20TokenRatioDeviationD: BigNumber.from(10).pow(8).div(2),
+                    minUniV3LiquidityRatioDeviationD: BigNumber.from(10).pow(8).div(2),
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
@@ -666,27 +710,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 ],
                 []
             )
-
-            const { uniswapV3Router } = await getNamedAccounts();
-            let swapRouter = await ethers.getContractAt(
-                ISwapRouter,
-                uniswapV3Router
-            );
-            await this.usdc.approve(
-                swapRouter.address,
-                ethers.constants.MaxUint256
-            );
-            let params = {
-                tokenIn: this.usdc.address,
-                tokenOut: this.weth.address,
-                fee: uniV3PoolFee,
-                recipient: this.deployer.address,
-                deadline: ethers.constants.MaxUint256,
-                amountIn: BigNumber.from(10).pow(6).mul(5000),
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0,
-            };
-            await swapRouter.exactInputSingle(params);
+            await this.swapTokens(this.deployer.address, this.deployer.address, this.usdc, this.weth, BigNumber.from(10).pow(6).mul(5000));
 
             let lowerVaultFees = await this.uniV3LowerVault.callStatic.collectEarnings();
             let upperVaultFees = await this.uniV3UpperVault.callStatic.collectEarnings();
@@ -894,7 +918,31 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
     xdescribe("#rebalanceUniV3Vaults", () => {});
 
-    xdescribe("#postPreOrder", () => {});
+    describe("#postPreOrder", () => {
+        describe("access control:", () => {
+            beforeEach(async () => {
+                this.preparePush({vault: this.uniV3LowerVault});
+                this.preparePush({vault: this.uniV3UpperVault});
+            });
+
+            describe.only("only", () => {
+                it("allowed: admin", async () => {
+                    await this.subject.connect(this.admin).postPreOrder();
+                });
+            });
+            it("allowed: operator", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), signer.address);
+                    await expect(this.subject.connect(signer).postPreOrder()).to.not.be.reverted;
+                });
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).postPreOrder()).to.be.reverted;
+                });
+            });
+        });
+    });
 
     xdescribe("#signOrder", () => {});
 });
