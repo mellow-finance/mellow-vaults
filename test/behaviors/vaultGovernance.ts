@@ -24,6 +24,7 @@ import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyP
 import { create } from "domain";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
 import { REGISTER_VAULT, CREATE_VAULT } from "../library/PermissionIdsLibrary";
+import { delayedProtocolPerVaultParamsBehavior } from "./vaultGovernanceDelayedProtocolPerVaultParams";
 
 export type VaultGovernanceContext<S extends Contract, F> = TestContext<
     S,
@@ -54,6 +55,7 @@ export function vaultGovernanceBehavior<
         strategyParams,
         delayedProtocolParams,
         protocolParams,
+        delayedProtocolPerVaultParams,
         defaultCreateVault,
         rootVaultGovernance,
     }: {
@@ -362,10 +364,16 @@ export function vaultGovernanceBehavior<
         });
     });
 
-    if (delayedProtocolParams) {
-        delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
-    }
-    if (delayedStrategyParams) {
-        delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
+    // if (delayedProtocolParams) {
+    //     delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
+    // }
+    // if (delayedStrategyParams) {
+    //     delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
+    // }
+    if (delayedProtocolPerVaultParams) {
+        delayedProtocolPerVaultParamsBehavior.call(
+            this as any,
+            delayedProtocolPerVaultParams
+        );
     }
 }

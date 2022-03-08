@@ -1,20 +1,10 @@
-import { Assertion, expect } from "chai";
-import { ethers, deployments, getNamedAccounts } from "hardhat";
-import {
-    addSigner,
-    now,
-    randomAddress,
-    sleep,
-    sleepTo,
-    toObject,
-    withSigner,
-} from "./library/Helpers";
-import Exceptions from "./library/Exceptions";
+import { expect } from "chai";
+import { ethers, deployments } from "hardhat";
+import { addSigner, now, randomAddress, sleepTo } from "./library/Helpers";
 import {
     DelayedProtocolParamsStruct,
     ERC20RootVaultGovernance,
 } from "./types/ERC20RootVaultGovernance";
-import { REGISTER_VAULT } from "./library/PermissionIdsLibrary";
 import { contract } from "./library/setup";
 import { address } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -22,7 +12,10 @@ import { Arbitrary, integer, tuple, boolean } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IVaultGovernance";
-import { DelayedStrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
+import {
+    DelayedProtocolPerVaultParamsStruct,
+    DelayedStrategyParamsStruct,
+} from "./types/IERC20RootVaultGovernance";
 
 type CustomContext = {
     nft: number;
@@ -123,9 +116,15 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 })
             );
 
+        const delayedProtocolPerVaultParams: Arbitrary<DelayedProtocolPerVaultParamsStruct> =
+            integer({ min: 0, max: 10 ** 6 }).map((num) => ({
+                protocolFee: BigNumber.from(num),
+            }));
+
         vaultGovernanceBehavior.call(this, {
             delayedStrategyParams,
             delayedProtocolParams,
+            delayedProtocolPerVaultParams,
             rootVaultGovernance: true,
             ...this,
         });
