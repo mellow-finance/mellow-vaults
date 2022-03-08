@@ -6,6 +6,9 @@ import { contract } from "./library/setup";
 import { ERC20Vault, LStrategy, UniV3Vault } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
+import { abi as ICurvePool } from "./helpers/curvePoolABI.json";
+import { abi as IWETH } from "./helpers/wethABI.json";
+import { abi as IWSTETH } from "./helpers/wstethABI.json";
 import {
     mint,
     mintUniV3Position_USDC_WETH,
@@ -76,26 +79,43 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     });
                 };
 
+                await this.weth.approve(
+                    uniswapV3PositionManager,
+                    ethers.constants.MaxUint256
+                );
+                await this.wsteth.approve(
+                    uniswapV3PositionManager,
+                    ethers.constants.MaxUint256
+                )
+
                 this.preparePush = async ({
                     vault,
                     tickLower = -887220,
                     tickUpper = 887220,
-                    usdcAmount = BigNumber.from(10).pow(6).mul(3000),
-                    wethAmount = BigNumber.from(10).pow(18),
+                    wethAmount = BigNumber.from(10).pow(18).mul(100),
+                    wstethAmount = BigNumber.from(10).pow(18).mul(100),
                 }: {
                     vault: any;
                     tickLower?: number;
                     tickUpper?: number;
-                    usdcAmount?: BigNumber;
                     wethAmount?: BigNumber;
+                    wstethAmount?: BigNumber;
                 }) => {
-                    const result = await mintUniV3Position_USDC_WETH({
-                        fee: 3000,
+                    const mintParams = {
+                        token0: this.weth.address,
+                        token1: this.wsteth.address,
+                        fee: 500,
                         tickLower: tickLower,
                         tickUpper: tickUpper,
-                        usdcAmount: usdcAmount,
-                        wethAmount: wethAmount,
-                    });
+                        amount0Desired: wethAmount,
+                        amount1Desired: wstethAmount,
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    }
+                    const result = await this.positionManager.callStatic.mint(mintParams);
+                    await this.positionManager.mint(mintParams);
                     await this.positionManager.functions[
                         "safeTransferFrom(address,address,uint256)"
                     ](this.deployer.address, vault.address, result.tokenId);
@@ -220,32 +240,57 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     deployParams.address
                 );
 
-                for (let address of [
+                const weth = await ethers.getContractAt(
+                    IWETH,
+                    this.weth.address
+                );
+
+                const wsteth = await ethers.getContractAt(
+                    IWSTETH,
+                    this.wsteth.address
+                );
+
+                const curvePool = await ethers.getContractAt(
+                    ICurvePool,
+                    "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+                );
+
+                const steth = await ethers.getContractAt(
+                    "ERC20Token",
+                    "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+                );
+
+                await mint(
+                    "WETH",
                     this.deployer.address,
+                    BigNumber.from(10).pow(18).mul(4000)
+                );
+                await this.weth.approve(
+                    curvePool.address,
+                    ethers.constants.MaxUint256
+                );
+                await steth.approve(
+                    this.wsteth.address,
+                    ethers.constants.MaxUint256
+                );
+                await weth.withdraw(BigNumber.from(10).pow(18).mul(2000));
+                const options = { value: BigNumber.from(10).pow(18).mul(2000) };
+                await curvePool.exchange(
+                    0, 1, BigNumber.from(10).pow(18).mul(2000), ethers.constants.Zero, options
+                );
+                await wsteth.wrap(BigNumber.from(10).pow(18).mul(1999));
+
+                for (let address of [
                     this.uniV3UpperVault.address,
                     this.uniV3LowerVault.address,
                     this.erc20Vault.address,
                 ]) {
-                    await mint(
-                        "WETH",
-                        address,
-                        BigNumber.from(10).pow(18).mul(4000)
-                    );
-                    await this.swapTokens(
-                        address,
-                        address,
-                        this.weth,
-                        this.wsteth,
-                        BigNumber.from(10).pow(17).mul(5)
-                    );
-                    await this.weth.approve(
-                        address,
-                        ethers.constants.MaxUint256
-                    );
-                    await this.wsteth.approve(
-                        address,
-                        ethers.constants.MaxUint256
-                    );
+                    for (let token of [this.weth, this.wsteth]) {
+                        await token.transfer(
+                            address,
+                            BigNumber.from(10).pow(18).mul(500)
+                        );
+                    }
                 }
 
                 await this.subject.connect(this.admin).updateTradingParams({
@@ -921,8 +966,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     describe("#postPreOrder", () => {
         describe("access control:", () => {
             beforeEach(async () => {
+                console.log("21212");
                 this.preparePush({vault: this.uniV3LowerVault});
-                this.preparePush({vault: this.uniV3UpperVault});
+                console.log("21214");
+                // this.preparePush({vault: this.uniV3UpperVault});
+                console.log("21215");
             });
 
             describe.only("only", () => {
