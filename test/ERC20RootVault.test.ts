@@ -14,6 +14,7 @@ import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import Exceptions from "./library/Exceptions";
+import {ERC20_ROOT_VAULT_INTERFACE_ID, VAULT_INTERFACE_ID} from "./library/Constants";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -174,24 +175,73 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
+        describe("#addDepositorsToAllowlist", () => {
+            it("adds depositor to allow list", async () => {
+                let newDepositor = randomAddress();
+                expect(await this.subject.depositorsAllowlist()).to.not.contain(newDepositor);
+                await this.subject.connect(this.admin).addDepositorsToAllowlist([newDepositor]);
+                expect(await this.subject.depositorsAllowlist()).to.contain(newDepositor);
+            });
+
+            describe("access control:", () => {
+                it("allowed: admin", async () => {
+                    await expect(this.subject.connect(this.admin).addDepositorsToAllowlist([randomAddress()])).to.not.be.reverted;
+                });
+                it("not allowed: deployer", async () => {
+                    await expect(this.subject.addDepositorsToAllowlist([randomAddress()])).to.be.reverted;
+                })
+                it("not allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(this.subject.connect(signer).addDepositorsToAllowlist([randomAddress()])).to.be.reverted;
+                    });
+                });
+            });
+        });
+
+        describe("#removeDepositorsFromAllowlist", () => {
+            it("removes depositor to allow list", async () => {
+                let newDepositor = randomAddress();
+                expect(await this.subject.depositorsAllowlist()).to.not.contain(newDepositor);
+                await this.subject.connect(this.admin).addDepositorsToAllowlist([newDepositor]);
+                expect(await this.subject.depositorsAllowlist()).to.contain(newDepositor);
+                await this.subject.connect(this.admin).removeDepositorsFromAllowlist([newDepositor]);
+                expect(await this.subject.depositorsAllowlist()).to.not.contain(newDepositor);
+            });
+
+            describe("access control:", () => {
+                it("allowed: admin", async () => {
+                    await expect(this.subject.connect(this.admin).removeDepositorsFromAllowlist([randomAddress()])).to.not.be.reverted;
+                });
+                it("not allowed: deployer", async () => {
+                    await expect(this.subject.removeDepositorsFromAllowlist([randomAddress()])).to.be.reverted;
+                })
+                it("not allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(this.subject.connect(signer).removeDepositorsFromAllowlist([randomAddress()])).to.be.reverted;
+                    });
+                });
+            });
+        });
+
         describe("#supportsInterface", () => {
-            // Helper:
-            // add to contract:
-            // function printSupports() external view returns (bytes4) {
-            //     return type(IERC20RootVault).interfaceId;
-            // }
-            // add to tests:
-            // it("test", async () => {
-            //     const id = await this.subject.printSupports(); // String.fromCharCode(await this.subject.printSupports());
-            //     console.log("id = ", id);
-            // });
-            const ERC20_ROOT_VAULT_INTERFACE_ID = "0x7681ee51"; // move to constants
             it(`returns true if this contract supports ${ERC20_ROOT_VAULT_INTERFACE_ID} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
                         ERC20_ROOT_VAULT_INTERFACE_ID
                     )
                 ).to.be.true;
+            });
+
+            describe("edge cases:", () => {
+                describe("when contract does not support the given interface", () => {
+                    it("returns false", async () => {
+                        expect(
+                            await this.subject.supportsInterface(
+                                VAULT_INTERFACE_ID
+                            )
+                        ).to.be.false;
+                    });
+                });
             });
 
             describe("access control:", () => {
