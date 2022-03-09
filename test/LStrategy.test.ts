@@ -11,7 +11,6 @@ import { abi as IWETH } from "./helpers/wethABI.json";
 import { abi as IWSTETH } from "./helpers/wstethABI.json";
 import {
     mint,
-    mintUniV3Position_USDC_WETH,
     randomAddress,
     sleep,
     withSigner,
@@ -102,13 +101,13 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     wstethAmount?: BigNumber;
                 }) => {
                     const mintParams = {
-                        token0: this.weth.address,
-                        token1: this.wsteth.address,
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
                         fee: 500,
                         tickLower: tickLower,
                         tickUpper: tickUpper,
-                        amount0Desired: wethAmount,
-                        amount1Desired: wstethAmount,
+                        amount0Desired: wstethAmount,
+                        amount1Desired: wethAmount,
                         amount0Min: 0,
                         amount1Min: 0,
                         recipient: this.deployer.address,
@@ -220,12 +219,19 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 );
 
                 const { deploy } = deployments;
-                let deployParams = await deploy("LStrategy", {
+                let cowswapDeployParams = await deploy("MockCowswap", {
+                    from: this.deployer.address,
+                    contract: "MockCowswap",
+                    args: [],
+                    log: true,
+                    autoMine: true,
+                });
+                let strategyDeployParams = await deploy("LStrategy", {
                     from: this.deployer.address,
                     contract: "LStrategy",
                     args: [
                         uniswapV3PositionManager,
-                        cowswap,
+                        cowswapDeployParams.address,
                         this.erc20Vault.address,
                         this.uniV3LowerVault.address,
                         this.uniV3UpperVault.address,
@@ -237,7 +243,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                 this.subject = await ethers.getContractAt(
                     "LStrategy",
-                    deployParams.address
+                    strategyDeployParams.address
                 );
 
                 const weth = await ethers.getContractAt(
@@ -293,12 +299,20 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 }
 
+                let oracleDeployParams = await deploy("MockOracle", {
+                    from: this.deployer.address,
+                    contract: "MockOracle",
+                    args: [],
+                    log: true,
+                    autoMine: true,
+                });
+
                 await this.subject.connect(this.admin).updateTradingParams({
                     maxSlippageD: BigNumber.from(10).pow(7),
                     oracleSafety: 5,
                     minRebalanceWaitTime: 86400,
                     orderDeadline: 86400 * 30,
-                    oracle: this.mellowOracle.address,
+                    oracle: oracleDeployParams.address,
                 });
 
                 await this.subject.connect(this.admin).updateRatioParams({
@@ -925,11 +939,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    xdescribe("#rebalanceERC20UniV3Vaults", () => {
+    describe.only("#rebalanceERC20UniV3Vaults", () => {
         describe("access control:", () => {
             beforeEach(async () => {
-                this.preparePush({vault: this.uniV3LowerVault});
-                this.preparePush({vault: this.uniV3UpperVault});
+                await this.preparePush({vault: this.uniV3LowerVault});
+                await this.preparePush({vault: this.uniV3UpperVault});
             });
 
             it("allowed: admin", async () => {
@@ -964,19 +978,42 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     xdescribe("#rebalanceUniV3Vaults", () => {});
 
     describe("#postPreOrder", () => {
-        describe("access control:", () => {
-            beforeEach(async () => {
-                console.log("21212");
-                this.preparePush({vault: this.uniV3LowerVault});
-                console.log("21214");
-                // this.preparePush({vault: this.uniV3UpperVault});
-                console.log("21215");
+        it("initializing preOrder when liquidityDelta is negative", async () => {
+            await this.subject.connect(this.admin).postPreOrder();
+            await expect((await this.subject.preOrder()).tokenIn).eq(this.weth.address);
+        });
+        it("initializing preOrder when liquidityDelta is not negative", async () => {
+            await withSigner(this.erc20Vault.address, async (signer) => {
+                await this.weth.connect(signer).transfer(this.deployer.address, BigNumber.from(10).pow(18).mul(500));
             });
+            await this.subject.connect(this.admin).postPreOrder();
+            await expect((await this.subject.preOrder()).tokenIn).eq(this.wsteth.address);
+        });
+        it("emits PreOrderPosted event", async () => {
+            await expect(this.subject.connect(this.admin).postPreOrder()).to.emit(this.subject, "PreOrderPosted");
+        });
 
-            describe.only("only", () => {
-                it("allowed: admin", async () => {
-                    await this.subject.connect(this.admin).postPreOrder();
+        describe("edge cases:", () => {
+            describe("when orderDeadline is lower than block.timestamp", () => {
+                it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
+                    //?????????????????????????????????
+                    console.log(await ethers.provider.send("eth_getStorageAt", [
+                        this.subject.address,
+                        "0xa", // address of orderDeadline
+                    ]));
+                    await ethers.provider.send("hardhat_setStorageAt", [
+                        this.subject.address,
+                        "0xa", // address of orderDeadline
+                        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                    ]);
+                    await expect(this.subject.connect(this.admin).postPreOrder()).to.be.revertedWith(Exceptions.TIMESTAMP);
                 });
+            });
+        });
+
+        describe("access control:", () => {
+            it("allowed: admin", async () => {
+                await expect(this.subject.connect(this.admin).postPreOrder()).to.not.be.reverted;
             });
             it("allowed: operator", async () => {
                 await withSigner(randomAddress(), async (signer) => {

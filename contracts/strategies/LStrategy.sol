@@ -18,6 +18,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
+import "hardhat/console.sol";
 
 contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     using SafeERC20 for IERC20;
@@ -309,6 +310,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @return preOrder_ Posted preorder
     function postPreOrder() external returns (PreOrder memory preOrder_) {
         _requireAtLeastOperator();
+        console.log(orderDeadline, block.timestamp);
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
