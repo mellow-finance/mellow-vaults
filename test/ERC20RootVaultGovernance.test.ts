@@ -1,6 +1,12 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { addSigner, now, randomAddress, sleepTo } from "./library/Helpers";
+import {
+    addSigner,
+    now,
+    randomAddress,
+    sleepTo,
+    withSigner,
+} from "./library/Helpers";
 import {
     DelayedProtocolParamsStruct,
     ERC20RootVaultGovernance,
@@ -15,7 +21,9 @@ import { InternalParamsStruct } from "./types/IVaultGovernance";
 import {
     DelayedProtocolPerVaultParamsStruct,
     DelayedStrategyParamsStruct,
+    OperatorParamsStruct,
 } from "./types/IERC20RootVaultGovernance";
+import { ERC20_ROOT_VAULT_GOVERNANCE } from "./library/Constants";
 
 type CustomContext = {
     nft: number;
@@ -85,6 +93,28 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
         });
 
+        describe("#supportsInterface", () => {
+            it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE} interface`, async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        ERC20_ROOT_VAULT_GOVERNANCE
+                    )
+                ).to.be.true;
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .supportsInterface(ERC20_ROOT_VAULT_GOVERNANCE)
+                        ).to.not.be.reverted;
+                    });
+                });
+            });
+        });
+
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
             tuple(integer({ min: 0, max: 10 ** 6 }), address).map(
                 ([num, oracle]) => ({
@@ -121,10 +151,17 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                 protocolFee: BigNumber.from(num),
             }));
 
+        const operatorParams: Arbitrary<OperatorParamsStruct> = boolean().map(
+            (disableDeposit) => ({
+                disableDeposit,
+            })
+        );
+
         vaultGovernanceBehavior.call(this, {
             delayedStrategyParams,
             delayedProtocolParams,
             delayedProtocolPerVaultParams,
+            operatorParams,
             rootVaultGovernance: true,
             ...this,
         });

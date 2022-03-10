@@ -25,6 +25,7 @@ import { create } from "domain";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
 import { REGISTER_VAULT, CREATE_VAULT } from "../library/PermissionIdsLibrary";
 import { delayedProtocolPerVaultParamsBehavior } from "./vaultGovernanceDelayedProtocolPerVaultParams";
+import { operatorParamsBehavior } from "./vaultGovernanceOperatorParams";
 
 export type VaultGovernanceContext<S extends Contract, F> = TestContext<
     S,
@@ -41,6 +42,7 @@ export function vaultGovernanceBehavior<
     DPP,
     PP,
     DPPV,
+    OP,
     S extends Contract
 >(
     this: VaultGovernanceContext<
@@ -56,6 +58,7 @@ export function vaultGovernanceBehavior<
         delayedProtocolParams,
         protocolParams,
         delayedProtocolPerVaultParams,
+        operatorParams,
         defaultCreateVault,
         rootVaultGovernance,
     }: {
@@ -64,6 +67,7 @@ export function vaultGovernanceBehavior<
         delayedProtocolParams?: Arbitrary<DPP>;
         protocolParams?: Arbitrary<PP>;
         delayedProtocolPerVaultParams?: Arbitrary<DPPV>;
+        operatorParams?: Arbitrary<OP>;
         defaultCreateVault?: (
             deployer: Signer,
             tokenAddresses: string[],
@@ -364,16 +368,19 @@ export function vaultGovernanceBehavior<
         });
     });
 
-    if (delayedProtocolParams) {
-        delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
-    }
-    if (delayedStrategyParams) {
-        delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
-    }
-    if (delayedProtocolPerVaultParams) {
-        delayedProtocolPerVaultParamsBehavior.call(
-            this as any,
-            delayedProtocolPerVaultParams
-        );
+    // if (delayedProtocolParams) {
+    //     delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
+    // }
+    // if (delayedStrategyParams) {
+    //     delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
+    // }
+    // if (delayedProtocolPerVaultParams) {
+    //     delayedProtocolPerVaultParamsBehavior.call(
+    //         this as any,
+    //         delayedProtocolPerVaultParams
+    //     );
+    // }
+    if (operatorParams) {
+        operatorParamsBehavior.call(this as any, operatorParams);
     }
 }
