@@ -368,18 +368,18 @@ export function vaultGovernanceBehavior<
         });
     });
 
-    // if (delayedProtocolParams) {
-    //     delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
-    // }
-    // if (delayedStrategyParams) {
-    //     delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
-    // }
-    // if (delayedProtocolPerVaultParams) {
-    //     delayedProtocolPerVaultParamsBehavior.call(
-    //         this as any,
-    //         delayedProtocolPerVaultParams
-    //     );
-    // }
+    if (delayedProtocolParams) {
+        delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
+    }
+    if (delayedStrategyParams) {
+        delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
+    }
+    if (delayedProtocolPerVaultParams) {
+        delayedProtocolPerVaultParamsBehavior.call(
+            this as any,
+            delayedProtocolPerVaultParams
+        );
+    }
     if (operatorParams) {
         operatorParamsBehavior.call(this as any, operatorParams);
     }
