@@ -364,12 +364,12 @@ export function vaultGovernanceBehavior<
         });
     });
 
-    // if (delayedProtocolParams) {
-    //     delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
-    // }
-    // if (delayedStrategyParams) {
-    //     delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
-    // }
+    if (delayedProtocolParams) {
+        delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
+    }
+    if (delayedStrategyParams) {
+        delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams);
+    }
     if (delayedProtocolPerVaultParams) {
         delayedProtocolPerVaultParamsBehavior.call(
             this as any,

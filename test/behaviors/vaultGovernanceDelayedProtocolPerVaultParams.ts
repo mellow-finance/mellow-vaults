@@ -2,9 +2,11 @@ import { BigNumber, Contract, ethers, Signer } from "ethers";
 import { Arbitrary, integer, nat } from "fast-check";
 import {
     generateParams,
+    now,
     randomAddress,
     randomNft,
     sleep,
+    sleepTo,
     toObject,
     withSigner,
 } from "../library/Helpers";
@@ -14,7 +16,6 @@ import { expect } from "chai";
 import Exceptions from "../library/Exceptions";
 import { VaultGovernanceContext } from "./vaultGovernance";
 import { deployments } from "hardhat";
-import { connect } from "http2";
 
 export function delayedProtocolPerVaultParamsBehavior<P, S extends Contract, F>(
     this: VaultGovernanceContext<S, F>,
@@ -171,18 +172,18 @@ export function delayedProtocolPerVaultParamsBehavior<P, S extends Contract, F>(
                 await this.subject.stagedDelayedProtocolPerVaultParams(nft);
             expect(someParams).to.be.equivalent(actualParams);
         });
-        //FIXME
-        // it("sets delay for commit", async () => {
-        //     await this.subject
-        //         .connect(this.admin)
-        //         .stageDelayedProtocolPerVaultParams(nft, someParams);
-        //     expect(
-        //         await this.subject.delayedProtocolPerVaultParamsTimestamp(nft)
-        //     ).to.be.within(
-        //         this.governanceDelay + this.startTimestamp,
-        //         this.governanceDelay + this.startTimestamp + 60
-        //     );
-        // });
+
+        it("sets delay for commit", async () => {
+            let timestamp = now() + 10 ** 6;
+            await sleepTo(timestamp);
+            await this.subject
+                .connect(this.admin)
+                .stageDelayedProtocolPerVaultParams(nft, someParams);
+            expect(
+                await this.subject.delayedProtocolPerVaultParamsTimestamp(nft)
+            ).to.be.within(timestamp, timestamp + 10);
+        });
+
         it("emits StageDelayedProtocolPerVaultParams event", async () => {
             await expect(
                 this.subject
@@ -191,281 +192,337 @@ export function delayedProtocolPerVaultParamsBehavior<P, S extends Contract, F>(
             ).to.emit(this.subject, "StageDelayedProtocolPerVaultParams");
         });
 
-        // describe("properties", () => {
-        //     pit(
-        //         "cannot be called by random address",
-        //         { numRuns: RUNS.verylow },
-        //         address,
-        //         paramsArb,
-        //         async (addr: string, params: P) => {
-        //             await withSigner(addr, async (s) => {
-        //                 await expect(
-        //                     this.subject
-        //                         .connect(s)
-        //                         .stageDelayedProtocolParams(params)
-        //                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
-        //             });
-        //             return true;
-        //         }
-        //     );
-        // });
+        describe("properties", () => {
+            pit(
+                "cannot be called by random address",
+                { numRuns: RUNS.verylow },
+                address,
+                paramsArb,
+                integer({ min: 0, max: 10 ** 9 }),
+                async (addr: string, params: P, nft) => {
+                    await withSigner(addr, async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .stageDelayedProtocolPerVaultParams(nft, params)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                }
+            );
+        });
 
-        // describe("access control", () => {
-        //     it("allowed: ProtocolGovernance admin", async () => {
-        //         await this.subject
-        //             .connect(this.admin)
-        //             .stageDelayedProtocolParams(someParams);
-        //     });
+        describe("access control", () => {
+            it("allowed: ProtocolGovernance admin", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolPerVaultParams(nft, someParams);
+            });
 
-        //     it("denied: Vault NFT Owner (aka liquidity provider)", async () => {
-        //         await expect(
-        //             this.subject
-        //                 .connect(this.ownerSigner)
-        //                 .stageDelayedProtocolParams(someParams)
-        //         ).to.be.revertedWith(Exceptions.FORBIDDEN);
-        //     });
-        //     it("denied: Vault NFT Approved (aka strategy)", async () => {
-        //         await expect(
-        //             this.subject
-        //                 .connect(this.strategySigner)
-        //                 .stageDelayedProtocolParams(someParams)
-        //         ).to.be.revertedWith(Exceptions.FORBIDDEN);
-        //     });
-        //     it("denied: deployer", async () => {
-        //         await expect(
-        //             this.subject
-        //                 .connect(this.deployer)
-        //                 .stageDelayedProtocolParams(someParams)
-        //         ).to.be.revertedWith(Exceptions.FORBIDDEN);
-        //     });
+            it("denied: Vault NFT Owner (aka liquidity provider)", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.ownerSigner)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+            it("denied: Vault NFT Approved (aka strategy)", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.strategySigner)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+            it("denied: deployer", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
 
-        //     it("denied: random address", async () => {
-        //         await withSigner(randomAddress(), async (s) => {
-        //             await expect(
-        //                 this.subject
-        //                     .connect(s)
-        //                     .stageDelayedProtocolParams(someParams)
-        //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
-        //         });
-        //     });
-        // });
+            it("denied: random address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .stageDelayedProtocolPerVaultParams(nft, someParams)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+        });
 
-        // describe("edge cases", () => {
-        //     describe("when called twice", () => {
-        //         it("succeeds with the last value", async () => {
-        //             const { someParams: someOtherParams } =
-        //                 generateParams(paramsArb);
-        //             await this.subject
-        //                 .connect(this.admin)
-        //                 .stageDelayedProtocolParams(someParams);
-        //             await this.subject
-        //                 .connect(this.admin)
-        //                 .stageDelayedProtocolParams(someOtherParams);
-        //             const actualParams =
-        //                 await this.subject.stagedDelayedProtocolParams();
-        //             expect(someOtherParams).to.be.equivalent(actualParams);
-        //         });
-        //     });
-        //     describe("when called with zero params", () => {
-        //         it("succeeds with zero params", async () => {
-        //             await this.subject
-        //                 .connect(this.admin)
-        //                 .stageDelayedProtocolParams(noneParams);
-        //             const actualParams =
-        //                 await this.subject.stagedDelayedProtocolParams();
-        //             expect(noneParams).to.be.equivalent(actualParams);
-        //         });
-        //     });
-        // });
+        describe("edge cases", () => {
+            describe("when called twice", () => {
+                it("succeeds with the last value", async () => {
+                    const { someParams: someOtherParams } =
+                        generateParams(paramsArb);
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams);
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(
+                            nft,
+                            someOtherParams
+                        );
+                    const actualParams =
+                        await this.subject.stagedDelayedProtocolPerVaultParams(
+                            nft
+                        );
+                    expect(someOtherParams).to.be.equivalent(actualParams);
+                });
+            });
+            describe("when called with zero params", () => {
+                it("succeeds with zero params", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, noneParams);
+                    const actualParams =
+                        await this.subject.stagedDelayedProtocolPerVaultParams(
+                            nft
+                        );
+                    expect(noneParams).to.be.equivalent(actualParams);
+                });
+            });
+            describe("when protocol fee is greater than MAX_PROTOCOL_FEE", () => {
+                it("reverts", async () => {
+                    let paramsInvalid = {
+                        protocolFee: (
+                            await this.subject.MAX_PROTOCOL_FEE()
+                        ).add(1),
+                    };
+                    await expect(
+                        this.subject.stageDelayedProtocolPerVaultParams(
+                            nft,
+                            paramsInvalid
+                        )
+                    ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                });
+            });
+        });
     });
 
-    // describe("#commitDelayedProtocolParams", () => {
-    //     let stagedFixture: Function;
-    //     before(async () => {
-    //         stagedFixture = await deployments.createFixture(async () => {
-    //             await this.deploymentFixture();
-    //             await this.subject
-    //                 .connect(this.admin)
-    //                 .stageDelayedProtocolParams(someParams);
-    //         });
-    //     });
-    //     beforeEach(async () => {
-    //         await stagedFixture();
-    //         await sleep(this.governanceDelay);
-    //     });
-    //     it("commits staged DelayedProtocolParams", async () => {
-    //         await this.subject
-    //             .connect(this.admin)
-    //             .commitDelayedProtocolParams();
+    describe("#commitDelayedProtocolPerVaultParams", () => {
+        let stagedFixture: Function;
+        before(async () => {
+            stagedFixture = await deployments.createFixture(async () => {
+                await this.deploymentFixture();
+                await this.subject
+                    .connect(this.admin)
+                    .stageDelayedProtocolPerVaultParams(nft, someParams);
+            });
+        });
+        beforeEach(async () => {
+            await stagedFixture();
+            await sleep(this.governanceDelay);
+        });
+        it("commits staged DelayedProtocolPerVaultParams", async () => {
+            await this.subject
+                .connect(this.admin)
+                .commitDelayedProtocolPerVaultParams(nft);
 
-    //         const actualParams = await this.subject.delayedProtocolParams();
-    //         expect(someParams).to.be.equivalent(actualParams);
-    //     });
-    //     it("resets delay for commit", async () => {
-    //         await this.subject
-    //             .connect(this.admin)
-    //             .commitDelayedProtocolParams();
-    //         expect(
-    //             await this.subject.delayedProtocolParamsTimestamp()
-    //         ).to.equal(BigNumber.from(0));
-    //     });
-    //     it("emits CommitDelayedProtocolParams event", async () => {
-    //         await expect(
-    //             await this.subject
-    //                 .connect(this.admin)
-    //                 .commitDelayedProtocolParams()
-    //         ).to.emit(this.subject, "CommitDelayedProtocolParams");
-    //     });
+            const actualParams =
+                await this.subject.delayedProtocolPerVaultParams(nft);
+            expect(someParams).to.be.equivalent(actualParams);
+        });
+        it("resets delay for commit", async () => {
+            await this.subject
+                .connect(this.admin)
+                .commitDelayedProtocolPerVaultParams(nft);
+            expect(
+                await this.subject.delayedProtocolPerVaultParamsTimestamp(nft)
+            ).to.equal(BigNumber.from(0));
+        });
+        it("emits CommitDelayedProtocolPerVaultParams event", async () => {
+            await expect(
+                await this.subject
+                    .connect(this.admin)
+                    .commitDelayedProtocolPerVaultParams(nft)
+            ).to.emit(this.subject, "CommitDelayedProtocolPerVaultParams");
+        });
 
-    //     describe("properties", () => {
-    //         pit(
-    //             "cannot be called by random address",
-    //             { numRuns: RUNS.verylow },
-    //             address,
-    //             paramsArb,
-    //             async (addr: string, params: P) => {
-    //                 await this.subject
-    //                     .connect(this.admin)
-    //                     .stageDelayedProtocolParams(someParams);
-    //                 await sleep(this.governanceDelay);
+        describe("properties", () => {
+            pit(
+                "cannot be called by random address",
+                { numRuns: RUNS.verylow },
+                address,
+                paramsArb,
+                integer({ min: 0, max: 10 ** 9 }),
+                async (addr: string, params: P, nft) => {
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, params);
+                    await sleep(this.governanceDelay);
 
-    //                 await withSigner(addr, async (s) => {
-    //                     await expect(
-    //                         this.subject
-    //                             .connect(s)
-    //                             .commitDelayedProtocolParams()
-    //                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
-    //                 });
-    //                 return true;
-    //             }
-    //         );
-    //         pit(
-    //             "reverts if called before the delay has elapsed",
-    //             { numRuns: RUNS.mid },
-    //             async () => nat((await this.governanceDelay) - 60),
-    //             paramsArb,
-    //             async (delay: number, params: P) => {
-    //                 await this.subject
-    //                     .connect(this.admin)
-    //                     .stageDelayedProtocolParams(someParams);
-    //                 await sleep(delay);
+                    await withSigner(addr, async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .commitDelayedProtocolPerVaultParams(nft)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                    return true;
+                }
+            );
+            pit(
+                "reverts if called before the delay has elapsed only if params have already been commited",
+                { numRuns: RUNS.mid, endOnFailure: true },
+                async () => nat(this.governanceDelay - 60),
+                paramsArb,
+                integer({ min: 0, max: 10 ** 9 }),
+                async (delay: number, params: P, nft) => {
+                    await this.deploymentFixture();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.not.be.revertedWith(Exceptions.TIMESTAMP);
 
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
-    //                 return true;
-    //             }
-    //         );
-    //         pit(
-    //             "succeeds if called after the delay has elapsed",
-    //             { numRuns: RUNS.mid },
-    //             nat(),
-    //             paramsArb,
-    //             async (delay: number, params: P) => {
-    //                 await this.subject
-    //                     .connect(this.admin)
-    //                     .stageDelayedProtocolParams(someParams);
-    //                 await sleep(this.governanceDelay + 60 + delay);
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, params);
+                    await sleep(delay);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                    return true;
+                }
+            );
+            pit(
+                "succeeds if called after the delay has elapsed",
+                { numRuns: RUNS.mid },
+                nat(),
+                paramsArb,
+                integer({ min: 0, max: 10 ** 9 }),
+                async (delay: number, params: P, nft) => {
+                    await this.deploymentFixture();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, params);
+                    await sleep(this.governanceDelay + 60 + delay);
 
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.not.be.reverted;
-    //                 return true;
-    //             }
-    //         );
-    //     });
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.not.be.reverted;
+                    return true;
+                }
+            );
+        });
 
-    //     describe("access control", () => {
-    //         it("allowed: ProtocolGovernance admin", async () => {
-    //             await this.subject
-    //                 .connect(this.admin)
-    //                 .commitDelayedProtocolParams();
-    //         });
+        describe("access control", () => {
+            it("allowed: ProtocolGovernance admin", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .commitDelayedProtocolPerVaultParams(nft);
+            });
 
-    //         it("denied: Vault NFT Owner (aka liquidity provider)", async () => {
-    //             await expect(
-    //                 this.subject
-    //                     .connect(this.ownerSigner)
-    //                     .commitDelayedProtocolParams()
-    //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
-    //         });
-    //         it("denied: Vault NFT Approved (aka strategy)", async () => {
-    //             await expect(
-    //                 this.subject
-    //                     .connect(this.strategySigner)
-    //                     .commitDelayedProtocolParams()
-    //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
-    //         });
-    //         it("denied: deployer", async () => {
-    //             await expect(
-    //                 this.subject
-    //                     .connect(this.deployer)
-    //                     .commitDelayedProtocolParams()
-    //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
-    //         });
+            it("denied: Vault NFT Owner (aka liquidity provider)", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.ownerSigner)
+                        .commitDelayedProtocolPerVaultParams(nft)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+            it("denied: Vault NFT Approved (aka strategy)", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.strategySigner)
+                        .commitDelayedProtocolPerVaultParams(nft)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+            it("denied: deployer", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .commitDelayedProtocolPerVaultParams(nft)
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
 
-    //         it("denied: random address", async () => {
-    //             await withSigner(randomAddress(), async (s) => {
-    //                 await expect(
-    //                     this.subject.connect(s).commitDelayedProtocolParams()
-    //                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
-    //             });
-    //         });
-    //     });
+            it("denied: random address", async () => {
+                await withSigner(randomAddress(), async (s) => {
+                    await expect(
+                        this.subject
+                            .connect(s)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+        });
 
-    //     describe("edge cases", () => {
-    //         describe("when called twice", () => {
-    //             it("reverts", async () => {
-    //                 await this.subject
-    //                     .connect(this.admin)
-    //                     .commitDelayedProtocolParams();
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.be.revertedWith(Exceptions.NULL);
-    //             });
-    //         });
-    //         describe("when nothing is staged", () => {
-    //             it("reverts", async () => {
-    //                 await this.deploymentFixture();
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.be.revertedWith(Exceptions.NULL);
-    //             });
-    //         });
-    //         describe("when delay has not elapsed", () => {
-    //             it("reverts", async () => {
-    //                 await this.deploymentFixture();
-    //                 await this.subject
-    //                     .connect(this.admin)
-    //                     .stageDelayedProtocolParams(someParams);
+        describe("edge cases", () => {
+            describe("when called twice", () => {
+                it("reverts", async () => {
+                    await this.subject
+                        .connect(this.admin)
+                        .commitDelayedProtocolPerVaultParams(nft);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.be.revertedWith(Exceptions.NULL);
+                });
+            });
+            describe("when nothing is staged", () => {
+                it("reverts", async () => {
+                    await this.deploymentFixture();
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.be.revertedWith(Exceptions.NULL);
+                });
+            });
+            describe("when delay has not elapsed and params have not been commited", () => {
+                it("reverts", async () => {
+                    await this.deploymentFixture();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams);
 
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
-    //                 await sleep(this.governanceDelay - 60);
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.be.revertedWith(Exceptions.TIMESTAMP);
-    //                 await sleep(60);
-    //                 await expect(
-    //                     this.subject
-    //                         .connect(this.admin)
-    //                         .commitDelayedProtocolParams()
-    //                 ).to.not.be.reverted;
-    //             });
-    //         });
-    //     });
-    // });
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.not.be.revertedWith(Exceptions.TIMESTAMP);
+                });
+            });
+            describe("when params have already been set and delay has not elapsed", () => {
+                it("reverts", async () => {
+                    await this.deploymentFixture();
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.not.be.revertedWith(Exceptions.TIMESTAMP);
+
+                    await this.subject
+                        .connect(this.admin)
+                        .stageDelayedProtocolPerVaultParams(nft, someParams);
+                    await sleep(this.governanceDelay - 60);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                    await sleep(60);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .commitDelayedProtocolPerVaultParams(nft)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+    });
 }
