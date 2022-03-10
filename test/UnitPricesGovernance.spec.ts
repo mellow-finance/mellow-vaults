@@ -218,7 +218,7 @@ contract<UnitPricesGovernance, DeployOptions, CustomContext>(
                             await this.subject
                                 .connect(this.admin)
                                 .stageUnitPrice(token, 2);
-                            await sleep(this.DELAY - 2);
+                            await sleep(this.DELAY - 10);
                             await expect(
                                 this.subject
                                     .connect(this.admin)

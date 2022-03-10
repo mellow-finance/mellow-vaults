@@ -395,6 +395,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let usdcDepositAmounts: BigNumber[] = [];
                     let wethDepositAmounts: BigNumber[] = [];
 
+                    let usdcDepositedAmount = BigNumber.from(0);
+                    let wethDepositedAmount = BigNumber.from(0);
+
                     /* 
                         --------------------- SET DEPOSIT AMOUNTS ---------------------------
                         R -> ratio
@@ -422,6 +425,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     .div(numDeposits)
                             );
                             wethDepositAmounts.push(BigNumber.from(0));
+
+                            usdcDepositedAmount = usdcDepositedAmount.add(
+                                usdcDepositAmounts[i]
+                            );
+                            wethDepositedAmount = wethDepositedAmount.add(
+                                wethDepositAmounts[i]
+                            );
                         }
                     } else {
                         for (let i = 0; i < numDeposits; ++i) {
@@ -441,6 +451,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             .pow(3)
                                             .sub(roundedTokensDepositRatio)
                                     )
+                            );
+
+                            usdcDepositedAmount = usdcDepositedAmount.add(
+                                usdcDepositAmounts[i]
+                            );
+                            wethDepositedAmount = wethDepositedAmount.add(
+                                wethDepositAmounts[i]
                             );
                         }
                     }
@@ -511,6 +528,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
 
                     /*
+                        in case deposit amounts are greater than 0
+
                         if token ratio == 1
                             weth balance remains const
                             usdc balance must be different
@@ -528,23 +547,34 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         expect(
                             await this.weth.balanceOf(this.deployer.address)
                         ).to.be.equal(this.wethDeployerSupply);
-                        expect(
-                            await this.usdc.balanceOf(this.deployer.address)
-                        ).to.not.be.equal(this.usdcDeployerSupply);
+
+                        if (usdcDepositedAmount.gt(0)) {
+                            expect(
+                                await this.usdc.balanceOf(this.deployer.address)
+                            ).to.not.be.equal(this.usdcDeployerSupply);
+                        }
                     } else if (tokensDepositRatioEqualsZero) {
-                        expect(
-                            await this.weth.balanceOf(this.deployer.address)
-                        ).to.not.be.equal(this.wethDeployerSupply);
+                        if (wethDepositedAmount.gt(0)) {
+                            expect(
+                                await this.weth.balanceOf(this.deployer.address)
+                            ).to.not.be.equal(this.wethDeployerSupply);
+                        }
+
                         expect(
                             await this.usdc.balanceOf(this.deployer.address)
                         ).to.be.equal(this.usdcDeployerSupply);
                     } else {
-                        expect(
-                            await this.weth.balanceOf(this.deployer.address)
-                        ).to.not.be.equal(this.wethDeployerSupply);
-                        expect(
-                            await this.usdc.balanceOf(this.deployer.address)
-                        ).to.not.be.equal(this.usdcDeployerSupply);
+                        if (wethDepositedAmount.gt(0)) {
+                            expect(
+                                await this.weth.balanceOf(this.deployer.address)
+                            ).to.not.be.equal(this.wethDeployerSupply);
+                        }
+
+                        if (usdcDepositedAmount.gt(0)) {
+                            expect(
+                                await this.usdc.balanceOf(this.deployer.address)
+                            ).to.not.be.equal(this.usdcDeployerSupply);
+                        }
                     }
 
                     /* 
