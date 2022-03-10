@@ -14,7 +14,11 @@ import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import Exceptions from "./library/Exceptions";
-import {ERC20_ROOT_VAULT_INTERFACE_ID, VAULT_INTERFACE_ID} from "./library/Constants";
+import {
+    ERC20_ROOT_VAULT_INTERFACE_ID,
+    YEARN_VAULT_INTERFACE_ID,
+} from "./library/Constants";
+import { randomInt } from "crypto";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -178,21 +182,37 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#addDepositorsToAllowlist", () => {
             it("adds depositor to allow list", async () => {
                 let newDepositor = randomAddress();
-                expect(await this.subject.depositorsAllowlist()).to.not.contain(newDepositor);
-                await this.subject.connect(this.admin).addDepositorsToAllowlist([newDepositor]);
-                expect(await this.subject.depositorsAllowlist()).to.contain(newDepositor);
+                expect(await this.subject.depositorsAllowlist()).to.not.contain(
+                    newDepositor
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist([newDepositor]);
+                expect(await this.subject.depositorsAllowlist()).to.contain(
+                    newDepositor
+                );
             });
 
             describe("access control:", () => {
                 it("allowed: admin", async () => {
-                    await expect(this.subject.connect(this.admin).addDepositorsToAllowlist([randomAddress()])).to.not.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([randomAddress()])
+                    ).to.not.be.reverted;
                 });
                 it("not allowed: deployer", async () => {
-                    await expect(this.subject.addDepositorsToAllowlist([randomAddress()])).to.be.reverted;
-                })
+                    await expect(
+                        this.subject.addDepositorsToAllowlist([randomAddress()])
+                    ).to.be.reverted;
+                });
                 it("not allowed: any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
-                        await expect(this.subject.connect(signer).addDepositorsToAllowlist([randomAddress()])).to.be.reverted;
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .addDepositorsToAllowlist([randomAddress()])
+                        ).to.be.reverted;
                     });
                 });
             });
@@ -201,23 +221,47 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#removeDepositorsFromAllowlist", () => {
             it("removes depositor to allow list", async () => {
                 let newDepositor = randomAddress();
-                expect(await this.subject.depositorsAllowlist()).to.not.contain(newDepositor);
-                await this.subject.connect(this.admin).addDepositorsToAllowlist([newDepositor]);
-                expect(await this.subject.depositorsAllowlist()).to.contain(newDepositor);
-                await this.subject.connect(this.admin).removeDepositorsFromAllowlist([newDepositor]);
-                expect(await this.subject.depositorsAllowlist()).to.not.contain(newDepositor);
+                expect(await this.subject.depositorsAllowlist()).to.not.contain(
+                    newDepositor
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist([newDepositor]);
+                expect(await this.subject.depositorsAllowlist()).to.contain(
+                    newDepositor
+                );
+                await this.subject
+                    .connect(this.admin)
+                    .removeDepositorsFromAllowlist([newDepositor]);
+                expect(await this.subject.depositorsAllowlist()).to.not.contain(
+                    newDepositor
+                );
             });
 
             describe("access control:", () => {
                 it("allowed: admin", async () => {
-                    await expect(this.subject.connect(this.admin).removeDepositorsFromAllowlist([randomAddress()])).to.not.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .removeDepositorsFromAllowlist([randomAddress()])
+                    ).to.not.be.reverted;
                 });
                 it("not allowed: deployer", async () => {
-                    await expect(this.subject.removeDepositorsFromAllowlist([randomAddress()])).to.be.reverted;
-                })
+                    await expect(
+                        this.subject.removeDepositorsFromAllowlist([
+                            randomAddress(),
+                        ])
+                    ).to.be.reverted;
+                });
                 it("not allowed: any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
-                        await expect(this.subject.connect(signer).removeDepositorsFromAllowlist([randomAddress()])).to.be.reverted;
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .removeDepositorsFromAllowlist([
+                                    randomAddress(),
+                                ])
+                        ).to.be.reverted;
                     });
                 });
             });
@@ -237,7 +281,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     it("returns false", async () => {
                         expect(
                             await this.subject.supportsInterface(
-                                VAULT_INTERFACE_ID
+                                YEARN_VAULT_INTERFACE_ID
                             )
                         ).to.be.false;
                     });
@@ -257,6 +301,194 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
             });
+        });
+
+        describe("#initialize", () => {
+            beforeEach(async () => {
+                this.nft = await ethers.provider.send("eth_getStorageAt", [
+                    this.subject.address,
+                    "0x4", // address of _nft
+                ]);
+                await ethers.provider.send("hardhat_setStorageAt", [
+                    this.subject.address,
+                    "0x4", // address of _nft
+                    "0x0000000000000000000000000000000000000000000000000000000000000000",
+                ]);
+            });
+
+            // it("initializes contract successfully", async () => {
+            //     await withSigner(
+            //         this.erc20VaultGovernance.address,
+            //         async (signer) => {
+            //             await expect(
+            //                 this.subject
+            //                     .connect(signer)
+            //                     .initialize(this.nft, [
+            //                         this.usdc.address,
+            //                         this.weth.address,
+            //                     ],
+            //                     randomAddress(),
+            //                     [
+            //                         this.usdc.address,
+            //                         this.weth.address,
+            //                     ],
+            //                     )
+            //             ).to.not.be.reverted;
+            //         }
+            //     );
+            // });
+
+            describe("edge cases:", () => {
+                describe("when subvaultNFTs length is 0", () => {
+                    it(`reverts with ${Exceptions.EMPTY_LIST}`, async () => {
+                        await withSigner(
+                            this.erc20VaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            []
+                                        )
+                                ).to.be.revertedWith(Exceptions.EMPTY_LIST);
+                            }
+                        );
+                    });
+                });
+
+                describe("when one of subvaultNFT is 0", () => {
+                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                        await withSigner(
+                            this.erc20VaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [0, randomInt(100)]
+                                        )
+                                ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                            }
+                        );
+                    });
+                });
+
+                // describe("when vault's nft is not 0", () => {
+                //     it(`reverts with ${Exceptions.INIT}`, async () => {
+                //         await ethers.provider.send("hardhat_setStorageAt", [
+                //             this.subject.address,
+                //             "0x4", // address of _nft
+                //             "0x0000000000000000000000000000000000000000000000000000000000000007",
+                //         ]);
+                //         await expect(
+                //             this.subject.initialize(this.nft, [
+                //                 this.usdc.address,
+                //                 this.weth.address,
+                //             ])
+                //         ).to.be.revertedWith(Exceptions.INIT);
+                //     });
+                // });
+                // describe("when tokens are not sorted", () => {
+                //     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                //         await expect(
+                //             this.subject.initialize(this.nft, [
+                //                 this.weth.address,
+                //                 this.usdc.address,
+                //             ])
+                //         ).to.be.revertedWith(Exceptions.INVARIANT);
+                //     });
+                // });
+                // describe("when tokens are not unique", () => {
+                //     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                //         await expect(
+                //             this.subject.initialize(this.nft, [
+                //                 this.weth.address,
+                //                 this.weth.address,
+                //             ])
+                //         ).to.be.revertedWith(Exceptions.INVARIANT);
+                //     });
+                // });
+                // describe("when setting zero nft", () => {
+                //     it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
+                //         await expect(
+                //             this.subject.initialize(0, [
+                //                 this.usdc.address,
+                //                 this.weth.address,
+                //             ])
+                //         ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                //     });
+                // });
+                // describe("when token has no permission to become a vault token", () => {
+                //     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                //         await this.protocolGovernance
+                //             .connect(this.admin)
+                //             .revokePermissions(this.usdc.address, [
+                //                 PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                //             ]);
+                //         await withSigner(
+                //             this.erc20VaultGovernance.address,
+                //             async (signer) => {
+                //                 await expect(
+                //                     this.subject
+                //                         .connect(signer)
+                //                         .initialize(this.nft, [
+                //                             this.usdc.address,
+                //                             this.weth.address,
+                //                         ])
+                //                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                //             }
+                //         );
+                //     });
+                // });
+            });
+        });
+
+        describe("#deposit", () => {
+            // it("emits Deposit event", async () => {
+            //     expect(
+            //         await this.subject.deposit(, BigNumber.from(randomInt(100))
+            //         )
+            //     ).to.emit(this.subject, "Deposit");
+            // });
+
+            describe("edge cases:", () => {
+                describe("when deposit is disabled", () => {
+                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                        await expect(
+                            this.subject.deposit(
+                                [],
+                                BigNumber.from(randomInt(100))
+                            )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            // describe("access control:", () => {
+            //     it("allowed: any address", async () => {
+            //         await withSigner(randomAddress(), async (signer) => {
+            //             await expect(
+            //                 this.subject
+            //                     .connect(signer)
+            //                     .deposit(
+            //                         [], BigNumber.from(randomInt(100))
+            //                     )
+            //             ).to.not.be.reverted;
+            //         });
+            //     });
+            // });
         });
     }
 );
