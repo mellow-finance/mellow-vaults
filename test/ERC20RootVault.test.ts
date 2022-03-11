@@ -385,6 +385,97 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
+                describe("when owner of subvaultNFT is not a contract", () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        await ethers.provider.send("hardhat_setStorageAt", [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        ]);
+                        const startNft = (
+                            await this.vaultRegistry.vaultsCount()
+                        ).toNumber();
+                        await withSigner(
+                            this.erc20VaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startNft]
+                                        )
+                                ).to.be.revertedWith(
+                                    Exceptions.INVALID_INTERFACE
+                                ); // FORBIDDEN
+                            }
+                        );
+                    });
+                });
+
+                describe("when subvaultNft index is 0", () => {
+                    it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
+                        // await ethers.provider.send("hardhat_setStorageAt", [
+                        //     this.subject.address,
+                        //     "0x4", // address of _nft
+                        //     "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        // ]);
+                        const startNft =
+                            (
+                                await this.vaultRegistry.vaultsCount()
+                            ).toNumber() - 1;
+                        await withSigner(
+                            this.erc20VaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startNft]
+                                        )
+                                ).to.be.revertedWith(Exceptions.DUPLICATE);
+                            }
+                        );
+                    });
+                });
+
+                describe("when subvaultNFT does not supports interface", () => {
+                    it(`reverts with ${Exceptions.INVALID_INTERFACE}`, async () => {
+                        const startNft = await this.vaultRegistry.vaultsCount();
+                        await withSigner(
+                            this.erc20VaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startNft]
+                                        )
+                                ).to.be.revertedWith(
+                                    Exceptions.INVALID_INTERFACE
+                                );
+                            }
+                        );
+                    });
+                });
+
                 // describe("when vault's nft is not 0", () => {
                 //     it(`reverts with ${Exceptions.INIT}`, async () => {
                 //         await ethers.provider.send("hardhat_setStorageAt", [
@@ -465,6 +556,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edge cases:", () => {
                 describe("when deposit is disabled", () => {
+                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                        // this.subject.
+                        await expect(
+                            this.subject.deposit(
+                                [],
+                                BigNumber.from(randomInt(100))
+                            )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            describe("edge cases:", () => {
+                describe("when it is private vault or there is no depositor in allow list", () => {
                     it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
                         await expect(
                             this.subject.deposit(
