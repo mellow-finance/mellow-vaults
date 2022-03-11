@@ -3,8 +3,6 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
-
 
 contract MockCowswap {
     struct Data {
@@ -32,8 +30,10 @@ contract MockCowswap {
     bytes32 private constant DOMAIN_NAME = keccak256("Gnosis Protocol");
     bytes32 private constant DOMAIN_VERSION = keccak256("v2");
 
+    mapping(bytes => bool) public preSignature;
+
     function setPreSignature(bytes calldata orderUid, bool signed) external {
-        console.log("roflan");
+        preSignature[orderUid] = signed;
     }
 
     constructor () {

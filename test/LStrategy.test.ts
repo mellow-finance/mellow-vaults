@@ -273,19 +273,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     autoMine: true,
                 });
 
-                let mockValidatorDeployParams = await deploy("MockValidator", {
+                let cowswapValidatorDeployParams = await deploy("CowswapValidator", {
                     from: this.deployer.address,
-                    contract: "MockValidator",
+                    contract: "CowswapValidator",
                     args: [this.protocolGovernance.address],
                     log: true,
                     autoMine: true,
                 });
-                console.log("cowswap: %s", this.cowswap.address);
-                console.log("validator: %s", mockValidatorDeployParams.address);
-                await this.protocolGovernance.connect(this.admin).stageValidator(this.cowswap.address, mockValidatorDeployParams.address);
+
+                await this.protocolGovernance.connect(this.admin).stageValidator(this.cowswap.address, cowswapValidatorDeployParams.address);
                 await sleep(await this.protocolGovernance.governanceDelay());
                 await this.protocolGovernance.connect(this.admin).commitValidator(this.cowswap.address);
-                console.log(await this.protocolGovernance.validators(this.cowswap.address));
 
                 this.subject = await ethers.getContractAt(
                     "LStrategy",
@@ -1028,27 +1026,46 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     });
 
     describe.only("#signOrder", () => {
-        it("signs order successfully", async () => {
-            await this.grantPermissions();
-            console.log(this.cowswap.address);
-            await this.subject.connect(this.admin).postPreOrder();
-            let preOrder = await this.subject.preOrder();
-            let orderStruct = {
-                sellToken: preOrder.tokenIn,
-                buyToken: preOrder.tokenOut,
-                receiver: this.deployer.address,
-                sellAmount: preOrder.amountIn,
-                buyAmount: preOrder.minAmountOut,
-                validTo: preOrder.deadline,
-                appData: randomBytes(32),
-                feeAmount: BigNumber.from(500),
-                kind: randomBytes(32),
-                partiallyFillable: false,
-                sellTokenBalance: randomBytes(32),
-                buyTokenBalance: randomBytes(32)
+        beforeEach(async () => {
+            this.successfulInitialization = async () => {
+                await this.grantPermissions();
+                await this.subject.connect(this.admin).postPreOrder();
+                let preOrder = await this.subject.preOrder();
+                this.baseOrderStruct = {
+                    sellToken: preOrder.tokenIn,
+                    buyToken: preOrder.tokenOut,
+                    receiver: this.deployer.address,
+                    sellAmount: preOrder.amountIn,
+                    buyAmount: preOrder.minAmountOut,
+                    validTo: preOrder.deadline,
+                    appData: randomBytes(32),
+                    feeAmount: BigNumber.from(500),
+                    kind: randomBytes(32),
+                    partiallyFillable: false,
+                    sellTokenBalance: randomBytes(32),
+                    buyTokenBalance: randomBytes(32)
+                };
             };
-            let orderHash = await this.cowswap.callStatic.hash(orderStruct, await this.cowswap.domainSeparator());
-            await this.subject.connect(this.admin).signOrder(orderStruct, ethers.utils.solidityPack(["bytes32", "address", "uint32"], [orderHash, randomBytes(20), randomBytes(4)]), true);
+        });
+        it("signs order successfully when signed is set to true", async () => {
+            await this.successfulInitialization();
+            let orderHash = await this.cowswap.callStatic.hash(this.baseOrderStruct, await this.cowswap.domainSeparator());
+            let orderUuid = ethers.utils.solidityPack(["bytes32", "address", "uint32"], [orderHash, randomBytes(20), randomBytes(4)]);
+            await expect(this.subject.connect(this.admin).signOrder(this.baseOrderStruct, orderUuid, true));
+            expect(await this.subject.orderDeadline()).eq(this.baseOrderStruct.validTo);
+            expect(await this.cowswap.preSignature(orderUuid)).to.be.true;
+        });
+        it("resets order successfully when signed is set to false", async () => {
+            await this.successfulInitialization();
+            let orderHash = await this.cowswap.callStatic.hash(this.baseOrderStruct, await this.cowswap.domainSeparator());
+            let orderUuid = ethers.utils.solidityPack(["bytes32", "address", "uint32"], [orderHash, randomBytes(20), randomBytes(4)]);
+            await expect(this.subject.connect(this.admin).signOrder(this.baseOrderStruct, orderUuid, false));
+            expect(await this.cowswap.preSignature(orderUuid)).to.be.false;
+        });
+        it("emits OrderSigned event", async () => {
+            await this.successfulInitialization();
+            let orderHash = await this.cowswap.callStatic.hash(this.baseOrderStruct, await this.cowswap.domainSeparator());
+            await expect(this.subject.connect(this.admin).signOrder(this.baseOrderStruct, ethers.utils.solidityPack(["bytes32", "address", "uint32"], [orderHash, randomBytes(20), randomBytes(4)]), true)).to.emit(this.subject, "OrderSigned");
         });
     });
 });

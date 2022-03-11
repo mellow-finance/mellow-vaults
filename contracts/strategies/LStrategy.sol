@@ -18,7 +18,6 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
-import "hardhat/console.sol";
 
 contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     using SafeERC20 for IERC20;
@@ -357,7 +356,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         _requireAtLeastOperator();
         PreOrder memory preOrder_ = preOrder;
         if (!signed) {
-            bytes memory resetData = abi.encodePacked(uuid, false);
+            bytes memory resetData = abi.encode(uuid, false);
             erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, resetData);
             return;
         }
@@ -373,7 +372,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         require(order.validTo <= preOrder_.deadline, ExceptionsLibrary.TIMESTAMP);
         bytes memory approveData = abi.encode(cowswap, order.sellAmount);
         erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
-        bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
+        bytes memory setPresignatureData = abi.encode(uuid, signed);
         erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
         orderDeadline = order.validTo;
         delete preOrder;
