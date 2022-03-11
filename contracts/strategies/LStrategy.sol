@@ -310,7 +310,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     /// @return preOrder_ Posted preorder
     function postPreOrder() external returns (PreOrder memory preOrder_) {
         _requireAtLeastOperator();
-        console.log(orderDeadline, block.timestamp);
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
@@ -363,7 +362,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             return;
         }
         require(preOrder_.deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
-
         (bytes32 orderHashFromUid, , ) = GPv2Order.extractOrderUidParams(uuid);
         bytes32 domainSeparator = ICowswapSettlement(cowswap).domainSeparator();
         bytes32 orderHash = GPv2Order.hash(order, domainSeparator);

@@ -3,7 +3,7 @@ import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 
 import { contract } from "./library/setup";
-import { ERC20Vault, LStrategy, UniV3Vault } from "./types";
+import { ERC20Vault, LStrategy, MockCowswap, UniV3Vault } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { abi as ICurvePool } from "./helpers/curvePoolABI.json";
@@ -18,13 +18,14 @@ import {
 import { BigNumber } from "ethers";
 import {combineVaults, PermissionIdsLibrary, setupVault} from "../deploy/0000_utils";
 import Exceptions from "./library/Exceptions";
-import {ERC20} from "./library/Types";
+import { ERC20 } from "./library/Types";
+import { randomBytes } from "ethers/lib/utils";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
     uniV3UpperVault: UniV3Vault;
     erc20Vault: ERC20Vault;
-    cowswap: string;
+    cowswap: MockCowswap;
 };
 
 type DeployOptions = {};
@@ -37,10 +38,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await deployments.fixture();
                 const { read } = deployments;
 
-                const { uniswapV3PositionManager, cowswap, uniswapV3Router } =
+                const { uniswapV3PositionManager, uniswapV3Router } =
                     await getNamedAccounts();
-
-                this.cowswap = cowswap;
 
                 this.swapRouter = await ethers.getContractAt(
                     ISwapRouter,
@@ -51,6 +50,35 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     INonfungiblePositionManager,
                     uniswapV3PositionManager
                 );
+
+                this.grantPermissions = async () => {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            this.erc20Vault.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(this.subject.address, tokenId);
+                        }
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(this.cowswap.address, [
+                            PermissionIdsLibrary.ERC20_APPROVE,
+                        ]);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitPermissionGrants(this.cowswap.address);
+                };
 
                 this.swapTokens = async (
                     senderAddress: string,
@@ -226,6 +254,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     log: true,
                     autoMine: true,
                 });
+                this.cowswap = await ethers.getContractAt(
+                    "MockCowswap",
+                    cowswapDeployParams.address
+                );
                 let strategyDeployParams = await deploy("LStrategy", {
                     from: this.deployer.address,
                     contract: "LStrategy",
@@ -240,6 +272,20 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     log: true,
                     autoMine: true,
                 });
+
+                let mockValidatorDeployParams = await deploy("MockValidator", {
+                    from: this.deployer.address,
+                    contract: "MockValidator",
+                    args: [this.protocolGovernance.address],
+                    log: true,
+                    autoMine: true,
+                });
+                console.log("cowswap: %s", this.cowswap.address);
+                console.log("validator: %s", mockValidatorDeployParams.address);
+                await this.protocolGovernance.connect(this.admin).stageValidator(this.cowswap.address, mockValidatorDeployParams.address);
+                await sleep(await this.protocolGovernance.governanceDelay());
+                await this.protocolGovernance.connect(this.admin).commitValidator(this.cowswap.address);
+                console.log(await this.protocolGovernance.validators(this.cowswap.address));
 
                 this.subject = await ethers.getContractAt(
                     "LStrategy",
@@ -674,45 +720,14 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     });
 
     describe("#resetCowswapAllowance", () => {
-        beforeEach(async () => {
-            this.grantPermissions = async () => {
-                let tokenId = await ethers.provider.send(
-                    "eth_getStorageAt",
-                    [
-                        this.erc20Vault.address,
-                        "0x4", // address of _nft
-                    ]
-                );
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(this.subject.address, tokenId);
-                        await this.protocolGovernance
-                            .connect(this.admin)
-                            .stagePermissionGrants(this.cowswap, [
-                                PermissionIdsLibrary.ERC20_APPROVE,
-                            ]);
-                        await sleep(
-                            await this.protocolGovernance.governanceDelay()
-                        );
-                        await this.protocolGovernance
-                            .connect(this.admin)
-                            .commitPermissionGrants(this.cowswap);
-                    }
-                );
-            };
-        });
-
         it("resets allowance from erc20Vault to cowswap", async () => {
             await withSigner(this.erc20Vault.address, async (signer) => {
-                await this.usdc.connect(signer).approve(this.cowswap, BigNumber.from(10).pow(18));
+                await this.usdc.connect(signer).approve(this.cowswap.address, BigNumber.from(10).pow(18));
             });
             await this.grantPermissions();
             await this.subject.connect(this.admin).grantRole(await this.subject.ADMIN_DELEGATE_ROLE(), this.deployer.address);
             await this.subject.resetCowswapAllowance(0);
-            expect(await this.usdc.allowance(this.erc20Vault.address, this.cowswap)).to.be.equal(0);
+            expect(await this.usdc.allowance(this.erc20Vault.address, this.cowswap.address)).to.be.equal(0);
         });
         it("emits CowswapAllowanceReset event", async () => {
             await this.grantPermissions();
@@ -854,23 +869,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await withSigner(this.erc20Vault.address, async (signer) => {
                 await this.usdc.connect(signer).approve(this.uniV3UpperVault.address, ethers.constants.MaxUint256);
             });
-            this.grantPermissions = async () => {
-                let tokenId = await ethers.provider.send(
-                    "eth_getStorageAt",
-                    [
-                        this.erc20Vault.address,
-                        "0x4", // address of _nft
-                    ]
-                );
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(this.subject.address, tokenId);
-                    }
-                );
-            };
         });
 
         it("pulls tokens from one vault to another", async () => {
@@ -939,7 +937,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe.only("#rebalanceERC20UniV3Vaults", () => {
+    describe("#rebalanceERC20UniV3Vaults", () => {
         describe("access control:", () => {
             beforeEach(async () => {
                 await this.preparePush({vault: this.uniV3LowerVault});
@@ -1029,5 +1027,28 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    xdescribe("#signOrder", () => {});
+    describe.only("#signOrder", () => {
+        it("signs order successfully", async () => {
+            await this.grantPermissions();
+            console.log(this.cowswap.address);
+            await this.subject.connect(this.admin).postPreOrder();
+            let preOrder = await this.subject.preOrder();
+            let orderStruct = {
+                sellToken: preOrder.tokenIn,
+                buyToken: preOrder.tokenOut,
+                receiver: this.deployer.address,
+                sellAmount: preOrder.amountIn,
+                buyAmount: preOrder.minAmountOut,
+                validTo: preOrder.deadline,
+                appData: randomBytes(32),
+                feeAmount: BigNumber.from(500),
+                kind: randomBytes(32),
+                partiallyFillable: false,
+                sellTokenBalance: randomBytes(32),
+                buyTokenBalance: randomBytes(32)
+            };
+            let orderHash = await this.cowswap.callStatic.hash(orderStruct, await this.cowswap.domainSeparator());
+            await this.subject.connect(this.admin).signOrder(orderStruct, ethers.utils.solidityPack(["bytes32", "address", "uint32"], [orderHash, randomBytes(20), randomBytes(4)]), true);
+        });
+    });
 });
