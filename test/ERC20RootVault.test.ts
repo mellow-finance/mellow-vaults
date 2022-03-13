@@ -9,7 +9,12 @@ import {
     randomAddress,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { ERC20RootVault, ERC20Vault, UniV3Vault } from "./types";
+import {
+    ERC20RootVault,
+    ERC20Vault,
+    IntegrationVault,
+    UniV3Vault,
+} from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -23,6 +28,7 @@ import { randomInt } from "crypto";
 type CustomContext = {
     erc20Vault: ERC20Vault;
     uniV3Vault: UniV3Vault;
+    integrationVault: IntegrationVault;
     curveRouter: string;
     preparePush: () => any;
 };
@@ -339,7 +345,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             // });
 
             describe("edge cases:", () => {
-                describe("when subvaultNFTs length is 0", () => {
+                describe("when subvaultNfts length is 0", () => {
                     it(`reverts with ${Exceptions.EMPTY_LIST}`, async () => {
                         await withSigner(
                             this.erc20VaultGovernance.address, // what to write here????
@@ -362,7 +368,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when one of subvaultNFT is 0", () => {
+                describe("when one of subvaultNft is 0", () => {
                     it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
                         await withSigner(
                             this.erc20VaultGovernance.address, // what to write here????
@@ -385,18 +391,30 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when owner of subvaultNFT is not a contract", () => {
+                describe("when owner of subvaultNft is not a contract", () => {
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
-                        await ethers.provider.send("hardhat_setStorageAt", [
-                            this.subject.address,
-                            "0x4", // address of _nft
-                            "0x0000000000000000000000000000000000000000000000000000000000000000",
-                        ]);
                         const startNft = (
                             await this.vaultRegistry.vaultsCount()
                         ).toNumber();
+                        const newOwner = randomAddress();
                         await withSigner(
-                            this.erc20VaultGovernance.address, // what to write here????
+                            await this.vaultRegistry.ownerOf(startNft),
+                            async (signer) => {
+                                await this.vaultRegistry
+                                    .connect(signer)
+                                    .setApprovalForAll(newOwner, true);
+                                await this.vaultRegistry
+                                    .connect(signer)
+                                    .transferFrom(
+                                        signer.address,
+                                        newOwner,
+                                        startNft
+                                    );
+                            }
+                        );
+
+                        await withSigner(
+                            this.erc20RootVaultGovernance.address,
                             async (signer) => {
                                 await expect(
                                     this.subject
@@ -410,21 +428,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             randomAddress(),
                                             [startNft]
                                         )
-                                ).to.be.revertedWith(
-                                    Exceptions.INVALID_INTERFACE
-                                ); // FORBIDDEN
+                                ).to.be.revertedWith(Exceptions.FORBIDDEN);
                             }
                         );
                     });
                 });
 
-                describe("when subvaultNft index is 0", () => {
+                describe("when subvaultNft index is 0 (Somehow works)", () => {
                     it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
-                        // await ethers.provider.send("hardhat_setStorageAt", [
-                        //     this.subject.address,
-                        //     "0x4", // address of _nft
-                        //     "0x0000000000000000000000000000000000000000000000000000000000000000",
-                        // ]);
                         const startNft =
                             (
                                 await this.vaultRegistry.vaultsCount()
@@ -450,9 +461,114 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when subvaultNFT does not supports interface", () => {
+                describe("when subvaultNft index is 0", () => {
+                    it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
+                        const startNft =
+                            (
+                                await this.vaultRegistry.vaultsCount()
+                            ).toNumber() - 2;
+                        await ethers.provider.send("hardhat_setStorageAt", [
+                            this.vaultRegistry.address,
+                            "0x5", // address of nft index
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        ]);
+                        await withSigner(
+                            this.erc20RootVaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startNft]
+                                        )
+                                ).to.be.revertedWith(Exceptions.DUPLICATE);
+                            }
+                        );
+                    });
+                });
+
+                describe("when subvaultNft address is 0", () => {
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
+                        const startNft = (
+                            await this.vaultRegistry.vaultsCount()
+                        ).toNumber();
+                        await ethers.provider.send("hardhat_setStorageAt", [
+                            this.vaultRegistry.address,
+                            "0x12", // address of vault
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        ]);
+                        const newOwner = ethers.constants.AddressZero;
+                        // await withSigner(
+                        //     await this.vaultRegistry.ownerOf(startNft),
+                        //     async (signer) => {
+                        //         await this.vaultRegistry
+                        //         .connect(signer)
+                        //         .setApprovalForAll(newOwner, true);
+                        //         await this.vaultRegistry
+                        //         .connect(signer)
+                        //         .transferFrom(signer.address, newOwner, startNft)
+                        //     });
+
+                        await withSigner(
+                            this.erc20VaultGovernance.address,
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startNft]
+                                        )
+                                ).to.be.revertedWith(
+                                    Exceptions.INVALID_INTERFACE // ADDRESS_ZERO
+                                );
+                            }
+                        );
+                    });
+                });
+
+                describe("when subvaultNFT does not support interface", () => {
                     it(`reverts with ${Exceptions.INVALID_INTERFACE}`, async () => {
                         const startNft = await this.vaultRegistry.vaultsCount();
+                        await withSigner(
+                            this.erc20VaultGovernance.address, // what to write here????
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startNft]
+                                        )
+                                ).to.be.revertedWith(
+                                    Exceptions.INVALID_INTERFACE
+                                );
+                            }
+                        );
+                    });
+                });
+
+                describe.only("when subvaultNFT supports interface", () => {
+                    it(`reverts with ${Exceptions.INVALID_INTERFACE}`, async () => {
+                        const startNft = (
+                            await this.vaultRegistry.vaultsCount()
+                        ).toNumber();
                         await withSigner(
                             this.erc20VaultGovernance.address, // what to write here????
                             async (signer) => {
@@ -590,6 +706,57 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             //                     .deposit(
             //                         [], BigNumber.from(randomInt(100))
             //                     )
+            //             ).to.not.be.reverted;
+            //         });
+            //     });
+            // });
+        });
+
+        describe.only("#withdraw", () => {
+            // it("emits Withdraw event", async () => {
+            //     expect(
+            //         await this.subject.withdraw(randomAddress(), BigNumber.from(randomInt(100)), []
+            //         )
+            //     ).to.emit(this.subject, "Withdraw");
+            // });
+
+            describe("edge cases:", () => {
+                describe("when total supply is 0", () => {
+                    it(`reverted with ${Exceptions.VALUE_ZERO}`, async () => {
+                        await expect(
+                            this.subject.withdraw(
+                                randomAddress(),
+                                BigNumber.from(randomInt(100)),
+                                []
+                            )
+                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                    });
+                });
+
+                describe("when total supply is not 0", () => {
+                    it(`reverted with ${Exceptions.VALUE_ZERO}`, async () => {
+                        const toAddress = randomAddress();
+                        await mint("USDC", toAddress, BigNumber.from(100));
+                        await expect(
+                            this.subject.withdraw(
+                                randomAddress(),
+                                BigNumber.from(randomInt(100)),
+                                []
+                            )
+                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                    });
+                });
+            });
+
+            // describe("access control:", () => {
+            //     it("allowed: any address", async () => {
+            //         // when all edge cases will be done
+            //         await withSigner(randomAddress(), async (signer) => {
+            //             await expect(
+            //                 this.subject
+            //                     .connect(signer)
+            //                     .withdraw
+            //                     (randomAddress(), BigNumber.from(randomInt(100)), [])
             //             ).to.not.be.reverted;
             //         });
             //     });
