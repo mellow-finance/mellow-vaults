@@ -9,9 +9,7 @@ import {
     randomAddress,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import {
-    StrategyParamsStruct,
-} from "./types/IERC20RootVaultGovernance";
+import { StrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
 import {
     ERC20RootVault,
     ERC20Vault,
@@ -761,12 +759,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
-                            .setStrategyParams(
-                                BigNumber.from(9),
-                                {
-                                    tokenLimitPerAddress: BigNumber.from(0),
-                                    tokenLimit: BigNumber.from(0),
-                                });
+                            .setStrategyParams(BigNumber.from(9), {
+                                tokenLimitPerAddress: BigNumber.from(0),
+                                tokenLimit: BigNumber.from(0),
+                            });
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
@@ -791,12 +787,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
-                            .setStrategyParams(
-                                BigNumber.from(9),
-                                {
-                                    tokenLimitPerAddress: BigNumber.from(10),
-                                    tokenLimit: BigNumber.from(0),
-                                });
+                            .setStrategyParams(BigNumber.from(9), {
+                                tokenLimitPerAddress: BigNumber.from(10),
+                                tokenLimit: BigNumber.from(0),
+                            });
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
