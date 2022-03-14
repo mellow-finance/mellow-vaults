@@ -730,6 +730,55 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                     });
                 });
+
+                describe("when lpAmount is 0", () => {
+                    it(`reverted with ${Exceptions.VALUE_ZERO}`, async () => {
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [BigNumber.from(0), BigNumber.from(0)],
+                                    BigNumber.from(0)
+                                )
+                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                    });
+                });
+
+                describe("when sum of lpAmount and sender balance is more than tokenLimitPerAddress", () => {
+                    it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        await ethers.provider.send("hardhat_setStorageAt", [
+                            this.subject.address,
+                            "0x4", // address of _nft
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        ]);
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [BigNumber.from(1), BigNumber.from(1)],
+                                    BigNumber.from(1)
+                                )
+                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                    });
+                });
             });
 
             describe("access control:", () => {
