@@ -663,12 +663,25 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#deposit", () => {
-            // it("emits Deposit event", async () => {
-            //     expect(
-            //         await this.subject.deposit(, BigNumber.from(randomInt(100))
-            //         )
-            //     ).to.emit(this.subject, "Deposit");
-            // });
+            it("emits Deposit event", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist([this.deployer.address]);
+                await this.weth
+                    .connect(this.deployer)
+                    .approve(this.subject.address, BigNumber.from(100));
+                await this.usdc
+                    .connect(this.deployer)
+                    .approve(this.subject.address, BigNumber.from(100));
+                await expect(
+                    this.subject
+                        .connect(this.deployer.address)
+                        .deposit(
+                            [BigNumber.from(1), BigNumber.from(1)],
+                            BigNumber.from(1)
+                        )
+                ).to.emit(this.subject, "Deposit");
+            });
 
             describe("edge cases:", () => {
                 describe("when deposit is disabled", () => {
@@ -696,7 +709,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe.only("when minLpTokens more than lpAmount", () => {
+                describe("when minLpTokens more than lpAmount", () => {
                     it(`reverted with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
                         await this.subject
                             .connect(this.admin)
@@ -707,41 +720,42 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.usdc
                             .connect(this.deployer)
                             .approve(this.subject.address, BigNumber.from(100));
-                        await withSigner(
-                            this.deployer.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .deposit(
-                                            [
-                                                BigNumber.from(1),
-                                                BigNumber.from(1),
-                                            ],
-                                            BigNumber.from(2)
-                                        )
-                                ).to.be.revertedWith(
-                                    Exceptions.LIMIT_UNDERFLOW
-                                );
-                            }
-                        );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [BigNumber.from(1), BigNumber.from(1)],
+                                    BigNumber.from(2)
+                                )
+                        ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                     });
                 });
             });
 
-            // describe("access control:", () => {
-            //     it("allowed: any address", async () => {
-            //         await withSigner(randomAddress(), async (signer) => {
-            //             await expect(
-            //                 this.subject
-            //                     .connect(signer)
-            //                     .deposit(
-            //                         [], BigNumber.from(randomInt(100))
-            //                     )
-            //             ).to.not.be.reverted;
-            //         });
-            //     });
-            // });
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    const depositor = randomAddress();
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([this.deployer.address]);
+                    await withSigner(this.deployer.address, async (signer) => {
+                        await this.weth
+                            .connect(signer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await this.usdc
+                            .connect(signer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .deposit(
+                                    [BigNumber.from(1), BigNumber.from(1)],
+                                    BigNumber.from(1)
+                                )
+                        ).to.not.be.reverted;
+                    });
+                });
+            });
         });
 
         describe("#withdraw", () => {
