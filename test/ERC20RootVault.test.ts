@@ -673,7 +673,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when deposit is disabled", () => {
                     it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
-                        // this.subject.
+                        // this.subject.vaultGovernance()
+                        // await expect(
+                        //     this.subject
+                        //     .connect(this.erc20RootVaultGovernance.address)
+                        //     .deposit(
+                        //         [],
+                        //         BigNumber.from(randomInt(100))
+                        //     )
+                        // ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+
+                describe("when it is not a private vault or there is no depositor in allow list", () => {
+                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
                         await expect(
                             this.subject.deposit(
                                 [],
@@ -682,17 +695,36 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
-            });
 
-            describe("edge cases:", () => {
-                describe("when it is private vault or there is no depositor in allow list", () => {
-                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
-                        await expect(
-                            this.subject.deposit(
-                                [],
-                                BigNumber.from(randomInt(100))
-                            )
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                describe.only("when minLpTokens more than lpAmount", () => {
+                    it(`reverted with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await withSigner(
+                            this.deployer.address,
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .deposit(
+                                            [
+                                                BigNumber.from(1),
+                                                BigNumber.from(1),
+                                            ],
+                                            BigNumber.from(2)
+                                        )
+                                ).to.be.revertedWith(
+                                    Exceptions.LIMIT_UNDERFLOW
+                                );
+                            }
+                        );
                     });
                 });
             });
@@ -712,7 +744,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             // });
         });
 
-        describe.only("#withdraw", () => {
+        describe("#withdraw", () => {
             // it("emits Withdraw event", async () => {
             //     expect(
             //         await this.subject.withdraw(randomAddress(), BigNumber.from(randomInt(100)), []
