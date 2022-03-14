@@ -10,10 +10,14 @@ import {
 } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
+    StrategyParamsStruct,
+} from "./types/IERC20RootVaultGovernance";
+import {
     ERC20RootVault,
     ERC20Vault,
     IntegrationVault,
     UniV3Vault,
+    ERC20RootVaultGovernance,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
@@ -753,13 +757,46 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when sum of lpAmount and sender balance is more than tokenLimitPerAddress", () => {
+                describe.only("when sum of lpAmount and sender balance is more than tokenLimitPerAddress", () => {
                     it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
-                        await ethers.provider.send("hardhat_setStorageAt", [
-                            this.subject.address,
-                            "0x4", // address of _nft
-                            "0x0000000000000000000000000000000000000000000000000000000000000000",
-                        ]);
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .setStrategyParams(
+                                BigNumber.from(9),
+                                {
+                                    tokenLimitPerAddress: BigNumber.from(0),
+                                    tokenLimit: BigNumber.from(0),
+                                });
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(this.subject.address, BigNumber.from(100));
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [BigNumber.from(1), BigNumber.from(1)],
+                                    BigNumber.from(1)
+                                )
+                        ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                    });
+                });
+
+                describe.only("when sum of lpAmount and totalSupply is more than tokenLimit", () => {
+                    it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .setStrategyParams(
+                                BigNumber.from(9),
+                                {
+                                    tokenLimitPerAddress: BigNumber.from(10),
+                                    tokenLimit: BigNumber.from(0),
+                                });
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
