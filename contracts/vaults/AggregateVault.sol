@@ -10,7 +10,6 @@ import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
 contract AggregateVault is IAggregateVault, Vault {
@@ -73,23 +72,19 @@ contract AggregateVault is IAggregateVault, Vault {
         address strategy_,
         uint256[] memory subvaultNfts_
     ) internal virtual {
-        console.log("In agregateVault initialize");
         IVaultRegistry vaultRegistry = IVaultGovernance(msg.sender).internalParams().registry;
         require(subvaultNfts_.length > 0, ExceptionsLibrary.EMPTY_LIST);
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
             uint256 subvaultNft = subvaultNfts_[i];
             require(subvaultNft > 0, ExceptionsLibrary.VALUE_ZERO);
-            console.log("before forbidden");
             require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.FORBIDDEN);
             require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE);
             address vault = vaultRegistry.vaultForNft(subvaultNft);
             require(vault != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-            console.log("before interface check");
             require(
                 IIntegrationVault(vault).supportsInterface(type(IIntegrationVault).interfaceId),
                 ExceptionsLibrary.INVALID_INTERFACE
             );
-            console.log("after interface check");
             vaultRegistry.approve(strategy_, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
             _subvaultNftsIndex[subvaultNft] = i + 1;

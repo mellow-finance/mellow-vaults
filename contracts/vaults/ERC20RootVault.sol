@@ -12,7 +12,6 @@ import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -64,7 +63,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address strategy_,
         uint256[] memory subvaultNfts_
     ) external {
-        console.log("In erc20RootVault initialize");
         _initialize(vaultTokens_, nft_, strategy_, subvaultNfts_);
 
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
@@ -82,7 +80,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
-        console.log("the first require");
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         address[] memory tokens = _vaultTokens;
@@ -93,14 +90,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !delayedStaretgyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
-        console.log("the second require");
         uint256 supply = totalSupply;
         uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
-            console.log(normalizedAmounts[i]);
-            console.log("loop");
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
         actualTokenAmounts = _push(normalizedAmounts, "");
