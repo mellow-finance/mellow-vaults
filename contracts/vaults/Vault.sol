@@ -8,7 +8,6 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IVault.sol";
 import "./VaultGovernance.sol";
-import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -85,7 +84,6 @@ abstract contract Vault is IVault, ERC165 {
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {
-        console.log("In vault initialize");
         require(_nft == 0, ExceptionsLibrary.INIT);
         require(CommonLibrary.isSortedAndUnique(vaultTokens_), ExceptionsLibrary.INVARIANT);
         require(nft_ != 0, ExceptionsLibrary.VALUE_ZERO); // guarantees that this method can only be called once
