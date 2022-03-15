@@ -526,7 +526,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             DENOMINATOR
         );
         if (minDeviation > 0) {
-            uint256 liquidityRatioD = FullMath.mulDiv(lowerLiquidity, lowerLiquidity + upperLiquidity, DENOMINATOR);
+            uint256 liquidityRatioD = FullMath.mulDiv(lowerLiquidity, DENOMINATOR, lowerLiquidity + upperLiquidity);
             uint256 deviation = targetLiquidityRatioD > liquidityRatioD
                 ? targetLiquidityRatioD - liquidityRatioD
                 : liquidityRatioD - targetLiquidityRatioD;

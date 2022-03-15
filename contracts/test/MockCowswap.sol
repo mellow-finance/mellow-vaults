@@ -24,9 +24,7 @@ contract MockCowswap {
     bytes32 public immutable domainSeparator;
 
     bytes32 private constant DOMAIN_TYPE_HASH =
-        keccak256(
-            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-        );
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 private constant DOMAIN_NAME = keccak256("Gnosis Protocol");
     bytes32 private constant DOMAIN_VERSION = keccak256("v2");
 
@@ -36,21 +34,13 @@ contract MockCowswap {
         preSignature[orderUid] = signed;
     }
 
-    constructor () {
+    constructor() {
         uint256 chainId;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             chainId := chainid()
         }
-        domainSeparator = keccak256(
-            abi.encode(
-                DOMAIN_TYPE_HASH,
-                DOMAIN_NAME,
-                DOMAIN_VERSION,
-                chainId,
-                address(this)
-            )
-        );
+        domainSeparator = keccak256(abi.encode(DOMAIN_TYPE_HASH, DOMAIN_NAME, DOMAIN_VERSION, chainId, address(this)));
     }
 
     uint256 internal constant UID_LENGTH = 56;

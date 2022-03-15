@@ -22,9 +22,11 @@ contract MockOracle is IOracle {
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
-        pricesX96 = new uint256[](1);
-        safetyIndices = new uint256[](1);
-        pricesX96[0] = currentPriceX96;
-        safetyIndices[0] = safetyIndex;
+        pricesX96 = new uint256[](2);
+        safetyIndices = new uint256[](2);
+        for (uint256 i = 0; i < 2; ++i) {
+            pricesX96[i] = currentPriceX96;
+            safetyIndices[i] = safetyIndex;
+        }
     }
 }
