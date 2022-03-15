@@ -677,7 +677,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .approve(this.subject.address, BigNumber.from(100));
                 await expect(
                     this.subject
-                        .connect(this.deployer.address)
+                        .connect(this.deployer)
                         .deposit(
                             [BigNumber.from(1), BigNumber.from(1)],
                             BigNumber.from(1)
@@ -686,26 +686,52 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("edge cases:", () => {
-                describe("when deposit is disabled", () => {
+                describe("when deposit is enabled", () => {
                     it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
-                        // this.subject.vaultGovernance()
-                        // await expect(
-                        //     this.subject
-                        //     .connect(this.erc20RootVaultGovernance.address)
-                        //     .deposit(
-                        //         [],
-                        //         BigNumber.from(randomInt(100))
-                        //     )
-                        // ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .setOperatorParams({
+                                disableDeposit: true,
+                            });
+                        await expect(
+                            this.subject.deposit(
+                                [BigNumber.from(1), BigNumber.from(1)],
+                                BigNumber.from(1)
+                            )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
 
-                describe("when it is not a private vault or there is no depositor in allow list", () => {
+                describe("when there is no depositor in allow list", () => {
                     it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
                         await expect(
                             this.subject.deposit(
                                 [],
                                 BigNumber.from(randomInt(100))
+                            )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+
+                describe("when there is a private vault in delayedStrategyParams", () => {
+                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                        const params = {
+                            strategyTreasury: randomAddress(),
+                            strategyPerformanceTreasury: randomAddress(),
+                            privateVault: true,
+                            managementFee: BigNumber.from(randomInt(10 ** 6)),
+                            performanceFee: BigNumber.from(randomInt(10 ** 6)),
+                        };
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(
+                                BigNumber.from(9),
+                                params
+                            );
+                        await expect(
+                            this.subject.deposit(
+                                [BigNumber.from(1), BigNumber.from(1)],
+                                BigNumber.from(1)
                             )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
@@ -755,7 +781,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe.only("when sum of lpAmount and sender balance is more than tokenLimitPerAddress", () => {
+                describe("when sum of lpAmount and sender balance is more than tokenLimitPerAddress", () => {
                     it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
@@ -783,7 +809,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe.only("when sum of lpAmount and totalSupply is more than tokenLimit", () => {
+                describe("when sum of lpAmount and totalSupply is more than tokenLimit", () => {
                     it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
