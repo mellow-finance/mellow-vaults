@@ -1168,7 +1168,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 );
         });
 
-        describe.only("edge cases:", () => {
+        describe("edge cases:", () => {
             describe("when minLowerAmounts are more than actual", () => {
                 it("reverts", async () => {
                     await this.grantPermissions();
