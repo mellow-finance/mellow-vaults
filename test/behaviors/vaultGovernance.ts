@@ -216,15 +216,8 @@ export function vaultGovernanceBehavior<
             ) => {
                 await this.protocolGovernance
                     .connect(this.admin)
-                    .stagePermissionGrants(ownerSigner.address, [CREATE_VAULT]);
-                await sleep(this.governanceDelay);
-                await this.protocolGovernance
-                    .connect(this.admin)
-                    .commitPermissionGrants(ownerSigner.address);
-
-                await this.protocolGovernance
-                    .connect(this.admin)
                     .stagePermissionGrants(ownerSigner.address, [
+                        CREATE_VAULT,
                         REGISTER_VAULT,
                     ]);
                 await sleep(this.governanceDelay);

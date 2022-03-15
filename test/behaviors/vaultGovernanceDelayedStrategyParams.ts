@@ -60,15 +60,10 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
     ) => {
         await this.protocolGovernance
             .connect(this.admin)
-            .stagePermissionGrants(ownerSigner.address, [CREATE_VAULT]);
-        await sleep(this.governanceDelay);
-        await this.protocolGovernance
-            .connect(this.admin)
-            .commitPermissionGrants(ownerSigner.address);
-
-        await this.protocolGovernance
-            .connect(this.admin)
-            .stagePermissionGrants(ownerSigner.address, [REGISTER_VAULT]);
+            .stagePermissionGrants(ownerSigner.address, [
+                CREATE_VAULT,
+                REGISTER_VAULT,
+            ]);
         await sleep(this.governanceDelay);
         await this.protocolGovernance
             .connect(this.admin)
