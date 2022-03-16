@@ -319,7 +319,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             ratioParams.minErc20TokenRatioDeviationD
         );
         TradingParams memory tradingParams_ = tradingParams;
-        uint256 priceX96 = targetPrice(tokens, tradingParams_);
         if (isNegative) {
             uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
