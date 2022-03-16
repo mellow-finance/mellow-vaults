@@ -1098,7 +1098,73 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    xdescribe("#rebalanceUniV3Vaults", () => {});
+    describe.only("#rebalanceUniV3Vaults", () => {
+        beforeEach(async () => {
+            await this.grantPermissions();
+            await this.preparePush({ vault: this.uniV3LowerVault });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
+                let tokenId = await ethers.provider.send(
+                    "eth_getStorageAt",
+                    [
+                        vault.address,
+                        "0x4", // address of _nft
+                    ]
+                );
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(this.subject.address, tokenId);
+                    }
+                );
+            }
+        });
+        describe("access control:", () => {
+            it("allowed: admin", async () => {
+                await expect(this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )).to.not.be.reverted;
+            });
+            it("allowed: operator", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject
+                        .connect(this.admin)
+                        .grantRole(
+                            await this.subject.ADMIN_DELEGATE_ROLE(),
+                            signer.address
+                        );
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .rebalanceUniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            )
+                    ).to.not.be.reverted;
+                });
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .rebalanceUniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+    });
 
     describe("#rebalanceERC20UniV3Vaults", () => {
         it("emits RebalancedErc20UniV3 event", async () => {
@@ -1217,13 +1283,13 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
 
             it("allowed: admin", async () => {
-                await this.subject
+                await expect(this.subject
                     .connect(this.admin)
                     .rebalanceERC20UniV3Vaults(
                         [ethers.constants.Zero, ethers.constants.Zero],
                         [ethers.constants.Zero, ethers.constants.Zero],
                         ethers.constants.MaxUint256
-                    );
+                    )).to.not.be.reverted;
             });
             it("allowed: operator", async () => {
                 await withSigner(randomAddress(), async (signer) => {
@@ -1241,7 +1307,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 [ethers.constants.Zero, ethers.constants.Zero],
                                 ethers.constants.MaxUint256
                             )
-                    ).to.be.reverted;
+                    ).to.not.be.reverted;
                 });
             });
             it("not allowed: any address", async () => {
@@ -1259,8 +1325,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
-
-    describe("#rebalanceUniV3Vaults", () => {});
 
     describe("#postPreOrder", () => {
         it("initializing preOrder when liquidityDelta is negative", async () => {
