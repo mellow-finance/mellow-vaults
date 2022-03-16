@@ -18,6 +18,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
     uint256 public lastFeeCharge;
     uint256 public totalWithdrawnAmountsTimestamp;
     uint256[] public totalWithdrawnAmounts;
@@ -80,6 +81,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
+        if (totalSupply == 0) {
+            for (uint256 i = 0; i < tokens.length; ++i) {
+                require(tokens[i] < FIRST_DEPOSIT_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
+            }
+        }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         address[] memory tokens = _vaultTokens;
