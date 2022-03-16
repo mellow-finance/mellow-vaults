@@ -311,8 +311,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
+        uint256 priceX96 = targetPrice(tokens, tradingParams);
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
-            tvl[0],
+            FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96),
             tvl[1],
             ratioParams.erc20TokenRatioD,
             ratioParams.minErc20TokenRatioDeviationD
