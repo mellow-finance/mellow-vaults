@@ -96,6 +96,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     // -------------------------  EXTERNAL, MUTATING  ------------------------------
 
     function addUniV3Pools(IUniswapV3Pool[] memory pools) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _addUniV3Pools(pools);
     }
 
