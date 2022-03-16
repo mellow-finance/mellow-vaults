@@ -610,8 +610,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                     liquidity = uint128(
                         FullMath.mulDiv(
                             availableBalances[i],
+                            DENOMINATOR,
                             shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i],
-                            DENOMINATOR
                         )
                     );
                 }
