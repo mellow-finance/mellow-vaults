@@ -655,9 +655,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
         if (!positiveTickGrowth) {
-            (fromVault, toVault) = (lowerVault, upperVault);
-        } else {
             (fromVault, toVault) = (upperVault, lowerVault);
+        } else {
+            (fromVault, toVault) = (lowerVault, upperVault);
         }
         uint256 fromNft = fromVault.uniV3Nft();
         uint256 toNft = toVault.uniV3Nft();
