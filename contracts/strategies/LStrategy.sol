@@ -313,7 +313,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         (uint256[] memory tvl, ) = erc20Vault.tvl();
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
             tvl[0],
-            tvl[0] + tvl[1],
+            tvl[1],
             ratioParams.erc20TokenRatioD,
             ratioParams.minErc20TokenRatioDeviationD
         );
