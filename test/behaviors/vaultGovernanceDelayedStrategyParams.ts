@@ -3,13 +3,10 @@ import { Arbitrary, nat, Random } from "fast-check";
 import { type } from "os";
 import {
     generateParams,
-    now,
     randomAddress,
     sleep,
-    sleepTo,
     toObject,
     withSigner,
-    zeroify,
 } from "../library/Helpers";
 import { address, pit, RUNS } from "../library/property";
 import { equals } from "ramda";
@@ -18,6 +15,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import Exceptions from "../library/Exceptions";
 import { VaultGovernanceContext } from "./vaultGovernance";
 import { deployments } from "hardhat";
+import { REGISTER_VAULT, CREATE_VAULT } from "../library/PermissionIdsLibrary";
 
 export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
     this: VaultGovernanceContext<S, F>,
@@ -28,6 +26,80 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
     this.beforeEach(() => {
         ({ someParams, noneParams } = generateParams(paramsArb));
     });
+
+    const setSubVaultNfts = async (
+        ownerSigner: SignerWithAddress,
+        tokens: string[]
+    ) => {
+        const { nft: nftERC20Vault } = await this.erc20VaultGovernance
+            .connect(ownerSigner)
+            .callStatic.createVault(tokens, ownerSigner.address);
+        await this.erc20VaultGovernance
+            .connect(ownerSigner)
+            .createVault(tokens, ownerSigner.address);
+
+        const { nft: nftYearnVault } = await this.yearnVaultGovernance
+            .connect(ownerSigner)
+            .callStatic.createVault(tokens, ownerSigner.address);
+        await this.yearnVaultGovernance
+            .connect(ownerSigner)
+            .createVault(tokens, ownerSigner.address);
+
+        let subVaultNfts = [nftERC20Vault, nftYearnVault];
+
+        for (let i = 0; i < subVaultNfts.length; ++i) {
+            await this.vaultRegistry
+                .connect(ownerSigner)
+                .approve(this.subject.address, subVaultNfts[i]);
+        }
+        return subVaultNfts;
+    };
+
+    const setPermissionsRegisterAndCreateVault = async (
+        ownerSigner: SignerWithAddress
+    ) => {
+        await this.protocolGovernance
+            .connect(this.admin)
+            .stagePermissionGrants(ownerSigner.address, [
+                CREATE_VAULT,
+                REGISTER_VAULT,
+            ]);
+        await sleep(this.governanceDelay);
+        await this.protocolGovernance
+            .connect(this.admin)
+            .commitPermissionGrants(ownerSigner.address);
+
+        await this.protocolGovernance
+            .connect(this.admin)
+            .stagePermissionGrants(this.subject.address, [REGISTER_VAULT]);
+        await sleep(this.governanceDelay);
+        await this.protocolGovernance
+            .connect(this.admin)
+            .commitPermissionGrants(this.subject.address);
+    };
+
+    const createNewRootVaultSystem = async (s: SignerWithAddress) => {
+        const tokenAddresses = this.tokens.slice(0, 2).map((x) => x.address);
+        await setPermissionsRegisterAndCreateVault(s);
+        let subvaultNfts = await setSubVaultNfts(s, tokenAddresses);
+        const { nft } = await this.subject
+            .connect(s)
+            .callStatic.createVault(
+                tokenAddresses,
+                this.strategySigner.address,
+                subvaultNfts,
+                this.ownerSigner.address
+            );
+        this.nft = nft;
+        await this.subject
+            .connect(s)
+            .createVault(
+                tokenAddresses,
+                this.strategySigner.address,
+                subvaultNfts,
+                this.ownerSigner.address
+            );
+    };
 
     describe(`#stagedDelayedStrategyParams`, () => {
         it(`returns DelayedStrategyParams staged for commit`, async () => {
@@ -198,11 +270,12 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
         describe("properties", () => {
             pit(
                 "cannot be called by random address",
-                { numRuns: RUNS.verylow },
+                { numRuns: RUNS.verylow, endOnFailure: true },
                 address,
                 paramsArb,
                 async (addr: string, params: P) => {
                     await withSigner(addr, async (s) => {
+                        await createNewRootVaultSystem(s);
                         await expect(
                             this.subject
                                 .connect(s)
@@ -221,6 +294,10 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                     .stageDelayedStrategyParams(this.nft, someParams);
             });
             it("allowed: Vault NFT Approved (aka strategy)", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
+                await this.vaultRegistry
+                    .connect(this.ownerSigner)
+                    .approve(this.strategySigner.address, this.nft);
                 await expect(
                     this.subject
                         .connect(this.strategySigner)
@@ -229,6 +306,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
             });
 
             it("allowed: Vault NFT Owner (aka liquidity provider)", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
                 await expect(
                     this.subject
                         .connect(this.ownerSigner)
@@ -236,6 +314,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                 ).to.not.be.reverted;
             });
             it("denied: deployer", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
                 await expect(
                     this.subject
                         .connect(this.deployer)
@@ -244,6 +323,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
             });
 
             it("denied: random address", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
                         this.subject
@@ -255,6 +335,48 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
         });
 
         describe("edge cases", () => {
+            describe("when managementFee is exceeds MAX_MANAGEMENT_FEE", () => {
+                it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                    const someParams = {
+                        strategyTreasury: randomAddress(),
+                        strategyPerformanceTreasury: randomAddress(),
+                        privateVault: true,
+                        managementFee: (
+                            await this.subject.MAX_MANAGEMENT_FEE()
+                        ).add(1),
+                        performanceFee: BigNumber.from(
+                            Math.round(Math.random() * 10 ** 6)
+                        ),
+                    };
+
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(this.nft, someParams)
+                    ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                });
+            });
+            describe("when performnaceFee is exceeds MAX_PERFORMANCE_FEE", () => {
+                it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                    const someParams = {
+                        strategyTreasury: randomAddress(),
+                        strategyPerformanceTreasury: randomAddress(),
+                        privateVault: true,
+                        managementFee: BigNumber.from(
+                            Math.round(Math.random() * 10 ** 6)
+                        ),
+                        performanceFee: (
+                            await this.subject.MAX_PERFORMANCE_FEE()
+                        ).add(1),
+                    };
+
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(this.nft, someParams)
+                    ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                });
+            });
             describe("when called twice", () => {
                 it("succeeds with the last value", async () => {
                     const { someParams: someOtherParams } =
@@ -290,7 +412,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
     describe("#commitDelayedStrategyParams", () => {
         let stagedFixture: Function;
         before(async () => {
-            stagedFixture = await deployments.createFixture(async () => {
+            stagedFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 await this.subject
                     .connect(this.admin)
@@ -330,10 +452,11 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
         describe("properties", () => {
             pit(
                 "cannot be called by random address",
-                { numRuns: RUNS.verylow },
+                { numRuns: RUNS.verylow, endOnFailure: true },
                 address,
                 paramsArb,
                 async (addr: string, params: P) => {
+                    await createNewRootVaultSystem(this.ownerSigner);
                     await this.subject
                         .connect(this.admin)
                         .stageDelayedStrategyParams(this.nft, someParams);
@@ -351,8 +474,8 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
             );
             pit(
                 "reverts if called before the delay has elapsed (after commit was called initally)",
-                { numRuns: RUNS.mid },
-                async () => nat((await this.governanceDelay) - 60),
+                { numRuns: RUNS.mid, endOnFailure: true },
+                async () => nat(this.governanceDelay - 60),
                 paramsArb,
                 async (delay: number, params: P) => {
                     // Fire off initial commit
@@ -379,11 +502,12 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
             );
             pit(
                 "succeeds if called after the delay has elapsed",
-                { numRuns: RUNS.mid },
+                { numRuns: RUNS.mid, endOnFailure: true },
                 nat(),
                 paramsArb,
                 async (delay: number, params: P) => {
                     // Fire off initial commit
+                    await createNewRootVaultSystem(this.ownerSigner);
                     await this.subject
                         .connect(this.admin)
                         .stageDelayedStrategyParams(this.nft, someParams);
@@ -415,6 +539,11 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
             });
 
             it("allowed: Vault NFT Owner (aka liquidity provider)", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
+                await this.subject
+                    .connect(this.ownerSigner)
+                    .stageDelayedStrategyParams(this.nft, someParams);
+                await sleep(this.governanceDelay);
                 await expect(
                     this.subject
                         .connect(this.ownerSigner)
@@ -422,6 +551,10 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                 ).to.not.be.reverted;
             });
             it("allowed: Vault NFT Approved (aka strategy)", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
+                await this.vaultRegistry
+                    .connect(this.ownerSigner)
+                    .approve(this.strategySigner.address, this.nft);
                 await expect(
                     this.subject
                         .connect(this.strategySigner)
@@ -429,6 +562,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                 ).to.not.be.reverted;
             });
             it("denied: deployer", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
                 await expect(
                     this.subject
                         .connect(this.deployer)
@@ -437,6 +571,7 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
             });
 
             it("denied: random address", async () => {
+                await createNewRootVaultSystem(this.ownerSigner);
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
                         this.subject

@@ -369,6 +369,9 @@ export function zeroify<
             return ethers.constants.AddressZero as T;
         }
     }
+    if (typeof x === "boolean") {
+        return false as unknown as T;
+    }
     if (typeof x === "number") {
         return 0 as T;
     }
