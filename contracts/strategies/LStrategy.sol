@@ -166,7 +166,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
-                erc20VaultCapital + lowerVaultCapital + upperVaultCapital,
+                lowerVaultCapital + upperVaultCapital,
                 ratioParams.erc20UniV3CapitalRatioD,
                 ratioParams.minErc20UniV3CapitalRatioDeviationD
             );
