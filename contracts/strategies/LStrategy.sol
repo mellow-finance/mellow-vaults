@@ -611,7 +611,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                         FullMath.mulDiv(
                             availableBalances[i],
                             DENOMINATOR,
-                            shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i],
+                            shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i]
                         )
                     );
                 }
