@@ -606,13 +606,14 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 if (availableBalance < requiredBalance) {
                     // since balances >= 0, this case means that shouldWithdrawTokenAmountsD < shouldDepositTokenAmountsD
                     // this also means that liquidity on the line below will decrease compared to the liqiduity above
-                    liquidity = uint128(
+                    uint128 potentialLiquidity = uint128(
                         FullMath.mulDiv(
                             availableBalances[i],
                             DENOMINATOR,
                             shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i]
                         )
                     );
+                    liquidity = potentialLiquidity < liquidity ? potentialLiquidity : liquidity;
                 }
             }
         }
