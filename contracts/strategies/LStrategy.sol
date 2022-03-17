@@ -192,7 +192,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
             );
             pulledAmounts = erc20Vault.pull(
-                address(lowerVault),
+                address(upperVault),
                 tokens,
                 upperTokenAmounts,
                 _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
