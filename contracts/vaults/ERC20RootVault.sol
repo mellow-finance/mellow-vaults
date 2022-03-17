@@ -81,14 +81,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
+        address[] memory tokens = _vaultTokens;
         if (totalSupply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
-                require(tokens[i] < FIRST_DEPOSIT_LIMIT, ExceptionsLibrary.LIMIT_OVERFLOW);
+                require(
+                    IERC20(tokens[i]).balanceOf(address(msg.sender)) < FIRST_DEPOSIT_LIMIT,
+                    ExceptionsLibrary.LIMIT_OVERFLOW
+                );
             }
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
-        address[] memory tokens = _vaultTokens;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
