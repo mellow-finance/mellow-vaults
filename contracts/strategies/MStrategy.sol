@@ -207,7 +207,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (tick >= tickMax) {
             return DENOMINATOR;
         }
-        return (uint256(uint24(tick - tickMin)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
+        return (uint256(uint24(tickMax - tick)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
     }
 
     function _getAverageTickChecked(IUniswapV3Pool pool_) internal view returns (int24) {
