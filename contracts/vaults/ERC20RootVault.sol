@@ -85,12 +85,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (totalSupply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
                 require(
-                    tokenAmounts[i] > 0,
+                    tokenAmounts[i] > FIRST_DEPOSIT_LIMIT,
                     ExceptionsLibrary.LIMIT_UNDERFLOW
-                );
-                require(
-                    tokenAmounts[i] < FIRST_DEPOSIT_LIMIT,
-                    ExceptionsLibrary.LIMIT_OVERFLOW
                 );
             }
         }
@@ -100,7 +96,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
         require(
-            !delayedStaretgyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
+            !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
         uint256 supply = totalSupply;
@@ -198,14 +194,16 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             return lpAmount;
         }
         uint256 tvlsLength = tvl_.length;
+        bool isLpAmountUpdated = 0;
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            if ((amounts[i] == 0) || (tvl_[i] == 0)) {
+            if (tvl_[i] < _pullExistentials[i]) {
                 continue;
             }
 
             uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
             // take min of meaningful tokenLp amounts
-            if ((tokenLpAmount < lpAmount) || (lpAmount == 0)) {
+            if ((tokenLpAmount < lpAmount) || (isLpAmountUpdated == 0)) {
+                isLpAmountUpdated = 1;
                 lpAmount = tokenLpAmount;
             }
         }
