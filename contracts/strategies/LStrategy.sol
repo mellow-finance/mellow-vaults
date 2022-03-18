@@ -371,6 +371,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         require(order.sellAmount == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
         require(order.buyAmount >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(order.validTo <= preOrder_.deadline, ExceptionsLibrary.TIMESTAMP);
+        require(order.receiver == address(erc20Vault), ExceptionsLibrary.FORBIDDEN);
         bytes memory approveData = abi.encode(cowswap, order.sellAmount);
         erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
         bytes memory setPresignatureData = abi.encode(uuid, signed);
