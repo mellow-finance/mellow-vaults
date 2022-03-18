@@ -15,7 +15,7 @@ import "../libraries/PermissionIdsLibrary.sol";
 contract AggregateVault is IAggregateVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _subvaultNfts;
-    uint256[] private _pullExistentials;
+    uint256[] internal _pullExistentials;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -38,6 +38,10 @@ contract AggregateVault is IAggregateVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 subvaultNft = _subvaultNfts[index];
         return registry.vaultForNft(subvaultNft);
+    }
+
+    function pullExistentials() external view returns (uint256[] memory) {
+        return _pullExistentials;
     }
 
     /// @inheritdoc IVault

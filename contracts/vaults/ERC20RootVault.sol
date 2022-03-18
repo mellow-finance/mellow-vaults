@@ -92,7 +92,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
-        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStaretgyParams = IERC20RootVaultGovernance(
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
         require(
@@ -182,7 +182,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory tvl_,
         uint256[] memory amounts,
         uint256 supply
-    ) internal pure returns (uint256 lpAmount) {
+    ) internal view returns (uint256 lpAmount) {
         if (supply == 0) {
             // On init lpToken = max(tokenAmounts)
             for (uint256 i = 0; i < tvl_.length; ++i) {
@@ -194,7 +194,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             return lpAmount;
         }
         uint256 tvlsLength = tvl_.length;
-        bool isLpAmountUpdated = 0;
+        bool isLpAmountUpdated = false;
         for (uint256 i = 0; i < tvlsLength; ++i) {
             if (tvl_[i] < _pullExistentials[i]) {
                 continue;
@@ -202,8 +202,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
             uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
             // take min of meaningful tokenLp amounts
-            if ((tokenLpAmount < lpAmount) || (isLpAmountUpdated == 0)) {
-                isLpAmountUpdated = 1;
+            if ((tokenLpAmount < lpAmount) || (isLpAmountUpdated == false)) {
+                isLpAmountUpdated = true;
                 lpAmount = tokenLpAmount;
             }
         }
