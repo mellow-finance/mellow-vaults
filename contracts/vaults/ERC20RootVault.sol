@@ -84,10 +84,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         if (totalSupply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
-                require(
-                    tokenAmounts[i] > FIRST_DEPOSIT_LIMIT,
-                    ExceptionsLibrary.LIMIT_UNDERFLOW
-                );
+                require(tokenAmounts[i] > FIRST_DEPOSIT_LIMIT, ExceptionsLibrary.LIMIT_UNDERFLOW);
             }
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
@@ -137,8 +134,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
-        if (lpTokenAmount > balanceOf[to]) {
-            lpTokenAmount = balanceOf[to];
+        if (lpTokenAmount > balanceOf[msg.sender]) {
+            lpTokenAmount = balanceOf[msg.sender];
         }
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
@@ -154,7 +151,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
-        _burn(to, lpTokenAmount);
+        _burn(msg.sender, lpTokenAmount);
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
