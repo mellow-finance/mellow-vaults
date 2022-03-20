@@ -378,7 +378,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 integer({ min: 0, max: 5 * 86400 }),
                 integer({ min: 2, max: 10 }),
                 integer({ min: 2, max: 10 }),
-                float({ min: 0.001, max: 0.999 }),
+                float({ min: 0.005, max: 0.995 }),
                 async (
                     delay: number,
                     numDeposits: number,
