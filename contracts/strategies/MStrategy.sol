@@ -226,7 +226,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
         uint16 observationIndexLast = observationIndex >= oracleObservationDelta
             ? observationIndex - oracleObservationDelta
-            : observationIndex + (type(uint16).max - oracleObservationDelta + 1);
+            : observationIndex + (observationCardinality - oracleObservationDelta);
         (uint32 blockTimestampLast, int56 tickCumulativeLast, , ) = pool_.observations(observationIndexLast);
 
         uint32 timespan = blockTimestamp - blockTimestampLast;
