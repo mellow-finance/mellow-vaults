@@ -8,6 +8,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 import "./utils/ContractMeta.sol";
+import "hardhat/console.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
@@ -197,8 +198,8 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         uint256 length = _stagedValidatorsAddresses.length();
         addressesCommitted = new address[](length);
         uint256 addressesCommittedLength;
-        for (uint256 i; i != length; i++) {
-            address stagedAddress = _stagedValidatorsAddresses.at(0);
+        for (uint256 i; i != length;) {
+            address stagedAddress = _stagedValidatorsAddresses.at(i);
             if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
                 validators[stagedAddress] = stagedValidators[stagedAddress];
                 _validatorsAddresses.add(stagedAddress);
@@ -206,8 +207,11 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 delete stagedValidatorsTimestamps[stagedAddress];
                 _stagedValidatorsAddresses.remove(stagedAddress);
                 addressesCommitted[addressesCommittedLength] = stagedAddress;
-                addressesCommittedLength += 1;
+                ++addressesCommittedLength;
+                --length;
                 emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
+            } else {
+                ++i;
             }
         }
         assembly {
@@ -252,7 +256,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory) {
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory roflan) {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
         uint256 addressesLeft = length;
@@ -272,13 +276,11 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 ++i;
             }
         }
-        // shrink to fit
-        uint256 addressesToReturn = length - addressesLeft;
-        address[] memory result = new address[](addressesToReturn);
-        for (uint256 i; i != addressesToReturn; ++i) {
-            result[i] = tempAddresses[i];
+        length -= addressesLeft;
+        assembly {
+            mstore(tempAddresses, length)
         }
-        return result;
+        return tempAddresses;
     }
 
     /// @inheritdoc IProtocolGovernance
