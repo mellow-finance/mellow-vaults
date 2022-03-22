@@ -19,8 +19,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
-    uint256 public lastFeeCharge;
-    uint256 public totalWithdrawnAmountsTimestamp;
+    uint64 public lastFeeCharge;
+    uint64 public totalWithdrawnAmountsTimestamp;
     uint256[] public totalWithdrawnAmounts;
 
     uint256 public lpPriceHighWaterMarkD18;
@@ -69,7 +69,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
         uint256 len = vaultTokens_.length;
         totalWithdrawnAmounts = new uint256[](len);
-        lastFeeCharge = block.timestamp;
+        lastFeeCharge = uint64(block.timestamp);
     }
 
     function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens)
@@ -257,7 +257,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         bool isWithdraw
     ) internal {
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
-        uint256 elapsed = block.timestamp - lastFeeCharge;
+        uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
         IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
             return;
@@ -269,7 +269,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             deltaSupply,
             isWithdraw
         );
-        lastFeeCharge = block.timestamp;
+        lastFeeCharge = uint64(block.timestamp);
         // don't charge on initial deposit as well as on the last withdraw
         if (baseSupply == 0) {
             return;
@@ -376,7 +376,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
     function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
         uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
-        uint256 timestamp = block.timestamp;
+        uint64 timestamp = uint64(block.timestamp);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
         if (timestamp != totalWithdrawnAmountsTimestamp) {
             totalWithdrawnAmountsTimestamp = timestamp;
