@@ -82,6 +82,7 @@ const setupStrategy = async (
         tickMin: 198240 - 5000,
         tickMax: 198240 + 5000,
         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+        minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
     };
     const txs = [];
     txs.push(

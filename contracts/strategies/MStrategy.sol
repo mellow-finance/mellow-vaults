@@ -50,6 +50,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 minTickRebalanceThreshold;
         int24 tickNeiborhood;
         int24 tickIncrease;
+        uint256 minErc20MoneyRatioDeviationD;
     }
 
     OracleParams public oracleParams;
@@ -135,7 +136,12 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_ = tokens;
         IUniswapV3Pool pool_ = pool;
         ISwapRouter router_ = router;
-        int256[] memory poolAmountsI = _rebalancePools(erc20Vault_, moneyVault_, tokens_);
+        int256[] memory poolAmountsI = _rebalancePools(
+            erc20Vault_,
+            moneyVault_,
+            tokens_,
+            ratioParams.minErc20MoneyRatioDeviationD
+        );
         (uint256 amountIn, uint8 index) = _rebalanceTokens(
             pool_,
             router_,
@@ -239,19 +245,22 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function _rebalancePools(
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
-        address[] memory tokens_
+        address[] memory tokens_,
+        uint256 minDeviation
     ) internal returns (int256[] memory tokenAmounts) {
         uint256 erc20MoneyRatioD = ratioParams.erc20MoneyRatioD;
         (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
         (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
         tokenAmounts = new int256[](2);
+        uint256[] memory absoluteTokenAmounts = new uint256[](2);
         uint256 max = type(uint256).max / 2;
         for (uint256 i = 0; i < 2; i++) {
             uint256 targetErc20Token = FullMath.mulDiv(erc20Tvl[i] + moneyTvl[i], erc20MoneyRatioD, DENOMINATOR);
             require(targetErc20Token < max && erc20Tvl[i] < max, ExceptionsLibrary.LIMIT_OVERFLOW);
             tokenAmounts[i] = int256(targetErc20Token) - int256(erc20Tvl[i]);
+            absoluteTokenAmounts[i] = tokenAmounts[i] >= 0 ? uint256(tokenAmounts[i]) : uint256(-tokenAmounts[i]);
         }
-        if ((tokenAmounts[0] == 0) && (tokenAmounts[1] == 0)) {
+        if ((absoluteTokenAmounts[0] < minDeviation) && (absoluteTokenAmounts[1] < minDeviation)) {
             return tokenAmounts;
         } else if ((tokenAmounts[0] <= 0) && (tokenAmounts[1] <= 0)) {
             uint256[] memory amounts = new uint256[](2);
