@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
-import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
 contract UniV3Validator is ContractMeta, Validator {
-    using EnumerableSet for EnumerableSet.AddressSet;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     bytes4 public constant EXACT_INPUT_SELECTOR = ISwapRouter.exactInput.selector;
     bytes4 public constant EXACT_OUTPUT_SINGLE_SELECTOR = ISwapRouter.exactOutputSingle.selector;

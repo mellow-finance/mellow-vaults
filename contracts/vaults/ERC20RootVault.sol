@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
 import "../utils/ERC20Token.sol";

@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/external/univ2/IUniswapV2Router01.sol";
-import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IVault.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
@@ -27,7 +24,6 @@ contract UniV2Validator is ContractMeta, Validator {
         address to;
         uint256 deadline;
     }
-    using EnumerableSet for EnumerableSet.AddressSet;
     bytes4 public constant EXACT_INPUT_SELECTOR = IUniswapV2Router01.swapExactTokensForTokens.selector;
     bytes4 public constant EXACT_OUTPUT_SELECTOR = IUniswapV2Router01.swapTokensForExactTokens.selector;
     bytes4 public constant EXACT_ETH_INPUT_SELECTOR = IUniswapV2Router01.swapExactETHForTokens.selector;

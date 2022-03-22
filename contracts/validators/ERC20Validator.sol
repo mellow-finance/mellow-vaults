@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/validators/IValidator.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
