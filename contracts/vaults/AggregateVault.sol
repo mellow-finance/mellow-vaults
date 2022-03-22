@@ -90,8 +90,8 @@ contract AggregateVault is IAggregateVault, Vault {
                 ExceptionsLibrary.INVALID_INTERFACE
             );
             address[] memory vaultTokens = IIntegrationVault(vault).vaultTokens();
-            require(vaultTokens_.length() == vaultTokens.length(), ExceptionsLibrary.INVALID_LENGTH);
-            for (int tokenId = 0; tokenId < vaultTokens.length(); ++tokenId) {
+            require(vaultTokens_.length == vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
+            for (uint256 tokenId = 0; tokenId < vaultTokens.length; ++tokenId) {
                 require(vaultTokens_[tokenId] == vaultTokens[tokenId], ExceptionsLibrary.INVALID_TOKEN);
             }
             vaultRegistry.approve(strategy_, subvaultNft);
