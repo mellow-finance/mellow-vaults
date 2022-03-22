@@ -11,7 +11,6 @@ import "./Validator.sol";
 
 contract ERC20Validator is ContractMeta, Validator {
     bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector;
-    bytes4 public constant EXCHANGE_SELECTOR = 0x3df02124;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}
 
