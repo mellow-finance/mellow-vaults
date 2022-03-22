@@ -218,8 +218,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     function _getAverageTickChecked(IUniswapV3Pool pool_) internal view returns (int24) {
         (int24 tick, int24 deviation) = _getAverageTick(pool_);
-        int24 maxDeviation = int24(oracleParams.maxTickDeviation);
-        require((deviation < maxDeviation) && (deviation > -maxDeviation), ExceptionsLibrary.INVARIANT);
+        uint24 absoluteDeviation = deviation < 0 ? uint24(-deviation) : uint24(deviation);
+        require(absoluteDeviation < oracleParams.maxTickDeviation, ExceptionsLibrary.INVARIANT);
         return tick;
     }
 
