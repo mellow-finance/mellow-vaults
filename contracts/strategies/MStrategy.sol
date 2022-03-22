@@ -48,7 +48,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 tickMax;
         uint256 erc20MoneyRatioD;
         int24 minTickRebalanceThreshold;
-        int24 tickNeiborhood;
+        int24 tickNeighbor;
         int24 tickIncrease;
         uint256 minErc20MoneyRatioDeviationD;
     }
@@ -304,10 +304,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             uint256 targetTokenRatioD;
             {
                 int24 tick = _getAverageTickChecked(pool_);
-                if (ratioParams.tickMin + ratioParams.tickNeiborhood > tick) {
+                if (ratioParams.tickMin + ratioParams.tickNeighborhood > tick) {
                     ratioParams.tickMin = tick - ratioParams.tickIncrease;
                 }
-                if (ratioParams.tickMax - ratioParams.tickNeiborhood < tick) {
+                if (ratioParams.tickMax - ratioParams.tickNeighborhood < tick) {
                     ratioParams.tickMax = tick + ratioParams.tickIncrease;
                 }
 
