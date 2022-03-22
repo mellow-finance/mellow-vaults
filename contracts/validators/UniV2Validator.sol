@@ -75,8 +75,8 @@ contract UniV2Validator is ContractMeta, Validator {
                 data,
                 (uint256, uint256, address[], address, uint256)
             );
-            _verifyPath(vault, path);
             require(to == msg.sender);
+            _verifyPath(vault, path);
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
@@ -95,6 +95,7 @@ contract UniV2Validator is ContractMeta, Validator {
     function _verifyPath(IVault vault, address[] memory path) private view {
         require(path.length > 1, ExceptionsLibrary.INVALID_LENGTH);
         IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
+        require(vault.isVaultToken(path[path.length - 1]), ExceptionsLibrary.INVALID_TOKEN);
         for (uint256 i = 0; i < path.length - 1; i++) {
             address token0 = path[i];
             address token1 = path[i + 1];
@@ -105,6 +106,5 @@ contract UniV2Validator is ContractMeta, Validator {
                 ExceptionsLibrary.FORBIDDEN
             );
         }
-        require(vault.isVaultToken(path[path.length - 1]), ExceptionsLibrary.INVALID_TOKEN);
     }
 }
