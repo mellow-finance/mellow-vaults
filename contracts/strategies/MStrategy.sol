@@ -95,7 +95,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address admin_
     ) external {
         DefaultAccessControlLateInit.init(admin_); // call once is checked here
-
+        require(tokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         address[] memory erc20Tokens = erc20Vault_.vaultTokens();
         address[] memory moneyTokens = moneyVault_.vaultTokens();
         for (uint256 i = 0; i < 2; i++) {
