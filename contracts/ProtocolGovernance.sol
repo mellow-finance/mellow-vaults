@@ -85,20 +85,18 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     /// @inheritdoc IProtocolGovernance
     function addressesByPermission(uint8 permissionId) external view returns (address[] memory addresses) {
         uint256 length = _permissionAddresses.length();
-        address[] memory tempAddresses = new address[](length);
         uint256 addressesLength = 0;
         uint256 mask = 1 << permissionId;
         for (uint256 i = 0; i < length; i++) {
             address addr = _permissionAddresses.at(i);
             if (permissionMasks[addr] & mask != 0) {
-                tempAddresses[addressesLength] = addr;
+                addresses[addressesLength] = addr;
                 addressesLength++;
             }
         }
         // shrink to fit
-        addresses = new address[](addressesLength);
-        for (uint256 i = 0; i < addressesLength; i++) {
-            addresses[i] = tempAddresses[i];
+        assembly {
+            mstore(addresses, addressesLength)
         }
     }
 
@@ -256,11 +254,10 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory roflan) {
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory addresses) {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
         uint256 addressesLeft = length;
-        address[] memory tempAddresses = new address[](length);
         for (uint256 i; i != addressesLeft;) {
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
@@ -269,7 +266,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 delete stagedPermissionGrantsMasks[stagedAddress];
                 delete stagedPermissionGrantsTimestamps[stagedAddress];
                 _stagedPermissionGrantsAddresses.remove(stagedAddress);
-                tempAddresses[length - addressesLeft] = stagedAddress;
+                addresses[length - addressesLeft] = stagedAddress;
                 --addressesLeft;
                 emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
@@ -278,9 +275,8 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         }
         length -= addressesLeft;
         assembly {
-            mstore(tempAddresses, length)
+            mstore(addresses, length)
         }
-        return tempAddresses;
     }
 
     /// @inheritdoc IProtocolGovernance
