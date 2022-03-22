@@ -98,7 +98,6 @@ abstract contract Vault is IVault, ERC165 {
             _vaultTokensIndex[vaultTokens_[i]] = true;
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        registry.setApprovalForAll(address(registry), true);
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
     }
 
