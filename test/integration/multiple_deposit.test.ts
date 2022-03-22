@@ -426,7 +426,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(
                                         randomInt(
                                             Number(
-                                                (await this.subject.FIRST_DEPOSIT_LIMIT()).add(1)
+                                                (
+                                                    await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                ).add(1)
                                             ),
                                             Number(
                                                 this.wethDeployerSupply
@@ -452,7 +454,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(
                                         randomInt(
                                             Number(
-                                                (await this.subject.FIRST_DEPOSIT_LIMIT()).add(1)
+                                                (
+                                                    await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                ).add(1)
                                             ),
                                             Number(
                                                 this.usdcDeployerSupply
