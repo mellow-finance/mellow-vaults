@@ -135,7 +135,6 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                 j += 1;
             }
             poolsIndex[token0][token1] = pool;
-            poolsIndex[token1][token0] = pool;
         }
         assembly {
             mstore(replaced, j)
