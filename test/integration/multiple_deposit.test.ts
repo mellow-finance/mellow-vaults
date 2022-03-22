@@ -378,7 +378,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 integer({ min: 0, max: 5 * 86400 }),
                 integer({ min: 2, max: 10 }),
                 integer({ min: 2, max: 10 }),
-                float({ min: 0.005, max: 0.995 }),
+                float({ min: 0.01, max: 0.99 }),
                 async (
                     delay: number,
                     numDeposits: number,
@@ -426,7 +426,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(
                                         randomInt(
                                             Number(
-                                                await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                (await this.subject.FIRST_DEPOSIT_LIMIT()).add(1)
                                             ),
                                             Number(
                                                 this.wethDeployerSupply
@@ -452,7 +452,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(
                                         randomInt(
                                             Number(
-                                                await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                (await this.subject.FIRST_DEPOSIT_LIMIT()).add(1)
                                             ),
                                             Number(
                                                 this.usdcDeployerSupply
