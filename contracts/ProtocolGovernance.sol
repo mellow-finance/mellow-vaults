@@ -287,10 +287,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     function revokePermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
         require(target != address(0), ExceptionsLibrary.NULL);
-        uint256 diff;
-        for (uint256 i = 0; i < permissionIds.length; ++i) {
-            diff |= 1 << permissionIds[i];
-        }
+        uint256 diff = _permissionIdsToMask(permissionIds);
         uint256 currentMask = permissionMasks[target];
         uint256 newMask = currentMask & (~diff);
         permissionMasks[target] = newMask;
