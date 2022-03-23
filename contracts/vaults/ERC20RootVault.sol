@@ -136,11 +136,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (lpTokenAmount > balanceOf[msg.sender]) {
             lpTokenAmount = balanceOf[msg.sender];
         }
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
-            require(tokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-        }
         actualTokenAmounts = _pull(address(this), tokenAmounts, "");
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            actualTokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
+            require(actualTokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+        }
         for (uint256 i = 0; i < tokens.length; ++i) {
             if (actualTokenAmounts[i] == 0) {
                 continue;
