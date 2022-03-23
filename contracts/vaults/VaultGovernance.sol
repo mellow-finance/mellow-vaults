@@ -94,6 +94,7 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
         require(block.timestamp >= _internalParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _internalParams = _stagedInternalParams;
         delete _internalParamsTimestamp;
+        delete _stagedInternalParams;
         emit CommitedInternalParams(tx.origin, msg.sender, _internalParams);
     }
 
