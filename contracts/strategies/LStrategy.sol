@@ -494,11 +494,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }
 
-    function _priceX96FromTick(int24 _tick) internal pure returns (uint256) {
-        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
-        return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
-    }
-
     /// @notice The vault to get stats from
     /// @return tickLower Lower tick for the uniV3 poistion inside the vault
     /// @return tickUpper Upper tick for the uniV3 poistion inside the vault
