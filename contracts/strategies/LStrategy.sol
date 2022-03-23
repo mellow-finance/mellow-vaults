@@ -168,6 +168,14 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 ratioParams.erc20UniV3CapitalRatioD,
                 ratioParams.minErc20UniV3CapitalRatioDeviationD
             );
+            if (capitalDelta == 0) {
+                uint256[] memory pulledAmounts = new uint256[](2);
+                for (uint256 i = 0; i < 2; ++i) {
+                    pulledAmounts[i] = 0;
+                }
+                isNegativeCapitalDelta = false;
+                return (pulledAmounts, isNegativeCapitalDelta);
+            }
             uint256 percentageIncreaseD = FullMath.mulDiv(
                 DENOMINATOR,
                 capitalDelta,
