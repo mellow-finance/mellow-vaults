@@ -96,7 +96,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(nft_);
-        IVaultRoot root = _root(registry, nft_);
+        IVaultRoot root = _root(registry, nft_, owner);
         if (owner != msg.sender) {
             address zeroVault = root.subvaultAt(0);
             if (zeroVault == address(this)) {
@@ -125,7 +125,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
         IProtocolGovernance governance = params.protocolGovernance;
         IVaultRegistry registry = params.registry;
-        address to = _root(registry, nft_).subvaultAt(0);
+        address owner = registry.ownerOf(nft_);
+        address to = _root(registry, nft_, owner).subvaultAt(0);
         require(to != address(this), ExceptionsLibrary.INVARIANT);
         actualTokenAmounts = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
@@ -205,8 +206,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         pTokenAmounts = CommonLibrary.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
-    function _root(IVaultRegistry registry, uint256 thisNft) internal view returns (IVaultRoot) {
-        address thisOwner = registry.ownerOf(thisNft);
+    function _root(IVaultRegistry registry, uint256 thisNft, address thisOwner) internal view returns (IVaultRoot) {
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
         require(thisNft + thisOwnerNft != 0, ExceptionsLibrary.INIT);
 
