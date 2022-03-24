@@ -212,7 +212,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         address thisOwner
     ) internal view returns (IVaultRoot) {
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
-        require((thisNft == 0) || (thisOwnerNft == 0), ExceptionsLibrary.INIT);
+        require((thisNft != 0) && (thisOwnerNft != 0), ExceptionsLibrary.INIT);
 
         return IVaultRoot(thisOwner);
     }
