@@ -8,7 +8,6 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 import "./utils/ContractMeta.sol";
-import "hardhat/console.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
@@ -261,6 +260,7 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
         uint256 addressesLeft = length;
+        addresses = new address[](length);
         for (uint256 i; i != addressesLeft;) {
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
