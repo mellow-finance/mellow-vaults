@@ -225,7 +225,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(amountUSDC).div(numDeposits),
                                     BigNumber.from(amountWETH).div(numDeposits),
                                 ],
-                                0
+                                0,
+                                []
                             );
                         lpAmounts.push(
                             await this.subject.balanceOf(this.deployer.address)
@@ -266,19 +267,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject.withdraw(
                             this.deployer.address,
                             BigNumber.from(lpTokensAmount).div(numWithdraws),
-                            [0, 0]
-                        );
-                    }
-
-                    if (
-                        !BigNumber.from(lpTokensAmount)
-                            .mod(numWithdraws)
-                            .eq(BigNumber.from(0))
-                    ) {
-                        await this.subject.withdraw(
-                            this.deployer.address,
-                            BigNumber.from(lpTokensAmount).mod(numWithdraws),
-                            [0, 0]
+                            [0, 0],
+                            [[], []]
                         );
                     }
 
@@ -290,7 +280,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject.withdraw(
                             this.deployer.address,
                             remainingLpTokenBalance,
-                            [0, 0]
+                            [0, 0],
+                            [[], []]
                         );
                     }
 
@@ -523,7 +514,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.deployer)
                         .deposit(
                             [usdcDepositAmounts[0], wethDepositAmounts[0]],
-                            0
+                            0,
+                            []
                         );
                     const lpTokenAmountAfterFirstDeposit =
                         await this.subject.balanceOf(this.deployer.address);
@@ -545,7 +537,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(this.deployer)
                             .deposit(
                                 [usdcDepositAmounts[i], wethDepositAmounts[i]],
-                                0
+                                0,
+                                []
                             );
                     }
 
@@ -796,14 +789,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await this.subject.withdraw(
                         this.deployer.address,
                         withdrawAmounts[0],
-                        [0, 0]
+                        [0, 0],
+                        [[], []]
                     );
 
                     for (let i = 1; i < numWithdraws; ++i) {
                         await this.subject.withdraw(
                             this.deployer.address,
                             withdrawAmounts[i],
-                            [0, 0]
+                            [0, 0],
+                            [[], []]
                         );
                     }
 
@@ -933,7 +928,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .withdraw(
                                     strategyTreasury,
                                     BigNumber.from(2).pow(256).sub(1),
-                                    [0, 0]
+                                    [0, 0],
+                                    [[], []]
                                 );
                         });
 
@@ -991,7 +987,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     .withdraw(
                                         strategyPerformanceTreasury,
                                         BigNumber.from(2).pow(256).sub(1),
-                                        [0, 0]
+                                        [0, 0],
+                                        [[], []]
                                     );
                             }
                         );
@@ -1048,7 +1045,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .withdraw(
                                     protocolTreasury,
                                     BigNumber.from(2).pow(256).sub(1),
-                                    [0, 0]
+                                    [0, 0],
+                                    [[], []]
                                 );
                         });
                     }

@@ -206,7 +206,11 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         pTokenAmounts = CommonLibrary.projectTokenAmounts(_vaultTokens, tokens, tokenAmounts);
     }
 
-    function _root(IVaultRegistry registry, uint256 thisNft, address thisOwner) internal view returns (IVaultRoot) {
+    function _root(
+        IVaultRegistry registry,
+        uint256 thisNft,
+        address thisOwner
+    ) internal view returns (IVaultRoot) {
         uint256 thisOwnerNft = registry.nftForVault(thisOwner);
         require((thisNft == 0) || (thisOwnerNft == 0), ExceptionsLibrary.INIT);
 

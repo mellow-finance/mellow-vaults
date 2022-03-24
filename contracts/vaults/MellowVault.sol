@@ -59,7 +59,7 @@ contract MellowVault is IMellowVault, IntegrationVault {
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(_vaultTokens[i]).safeIncreaseAllowance(address(vault), tokenAmounts[i]);
         }
-        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens);
+        actualTokenAmounts = vault.deposit(tokenAmounts, minLpTokens, "");
         for (uint256 i = 0; i < tokenAmounts.length; i++) {
             IERC20(_vaultTokens[i]).safeApprove(address(vault), 0);
         }
@@ -85,6 +85,10 @@ contract MellowVault is IMellowVault, IntegrationVault {
             lpTokenAmount = totalLpTokens;
         }
 
-        actualTokenAmounts = vault_.withdraw(to, lpTokenAmount, minTokenAmounts);
+        bytes[] memory emptyOptions = new bytes[](vault.subvaultNfts().length);
+        for (uint256 i = 0; i < emptyOptions.length; ++i) {
+            emptyOptions[i] = "";
+        }
+        actualTokenAmounts = vault_.withdraw(to, lpTokenAmount, minTokenAmounts, emptyOptions);
     }
 }

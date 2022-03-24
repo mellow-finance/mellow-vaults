@@ -105,7 +105,10 @@ contract AggregateVault is IAggregateVault, Vault {
         _initialize(vaultTokens_, nft_);
     }
 
-    function _push(uint256[] memory tokenAmounts, bytes memory) internal returns (uint256[] memory actualTokenAmounts) {
+    function _push(uint256[] memory tokenAmounts, bytes memory vaultOptions)
+        internal
+        returns (uint256[] memory actualTokenAmounts)
+    {
         require(_nft != 0, ExceptionsLibrary.INIT);
         IVaultGovernance.InternalParams memory params = _vaultGovernance.internalParams();
         uint256 destNft = _subvaultNfts[0];
@@ -115,7 +118,7 @@ contract AggregateVault is IAggregateVault, Vault {
             IERC20(_vaultTokens[i]).safeIncreaseAllowance(address(destVault), tokenAmounts[i]);
         }
 
-        actualTokenAmounts = destVault.transferAndPush(address(this), _vaultTokens, tokenAmounts, "");
+        actualTokenAmounts = destVault.transferAndPush(address(this), _vaultTokens, tokenAmounts, vaultOptions);
 
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
             IERC20(_vaultTokens[i]).safeApprove(address(destVault), 0);
@@ -125,9 +128,10 @@ contract AggregateVault is IAggregateVault, Vault {
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
-        bytes memory
+        bytes[] memory vaultsOptions
     ) internal returns (uint256[] memory actualTokenAmounts) {
         require(_nft != 0, ExceptionsLibrary.INIT);
+        require(vaultsOptions.length == _subvaultNfts.length, ExceptionsLibrary.INVALID_LENGTH);
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;
@@ -140,7 +144,7 @@ contract AggregateVault is IAggregateVault, Vault {
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             uint256 subvaultNft = _subvaultNfts[i];
             IIntegrationVault subvault = IIntegrationVault(vaultRegistry.vaultForNft(subvaultNft));
-            pulledAmounts = subvault.pull(address(this), tokens, leftToPull, "");
+            pulledAmounts = subvault.pull(address(this), tokens, leftToPull, vaultsOptions[i]);
             bool shouldStop = true;
             for (uint256 j = 0; j < tokens.length; j++) {
                 if (leftToPull[j] > pulledAmounts[j] + existentials[j]) {

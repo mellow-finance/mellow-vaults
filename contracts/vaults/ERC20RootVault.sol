@@ -71,11 +71,11 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = uint64(block.timestamp);
     }
 
-    function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens)
-        external
-        nonReentrant
-        returns (uint256[] memory actualTokenAmounts)
-    {
+    function deposit(
+        uint256[] memory tokenAmounts,
+        uint256 minLpTokens,
+        bytes memory vaultOptions
+    ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
@@ -102,7 +102,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
-        actualTokenAmounts = _push(normalizedAmounts, "");
+        actualTokenAmounts = _push(normalizedAmounts, vaultOptions);
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
@@ -126,7 +126,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function withdraw(
         address to,
         uint256 lpTokenAmount,
-        uint256[] memory minTokenAmounts
+        uint256[] memory minTokenAmounts,
+        bytes[] memory vaultsOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         uint256 supply = totalSupply;
         require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
@@ -139,7 +140,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
         }
-        actualTokenAmounts = _pull(address(this), tokenAmounts, "");
+        actualTokenAmounts = _pull(address(this), tokenAmounts, vaultsOptions);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             require(actualTokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }

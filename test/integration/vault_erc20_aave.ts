@@ -173,7 +173,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             ) => {
                 await this.subject
                     .connect(this.deployer)
-                    .deposit([amountUSDC, amountWETH], 0);
+                    .deposit([amountUSDC, amountWETH], 0, []);
 
                 const lpTokens = await this.subject.balanceOf(
                     this.deployer.address
@@ -227,7 +227,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 await this.subject.withdraw(
                     this.deployer.address,
                     lpTokens,
-                    [0, 0]
+                    [0, 0],
+                    [[], []]
                 );
                 expect(
                     await this.subject.balanceOf(this.deployer.address)

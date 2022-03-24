@@ -128,7 +128,14 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @notice Perform a rebalance according to target ratios
-    function rebalance() external returns (uint256[] memory poolAmounts, uint256[] memory tokenAmounts) {
+    function rebalance()
+        external
+        returns (
+            uint256[] memory poolAmounts,
+            uint256[] memory tokenAmounts,
+            bytes memory vaultOptions
+        )
+    {
         _requireAdmin();
         IIntegrationVault erc20Vault_ = erc20Vault;
         IIntegrationVault moneyVault_ = moneyVault;
@@ -139,7 +146,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             erc20Vault_,
             moneyVault_,
             tokens_,
-            ratioParams.minErc20MoneyRatioDeviationD
+            ratioParams.minErc20MoneyRatioDeviationD,
+            vaultOptions
         );
         (uint256 amountIn, uint8 index) = _rebalanceTokens(
             pool_,
@@ -147,7 +155,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             erc20Vault_,
             moneyVault_,
             tokens_,
-            ratioParams.minTickRebalanceThreshold
+            ratioParams.minTickRebalanceThreshold,
+            vaultOptions
         );
         poolAmounts = new uint256[](2);
         tokenAmounts = new uint256[](2);
@@ -164,10 +173,11 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function manualPull(
         IIntegrationVault fromVault,
         IIntegrationVault toVault,
-        uint256[] memory tokenAmounts
+        uint256[] memory tokenAmounts,
+        bytes memory vaultOptions
     ) external {
         _requireAdmin();
-        fromVault.pull(address(toVault), tokens, tokenAmounts, "");
+        fromVault.pull(address(toVault), tokens, tokenAmounts, vaultOptions);
     }
 
     /// @notice Set new Oracle params
@@ -245,7 +255,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
         address[] memory tokens_,
-        uint256 minDeviation
+        uint256 minDeviation,
+        bytes memory vaultOptions
     ) internal returns (int256[] memory tokenAmounts) {
         uint256 erc20MoneyRatioD = ratioParams.erc20MoneyRatioD;
         (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
@@ -270,13 +281,13 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             uint256[] memory amounts = new uint256[](2);
             amounts[0] = uint256(tokenAmounts[0]);
             amounts[1] = uint256(tokenAmounts[1]);
-            moneyVault_.pull(address(erc20Vault_), tokens_, amounts, "");
+            moneyVault_.pull(address(erc20Vault_), tokens_, amounts, vaultOptions);
         } else {
             for (uint256 i = 0; i < 2; i++) {
                 uint256[] memory amounts = new uint256[](2);
                 if (tokenAmounts[i] > 0) {
                     amounts[i] = uint256(tokenAmounts[i]);
-                    moneyVault_.pull(address(erc20Vault_), tokens_, amounts, "");
+                    moneyVault_.pull(address(erc20Vault_), tokens_, amounts, vaultOptions);
                 } else {
                     // cannot == 0 here
                     amounts[i] = uint256(-tokenAmounts[i]);
@@ -293,7 +304,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
         address[] memory tokens_,
-        int24 minTickRebalanceThreshold_
+        int24 minTickRebalanceThreshold_,
+        bytes memory vaultOptions
     ) internal returns (uint256 amountIn, uint8 index) {
         uint256 token0;
         uint256 priceX96;
@@ -360,7 +372,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             });
         }
         if (amountIn != 0) {
-            _swapToTarget(params);
+            _swapToTarget(params, vaultOptions);
             emit SwappedTokens(params);
         }
     }
@@ -377,13 +389,12 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault;
     }
 
-    function _swapToTarget(SwapToTargetParams memory params) internal {
+    function _swapToTarget(SwapToTargetParams memory params, bytes memory vaultOptions) internal {
         ISwapRouter.ExactInputSingleParams memory swapParams;
         uint8 tokenInIndex = params.tokenInIndex;
         uint256 amountIn = params.amountIn;
         ISwapRouter router_ = params.router;
         {
-            address[] memory tokens_ = params.tokens;
             uint256 priceX96 = params.priceX96;
             uint256[] memory erc20Tvl = params.erc20Tvl;
             IUniswapV3Pool pool_ = params.pool;
@@ -393,7 +404,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             if (amountIn > erc20Tvl[tokenInIndex]) {
                 uint256[] memory tokenAmounts = new uint256[](2);
                 tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
-                moneyVault_.pull(address(erc20Vault_), tokens_, tokenAmounts, "");
+                moneyVault_.pull(address(erc20Vault_), params.tokens, tokenAmounts, vaultOptions);
                 amountIn = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
             }
             uint256 amountOutMinimum;
@@ -404,8 +415,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             }
             amountOutMinimum = FullMath.mulDiv(amountOutMinimum, DENOMINATOR - oracleParams.maxSlippageD, DENOMINATOR);
             swapParams = ISwapRouter.ExactInputSingleParams({
-                tokenIn: tokens_[tokenInIndex],
-                tokenOut: tokens_[1 - tokenInIndex],
+                tokenIn: params.tokens[tokenInIndex],
+                tokenOut: params.tokens[1 - tokenInIndex],
                 fee: pool_.fee(),
                 recipient: address(erc20Vault),
                 deadline: block.timestamp + 1,
