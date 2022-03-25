@@ -40,19 +40,19 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     // MUTABLE PARAMS
 
     struct TradingParams {
-        uint256 maxSlippageD;
-        uint256 minRebalanceWaitTime;
+        uint32 maxSlippageD;
+        uint32 minRebalanceWaitTime;
         uint32 orderDeadline;
         uint8 oracleSafety;
         IOracle oracle;
     }
 
     struct RatioParams {
-        uint256 erc20UniV3CapitalRatioD;
-        uint256 erc20TokenRatioD;
-        uint256 minErc20UniV3CapitalRatioDeviationD;
-        uint256 minErc20TokenRatioDeviationD;
-        uint256 minUniV3LiquidityRatioDeviationD;
+        uint32 erc20UniV3CapitalRatioD;
+        uint32 erc20TokenRatioD;
+        uint32 minErc20UniV3CapitalRatioDeviationD;
+        uint32 minErc20TokenRatioDeviationD;
+        uint32 minUniV3LiquidityRatioDeviationD;
     }
 
     struct OtherParams {
