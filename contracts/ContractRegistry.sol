@@ -75,9 +75,14 @@ contract ContractRegistry is ContractMeta, IContractRegistry, Multicall {
         bytes32 newContractName = newContract.contractNameBytes();
         bytes32 newContractVersionRaw = newContract.contractVersionBytes();
         uint256 newContractVersion = SemverLibrary.numberifySemver(newContract.contractVersion());
+        uint256 latestContractVersion = _latestVersion(newContractName);
 
         require(_validateContractName(newContractName), ExceptionsLibrary.INVALID_VALUE);
-        require(newContractVersion > _latestVersion(newContractName), ExceptionsLibrary.INVARIANT);
+        require(newContractVersion > latestContractVersion, ExceptionsLibrary.INVARIANT);
+
+        uint256 newContractVersionMajor = newContractVersion >> 16;
+        uint256 latestContractVersionMajor = latestContractVersion >> 16;
+        require(newContractVersionMajor - latestContractVersionMajor <= 1, ExceptionsLibrary.INVARIANT);
 
         _nameToVersionToAddress[newContractName][newContractVersion] = target;
         _nameToVersions[newContractName].push(newContractVersion);
