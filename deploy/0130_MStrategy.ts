@@ -13,6 +13,27 @@ import { map } from "ramda";
 
 type MoneyVault = "Aave" | "Yearn";
 
+const setupCardinality = async function (
+    hre: HardhatRuntimeEnvironment,
+    tokens: string[],
+    fee: 500 | 3000 | 10000
+) {
+    const { deployments, getNamedAccounts } = hre;
+    const { deploy, log, execute, read, get, getOrNull } = deployments;
+    const { deployer, uniswapV3Factory } =
+        await getNamedAccounts();
+
+    const factory = await hre.ethers.getContractAt(
+        "IUniswapV3Factory",
+        uniswapV3Factory
+    );
+    const pool = await hre.ethers.getContractAt(
+        "IUniswapV3Pool",
+        await factory.getPool(tokens[0], tokens[1], fee)
+    );
+    await pool.increaseObservationCardinalityNext(100);
+}
+
 const deployMStrategy = async function (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault
