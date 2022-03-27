@@ -126,18 +126,11 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         int24 midTick = (tickUpper + tickLower) / 2;
         isNegative = midTick > targetTick_;
         if (isNegative) {
-            liquidityRatioD = FullMath.mulDiv(
-                uint256(uint24(midTick - targetTick_)),
-                DENOMINATOR,
-                uint256(uint24(tickUpper - tickLower))
-            );
+            liquidityRatioD = uint256(uint24(midTick - targetTick_));
         } else {
-            liquidityRatioD = FullMath.mulDiv(
-                uint256(uint24(targetTick_ - midTick)),
-                DENOMINATOR,
-                uint256(uint24(tickUpper - tickLower))
-            );
+            liquidityRatioD = uint256(uint24(targetTick_ - midTick));
         }
+        liquidityRatioD = liquidityRatioD * DENOMINATOR / uint256(uint24(tickUpper - tickLower));
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
