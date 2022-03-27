@@ -70,7 +70,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                     (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
                     (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
                     uint256 timespan = timestamp1 - timestamp0;
-                    tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
+                    tickAverage = (int256(tick1) - int256(tick0)) / int256(timespan);
                 }
                 pricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
                 safetyIndices[len] = i;
