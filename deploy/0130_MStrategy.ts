@@ -77,7 +77,9 @@ const setupStrategy = async (
     );
 
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
-    const params = [tokens, erc20Vault, moneyVault, 3000, mStrategyAdmin];
+    const fee = 3000;
+    await setupCardinality(hre, tokens, fee);
+    const params = [tokens, erc20Vault, moneyVault, fee, mStrategyAdmin];
     const address = await mStrategy.callStatic.createStrategy(...params);
     if (!(await deployments.getOrNull(`${mStrategyName}_WETH_USDC`))) {
         return;
