@@ -8,6 +8,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 import "./utils/ContractMeta.sol";
+import "hardhat/console.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
@@ -83,10 +84,8 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
 
     /// @inheritdoc IProtocolGovernance
     function addressesByPermission(uint8 permissionId) external view returns (address[] memory addresses) {
-        if (((_params.forceAllowMask >> permissionId) & 1) == 1) {
-            return _permissionAddresses.values();
-        }
         uint256 length = _permissionAddresses.length();
+        addresses = new address[](length);
         uint256 addressesLength = 0;
         uint256 mask = 1 << permissionId;
         for (uint256 i = 0; i < length; i++) {
