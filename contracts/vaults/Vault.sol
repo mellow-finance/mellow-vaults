@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../libraries/CommonLibrary.sol";
@@ -33,6 +34,7 @@ abstract contract Vault is IVault, ERC165 {
     address[] internal _vaultTokens;
     mapping(address => bool) internal _vaultTokensIndex;
     uint256 internal _nft;
+    uint256[] internal _pullExistentials;
 
     constructor() {
         // lock initialization and thus all mutations for any deployed Vault
@@ -73,6 +75,10 @@ abstract contract Vault is IVault, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
+    function pullExistentials() external view returns (uint256[] memory) {
+        return _pullExistentials;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {
@@ -96,6 +102,9 @@ abstract contract Vault is IVault, ERC165 {
         uint256 len = _vaultTokens.length;
         for (uint256 i = 0; i < len; ++i) {
             _vaultTokensIndex[vaultTokens_[i]] = true;
+
+            IERC20Metadata token = IERC20Metadata(vaultTokens_[i]);
+            _pullExistentials.push(10**(token.decimals() / 2));
         }
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);

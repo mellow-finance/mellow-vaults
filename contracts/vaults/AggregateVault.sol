@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IVaultRoot.sol";
@@ -14,7 +13,6 @@ import "../libraries/ExceptionsLibrary.sol";
 contract AggregateVault is IAggregateVault, Vault {
     using SafeERC20 for IERC20;
     uint256[] private _subvaultNfts;
-    uint256[] internal _pullExistentials;
     mapping(uint256 => uint256) private _subvaultNftsIndex;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -37,10 +35,6 @@ contract AggregateVault is IAggregateVault, Vault {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 subvaultNft = _subvaultNfts[index];
         return registry.vaultForNft(subvaultNft);
-    }
-
-    function pullExistentials() external view returns (uint256[] memory) {
-        return _pullExistentials;
     }
 
     /// @inheritdoc IVault
@@ -96,10 +90,6 @@ contract AggregateVault is IAggregateVault, Vault {
             vaultRegistry.approve(strategy_, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
             _subvaultNftsIndex[subvaultNft] = i + 1;
-        }
-        for (uint256 i = 0; i < vaultTokens_.length; i++) {
-            IERC20Metadata token = IERC20Metadata(vaultTokens_[i]);
-            _pullExistentials.push(10**(token.decimals() / 2));
         }
         _subvaultNfts = subvaultNfts_;
         _initialize(vaultTokens_, nft_);
