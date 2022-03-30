@@ -17,6 +17,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    bytes4 public constant REBALANCE_SELECTOR = 0xe78eeb6d;
     uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
     uint64 public lastFeeCharge;
     uint64 public totalWithdrawnAmountsTimestamp;
@@ -74,7 +75,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
-        bytes memory vaultOptions
+        bytes memory vaultOptions,
+        bytes memory callbackOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
@@ -117,6 +119,19 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             if (normalizedAmounts[i] > actualTokenAmounts[i]) {
                 IERC20(_vaultTokens[i]).safeTransfer(msg.sender, normalizedAmounts[i] - actualTokenAmounts[i]);
+            }
+        }
+
+        if (callbackOptions.length > 0) {
+            (address to, bytes4 selector, bytes memory data) = abi.decode(callbackOptions, (address, bytes4, bytes));
+            require(selector == REBALANCE_SELECTOR, ExceptionsLibrary.FORBIDDEN);
+            (bool res, bytes memory returndata) = to.call{value: 0}(abi.encodePacked(selector, data));
+            if (!res) {
+                assembly {
+                    let returndata_size := mload(returndata)
+                    // Bubble up revert reason
+                    revert(add(32, returndata), returndata_size)
+                }
             }
         }
 

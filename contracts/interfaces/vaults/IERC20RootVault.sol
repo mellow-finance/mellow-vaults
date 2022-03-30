@@ -18,7 +18,7 @@ interface IERC20RootVault is IAggregateVault, IERC20 {
         uint256[] memory subvaultNfts_
     ) external;
 
-    function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens, bytes memory vaultOptions)
+    function deposit(uint256[] memory tokenAmounts, uint256 minLpTokens, bytes memory vaultOptions, bytes memory callbackOptions)
         external
         returns (uint256[] memory actualTokenAmounts);
 
