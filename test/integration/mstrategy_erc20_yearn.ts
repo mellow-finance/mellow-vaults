@@ -221,7 +221,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             ) => {
                 await this.erc20RootVault
                     .connect(this.deployer)
-                    .deposit([amountUSDC, amountWETH], 0, []);
+                    .deposit([amountUSDC, amountWETH], 0, [], []);
 
                 await sleep(delay);
 
