@@ -2,12 +2,10 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
 import "../interfaces/oracles/IOracle.sol";
-import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 
 contract MellowOracle is ContractMeta, IOracle, ERC165 {

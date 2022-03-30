@@ -186,7 +186,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(10).pow(6).mul(3000),
                         BigNumber.from(10).pow(18),
                     ],
-                    0
+                    0,
+                    []
                 );
                 expect(
                     await this.subject.balanceOf(this.deployer.address)
@@ -214,7 +215,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(10).pow(6).mul(3000),
                         BigNumber.from(10).pow(18),
                     ],
-                    0
+                    0,
+                    []
                 );
                 await this.uniV3Vault.collectEarnings();
                 await this.uniV3Vault.pull(

@@ -17,7 +17,7 @@ interface IUnitPricesGovernance is IDefaultAccessControl, IERC165 {
     /// @return Timestamp
     function stagedUnitPricesTimestamps(address token) external view returns (uint256);
 
-    /// @notice Estimated amount of token worth 1 USD staged for commit.
+    /// @notice Estimated amount of token worth 1 USD.
     /// @param token Address of the token
     /// @return The amount of token
     function unitPrices(address token) external view returns (uint256);

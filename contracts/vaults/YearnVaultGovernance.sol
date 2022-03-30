@@ -88,6 +88,7 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
         (vaddr, nft) = _createVault(owner_);
         vault = IYearnVault(vaddr);
         vault.initialize(nft, vaultTokens_);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, "", owner_, vaddr, nft);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

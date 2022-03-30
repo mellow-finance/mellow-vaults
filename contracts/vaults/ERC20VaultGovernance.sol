@@ -34,5 +34,6 @@ contract ERC20VaultGovernance is ContractMeta, IERC20VaultGovernance, VaultGover
         (vaddr, nft) = _createVault(owner_);
         vault = IERC20Vault(vaddr);
         vault.initialize(nft, vaultTokens_);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, "", owner_, vaddr, nft);
     }
 }

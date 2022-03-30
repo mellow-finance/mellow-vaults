@@ -27,7 +27,6 @@ contract<UnitPricesGovernance, DeployOptions, CustomContext>(
                     this.subject = (await factory.deploy(
                         this.admin.address
                     )) as UnitPricesGovernance;
-                    this.DELAY = Number(await this.subject.DELAY());
                     return this.subject;
                 }
             );
@@ -35,6 +34,7 @@ contract<UnitPricesGovernance, DeployOptions, CustomContext>(
 
         beforeEach(async () => {
             await this.deploymentFixture();
+            this.DELAY = Number(await this.subject.DELAY());
             this.startTimestamp = now();
             await sleepTo(this.startTimestamp);
         });
@@ -218,7 +218,7 @@ contract<UnitPricesGovernance, DeployOptions, CustomContext>(
                             await this.subject
                                 .connect(this.admin)
                                 .stageUnitPrice(token, 2);
-                            await sleep(this.DELAY - 2);
+                            await sleep(this.DELAY - 10);
                             await expect(
                                 this.subject
                                     .connect(this.admin)

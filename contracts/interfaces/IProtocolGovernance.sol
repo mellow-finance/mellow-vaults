@@ -6,9 +6,9 @@ import "./IUnitPricesGovernance.sol";
 
 interface IProtocolGovernance is IDefaultAccessControl, IUnitPricesGovernance {
     /// @notice CommonLibrary protocol params.
-    /// @param permissionless If `true` anyone can spawn vaults, o/w only Protocol Governance Admin
-    /// @param maxTokensPerVault Max different token addresses that could be managed by the protocol
+    /// @param maxTokensPerVault Max different token addresses that could be managed by the vault
     /// @param governanceDelay The delay (in secs) that must pass before setting new pending params to commiting them
+    /// @param protocolTreasury The address that collects protocolFees, if protocolFee is not zero
     /// @param forceAllowMask If a permission bit is set in this mask it forces all addresses to have this permission as true
     /// @param withdrawLimit Withdraw limit (in unit prices, i.e. usd)
     struct Params {

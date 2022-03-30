@@ -8,6 +8,7 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 import "./utils/ContractMeta.sol";
+import "hardhat/console.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {
@@ -84,20 +85,19 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     /// @inheritdoc IProtocolGovernance
     function addressesByPermission(uint8 permissionId) external view returns (address[] memory addresses) {
         uint256 length = _permissionAddresses.length();
-        address[] memory tempAddresses = new address[](length);
+        addresses = new address[](length);
         uint256 addressesLength = 0;
         uint256 mask = 1 << permissionId;
         for (uint256 i = 0; i < length; i++) {
             address addr = _permissionAddresses.at(i);
             if (permissionMasks[addr] & mask != 0) {
-                tempAddresses[addressesLength] = addr;
+                addresses[addressesLength] = addr;
                 addressesLength++;
             }
         }
         // shrink to fit
-        addresses = new address[](addressesLength);
-        for (uint256 i = 0; i < addressesLength; i++) {
-            addresses[i] = tempAddresses[i];
+        assembly {
+            mstore(addresses, addressesLength)
         }
     }
 
@@ -197,8 +197,8 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
         uint256 length = _stagedValidatorsAddresses.length();
         addressesCommitted = new address[](length);
         uint256 addressesCommittedLength;
-        for (uint256 i; i != length; i++) {
-            address stagedAddress = _stagedValidatorsAddresses.at(0);
+        for (uint256 i; i != length;) {
+            address stagedAddress = _stagedValidatorsAddresses.at(i);
             if (block.timestamp >= stagedValidatorsTimestamps[stagedAddress]) {
                 validators[stagedAddress] = stagedValidators[stagedAddress];
                 _validatorsAddresses.add(stagedAddress);
@@ -206,8 +206,11 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 delete stagedValidatorsTimestamps[stagedAddress];
                 _stagedValidatorsAddresses.remove(stagedAddress);
                 addressesCommitted[addressesCommittedLength] = stagedAddress;
-                addressesCommittedLength += 1;
+                ++addressesCommittedLength;
+                --length;
                 emit ValidatorCommitted(tx.origin, msg.sender, stagedAddress);
+            } else {
+                ++i;
             }
         }
         assembly {
@@ -252,11 +255,11 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
     }
 
     /// @inheritdoc IProtocolGovernance
-    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory) {
+    function commitAllPermissionGrantsSurpassedDelay() external returns (address[] memory addresses) {
         _requireAdmin();
         uint256 length = _stagedPermissionGrantsAddresses.length();
         uint256 addressesLeft = length;
-        address[] memory tempAddresses = new address[](length);
+        addresses = new address[](length);
         for (uint256 i; i != addressesLeft;) {
             address stagedAddress = _stagedPermissionGrantsAddresses.at(i);
             if (block.timestamp >= stagedPermissionGrantsTimestamps[stagedAddress]) {
@@ -265,30 +268,24 @@ contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPr
                 delete stagedPermissionGrantsMasks[stagedAddress];
                 delete stagedPermissionGrantsTimestamps[stagedAddress];
                 _stagedPermissionGrantsAddresses.remove(stagedAddress);
-                tempAddresses[length - addressesLeft] = stagedAddress;
+                addresses[length - addressesLeft] = stagedAddress;
                 --addressesLeft;
                 emit PermissionGrantsCommitted(tx.origin, msg.sender, stagedAddress);
             } else {
                 ++i;
             }
         }
-        // shrink to fit
-        uint256 addressesToReturn = length - addressesLeft;
-        address[] memory result = new address[](addressesToReturn);
-        for (uint256 i; i != addressesToReturn; ++i) {
-            result[i] = tempAddresses[i];
+        length -= addressesLeft;
+        assembly {
+            mstore(addresses, length)
         }
-        return result;
     }
 
     /// @inheritdoc IProtocolGovernance
     function revokePermissions(address target, uint8[] calldata permissionIds) external {
         _requireAdmin();
         require(target != address(0), ExceptionsLibrary.NULL);
-        uint256 diff;
-        for (uint256 i = 0; i < permissionIds.length; ++i) {
-            diff |= 1 << permissionIds[i];
-        }
+        uint256 diff = _permissionIdsToMask(permissionIds);
         uint256 currentMask = permissionMasks[target];
         uint256 newMask = currentMask & (~diff);
         permissionMasks[target] = newMask;
