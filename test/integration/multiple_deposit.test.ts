@@ -226,6 +226,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(amountWETH).div(numDeposits),
                                 ],
                                 0,
+                                [],
                                 []
                             );
                         lpAmounts.push(
@@ -515,6 +516,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .deposit(
                             [usdcDepositAmounts[0], wethDepositAmounts[0]],
                             0,
+                            [],
                             []
                         );
                     const lpTokenAmountAfterFirstDeposit =
@@ -538,6 +540,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .deposit(
                                 [usdcDepositAmounts[i], wethDepositAmounts[i]],
                                 0,
+                                [],
                                 []
                             );
                     }
