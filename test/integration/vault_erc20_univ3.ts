@@ -187,6 +187,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(10).pow(18),
                     ],
                     0,
+                    [],
                     []
                 );
                 expect(
@@ -216,6 +217,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(10).pow(18),
                     ],
                     0,
+                    [],
                     []
                 );
                 await this.uniV3Vault.collectEarnings();
