@@ -2190,8 +2190,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
 
                 describe("when attempting to commit multiple validators too early", () => {
                     it(`does not commit these validators`, async () => {
-                        let targetAddresses = [];
-                        let validatorsAddresses: Address[] = [];
+                        let targetAddresses: Address[] = [];
                         const len = 10;
                         let randomIndex = randomInt(0, len - 1);
                         for (let i = 0; i < randomIndex; ++i) {
@@ -2203,6 +2202,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                     targetAddress,
                                     validatorAddress
                                 );
+                            targetAddresses.push(targetAddress);
                         }
                         await sleep(this.governanceDelay);
                         for (let i = randomIndex; i < len; ++i) {
@@ -2214,20 +2214,22 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                     targetAddress,
                                     validatorAddress
                                 );
+                            targetAddresses.push(targetAddress);
                         }
-                        await sleep(1);
+                        await sleep(this.governanceDelay / 2);
                         await this.subject
                             .connect(this.admin)
                             .commitAllValidatorsSurpassedDelay();
+                        console.log(await this.subject.validatorsAddresses());
                         for (let i = 0; i < randomIndex; ++i) {
                             expect(
                                 await this.subject.validatorsAddresses()
-                            ).to.contain(validatorsAddresses[i]);
+                            ).to.contain(targetAddresses[i]);
                         }
                         for (let i = randomIndex; i < len; ++i) {
                             expect(
                                 await this.subject.validatorsAddresses()
-                            ).to.not.contain(validatorsAddresses[i]);
+                            ).to.not.contain(targetAddresses[i]);
                         }
                         return true;
                     });
