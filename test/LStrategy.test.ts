@@ -3,7 +3,7 @@ import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 
 import { contract } from "./library/setup";
-import { ERC20Vault, LStrategy, MockCowswap, UniV3Vault } from "./types";
+import {ERC20Vault, LStrategy, MockCowswap, MockOracle, UniV3Vault} from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { abi as ICurvePool } from "./helpers/curvePoolABI.json";
@@ -25,6 +25,7 @@ type CustomContext = {
     uniV3UpperVault: UniV3Vault;
     erc20Vault: ERC20Vault;
     cowswap: MockCowswap;
+    mockOracle: MockOracle;
 };
 
 type DeployOptions = {};
@@ -289,6 +290,28 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     autoMine: true,
                 });
 
+                let wstethValidator = await deploy(
+                    "ERC20Validator",
+                    {
+                        from: this.deployer.address,
+                        contract: "ERC20Validator",
+                        args: [this.protocolGovernance.address],
+                        log: true,
+                        autoMine: true,
+                    }
+                )
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(
+                        this.wsteth.address,
+                        wstethValidator.address
+                    );
+                await sleep(await this.protocolGovernance.governanceDelay());
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(this.wsteth.address);
+
                 let cowswapValidatorDeployParams = await deploy(
                     "CowswapValidator",
                     {
@@ -381,6 +404,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     autoMine: true,
                 });
 
+                this.mockOracle = await ethers.getContractAt(
+                    "MockOracle",
+                    oracleDeployParams.address
+                )
+
                 await this.uniV3VaultGovernance
                     .connect(this.admin)
                     .stageDelayedProtocolParams({
@@ -465,7 +493,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("when maxSlippageD is more than DENOMINATOR", () => {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     let params = this.baseParams;
-                    params.maxSlippageD = BigNumber.from(10).pow(10);
+                    params.maxSlippageD = BigNumber.from(10).pow(9).mul(2);
                     await expect(
                         this.subject
                             .connect(this.admin)
@@ -560,14 +588,13 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 .connect(this.admin)
                 .updateRatioParams(this.baseParams);
             const expectedParams = [
-                BigNumber.from(10).pow(7).mul(5),
-                BigNumber.from(10).pow(8).mul(5),
-                BigNumber.from(10).pow(7),
-                BigNumber.from(10).pow(7),
-                BigNumber.from(10).pow(7),
+                5 * 10 ** 7,
+                5 * 10 ** 8,
+                10 ** 7,
+                10 ** 7,
+                10 ** 7,
             ];
-            const returnedParams = await this.subject.ratioParams();
-            expect(expectedParams == returnedParams);
+            expect(await this.subject.ratioParams()).to.be.eqls(expectedParams);
         });
         it("emits RatioParamsUpdated event", async () => {
             await expect(
@@ -581,7 +608,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("when erc20UniV3CapitalRatioD is more than DENOMINATOR", () => {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     let params = this.baseParams;
-                    params.erc20UniV3CapitalRatioD = BigNumber.from(10).pow(10);
+                    params.erc20UniV3CapitalRatioD = BigNumber.from(10).pow(9).mul(2);
                     await expect(
                         this.subject
                             .connect(this.admin)
@@ -592,7 +619,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("when erc20TokenRatioD is more than DENOMINATOR", () => {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     let params = this.baseParams;
-                    params.erc20TokenRatioD = BigNumber.from(10).pow(10);
+                    params.erc20TokenRatioD = BigNumber.from(10).pow(9).mul(2);
                     await expect(
                         this.subject
                             .connect(this.admin)
@@ -688,12 +715,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 minRebalanceWaitTime: 86400,
                 orderDeadline: 86400 * 30,
                 oracleSafety: 1,
-                oracle: this.mellowOracle.address,
+                oracle: this.mockOracle.address,
             };
             expect(
                 (
                     await this.subject.targetPrice(
-                        [this.weth.address, this.usdc.address],
+                        [this.wsteth.address, this.weth.address],
                         params
                     )
                 ).shr(96)
@@ -712,7 +739,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     };
                     await expect(
                         this.subject.targetPrice(
-                            [this.usdc.address, this.weth.address],
+                            [this.wsteth.address, this.weth.address],
                             params
                         )
                     ).to.be.reverted;
@@ -731,7 +758,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     );
                     expect(result.isNegative).to.be.false;
                     expect(result.liquidityRatioD).to.be.equal(
-                        BigNumber.from(10).pow(9).div(887220)
+                        BigNumber.from(10).pow(9).div(887220 * 2)
                     );
                 });
             });
@@ -743,7 +770,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     );
                     expect(result.isNegative).to.be.true;
                     expect(result.liquidityRatioD).to.be.equal(
-                        BigNumber.from(10).pow(9).div(887220)
+                        BigNumber.from(10).pow(9).div(887220 * 2)
                     );
                 });
             });
@@ -763,7 +790,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     describe("#resetCowswapAllowance", () => {
         it("resets allowance from erc20Vault to cowswap", async () => {
             await withSigner(this.erc20Vault.address, async (signer) => {
-                await this.usdc
+                await this.wsteth
                     .connect(signer)
                     .approve(this.cowswap.address, BigNumber.from(10).pow(18));
             });
@@ -776,7 +803,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 );
             await this.subject.resetCowswapAllowance(0);
             expect(
-                await this.usdc.allowance(
+                await this.wsteth.allowance(
                     this.erc20Vault.address,
                     this.cowswap.address
                 )
@@ -845,17 +872,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
             await this.uniV3UpperVault.push(
-                [this.usdc.address, this.weth.address],
+                [this.wsteth.address, this.weth.address],
                 [
-                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
                     BigNumber.from(10).pow(18).mul(1),
                 ],
                 []
             );
             await this.uniV3LowerVault.push(
-                [this.usdc.address, this.weth.address],
+                [this.wsteth.address, this.weth.address],
                 [
-                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
                     BigNumber.from(10).pow(18).mul(1),
                 ],
                 []
@@ -863,9 +890,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.swapTokens(
                 this.deployer.address,
                 this.deployer.address,
-                this.usdc,
+                this.wsteth,
                 this.weth,
-                BigNumber.from(10).pow(6).mul(5000)
+                BigNumber.from(10).pow(17).mul(5)
             );
 
             let lowerVaultFees =
@@ -903,17 +930,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await this.preparePush({ vault: this.uniV3LowerVault });
                     await this.preparePush({ vault: this.uniV3UpperVault });
                     await this.uniV3UpperVault.push(
-                        [this.usdc.address, this.weth.address],
+                        [this.wsteth.address, this.weth.address],
                         [
-                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
                             BigNumber.from(10).pow(18).mul(1),
                         ],
                         []
                     );
                     await this.uniV3LowerVault.push(
-                        [this.usdc.address, this.weth.address],
+                        [this.wsteth.address, this.weth.address],
                         [
-                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
                             BigNumber.from(10).pow(18).mul(1),
                         ],
                         []
@@ -975,7 +1002,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     describe("#manualPull", () => {
         beforeEach(async () => {
             await withSigner(this.erc20Vault.address, async (signer) => {
-                await this.usdc
+                await this.wsteth
                     .connect(signer)
                     .approve(
                         this.uniV3UpperVault.address,
@@ -1000,11 +1027,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 );
             let endBalances = [
                 [
-                    await this.usdc.balanceOf(this.erc20Vault.address),
+                    await this.wsteth.balanceOf(this.erc20Vault.address),
                     await this.weth.balanceOf(this.erc20Vault.address),
                 ],
                 [
-                    await this.usdc.balanceOf(this.uniV3UpperVault.address),
+                    await this.wsteth.balanceOf(this.uniV3UpperVault.address),
                     await this.weth.balanceOf(this.uniV3UpperVault.address),
                 ],
             ];
@@ -1028,7 +1055,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.erc20Vault.address,
                         this.uniV3UpperVault.address,
                         [
-                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
                             BigNumber.from(10).pow(18).mul(1),
                         ],
                         [ethers.constants.Zero, ethers.constants.Zero],
@@ -1046,7 +1073,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.erc20Vault.address,
                         this.uniV3UpperVault.address,
                         [
-                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
                             BigNumber.from(10).pow(18).mul(1),
                         ],
                         [ethers.constants.Zero, ethers.constants.Zero],
@@ -1068,7 +1095,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 this.erc20Vault.address,
                                 this.uniV3UpperVault.address,
                                 [
-                                    BigNumber.from(10).pow(6).mul(3000),
+                                    BigNumber.from(10).pow(18).mul(1),
                                     BigNumber.from(10).pow(18).mul(1),
                                 ],
                                 [ethers.constants.Zero, ethers.constants.Zero],
@@ -1086,7 +1113,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 this.erc20Vault.address,
                                 this.uniV3UpperVault.address,
                                 [
-                                    BigNumber.from(10).pow(6).mul(3000),
+                                    BigNumber.from(10).pow(18).mul(1),
                                     BigNumber.from(10).pow(18).mul(1),
                                 ],
                                 [ethers.constants.Zero, ethers.constants.Zero],
@@ -1098,7 +1125,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe.only("#rebalanceUniV3Vaults", () => {
+    describe("#rebalanceUniV3Vaults", () => {
         beforeEach(async () => {
             await this.grantPermissions();
             await this.preparePush({ vault: this.uniV3LowerVault });
@@ -1328,14 +1355,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
     describe("#postPreOrder", () => {
         it("initializing preOrder when liquidityDelta is negative", async () => {
-            await this.subject.connect(this.admin).postPreOrder();
-            await expect((await this.subject.preOrder()).tokenIn).eq(
-                this.weth.address
-            );
-        });
-        it("initializing preOrder when liquidityDelta is not negative", async () => {
             await withSigner(this.erc20Vault.address, async (signer) => {
-                await this.weth
+                await this.wsteth
                     .connect(signer)
                     .transfer(
                         this.deployer.address,
@@ -1344,7 +1365,19 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
             await this.subject.connect(this.admin).postPreOrder();
             await expect((await this.subject.preOrder()).tokenIn).eq(
+                this.weth.address
+            );
+            await expect((await this.subject.preOrder()).amountIn).eq(
+                BigNumber.from(10).pow(18).mul(250)
+            );
+        });
+        it("initializing preOrder when liquidityDelta is not negative", async () => {
+            await this.subject.connect(this.admin).postPreOrder();
+            await expect((await this.subject.preOrder()).tokenIn).eq(
                 this.wsteth.address
+            );
+            await expect((await this.subject.preOrder()).amountIn).eq(
+                BigNumber.from(10).pow(18).mul(0)
             );
         });
         it("emits PreOrderPosted event", async () => {
@@ -1403,7 +1436,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 this.baseOrderStruct = {
                     sellToken: preOrder.tokenIn,
                     buyToken: preOrder.tokenOut,
-                    receiver: this.deployer.address,
+                    receiver: this.erc20Vault.address,
                     sellAmount: preOrder.amountIn,
                     buyAmount: preOrder.minAmountOut,
                     validTo: preOrder.deadline,
@@ -1530,7 +1563,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                     await this.successfulInitialization();
                     let orderStruct = this.baseOrderStruct;
-                    orderStruct.buyToken = this.usdc.address;
+                    orderStruct.buyToken = this.wsteth.address;
                     let orderHash = await this.cowswap.callStatic.hash(
                         orderStruct,
                         await this.cowswap.domainSeparator()
@@ -1550,7 +1583,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
                     await this.successfulInitialization();
                     let orderStruct = this.baseOrderStruct;
-                    orderStruct.sellAmount = ethers.constants.Zero;
+                    orderStruct.sellAmount = ethers.constants.MaxUint256;
                     let orderHash = await this.cowswap.callStatic.hash(
                         orderStruct,
                         await this.cowswap.domainSeparator()
@@ -1566,8 +1599,36 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
             });
-            describe("when order buy amount does is less than minAmountOut", () => {
+            describe("when reciever address is not erc20Vault", () => {
+                it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                    await this.successfulInitialization();
+                    let orderStruct = this.baseOrderStruct;
+                    orderStruct.receiver = this.deployer.address;
+                    let orderHash = await this.cowswap.callStatic.hash(
+                        orderStruct,
+                        await this.cowswap.domainSeparator()
+                    );
+                    let orderUuid = ethers.utils.solidityPack(
+                        ["bytes32", "address", "uint32"],
+                        [orderHash, randomBytes(20), randomBytes(4)]
+                    );
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .signOrder(orderStruct, orderUuid, true)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+            describe("when order buy amount is less than minAmountOut", () => {
                 it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
+                    await withSigner(this.erc20Vault.address, async (signer) => {
+                        await this.wsteth
+                            .connect(signer)
+                            .transfer(
+                                this.deployer.address,
+                                BigNumber.from(10).pow(18).mul(500)
+                            );
+                    });
                     await this.successfulInitialization();
                     let orderStruct = this.baseOrderStruct;
                     orderStruct.buyAmount = ethers.constants.Zero;
