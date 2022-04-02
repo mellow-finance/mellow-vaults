@@ -3,7 +3,13 @@ import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 
 import { contract } from "./library/setup";
-import {ERC20Vault, LStrategy, MockCowswap, MockOracle, UniV3Vault} from "./types";
+import {
+    ERC20Vault,
+    LStrategy,
+    MockCowswap,
+    MockOracle,
+    UniV3Vault,
+} from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { abi as ICurvePool } from "./helpers/curvePoolABI.json";
@@ -290,16 +296,13 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     autoMine: true,
                 });
 
-                let wstethValidator = await deploy(
-                    "ERC20Validator",
-                    {
-                        from: this.deployer.address,
-                        contract: "ERC20Validator",
-                        args: [this.protocolGovernance.address],
-                        log: true,
-                        autoMine: true,
-                    }
-                )
+                let wstethValidator = await deploy("ERC20Validator", {
+                    from: this.deployer.address,
+                    contract: "ERC20Validator",
+                    args: [this.protocolGovernance.address],
+                    log: true,
+                    autoMine: true,
+                });
 
                 await this.protocolGovernance
                     .connect(this.admin)
@@ -407,7 +410,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 this.mockOracle = await ethers.getContractAt(
                     "MockOracle",
                     oracleDeployParams.address
-                )
+                );
 
                 await this.uniV3VaultGovernance
                     .connect(this.admin)
@@ -608,7 +611,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("when erc20UniV3CapitalRatioD is more than DENOMINATOR", () => {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     let params = this.baseParams;
-                    params.erc20UniV3CapitalRatioD = BigNumber.from(10).pow(9).mul(2);
+                    params.erc20UniV3CapitalRatioD = BigNumber.from(10)
+                        .pow(9)
+                        .mul(2);
                     await expect(
                         this.subject
                             .connect(this.admin)
@@ -758,7 +763,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     );
                     expect(result.isNegative).to.be.false;
                     expect(result.liquidityRatioD).to.be.equal(
-                        BigNumber.from(10).pow(9).div(887220 * 2)
+                        BigNumber.from(10)
+                            .pow(9)
+                            .div(887220 * 2)
                     );
                 });
             });
@@ -770,7 +777,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     );
                     expect(result.isNegative).to.be.true;
                     expect(result.liquidityRatioD).to.be.equal(
-                        BigNumber.from(10).pow(9).div(887220 * 2)
+                        BigNumber.from(10)
+                            .pow(9)
+                            .div(887220 * 2)
                     );
                 });
             });
@@ -1131,13 +1140,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
             for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
-                let tokenId = await ethers.provider.send(
-                    "eth_getStorageAt",
-                    [
-                        vault.address,
-                        "0x4", // address of _nft
-                    ]
-                );
+                let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                    vault.address,
+                    "0x4", // address of _nft
+                ]);
                 await withSigner(
                     this.erc20RootVault.address,
                     async (erc20RootVaultSigner) => {
@@ -1150,13 +1156,15 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
         describe("access control:", () => {
             it("allowed: admin", async () => {
-                await expect(this.subject
-                    .connect(this.admin)
-                    .rebalanceUniV3Vaults(
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        ethers.constants.MaxUint256
-                    )).to.not.be.reverted;
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .rebalanceUniV3Vaults(
+                            [ethers.constants.Zero, ethers.constants.Zero],
+                            [ethers.constants.Zero, ethers.constants.Zero],
+                            ethers.constants.MaxUint256
+                        )
+                ).to.not.be.reverted;
             });
             it("allowed: operator", async () => {
                 await withSigner(randomAddress(), async (signer) => {
@@ -1310,13 +1318,15 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
 
             it("allowed: admin", async () => {
-                await expect(this.subject
-                    .connect(this.admin)
-                    .rebalanceERC20UniV3Vaults(
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        ethers.constants.MaxUint256
-                    )).to.not.be.reverted;
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .rebalanceERC20UniV3Vaults(
+                            [ethers.constants.Zero, ethers.constants.Zero],
+                            [ethers.constants.Zero, ethers.constants.Zero],
+                            ethers.constants.MaxUint256
+                        )
+                ).to.not.be.reverted;
             });
             it("allowed: operator", async () => {
                 await withSigner(randomAddress(), async (signer) => {
@@ -1621,14 +1631,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
             describe("when order buy amount is less than minAmountOut", () => {
                 it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
-                    await withSigner(this.erc20Vault.address, async (signer) => {
-                        await this.wsteth
-                            .connect(signer)
-                            .transfer(
-                                this.deployer.address,
-                                BigNumber.from(10).pow(18).mul(500)
-                            );
-                    });
+                    await withSigner(
+                        this.erc20Vault.address,
+                        async (signer) => {
+                            await this.wsteth
+                                .connect(signer)
+                                .transfer(
+                                    this.deployer.address,
+                                    BigNumber.from(10).pow(18).mul(500)
+                                );
+                        }
+                    );
                     await this.successfulInitialization();
                     let orderStruct = this.baseOrderStruct;
                     orderStruct.buyAmount = ethers.constants.Zero;
