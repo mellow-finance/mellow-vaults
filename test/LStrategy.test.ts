@@ -1149,7 +1149,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     });
 
     describe("#rebalanceUniV3Vaults", () => {
-        beforeEach(async () => {
+        it("average happy case", async () => {
             await this.grantPermissions();
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
@@ -1167,8 +1167,224 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 );
             }
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
         });
+        it("another average happy case", async () => {
+            await this.grantPermissions();
+            await this.preparePush({
+                vault: this.uniV3LowerVault,
+                tickLower: -800000,
+                tickUpper: -600000,
+            });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
+                let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                    vault.address,
+                    "0x4", // address of _nft
+                ]);
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(this.subject.address, tokenId);
+                    }
+                );
+            }
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+        });
+        it("and another average happy case", async () => {
+            await this.grantPermissions();
+            await this.preparePush({
+                vault: this.uniV3LowerVault,
+                tickLower: 100000,
+                tickUpper: 800000,
+            });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
+                let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                    vault.address,
+                    "0x4", // address of _nft
+                ]);
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(this.subject.address, tokenId);
+                    }
+                );
+            }
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+        });
+        it("and another one average happy case", async () => {
+            await this.grantPermissions();
+            await this.preparePush({
+                vault: this.uniV3LowerVault,
+                tickLower: 100000,
+                tickUpper: 800000,
+            });
+            await this.preparePush({
+                vault: this.uniV3UpperVault,
+                wethAmount: BigNumber.from(0),
+                wstethAmount: BigNumber.from(0),
+            });
+            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
+                let tokenId = await ethers.provider.send("eth_getStorageAt", [
+                    vault.address,
+                    "0x4", // address of _nft
+                ]);
+                await withSigner(
+                    this.erc20RootVault.address,
+                    async (erc20RootVaultSigner) => {
+                        await this.vaultRegistry
+                            .connect(erc20RootVaultSigner)
+                            .approve(this.subject.address, tokenId);
+                    }
+                );
+            }
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+        });
+
+        describe("edge cases:", () => {
+            describe("when minLowerAmounts are more than actual", () => {
+                it("reverts", async () => {
+                    await this.grantPermissions();
+                    await this.preparePush({ vault: this.uniV3LowerVault });
+                    await this.preparePush({ vault: this.uniV3UpperVault });
+                    for (let vault of [
+                        this.uniV3UpperVault,
+                        this.uniV3LowerVault,
+                    ]) {
+                        let tokenId = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                vault.address,
+                                "0x4", // address of _nft
+                            ]
+                        );
+                        await withSigner(
+                            this.erc20RootVault.address,
+                            async (erc20RootVaultSigner) => {
+                                await this.vaultRegistry
+                                    .connect(erc20RootVaultSigner)
+                                    .approve(this.subject.address, tokenId);
+                            }
+                        );
+                    }
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceUniV3Vaults(
+                                [
+                                    ethers.constants.MaxUint256,
+                                    ethers.constants.MaxUint256,
+                                ],
+                                [
+                                    ethers.constants.MaxUint256,
+                                    ethers.constants.MaxUint256,
+                                ],
+                                ethers.constants.MaxUint256
+                            )
+                    ).to.be.reverted;
+                });
+            });
+            describe("when deadline is earlier than block timestamp", () => {
+                it("reverts", async () => {
+                    await this.grantPermissions();
+                    await this.preparePush({ vault: this.uniV3LowerVault });
+                    await this.preparePush({ vault: this.uniV3UpperVault });
+                    for (let vault of [
+                        this.uniV3UpperVault,
+                        this.uniV3LowerVault,
+                    ]) {
+                        let tokenId = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                vault.address,
+                                "0x4", // address of _nft
+                            ]
+                        );
+                        await withSigner(
+                            this.erc20RootVault.address,
+                            async (erc20RootVaultSigner) => {
+                                await this.vaultRegistry
+                                    .connect(erc20RootVaultSigner)
+                                    .approve(this.subject.address, tokenId);
+                            }
+                        );
+                    }
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceUniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.Zero
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+
         describe("access control:", () => {
+            beforeEach(async () => {
+                await this.grantPermissions();
+                await this.preparePush({ vault: this.uniV3LowerVault });
+                await this.preparePush({ vault: this.uniV3UpperVault });
+                for (let vault of [
+                    this.uniV3UpperVault,
+                    this.uniV3LowerVault,
+                ]) {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            vault.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(this.subject.address, tokenId);
+                        }
+                    );
+                }
+            });
             it("allowed: admin", async () => {
                 await expect(
                     this.subject
