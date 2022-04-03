@@ -57,6 +57,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     uniswapV3PositionManager
                 );
 
+                this.calculateTvl = async () => {
+                    let erc20tvl = (await this.erc20Vault.tvl())[0];
+                    let erc20OverallTvl = erc20tvl[0].add(erc20tvl[1]);
+                    let lowerVaultTvl = (await this.uniV3LowerVault.tvl())[0];
+                    let upperVaultTvl = (await this.uniV3UpperVault.tvl())[0];
+                    let uniV3OverallTvl = ethers.constants.Zero;
+                    for (let i = 0; i < 2; ++i) {
+                        uniV3OverallTvl = uniV3OverallTvl.add(lowerVaultTvl[i]).add(upperVaultTvl[i]);
+                    }
+                    return [erc20OverallTvl, uniV3OverallTvl];
+                }
+
                 this.grantPermissions = async () => {
                     let tokenId = await ethers.provider.send(
                         "eth_getStorageAt",
@@ -1134,7 +1146,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe("#rebalanceUniV3Vaults", () => {
+    describe.only("#rebalanceUniV3Vaults", () => {
         beforeEach(async () => {
             await this.grantPermissions();
             await this.preparePush({ vault: this.uniV3LowerVault });
@@ -1216,10 +1228,45 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     )
             ).to.emit(this.subject, "RebalancedErc20UniV3");
         });
+        it("does nothing when capital delta is 0", async () => {
+            await this.grantPermissions();
+            await this.preparePush({vault: this.uniV3LowerVault});
+            await this.preparePush({vault: this.uniV3UpperVault});
+            let [erc20OverallTvl, uniV3OverallTvl] = await this.calculateTvl();
+
+            let clearValue = uniV3OverallTvl.div(20) // * 0.05 (erc20UniV3CapitalRatioD)
+
+            await withSigner(
+                this.erc20Vault.address,
+                async (signer) => {
+                    for (let token of [this.wsteth, this.weth]) {
+                        await token
+                            .connect(signer)
+                            .transfer(
+                                this.deployer.address,
+                                BigNumber.from(10).pow(18).mul(500).sub(clearValue.div(2))
+                            );
+                    }
+                }
+            );
+
+            [erc20OverallTvl, uniV3OverallTvl] = await this.calculateTvl();
+
+            await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
+                [ethers.constants.Zero, ethers.constants.Zero],
+                [ethers.constants.Zero, ethers.constants.Zero],
+                ethers.constants.MaxUint256
+            )
+
+            expect(await this.calculateTvl()).to.be.deep.equal([erc20OverallTvl, uniV3OverallTvl]);
+        });
         it("rebalances vaults when capital delta is not negative", async () => {
             await this.grantPermissions();
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
+
+            let [erc20OverallTvl, uniV3OverallTvl] = await this.calculateTvl();
+
             await expect(
                 this.subject
                     .connect(this.admin)
@@ -1229,11 +1276,30 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ethers.constants.MaxUint256
                     )
             ).to.not.be.reverted;
+
+            let [newErc20OverallTvl, newUniV3OverallTvl] = await this.calculateTvl();
+
+            expect(newErc20OverallTvl.lt(erc20OverallTvl) && newUniV3OverallTvl.gt(uniV3OverallTvl));
         });
         it("rebalances vaults when capital delta is negative", async () => {
             await this.grantPermissions();
-            await this.preparePush({ vault: this.uniV3LowerVault });
-            await this.preparePush({ vault: this.uniV3UpperVault });
+            await this.preparePush({vault: this.uniV3LowerVault});
+            await this.preparePush({vault: this.uniV3UpperVault});
+            await withSigner(
+                this.erc20Vault.address,
+                async (signer) => {
+                    for (let token of [this.wsteth, this.weth]) {
+                        await token
+                            .connect(signer)
+                            .transfer(
+                                this.deployer.address,
+                                BigNumber.from(10).pow(18).mul(500)
+                            );
+                    }
+                }
+            );
+
+            let [erc20OverallTvl, uniV3OverallTvl] = await this.calculateTvl();
 
             for (let vault of [this.uniV3LowerVault, this.uniV3UpperVault]) {
                 let tokenId = await ethers.provider.send("eth_getStorageAt", [
@@ -1250,16 +1316,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 );
             }
 
-            await this.subject.connect(this.admin).updateRatioParams({
-                erc20UniV3CapitalRatioD: BigNumber.from(10).pow(8).mul(5), // 0.05 * DENOMINATOR
-                erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
-                minErc20UniV3CapitalRatioDeviationD: BigNumber.from(10).pow(2),
-                minErc20TokenRatioDeviationD: BigNumber.from(10).pow(8).div(2),
-                minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
-                    .pow(8)
-                    .div(2),
-            });
-
             await this.subject
                 .connect(this.admin)
                 .rebalanceERC20UniV3Vaults(
@@ -1267,6 +1323,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     [ethers.constants.Zero, ethers.constants.Zero],
                     ethers.constants.MaxUint256
                 );
+
+            let [newErc20OverallTvl, newUniV3OverallTvl] = await this.calculateTvl();
+
+            expect(newErc20OverallTvl.gt(erc20OverallTvl) && newUniV3OverallTvl.lt(uniV3OverallTvl));
         });
 
         describe("edge cases:", () => {
