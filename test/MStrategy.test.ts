@@ -16,6 +16,7 @@ import { Contract } from "@ethersproject/contracts";
 import { pit, RUNS } from "./library/property";
 import { integer } from "fast-check";
 import { OracleParamsStruct, RatioParamsStruct } from "./types/MStrategy";
+import Exceptions from "./library/Exceptions";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -23,7 +24,7 @@ type CustomContext = {
     erc20RootVault: ERC20RootVault;
     positionManager: Contract;
     protocolGovernance: ProtocolGovernance;
-    paramsForStrategy: any[];
+    params: any;
 };
 
 type DeployOptions = {};
@@ -101,18 +102,28 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     const mStrategy = await (
                         await ethers.getContractFactory("MStrategy")
                     ).deploy(uniswapV3PositionManager, uniswapV3Router);
-                    this.params = [
-                        tokens,
-                        erc20Vault,
-                        yearnVault,
-                        3000,
-                        this.mStrategyAdmin.address,
-                    ];
+                    this.params = {
+                        tokens: tokens,
+                        erc20Vault: erc20Vault,
+                        moneyVault: yearnVault,
+                        fee: 3000,
+                        admin: this.mStrategyAdmin.address,
+                    };
 
                     const address = await mStrategy.callStatic.createStrategy(
-                        ...this.params
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
                     );
-                    await mStrategy.createStrategy(...this.params);
+                    await mStrategy.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
                     this.subject = await ethers.getContractAt(
                         "MStrategy",
                         address
@@ -242,43 +253,73 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        // pit(
-        //     `
-        // rebalances some times
-        // `,
-        //     { numRuns: RUNS.verylow },
-        //     integer({ min: 0, max: 86400 }),
-        //     integer({ min: 100_000, max: 1_000_000 }).map((x) =>
-        //         BigNumber.from(x.toString())
-        //     ),
-        //     integer({ min: 10 ** 11, max: 10 ** 15 }).map((x) =>
-        //         BigNumber.from(x.toString())
-        //     ),
-        //     async (
-        //         delay: number,
-        //         amountUSDC: BigNumber,
-        //         amountWETH: BigNumber
-        //     ) => {
-        //         await this.erc20RootVault
-        //             .connect(this.deployer)
-        //             .deposit([amountUSDC, amountWETH], 0, []);
+        describe("#createStrategy", () => {
+            it("creates a new strategy and initializes it", async () => {
+                const address = await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .callStatic.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
 
-        //         await sleep(delay);
+                expect(address).to.not.eq(ethers.constants.AddressZero);
 
-        //         console.log(
-        //             (
-        //                 await this.subject
-        //                     .connect(this.mStrategyAdmin)
-        //                     .callStatic.rebalance()
-        //             ).toString()
-        //         );
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .createStrategy(
+                            this.params.tokens,
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.fee,
+                            this.params.admin
+                        )
+                ).to.not.be.reverted;
+            });
 
-        //         await this.subject
-        //                     .connect(this.mStrategyAdmin)
-        //                     .rebalance()
+            describe("access control", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .createStrategy(
+                                    this.params.tokens,
+                                    this.params.erc20Vault,
+                                    this.params.moneyVault,
+                                    this.params.fee,
+                                    this.params.admin
+                                )
+                        ).to.not.be.reverted;
+                    });
+                });
+            });
 
-        //         return true;
-        //     }
-        // );
+            describe("edge cases", () => {
+                describe("when tokens.length is not equal 2", () => {
+                    it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
+                        const tokens = [
+                            this.weth.address,
+                            this.usdc.address,
+                            this.wbtc.address,
+                        ]
+                            .map((t) => t.toLowerCase())
+                            .sort();
+                        await expect(
+                            this.subject.createStrategy(
+                                tokens,
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                this.params.fee,
+                                this.params.admin
+                            )
+                        ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
+                    });
+                });
+            });
+        });
     }
 );
