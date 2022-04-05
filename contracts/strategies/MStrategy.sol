@@ -59,6 +59,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param positionManager_ Uniswap V3 position manager
     /// @param router_ Uniswap V3 swap router
     constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) {
+        require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(router_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
         router = router_;
         DefaultAccessControlLateInit.init(address(this));

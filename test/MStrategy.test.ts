@@ -10,13 +10,18 @@ import {
     MStrategy,
     ProtocolGovernance,
 } from "./types";
-import { setupVault, combineVaults } from "./../deploy/0000_utils";
+import {
+    setupVault,
+    combineVaults,
+    PermissionIdsLibrary,
+} from "./../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
 import { pit, RUNS } from "./library/property";
 import { integer } from "fast-check";
 import { OracleParamsStruct, RatioParamsStruct } from "./types/MStrategy";
 import Exceptions from "./library/Exceptions";
+import { assert } from "console";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -224,14 +229,17 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
             describe("edge cases", () => {
                 describe("when positionManager_ address is zero", () => {
-                    it("passes", async () => {
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
                         const { uniswapV3Router } = await getNamedAccounts();
-                        const mStrategyNew = await (
-                            await ethers.getContractFactory("MStrategy")
-                        ).deploy(ethers.constants.AddressZero, uniswapV3Router);
-                        expect(mStrategyNew.address).to.not.eq(
-                            ethers.constants.AddressZero
+                        let factory = await ethers.getContractFactory(
+                            "MStrategy"
                         );
+                        await expect(
+                            factory.deploy(
+                                ethers.constants.AddressZero,
+                                uniswapV3Router
+                            )
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
                 });
 
@@ -239,15 +247,16 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     it("passes", async () => {
                         const { uniswapV3PositionManager } =
                             await getNamedAccounts();
-                        const mStrategyNew = await (
-                            await ethers.getContractFactory("MStrategy")
-                        ).deploy(
-                            uniswapV3PositionManager,
-                            ethers.constants.AddressZero
+
+                        let factory = await ethers.getContractFactory(
+                            "MStrategy"
                         );
-                        expect(mStrategyNew.address).to.not.eq(
-                            ethers.constants.AddressZero
-                        );
+                        await expect(
+                            factory.deploy(
+                                uniswapV3PositionManager,
+                                ethers.constants.AddressZero
+                            )
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
                 });
             });
@@ -301,7 +310,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             describe("edge cases", () => {
                 describe("when tokens.length is not equal 2", () => {
                     it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
-                        const tokens = [
+                        const tokensTooLong = [
                             this.weth.address,
                             this.usdc.address,
                             this.wbtc.address,
@@ -310,13 +319,179 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             .sort();
                         await expect(
                             this.subject.createStrategy(
-                                tokens,
+                                tokensTooLong,
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.fee,
                                 this.params.admin
                             )
                         ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
+
+                        const tokensTooShort = [this.weth.address]
+                            .map((t) => t.toLowerCase())
+                            .sort();
+                        await expect(
+                            this.subject.createStrategy(
+                                tokensTooShort,
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                this.params.fee,
+                                this.params.admin
+                            )
+                        ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
+                    });
+                });
+
+                describe("when erc20Vault vaultTokens do not match tokens_", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        const erc20VaultTokens = [
+                            this.wbtc.address,
+                            this.usdc.address,
+                        ]
+                            .map((t) => t.toLowerCase())
+                            .sort();
+
+                        let erc20VaultOwner = randomAddress();
+                        const { vault: newERC20VaultAddress } =
+                            await this.erc20VaultGovernance.callStatic.createVault(
+                                erc20VaultTokens,
+                                erc20VaultOwner
+                            );
+                        await this.erc20VaultGovernance.createVault(
+                            erc20VaultTokens,
+                            erc20VaultOwner
+                        );
+                        assert(
+                            newERC20VaultAddress !==
+                                ethers.constants.AddressZero
+                        );
+
+                        await expect(
+                            this.subject.createStrategy(
+                                this.params.tokens,
+                                newERC20VaultAddress,
+                                this.params.moneyVault,
+                                this.params.fee,
+                                this.params.admin
+                            )
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+
+                describe("when moneyVault vaultTokens do not match tokens_", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        const moneyVaultTokens = [
+                            this.weth.address,
+                            this.wbtc.address,
+                        ]
+                            .map((t) => t.toLowerCase())
+                            .sort();
+
+                        let moneyVaultOwner = randomAddress();
+                        const { vault: newMoneyVaultAddress } =
+                            await this.yearnVaultGovernance.callStatic.createVault(
+                                moneyVaultTokens,
+                                moneyVaultOwner
+                            );
+                        await this.yearnVaultGovernance.createVault(
+                            moneyVaultTokens,
+                            moneyVaultOwner
+                        );
+                        assert(
+                            newMoneyVaultAddress !==
+                                ethers.constants.AddressZero
+                        );
+
+                        await expect(
+                            this.subject.createStrategy(
+                                this.params.tokens,
+                                this.params.erc20Vault,
+                                newMoneyVaultAddress,
+                                this.params.fee,
+                                this.params.admin
+                            )
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+
+                describe.only("when UniSwapV3 pool for tokens does not exist", () => {
+                    it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
+                        let erc20Factory = await ethers.getContractFactory(
+                            "ERC20Token"
+                        );
+                        let erc20TokenOne = await erc20Factory.deploy();
+                        let erc20TokenTwo = await erc20Factory.deploy();
+                        assert(
+                            erc20TokenOne.address !==
+                                ethers.constants.AddressZero
+                        );
+                        assert(
+                            erc20TokenTwo.address !==
+                                ethers.constants.AddressZero
+                        );
+
+                        const tokens = [
+                            erc20TokenOne.address,
+                            erc20TokenTwo.address,
+                        ]
+                            .map((t) => t.toLowerCase())
+                            .sort();
+
+                        for (let i = 0; i < tokens.length; ++i) {
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(tokens[i], [
+                                    PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                                ]);
+                        }
+
+                        await sleep(this.governanceDelay);
+
+                        for (let i = 0; i < tokens.length; ++i) {
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .commitPermissionGrants(tokens[i]);
+                        }
+
+                        let erc20VaultOwner = randomAddress();
+                        const { vault: newERC20VaultAddress } =
+                            await this.erc20VaultGovernance.callStatic.createVault(
+                                tokens,
+                                erc20VaultOwner
+                            );
+                        await this.erc20VaultGovernance.createVault(
+                            tokens,
+                            erc20VaultOwner
+                        );
+                        assert(
+                            newERC20VaultAddress !==
+                                ethers.constants.AddressZero
+                        );
+
+                        let moneyVaultOwner = randomAddress();
+                        const { vault: newMoneyVaultAddress } =
+                            await this.erc20VaultGovernance.callStatic.createVault(
+                                tokens,
+                                moneyVaultOwner
+                            );
+                        await this.erc20VaultGovernance.createVault(
+                            tokens,
+                            moneyVaultOwner
+                        );
+                        assert(
+                            newMoneyVaultAddress !==
+                                ethers.constants.AddressZero
+                        );
+
+                        await expect(
+                            this.subject.createStrategy(
+                                tokens,
+                                newERC20VaultAddress,
+                                newMoneyVaultAddress,
+                                this.params.fee,
+                                this.params.admin
+                            )
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
                 });
             });
