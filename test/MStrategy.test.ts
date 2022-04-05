@@ -414,7 +414,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe.only("when UniSwapV3 pool for tokens does not exist", () => {
+                describe("when UniSwapV3 pool for tokens does not exist", () => {
                     it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
                         let erc20Factory = await ethers.getContractFactory(
                             "ERC20Token"
