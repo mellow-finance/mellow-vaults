@@ -143,6 +143,9 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                     privateVault,
                     managementFee: BigNumber.from(numManagementFee),
                     performanceFee: BigNumber.from(numPerformanceFee),
+                    depositCallback: ethers.constants.AddressZero,
+                    withdrawCallback: ethers.constants.AddressZero,
+                    rebalanceDeadline: ethers.constants.Zero
                 })
             );
 
