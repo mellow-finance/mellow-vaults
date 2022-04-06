@@ -18,7 +18,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    bytes4 public constant REBALANCE_SELECTOR = 0xe78eeb6d;
     uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
     uint64 public lastFeeCharge;
     uint64 public totalWithdrawnAmountsTimestamp;
