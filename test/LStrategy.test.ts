@@ -235,13 +235,19 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     createVaultArgs: [tokens, this.deployer.address],
                 });
 
-                await combineVaults(
-                    hre,
-                    erc20VaultNft + 1,
-                    [erc20VaultNft, uniV3LowerVaultNft, uniV3UpperVaultNft],
-                    this.deployer.address,
-                    this.deployer.address
+                const { deploy } = deployments;
+                let cowswapDeployParams = await deploy("MockCowswap", {
+                    from: this.deployer.address,
+                    contract: "MockCowswap",
+                    args: [],
+                    log: true,
+                    autoMine: true,
+                });
+                this.cowswap = await ethers.getContractAt(
+                    "MockCowswap",
+                    cowswapDeployParams.address
                 );
+
                 const erc20Vault = await read(
                     "VaultRegistry",
                     "vaultForNft",
@@ -256,11 +262,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     "VaultRegistry",
                     "vaultForNft",
                     uniV3UpperVaultNft
-                );
-                const erc20RootVault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    erc20VaultNft + 1
                 );
 
                 this.erc20Vault = await ethers.getContractAt(
@@ -278,23 +279,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     uniV3UpperVault
                 );
 
-                this.erc20RootVault = await ethers.getContractAt(
-                    "ERC20RootVault",
-                    erc20RootVault
-                );
-
-                const { deploy } = deployments;
-                let cowswapDeployParams = await deploy("MockCowswap", {
-                    from: this.deployer.address,
-                    contract: "MockCowswap",
-                    args: [],
-                    log: true,
-                    autoMine: true,
-                });
-                this.cowswap = await ethers.getContractAt(
-                    "MockCowswap",
-                    cowswapDeployParams.address
-                );
                 let strategyDeployParams = await deploy("LStrategy", {
                     from: this.deployer.address,
                     contract: "LStrategy",
@@ -309,6 +293,25 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     log: true,
                     autoMine: true,
                 });
+
+                await combineVaults(
+                    hre,
+                    erc20VaultNft + 1,
+                    [erc20VaultNft, uniV3LowerVaultNft, uniV3UpperVaultNft],
+                    this.deployer.address,
+                    this.deployer.address
+                );
+
+                const erc20RootVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft + 1
+                );
+
+                this.erc20RootVault = await ethers.getContractAt(
+                    "ERC20RootVault",
+                    erc20RootVault
+                );
 
                 let wstethValidator = await deploy("ERC20Validator", {
                     from: this.deployer.address,
@@ -378,6 +381,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                 await mint(
                     "WETH",
+                    this.subject.address,
+                    BigNumber.from(10).pow(18).mul(4000)
+                );
+                await mint(
+                    "WETH",
                     this.deployer.address,
                     BigNumber.from(10).pow(18).mul(4000)
                 );
@@ -412,6 +420,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         );
                     }
                 }
+
+                await wsteth.transfer(
+                    this.subject.address,
+                    BigNumber.from(10).pow(18).mul(3)
+                );
 
                 let oracleDeployParams = await deploy("MockOracle", {
                     from: this.deployer.address,
@@ -1148,222 +1161,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe("#rebalanceUniV3Vaults", () => {
-        it("average happy case", async () => {
-            await this.grantPermissions();
-            await this.preparePush({ vault: this.uniV3LowerVault });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    vault.address,
-                    "0x4", // address of _nft
-                ]);
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(this.subject.address, tokenId);
-                    }
-                );
-            }
-            await expect(
-                this.subject
-                    .connect(this.admin)
-                    .rebalanceUniV3Vaults(
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        ethers.constants.MaxUint256
-                    )
-            ).to.not.be.reverted;
-        });
-        it("another average happy case", async () => {
-            await this.grantPermissions();
-            await this.preparePush({
-                vault: this.uniV3LowerVault,
-                tickLower: -800000,
-                tickUpper: -600000,
-            });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    vault.address,
-                    "0x4", // address of _nft
-                ]);
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(this.subject.address, tokenId);
-                    }
-                );
-            }
-            await expect(
-                this.subject
-                    .connect(this.admin)
-                    .rebalanceUniV3Vaults(
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        ethers.constants.MaxUint256
-                    )
-            ).to.not.be.reverted;
-        });
-        it("and another average happy case", async () => {
-            await this.grantPermissions();
-            await this.preparePush({
-                vault: this.uniV3LowerVault,
-                tickLower: 100000,
-                tickUpper: 800000,
-            });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    vault.address,
-                    "0x4", // address of _nft
-                ]);
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(this.subject.address, tokenId);
-                    }
-                );
-            }
-            await expect(
-                this.subject
-                    .connect(this.admin)
-                    .rebalanceUniV3Vaults(
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        ethers.constants.MaxUint256
-                    )
-            ).to.not.be.reverted;
-        });
-        it("and another one average happy case", async () => {
-            await this.grantPermissions();
-            await this.preparePush({
-                vault: this.uniV3LowerVault,
-                tickLower: 100000,
-                tickUpper: 800000,
-            });
-            await this.preparePush({
-                vault: this.uniV3UpperVault,
-                wethAmount: BigNumber.from(0),
-                wstethAmount: BigNumber.from(0),
-            });
-            for (let vault of [this.uniV3UpperVault, this.uniV3LowerVault]) {
-                let tokenId = await ethers.provider.send("eth_getStorageAt", [
-                    vault.address,
-                    "0x4", // address of _nft
-                ]);
-                await withSigner(
-                    this.erc20RootVault.address,
-                    async (erc20RootVaultSigner) => {
-                        await this.vaultRegistry
-                            .connect(erc20RootVaultSigner)
-                            .approve(this.subject.address, tokenId);
-                    }
-                );
-            }
-            await expect(
-                this.subject
-                    .connect(this.admin)
-                    .rebalanceUniV3Vaults(
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        [ethers.constants.Zero, ethers.constants.Zero],
-                        ethers.constants.MaxUint256
-                    )
-            ).to.not.be.reverted;
-        });
-
-        describe("edge cases:", () => {
-            describe("when minLowerAmounts are more than actual", () => {
-                it("reverts", async () => {
-                    await this.grantPermissions();
-                    await this.preparePush({ vault: this.uniV3LowerVault });
-                    await this.preparePush({ vault: this.uniV3UpperVault });
-                    for (let vault of [
-                        this.uniV3UpperVault,
-                        this.uniV3LowerVault,
-                    ]) {
-                        let tokenId = await ethers.provider.send(
-                            "eth_getStorageAt",
-                            [
-                                vault.address,
-                                "0x4", // address of _nft
-                            ]
-                        );
-                        await withSigner(
-                            this.erc20RootVault.address,
-                            async (erc20RootVaultSigner) => {
-                                await this.vaultRegistry
-                                    .connect(erc20RootVaultSigner)
-                                    .approve(this.subject.address, tokenId);
-                            }
-                        );
-                    }
-                    await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .rebalanceUniV3Vaults(
-                                [
-                                    ethers.constants.MaxUint256,
-                                    ethers.constants.MaxUint256,
-                                ],
-                                [
-                                    ethers.constants.MaxUint256,
-                                    ethers.constants.MaxUint256,
-                                ],
-                                ethers.constants.MaxUint256
-                            )
-                    ).to.be.reverted;
-                });
-            });
-            describe("when deadline is earlier than block timestamp", () => {
-                it("reverts", async () => {
-                    await this.grantPermissions();
-                    await this.preparePush({ vault: this.uniV3LowerVault });
-                    await this.preparePush({ vault: this.uniV3UpperVault });
-                    for (let vault of [
-                        this.uniV3UpperVault,
-                        this.uniV3LowerVault,
-                    ]) {
-                        let tokenId = await ethers.provider.send(
-                            "eth_getStorageAt",
-                            [
-                                vault.address,
-                                "0x4", // address of _nft
-                            ]
-                        );
-                        await withSigner(
-                            this.erc20RootVault.address,
-                            async (erc20RootVaultSigner) => {
-                                await this.vaultRegistry
-                                    .connect(erc20RootVaultSigner)
-                                    .approve(this.subject.address, tokenId);
-                            }
-                        );
-                    }
-                    await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .rebalanceUniV3Vaults(
-                                [ethers.constants.Zero, ethers.constants.Zero],
-                                [ethers.constants.Zero, ethers.constants.Zero],
-                                ethers.constants.Zero
-                            )
-                    ).to.be.reverted;
-                });
-            });
-        });
-
-        describe("access control:", () => {
-            beforeEach(async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
+    describe.only("#rebalanceUniV3Vaults", () => {
+        beforeEach(async () => {
+            this.grantPermissionsUniV3Vaults = async () => {
                 for (let vault of [
                     this.uniV3UpperVault,
                     this.uniV3LowerVault,
@@ -1384,6 +1184,226 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         }
                     );
                 }
+            };
+            this.drainLiquidity = async (vault: UniV3Vault) => {
+                let vaultNft = await vault.uniV3Nft();
+                await withSigner(vault.address, async (signer) => {
+                    let [, , , , , , , liquidity, , , ,] =
+                        await this.positionManager.positions(vaultNft);
+                    await this.positionManager
+                        .connect(signer)
+                        .decreaseLiquidity({
+                            tokenId: vaultNft,
+                            liquidity: liquidity,
+                            amount0Min: 0,
+                            amount1Min: 0,
+                            deadline: ethers.constants.MaxUint256,
+                        });
+                });
+            };
+            this.calculateTvl = async () => {
+                const uniV3LowerTvl = (await this.uniV3LowerVault.tvl())[0];
+                const uniV3UpperTvl = (await this.uniV3UpperVault.tvl())[0];
+                return [uniV3LowerTvl[0].add(uniV3LowerTvl[1]), uniV3UpperTvl[0].add(uniV3UpperTvl[1])];
+            };
+            await this.grantPermissions();
+        });
+        it("rebalances when delta is positive", async () => {
+            await this.preparePush({vault: this.uniV3LowerVault});
+            await this.preparePush({vault: this.uniV3UpperVault});
+            await this.grantPermissionsUniV3Vaults();
+            let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+            let [newLowerVaultTvl, newUpperVaultTvl] = await this.calculateTvl();
+            expect(newLowerVaultTvl.lt(lowerVaultTvl) && newUpperVaultTvl.gt(upperVaultTvl));
+        });
+        it("rebalances when delta is negative", async () => {
+            await this.preparePush({
+                vault: this.uniV3LowerVault,
+                tickLower: -1000,
+                tickUpper: 1000,
+            });
+            await this.preparePush({
+                vault: this.uniV3UpperVault,
+                tickLower: -1000,
+                tickUpper: 1000,
+            });
+            await this.mockOracle.updatePrice(
+                BigNumber.from(1).shl(96).mul(110).div(100)
+            );
+            await this.grantPermissionsUniV3Vaults();
+            let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+            let [newLowerVaultTvl, newUpperVaultTvl] = await this.calculateTvl();
+            expect(newLowerVaultTvl.gt(lowerVaultTvl) && newUpperVaultTvl.lt(upperVaultTvl));
+        });
+        it("rebalances when crossing the interval left to right", async () => {
+            await this.preparePush({
+                vault: this.uniV3LowerVault,
+                tickLower: -800000,
+                tickUpper: -600000,
+            });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            await this.grantPermissionsUniV3Vaults();
+            let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+            let [newLowerVaultTvl, newUpperVaultTvl] = await this.calculateTvl();
+            expect(newLowerVaultTvl.lt(lowerVaultTvl) && newUpperVaultTvl.gt(upperVaultTvl));
+        });
+        it("swap vaults when crossing the interval left to right with no liquidity", async () => {
+            await this.preparePush({
+                vault: this.uniV3LowerVault,
+                tickLower: -800000,
+                tickUpper: -600000,
+            });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            await this.grantPermissionsUniV3Vaults();
+            await this.drainLiquidity(this.uniV3LowerVault);
+            let result = await this.subject
+                .connect(this.admin)
+                .callStatic.rebalanceUniV3Vaults(
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    ethers.constants.MaxUint256
+                );
+            await this.subject
+                .connect(this.admin)
+                .rebalanceUniV3Vaults(
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    ethers.constants.MaxUint256
+                );
+            for (let i = 0; i < 2; ++i) {
+                for (let j = 0; j < 2; ++j) {
+                    expect(result[i][j]).equal(ethers.constants.Zero);
+                }
+            }
+        });
+        it("rebalances when crossing the interval right to left", async () => {
+            await this.preparePush({ vault: this.uniV3LowerVault });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            await this.mockOracle.updatePrice(BigNumber.from(1).shl(95));
+            await this.grantPermissionsUniV3Vaults();
+            const result = await this.subject
+                .connect(this.admin)
+                .callStatic.rebalanceUniV3Vaults(
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    ethers.constants.MaxUint256
+                );
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+            const tvl = (await this.uniV3UpperVault.tvl())[0]
+            for (let i = 0; i < 2; ++i) {
+                expect(tvl[i]).lt(BigNumber.from(10)); // check, that all liquidity passed to other vault
+            }
+        });
+        it("swap vaults when crossing the interval right to left with no liquidity", async () => {
+            await this.preparePush({ vault: this.uniV3LowerVault });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            await this.mockOracle.updatePrice(BigNumber.from(1).shl(95));
+            await this.grantPermissionsUniV3Vaults();
+            await this.drainLiquidity(this.uniV3UpperVault);
+            const result = await this.subject
+                .connect(this.admin)
+                .callStatic.rebalanceUniV3Vaults(
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    [ethers.constants.Zero, ethers.constants.Zero],
+                    ethers.constants.MaxUint256
+                );
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+            for (let i = 0; i < 2; ++i) {
+                for (let j = 0; j < 2; ++j) {
+                    expect(result[i][j]).equal(ethers.constants.Zero);
+                }
+            }
+        });
+
+        describe("edge cases:", () => {
+            describe("when minLowerAmounts are more than actual", () => {
+                it("reverts", async () => {
+                    await this.preparePush({ vault: this.uniV3LowerVault });
+                    await this.preparePush({ vault: this.uniV3UpperVault });
+                    await this.grantPermissionsUniV3Vaults();
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceUniV3Vaults(
+                                [
+                                    ethers.constants.MaxUint256,
+                                    ethers.constants.MaxUint256,
+                                ],
+                                [
+                                    ethers.constants.MaxUint256,
+                                    ethers.constants.MaxUint256,
+                                ],
+                                ethers.constants.MaxUint256
+                            )
+                    ).to.be.reverted;
+                });
+            });
+            describe("when deadline is earlier than block timestamp", () => {
+                it("reverts", async () => {
+                    await this.preparePush({ vault: this.uniV3LowerVault });
+                    await this.preparePush({ vault: this.uniV3UpperVault });
+                    await this.grantPermissionsUniV3Vaults();
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceUniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.Zero
+                            )
+                    ).to.be.reverted;
+                });
+            });
+        });
+
+        describe("access control:", () => {
+            beforeEach(async () => {
+                await this.preparePush({ vault: this.uniV3LowerVault });
+                await this.preparePush({ vault: this.uniV3UpperVault });
+                await this.grantPermissionsUniV3Vaults();
             });
             it("allowed: admin", async () => {
                 await expect(
@@ -1517,10 +1537,20 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await token
                         .connect(signer)
                         .transfer(
-                            this.deployer.address,
+                            this.uniV3UpperVault.address,
                             BigNumber.from(10).pow(18).mul(500)
                         );
                 }
+            });
+
+            await this.subject.connect(this.admin).updateRatioParams({
+                erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
+                erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
+                minErc20UniV3CapitalRatioDeviationD: BigNumber.from(10).pow(7),
+                minErc20TokenRatioDeviationD: BigNumber.from(10).pow(8).div(2),
+                minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
+                    .pow(8)
+                    .div(2),
             });
 
             let [erc20OverallTvl, uniV3OverallTvl] = await this.calculateTvl();

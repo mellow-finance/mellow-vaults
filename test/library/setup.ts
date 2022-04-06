@@ -19,7 +19,7 @@ import {
     UniV3Vault,
     ERC20RootVault,
     MellowOracle,
-    MStrategy,
+    MStrategy, LStrategy,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
@@ -38,6 +38,7 @@ export interface TestContext<T, F> extends Suite {
     erc20RootVaultSingleton: ERC20RootVault;
     mellowOracle: MellowOracle;
     mStrategy: MStrategy;
+    lStrategy: LStrategy;
 
     usdc: ERC20;
     weth: ERC20;
@@ -107,6 +108,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     } else {
         this.mStrategy = mStrategy;
     }
+    this.lStrategy = await ethers.getContract("LStrategy");
 
     const namedAccounts = await getNamedAccounts();
     for (const name of ["deployer", "admin", "mStrategyAdmin", "test"]) {
