@@ -539,5 +539,36 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 });
             });
         });
+
+        describe("#setRatioParams", () => {
+            const ratioParams: RatioParamsStruct = {
+                tickMin: 198240 - 5000,
+                tickMax: 198240 + 5000,
+                erc20MoneyRatioD: BigNumber.from(Math.round(0.1 * 10 ** 9)),
+                minErc20MoneyRatioDeviationD: BigNumber.from(Math.round(
+                    0.01 * 10 ** 9
+                )),
+                minTickRebalanceThreshold: 180,
+                tickNeighborhood: 60,
+                tickIncrease: 180,
+            };
+
+            it("sets new ratio params", async () => {
+                await this.subject.connect(this.mStrategyAdmin).setRatioParams(ratioParams);
+                expect(await this.subject.ratioParams()).to.be.equivalent(ratioParams);
+            });
+
+            describe("access control", () => {
+                it("allowed: MStrategy admin", async () => {
+                    await expect(this.subject.connect(this.mStrategyAdmin).setRatioParams(ratioParams)).to.not.be.reverted;
+                });
+
+                it("denied: any other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(this.subject.connect(s).setRatioParams(ratioParams)).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
     }
 );
