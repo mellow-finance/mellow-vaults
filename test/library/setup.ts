@@ -19,7 +19,8 @@ import {
     UniV3Vault,
     ERC20RootVault,
     MellowOracle,
-    MStrategy, LStrategy,
+    MStrategy,
+    LStrategy,
 } from "../types";
 
 export interface TestContext<T, F> extends Suite {
