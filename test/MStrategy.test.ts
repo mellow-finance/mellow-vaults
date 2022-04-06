@@ -580,5 +580,15 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 });
             });
         });
+
+        describe("#manualPull", () => {
+            it("pulls token amounts from fromVault to toVault", async () => {
+                await this.weth.connect(this.deployer).transfer(this.erc20Vault.address, BigNumber.from(1000));
+                await this.usdc.connect(this.deployer).transfer(this.erc20Vault.address, BigNumber.from(1000));
+                console.log(Number(await this.weth.balanceOf(this.erc20Vault.address)));
+                console.log(Number(await this.usdc.balanceOf(this.erc20Vault.address)));
+                
+            });
+        });
     }
 );
