@@ -790,9 +790,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     );
                     expect(result.isNegative).to.be.false;
                     expect(result.liquidityRatioD).to.be.equal(
-                        BigNumber.from(10)
-                            .pow(9)
-                            .div(887220)
+                        BigNumber.from(10).pow(9).div(887220)
                     );
                 });
             });
@@ -804,9 +802,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     );
                     expect(result.isNegative).to.be.true;
                     expect(result.liquidityRatioD).to.be.equal(
-                        BigNumber.from(10)
-                            .pow(9)
-                            .div(887220)
+                        BigNumber.from(10).pow(9).div(887220)
                     );
                 });
             });
