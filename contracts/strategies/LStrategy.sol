@@ -130,7 +130,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         } else {
             liquidityRatioD = uint256(uint24(targetTick_ - midTick));
         }
-        liquidityRatioD = (liquidityRatioD * DENOMINATOR) / uint256(uint24(tickUpper - tickLower));
+        liquidityRatioD = (liquidityRatioD * DENOMINATOR) / uint256(uint24(tickUpper - tickLower) / 2);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
