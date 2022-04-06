@@ -1,7 +1,13 @@
 import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, randomAddress, sleep, withSigner } from "./library/Helpers";
+import {
+    mint,
+    randomAddress,
+    sleep,
+    toObject,
+    withSigner,
+} from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
@@ -492,6 +498,43 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 this.params.admin
                             )
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    });
+                });
+            });
+        });
+
+        describe("#setOracleParams", () => {
+            const oracleParams: OracleParamsStruct = {
+                oracleObservationDelta: 10,
+                maxTickDeviation: 100,
+                maxSlippageD: BigNumber.from(Math.round(0.05 * 10 ** 9)),
+            };
+
+            it("sets new params for oracle", async () => {
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setOracleParams(oracleParams);
+                expect(
+                    toObject(await this.subject.oracleParams())
+                ).to.be.equivalent(oracleParams);
+            });
+
+            describe("access control", () => {
+                it("allowed: MStrategy admin", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setOracleParams(oracleParams)
+                    ).to.not.be.reverted;
+                });
+
+                it("denied: any other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .setOracleParams(oracleParams)
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
                 });
             });
