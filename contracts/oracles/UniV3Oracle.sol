@@ -80,7 +80,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         assembly {
             mstore(pricesX96, len)
         }
-        bool revTokens = token0 < token1;
+        bool revTokens = token0 > token1;
         for (uint256 i = 0; i < len; i++) {
             if (revTokens) {
                 pricesX96[i] = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, pricesX96[i]);
