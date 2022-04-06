@@ -11,8 +11,6 @@ import "./IntegrationVault.sol";
 /// **TVL**
 ///
 /// The TVL of the vault is cached and updated after each deposit withdraw.
-/// So essentially `tvl` call doesn't take into account accrued interest / donations to Yearn since the
-/// last `deposit` / `withdraw`
 ///
 /// **yTokens**
 /// yTokens are fixed at the token creation and addresses are taken from YearnVault governance and if missing there

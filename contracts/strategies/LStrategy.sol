@@ -6,10 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/external/cowswap/ICowswapSettlement.sol";
-import "../interfaces/IVaultRegistry.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../interfaces/utils/IContractMeta.sol";
 import "../interfaces/oracles/IOracle.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
@@ -42,19 +40,19 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     // MUTABLE PARAMS
 
     struct TradingParams {
-        uint256 maxSlippageD;
-        uint256 minRebalanceWaitTime;
+        uint32 maxSlippageD;
+        uint32 minRebalanceWaitTime;
         uint32 orderDeadline;
         uint8 oracleSafety;
         IOracle oracle;
     }
 
     struct RatioParams {
-        uint256 erc20UniV3CapitalRatioD;
-        uint256 erc20TokenRatioD;
-        uint256 minErc20UniV3CapitalRatioDeviationD;
-        uint256 minErc20TokenRatioDeviationD;
-        uint256 minUniV3LiquidityRatioDeviationD;
+        uint32 erc20UniV3CapitalRatioD;
+        uint32 erc20TokenRatioD;
+        uint32 minErc20UniV3CapitalRatioDeviationD;
+        uint32 minErc20TokenRatioDeviationD;
+        uint32 minUniV3LiquidityRatioDeviationD;
     }
 
     struct OtherParams {
@@ -128,18 +126,11 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         int24 midTick = (tickUpper + tickLower) / 2;
         isNegative = midTick > targetTick_;
         if (isNegative) {
-            liquidityRatioD = FullMath.mulDiv(
-                uint256(uint24(midTick - targetTick_)),
-                DENOMINATOR,
-                uint256(uint24((tickUpper - tickLower) / 2))
-            );
+            liquidityRatioD = uint256(uint24(midTick - targetTick_));
         } else {
-            liquidityRatioD = FullMath.mulDiv(
-                uint256(uint24(targetTick_ - midTick)),
-                DENOMINATOR,
-                uint256(uint24((tickUpper - tickLower) / 2))
-            );
+            liquidityRatioD = uint256(uint24(targetTick_ - midTick));
         }
+        liquidityRatioD = (liquidityRatioD * DENOMINATOR) / uint256(uint24(tickUpper - tickLower) / 2);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -166,10 +157,18 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
             uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
-                erc20VaultCapital + lowerVaultCapital + upperVaultCapital,
+                lowerVaultCapital + upperVaultCapital,
                 ratioParams.erc20UniV3CapitalRatioD,
                 ratioParams.minErc20UniV3CapitalRatioDeviationD
             );
+            if (capitalDelta == 0) {
+                uint256[] memory pulledAmounts = new uint256[](2);
+                for (uint256 i = 0; i < 2; ++i) {
+                    pulledAmounts[i] = 0;
+                }
+                isNegativeCapitalDelta = false;
+                return (pulledAmounts, isNegativeCapitalDelta);
+            }
             uint256 percentageIncreaseD = FullMath.mulDiv(
                 DENOMINATOR,
                 capitalDelta,
@@ -192,7 +191,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
             );
             pulledAmounts = erc20Vault.pull(
-                address(lowerVault),
+                address(upperVault),
                 tokens,
                 upperTokenAmounts,
                 _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
@@ -311,14 +310,14 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
+        uint256 priceX96 = targetPrice(tokens, tradingParams);
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
-            tvl[0],
-            tvl[0] + tvl[1],
+            FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96),
+            tvl[1],
             ratioParams.erc20TokenRatioD,
             ratioParams.minErc20TokenRatioDeviationD
         );
         TradingParams memory tradingParams_ = tradingParams;
-        uint256 priceX96 = targetPrice(tokens, tradingParams_);
         if (isNegative) {
             uint256 minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
             minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
@@ -371,9 +370,10 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         require(order.sellAmount == preOrder_.amountIn, ExceptionsLibrary.INVALID_VALUE);
         require(order.buyAmount >= preOrder_.minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(order.validTo <= preOrder_.deadline, ExceptionsLibrary.TIMESTAMP);
+        require(order.receiver == address(erc20Vault), ExceptionsLibrary.FORBIDDEN);
         bytes memory approveData = abi.encode(cowswap, order.sellAmount);
         erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
-        bytes memory setPresignatureData = abi.encode(SET_PRESIGNATURE_SELECTOR, uuid, signed);
+        bytes memory setPresignatureData = abi.encode(uuid, signed);
         erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
         orderDeadline = order.validTo;
         delete preOrder;
@@ -485,11 +485,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     function _tickFromPriceX96(uint256 priceX96) internal pure returns (int24) {
         uint256 sqrtPriceX96 = CommonLibrary.sqrtX96(priceX96);
         return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
-    }
-
-    function _priceX96FromTick(int24 _tick) internal pure returns (uint256) {
-        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
-        return FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
     }
 
     /// @notice The vault to get stats from
@@ -606,13 +601,14 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
                 if (availableBalance < requiredBalance) {
                     // since balances >= 0, this case means that shouldWithdrawTokenAmountsD < shouldDepositTokenAmountsD
                     // this also means that liquidity on the line below will decrease compared to the liqiduity above
-                    liquidity = uint128(
+                    uint128 potentialLiquidity = uint128(
                         FullMath.mulDiv(
                             availableBalances[i],
-                            shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i],
-                            DENOMINATOR
+                            DENOMINATOR,
+                            shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i]
                         )
                     );
+                    liquidity = potentialLiquidity < liquidity ? potentialLiquidity : liquidity;
                 }
             }
         }
@@ -654,9 +650,9 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         IUniV3Vault fromVault;
         IUniV3Vault toVault;
         if (!positiveTickGrowth) {
-            (fromVault, toVault) = (lowerVault, upperVault);
-        } else {
             (fromVault, toVault) = (upperVault, lowerVault);
+        } else {
+            (fromVault, toVault) = (lowerVault, upperVault);
         }
         uint256 fromNft = fromVault.uniV3Nft();
         uint256 toNft = toVault.uniV3Nft();

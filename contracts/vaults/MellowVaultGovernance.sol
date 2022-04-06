@@ -35,5 +35,6 @@ contract MellowVaultGovernance is ContractMeta, IMellowVaultGovernance, VaultGov
         (vaddr, nft) = _createVault(owner_);
         vault = IMellowVault(vaddr);
         vault.initialize(nft, vaultTokens_, underlyingVault);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, "", owner_, vaddr, nft);
     }
 }

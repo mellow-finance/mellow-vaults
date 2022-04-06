@@ -73,6 +73,7 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
         (vaddr, nft) = _createVault(owner_);
         vault = IAaveVault(vaddr);
         vault.initialize(nft, vaultTokens_);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, "", owner_, vaddr, nft);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

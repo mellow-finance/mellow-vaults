@@ -158,7 +158,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     function collectEarnings() external nonReentrant returns (uint256[] memory collectedEarnings) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        address to = _root(registry, _nft).subvaultAt(0);
+        address owner = registry.ownerOf(_nft);
+        address to = _root(registry, _nft, owner).subvaultAt(0);
         collectedEarnings = new uint256[](2);
         (uint256 collectedEarnings0, uint256 collectedEarnings1) = _positionManager.collect(
             INonfungiblePositionManager.CollectParams({

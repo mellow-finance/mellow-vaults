@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 import "../interfaces/external/aave/ILendingPool.sol";
 import "../interfaces/vaults/IAaveVaultGovernance.sol";
-import "../interfaces/vaults/IVault.sol";
 import "../interfaces/vaults/IAaveVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";

@@ -70,7 +70,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                     (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
                     (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
                     uint256 timespan = timestamp1 - timestamp0;
-                    tickAverage = (int256(tick1) - int256(tick0)) / int256(uint256(timespan));
+                    tickAverage = (int256(tick1) - int256(tick0)) / int256(timespan);
                 }
                 pricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
                 safetyIndices[len] = i;
@@ -80,7 +80,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         assembly {
             mstore(pricesX96, len)
         }
-        bool revTokens = token1 > token0;
+        bool revTokens = token0 > token1;
         for (uint256 i = 0; i < len; i++) {
             if (revTokens) {
                 pricesX96[i] = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, pricesX96[i]);
@@ -96,6 +96,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     // -------------------------  EXTERNAL, MUTATING  ------------------------------
 
     function addUniV3Pools(IUniswapV3Pool[] memory pools) external {
+        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         _addUniV3Pools(pools);
     }
 
@@ -134,7 +135,6 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                 j += 1;
             }
             poolsIndex[token0][token1] = pool;
-            poolsIndex[token1][token0] = pool;
         }
         assembly {
             mstore(replaced, j)

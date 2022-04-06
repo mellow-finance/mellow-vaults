@@ -53,7 +53,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         }
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(oraclesIndex[token0]);
         IAggregatorV3 chainlinkOracle1 = IAggregatorV3(oraclesIndex[token1]);
-        if ((address(chainlinkOracle0) != address(0)) || (address(chainlinkOracle1) != address(0))) {
+        if ((address(chainlinkOracle0) == address(0)) || (address(chainlinkOracle1) == address(0))) {
             return (pricesX96, safetyIndices);
         }
         uint256 price0;
