@@ -173,7 +173,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             ) => {
                 await this.subject
                     .connect(this.deployer)
-                    .deposit([amountUSDC, amountWETH], 0, [], []);
+                    .deposit([amountUSDC, amountWETH], 0, []);
 
                 const lpTokens = await this.subject.balanceOf(
                     this.deployer.address

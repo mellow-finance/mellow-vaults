@@ -9,6 +9,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
+import "../interfaces/utils/ICallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
@@ -75,8 +76,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
-        bytes memory vaultOptions,
-        bytes memory callbackOptions
+        bytes memory vaultOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
@@ -122,17 +122,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
 
-        if (callbackOptions.length > 0) {
-            (address to, bytes4 selector, bytes memory data) = abi.decode(callbackOptions, (address, bytes4, bytes));
-            require(selector == REBALANCE_SELECTOR, ExceptionsLibrary.FORBIDDEN);
-            (bool res, bytes memory returndata) = to.call{value: 0}(abi.encodePacked(selector, data));
-            if (!res) {
-                assembly {
-                    let returndata_size := mload(returndata)
-                    // Bubble up revert reason
-                    revert(add(32, returndata), returndata_size)
-                }
-            }
+        if (delayedStrategyParams.depositCallback != address(0)) {
+            ICallback callbackContract = ICallback(delayedStrategyParams.depositCallback);
+            callbackContract.rebalanceERC20UniV3Vaults(
+                _pullExistentials,
+                _pullExistentials,
+                block.timestamp + delayedStrategyParams.rebalanceDeadline
+            );
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -169,6 +165,27 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         _burn(msg.sender, lpTokenAmount);
+
+        uint256 thisNft = _nft;
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(thisNft);
+
+        if (delayedStrategyParams.withdrawCallback != address(0)) {
+            ICallback callbackContract = ICallback(delayedStrategyParams.withdrawCallback);
+            try
+                callbackContract.rebalanceERC20UniV3Vaults(
+                    _pullExistentials,
+                    _pullExistentials,
+                    block.timestamp + delayedStrategyParams.rebalanceDeadline
+                )
+            {} catch Error(string memory reason) {
+                emit WithdrawCallbackLog(reason);
+            } catch {
+                emit WithdrawCallbackLog("callback failed without reason");
+            }
+        }
+
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -445,4 +462,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+
+    /// @notice Emitted when callback in withdraw failed
+    /// @param reason Error reason
+    event WithdrawCallbackLog(string reason);
 }
