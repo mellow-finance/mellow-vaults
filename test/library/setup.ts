@@ -125,7 +125,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     this.wsteth = await ethers.getContractAt("ERC20Token", wsteth);
     this.tokens = sortBy(
         (c: ERC20) => c.address.toLowerCase(),
-        [this.usdc, this.weth, this.wbtc, this.dai, this.wsteth]
+        [this.usdc, this.weth, this.wbtc, this.dai]
     );
     this.governanceDelay = (
         await this.protocolGovernance.governanceDelay()
