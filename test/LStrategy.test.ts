@@ -1161,7 +1161,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
 
-    describe.only("#rebalanceUniV3Vaults", () => {
+    describe("#rebalanceUniV3Vaults", () => {
         beforeEach(async () => {
             this.grantPermissionsUniV3Vaults = async () => {
                 for (let vault of [
@@ -1204,13 +1204,16 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             this.calculateTvl = async () => {
                 const uniV3LowerTvl = (await this.uniV3LowerVault.tvl())[0];
                 const uniV3UpperTvl = (await this.uniV3UpperVault.tvl())[0];
-                return [uniV3LowerTvl[0].add(uniV3LowerTvl[1]), uniV3UpperTvl[0].add(uniV3UpperTvl[1])];
+                return [
+                    uniV3LowerTvl[0].add(uniV3LowerTvl[1]),
+                    uniV3UpperTvl[0].add(uniV3UpperTvl[1]),
+                ];
             };
             await this.grantPermissions();
         });
         it("rebalances when delta is positive", async () => {
-            await this.preparePush({vault: this.uniV3LowerVault});
-            await this.preparePush({vault: this.uniV3UpperVault});
+            await this.preparePush({ vault: this.uniV3LowerVault });
+            await this.preparePush({ vault: this.uniV3UpperVault });
             await this.grantPermissionsUniV3Vaults();
             let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
             await expect(
@@ -1222,8 +1225,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ethers.constants.MaxUint256
                     )
             ).to.not.be.reverted;
-            let [newLowerVaultTvl, newUpperVaultTvl] = await this.calculateTvl();
-            expect(newLowerVaultTvl.lt(lowerVaultTvl) && newUpperVaultTvl.gt(upperVaultTvl));
+            let [newLowerVaultTvl, newUpperVaultTvl] =
+                await this.calculateTvl();
+            expect(
+                newLowerVaultTvl.lt(lowerVaultTvl) &&
+                    newUpperVaultTvl.gt(upperVaultTvl)
+            );
         });
         it("rebalances when delta is negative", async () => {
             await this.preparePush({
@@ -1250,8 +1257,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ethers.constants.MaxUint256
                     )
             ).to.not.be.reverted;
-            let [newLowerVaultTvl, newUpperVaultTvl] = await this.calculateTvl();
-            expect(newLowerVaultTvl.gt(lowerVaultTvl) && newUpperVaultTvl.lt(upperVaultTvl));
+            let [newLowerVaultTvl, newUpperVaultTvl] =
+                await this.calculateTvl();
+            expect(
+                newLowerVaultTvl.gt(lowerVaultTvl) &&
+                    newUpperVaultTvl.lt(upperVaultTvl)
+            );
         });
         it("rebalances when crossing the interval left to right", async () => {
             await this.preparePush({
@@ -1271,8 +1282,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ethers.constants.MaxUint256
                     )
             ).to.not.be.reverted;
-            let [newLowerVaultTvl, newUpperVaultTvl] = await this.calculateTvl();
-            expect(newLowerVaultTvl.lt(lowerVaultTvl) && newUpperVaultTvl.gt(upperVaultTvl));
+            let [newLowerVaultTvl, newUpperVaultTvl] =
+                await this.calculateTvl();
+            expect(
+                newLowerVaultTvl.lt(lowerVaultTvl) &&
+                    newUpperVaultTvl.gt(upperVaultTvl)
+            );
         });
         it("swap vaults when crossing the interval left to right with no liquidity", async () => {
             await this.preparePush({
@@ -1324,7 +1339,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ethers.constants.MaxUint256
                     )
             ).to.not.be.reverted;
-            const tvl = (await this.uniV3UpperVault.tvl())[0]
+            const tvl = (await this.uniV3UpperVault.tvl())[0];
             for (let i = 0; i < 2; ++i) {
                 expect(tvl[i]).lt(BigNumber.from(10)); // check, that all liquidity passed to other vault
             }
