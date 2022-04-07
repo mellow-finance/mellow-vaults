@@ -591,7 +591,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#manualPull", () => {
+        describe("#manualPull", () => {
             it("pulls token amounts from fromVault to toVault", async () => {
                 let amountWETH = randomInt(10 ** 4, 10 ** 6);
                 let amountUSDC = randomInt(10 ** 4, 10 ** 6);
