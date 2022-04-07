@@ -28,6 +28,7 @@ import { integer } from "fast-check";
 import { OracleParamsStruct, RatioParamsStruct } from "./types/MStrategy";
 import Exceptions from "./library/Exceptions";
 import { assert } from "console";
+import { randomInt } from "crypto";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -36,6 +37,8 @@ type CustomContext = {
     positionManager: Contract;
     protocolGovernance: ProtocolGovernance;
     params: any;
+    deployerWethAmount: BigNumber;
+    deployerUsdcAmount: BigNumber;
 };
 
 type DeployOptions = {};
@@ -194,15 +197,19 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     /*
                      * Mint USDC and WETH to deployer
                      */
+
+                    this.deployerUsdcAmount = BigNumber.from(10).pow(6).mul(3000);
+                    this.deployerWethAmount = BigNumber.from(10).pow(18);
+
                     await mint(
                         "USDC",
                         this.deployer.address,
-                        BigNumber.from(10).pow(6).mul(3000)
+                        this.deployerUsdcAmount
                     );
                     await mint(
                         "WETH",
                         this.deployer.address,
-                        BigNumber.from(10).pow(18)
+                        this.deployerWethAmount
                     );
 
                     /*
@@ -581,13 +588,56 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#manualPull", () => {
+        describe.only("#manualPull", () => {
             it("pulls token amounts from fromVault to toVault", async () => {
-                await this.weth.connect(this.deployer).transfer(this.erc20Vault.address, BigNumber.from(1000));
-                await this.usdc.connect(this.deployer).transfer(this.erc20Vault.address, BigNumber.from(1000));
-                console.log(Number(await this.weth.balanceOf(this.erc20Vault.address)));
-                console.log(Number(await this.usdc.balanceOf(this.erc20Vault.address)));
+                let amountWETH = randomInt(0, 10 ** 6);
+                let amountUSDC = randomInt(0, 10 ** 6);
+
+                await this.usdc
+                    .connect(this.deployer)
+                    .transfer(this.erc20Vault.address, amountUSDC);
+                await this.weth
+                    .connect(this.deployer)
+                    .transfer(this.erc20Vault.address, amountWETH);
+
+                assert(Number(await this.usdc.balanceOf(this.params.erc20Vault)) === amountUSDC);
+                assert(Number(await this.weth.balanceOf(this.params.erc20Vault)) === amountWETH);
+               
+                let amountWETHtoPull = randomInt(0, amountWETH);
+                let amountUSDCtoPull = randomInt(0, amountUSDC);
+
+                console.log(amountUSDC);
+                console.log(amountWETH);
+                console.log(amountUSDCtoPull);
+                console.log(amountWETHtoPull);
+
+                console.log("initial balances\n");
+                console.log(Number(await this.usdc.balanceOf(this.params.erc20Vault)));
+                console.log(Number(await this.weth.balanceOf(this.params.erc20Vault)));
+
+                console.log(Number(await this.usdc.balanceOf(this.params.moneyVault)));
+                console.log(Number(await this.weth.balanceOf(this.params.moneyVault)));
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .manualPull(
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        [amountUSDCtoPull, amountWETHtoPull],
+                        []
+                    );
                 
+                console.log("actual balances\n");
+                console.log(Number(await this.usdc.balanceOf(this.params.erc20Vault)));
+                console.log(Number(await this.weth.balanceOf(this.params.erc20Vault)));
+
+                console.log(Number(await this.usdc.balanceOf(this.params.moneyVault)));
+                console.log(Number(await this.weth.balanceOf(this.params.moneyVault)));
+                // expect(await this.weth.balanceOf(this.params.moneyVault)).to.be.equal(BigNumber.from(amountWETHtoPull));
+                // expect(await this.usdc.balanceOf(this.params.moneyVault)).to.be.equal(BigNumber.from(amountUSDCtoPull));
+                // console.log(2);
+                // expect(await this.weth.balanceOf(this.params.erc20Vault)).to.be.equal(BigNumber.from(amountWETH - amountWETHtoPull));
+                // expect(await this.usdc.balanceOf(this.params.erc20Vault)).to.be.equal(BigNumber.from(amountUSDC - amountUSDCtoPull));
+                // console.log(3);
             });
         });
     }
