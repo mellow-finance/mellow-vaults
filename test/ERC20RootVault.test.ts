@@ -566,7 +566,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe.only("when subvaultNFT supports interface", () => {
+                describe("when subvaultNFT supports interface", () => {
                     it(`reverts with ${Exceptions.INVALID_INTERFACE}`, async () => {
                         const startNft = (
                             await this.vaultRegistry.vaultsCount()
@@ -680,7 +680,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.deployer)
                         .deposit(
                             [BigNumber.from(1), BigNumber.from(1)],
-                            BigNumber.from(1)
+                            BigNumber.from(1),
+                            []
                         )
                 ).to.emit(this.subject, "Deposit");
             });
@@ -696,7 +697,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.deposit(
                                 [BigNumber.from(1), BigNumber.from(1)],
-                                BigNumber.from(1)
+                                BigNumber.from(1),
+                                []
                             )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
@@ -707,7 +709,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.deposit(
                                 [],
-                                BigNumber.from(randomInt(100))
+                                BigNumber.from(randomInt(100)),
+                                []
                             )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
@@ -731,7 +734,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.deposit(
                                 [BigNumber.from(1), BigNumber.from(1)],
-                                BigNumber.from(1)
+                                BigNumber.from(1),
+                                []
                             )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
@@ -753,7 +757,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .connect(this.deployer)
                                 .deposit(
                                     [BigNumber.from(1), BigNumber.from(1)],
-                                    BigNumber.from(2)
+                                    BigNumber.from(2),
+                                    []
                                 )
                         ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                     });
@@ -775,7 +780,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .connect(this.deployer)
                                 .deposit(
                                     [BigNumber.from(0), BigNumber.from(0)],
-                                    BigNumber.from(0)
+                                    BigNumber.from(0),
+                                    []
                                 )
                         ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                     });
@@ -803,7 +809,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .connect(this.deployer)
                                 .deposit(
                                     [BigNumber.from(1), BigNumber.from(1)],
-                                    BigNumber.from(1)
+                                    BigNumber.from(1),
+                                    []
                                 )
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                     });
@@ -831,7 +838,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .connect(this.deployer)
                                 .deposit(
                                     [BigNumber.from(1), BigNumber.from(1)],
-                                    BigNumber.from(1)
+                                    BigNumber.from(1),
+                                    []
                                 )
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                     });
@@ -856,7 +864,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .connect(signer)
                                 .deposit(
                                     [BigNumber.from(1), BigNumber.from(1)],
-                                    BigNumber.from(1)
+                                    BigNumber.from(1),
+                                    []
                                 )
                         ).to.not.be.reverted;
                     });
@@ -879,6 +888,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             this.subject.withdraw(
                                 randomAddress(),
                                 BigNumber.from(randomInt(100)),
+                                [],
                                 []
                             )
                         ).to.be.revertedWith(Exceptions.VALUE_ZERO);
@@ -893,6 +903,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             this.subject.withdraw(
                                 randomAddress(),
                                 BigNumber.from(randomInt(100)),
+                                [],
                                 []
                             )
                         ).to.be.revertedWith(Exceptions.VALUE_ZERO);
