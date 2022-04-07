@@ -8,5 +8,4 @@ export default class Common {
     static readonly Q48: BigNumber = BigNumber.from(2).pow(48);
     static readonly Q160: BigNumber = BigNumber.from(2).pow(160);
     static readonly UNI_FEE_DENOMINATOR: BigNumber = BigNumber.from(10).pow(6);
-
 }
