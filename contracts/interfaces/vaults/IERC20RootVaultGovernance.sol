@@ -23,7 +23,6 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         uint256 performanceFee;
         address depositCallback;
         address withdrawCallback;
-        uint256 rebalanceDeadline;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.

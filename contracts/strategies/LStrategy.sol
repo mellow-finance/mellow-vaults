@@ -9,6 +9,7 @@ import "../interfaces/external/cowswap/ICowswapSettlement.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -17,7 +18,7 @@ import "../libraries/external/GPv2Order.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
+contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -36,6 +37,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     IUniV3Vault public upperVault;
     uint256 public lastUniV3RebalanceTimestamp;
     uint256 public orderDeadline;
+    uint256[] internal _pullExistentials;
 
     // MUTABLE PARAMS
 
@@ -59,6 +61,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint16 intervalWidthInTicks;
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
+        uint256 rebalanceDeadline;
     }
 
     struct PreOrder {
@@ -93,6 +96,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         upperVault = vault2_;
         tokens = vault1_.vaultTokens();
         poolFee = vault1_.pool().fee();
+        _pullExistentials = vault1_.pullExistentials();
         cowswap = cowswap_;
     }
 
@@ -147,76 +151,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256 deadline
     ) external returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
         _requireAtLeastOperator();
-        uint256 capitalDelta;
-        uint256[] memory lowerTokenAmounts;
-        uint256[] memory upperTokenAmounts;
-        {
-            uint256 priceX96 = targetPrice(tokens, tradingParams);
-            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
-            uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
-            uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
-            (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
-                erc20VaultCapital,
-                lowerVaultCapital + upperVaultCapital,
-                ratioParams.erc20UniV3CapitalRatioD,
-                ratioParams.minErc20UniV3CapitalRatioDeviationD
-            );
-            if (capitalDelta == 0) {
-                uint256[] memory pulledAmounts = new uint256[](2);
-                for (uint256 i = 0; i < 2; ++i) {
-                    pulledAmounts[i] = 0;
-                }
-                isNegativeCapitalDelta = false;
-                return (pulledAmounts, isNegativeCapitalDelta);
-            }
-            uint256 percentageIncreaseD = FullMath.mulDiv(
-                DENOMINATOR,
-                capitalDelta,
-                lowerVaultCapital + upperVaultCapital
-            );
-            (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
-            (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
-            uint256 lowerVaultDelta = FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR);
-            uint256 upperVaultDelta = FullMath.mulDiv(percentageIncreaseD, upperVaultLiquidity, DENOMINATOR);
-            lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(uint128(lowerVaultDelta));
-            upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
-        }
-
-        uint256[] memory pulledAmounts = new uint256[](2);
-        if (!isNegativeCapitalDelta) {
-            totalPulledAmounts = erc20Vault.pull(
-                address(lowerVault),
-                tokens,
-                lowerTokenAmounts,
-                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
-            );
-            pulledAmounts = erc20Vault.pull(
-                address(upperVault),
-                tokens,
-                upperTokenAmounts,
-                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
-            );
-            for (uint256 i = 0; i < 2; i++) {
-                totalPulledAmounts[i] += pulledAmounts[i];
-            }
-        } else {
-            totalPulledAmounts = lowerVault.pull(
-                address(erc20Vault),
-                tokens,
-                lowerTokenAmounts,
-                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
-            );
-            pulledAmounts = upperVault.pull(
-                address(erc20Vault),
-                tokens,
-                upperTokenAmounts,
-                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
-            );
-            for (uint256 i = 0; i < 2; i++) {
-                totalPulledAmounts[i] += pulledAmounts[i];
-            }
-        }
-        emit RebalancedErc20UniV3(tx.origin, msg.sender, !isNegativeCapitalDelta, totalPulledAmounts);
+        return _rebalanceERC20UniV3Vaults(minLowerVaultTokens, minUpperVaultTokens, deadline);
     }
 
     /// @notice Make a rebalance of UniV3 vaults
@@ -459,7 +394,22 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     function updateOtherParams(OtherParams calldata newOtherParams) external {
         _requireAdmin();
         otherParams = newOtherParams;
-        emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
+    }
+
+    function depositCallback() external {
+        _rebalanceERC20UniV3Vaults(
+            _pullExistentials,
+            _pullExistentials,
+            block.timestamp + otherParams.rebalanceDeadline
+        );
+    }
+
+    function withdrawCallback() external {
+        _rebalanceERC20UniV3Vaults(
+            _pullExistentials,
+            _pullExistentials,
+            block.timestamp + otherParams.rebalanceDeadline
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
@@ -561,6 +511,84 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
+
+    /// @notice reference to rebalanceERC20UniV3Vaults
+    function _rebalanceERC20UniV3Vaults(
+        uint256[] memory minLowerVaultTokens,
+        uint256[] memory minUpperVaultTokens,
+        uint256 deadline
+    ) internal returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
+        uint256 capitalDelta;
+        uint256[] memory lowerTokenAmounts;
+        uint256[] memory upperTokenAmounts;
+        {
+            uint256 priceX96 = targetPrice(tokens, tradingParams);
+            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
+            uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
+            uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
+            (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
+                erc20VaultCapital,
+                lowerVaultCapital + upperVaultCapital,
+                ratioParams.erc20UniV3CapitalRatioD,
+                ratioParams.minErc20UniV3CapitalRatioDeviationD
+            );
+            if (capitalDelta == 0) {
+                uint256[] memory pulledAmounts = new uint256[](2);
+                for (uint256 i = 0; i < 2; ++i) {
+                    pulledAmounts[i] = 0;
+                }
+                isNegativeCapitalDelta = false;
+                return (pulledAmounts, isNegativeCapitalDelta);
+            }
+            uint256 percentageIncreaseD = FullMath.mulDiv(
+                DENOMINATOR,
+                capitalDelta,
+                lowerVaultCapital + upperVaultCapital
+            );
+            (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
+            (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
+            uint256 lowerVaultDelta = FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR);
+            uint256 upperVaultDelta = FullMath.mulDiv(percentageIncreaseD, upperVaultLiquidity, DENOMINATOR);
+            lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(uint128(lowerVaultDelta));
+            upperTokenAmounts = upperVault.liquidityToTokenAmounts(uint128(upperVaultDelta));
+        }
+
+        uint256[] memory pulledAmounts = new uint256[](2);
+        if (!isNegativeCapitalDelta) {
+            totalPulledAmounts = erc20Vault.pull(
+                address(lowerVault),
+                tokens,
+                lowerTokenAmounts,
+                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
+            );
+            pulledAmounts = erc20Vault.pull(
+                address(upperVault),
+                tokens,
+                upperTokenAmounts,
+                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
+            );
+            for (uint256 i = 0; i < 2; i++) {
+                totalPulledAmounts[i] += pulledAmounts[i];
+            }
+        } else {
+            totalPulledAmounts = lowerVault.pull(
+                address(erc20Vault),
+                tokens,
+                lowerTokenAmounts,
+                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
+            );
+            pulledAmounts = upperVault.pull(
+                address(erc20Vault),
+                tokens,
+                upperTokenAmounts,
+                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
+            );
+            for (uint256 i = 0; i < 2; i++) {
+                totalPulledAmounts[i] += pulledAmounts[i];
+            }
+        }
+        emit RebalancedErc20UniV3(tx.origin, msg.sender, !isNegativeCapitalDelta, totalPulledAmounts);
+    }
 
     /// @notice Pull liquidity from `fromVault` and put into `toVault`
     /// @param fromVault The vault to pull liquidity from

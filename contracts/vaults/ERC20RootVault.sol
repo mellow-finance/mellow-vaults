@@ -9,7 +9,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
-import "../interfaces/utils/ICallback.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
@@ -122,12 +122,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
 
         if (delayedStrategyParams.depositCallback != address(0)) {
-            ICallback callbackContract = ICallback(delayedStrategyParams.depositCallback);
-            callbackContract.rebalanceERC20UniV3Vaults(
-                _pullExistentials,
-                _pullExistentials,
-                block.timestamp + delayedStrategyParams.rebalanceDeadline
-            );
+            ILpCallback callbackContract = ILpCallback(delayedStrategyParams.depositCallback);
+            callbackContract.depositCallback();
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -171,14 +167,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         ).delayedStrategyParams(thisNft);
 
         if (delayedStrategyParams.withdrawCallback != address(0)) {
-            ICallback callbackContract = ICallback(delayedStrategyParams.withdrawCallback);
-            try
-                callbackContract.rebalanceERC20UniV3Vaults(
-                    _pullExistentials,
-                    _pullExistentials,
-                    block.timestamp + delayedStrategyParams.rebalanceDeadline
-                )
-            {} catch Error(string memory reason) {
+            ILpCallback callbackContract = ILpCallback(delayedStrategyParams.withdrawCallback);
+            try callbackContract.withdrawCallback() {} catch Error(string memory reason) {
                 emit WithdrawCallbackLog(reason);
             } catch {
                 emit WithdrawCallbackLog("callback failed without reason");
