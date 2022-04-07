@@ -465,7 +465,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
     }
 
     function depositCallback() external {
-        _rebalanceERC20UniV3Vaults(
+        rebalanceERC20UniV3Vaults(
             _pullExistentials,
             _pullExistentials,
             block.timestamp + otherParams.rebalanceDeadline
@@ -473,7 +473,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
     }
 
     function withdrawCallback() external {
-        _rebalanceERC20UniV3Vaults(
+        rebalanceERC20UniV3Vaults(
             _pullExistentials,
             _pullExistentials,
             block.timestamp + otherParams.rebalanceDeadline
