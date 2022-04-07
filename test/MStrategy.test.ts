@@ -15,6 +15,7 @@ import {
     ERC20Vault,
     MStrategy,
     ProtocolGovernance,
+    IYearnProtocolVault,
 } from "./types";
 import {
     setupVault,
@@ -198,7 +199,9 @@ contract<MStrategy, DeployOptions, CustomContext>(
                      * Mint USDC and WETH to deployer
                      */
 
-                    this.deployerUsdcAmount = BigNumber.from(10).pow(6).mul(3000);
+                    this.deployerUsdcAmount = BigNumber.from(10)
+                        .pow(6)
+                        .mul(3000);
                     this.deployerWethAmount = BigNumber.from(10).pow(18);
 
                     await mint(
@@ -590,8 +593,8 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
         describe.only("#manualPull", () => {
             it("pulls token amounts from fromVault to toVault", async () => {
-                let amountWETH = randomInt(0, 10 ** 6);
-                let amountUSDC = randomInt(0, 10 ** 6);
+                let amountWETH = randomInt(10 ** 4, 10 ** 6);
+                let amountUSDC = randomInt(10 ** 4, 10 ** 6);
 
                 await this.usdc
                     .connect(this.deployer)
@@ -600,23 +603,39 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     .connect(this.deployer)
                     .transfer(this.erc20Vault.address, amountWETH);
 
-                assert(Number(await this.usdc.balanceOf(this.params.erc20Vault)) === amountUSDC);
-                assert(Number(await this.weth.balanceOf(this.params.erc20Vault)) === amountWETH);
-               
+                assert(
+                    Number(
+                        await this.usdc.balanceOf(this.params.erc20Vault)
+                    ) === amountUSDC
+                );
+                assert(
+                    Number(
+                        await this.weth.balanceOf(this.params.erc20Vault)
+                    ) === amountWETH
+                );
+
+                let yTokensAddresses = await this.yearnVault.yTokens();
+                let yTokens: IYearnProtocolVault[] = [];
+                let yTokenBalances = [];
+                for (let i = 0; i < yTokensAddresses.length; ++i) {
+                    yTokens.push(
+                        await ethers.getContractAt(
+                            "IYearnProtocolVault",
+                            yTokensAddresses[i]
+                        )
+                    );
+                    yTokenBalances.push(
+                        await yTokens[i].balanceOf(this.params.moneyVault)
+                    );
+                }
+
+                for (let i = 0; i < yTokenBalances.length; ++i) {
+                    expect(yTokenBalances[i]).to.be.eq(0);
+                }
+
                 let amountWETHtoPull = randomInt(0, amountWETH);
                 let amountUSDCtoPull = randomInt(0, amountUSDC);
 
-                console.log(amountUSDC);
-                console.log(amountWETH);
-                console.log(amountUSDCtoPull);
-                console.log(amountWETHtoPull);
-
-                console.log("initial balances\n");
-                console.log(Number(await this.usdc.balanceOf(this.params.erc20Vault)));
-                console.log(Number(await this.weth.balanceOf(this.params.erc20Vault)));
-
-                console.log(Number(await this.usdc.balanceOf(this.params.moneyVault)));
-                console.log(Number(await this.weth.balanceOf(this.params.moneyVault)));
                 await this.subject
                     .connect(this.mStrategyAdmin)
                     .manualPull(
@@ -625,19 +644,113 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         [amountUSDCtoPull, amountWETHtoPull],
                         []
                     );
-                
-                console.log("actual balances\n");
-                console.log(Number(await this.usdc.balanceOf(this.params.erc20Vault)));
-                console.log(Number(await this.weth.balanceOf(this.params.erc20Vault)));
 
-                console.log(Number(await this.usdc.balanceOf(this.params.moneyVault)));
-                console.log(Number(await this.weth.balanceOf(this.params.moneyVault)));
-                // expect(await this.weth.balanceOf(this.params.moneyVault)).to.be.equal(BigNumber.from(amountWETHtoPull));
-                // expect(await this.usdc.balanceOf(this.params.moneyVault)).to.be.equal(BigNumber.from(amountUSDCtoPull));
-                // console.log(2);
-                // expect(await this.weth.balanceOf(this.params.erc20Vault)).to.be.equal(BigNumber.from(amountWETH - amountWETHtoPull));
-                // expect(await this.usdc.balanceOf(this.params.erc20Vault)).to.be.equal(BigNumber.from(amountUSDC - amountUSDCtoPull));
-                // console.log(3);
+                for (let i = 0; i < yTokens.length; ++i) {
+                    yTokenBalances[i] = await yTokens[i].balanceOf(
+                        this.params.moneyVault
+                    );
+                }
+
+                for (let i = 0; i < yTokenBalances.length; ++i) {
+                    expect(yTokenBalances[i]).to.be.gt(0);
+                }
+
+                expect(
+                    await this.weth.balanceOf(this.params.erc20Vault)
+                ).to.be.equal(BigNumber.from(amountWETH - amountWETHtoPull));
+                expect(
+                    await this.usdc.balanceOf(this.params.erc20Vault)
+                ).to.be.equal(BigNumber.from(amountUSDC - amountUSDCtoPull));
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .manualPull(
+                        this.params.moneyVault,
+                        this.params.erc20Vault,
+                        [amountUSDCtoPull, amountWETHtoPull],
+                        []
+                    );
+
+                for (let i = 0; i < yTokens.length; ++i) {
+                    yTokenBalances[i] = await yTokens[i].balanceOf(
+                        this.params.moneyVault
+                    );
+                }
+
+                for (let i = 0; i < yTokenBalances.length; ++i) {
+                    expect(yTokenBalances[i]).to.be.eq(0);
+                }
+
+                let usdcBalanceAbsDif = (
+                    await this.usdc.balanceOf(this.params.erc20Vault)
+                )
+                    .sub(amountUSDC)
+                    .abs();
+                let wethBalanceAbsDif = (
+                    await this.weth.balanceOf(this.params.erc20Vault)
+                )
+                    .sub(amountWETH)
+                    .abs();
+
+                expect(
+                    usdcBalanceAbsDif
+                        .mul(10000)
+                        .sub(BigNumber.from(amountUSDC))
+                        .lte(0)
+                ).to.be.true;
+                expect(
+                    wethBalanceAbsDif
+                        .mul(10000)
+                        .sub(BigNumber.from(amountWETH))
+                        .lte(0)
+                ).to.be.true;
+            });
+
+            describe("access control", () => {
+                it("allowed: MStrategy admin", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .manualPull(
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                [1, 1],
+                                []
+                            )
+                    ).to.not.be.reverted;
+                });
+
+                it("denied: any other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .manualPull(
+                                    this.params.erc20Vault,
+                                    this.params.moneyVault,
+                                    [1, 1],
+                                    []
+                                )
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+
+            describe("edge cases", () => {
+                describe("when token pull amounts are 0", () => {
+                    it("passes", async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.mStrategyAdmin)
+                                .manualPull(
+                                    this.params.erc20Vault,
+                                    this.params.moneyVault,
+                                    [0, 0],
+                                    []
+                                )
+                        ).to.not.be.reverted;
+                    });
+                });
             });
         });
     }
