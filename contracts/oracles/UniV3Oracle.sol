@@ -73,6 +73,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                     uint256(observationCardinality);
                 uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
                     uint256(observationCardinality);
+                require(obs1 > obs0, ExceptionsLibrary.INVALID_VALUE);
                 int256 tickAverage;
                 {
                     (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
@@ -130,10 +131,10 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             return LOW_OBS;
         } else if (safety == 3) {
             return MID_OBS;
-        } else if (safety == 4) {
+        } else {
+            require(safety == 4, ExceptionsLibrary.INVALID_VALUE);
             return HIGH_OBS;
         }
-        return 0;
     }
 
     function _addUniV3Pools(IUniswapV3Pool[] memory pools) internal {
@@ -155,6 +156,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                 k += 1;
             }
             poolsIndex[token0][token1] = pool;
+            poolsIndex[token1][token0] = pool;
         }
         assembly {
             mstore(replaced, j)

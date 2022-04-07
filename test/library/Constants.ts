@@ -1,4 +1,8 @@
 export const ERC165_INTERFACE_ID: string = "0x01ffc9a7";
+export const CHAINLINK_ORACLE_INTERFACE_ID: string = "0x734d54e6";
+export const UNIV2_ORACLE_INTERFACE_ID: string = "0xc45a0155";
+export const UNIV3_ORACLE_INTERFACE_ID: string = "0x4812bf52";
+export const ORACLE_INTERFACE_ID: string = "0x4e45e717";
 export const CHIEF_TRADER_INTERFACE_ID: string = "0x698afc85";
 export const TRADER_INTERFACE_ID: string = "0xdf1e4f02";
 export const ZERO_INTERFACE_ID: string = "0x00000000";
