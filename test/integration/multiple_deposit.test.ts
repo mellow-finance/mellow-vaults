@@ -1,7 +1,14 @@
 import hre, { getNamedAccounts } from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, now, randomAddress, sleep, sleepTo } from "../library/Helpers";
+import {
+    mint,
+    now,
+    randomAddress,
+    sleep,
+    sleepTo,
+    withSigner,
+} from "../library/Helpers";
 import { contract } from "../library/setup";
 import { pit, RUNS } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
@@ -13,6 +20,8 @@ import { integer, float, boolean } from "fast-check";
 import { ERC20RootVaultGovernance, MellowOracle } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
+import { max } from "ramda";
+import { randomInt } from "crypto";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -189,10 +198,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 { numRuns: RUNS.mid, endOnFailure: true },
                 integer({ min: 1, max: 10 }),
                 integer({ min: 1, max: 10 }),
-                integer({ min: 100_000, max: 1_000_000 }).map((x) =>
+                integer({ min: 10 ** 6, max: 10 ** 9 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
-                integer({ min: 10 ** 5, max: 10 ** 9 }).map((x) =>
+                integer({ min: 10 ** 7, max: 10 ** 10 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
                 async (
@@ -216,7 +225,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     BigNumber.from(amountUSDC).div(numDeposits),
                                     BigNumber.from(amountWETH).div(numDeposits),
                                 ],
-                                0
+                                0,
+                                []
                             );
                         lpAmounts.push(
                             await this.subject.balanceOf(this.deployer.address)
@@ -257,19 +267,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject.withdraw(
                             this.deployer.address,
                             BigNumber.from(lpTokensAmount).div(numWithdraws),
-                            [0, 0]
-                        );
-                    }
-
-                    if (
-                        !BigNumber.from(lpTokensAmount)
-                            .mod(numWithdraws)
-                            .eq(BigNumber.from(0))
-                    ) {
-                        await this.subject.withdraw(
-                            this.deployer.address,
-                            BigNumber.from(lpTokensAmount).mod(numWithdraws),
-                            [0, 0]
+                            [0, 0],
+                            [[], []]
                         );
                     }
 
@@ -281,7 +280,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject.withdraw(
                             this.deployer.address,
                             remainingLpTokenBalance,
-                            [0, 0]
+                            [0, 0],
+                            [[], []]
                         );
                     }
 
@@ -369,31 +369,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 integer({ min: 0, max: 5 * 86400 }),
                 integer({ min: 2, max: 10 }),
                 integer({ min: 2, max: 10 }),
-                float({ min: 0, max: 1 }),
-                boolean(),
+                float({ min: 0.01, max: 0.99 }),
                 async (
                     delay: number,
                     numDeposits: number,
                     numWithdraws: number,
-                    tokensDepositRatio: number,
-                    invertRatio: boolean
+                    tokensDepositRatio: number
                 ) => {
                     await setNonZeroFeesFixture();
-                    if (invertRatio) {
-                        tokensDepositRatio = 1 - tokensDepositRatio;
-                    }
 
                     let roundedTokensDepositRatio = BigNumber.from(
                         Math.round(tokensDepositRatio * 10 ** 3)
                     );
 
-                    let tokensDepositRatioEqualsOne: boolean =
-                        roundedTokensDepositRatio.eq(10 ** 3);
-                    let tokensDepositRatioEqualsZero: boolean =
-                        roundedTokensDepositRatio.eq(0);
-
                     let usdcDepositAmounts: BigNumber[] = [];
                     let wethDepositAmounts: BigNumber[] = [];
+
+                    let usdcDepositedAmount = BigNumber.from(0);
+                    let wethDepositedAmount = BigNumber.from(0);
 
                     /* 
                         --------------------- SET DEPOSIT AMOUNTS ---------------------------
@@ -401,37 +394,93 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         U -> usdcDepositAmounts[i]
                         W -> wethDepositAmounts[i]
 
-                        R = U / (U + W), R in range [0, 1]
+                        R = U / (U + W), R in range (0, 1)
                         let W be a random value, than
 
                         R * U + R * W = U
                         U * (1 - R) = W * R
                         U = W * (R / (1 - R))
-                        R == 1 is an exclusive case, so we treat it with another "if" statement
-                        (U is a random value, W = 0)
                     */
 
-                    if (tokensDepositRatioEqualsOne) {
-                        for (let i = 0; i < numDeposits; ++i) {
-                            usdcDepositAmounts.push(
-                                BigNumber.from(
-                                    Math.round(Math.random() * 10 ** 6)
-                                )
-                                    .mul(this.usdcDeployerSupply)
-                                    .div(BigNumber.from(10).pow(10))
-                                    .div(numDeposits)
-                            );
-                            wethDepositAmounts.push(BigNumber.from(0));
-                        }
-                    } else {
-                        for (let i = 0; i < numDeposits; ++i) {
+                    for (let i = 0; i < numDeposits; ++i) {
+                        if (i == 0) {
+                            if (
+                                roundedTokensDepositRatio
+                                    .div(
+                                        BigNumber.from(10)
+                                            .pow(3)
+                                            .sub(roundedTokensDepositRatio)
+                                    )
+                                    .gt(1)
+                            ) {
+                                let wethNextDepositAmount = BigNumber.from(
+                                    BigNumber.from(
+                                        randomInt(
+                                            Number(
+                                                (
+                                                    await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                ).add(1)
+                                            ),
+                                            Number(
+                                                this.wethDeployerSupply
+                                                    .div(10 ** 4)
+                                                    .div(numDeposits)
+                                            )
+                                        )
+                                    )
+                                );
+                                let usdcNextDepositAmount =
+                                    wethNextDepositAmount
+                                        .mul(roundedTokensDepositRatio)
+                                        .div(
+                                            BigNumber.from(10)
+                                                .pow(3)
+                                                .sub(roundedTokensDepositRatio)
+                                        );
+
+                                usdcDepositAmounts.push(usdcNextDepositAmount);
+                                wethDepositAmounts.push(wethNextDepositAmount);
+                            } else {
+                                let usdcNextDepositAmount = BigNumber.from(
+                                    BigNumber.from(
+                                        randomInt(
+                                            Number(
+                                                (
+                                                    await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                ).add(1)
+                                            ),
+                                            Number(
+                                                this.usdcDeployerSupply
+                                                    .div(10 ** 4)
+                                                    .div(numDeposits)
+                                            )
+                                        )
+                                    )
+                                );
+                                let wethNextDepositAmount =
+                                    usdcNextDepositAmount
+                                        .mul(
+                                            BigNumber.from(10)
+                                                .pow(3)
+                                                .sub(roundedTokensDepositRatio)
+                                        )
+                                        .div(roundedTokensDepositRatio);
+
+                                usdcDepositAmounts.push(usdcNextDepositAmount);
+                                wethDepositAmounts.push(wethNextDepositAmount);
+                            }
+                        } else {
                             wethDepositAmounts.push(
                                 BigNumber.from(
-                                    Math.round(Math.random() * 10 ** 6)
+                                    randomInt(
+                                        1,
+                                        Number(
+                                            this.wethDeployerSupply
+                                                .div(10 ** 4)
+                                                .div(numDeposits)
+                                        )
+                                    )
                                 )
-                                    .mul(this.wethDeployerSupply)
-                                    .div(BigNumber.from(10).pow(10))
-                                    .div(numDeposits)
                             );
                             usdcDepositAmounts.push(
                                 wethDepositAmounts[i]
@@ -443,6 +492,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     )
                             );
                         }
+
+                        usdcDepositedAmount = usdcDepositedAmount.add(
+                            usdcDepositAmounts[i]
+                        );
+                        wethDepositedAmount = wethDepositedAmount.add(
+                            wethDepositAmounts[i]
+                        );
                     }
 
                     /* 
@@ -458,7 +514,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.deployer)
                         .deposit(
                             [usdcDepositAmounts[0], wethDepositAmounts[0]],
-                            0
+                            0,
+                            []
                         );
                     const lpTokenAmountAfterFirstDeposit =
                         await this.subject.balanceOf(this.deployer.address);
@@ -480,7 +537,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(this.deployer)
                             .deposit(
                                 [usdcDepositAmounts[i], wethDepositAmounts[i]],
-                                0
+                                0,
+                                []
                             );
                     }
 
@@ -511,37 +569,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
 
                     /*
-                        if token ratio == 1
-                            weth balance remains const
-                            usdc balance must be different
-                        
-                        if token ratio == 0
-                            usdc balance remains const
-                            weth balance must be different
-                        
-                        else 
-                            usdc balance must be different
-                            weth balance must be different
+                        in case deposit amounts are greater than 0
+
+                        usdc balance must be different
+                        weth balance must be different
                     */
 
-                    if (tokensDepositRatioEqualsOne) {
-                        expect(
-                            await this.weth.balanceOf(this.deployer.address)
-                        ).to.be.equal(this.wethDeployerSupply);
-                        expect(
-                            await this.usdc.balanceOf(this.deployer.address)
-                        ).to.not.be.equal(this.usdcDeployerSupply);
-                    } else if (tokensDepositRatioEqualsZero) {
+                    if (wethDepositedAmount.gt(0)) {
                         expect(
                             await this.weth.balanceOf(this.deployer.address)
                         ).to.not.be.equal(this.wethDeployerSupply);
-                        expect(
-                            await this.usdc.balanceOf(this.deployer.address)
-                        ).to.be.equal(this.usdcDeployerSupply);
-                    } else {
-                        expect(
-                            await this.weth.balanceOf(this.deployer.address)
-                        ).to.not.be.equal(this.wethDeployerSupply);
+                    }
+
+                    if (usdcDepositedAmount.gt(0)) {
                         expect(
                             await this.usdc.balanceOf(this.deployer.address)
                         ).to.not.be.equal(this.usdcDeployerSupply);
@@ -749,14 +789,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await this.subject.withdraw(
                         this.deployer.address,
                         withdrawAmounts[0],
-                        [0, 0]
+                        [0, 0],
+                        [[], []]
                     );
 
                     for (let i = 1; i < numWithdraws; ++i) {
                         await this.subject.withdraw(
                             this.deployer.address,
                             withdrawAmounts[i],
-                            [0, 0]
+                            [0, 0],
+                            [[], []]
                         );
                     }
 
@@ -880,11 +922,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .div(totalLpSupply);
 
                         // --------------------- WITHDRAW ---------------------------
-                        await this.subject.withdraw(
-                            strategyTreasury,
-                            BigNumber.from(2).pow(256).sub(1),
-                            [0, 0]
-                        );
+                        await withSigner(strategyTreasury, async (s) => {
+                            await this.subject
+                                .connect(s)
+                                .withdraw(
+                                    strategyTreasury,
+                                    BigNumber.from(2).pow(256).sub(1),
+                                    [0, 0],
+                                    [[], []]
+                                );
+                        });
 
                         let usdcBalanceStrategyTreasury =
                             await this.usdc.balanceOf(this.strategyTreasury);
@@ -932,10 +979,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         let tvls = (await this.subject.tvl())[0];
 
                         // --------------------- WITHDRAW ---------------------------
-                        await this.subject.withdraw(
+                        await withSigner(
                             strategyPerformanceTreasury,
-                            BigNumber.from(2).pow(256).sub(1),
-                            [0, 0]
+                            async (s) => {
+                                await this.subject
+                                    .connect(s)
+                                    .withdraw(
+                                        strategyPerformanceTreasury,
+                                        BigNumber.from(2).pow(256).sub(1),
+                                        [0, 0],
+                                        [[], []]
+                                    );
+                            }
                         );
 
                         /*
@@ -984,11 +1039,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     if (
                         (await this.subject.balanceOf(protocolTreasury)).gt(0)
                     ) {
-                        await this.subject.withdraw(
-                            protocolTreasury,
-                            BigNumber.from(2).pow(256).sub(1),
-                            [0, 0]
-                        );
+                        await withSigner(protocolTreasury, async (s) => {
+                            await this.subject
+                                .connect(s)
+                                .withdraw(
+                                    protocolTreasury,
+                                    BigNumber.from(2).pow(256).sub(1),
+                                    [0, 0],
+                                    [[], []]
+                                );
+                        });
                     }
 
                     /* 

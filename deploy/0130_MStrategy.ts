@@ -13,6 +13,27 @@ import { map } from "ramda";
 
 type MoneyVault = "Aave" | "Yearn";
 
+const setupCardinality = async function (
+    hre: HardhatRuntimeEnvironment,
+    tokens: string[],
+    fee: 500 | 3000 | 10000
+) {
+    const { deployments, getNamedAccounts } = hre;
+    const { deploy, log, execute, read, get, getOrNull } = deployments;
+    const { deployer, uniswapV3Factory } =
+        await getNamedAccounts();
+
+    const factory = await hre.ethers.getContractAt(
+        "IUniswapV3Factory",
+        uniswapV3Factory
+    );
+    const pool = await hre.ethers.getContractAt(
+        "IUniswapV3Pool",
+        await factory.getPool(tokens[0], tokens[1], fee)
+    );
+    await pool.increaseObservationCardinalityNext(100);
+}
+
 const deployMStrategy = async function (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault
@@ -56,7 +77,9 @@ const setupStrategy = async (
     );
 
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
-    const params = [tokens, erc20Vault, moneyVault, 3000, mStrategyAdmin];
+    const fee = 3000;
+    await setupCardinality(hre, tokens, fee);
+    const params = [tokens, erc20Vault, moneyVault, fee, mStrategyAdmin];
     const address = await mStrategy.callStatic.createStrategy(...params);
     if (!(await deployments.getOrNull(`${mStrategyName}_WETH_USDC`))) {
         return;
@@ -82,6 +105,7 @@ const setupStrategy = async (
         tickMin: 198240 - 5000,
         tickMax: 198240 + 5000,
         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+        minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
     };
     const txs = [];
     txs.push(

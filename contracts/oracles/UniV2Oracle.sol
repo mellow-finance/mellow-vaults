@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/external/univ2/IUniswapV2Pair.sol";
 import "../interfaces/external/univ2/IUniswapV2Factory.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
-import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 

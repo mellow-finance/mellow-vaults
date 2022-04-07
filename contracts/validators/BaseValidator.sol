@@ -44,6 +44,7 @@ contract BaseValidator is IBaseValidator {
     function commitValidatorParams() external {
         IProtocolGovernance governance = _validatorParams.protocolGovernance;
         require(governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        require(block.timestamp >= _stagedValidatorParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _validatorParams = _stagedValidatorParams;
         delete _stagedValidatorParams;
         delete _stagedValidatorParamsTimestamp;

@@ -1,19 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/curve/I3Pool.sol";
-import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
 contract CurveValidator is ContractMeta, Validator {
-    using EnumerableSet for EnumerableSet.AddressSet;
     bytes4 public constant EXCHANGE_SELECTOR = 0x3df02124;
 
     constructor(IProtocolGovernance protocolGovernance_) BaseValidator(protocolGovernance_) {}

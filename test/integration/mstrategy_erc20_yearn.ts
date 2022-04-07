@@ -15,6 +15,7 @@ import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
 import { pit, RUNS } from "../library/property";
 import { integer } from "fast-check";
+import { OracleParamsStruct, RatioParamsStruct } from "../types/MStrategy";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -118,17 +119,20 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     /*
                      * Configure oracles for the MStrategy
                      */
-                    const oracleParams = {
+                    const oracleParams: OracleParamsStruct = {
                         oracleObservationDelta: 15,
                         maxTickDeviation: 50,
                         maxSlippageD: Math.round(0.1 * 10 ** 9),
                     };
-                    const ratioParams = {
+                    const ratioParams: RatioParamsStruct = {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                        minErc20MoneyRatioDeviationD: Math.round(
+                            0.01 * 10 ** 9
+                        ),
                         minTickRebalanceThreshold: 180,
-                        tickNeiborhood: 60,
+                        tickNeighborhood: 60,
                         tickIncrease: 180,
                     };
                     let txs = [];
@@ -217,7 +221,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             ) => {
                 await this.erc20RootVault
                     .connect(this.deployer)
-                    .deposit([amountUSDC, amountWETH], 0);
+                    .deposit([amountUSDC, amountWETH], 0, []);
 
                 await sleep(delay);
 

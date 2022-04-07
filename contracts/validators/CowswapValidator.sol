@@ -2,9 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../libraries/PermissionIdsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 

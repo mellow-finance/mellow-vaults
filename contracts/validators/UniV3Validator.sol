@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
-import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IVault.sol";
 import "../interfaces/IProtocolGovernance.sol";
-import "../libraries/CommonLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
 contract UniV3Validator is ContractMeta, Validator {
-    using EnumerableSet for EnumerableSet.AddressSet;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     bytes4 public constant EXACT_INPUT_SELECTOR = ISwapRouter.exactInput.selector;
     bytes4 public constant EXACT_OUTPUT_SINGLE_SELECTOR = ISwapRouter.exactOutputSingle.selector;
@@ -81,6 +77,7 @@ contract UniV3Validator is ContractMeta, Validator {
         address token1;
         uint24 fee;
         uint256 feeMask = (1 << 24) - 1;
+        require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
         while (path.length - i > 20) {
             // the sample UniV3 path structure is (DAI address,DAI-USDC fee, USDC, USDC-WETH fee, WETH)
             // addresses are 20 bytes, fees are 3 bytes
@@ -96,7 +93,6 @@ contract UniV3Validator is ContractMeta, Validator {
             _verifyPathItem(token0, token1, fee);
             i += 23;
         }
-        require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
         require(vault.isVaultToken(token1), ExceptionsLibrary.INVALID_TOKEN);
     }
 

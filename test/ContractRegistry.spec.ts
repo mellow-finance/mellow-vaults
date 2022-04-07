@@ -1,12 +1,16 @@
 import { expect } from "chai";
-import { ethers, deployments } from "hardhat";
+import { ethers, deployments, network } from "hardhat";
 import { ContractRegistry } from "./types/ContractRegistry";
 import { uint8, pit, RUNS } from "./library/property";
 import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "./library/setup";
 import { hexaString } from "fast-check";
 import Exceptions from "./library/Exceptions";
-import { withSigner, randomAddress } from "./library/Helpers";
+import {
+    withSigner,
+    randomAddress,
+    generateSingleParams,
+} from "./library/Helpers";
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -38,51 +42,66 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
         });
 
         describe("#registerContract", () => {
-            pit(
-                `registeres IContractMeta compatible contract and updates respective view methods
-                    - #addresses
-                    - #versions
-                    - #names
-                    - #latestVersion
-                    - #versionAddress`,
-                { numRuns: RUNS.low },
-                uint8.filter((x) => x.gt(0) && x.lt(20)),
-                uint8.filter((x) => x.lt(20)),
-                uint8.filter((x) => x.lt(20)),
-                hexaString({ minLength: 5, maxLength: 20 }),
-                async (
-                    n1: BigNumber,
-                    n2: BigNumber,
-                    n3: BigNumber,
-                    name: string
-                ) => {
-                    const semver = `${n1}.${n2}.${n3}`;
-                    const mockFactory = await ethers.getContractFactory(
-                        "ContractMetaMock"
-                    );
-                    const mock = await mockFactory.deploy(name, semver);
-                    await expect(
-                        this.subject.registerContract(mock.address)
-                    ).to.emit(this.subject, "ContractRegistered");
-                    const [semverResponse, addressResponse] =
-                        await this.subject.latestVersion(name);
-                    expect(semverResponse).to.eq(semver);
-                    expect(addressResponse).to.eq(mock.address);
-                    expect(await this.subject.names()).to.contain(name);
-                    expect(await this.subject.addresses()).to.contain(
-                        mock.address
-                    );
-                    expect(await this.subject.versions(name)).to.have.members([
-                        semverResponse,
-                    ]);
-                    expect(
-                        await this.subject.versionAddress(name, semver)
-                    ).to.eq(mock.address);
-                    return true;
-                }
-            );
+            it(`registers IContractMeta compatible contract and updates respective view methods
+                - #addresses
+                - #versions
+                - #names
+                - #latestVersion
+                - #versionAddress`, async () => {
+                const n1 = generateSingleParams(
+                    uint8.filter((x) => x.gte(0) && x.lte(1))
+                );
+                const n2 = generateSingleParams(uint8.filter((x) => x.lt(20)));
+                const n3 = generateSingleParams(uint8.filter((x) => x.lt(20)));
+                const name = generateSingleParams(
+                    hexaString({ minLength: 5, maxLength: 20 })
+                );
+
+                const semver = `${n1}.${n2}.${n3}`;
+                const mockFactory = await ethers.getContractFactory(
+                    "ContractMetaMock"
+                );
+                const mock = await mockFactory.deploy(name, semver);
+                await expect(
+                    this.subject.registerContract(mock.address)
+                ).to.emit(this.subject, "ContractRegistered");
+                const [semverResponse, addressResponse] =
+                    await this.subject.latestVersion(name);
+                expect(semverResponse).to.eq(semver);
+                expect(addressResponse).to.eq(mock.address);
+                expect(await this.subject.names()).to.contain(name);
+                expect(await this.subject.addresses()).to.contain(mock.address);
+                expect(await this.subject.versions(name)).to.have.members([
+                    semverResponse,
+                ]);
+                expect(await this.subject.versionAddress(name, semver)).to.eq(
+                    mock.address
+                );
+                return true;
+            });
 
             describe("edge cases", () => {
+                describe("when new contract major version differs more, than on one", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        // initial version
+                        const semver = "1.0.0";
+                        const name = "ContractMetaMock";
+                        const mockFactory = await ethers.getContractFactory(
+                            "ContractMetaMock"
+                        );
+                        const mock = await mockFactory.deploy(name, semver);
+                        await this.subject.registerContract(mock.address);
+
+                        const lowerSemver = "3.0.0";
+                        const anotherMock = await mockFactory.deploy(
+                            name,
+                            lowerSemver
+                        );
+                        await expect(
+                            this.subject.registerContract(anotherMock.address)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
                 describe("when new contract version lower or equal existing one", () => {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         // initial version
