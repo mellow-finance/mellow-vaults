@@ -35,7 +35,7 @@ library CommonLibrary {
     function bubbleSort(address[] memory arr) internal pure {
         uint256 l = arr.length;
         for (uint256 i = 0; i < l; ++i) {
-            for (uint256 j = i + 1; j < l; ++j) {
+            for (uint256 j = i; j >= 0; --j) {
                 if (arr[i] > arr[j]) {
                     address temp = arr[i];
                     arr[i] = arr[j];
@@ -50,7 +50,7 @@ library CommonLibrary {
     function bubbleSortUint(uint256[] memory arr) internal pure {
         uint256 l = arr.length;
         for (uint256 i = 0; i < l; ++i) {
-            for (uint256 j = i + 1; j < l; ++j) {
+            for (uint256 j = i; j > 0; --j) {
                 if (arr[i] > arr[j]) {
                     uint256 temp = arr[i];
                     arr[i] = arr[j];
