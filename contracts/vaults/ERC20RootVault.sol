@@ -167,7 +167,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         ).delayedStrategyParams(thisNft);
 
         if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
-            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(string memory reason) {
+            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
+                string memory reason
+            ) {
                 emit WithdrawCallbackLog(reason);
             } catch {
                 emit WithdrawCallbackLog("callback failed without reason");

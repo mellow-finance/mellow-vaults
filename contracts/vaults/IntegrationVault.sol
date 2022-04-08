@@ -101,7 +101,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
             address zeroVault = root.subvaultAt(0);
             if (zeroVault == address(this)) {
                 // If we pull from zero vault
-                require(root.hasSubvault(registry.nftForVault(to)) && to != address(this), ExceptionsLibrary.INVALID_TARGET);
+                require(
+                    root.hasSubvault(registry.nftForVault(to)) && to != address(this),
+                    ExceptionsLibrary.INVALID_TARGET
+                );
             } else {
                 // If we pull from other vault
                 require(zeroVault == to, ExceptionsLibrary.INVALID_TARGET);
