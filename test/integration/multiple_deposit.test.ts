@@ -318,8 +318,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             privateVault: true,
                             managementFee: BigNumber.from(20000000),
                             performanceFee: BigNumber.from(200000000),
-                            depositCallbackAddress: ethers.constants.AddressZero,
-                            withdrawCallbackAddress: ethers.constants.AddressZero,
+                            depositCallbackAddress:
+                                ethers.constants.AddressZero,
+                            withdrawCallbackAddress:
+                                ethers.constants.AddressZero,
                         });
                     await sleep(this.governanceDelay);
                     await this.erc20RootVaultGovernance
