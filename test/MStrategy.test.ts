@@ -753,5 +753,41 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 });
             });
         });
+
+        describe("#rebalance", () => {
+            it("performs a rebalance according to target ratios", async () => {
+                await this.erc20RootVault
+                    .connect(this.mStrategyAdmin)
+                    .deposit(
+                        [BigNumber.from(10 ** 5), BigNumber.from(10 ** 5)],
+                        [0, 0],
+                        []
+                    );
+
+                console.log(
+                    (
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .callStatic.rebalance()
+                    ).toString()
+                );
+            });
+
+            describe("access control", () => {
+                it("allowed: MStrategy admin", async () => {
+                    await expect(
+                        this.subject.connect(this.mStrategyAdmin).rebalance()
+                    ).to.not.be.reverted;
+                });
+
+                it("denied: any other address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject.connect(s).rebalance()
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
     }
 );

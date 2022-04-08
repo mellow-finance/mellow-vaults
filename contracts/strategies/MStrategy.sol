@@ -118,6 +118,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param erc20Vault_ erc20Vault of the Strategy
     /// @param moneyVault_ moneyVault of the Strategy
     /// @param fee_ Uniswap V3 fee for the pool (needed for oracle and swaps)
+    /// @param admin_ Admin of the new strategy
     function createStrategy(
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
@@ -144,13 +145,6 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_ = tokens;
         IUniswapV3Pool pool_ = pool;
         ISwapRouter router_ = router;
-        int256[] memory poolAmountsI = _rebalancePools(
-            erc20Vault_,
-            moneyVault_,
-            tokens_,
-            ratioParams.minErc20MoneyRatioDeviationD,
-            vaultOptions
-        );
         (uint256 amountIn, uint8 index) = _rebalanceTokens(
             pool_,
             router_,
@@ -158,6 +152,13 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             moneyVault_,
             tokens_,
             ratioParams.minTickRebalanceThreshold,
+            vaultOptions
+        );
+        int256[] memory poolAmountsI = _rebalancePools(
+            erc20Vault_,
+            moneyVault_,
+            tokens_,
+            ratioParams.minErc20MoneyRatioDeviationD,
             vaultOptions
         );
         poolAmounts = new uint256[](2);
