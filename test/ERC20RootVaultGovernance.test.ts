@@ -93,7 +93,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#supportsInterface", () => {
+        describe.only("#supportsInterface", () => {
             it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
@@ -143,8 +143,8 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                     privateVault,
                     managementFee: BigNumber.from(numManagementFee),
                     performanceFee: BigNumber.from(numPerformanceFee),
-                    depositCallback: ethers.constants.AddressZero,
-                    withdrawCallback: ethers.constants.AddressZero,
+                    depositCallbackAddress: ethers.constants.AddressZero,
+                    withdrawCallbackAddress: ethers.constants.AddressZero,
                 })
             );
 

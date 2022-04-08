@@ -262,8 +262,8 @@ export const combineVaults = async (
             managementFee: BigNumber.from(managementFee),
             performanceFee: BigNumber.from(performanceFee),
             privateVault: PRIVATE_VAULT,
-            depositCallback: ethers.constants.AddressZero,
-            withdrawCallback: ethers.constants.AddressZero,
+            depositCallbackAddress: ethers.constants.AddressZero,
+            withdrawCallbackAddress: ethers.constants.AddressZero,
         },
         strategyParams: {
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
