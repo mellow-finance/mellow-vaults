@@ -67,7 +67,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         _initialize(vaultTokens_, nft_, strategy_, subvaultNfts_);
 
         _initERC20(_getTokenName(bytes("Mellow Lp Token "), nft_), _getTokenName(bytes("MLP"), nft_));
-        totalWithdrawnAmounts = new uint256[](vaultTokens_.length);
+        uint256 len = vaultTokens_.length;
+        totalWithdrawnAmounts = new uint256[](len);
         lastFeeCharge = uint64(block.timestamp);
     }
 
@@ -80,44 +81,38 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
         );
+        address[] memory tokens = _vaultTokens;
         if (totalSupply == 0) {
-            for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            for (uint256 i = 0; i < tokens.length; ++i) {
                 require(tokenAmounts[i] > FIRST_DEPOSIT_LIMIT, ExceptionsLibrary.LIMIT_UNDERFLOW);
             }
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
+        uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
-        ).delayedStrategyParams(_nft);
+        ).delayedStrategyParams(thisNft);
         require(
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
-        uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, totalSupply);
+        uint256 supply = totalSupply;
+        uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            if (totalSupply == 0) {
-                // skip normalization on init
-                normalizedAmounts[i] = tokenAmounts[i];
-            } else {
-                // normalize amount
-                normalizedAmounts[i] = FullMath.mulDiv(maxTvl[i], preLpAmount, totalSupply);
-                if (normalizedAmounts[i] > tokenAmounts[i]) {
-                    normalizedAmounts[i] = tokenAmounts[i];
-                }
-            }
-            IERC20(_vaultTokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
+            IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
         actualTokenAmounts = _push(normalizedAmounts, vaultOptions);
-        uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, totalSupply);
+        uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
-            .strategyParams(_nft);
+            .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + totalSupply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
 
-        _chargeFees(_nft, minTvl, totalSupply, actualTokenAmounts, lpAmount, _vaultTokens, false);
+        _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
         _mint(msg.sender, lpAmount);
 
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
@@ -140,56 +135,43 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory minTokenAmounts,
         bytes[] memory vaultsOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        require(totalSupply > 0, ExceptionsLibrary.VALUE_ZERO);
+        uint256 supply = totalSupply;
+        require(supply > 0, ExceptionsLibrary.VALUE_ZERO);
+        address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
         if (lpTokenAmount > balanceOf[msg.sender]) {
             lpTokenAmount = balanceOf[msg.sender];
         }
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], totalSupply);
+            tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
         }
         actualTokenAmounts = _pull(address(this), tokenAmounts, vaultsOptions);
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             require(actualTokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             if (actualTokenAmounts[i] == 0) {
                 continue;
             }
 
-            IERC20(_vaultTokens[i]).safeTransfer(to, actualTokenAmounts[i]);
+            IERC20(tokens[i]).safeTransfer(to, actualTokenAmounts[i]);
         }
-        uint256[] memory withdrawn = new uint256[](actualTokenAmounts.length);
-        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
-        if (uint64(block.timestamp) != totalWithdrawnAmountsTimestamp) {
-            totalWithdrawnAmountsTimestamp = uint64(block.timestamp);
-        } else {
-            for (uint256 i = 0; i < tokenAmounts.length; i++) {
-                withdrawn[i] = totalWithdrawnAmounts[i];
-            }
-        }
-        for (uint256 i = 0; i < tokenAmounts.length; i++) {
-            withdrawn[i] += tokenAmounts[i];
-            require(
-                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
-                ExceptionsLibrary.LIMIT_OVERFLOW
-            );
-            totalWithdrawnAmounts[i] = withdrawn[i];
-        }
-        _chargeFees(_nft, minTvl, totalSupply, actualTokenAmounts, lpTokenAmount, _vaultTokens, true);
+        _updateWithdrawnAmounts(actualTokenAmounts);
+        _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         _burn(msg.sender, lpTokenAmount);
 
+        uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
-        ).delayedStrategyParams(_nft);
+        ).delayedStrategyParams(thisNft);
 
         if (delayedStrategyParams.withdrawCallback != address(0)) {
             ILpCallback callbackContract = ILpCallback(delayedStrategyParams.withdrawCallback);
             try callbackContract.withdrawCallback() {} catch Error(string memory reason) {
                 emit WithdrawCallbackLog(reason);
             } catch {
-                emit WithdrawCallbackLog(ExceptionsLibrary.CALLBACK_FAILED);
+                emit WithdrawCallbackLog("callback failed without reason");
             }
         }
 
@@ -197,6 +179,24 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
+
+    function _getTvlToken0(
+        uint256[] memory tvls,
+        address[] memory tokens,
+        IOracle oracle
+    ) internal view returns (uint256 tvl0) {
+        tvl0 = tvls[0];
+        for (uint256 i = 1; i < tvls.length; i++) {
+            (uint256[] memory prices, ) = oracle.price(tokens[0], tokens[i], 0x28);
+            require(prices.length > 0, ExceptionsLibrary.VALUE_ZERO);
+            uint256 price = 0;
+            for (uint256 j = 0; j < prices.length; j++) {
+                price += prices[j];
+            }
+            price /= prices.length;
+            tvl0 += tvls[i] / price;
+        }
+    }
 
     function _getLpAmount(
         uint256[] memory tvl_,
@@ -227,6 +227,26 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpAmount = tokenLpAmount;
             }
         }
+    }
+
+    function _getNormalizedAmount(
+        uint256 tvl_,
+        uint256 amount,
+        uint256 lpAmount,
+        uint256 supply
+    ) internal pure returns (uint256) {
+        if (supply == 0) {
+            // skip normalization on init
+            return amount;
+        }
+
+        // normalize amount
+        uint256 res = FullMath.mulDiv(tvl_, lpAmount, supply);
+        if (res > amount) {
+            res = amount;
+        }
+
+        return res;
     }
 
     function _requireAtLeastStrategy() internal view {
@@ -265,18 +285,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
             return;
         }
-        uint256 baseSupply = supply;
-        if (isWithdraw) {
-            baseSupply = 0;
-            if (supply > deltaSupply) {
-                baseSupply = supply - deltaSupply;
-            }
-        }
-        uint256[] memory baseTvls = new uint256[](tvls.length);
-        for (uint256 i = 0; i < baseTvls.length; ++i) {
-            if (isWithdraw) baseTvls[i] = tvls[i] - deltaTvls[i];
-            else baseTvls[i] = tvls[i];
-        }
+        (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
+            tvls,
+            supply,
+            deltaTvls,
+            deltaSupply,
+            isWithdraw
+        );
         lastFeeCharge = uint64(block.timestamp);
         // don't charge on initial deposit as well as on the last withdraw
         if (baseSupply == 0) {
@@ -285,41 +300,88 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
         address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
+        _chargeManagementFees(
+            strategyParams.managementFee,
+            protocolFee,
+            strategyParams.strategyTreasury,
+            protocolTreasury,
+            elapsed,
+            baseSupply
+        );
 
-        if (strategyParams.managementFee > 0) {
+        _chargePerformanceFees(
+            baseSupply,
+            baseTvls,
+            strategyParams.performanceFee,
+            strategyParams.strategyPerformanceTreasury,
+            tokens,
+            delayedProtocolParams.oracle
+        );
+    }
+
+    function _getBaseParamsForFees(
+        uint256[] memory tvls,
+        uint256 supply,
+        uint256[] memory deltaTvls,
+        uint256 deltaSupply,
+        bool isWithdraw
+    ) internal pure returns (uint256 baseSupply, uint256[] memory baseTvls) {
+        // the base for lp Supply charging. postSupply for deposit, preSupply for withdraw,
+        // thus always lower lpPrice for performance fees
+        baseSupply = supply;
+        if (isWithdraw) {
+            baseSupply = 0;
+            if (supply > deltaSupply) {
+                baseSupply = supply - deltaSupply;
+            }
+        }
+        baseTvls = new uint256[](tvls.length);
+        for (uint256 i = 0; i < baseTvls.length; ++i) {
+            if (isWithdraw) baseTvls[i] = tvls[i] - deltaTvls[i];
+            else baseTvls[i] = tvls[i];
+        }
+    }
+
+    function _chargeManagementFees(
+        uint256 managementFee,
+        uint256 protocolFee,
+        address strategyTreasury,
+        address protocolTreasury,
+        uint256 elapsed,
+        uint256 lpSupply
+    ) internal {
+        if (managementFee > 0) {
             uint256 toMint = FullMath.mulDiv(
-                strategyParams.managementFee * elapsed,
-                baseSupply,
+                managementFee * elapsed,
+                lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
-            _mint(strategyParams.strategyTreasury, toMint);
-            emit ManagementFeesCharged(strategyParams.strategyTreasury, strategyParams.managementFee, toMint);
+            _mint(strategyTreasury, toMint);
+            emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
         if (protocolFee > 0) {
             uint256 toMint = FullMath.mulDiv(
                 protocolFee * elapsed,
-                baseSupply,
+                lpSupply,
                 CommonLibrary.YEAR * CommonLibrary.DENOMINATOR
             );
             _mint(protocolTreasury, toMint);
             emit ProtocolFeesCharged(protocolTreasury, protocolFee, toMint);
         }
+    }
 
-        if ((strategyParams.performanceFee == 0) || (baseSupply == 0)) {
+    function _chargePerformanceFees(
+        uint256 baseSupply,
+        uint256[] memory baseTvls,
+        uint256 performanceFee,
+        address treasury,
+        address[] memory tokens,
+        IOracle oracle
+    ) internal {
+        if ((performanceFee == 0) || (baseSupply == 0)) {
             return;
         }
-        uint256 tvlToken0 = baseTvls[0]; //_getTvlToken0(baseTvls, tokens, oracle);
-        for (uint256 i = 1; i < baseTvls.length; i++) {
-            (uint256[] memory prices, ) = delayedProtocolParams.oracle.price(tokens[0], tokens[i], 0x28);
-            require(prices.length > 0, ExceptionsLibrary.VALUE_ZERO);
-            uint256 price = 0;
-            for (uint256 j = 0; j < prices.length; j++) {
-                price += prices[j];
-            }
-            price /= prices.length;
-            tvlToken0 += baseTvls[i] / price;
-        }
-
+        uint256 tvlToken0 = _getTvlToken0(baseTvls, tokens, oracle);
         uint256 lpPriceD18 = FullMath.mulDiv(tvlToken0, CommonLibrary.D18, baseSupply);
         uint256 hwmsD18 = lpPriceHighWaterMarkD18;
         if (lpPriceD18 <= hwmsD18) {
@@ -328,11 +390,32 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 toMint;
         if (hwmsD18 > 0) {
             toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
-            toMint = FullMath.mulDiv(toMint, strategyParams.performanceFee, CommonLibrary.DENOMINATOR);
+            toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        _mint(strategyParams.strategyPerformanceTreasury, toMint);
-        emit PerformanceFeesCharged(strategyParams.strategyPerformanceTreasury, strategyParams.performanceFee, toMint);
+        _mint(treasury, toMint);
+        emit PerformanceFeesCharged(treasury, performanceFee, toMint);
+    }
+
+    function _updateWithdrawnAmounts(uint256[] memory tokenAmounts) internal {
+        uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
+        uint64 timestamp = uint64(block.timestamp);
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        if (timestamp != totalWithdrawnAmountsTimestamp) {
+            totalWithdrawnAmountsTimestamp = timestamp;
+        } else {
+            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+                withdrawn[i] = totalWithdrawnAmounts[i];
+            }
+        }
+        for (uint256 i = 0; i < tokenAmounts.length; i++) {
+            withdrawn[i] += tokenAmounts[i];
+            require(
+                withdrawn[i] <= protocolGovernance.withdrawLimit(_vaultTokens[i]),
+                ExceptionsLibrary.LIMIT_OVERFLOW
+            );
+            totalWithdrawnAmounts[i] = withdrawn[i];
+        }
     }
 
     // --------------------------  EVENTS  --------------------------

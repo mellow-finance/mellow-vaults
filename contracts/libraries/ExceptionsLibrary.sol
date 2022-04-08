@@ -25,5 +25,4 @@ library ExceptionsLibrary {
     string constant INVALID_LENGTH = "INVL";
     string constant LOCK = "LCKD";
     string constant DISABLED = "DIS";
-    string constant CALLBACK_FAILED = "CF";
 }
