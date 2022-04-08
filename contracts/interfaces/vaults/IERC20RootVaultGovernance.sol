@@ -12,8 +12,8 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @param privateVault If true, only whitlisted depositors can deposit into the vault
     /// @param managementFee Management fee for Strategist denominated in 10 ** 9
     /// @param performanceFee Performance fee for Strategist denominated in 10 ** 9
-    /// @param depositCallback Address of callback function after deposit
-    /// @param withdrawCallback Address of callback function after withdraw
+    /// @param depositCallbackAddress Address of callback function after deposit
+    /// @param withdrawCallbackAddress Address of callback function after withdraw
     /// @param rebalanceDeadline Deadline of rebalance at callback function
     struct DelayedStrategyParams {
         address strategyTreasury;
@@ -21,8 +21,8 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         bool privateVault;
         uint256 managementFee;
         uint256 performanceFee;
-        address depositCallback;
-        address withdrawCallback;
+        address depositCallbackAddress;
+        address withdrawCallbackAddress;
     }
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.

@@ -77,6 +77,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 minLpTokens,
         bytes memory vaultOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
+        _requireAtLeastStrategy();
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN
@@ -121,9 +122,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
 
-        if (delayedStrategyParams.depositCallback != address(0)) {
-            ILpCallback callbackContract = ILpCallback(delayedStrategyParams.depositCallback);
-            callbackContract.depositCallback();
+        if (delayedStrategyParams.depositCallbackAddress != address(0)) {
+            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback();
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -166,9 +166,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
 
-        if (delayedStrategyParams.withdrawCallback != address(0)) {
-            ILpCallback callbackContract = ILpCallback(delayedStrategyParams.withdrawCallback);
-            try callbackContract.withdrawCallback() {} catch Error(string memory reason) {
+        if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
+            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(string memory reason) {
                 emit WithdrawCallbackLog(reason);
             } catch {
                 emit WithdrawCallbackLog("callback failed without reason");

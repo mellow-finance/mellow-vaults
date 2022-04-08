@@ -71,8 +71,8 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                     privateVault: false,
                     managementFee: 0,
                     performanceFee: 0,
-                    depositCallback: address(0),
-                    withdrawCallback: address(0)
+                    depositCallbackAddress: address(0),
+                    withdrawCallbackAddress: address(0)
                 });
         }
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
@@ -96,8 +96,8 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                     privateVault: false,
                     managementFee: 0,
                     performanceFee: 0,
-                    depositCallback: address(0),
-                    withdrawCallback: address(0)
+                    depositCallbackAddress: address(0),
+                    withdrawCallbackAddress: address(0)
                 });
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
