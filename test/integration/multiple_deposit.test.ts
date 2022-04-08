@@ -419,7 +419,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             Number(
                                                 (
                                                     await this.subject.FIRST_DEPOSIT_LIMIT()
-                                                ).add(1)
+                                                ).add(10 ** 4)
                                             ),
                                             Number(
                                                 this.wethDeployerSupply
@@ -447,7 +447,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             Number(
                                                 (
                                                     await this.subject.FIRST_DEPOSIT_LIMIT()
-                                                ).add(1)
+                                                ).add(10 ** 4)
                                             ),
                                             Number(
                                                 this.usdcDeployerSupply
