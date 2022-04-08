@@ -9,6 +9,7 @@ import "../interfaces/external/cowswap/ICowswapSettlement.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -17,7 +18,7 @@ import "../libraries/external/GPv2Order.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
+contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -36,6 +37,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     IUniV3Vault public upperVault;
     uint256 public lastUniV3RebalanceTimestamp;
     uint256 public orderDeadline;
+    uint256[] internal _pullExistentials;
 
     // MUTABLE PARAMS
 
@@ -59,6 +61,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint16 intervalWidthInTicks;
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
+        uint256 rebalanceDeadline;
     }
 
     struct PreOrder {
@@ -93,6 +96,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         upperVault = vault2_;
         tokens = vault1_.vaultTokens();
         poolFee = vault1_.pool().fee();
+        _pullExistentials = vault1_.pullExistentials();
         cowswap = cowswap_;
     }
 
@@ -145,7 +149,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
         uint256[] memory minLowerVaultTokens,
         uint256[] memory minUpperVaultTokens,
         uint256 deadline
-    ) external returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
+    ) public returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
         _requireAtLeastOperator();
         uint256 capitalDelta;
         uint256[] memory lowerTokenAmounts;
@@ -459,7 +463,22 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl {
     function updateOtherParams(OtherParams calldata newOtherParams) external {
         _requireAdmin();
         otherParams = newOtherParams;
-        emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
+    }
+
+    function depositCallback() external {
+        rebalanceERC20UniV3Vaults(
+            _pullExistentials,
+            _pullExistentials,
+            block.timestamp + otherParams.rebalanceDeadline
+        );
+    }
+
+    function withdrawCallback() external {
+        rebalanceERC20UniV3Vaults(
+            _pullExistentials,
+            _pullExistentials,
+            block.timestamp + otherParams.rebalanceDeadline
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
