@@ -18,6 +18,11 @@ interface IChainlinkOracle is IOracle {
     /// @return Address of the chainlink oracle
     function oraclesIndex(address token) external view returns (address);
 
+    /// @notice Negative sum of decimals of token and chainlink oracle data for this token
+    /// @param token The address of the ERC20 token
+    /// @return Negative sum of decimals of token and chainlink oracle data for this token
+    function decimalsIndex(address token) external view returns (int256);
+
     /// Add a Chainlink price feed for a token
     /// @param tokens ERC20 tokens for the feed
     /// @param oracles Chainlink oracle price feeds (token / USD)
