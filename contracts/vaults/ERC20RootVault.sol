@@ -77,7 +77,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 minLpTokens,
         bytes memory vaultOptions
     ) external nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        _requireAtLeastStrategy();
         require(
             !IERC20RootVaultGovernance(address(_vaultGovernance)).operatorParams().disableDeposit,
             ExceptionsLibrary.FORBIDDEN

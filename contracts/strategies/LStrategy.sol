@@ -150,6 +150,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
         uint256[] memory minUpperVaultTokens,
         uint256 deadline
     ) public returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
+        _requireAtLeastOperator();
         uint256 capitalDelta;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
