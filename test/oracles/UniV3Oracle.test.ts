@@ -69,19 +69,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("#price", () => {
-            it("empty response if pools index is zero", async () => {
-                const pricesResult = await this.uniV3Oracle.price(
-                    this.usdc.address,
-                    ADDRESS_ZERO,
-                    BigNumber.from(30)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
-            });
-
             it("non-empty response", async () => {
                 for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
                     const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
@@ -106,13 +93,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("#supportsInterface", () => {
-            it(`returns true for ERC165 interface (${ERC165_INTERFACE_ID})`, async () => {
-                let isSupported = await this.uniV3Oracle.supportsInterface(
-                    ERC165_INTERFACE_ID
-                );
-                expect(isSupported).to.be.true;
-            });
-
             it(`returns true for IUniV3Oracle interface (${UNIV3_ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.uniV3Oracle.supportsInterface(
                     UNIV3_ORACLE_INTERFACE_ID
@@ -120,12 +100,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(isSupported).to.be.true;
             });
 
-            it("returns false when contract does not support the given interface", async () => {
-                let isSupported = await this.uniV3Oracle.supportsInterface(
-                    UNIV2_ORACLE_INTERFACE_ID
-                );
-                expect(isSupported).to.be.false;
-            });
         });
 
         const mulDivFromFullMath = (
@@ -292,6 +266,27 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 await expect(
                     this.uniV3Oracle.price(token0, token1, safetyIndicesSet)
                 ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+            });
+
+
+            it("empty response if pools index is zero", async () => {
+                const pricesResult = await this.uniV3Oracle.price(
+                    this.usdc.address,
+                    ADDRESS_ZERO,
+                    BigNumber.from(30)
+                );
+
+                const pricesX96 = pricesResult.pricesX96;
+                const safetyIndices = pricesResult.safetyIndices;
+                expect(pricesX96.length).to.be.eq(0);
+                expect(safetyIndices.length).to.be.eq(0);
+            });
+
+            it("returns false when contract does not support the given interface", async () => {
+                let isSupported = await this.uniV3Oracle.supportsInterface(
+                    UNIV2_ORACLE_INTERFACE_ID
+                );
+                expect(isSupported).to.be.false;
             });
         });
     }

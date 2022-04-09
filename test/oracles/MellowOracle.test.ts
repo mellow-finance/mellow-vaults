@@ -33,17 +33,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const { deployments, getNamedAccounts } = hre;
                     const { deploy, get } = deployments;
                     const { deployer } = await getNamedAccounts();
-                    const { address: chainlinkOracle } = await get(
-                        "ChainlinkOracle"
-                    );
+                    const { address: chainlinkOracle } = await get("ChainlinkOracle");
                     const { address: univ3Oracle } = await get("UniV3Oracle");
+                    const { address: univ2Oracle } = await get("UniV2Oracle");
                     await deploy("MellowOracle", {
                         from: deployer,
-                        args: [
-                            hre.ethers.constants.AddressZero,
-                            univ3Oracle,
-                            chainlinkOracle,
-                        ],
+                        args: [univ2Oracle, univ3Oracle, chainlinkOracle],
                         log: true,
                         autoMine: true,
                     });
@@ -81,20 +76,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
             });
 
-            // corresponds to https://github.com/mellow-finance/mellow-vaults/blob/main/deploy/0054_MellowOracle_univ3.ts#L14
-            it("does not initialize IUniV2Oracle", async () => {
-                expect(ethers.constants.AddressZero).to.be.eq(
+            it("initializes IUniV2Oracle", async () => {
+                expect(ethers.constants.AddressZero).to.not.eq(
                     await this.mellowOracle.univ2Oracle()
                 );
             });
 
-            it("initializes IUniV3Oracle ", async () => {
+            it("initializes IUniV3Oracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     await this.mellowOracle.univ3Oracle()
                 );
             });
 
-            it("initializes IChainlinkOracle ", async () => {
+            it("initializes IChainlinkOracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     await this.mellowOracle.chainlinkOracle()
                 );
@@ -102,42 +96,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("#supportsInterface", () => {
-            it(`returns true for ERC165 interface (${ERC165_INTERFACE_ID})`, async () => {
-                let isSupported = await this.mellowOracle.supportsInterface(
-                    ERC165_INTERFACE_ID
-                );
-                expect(isSupported).to.be.true;
-            });
-
             it(`returns true for IUniV3Oracle interface (${ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.mellowOracle.supportsInterface(
                     ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
             });
-
-            it("returns false when contract does not support the given interface", async () => {
-                let isSupported = await this.mellowOracle.supportsInterface(
-                    UNIV2_ORACLE_INTERFACE_ID
-                );
-                expect(isSupported).to.be.false;
-            });
         });
 
         describe.only("#price", () => {
-            it("empty response if pools index is zero", async () => {
-                const pricesResult = await this.mellowOracle.price(
-                    ethers.constants.AddressZero,
-                    this.weth.address,
-                    BigNumber.from(31)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
-            });
-
             it("non-empty response in full-mask case", async () => {
                 const pricesResult = await this.mellowOracle.price(
                     this.usdc.address,
@@ -147,8 +114,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 const pricesX96 = pricesResult.pricesX96;
                 const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(5);
-                expect(safetyIndices.length).to.be.eq(5);
+                expect(pricesX96.length).to.be.eq(6);
+                expect(safetyIndices.length).to.be.eq(6);
             });
 
             it("non-empty response in full-mask for ChainlinkOracle case", async () => {
@@ -168,7 +135,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const pricesResult = await this.mellowOracle.price(
                     this.usdc.address,
                     this.weth.address,
-                    BigNumber.from(31)
+                    BigNumber.from(30)
                 );
 
                 const pricesX96 = pricesResult.pricesX96;
@@ -177,28 +144,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(safetyIndices.length).to.be.eq(4);
             });
 
-            it("non-empty response in full-mask and activated UniV2Oracle case", async () => {
-                const { deployments, getNamedAccounts } = hre;
-                const { deploy } = deployments;
-                const { deployer } = await getNamedAccounts();
-
-                await deploy("MellowOracle", {
-                    from: deployer,
-                    args: [
-                        this.uniV2Oracle.address,
-                        hre.ethers.constants.AddressZero,
-                        hre.ethers.constants.AddressZero,
-                    ],
-                    log: true,
-                    autoMine: true,
-                });
-
-                this.mellowOracle = await ethers.getContract("MellowOracle");
-
+            it("non-empty response in full-mask for UniV3Oracle case", async () => {
                 const pricesResult = await this.mellowOracle.price(
                     this.usdc.address,
                     this.weth.address,
-                    BigNumber.from(31)
+                    BigNumber.from(1)
                 );
 
                 const pricesX96 = pricesResult.pricesX96;
@@ -206,6 +156,29 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(pricesX96.length).to.be.eq(1);
                 expect(safetyIndices.length).to.be.eq(1);
             });
+        });
+
+        describe.only("#edge cases", () => {
+            it("returns false when contract does not support the given interface", async () => {
+                let isSupported = await this.mellowOracle.supportsInterface(
+                    UNIV2_ORACLE_INTERFACE_ID
+                );
+                expect(isSupported).to.be.false;
+            });
+
+            it("empty response if pools index is zero", async () => {
+                const pricesResult = await this.mellowOracle.price(
+                    ethers.constants.AddressZero,
+                    this.weth.address,
+                    BigNumber.from(31)
+                );
+
+                const pricesX96 = pricesResult.pricesX96;
+                const safetyIndices = pricesResult.safetyIndices;
+                expect(pricesX96.length).to.be.eq(0);
+                expect(safetyIndices.length).to.be.eq(0);
+            });
+
         });
     }
 );

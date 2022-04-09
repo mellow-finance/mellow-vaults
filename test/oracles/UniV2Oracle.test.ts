@@ -57,28 +57,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("#price", () => {
-            it("Empty response if zero bit of safetyIndicesSet is missing", async () => {
-                for (var i = 1; i < 10; i++) {
-                    let pricesResult = await this.uniV2Oracle.price(
-                        this.usdc.address,
-                        this.weth.address,
-                        BigNumber.from(1 << i)
-                    );
-                    let pricesX96 = pricesResult.pricesX96;
-                    expect(pricesX96).to.be.empty;
-                }
-            });
-
-            it(`Empty response in case of zero addresses`, async () => {
-                let pricesResult = await this.uniV2Oracle.price(
-                    ethers.constants.AddressZero,
-                    ethers.constants.AddressZero,
-                    BigNumber.from(0x1)
-                );
-
-                let pricesX96 = pricesResult.pricesX96;
-                expect(pricesX96).to.be.empty;
-            });
 
             it(`Non-empty response for [uscd, weth] pair`, async () => {
                 const pricesResult = await this.uniV2Oracle.price(
@@ -110,18 +88,37 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("#supportsInterface", () => {
-            it(`returns true for ERC165 interface (${ERC165_INTERFACE_ID})`, async () => {
-                let isSupported = await this.uniV2Oracle.supportsInterface(
-                    ERC165_INTERFACE_ID
-                );
-                expect(isSupported).to.be.true;
-            });
-
             it(`returns true for IUniV2Oracle interface (${UNIV2_ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.uniV2Oracle.supportsInterface(
                     UNIV2_ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
+            });
+
+        });
+
+        describe.only("#edge cases", () => {
+            it("Empty response if zero bit of safetyIndicesSet is missing", async () => {
+                for (var i = 1; i < 10; i++) {
+                    let pricesResult = await this.uniV2Oracle.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        BigNumber.from(1 << i)
+                    );
+                    let pricesX96 = pricesResult.pricesX96;
+                    expect(pricesX96).to.be.empty;
+                }
+            });
+
+            it(`Empty response in case of zero addresses`, async () => {
+                let pricesResult = await this.uniV2Oracle.price(
+                    ethers.constants.AddressZero,
+                    ethers.constants.AddressZero,
+                    BigNumber.from(0x1)
+                );
+
+                let pricesX96 = pricesResult.pricesX96;
+                expect(pricesX96).to.be.empty;
             });
 
             it(`returns false when contract does not support the given interface`, async () => {

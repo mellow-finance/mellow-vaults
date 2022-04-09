@@ -192,25 +192,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("#supportsInterface", () => {
-            it(`returns true for ERC165 interface (${ERC165_INTERFACE_ID})`, async () => {
-                let isSupported = await this.chainlinkOracle.supportsInterface(
-                    ERC165_INTERFACE_ID
-                );
-                expect(isSupported).to.be.true;
-            });
-
             it(`returns true for ChainlinkOracle interface (${CHAINLINK_ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.chainlinkOracle.supportsInterface(
                     CHAINLINK_ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
-            });
-
-            it("returns false when contract does not support the given interface", async () => {
-                let isSupported = await this.chainlinkOracle.supportsInterface(
-                    UNIV2_ORACLE_INTERFACE_ID
-                );
-                expect(isSupported).to.be.false;
             });
         });
 
@@ -232,27 +218,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const safetyIndices = pricesResult.safetyIndices;
                 expect(pricesX96.length).to.be.eq(1);
                 expect(safetyIndices.length).to.be.eq(1);
-            });
-
-            it(`reverts with ${Exceptions.INVALID_VALUE} b.o. different lengths of arrays`, async () => {
-                await expect(
-                    this.chainlinkOracle
-                        .connect(this.admin)
-                        .addChainlinkOracles(
-                            [
-                                this.weth.address,
-                                this.usdc.address,
-                                this.wbtc.address,
-                            ],
-                            [this.chainlinkEth, this.chainlinkUsdc]
-                        )
-                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-            });
-
-            it(`reverts with ${Exceptions.FORBIDDEN} b.o. sender is not with admin rights`, async () => {
-                await expect(
-                    this.chainlinkOracle.addChainlinkOracles([], [])
-                ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
 
             it(`function emits OraclesAdded event`, async () => {
@@ -280,14 +245,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     expect(isSupported).to.be.true;
                 });
             });
-            it(`returns false if oracle is not supported`, async () => {
-                [this.chainlinkEth].forEach(async (token) => {
-                    var isSupported = await this.chainlinkOracle.hasOracle(
-                        token
-                    );
-                    expect(isSupported).to.be.false;
-                });
-            });
         });
 
         describe.only("#supportedTokens", () => {
@@ -300,6 +257,46 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.wbtc.address,
                 ].forEach((token) => {
                     expect(tokens.includes(token)).to.be.true;
+                });
+            });
+        });
+
+
+        describe.only("#edge cases", () => {
+            it("returns false when contract does not support the given interface", async () => {
+                let isSupported = await this.chainlinkOracle.supportsInterface(
+                    UNIV2_ORACLE_INTERFACE_ID
+                );
+                expect(isSupported).to.be.false;
+            });
+
+            it(`reverts with ${Exceptions.INVALID_VALUE} b.o. different lengths of arrays`, async () => {
+                await expect(
+                    this.chainlinkOracle
+                        .connect(this.admin)
+                        .addChainlinkOracles(
+                            [
+                                this.weth.address,
+                                this.usdc.address,
+                                this.wbtc.address,
+                            ],
+                            [this.chainlinkEth, this.chainlinkUsdc]
+                        )
+                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+            });
+
+            it(`reverts with ${Exceptions.FORBIDDEN} b.o. sender is not with admin rights`, async () => {
+                await expect(
+                    this.chainlinkOracle.addChainlinkOracles([], [])
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+
+            it(`returns false if oracle is not supported`, async () => {
+                [this.chainlinkEth].forEach(async (token) => {
+                    var isSupported = await this.chainlinkOracle.hasOracle(
+                        token
+                    );
+                    expect(isSupported).to.be.false;
                 });
             });
         });
