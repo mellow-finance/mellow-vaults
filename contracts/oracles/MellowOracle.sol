@@ -5,12 +5,15 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/oracles/IChainlinkOracle.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../interfaces/oracles/IUniV2Oracle.sol";
-import "../interfaces/oracles/IOracle.sol";
+import "../interfaces/oracles/IMellowOracle.sol";
 import "../utils/ContractMeta.sol";
 
-contract MellowOracle is ContractMeta, IOracle, ERC165 {
+contract MellowOracle is ContractMeta, IMellowOracle, ERC165 {
+    /// @inheritdoc IMellowOracle
     IUniV2Oracle public immutable univ2Oracle;
+    /// @inheritdoc IMellowOracle
     IUniV3Oracle public immutable univ3Oracle;
+    /// @inheritdoc IMellowOracle
     IChainlinkOracle public immutable chainlinkOracle;
 
     constructor(
@@ -53,6 +56,7 @@ contract MellowOracle is ContractMeta, IOracle, ERC165 {
         }
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IOracle).interfaceId == interfaceId;
     }
