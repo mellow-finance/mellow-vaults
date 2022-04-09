@@ -15,39 +15,9 @@ library CommonLibrary {
     uint256 constant Q160 = 2**160;
     uint256 constant UNI_FEE_DENOMINATOR = 10**6;
 
-    function deviationFactor(uint256 a, uint256 b) internal pure returns (uint256 deviationX96) {
-        if (a > b) {
-            (a, b) = (b, a);
-        }
-        if (a == 0) {
-            return type(uint256).max;
-        }
-        if (b / a >= Q160) {
-            // overflow for X96 format
-            return type(uint256).max;
-        }
-
-        deviationX96 = FullMath.mulDiv(b, Q96, a);
-    }
-
-    /// @notice Sort addresses using bubble sort. The sorting is done in-place.
-    /// @param arr Array of addresses
-    function bubbleSort(address[] memory arr) internal pure {
-        uint256 l = arr.length;
-        for (uint256 i = 0; i < l; ++i) {
-            for (uint256 j = i + 1; j < l; ++j) {
-                if (arr[i] > arr[j]) {
-                    address temp = arr[i];
-                    arr[i] = arr[j];
-                    arr[j] = temp;
-                }
-            }
-        }
-    }
-
     /// @notice Sort uint256 using bubble sort. The sorting is done in-place.
     /// @param arr Array of uint256
-    function bubbleSortUint(uint256[] memory arr) internal pure {
+    function sortUint(uint256[] memory arr) internal pure {
         uint256 l = arr.length;
         for (uint256 i = 0; i < l; ++i) {
             for (uint256 j = i + 1; j < l; ++j) {
@@ -75,6 +45,7 @@ library CommonLibrary {
         return true;
     }
 
+    /// @notice Projects tokenAmounts onto subset or superset of tokens
     /// @dev
     /// Requires both sets of tokens to be sorted. When tokens are not sorted, it's undefined behavior.
     /// If there is a token in tokensToProject that is not part of tokens and corresponding tokenAmountsToProject > 0, reverts.
@@ -110,52 +81,17 @@ library CommonLibrary {
         return res;
     }
 
-    /// @notice Splits each amount of n tokens from `amounts` into k vaults according to `weights`.
-    /// @dev Requires tokens and tokenAmounts to be vector of size n and delegatedTokenAmounts to be k x n matrix
-    /// so that delegatedTokenAmounts[i] is a vector of size n
-    /// norm is a vector 1 x k
-    /// the error is up to k tokens due to rounding
-    /// @param amounts Amounts to split, vector n x 1
-    /// @param weights Weights of the split, matrix n x k, weights[i] is vector n x 1.
-    /// Weights do not need to sum to 1 in each column, but they will be normalized on split.
-    function splitAmounts(uint256[] memory amounts, uint256[][] memory weights)
-        internal
-        pure
-        returns (uint256[][] memory)
-    {
-        uint256 k = weights.length;
-        require(k > 0, ExceptionsLibrary.EMPTY_LIST);
-        uint256 n = amounts.length;
-        require(n > 0, ExceptionsLibrary.EMPTY_LIST);
-        uint256[] memory weightsNorm = new uint256[](n);
-        for (uint256 i = 0; i < k; ++i) {
-            require(weights[i].length == n, ExceptionsLibrary.INVALID_VALUE);
-        }
-        for (uint256 j = 0; j < n; ++j) {
-            weightsNorm[j] = 0;
-            for (uint256 i = 0; i < k; ++i) {
-                weightsNorm[j] += weights[i][j];
-            }
-        }
-        uint256[][] memory res = new uint256[][](k);
-        for (uint256 i = 0; i < k; ++i) {
-            res[i] = new uint256[](n);
-            for (uint256 j = 0; j < n; ++j) {
-                if (weightsNorm[j] == 0) {
-                    res[i][j] = amounts[j] / k;
-                } else {
-                    res[i][j] = (amounts[j] * weights[i][j]) / weightsNorm[j];
-                }
-            }
-        }
-        return res;
-    }
-
+    /// @notice Calculated sqrt of uint in X96 format
+    /// @param xX96 input number in X96 format
+    /// @return sqrt of xX96 in X96 format
     function sqrtX96(uint256 xX96) internal pure returns (uint256) {
         uint256 sqX96 = sqrt(xX96);
         return sqX96 << 48;
     }
 
+    /// @notice Calculated sqrt of uint
+    /// @param x input number
+    /// @return sqrt of x
     function sqrt(uint256 x) internal pure returns (uint256) {
         if (x == 0) return 0;
         uint256 xx = x;
@@ -198,12 +134,21 @@ library CommonLibrary {
         return (r < r1 ? r : r1);
     }
 
+    /// @notice Recovers signer address from signed message hash
+    /// @param _ethSignedMessageHash signed message
+    /// @param _signature contatenated ECDSA r, s, v (65 bytes)
+    /// @return Recovered address if the signature is valid, address(0) otherwise
     function recoverSigner(bytes32 _ethSignedMessageHash, bytes memory _signature) internal pure returns (address) {
         (bytes32 r, bytes32 s, uint8 v) = splitSignature(_signature);
 
         return ecrecover(_ethSignedMessageHash, v, r, s);
     }
 
+    /// @notice Get ECDSA r, s, v from signature
+    /// @param sig signature (65 bytes)
+    /// @return r ECDSA r
+    /// @return s ECDSA s
+    /// @return v ECDSA v
     function splitSignature(bytes memory sig)
         internal
         pure

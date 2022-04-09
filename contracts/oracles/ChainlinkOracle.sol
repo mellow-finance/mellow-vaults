@@ -19,6 +19,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
 
     /// @inheritdoc IChainlinkOracle
     mapping(address => address) public oraclesIndex;
+    /// @inheritdoc IChainlinkOracle
     mapping(address => int256) public decimalsIndex;
     EnumerableSet.AddressSet private _tokens;
 
@@ -48,7 +49,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
-        if (safetyIndicesSet >> 5 != 1) {
+        if (((safetyIndicesSet >> 5) & 1) != 1) {
             return (pricesX96, safetyIndices);
         }
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(oraclesIndex[token0]);
@@ -81,6 +82,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         safetyIndices[0] = 5;
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
     }
@@ -129,5 +131,10 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
 
     // --------------------------  EVENTS  --------------------------
 
+    /// @notice Emitted when new Chainlink oracle is added
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tokens Tokens added
+    /// @param oracles Orecles added for the tokens
     event OraclesAdded(address indexed origin, address indexed sender, address[] tokens, address[] oracles);
 }
