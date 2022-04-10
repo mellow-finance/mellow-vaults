@@ -4,60 +4,86 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { expect } from "chai";
-import {
-    MellowOracle,
-    MellowOracle__factory,
-    UniV2Oracle,
-    UniV2Oracle__factory,
-} from "../types";
+import { MellowOracle } from "../types";
 
 import {
-    ERC165_INTERFACE_ID,
     UNIV2_ORACLE_INTERFACE_ID,
     ORACLE_INTERFACE_ID,
 } from "../library/Constants";
 
 type CustomContext = {
     mellowOracle: MellowOracle;
-    uniV2Oracle: UniV2Oracle;
 };
 
-type DeployOptions = {};
+type DeployOptions = {
+    isActiveUniV2Oracle: boolean;
+    isActiveUniV3Oracle: boolean;
+    isActiveChainlinkOracle: boolean;
+};
+
+const DEFAULT_DEPLOY_PARAMS: DeployOptions = {
+    isActiveChainlinkOracle: true,
+    isActiveUniV2Oracle: false,
+    isActiveUniV3Oracle: true,
+};
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
     "MellowOracle",
     function () {
+        const deployMellowOracle = async (options: DeployOptions) => {
+            const { deployments, getNamedAccounts } = hre;
+            const { deploy, get } = deployments;
+            const { deployer } = await getNamedAccounts();
+
+            var chainlinkOracleAddress = ethers.constants.AddressZero;
+            var univ3OracleAddress = ethers.constants.AddressZero;
+            var univ2OracleAddress = ethers.constants.AddressZero;
+
+            if (options) {
+                if (options.isActiveChainlinkOracle) {
+                    chainlinkOracleAddress = (await get("ChainlinkOracle"))
+                        .address;
+                }
+
+                if (options.isActiveUniV2Oracle) {
+                    univ2OracleAddress = (await get("UniV2Oracle")).address;
+                }
+
+                if (options.isActiveUniV3Oracle) {
+                    univ3OracleAddress = (await get("UniV3Oracle")).address;
+                }
+            }
+
+            await deploy("MellowOracle", {
+                from: deployer,
+                args: [
+                    univ2OracleAddress,
+                    univ3OracleAddress,
+                    chainlinkOracleAddress,
+                ],
+                log: true,
+                autoMine: true,
+            });
+
+            this.mellowOracle = await ethers.getContract("MellowOracle");
+        };
+
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
-                async (_, __?: DeployOptions) => {
-                    const { deployments, getNamedAccounts } = hre;
-                    const { deploy, get } = deployments;
-                    const { deployer } = await getNamedAccounts();
-                    const { address: chainlinkOracle } = await get("ChainlinkOracle");
-                    const { address: univ3Oracle } = await get("UniV3Oracle");
-                    const { address: univ2Oracle } = await get("UniV2Oracle");
-                    await deploy("MellowOracle", {
-                        from: deployer,
-                        args: [univ2Oracle, univ3Oracle, chainlinkOracle],
-                        log: true,
-                        autoMine: true,
-                    });
-
-                    this.mellowOracle = await ethers.getContract(
-                        "MellowOracle"
+                async (_, options?: DeployOptions) => {
+                    deployMellowOracle(
+                        options ? options : DEFAULT_DEPLOY_PARAMS
                     );
-
-                    this.uniV2Oracle = await ethers.getContract("UniV2Oracle");
                     return this.subject;
                 }
             );
         });
 
         beforeEach(async () => {
-            await this.deploymentFixture();
+            await this.deploymentFixture(DEFAULT_DEPLOY_PARAMS);
         });
 
-        describe.only("#contructor", () => {
+        describe("#contructor", () => {
             it("creates MellowOracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.mellowOracle.address
@@ -76,12 +102,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
             });
 
-            it("initializes IUniV2Oracle", async () => {
-                expect(ethers.constants.AddressZero).to.not.eq(
-                    await this.mellowOracle.univ2Oracle()
-                );
-            });
-
             it("initializes IUniV3Oracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     await this.mellowOracle.univ3Oracle()
@@ -95,7 +115,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#supportsInterface", () => {
+        describe("#supportsInterface", () => {
             it(`returns true for IUniV3Oracle interface (${ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.mellowOracle.supportsInterface(
                     ORACLE_INTERFACE_ID
@@ -104,62 +124,77 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#price", () => {
-            it("non-empty response in full-mask case", async () => {
-                const pricesResult = await this.mellowOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    BigNumber.from(63)
-                );
+        describe("#price", () => {
+            type TestParameters = {
+                opts: DeployOptions;
+                name: string;
+                size: number;
+                mask: number;
+            };
 
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(6);
-                expect(safetyIndices.length).to.be.eq(6);
-            });
+            const tests: TestParameters[] = [
+                {
+                    opts: {
+                        isActiveUniV2Oracle: false,
+                        isActiveChainlinkOracle: false,
+                        isActiveUniV3Oracle: true,
+                    },
+                    name: "non-empty response for UniV3Oracle",
+                    size: 4,
+                    mask: 30,
+                },
+                {
+                    opts: {
+                        isActiveUniV2Oracle: false,
+                        isActiveChainlinkOracle: true,
+                        isActiveUniV3Oracle: false,
+                    },
+                    name: "non-empty response for ChainlinkOracle",
+                    size: 1,
+                    mask: 32,
+                },
+                {
+                    opts: {
+                        isActiveUniV2Oracle: true,
+                        isActiveChainlinkOracle: false,
+                        isActiveUniV3Oracle: false,
+                    },
+                    name: "non-empty response for UniV2Oracle",
+                    size: 1,
+                    mask: 2,
+                },
+                {
+                    opts: {
+                        isActiveUniV2Oracle: true,
+                        isActiveChainlinkOracle: true,
+                        isActiveUniV3Oracle: true,
+                    },
+                    name: "non-empty response for MellowOracle",
+                    size: 6,
+                    mask: 127,
+                },
+            ];
 
-            it("non-empty response in full-mask for ChainlinkOracle case", async () => {
-                const pricesResult = await this.mellowOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    BigNumber.from(32)
-                );
+            tests.forEach((params) => {
+                it(params.name, async () => {
+                    await deployMellowOracle(params.opts);
+                    const pricesResult = await this.mellowOracle.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        BigNumber.from(params.mask)
+                    );
 
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(1);
-                expect(safetyIndices.length).to.be.eq(1);
-            });
-
-            it("non-empty response in full-mask for UniV3Oracle case", async () => {
-                const pricesResult = await this.mellowOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    BigNumber.from(30)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(4);
-                expect(safetyIndices.length).to.be.eq(4);
-            });
-
-            it("non-empty response in full-mask for UniV3Oracle case", async () => {
-                const pricesResult = await this.mellowOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    BigNumber.from(1)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(1);
-                expect(safetyIndices.length).to.be.eq(1);
+                    const pricesX96 = pricesResult.pricesX96;
+                    const safetyIndices = pricesResult.safetyIndices;
+                    expect(params.size).to.be.eq(pricesX96.length);
+                    expect(params.size).to.be.eq(safetyIndices.length);
+                });
             });
         });
 
-        describe.only("#edge cases", () => {
+        describe("#edge cases", async () => {
             it("returns false when contract does not support the given interface", async () => {
+                await deployMellowOracle(DEFAULT_DEPLOY_PARAMS);
                 let isSupported = await this.mellowOracle.supportsInterface(
                     UNIV2_ORACLE_INTERFACE_ID
                 );
@@ -179,6 +214,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(safetyIndices.length).to.be.eq(0);
             });
 
+            it("not initialize IUniV2Oracle", async () => {
+                expect(ethers.constants.AddressZero).to.be.eq(
+                    await this.mellowOracle.univ2Oracle()
+                );
+            });
         });
     }
 );

@@ -45,7 +45,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#contructor", () => {
+        describe("#contructor", () => {
             it("creates UniV3Oracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.uniV3Oracle.address
@@ -68,7 +68,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#price", () => {
+        describe("#price", () => {
             it("non-empty response", async () => {
                 for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
                     const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
@@ -99,20 +99,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 expect(isSupported).to.be.true;
             });
-
         });
 
-        const mulDivFromFullMath = (
-            a: BigNumber,
-            b: BigNumber,
-            denominator: BigNumber
-        ) => {
-            return a.mul(b).div(denominator);
-        };
-
         const calculateCorrectValuesForMask = async (
-            token0: string,
-            token1: string,
             poolUsdcWeth: IUniswapV3Pool,
             safetyIndexes: number
         ) => {
@@ -171,104 +160,95 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 correctSafetyIndexes.push(BigNumber.from(i));
             }
 
-            var revTokens = token0 > token1;
-            for (var i = 0; i < correctPricesX96.length; i++) {
-                if (revTokens) {
-                    correctPricesX96[i] = mulDivFromFullMath(
-                        Common.Q96,
-                        Common.Q96,
-                        correctPricesX96[i]
-                    );
-                }
-                correctPricesX96[i] = mulDivFromFullMath(
-                    correctPricesX96[i],
-                    correctPricesX96[i],
-                    Common.Q96
-                );
-            }
+            correctPricesX96 = correctPricesX96.map((price) => {
+                return price.mul(price).div(Common.Q96);
+            });
 
             return [correctPricesX96, correctSafetyIndexes];
         };
 
         const testForFeeAndMask = async (
             fee: number,
+            token0: string,
+            token1: string,
             safetyIndicesSet: number,
             correctResultSize: number
         ) => {
-            it(`test adding [weth, usdc] pools with fee = ${fee}`, async () => {
-                const token0 = this.weth.address;
-                const token1 = this.usdc.address;
+            if (token0 > token1) {
+                [token0, token1] = [token1, token0];
+            }
 
-                const poolWethUsdcAddress = await this.uniswapV3Factory.getPool(
-                    token0,
-                    token1,
-                    fee
-                );
+            const poolWethUsdcAddress = await this.uniswapV3Factory.getPool(
+                token0,
+                token1,
+                fee
+            );
 
-                await this.uniV3Oracle
-                    .connect(this.admin)
-                    .addUniV3Pools([poolWethUsdcAddress]);
-                const poolUsdcWeth: IUniswapV3Pool = await ethers.getContractAt(
-                    "IUniswapV3Pool",
-                    poolWethUsdcAddress
-                );
+            await this.uniV3Oracle
+                .connect(this.admin)
+                .addUniV3Pools([poolWethUsdcAddress]);
+            const poolUsdcWeth: IUniswapV3Pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                poolWethUsdcAddress
+            );
 
-                expect(await poolUsdcWeth.fee()).to.be.eq(fee);
-                // revesed
-                expect(await poolUsdcWeth.token0()).to.be.eq(token1);
-                expect(await poolUsdcWeth.token1()).to.be.eq(token0);
+            expect(await poolUsdcWeth.fee()).to.be.eq(fee);
+            expect(await poolUsdcWeth.token0()).to.be.eq(token0);
+            expect(await poolUsdcWeth.token1()).to.be.eq(token1);
 
-                var [correctPricesX96, correctSafetyIndexes] =
-                    await calculateCorrectValuesForMask(
-                        token0,
-                        token1,
-                        poolUsdcWeth,
-                        safetyIndicesSet
-                    );
-                const pricesResult = await this.uniV3Oracle.price(
-                    token0,
-                    token1,
+            var [correctPricesX96, correctSafetyIndexes] =
+                await calculateCorrectValuesForMask(
+                    poolUsdcWeth,
                     safetyIndicesSet
                 );
 
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndexes = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(correctResultSize);
-                expect(safetyIndexes.length).to.be.eq(correctResultSize);
-                for (var i = 0; i < correctResultSize; i++) {
-                    expect(correctPricesX96[i]).to.be.eq(pricesX96[i]);
-                    expect(correctSafetyIndexes[i]).to.be.eq(safetyIndexes[i]);
-                }
-            });
+            const pricesResult = await this.uniV3Oracle.price(
+                token0,
+                token1,
+                safetyIndicesSet
+            );
+
+            const pricesX96 = pricesResult.pricesX96;
+            const safetyIndexes = pricesResult.safetyIndices;
+            expect(pricesX96.length).to.be.eq(correctResultSize);
+            expect(safetyIndexes.length).to.be.eq(correctResultSize);
+            for (var i = 0; i < correctResultSize; i++) {
+                expect(correctPricesX96[i]).to.be.eq(pricesX96[i]);
+                expect(correctSafetyIndexes[i]).to.be.eq(safetyIndexes[i]);
+            }
         };
 
-        describe.only("#addUniV3Pools", () => {
-            [500, 3000].forEach(
-                async (fee) => await testForFeeAndMask(fee, 30, 4)
-            );
-            [10000].forEach(async (fee) => await testForFeeAndMask(fee, 16, 0));
+        describe("#addUniV3Pools", () => {
+            it(`test adding [weth, usdc] pools with fee = 500`, async () => {
+                await testForFeeAndMask(
+                    500,
+                    this.weth.address,
+                    this.usdc.address,
+                    30,
+                    4
+                );
+            });
+            it(`test adding [weth, usdc] pools with fee = 3000`, async () => {
+                await testForFeeAndMask(
+                    3000,
+                    this.weth.address,
+                    this.usdc.address,
+                    30,
+                    4
+                );
+            });
+            it(`test adding [weth, usdc] pools with fee = 10000`, async () => {
+                await testForFeeAndMask(
+                    10000,
+                    this.weth.address,
+                    this.usdc.address,
+                    16,
+                    0
+                );
+            });
         });
 
-        describe.only("#edge cases", () => {
-            it(`price function reverts with ${Exceptions.INVALID_VALUE} when adding [weth, usdc] pools with fee = 10000`, async () => {
-                const token0 = this.weth.address;
-                const token1 = this.usdc.address;
-                const poolWethUsdcAddress = await this.uniswapV3Factory.getPool(
-                    token0,
-                    token1,
-                    10000
-                );
-
-                await this.uniV3Oracle
-                    .connect(this.admin)
-                    .addUniV3Pools([poolWethUsdcAddress]);
-                const safetyIndicesSet = BigNumber.from(30);
-                await expect(
-                    this.uniV3Oracle.price(token0, token1, safetyIndicesSet)
-                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-            });
-
-
+        describe("#edge cases", () => {
             it("empty response if pools index is zero", async () => {
                 const pricesResult = await this.uniV3Oracle.price(
                     this.usdc.address,

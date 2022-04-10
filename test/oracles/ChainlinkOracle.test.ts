@@ -46,7 +46,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#contructor", () => {
+        describe("#contructor", () => {
             it("creates ChainlinkOracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.chainlinkOracle.address
@@ -82,7 +82,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             return [price0, BigNumber.from(decimals0)];
         };
 
-        describe.only("#price", () => {
+        describe("#price", () => {
             it("empty response if pools index is zero", async () => {
                 const pricesResult = await this.chainlinkOracle.price(
                     this.usdc.address,
@@ -191,7 +191,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#supportsInterface", () => {
+        describe("#supportsInterface", () => {
             it(`returns true for ChainlinkOracle interface (${CHAINLINK_ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.chainlinkOracle.supportsInterface(
                     CHAINLINK_ORACLE_INTERFACE_ID
@@ -200,7 +200,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#addChainlinkOracles", () => {
+        describe("#addChainlinkOracles", () => {
             it(`non-empty response of price function with set oracles by the addChainlinkOracles function`, async () => {
                 await this.chainlinkOracle
                     .connect(this.admin)
@@ -232,7 +232,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#hasOracle", () => {
+        describe("#hasOracle", () => {
             it(`returns true if oracle is supported`, async () => {
                 [
                     this.usdc.address,
@@ -247,7 +247,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#supportedTokens", () => {
+        describe("#supportedTokens", () => {
             it(`returns list of supported tokens`, async () => {
                 var tokens = await this.chainlinkOracle.supportedTokens();
                 expect(tokens.length).to.be.eq(3);
@@ -261,8 +261,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-
-        describe.only("#edge cases", () => {
+        describe("#edge cases", () => {
             it("returns false when contract does not support the given interface", async () => {
                 let isSupported = await this.chainlinkOracle.supportsInterface(
                     UNIV2_ORACLE_INTERFACE_ID
