@@ -79,6 +79,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const lStrategy = await ethers.getContract("LStrategy");
     const mellowOracle = await get("MellowOracle");
 
+    let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+        from: deployer,
+        contract: "LStrategyOrderHelper",
+        args: [
+            strategyDeployParams.address,
+            cowswap,
+            erc20Vault,
+        ],
+        log: true,
+        autoMine: true
+    });
+
     await lStrategy.updateTradingParams({
         maxSlippageD: BigNumber.from(10).pow(7),
         oracleSafety: 5,
@@ -101,9 +113,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     await lStrategy.updateOtherParams({
+        orderHelper: strategyOrderHelper.address,
         intervalWidthInTicks: 100,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
+        rebalanceDeadline: BigNumber.from(86400 * 30),
     });
 };
 

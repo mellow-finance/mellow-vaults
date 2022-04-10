@@ -6,6 +6,7 @@ import { contract } from "./library/setup";
 import {
     ERC20Vault,
     LStrategy,
+    LStrategyOrderHelper,
     MockCowswap,
     MockOracle,
     UniV3Vault,
@@ -32,6 +33,7 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     cowswap: MockCowswap;
     mockOracle: MockOracle;
+    orderHelper: LStrategyOrderHelper;
 };
 
 type DeployOptions = {};
@@ -84,7 +86,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         async (erc20RootVaultSigner) => {
                             await this.vaultRegistry
                                 .connect(erc20RootVaultSigner)
-                                .approve(this.subject.address, tokenId);
+                                .approve(this.orderHelper.address, tokenId);
                         }
                     );
 
@@ -294,6 +296,23 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     autoMine: true,
                 });
 
+                let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+                    from: this.deployer.address,
+                    contract: "LStrategyOrderHelper",
+                    args: [
+                        strategyDeployParams.address,
+                        cowswapDeployParams.address,
+                        this.erc20Vault.address,
+                    ],
+                    log: true,
+                    autoMine: true,
+                });
+
+                this.orderHelper = await ethers.getContractAt(
+                    "LStrategyOrderHelper",
+                    strategyOrderHelper.address
+                );
+
                 await combineVaults(
                     hre,
                     erc20VaultNft + 1,
@@ -472,9 +491,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
+                    orderHelper: strategyOrderHelper.address,
                     intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
+                    rebalanceDeadline: BigNumber.from(10).pow(6),
                 });
 
                 return this.subject;
@@ -689,9 +710,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     describe("#updateOtherParams", () => {
         beforeEach(async () => {
             this.baseParams = {
+                orderHelper: this.orderHelper.address,
                 intervalWidthInTicks: 100,
                 minToken0ForOpening: BigNumber.from(10).pow(6),
                 minToken1ForOpening: BigNumber.from(10).pow(6),
+                rebalanceDeadline: BigNumber.from(86400 * 30),
             };
         });
 
@@ -700,9 +723,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 .connect(this.admin)
                 .updateOtherParams(this.baseParams);
             const expectedParams = [
+                this.orderHelper.address,
                 100,
                 BigNumber.from(10).pow(6),
                 BigNumber.from(10).pow(6),
+                BigNumber.from(86400 * 30),
             ];
             const returnedParams = await this.subject.otherParams();
             expect(expectedParams == returnedParams);
