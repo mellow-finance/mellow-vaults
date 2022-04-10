@@ -67,7 +67,11 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    function externalCall(address to, bytes4 selector, bytes memory data) internal {
+    function externalCall(
+        address to,
+        bytes4 selector,
+        bytes memory data
+    ) internal {
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
         IValidator validator = IValidator(protocolGovernance.validators(to));
         require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
