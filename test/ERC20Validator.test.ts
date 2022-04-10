@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { encodeToBytes, randomAddress, sleep, withSigner } from "./library/Helpers";
+import { encodeToBytes, randomAddress, sleep, withSigner, generateSingleParams } from "./library/Helpers";
 import { contract } from "./library/setup";
 import { ERC20Validator } from "./types";
 import {
@@ -9,6 +9,7 @@ import {
 import { ValidatorBehaviour } from "./behaviors/validator";
 import Exceptions from "./library/Exceptions";
 import { randomBytes, randomInt } from "crypto";
+import { uint256 } from "./library/property";
 
 type CustomContext = {
 };
@@ -48,7 +49,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>("ERC20Validator", functio
                         .validate(
                             signer.address, 
                             randomAddress(),
-                            randomInt(1, 1000),
+                            generateSingleParams(uint256),
                             randomBytes(4),
                             randomBytes(randomInt(32))
                         )
@@ -134,8 +135,6 @@ contract<ERC20Validator, DeployOptions, CustomContext>("ERC20Validator", functio
             await withSigner(randomAddress(), async (signer) => {
                 let tokenAddress = randomAddress();
                 let spenderAddress = randomAddress();
-                console.log(encodeToBytes(["address"], [spenderAddress]))
-                console.log(spenderAddress)
                 this.protocolGovernance.connect(this.admin).stagePermissionGrants(tokenAddress, [PermissionIdsLibrary.ERC20_TRANSFER])
                 this.protocolGovernance.connect(this.admin).stagePermissionGrants(spenderAddress, [PermissionIdsLibrary.ERC20_APPROVE_RESTRICTED])
                 this.protocolGovernance.connect(this.admin).stagePermissionGrants(signer.address, [PermissionIdsLibrary.ERC20_TRUSTED_STRATEGY])
