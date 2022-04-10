@@ -9,6 +9,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
@@ -120,6 +121,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
 
+        if (delayedStrategyParams.depositCallbackAddress != address(0)) {
+            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback();
+        }
+
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
@@ -154,6 +159,22 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         _burn(msg.sender, lpTokenAmount);
+
+        uint256 thisNft = _nft;
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(thisNft);
+
+        if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
+            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
+                string memory reason
+            ) {
+                emit WithdrawCallbackLog(reason);
+            } catch {
+                emit WithdrawCallbackLog("callback failed without reason");
+            }
+        }
+
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -430,4 +451,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+
+    /// @notice Emitted when callback in withdraw failed
+    /// @param reason Error reason
+    event WithdrawCallbackLog(string reason);
 }

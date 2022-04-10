@@ -347,6 +347,8 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                         performanceFee: BigNumber.from(
                             Math.round(Math.random() * 10 ** 6)
                         ),
+                        depositCallbackAddress: ethers.constants.AddressZero,
+                        withdrawCallbackAddress: ethers.constants.AddressZero,
                     };
 
                     await expect(
@@ -368,6 +370,8 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                         performanceFee: (
                             await this.subject.MAX_PERFORMANCE_FEE()
                         ).add(1),
+                        depositCallbackAddress: ethers.constants.AddressZero,
+                        withdrawCallbackAddress: ethers.constants.AddressZero,
                     };
 
                     await expect(

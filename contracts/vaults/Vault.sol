@@ -71,12 +71,13 @@ abstract contract Vault is IVault, ERC165 {
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
-    }
-
+    /// @inheritdoc IVault
     function pullExistentials() external view returns (uint256[] memory) {
         return _pullExistentials;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

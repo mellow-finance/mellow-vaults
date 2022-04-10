@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BSL-1.1
+// SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity =0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -139,6 +139,4 @@ contract ERC20Token is IERC20 {
 
         emit Transfer(from, address(0), amount);
     }
-
-    // --------------------------  EVENTS  --------------------------
 }

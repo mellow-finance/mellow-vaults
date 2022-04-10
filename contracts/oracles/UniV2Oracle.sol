@@ -9,6 +9,7 @@ import "../libraries/CommonLibrary.sol";
 import "../utils/ContractMeta.sol";
 
 contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
+    /// @inheritdoc IUniV2Oracle
     IUniswapV2Factory public immutable factory;
 
     constructor(IUniswapV2Factory factory_) {
@@ -23,7 +24,7 @@ contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
-        if (safetyIndicesSet & 0x1 != 1) {
+        if (safetyIndicesSet & 0x2 != 1) {
             return (pricesX96, safetyIndices);
         }
         IUniswapV2Pair pool = IUniswapV2Pair(factory.getPair(token0, token1));
@@ -41,6 +42,7 @@ contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
         safetyIndices[0] = 1;
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV2Oracle).interfaceId == interfaceId;
     }
