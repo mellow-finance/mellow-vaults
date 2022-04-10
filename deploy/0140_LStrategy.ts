@@ -78,6 +78,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const lStrategy = await ethers.getContract("LStrategy");
     const mellowOracle = await get("MellowOracle");
+    const erc20VaultGovernance = await ethers.getContract("ERC20VaultGovernance");
 
     let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
         from: deployer,
@@ -86,6 +87,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             strategyDeployParams.address,
             cowswap,
             erc20Vault,
+            erc20VaultGovernance.address,
         ],
         log: true,
         autoMine: true

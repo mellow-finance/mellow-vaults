@@ -13,6 +13,4 @@ interface ILStrategyOrderHelper {
         uint256 minAmountOut,
         uint256 deadline
     ) external;
-
-    function resetCowswapAllowance(address token) external;
 }

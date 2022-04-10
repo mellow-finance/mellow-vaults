@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/cowswap/ICowswapSettlement.sol";
 import "../interfaces/strategies/ILStrategyOrderHelper.sol";
+import "../interfaces/validators/IValidator.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../libraries/ExceptionsLibrary.sol";
@@ -15,15 +16,21 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
     bytes4 public constant SET_PRESIGNATURE_SELECTOR = 0xec6cb13f;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
 
+    IVaultGovernance private _vaultGovernance;
+
     constructor(
         address lStrategy_,
         address cowswap_,
-        IERC20Vault erc20vault_
+        IERC20Vault erc20vault_,
+        IVaultGovernance vaultGovernance_
     ) {
         lStrategy = lStrategy_;
         cowswap = cowswap_;
         erc20Vault = erc20vault_;
+        _vaultGovernance = vaultGovernance_;
     }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     function checkOrder(
         GPv2Order.Data memory order,
@@ -38,7 +45,7 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
         require(msg.sender == lStrategy, ExceptionsLibrary.FORBIDDEN);
         if (!signed) {
             bytes memory resetData = abi.encode(uuid, false);
-            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, resetData);
+            externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, resetData);
             return;
         }
         require(deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
@@ -53,14 +60,25 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
         require(order.validTo <= deadline, ExceptionsLibrary.TIMESTAMP);
         require(order.receiver == address(erc20Vault), ExceptionsLibrary.FORBIDDEN);
         bytes memory approveData = abi.encode(cowswap, order.sellAmount);
-        erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
+        externalCall(address(order.sellToken), APPROVE_SELECTOR, approveData);
         bytes memory setPresignatureData = abi.encode(uuid, signed);
-        erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
+        externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, setPresignatureData);
     }
 
-    function resetCowswapAllowance(address token) external {
-        require(msg.sender == lStrategy, ExceptionsLibrary.FORBIDDEN);
-        bytes memory approveData = abi.encode(cowswap, uint256(0));
-        erc20Vault.externalCall(token, APPROVE_SELECTOR, approveData);
+    // -------------------  INTERNAL, MUTATING  -------------------
+
+    function externalCall(address to, bytes4 selector, bytes memory data) internal {
+        IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        IValidator validator = IValidator(protocolGovernance.validators(to));
+        require(address(validator) != address(0), ExceptionsLibrary.FORBIDDEN);
+        validator.validate(msg.sender, to, msg.value, selector, data);
+        (bool res, bytes memory returndata) = to.call{value: msg.value}(abi.encodePacked(selector, data));
+        if (!res) {
+            assembly {
+                let returndata_size := mload(returndata)
+                // Bubble up revert reason
+                revert(add(32, returndata), returndata_size)
+            }
+        }
     }
 }

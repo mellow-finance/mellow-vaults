@@ -22,6 +22,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
+    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     uint256 public constant DENOMINATOR = 10**9;
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
@@ -369,8 +370,8 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
     /// @param tokenNumber The number of token in LStrategy
     function resetCowswapAllowance(uint8 tokenNumber) external {
         _requireAtLeastOperator();
-        require(address(otherParams.orderHelper) != address(0), ExceptionsLibrary.INVARIANT);
-        otherParams.orderHelper.resetCowswapAllowance(tokens[tokenNumber]);
+        bytes memory approveData = abi.encode(cowswap, uint256(0));
+        erc20Vault.externalCall(tokens[tokenNumber], APPROVE_SELECTOR, approveData);
         emit CowswapAllowanceReset(tx.origin, msg.sender);
     }
 
@@ -501,8 +502,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
             uint128 liquidity
         )
     {
-        uint256 nft = vault.uniV3Nft();
-        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(nft);
+        (, , , , , tickLower, tickUpper, liquidity, , , , ) = positionManager.positions(vault.uniV3Nft());
     }
 
     /// @notice Liquidity required to be sold to reach targetLiquidityRatioD
@@ -580,7 +580,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) internal returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
-        address[] memory tokens_ = tokens;
         uint128 liquidity = desiredLiquidity;
 
         // Cut for available liquidity in the vault
@@ -619,14 +618,14 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
             uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
             pulledAmounts = fromVault.pull(
                 address(erc20Vault),
-                tokens_,
+                tokens,
                 withdrawTokenAmounts,
                 _makeUniswapVaultOptions(minWithdrawTokens, deadline)
             );
             // The pull is on best effort so we don't worry on overflow
             pushedAmounts = erc20Vault.pull(
                 address(toVault),
-                tokens_,
+                tokens,
                 depositTokenAmounts,
                 _makeUniswapVaultOptions(minDepositTokens, deadline)
             );

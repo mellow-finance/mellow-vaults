@@ -86,7 +86,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         async (erc20RootVaultSigner) => {
                             await this.vaultRegistry
                                 .connect(erc20RootVaultSigner)
-                                .approve(this.orderHelper.address, tokenId);
+                                .approve(this.subject.address, tokenId);
                         }
                     );
 
@@ -303,6 +303,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         strategyDeployParams.address,
                         cowswapDeployParams.address,
                         this.erc20Vault.address,
+                        this.erc20VaultGovernance.address,
                     ],
                     log: true,
                     autoMine: true,
