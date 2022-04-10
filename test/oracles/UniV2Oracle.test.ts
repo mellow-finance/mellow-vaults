@@ -1,5 +1,4 @@
 import { ethers, deployments } from "hardhat";
-import { utils } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
@@ -7,7 +6,6 @@ import { expect } from "chai";
 import { UniV2Oracle } from "../types";
 
 import {
-    ERC165_INTERFACE_ID,
     UNIV2_ORACLE_INTERFACE_ID,
     UNIV3_VAULT_INTERFACE_ID,
 } from "../library/Constants";
@@ -35,7 +33,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#contructor", () => {
-            it("creates UniV2Oracle", async () => {
+            it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.uniV2Oracle.address
                 );
@@ -44,13 +42,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
             });
 
-            it("initializes UniV2Oracle name", async () => {
+            it("initializes name", async () => {
                 expect("UniV2Oracle").to.be.eq(
                     await this.uniV2Oracle.contractName()
                 );
             });
 
-            it("initializes UniV2Oracle version", async () => {
+            it("initializes version", async () => {
                 expect("1.0.0").to.be.eq(
                     await this.uniV2Oracle.contractVersion()
                 );
@@ -58,7 +56,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#price", () => {
-            it(`Non-empty response for [uscd, weth] pair`, async () => {
+            it("retruns correct response for [uscd, weth] pair", async () => {
                 const pricesResult = await this.uniV2Oracle.price(
                     this.usdc.address,
                     this.weth.address,
@@ -72,7 +70,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(safetyIndices[0]).to.be.eq(BigNumber.from(1));
             });
 
-            it(`Non-empty response for [weth, uscd] pair`, async () => {
+            it("retruns correct response for [weth, usdc] pair", async () => {
                 const pricesResult = await this.uniV2Oracle.price(
                     this.weth.address,
                     this.usdc.address,
@@ -84,6 +82,36 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(pricesX96.length).to.be.eq(1);
                 expect(safetyIndices.length).to.be.eq(1);
                 expect(safetyIndices[0]).to.be.eq(BigNumber.from(1));
+            });
+
+            describe("edges cases:", () => {
+                describe("when one of tokens is zero", () => {
+                    it("returns empty response", async () => {
+                        let pricesResult = await this.uniV2Oracle.price(
+                            ethers.constants.AddressZero,
+                            ethers.constants.AddressZero,
+                            BigNumber.from(
+                                1 << (await this.uniV2Oracle.safetyIndex())
+                            )
+                        );
+
+                        let pricesX96 = pricesResult.pricesX96;
+                        expect(pricesX96).to.be.empty;
+                    });
+                });
+                describe("when first of safetyIndicesSet is missing", () => {
+                    it("returns empty response", async () => {
+                        const badMask =
+                            63 ^ (1 << (await this.uniV2Oracle.safetyIndex()));
+                        let pricesResult = await this.uniV2Oracle.price(
+                            this.usdc.address,
+                            this.weth.address,
+                            badMask
+                        );
+                        let pricesX96 = pricesResult.pricesX96;
+                        expect(pricesX96).to.be.empty;
+                    });
+                });
             });
         });
 
@@ -94,37 +122,17 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 expect(isSupported).to.be.true;
             });
-        });
 
-        describe("#edge cases", () => {
-            it("Empty response if zero bit of safetyIndicesSet is missing", async () => {
-                const badMask =
-                    63 ^ (1 << (await this.uniV2Oracle.safetyIndex()));
-                let pricesResult = await this.uniV2Oracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    badMask
-                );
-                let pricesX96 = pricesResult.pricesX96;
-                expect(pricesX96).to.be.empty;
-            });
-
-            it(`Empty response in case of zero addresses`, async () => {
-                let pricesResult = await this.uniV2Oracle.price(
-                    ethers.constants.AddressZero,
-                    ethers.constants.AddressZero,
-                    BigNumber.from(1 << (await this.uniV2Oracle.safetyIndex()))
-                );
-
-                let pricesX96 = pricesResult.pricesX96;
-                expect(pricesX96).to.be.empty;
-            });
-
-            it(`returns false when contract does not support the given interface`, async () => {
-                let isSupported = await this.uniV2Oracle.supportsInterface(
-                    UNIV3_VAULT_INTERFACE_ID
-                );
-                expect(isSupported).to.be.false;
+            describe("edge cases:", () => {
+                describe("when contract does not support the given interface", () => {
+                    it("returns false", async () => {
+                        let isSupported =
+                            await this.uniV2Oracle.supportsInterface(
+                                UNIV3_VAULT_INTERFACE_ID
+                            );
+                        expect(isSupported).to.be.false;
+                    });
+                });
             });
         });
     }

@@ -7,7 +7,6 @@ import { expect } from "chai";
 import { ChainlinkOracle, IAggregatorV3, IERC20Metadata } from "../types";
 
 import {
-    ERC165_INTERFACE_ID,
     UNIV2_ORACLE_INTERFACE_ID,
     CHAINLINK_ORACLE_INTERFACE_ID,
 } from "../library/Constants";
@@ -47,19 +46,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#contructor", () => {
-            it("creates ChainlinkOracle", async () => {
+            it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.chainlinkOracle.address
                 );
             });
 
-            it("initializes ChainlinkOracle name", async () => {
+            it("initializes name", async () => {
                 expect("ChainlinkOracle").to.be.eq(
                     await this.chainlinkOracle.contractName()
                 );
             });
 
-            it("initializes ChainlinkOracle version", async () => {
+            it("initializes version", async () => {
                 expect("1.0.0").to.be.eq(
                     await this.chainlinkOracle.contractVersion()
                 );
@@ -83,68 +82,76 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         };
 
         describe("#price", () => {
-            it("empty response if pools index is zero", async () => {
-                const pricesResult = await this.chainlinkOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    BigNumber.from(31)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
-            });
-
-            it("empty response for wrong tokens", async () => {
-                const pricesResult = await this.chainlinkOracle.price(
-                    ethers.constants.AddressZero,
-                    this.usdc.address,
-                    BigNumber.from(32)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
-            });
-
-            it("empty response if first call of queryChainlinkOracle failed", async () => {
-                await this.chainlinkOracle
-                    .connect(this.admin)
-                    .addChainlinkOracles(
-                        [this.weth.address, this.usdc.address],
-                        [this.weth.address, this.chainlinkUsdc]
+            describe("when pools index is zero", () => {
+                it("returns empty response", async () => {
+                    const pricesResult = await this.chainlinkOracle.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        BigNumber.from(31)
                     );
-                const pricesResult = await this.chainlinkOracle.price(
-                    this.weth.address,
-                    this.usdc.address,
-                    BigNumber.from(32)
-                );
 
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
+                    const pricesX96 = pricesResult.pricesX96;
+                    const safetyIndices = pricesResult.safetyIndices;
+                    expect(pricesX96.length).to.be.eq(0);
+                    expect(safetyIndices.length).to.be.eq(0);
+                });
             });
 
-            it("empty response if second call of queryChainlinkOracle failed", async () => {
-                await this.chainlinkOracle
-                    .connect(this.admin)
-                    .addChainlinkOracles(
-                        [this.weth.address, this.usdc.address],
-                        [this.weth.address, this.chainlinkUsdc]
+            describe("when one of tokens is zero", () => {
+                it("retruns empty response", async () => {
+                    const pricesResult = await this.chainlinkOracle.price(
+                        ethers.constants.AddressZero,
+                        this.usdc.address,
+                        BigNumber.from(32)
                     );
-                const pricesResult = await this.chainlinkOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    BigNumber.from(32)
-                );
 
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
+                    const pricesX96 = pricesResult.pricesX96;
+                    const safetyIndices = pricesResult.safetyIndices;
+                    expect(pricesX96.length).to.be.eq(0);
+                    expect(safetyIndices.length).to.be.eq(0);
+                });
+            });
+
+            describe("when the first call of queryChainlinkOracle failed", () => {
+                it("retruns empty response", async () => {
+                    await this.chainlinkOracle
+                        .connect(this.admin)
+                        .addChainlinkOracles(
+                            [this.weth.address, this.usdc.address],
+                            [this.weth.address, this.chainlinkUsdc]
+                        );
+                    const pricesResult = await this.chainlinkOracle.price(
+                        this.weth.address,
+                        this.usdc.address,
+                        BigNumber.from(32)
+                    );
+
+                    const pricesX96 = pricesResult.pricesX96;
+                    const safetyIndices = pricesResult.safetyIndices;
+                    expect(pricesX96.length).to.be.eq(0);
+                    expect(safetyIndices.length).to.be.eq(0);
+                });
+            });
+
+            describe("when the second call of queryChainlinkOracle failed", () => {
+                it("retruns empty response", async () => {
+                    await this.chainlinkOracle
+                        .connect(this.admin)
+                        .addChainlinkOracles(
+                            [this.weth.address, this.usdc.address],
+                            [this.weth.address, this.chainlinkUsdc]
+                        );
+                    const pricesResult = await this.chainlinkOracle.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        BigNumber.from(32)
+                    );
+
+                    const pricesX96 = pricesResult.pricesX96;
+                    const safetyIndices = pricesResult.safetyIndices;
+                    expect(pricesX96.length).to.be.eq(0);
+                    expect(safetyIndices.length).to.be.eq(0);
+                });
             });
 
             it("returns correct pricesX96 and safetyIndexes", async () => {
@@ -198,29 +205,42 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 expect(isSupported).to.be.true;
             });
+            describe("edge cases:", () => {
+                describe("when contract does not support the given interface", () => {
+                    it("returns false", async () => {
+                        let isSupported =
+                            await this.chainlinkOracle.supportsInterface(
+                                UNIV2_ORACLE_INTERFACE_ID
+                            );
+                        expect(isSupported).to.be.false;
+                    });
+                });
+            });
         });
 
         describe("#addChainlinkOracles", () => {
-            it(`non-empty response of price function with set oracles by the addChainlinkOracles function`, async () => {
-                await this.chainlinkOracle
-                    .connect(this.admin)
-                    .addChainlinkOracles(
-                        [this.weth.address, this.usdc.address],
-                        [this.chainlinkEth, this.chainlinkUsdc]
+            describe("when oracles have set by addChainLinkOracles function", () => {
+                it("returns non-empty response", async () => {
+                    await this.chainlinkOracle
+                        .connect(this.admin)
+                        .addChainlinkOracles(
+                            [this.weth.address, this.usdc.address],
+                            [this.chainlinkEth, this.chainlinkUsdc]
+                        );
+                    const pricesResult = await this.chainlinkOracle.price(
+                        this.weth.address,
+                        this.usdc.address,
+                        BigNumber.from(32)
                     );
-                const pricesResult = await this.chainlinkOracle.price(
-                    this.weth.address,
-                    this.usdc.address,
-                    BigNumber.from(32)
-                );
 
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(1);
-                expect(safetyIndices.length).to.be.eq(1);
+                    const pricesX96 = pricesResult.pricesX96;
+                    const safetyIndices = pricesResult.safetyIndices;
+                    expect(pricesX96.length).to.be.eq(1);
+                    expect(safetyIndices.length).to.be.eq(1);
+                });
             });
 
-            it(`function emits OraclesAdded event`, async () => {
+            it("emits OraclesAdded event", async () => {
                 await expect(
                     this.chainlinkOracle
                         .connect(this.admin)
@@ -230,10 +250,37 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         )
                 ).to.emit(this.chainlinkOracle, "OraclesAdded");
             });
+
+            describe("edge cases:", () => {
+                describe("when arrays have different lengths", () => {
+                    it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
+                        await expect(
+                            this.chainlinkOracle
+                                .connect(this.admin)
+                                .addChainlinkOracles(
+                                    [
+                                        this.weth.address,
+                                        this.usdc.address,
+                                        this.wbtc.address,
+                                    ],
+                                    [this.chainlinkEth, this.chainlinkUsdc]
+                                )
+                        ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                    });
+                });
+
+                describe("when sender has no admin righs", () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        await expect(
+                            this.chainlinkOracle.addChainlinkOracles([], [])
+                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
         });
 
         describe("#hasOracle", () => {
-            it(`returns true if oracle is supported`, async () => {
+            it("returns true if oracle is supported", async () => {
                 [
                     this.usdc.address,
                     this.weth.address,
@@ -245,10 +292,22 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     expect(isSupported).to.be.true;
                 });
             });
+
+            describe("edge case:", () => {
+                describe("when oracle is not supported", () => {
+                    it("returns false", async () => {
+                        [this.chainlinkEth].forEach(async (token) => {
+                            var isSupported =
+                                await this.chainlinkOracle.hasOracle(token);
+                            expect(isSupported).to.be.false;
+                        });
+                    });
+                });
+            });
         });
 
         describe("#supportedTokens", () => {
-            it(`returns list of supported tokens`, async () => {
+            it("returns list of supported tokens", async () => {
                 var tokens = await this.chainlinkOracle.supportedTokens();
                 expect(tokens.length).to.be.eq(3);
                 [
@@ -257,45 +316,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.wbtc.address,
                 ].forEach((token) => {
                     expect(tokens.includes(token)).to.be.true;
-                });
-            });
-        });
-
-        describe("#edge cases", () => {
-            it("returns false when contract does not support the given interface", async () => {
-                let isSupported = await this.chainlinkOracle.supportsInterface(
-                    UNIV2_ORACLE_INTERFACE_ID
-                );
-                expect(isSupported).to.be.false;
-            });
-
-            it(`reverts with ${Exceptions.INVALID_VALUE} b.o. different lengths of arrays`, async () => {
-                await expect(
-                    this.chainlinkOracle
-                        .connect(this.admin)
-                        .addChainlinkOracles(
-                            [
-                                this.weth.address,
-                                this.usdc.address,
-                                this.wbtc.address,
-                            ],
-                            [this.chainlinkEth, this.chainlinkUsdc]
-                        )
-                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-            });
-
-            it(`reverts with ${Exceptions.FORBIDDEN} b.o. sender is not with admin rights`, async () => {
-                await expect(
-                    this.chainlinkOracle.addChainlinkOracles([], [])
-                ).to.be.revertedWith(Exceptions.FORBIDDEN);
-            });
-
-            it(`returns false if oracle is not supported`, async () => {
-                [this.chainlinkEth].forEach(async (token) => {
-                    var isSupported = await this.chainlinkOracle.hasOracle(
-                        token
-                    );
-                    expect(isSupported).to.be.false;
                 });
             });
         });

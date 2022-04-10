@@ -9,12 +9,10 @@ import Common from "../library/Common";
 import { UniV3Oracle, IUniswapV3Pool, IUniswapV3Factory } from "../types";
 
 import {
-    ERC165_INTERFACE_ID,
     UNIV2_ORACLE_INTERFACE_ID,
     UNIV3_ORACLE_INTERFACE_ID,
 } from "../library/Constants";
 import { ADDRESS_ZERO, TickMath } from "@uniswap/v3-sdk";
-import Exceptions from "../library/Exceptions";
 
 type CustomContext = {
     uniV3Oracle: UniV3Oracle;
@@ -46,7 +44,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#contructor", () => {
-            it("creates UniV3Oracle", async () => {
+            it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
                     this.uniV3Oracle.address
                 );
@@ -55,13 +53,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
             });
 
-            it("initializes UniV3Oracle name", async () => {
+            it("initializes name", async () => {
                 expect("UniV3Oracle").to.be.eq(
                     await this.uniV3Oracle.contractName()
                 );
             });
 
-            it("initializes UniV3Oracle version", async () => {
+            it("initializes version", async () => {
                 expect("1.0.0").to.be.eq(
                     await this.uniV3Oracle.contractVersion()
                 );
@@ -69,7 +67,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#price", () => {
-            it("non-empty response", async () => {
+            it("returns response", async () => {
                 for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
                     const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
                     const pricesResult = await this.uniV3Oracle.price(
@@ -90,14 +88,40 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
                 }
             });
+
+            describe("edge cases:", () => {
+                describe("when index of one of pools is zero", () => {
+                    it("returns empty response", async () => {
+                        const pricesResult = await this.uniV3Oracle.price(
+                            this.usdc.address,
+                            ADDRESS_ZERO,
+                            BigNumber.from(30)
+                        );
+
+                        const pricesX96 = pricesResult.pricesX96;
+                        const safetyIndices = pricesResult.safetyIndices;
+                        expect(pricesX96.length).to.be.eq(0);
+                        expect(safetyIndices.length).to.be.eq(0);
+                    });
+                });
+            });
         });
 
-        describe.only("#supportsInterface", () => {
+        describe("#supportsInterface", () => {
             it(`returns true for IUniV3Oracle interface (${UNIV3_ORACLE_INTERFACE_ID})`, async () => {
                 let isSupported = await this.uniV3Oracle.supportsInterface(
                     UNIV3_ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
+            });
+
+            describe("when contract does not support the given interface", () => {
+                it("returns false", async () => {
+                    let isSupported = await this.uniV3Oracle.supportsInterface(
+                        UNIV2_ORACLE_INTERFACE_ID
+                    );
+                    expect(isSupported).to.be.false;
+                });
             });
         });
 
@@ -219,54 +243,40 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         };
 
         describe("#addUniV3Pools", () => {
-            it(`test adding [weth, usdc] pools with fee = 500`, async () => {
-                await testForFeeAndMask(
-                    500,
-                    this.weth.address,
-                    this.usdc.address,
-                    30,
-                    4
-                );
-            });
-            it(`test adding [weth, usdc] pools with fee = 3000`, async () => {
-                await testForFeeAndMask(
-                    3000,
-                    this.weth.address,
-                    this.usdc.address,
-                    30,
-                    4
-                );
-            });
-            it(`test adding [weth, usdc] pools with fee = 10000`, async () => {
-                await testForFeeAndMask(
-                    10000,
-                    this.weth.address,
-                    this.usdc.address,
-                    16,
-                    0
-                );
-            });
-        });
-
-        describe("#edge cases", () => {
-            it("empty response if pools index is zero", async () => {
-                const pricesResult = await this.uniV3Oracle.price(
-                    this.usdc.address,
-                    ADDRESS_ZERO,
-                    BigNumber.from(30)
-                );
-
-                const pricesX96 = pricesResult.pricesX96;
-                const safetyIndices = pricesResult.safetyIndices;
-                expect(pricesX96.length).to.be.eq(0);
-                expect(safetyIndices.length).to.be.eq(0);
+            describe("when adding [weth, usdc] pools with fee = 500", () => {
+                it("returns correct response", async () => {
+                    await testForFeeAndMask(
+                        500,
+                        this.weth.address,
+                        this.usdc.address,
+                        30,
+                        4
+                    );
+                });
             });
 
-            it("returns false when contract does not support the given interface", async () => {
-                let isSupported = await this.uniV3Oracle.supportsInterface(
-                    UNIV2_ORACLE_INTERFACE_ID
-                );
-                expect(isSupported).to.be.false;
+            describe("when adding [weth, usdc] pools with fee = 3000", () => {
+                it("returns correct response", async () => {
+                    await testForFeeAndMask(
+                        3000,
+                        this.weth.address,
+                        this.usdc.address,
+                        30,
+                        4
+                    );
+                });
+            });
+
+            describe("when adding [weth, usdc] pools with fee = 10000", () => {
+                it("retruns correct response", async () => {
+                    await testForFeeAndMask(
+                        10000,
+                        this.weth.address,
+                        this.usdc.address,
+                        16,
+                        0
+                    );
+                });
             });
         });
     }
