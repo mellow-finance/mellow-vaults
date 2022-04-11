@@ -1,29 +1,28 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
-import "../interfaces/strategies/ILStrategyOrderHelper.sol";
 import "../interfaces/utils/ILpCallback.sol";
+import "../interfaces/utils/ILStrategyOrderHelper.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
-import "../utils/ContractMeta.sol";
 import "../utils/DefaultAccessControl.sol";
 
-contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback {
+contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
-    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     uint256 public constant DENOMINATOR = 10**9;
+    bytes4 public constant SET_PRESIGNATURE_SELECTOR = 0xec6cb13f;
+    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
     INonfungiblePositionManager public immutable positionManager;
@@ -307,7 +306,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
 
     /// @notice Post preorder for ERC20 vault rebalance.
     /// @return preOrder_ Posted preorder
-    function postPreOrder() public returns (PreOrder memory preOrder_) {
+    function postPreOrder() external returns (PreOrder memory preOrder_) {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
@@ -348,21 +347,24 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
         bool signed
     ) external {
         _requireAtLeastOperator();
-        require(address(otherParams.orderHelper) != address(0), ExceptionsLibrary.INVARIANT);
-        otherParams.orderHelper.checkOrder(
-            order,
-            uuid,
-            signed,
-            preOrder.tokenIn,
-            preOrder.tokenOut,
-            preOrder.amountIn,
-            preOrder.minAmountOut,
-            preOrder.deadline
-        );
         if (signed) {
+            require(address(otherParams.orderHelper) != address(0), ExceptionsLibrary.INVARIANT);
+            otherParams.orderHelper.checkOrder(
+                order,
+                uuid,
+                preOrder.tokenIn,
+                preOrder.tokenOut,
+                preOrder.amountIn,
+                preOrder.minAmountOut,
+                preOrder.deadline
+            );
+            erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, abi.encode(cowswap, order.sellAmount));
+            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
             orderDeadline = order.validTo;
             delete preOrder;
             emit OrderSigned(tx.origin, msg.sender, uuid, order, preOrder, signed);
+        } else {
+            erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, false));
         }
     }
 
@@ -448,6 +450,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
         emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
     }
 
+    /// @notice Callback function called after for ERC20RootVault::deposit
     function depositCallback() external {
         rebalanceERC20UniV3Vaults(
             _pullExistentials,
@@ -456,6 +459,7 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
         );
     }
 
+    /// @notice Callback function called after for ERC20RootVault::withdraw
     function withdrawCallback() external {
         rebalanceERC20UniV3Vaults(
             _pullExistentials,
@@ -465,14 +469,6 @@ contract LStrategy is ContractMeta, Multicall, DefaultAccessControl, ILpCallback
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
-
-    function _contractName() internal pure override returns (bytes32) {
-        return bytes32("LStrategy");
-    }
-
-    function _contractVersion() internal pure override returns (bytes32) {
-        return bytes32("1.0.0");
-    }
 
     /// @notice Calculate a pure (not Uniswap) liquidity
     /// @param priceX96 Current price y / x

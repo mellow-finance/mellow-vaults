@@ -107,7 +107,6 @@ abstract contract Vault is IVault, ERC165 {
             IERC20Metadata token = IERC20Metadata(vaultTokens_[i]);
             _pullExistentials.push(10**(token.decimals() / 2));
         }
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
     }
 

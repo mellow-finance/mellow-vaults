@@ -6,7 +6,6 @@ interface ILStrategyOrderHelper {
     function checkOrder(
         GPv2Order.Data memory order,
         bytes calldata uuid,
-        bool signed,
         address tokenIn,
         address tokenOut,
         uint256 amountIn,

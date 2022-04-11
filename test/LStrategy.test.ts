@@ -303,7 +303,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         strategyDeployParams.address,
                         cowswapDeployParams.address,
                         this.erc20Vault.address,
-                        this.erc20VaultGovernance.address,
                     ],
                     log: true,
                     autoMine: true,
