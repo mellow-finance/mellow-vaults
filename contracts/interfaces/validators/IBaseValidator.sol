@@ -4,6 +4,8 @@ pragma solidity 0.8.9;
 import "../IProtocolGovernance.sol";
 
 interface IBaseValidator {
+    /// @notice Validator parameters
+    /// @param protocolGovernance Reference to Protocol Governance
     struct ValidatorParams {
         IProtocolGovernance protocolGovernance;
     }

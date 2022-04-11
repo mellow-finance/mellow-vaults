@@ -33,6 +33,8 @@ contract BaseValidator is IBaseValidator {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
+    /// @notice Stages params that could have been committed after governance delay expires.
+    /// @param newParams Params to stage
     function stageValidatorParams(IBaseValidator.ValidatorParams calldata newParams) external {
         IProtocolGovernance governance = _validatorParams.protocolGovernance;
         require(governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
@@ -41,6 +43,7 @@ contract BaseValidator is IBaseValidator {
         emit StagedValidatorParams(tx.origin, msg.sender, newParams, _stagedValidatorParamsTimestamp);
     }
 
+    /// @notice Commits staged params
     function commitValidatorParams() external {
         IProtocolGovernance governance = _validatorParams.protocolGovernance;
         require(governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
