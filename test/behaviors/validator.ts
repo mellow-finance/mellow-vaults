@@ -214,11 +214,6 @@ export function ValidatorBehaviour<S extends Contract>(
             describe("commit earlier than staging timestamp", async () => {
                 it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
                     await withSigner(this.admin.address, async (signer) => {
-                        await sleep(
-                            (
-                                await this.protocolGovernance.governanceDelay()
-                            ).sub(2)
-                        );
                         await expect(
                             this.subject.connect(signer).commitValidatorParams()
                         ).to.be.revertedWith(Exceptions.TIMESTAMP);
