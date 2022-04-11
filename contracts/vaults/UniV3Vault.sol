@@ -190,9 +190,15 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
         (uint256[] memory prices, ) = oracle.price(_vaultTokens[0], _vaultTokens[1], 0x26);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
-        CommonLibrary.sortUint(prices);
         minPriceX96 = prices[0];
-        maxPriceX96 = prices[prices.length - 1];
+        maxPriceX96 = prices[0];
+        for (uint32 i = 0; i < prices.length; ++i) {
+            if (prices[i] < minPriceX96) {
+                minPriceX96 = prices[i];
+            } else if (prices[i] > maxPriceX96) {
+                maxPriceX96 = prices[i];
+            }
+        }
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
