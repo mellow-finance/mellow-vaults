@@ -53,6 +53,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         uniV3UpperVaultNft
     );
 
+    let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+        from: deployer,
+        contract: "LStrategyOrderHelper",
+        args: [
+            cowswap,
+        ],
+        log: true,
+        autoMine: true
+    });
+
     let strategyDeployParams = await deploy("LStrategy", {
         from: deployer,
         contract: "LStrategy",
@@ -62,6 +72,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             erc20Vault,
             uniV3LowerVault,
             uniV3UpperVault,
+            strategyOrderHelper.address,
             deployer,
         ],
         log: true,
@@ -78,18 +89,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const lStrategy = await ethers.getContract("LStrategy");
     const mellowOracle = await get("MellowOracle");
-
-    let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
-        from: deployer,
-        contract: "LStrategyOrderHelper",
-        args: [
-            strategyDeployParams.address,
-            cowswap,
-            erc20Vault
-        ],
-        log: true,
-        autoMine: true
-    });
 
     await lStrategy.updateTradingParams({
         maxSlippageD: BigNumber.from(10).pow(7),
@@ -113,7 +112,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     await lStrategy.updateOtherParams({
-        orderHelper: strategyOrderHelper.address,
         intervalWidthInTicks: 100,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),

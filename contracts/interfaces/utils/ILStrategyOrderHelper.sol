@@ -10,6 +10,7 @@ interface ILStrategyOrderHelper {
         address tokenOut,
         uint256 amountIn,
         uint256 minAmountOut,
-        uint256 deadline
+        uint256 deadline,
+        address erc20Vault
     ) external;
 }

@@ -26,6 +26,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
     INonfungiblePositionManager public immutable positionManager;
+    ILStrategyOrderHelper public immutable orderHelper;
     uint24 public immutable poolFee;
     address public immutable cowswap;
 
@@ -56,7 +57,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     }
 
     struct OtherParams {
-        ILStrategyOrderHelper orderHelper;
         uint16 intervalWidthInTicks;
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
@@ -87,6 +87,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,
         IUniV3Vault vault2_,
+        ILStrategyOrderHelper orderHelper_,
         address admin_
     ) DefaultAccessControl(admin_) {
         positionManager = positionManager_;
@@ -97,6 +98,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         poolFee = vault1_.pool().fee();
         _pullExistentials = vault1_.pullExistentials();
         cowswap = cowswap_;
+        orderHelper = orderHelper_;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -348,15 +350,15 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     ) external {
         _requireAtLeastOperator();
         if (signed) {
-            require(address(otherParams.orderHelper) != address(0), ExceptionsLibrary.INVARIANT);
-            otherParams.orderHelper.checkOrder(
+            orderHelper.checkOrder(
                 order,
                 uuid,
                 preOrder.tokenIn,
                 preOrder.tokenOut,
                 preOrder.amountIn,
                 preOrder.minAmountOut,
-                preOrder.deadline
+                preOrder.deadline,
+                address(erc20Vault)
             );
             erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, abi.encode(cowswap, order.sellAmount));
             erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));

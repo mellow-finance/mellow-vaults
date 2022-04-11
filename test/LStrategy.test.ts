@@ -281,6 +281,16 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     uniV3UpperVault
                 );
 
+                let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+                    from: this.deployer.address,
+                    contract: "LStrategyOrderHelper",
+                    args: [
+                        cowswapDeployParams.address,
+                    ],
+                    log: true,
+                    autoMine: true,
+                });
+
                 let strategyDeployParams = await deploy("LStrategy", {
                     from: this.deployer.address,
                     contract: "LStrategy",
@@ -290,19 +300,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.erc20Vault.address,
                         this.uniV3LowerVault.address,
                         this.uniV3UpperVault.address,
+                        strategyOrderHelper.address,
                         this.admin.address,
-                    ],
-                    log: true,
-                    autoMine: true,
-                });
-
-                let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
-                    from: this.deployer.address,
-                    contract: "LStrategyOrderHelper",
-                    args: [
-                        strategyDeployParams.address,
-                        cowswapDeployParams.address,
-                        this.erc20Vault.address,
                     ],
                     log: true,
                     autoMine: true,
@@ -491,7 +490,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
-                    orderHelper: strategyOrderHelper.address,
                     intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
@@ -710,7 +708,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     describe("#updateOtherParams", () => {
         beforeEach(async () => {
             this.baseParams = {
-                orderHelper: this.orderHelper.address,
                 intervalWidthInTicks: 100,
                 minToken0ForOpening: BigNumber.from(10).pow(6),
                 minToken1ForOpening: BigNumber.from(10).pow(6),
@@ -723,7 +720,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 .connect(this.admin)
                 .updateOtherParams(this.baseParams);
             const expectedParams = [
-                this.orderHelper.address,
                 100,
                 BigNumber.from(10).pow(6),
                 BigNumber.from(10).pow(6),

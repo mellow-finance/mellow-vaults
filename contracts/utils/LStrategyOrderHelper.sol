@@ -8,23 +8,13 @@ import "../libraries/ExceptionsLibrary.sol";
 
 contract LStrategyOrderHelper is ILStrategyOrderHelper {
     // IMMUTABLES
-    address public immutable erc20Vault;
-    address public immutable lStrategy;
     address public immutable cowswap;
-    bytes4 public constant SET_PRESIGNATURE_SELECTOR = 0xec6cb13f;
-    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
 
-    constructor(
-        address lStrategy_,
-        address cowswap_,
-        address erc20Vault_
-    ) {
-        lStrategy = lStrategy_;
-        erc20Vault = erc20Vault_;
+    constructor(address cowswap_) {
         cowswap = cowswap_;
     }
 
-    // -------------------  EXTERNAL, MUTATING  -------------------
+    // -------------------  EXTERNAL, VIEW  -------------------
 
     function checkOrder(
         GPv2Order.Data memory order,
@@ -33,9 +23,9 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
         address tokenOut,
         uint256 amountIn,
         uint256 minAmountOut,
-        uint256 deadline
+        uint256 deadline,
+        address erc20Vault
     ) external view {
-        require(msg.sender == lStrategy, ExceptionsLibrary.FORBIDDEN);
         require(deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
         (bytes32 orderHashFromUid, , ) = GPv2Order.extractOrderUidParams(uuid);
         bytes32 domainSeparator = ICowswapSettlement(cowswap).domainSeparator();
