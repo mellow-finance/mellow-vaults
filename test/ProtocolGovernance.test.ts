@@ -20,6 +20,8 @@ import {
     VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import assert from "assert";
+import { randomInt } from "crypto";
+import { Address } from "hardhat-deploy/types";
 
 const MAX_GOVERNANCE_DELAY = BigNumber.from(60 * 60 * 24 * 7);
 
@@ -1934,19 +1936,20 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("edge cases", () => {
-                describe("when attempting to commit permissions too early", () => {
-                    it(`does not commit permission`, async () => {
+                describe("when attempting to commit a single permission too early", () => {
+                    it("does not commit permission", async () => {
                         let targetAddress = randomAddress();
                         let permissionIds = permissionIdsByMask(
                             generateSingleParams(uint256.filter((x) => x.gt(0)))
                         );
+
                         await this.subject
                             .connect(this.admin)
                             .stagePermissionGrants(
                                 targetAddress,
                                 permissionIds
                             );
-                        await sleep(1);
+                        await sleep(this.governanceDelay - 10);
                         await this.subject
                             .connect(this.admin)
                             .commitAllPermissionGrantsSurpassedDelay();
@@ -1956,6 +1959,70 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                                 permissionIds
                             )
                         ).to.be.false;
+                    });
+                });
+                describe("when attempting to commit multiple permissions too early", () => {
+                    it(`does not commit these permissions`, async () => {
+                        let targetAddresses = [];
+                        let permissions = [];
+                        const len = 10;
+                        let randomIndex = randomInt(0, len - 1);
+                        for (let i = 0; i < len; ++i) {
+                            let targetAddress = randomAddress();
+                            let permissionIds = permissionIdsByMask(
+                                generateSingleParams(
+                                    uint256.filter((x) => x.gt(0))
+                                )
+                            );
+                            targetAddresses.push(targetAddress);
+                            permissions.push(permissionIds);
+                        }
+                        for (let i = 0; i < randomIndex; ++i) {
+                            await this.subject
+                                .connect(this.admin)
+                                .stagePermissionGrants(
+                                    targetAddresses[i],
+                                    permissions[i]
+                                );
+                        }
+                        await sleep(this.governanceDelay);
+                        for (
+                            let i = randomIndex;
+                            i < targetAddresses.length;
+                            ++i
+                        ) {
+                            await this.subject
+                                .connect(this.admin)
+                                .stagePermissionGrants(
+                                    targetAddresses[i],
+                                    permissions[i]
+                                );
+                        }
+                        await sleep(this.governanceDelay / 2);
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllPermissionGrantsSurpassedDelay();
+
+                        for (let i = 0; i < randomIndex; ++i) {
+                            expect(
+                                await this.subject.hasAllPermissions(
+                                    targetAddresses[i],
+                                    permissions[i]
+                                )
+                            ).to.be.true;
+                        }
+                        for (
+                            let i = randomIndex;
+                            i < targetAddresses.length;
+                            ++i
+                        ) {
+                            expect(
+                                await this.subject.hasAllPermissions(
+                                    targetAddresses[i],
+                                    permissions[i]
+                                )
+                            ).to.be.false;
+                        }
                         return true;
                     });
                 });
@@ -2103,7 +2170,7 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
             });
 
             describe("edge cases", () => {
-                describe("when attempting to commit validators too early", () => {
+                describe("when attempting to commit a single validator too early", () => {
                     it(`does not commit validator`, async () => {
                         let targetAddress = randomAddress();
                         let validatorAddress = randomAddress();
@@ -2117,6 +2184,52 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         expect(
                             await this.subject.validatorsAddresses()
                         ).to.not.contain(validatorAddress);
+                        return true;
+                    });
+                });
+
+                describe("when attempting to commit multiple validators too early", () => {
+                    it(`does not commit these validators`, async () => {
+                        let targetAddresses: Address[] = [];
+                        const len = 10;
+                        let randomIndex = randomInt(0, len - 1);
+                        for (let i = 0; i < randomIndex; ++i) {
+                            let targetAddress = randomAddress();
+                            let validatorAddress = randomAddress();
+                            await this.subject
+                                .connect(this.admin)
+                                .stageValidator(
+                                    targetAddress,
+                                    validatorAddress
+                                );
+                            targetAddresses.push(targetAddress);
+                        }
+                        await sleep(this.governanceDelay);
+                        for (let i = randomIndex; i < len; ++i) {
+                            let targetAddress = randomAddress();
+                            let validatorAddress = randomAddress();
+                            await this.subject
+                                .connect(this.admin)
+                                .stageValidator(
+                                    targetAddress,
+                                    validatorAddress
+                                );
+                            targetAddresses.push(targetAddress);
+                        }
+                        await sleep(this.governanceDelay / 2);
+                        await this.subject
+                            .connect(this.admin)
+                            .commitAllValidatorsSurpassedDelay();
+                        for (let i = 0; i < randomIndex; ++i) {
+                            expect(
+                                await this.subject.validatorsAddresses()
+                            ).to.contain(targetAddresses[i]);
+                        }
+                        for (let i = randomIndex; i < len; ++i) {
+                            expect(
+                                await this.subject.validatorsAddresses()
+                            ).to.not.contain(targetAddresses[i]);
+                        }
                         return true;
                     });
                 });
