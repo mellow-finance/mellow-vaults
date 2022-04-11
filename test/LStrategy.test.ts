@@ -284,9 +284,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
                     from: this.deployer.address,
                     contract: "LStrategyOrderHelper",
-                    args: [
-                        cowswapDeployParams.address,
-                    ],
+                    args: [cowswapDeployParams.address],
                     log: true,
                     autoMine: true,
                 });
