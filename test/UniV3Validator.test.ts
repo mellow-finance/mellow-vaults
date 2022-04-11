@@ -22,6 +22,11 @@ type DeployOptions = {};
 contract<UniV3Validator, DeployOptions, CustomContext>(
     "UniV3Validator",
     function () {
+        const EXACT_INPUT_SINGLE_SELECTOR = "0x414bf389";
+        const EXACT_INPUT_SELECTOR = "0xc04b8d59";
+        const EXACT_OUTPUT_SINGLE_SELECTOR = "0xdb3e2198";
+        const EXACT_OUTPUT_SELECTOR = "0xf28c0498";
+
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
@@ -32,15 +37,6 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                         address
                     );
                     this.swapRouterAddress = await this.subject.swapRouter();
-
-                    this.EXACT_INPUT_SINGLE_SELECTOR =
-                        await this.subject.EXACT_INPUT_SINGLE_SELECTOR();
-                    this.EXACT_INPUT_SELECTOR =
-                        await this.subject.EXACT_INPUT_SELECTOR();
-                    this.EXACT_OUTPUT_SINGLE_SELECTOR =
-                        await this.subject.EXACT_OUTPUT_SINGLE_SELECTOR();
-                    this.EXACT_OUTPUT_SELECTOR =
-                        await this.subject.EXACT_OUTPUT_SELECTOR();
 
                     const vaultTokens = [this.dai.address, this.usdc.address];
                     let vaultOwner = randomAddress();
@@ -125,8 +121,8 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("EXACT_INPUT_SINGLE_SELECTOR", async () => {
-                it("succesful validate", async () => {
+            describe(`selector is ${EXACT_INPUT_SINGLE_SELECTOR}`, async () => {
+                it("successful validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -153,7 +149,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     randomAddress(),
                                     this.swapRouterAddress,
                                     0,
-                                    this.EXACT_INPUT_SINGLE_SELECTOR,
+                                    EXACT_INPUT_SINGLE_SELECTOR,
                                     encodeToBytes(
                                         [
                                             "address",
@@ -193,8 +189,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                EXACT_INPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -248,8 +243,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                EXACT_INPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -303,8 +297,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                EXACT_INPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -358,8 +351,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                EXACT_INPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -401,8 +393,8 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("EXACT_OUTPUT_SINGLE_SELECTOR", async () => {
-                it("succesfull validate", async () => {
+            describe(`selector is ${EXACT_OUTPUT_SINGLE_SELECTOR}`, async () => {
+                it("successfull validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -429,7 +421,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     randomAddress(),
                                     this.swapRouterAddress,
                                     0,
-                                    this.EXACT_OUTPUT_SINGLE_SELECTOR,
+                                    EXACT_OUTPUT_SINGLE_SELECTOR,
                                     encodeToBytes(
                                         [
                                             "address",
@@ -470,8 +462,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                EXACT_OUTPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -525,8 +516,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                EXACT_OUTPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -580,8 +570,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                EXACT_OUTPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -635,8 +624,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this
-                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                EXACT_OUTPUT_SINGLE_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "address",
@@ -678,8 +666,8 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("EXACT_INPUT_SELECTOR", async () => {
-                it("succesfull validate", async () => {
+            describe(`selector is ${EXACT_INPUT_SELECTOR}`, async () => {
+                it("successfull validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -718,7 +706,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     randomAddress(),
                                     this.swapRouterAddress,
                                     0,
-                                    this.EXACT_INPUT_SELECTOR,
+                                    EXACT_INPUT_SELECTOR,
                                     encodeToBytes(
                                         [
                                             "tuple(" +
@@ -754,7 +742,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_INPUT_SELECTOR,
+                                                EXACT_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -800,7 +788,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_INPUT_SELECTOR,
+                                                EXACT_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -841,7 +829,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_INPUT_SELECTOR,
+                                                EXACT_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -903,7 +891,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_INPUT_SELECTOR,
+                                                EXACT_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -926,8 +914,8 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("EXACT_OUTPUT_SELECTOR", async () => {
-                it("succesfull validate", async () => {
+            describe(`selector is ${EXACT_OUTPUT_SELECTOR}`, async () => {
+                it("successfull validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -966,7 +954,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     randomAddress(),
                                     this.swapRouterAddress,
                                     0,
-                                    this.EXACT_OUTPUT_SELECTOR,
+                                    EXACT_OUTPUT_SELECTOR,
                                     encodeToBytes(
                                         [
                                             "tuple(" +
@@ -1002,7 +990,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_OUTPUT_SELECTOR,
+                                                EXACT_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -1048,7 +1036,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_OUTPUT_SELECTOR,
+                                                EXACT_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -1089,7 +1077,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_OUTPUT_SELECTOR,
+                                                EXACT_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +
@@ -1151,7 +1139,7 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_OUTPUT_SELECTOR,
+                                                EXACT_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "tuple(" +

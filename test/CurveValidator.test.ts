@@ -60,7 +60,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("succesful validate", async () => {
+            it("successful validate", async () => {
                 await withSigner(this.vault.address, async (signer) => {
                     await expect(
                         this.subject
@@ -84,7 +84,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                 });
             });
             describe("edge cases:", async () => {
-                describe("if selector is not exchange", async () => {
+                describe(`when selector is not ${CURVE_EXCHANGE_SELECTOR}`, async () => {
                     it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(
@@ -102,7 +102,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("if token ids are equal", async () => {
+                describe("when token ids are equal", async () => {
                     it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             let amount = generateSingleParams(uint8);
@@ -134,7 +134,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("if not a vault token", async () => {
+                describe("when not a vault token", async () => {
                     it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                         await withSigner(
                             this.erc20VaultSingleton.address,
@@ -172,7 +172,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("if pool has no approve permission", async () => {
+                describe("when pool has no approve permission", async () => {
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         await this.protocolGovernance
                             .connect(this.admin)

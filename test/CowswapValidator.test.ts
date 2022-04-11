@@ -59,7 +59,7 @@ contract<CowswapValidator, DeployOptions, CustomContext>(
                 });
             });
             describe("edge cases:", async () => {
-                describe("if selector is not pre_signature", async () => {
+                describe(`when selector is not ${PRE_SIGNATURE_SELECTOR}`, async () => {
                     it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(

@@ -152,17 +152,6 @@ export function ValidatorBehaviour<S extends Contract>(
             });
         });
 
-        it("reverts: commit earlier than staging timestamp", async () => {
-            await withSigner(this.admin.address, async (signer) => {
-                await sleep(
-                    (await this.protocolGovernance.governanceDelay()).sub(2)
-                );
-                await expect(
-                    this.subject.connect(signer).commitValidatorParams()
-                ).to.be.revertedWith(Exceptions.TIMESTAMP);
-            });
-        });
-
         it("emits CommittedValidatorParams", async () => {
             await withSigner(this.admin.address, async (signer) => {
                 await sleep(await this.protocolGovernance.governanceDelay());
@@ -221,6 +210,22 @@ export function ValidatorBehaviour<S extends Contract>(
                 ).to.deep.eq(this.stagingParams);
             });
         });
+        describe("edge cases:", async () => {
+            describe("commit earlier than staging timestamp", async () => {
+                it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
+                    await withSigner(this.admin.address, async (signer) => {
+                        await sleep(
+                            (
+                                await this.protocolGovernance.governanceDelay()
+                            ).sub(2)
+                        );
+                        await expect(
+                            this.subject.connect(signer).commitValidatorParams()
+                        ).to.be.revertedWith(Exceptions.TIMESTAMP);
+                    });
+                });
+            });
+        });
 
         describe("access control", () => {
             it("forbidden: not an admin", async () => {
@@ -245,7 +250,7 @@ export function ValidatorBehaviour<S extends Contract>(
     });
 
     describe("#supportsInterface", () => {
-        it("true for IValidator", async () => {
+        it(`returns true if this contract supports ${VALIDATOR_INTERFACE_ID}`, async () => {
             await withSigner(this.admin.address, async (signer) => {
                 await expect(
                     await this.subject
@@ -254,15 +259,20 @@ export function ValidatorBehaviour<S extends Contract>(
                 ).to.be.true;
             });
         });
-        it("false for IVault", async () => {
-            await withSigner(this.admin.address, async (signer) => {
-                await expect(
-                    await this.subject
-                        .connect(signer)
-                        .supportsInterface(VAULT_INTERFACE_ID)
-                ).to.be.false;
+        describe("edge cases:", async () => {
+            describe(`when contract does not support given interface`, async () => {
+                it("returns false", async () => {
+                    await withSigner(this.admin.address, async (signer) => {
+                        await expect(
+                            await this.subject
+                                .connect(signer)
+                                .supportsInterface(VAULT_INTERFACE_ID)
+                        ).to.be.false;
+                    });
+                });
             });
         });
+
         describe("access control", async () => {
             it("allow: any address", async () => {
                 await withSigner(randomAddress(), async (signer) => {

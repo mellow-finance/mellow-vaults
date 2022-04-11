@@ -22,6 +22,13 @@ type DeployOptions = {};
 contract<UniV2Validator, DeployOptions, CustomContext>(
     "UniV2Validator",
     function () {
+        const EXACT_INPUT_SELECTOR = "0x38ed1739";
+        const EXACT_OUTPUT_SELECTOR = "0x8803dbee";
+        const EXACT_ETH_INPUT_SELECTOR = "0x7ff36ab5";
+        const EXACT_ETH_OUTPUT_SELECTOR = "0x4a25d94a";
+        const EXACT_TOKENS_INPUT_SELECTOR = "0x18cbafe5";
+        const EXACT_TOKENS_OUTPUT_SELECTOR = "0xfb3bdb41";
+
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
@@ -32,19 +39,6 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         address
                     );
                     this.swapRouterAddress = await this.subject.swapRouter();
-
-                    this.EXACT_INPUT_SELECTOR =
-                        await this.subject.EXACT_INPUT_SELECTOR();
-                    this.EXACT_OUTPUT_SELECTOR =
-                        await this.subject.EXACT_OUTPUT_SELECTOR();
-                    this.EXACT_ETH_INPUT_SELECTOR =
-                        await this.subject.EXACT_ETH_INPUT_SELECTOR();
-                    this.EXACT_ETH_OUTPUT_SELECTOR =
-                        await this.subject.EXACT_ETH_OUTPUT_SELECTOR();
-                    this.EXACT_TOKENS_INPUT_SELECTOR =
-                        await this.subject.EXACT_TOKENS_INPUT_SELECTOR();
-                    this.EXACT_TOKENS_OUTPUT_SELECTOR =
-                        await this.subject.EXACT_TOKENS_OUTPUT_SELECTOR();
 
                     const vaultTokens = [this.dai.address, this.usdc.address];
                     let vaultOwner = randomAddress();
@@ -76,8 +70,8 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            describe("selector is EXACT_ETH_INPUT_SELECTOR or EXACT_TOKENS_OUTPUT_SELECTOR", async () => {
-                it("succesful validate", async () => {
+            describe(`selector is ${EXACT_ETH_INPUT_SELECTOR} or ${EXACT_TOKENS_OUTPUT_SELECTOR}`, async () => {
+                it("successful validate", async () => {
                     await withSigner(
                         await this.vault.address,
                         async (signer) => {
@@ -99,7 +93,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                         randomAddress(),
                                         this.swapRouterAddress,
                                         generateSingleParams(uint256),
-                                        this.EXACT_ETH_INPUT_SELECTOR,
+                                        EXACT_ETH_INPUT_SELECTOR,
                                         encodeToBytes(
                                             [
                                                 "uint256",
@@ -124,7 +118,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                 });
 
                 describe("edge cases:", () => {
-                    describe("if addr is not swap", () => {
+                    describe("when addr is not swap", () => {
                         it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
                             await withSigner(
                                 randomAddress(),
@@ -147,7 +141,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if wrong selector", () => {
+                    describe("when selector is wrong", () => {
                         it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
                             await withSigner(
                                 randomAddress(),
@@ -170,7 +164,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if path is too small", () => {
+                    describe("when path is too small", () => {
                         it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
                             await withSigner(
                                 await this.erc20VaultSingleton.address,
@@ -182,7 +176,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 generateSingleParams(uint256),
-                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                EXACT_ETH_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -210,7 +204,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if not a vault token", () => {
+                    describe("when not a vault token", () => {
                         it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                             await withSigner(
                                 await this.erc20VaultSingleton.address,
@@ -222,7 +216,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 generateSingleParams(uint256),
-                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                EXACT_ETH_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -253,7 +247,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if tokens are the same", () => {
+                    describe("when tokens are the same", () => {
                         it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                             await withSigner(
                                 await this.vault.address,
@@ -265,7 +259,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 generateSingleParams(uint256),
-                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                EXACT_ETH_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -296,7 +290,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if pool has no approve permission", () => {
+                    describe("when pool has no approve permission", () => {
                         it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                             await withSigner(
                                 await this.vault.address,
@@ -308,7 +302,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 generateSingleParams(uint256),
-                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                EXACT_ETH_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -337,7 +331,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if sender is not a reciever", () => {
+                    describe("when sender is not a reciever", () => {
                         it(`reverts`, async () => {
                             await withSigner(
                                 await this.vault.address,
@@ -360,7 +354,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 generateSingleParams(uint256),
-                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                EXACT_ETH_INPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -390,8 +384,8 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                     });
                 });
             });
-            describe("selector is one of: EXACT_ETH_OUTPUT_SELECTOR, EXACT_TOKENS_INPUT_SELECTOR, EXACT_INPUT_SELECTOR, EXACT_OUTPUT_SELECTOR", async () => {
-                it("succesful validate", async () => {
+            describe(`selector is one of: ${EXACT_ETH_OUTPUT_SELECTOR}, ${EXACT_TOKENS_INPUT_SELECTOR}, ${EXACT_INPUT_SELECTOR}, ${EXACT_OUTPUT_SELECTOR}`, async () => {
+                it("successful validate", async () => {
                     this.protocolGovernance
                         .connect(this.admin)
                         .stagePermissionGrants(this.pool, [
@@ -413,7 +407,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                         randomAddress(),
                                         this.swapRouterAddress,
                                         0,
-                                        this.EXACT_ETH_OUTPUT_SELECTOR,
+                                        EXACT_ETH_OUTPUT_SELECTOR,
                                         encodeToBytes(
                                             [
                                                 "uint256",
@@ -440,7 +434,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                 });
 
                 describe("edge cases:", async () => {
-                    describe("if value is not zero", async () => {
+                    describe("when value is not zero", async () => {
                         it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
                             await withSigner(
                                 await this.erc20VaultSingleton.address,
@@ -454,7 +448,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 generateSingleParams(
                                                     uint256
                                                 ).add(1),
-                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                EXACT_ETH_OUTPUT_SELECTOR,
                                                 randomBytes(32)
                                             )
                                     ).to.be.revertedWith(
@@ -465,7 +459,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if sender is not reciever", async () => {
+                    describe("when sender is not reciever", async () => {
                         it(`reverts`, async () => {
                             await withSigner(
                                 await this.erc20VaultSingleton.address,
@@ -477,7 +471,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                EXACT_ETH_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -510,7 +504,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if path too small", async () => {
+                    describe("when path too small", async () => {
                         it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
                             await withSigner(
                                 await this.erc20VaultSingleton.address,
@@ -522,7 +516,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                EXACT_ETH_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -554,7 +548,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if not a vault token", async () => {
+                    describe("when not a vault token", async () => {
                         it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                             await withSigner(
                                 await this.erc20VaultSingleton.address,
@@ -566,7 +560,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                EXACT_ETH_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -601,7 +595,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if tokens are the same", async () => {
+                    describe("when tokens are the same", async () => {
                         it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
                             await withSigner(
                                 await this.vault.address,
@@ -613,7 +607,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                EXACT_ETH_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",
@@ -648,7 +642,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                         });
                     });
 
-                    describe("if pool has no approve permission", async () => {
+                    describe("when pool has no approve permission", async () => {
                         it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                             await withSigner(
                                 await this.vault.address,
@@ -660,7 +654,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                 randomAddress(),
                                                 this.swapRouterAddress,
                                                 0,
-                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                EXACT_ETH_OUTPUT_SELECTOR,
                                                 encodeToBytes(
                                                     [
                                                         "uint256",

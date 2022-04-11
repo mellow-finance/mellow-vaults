@@ -43,7 +43,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("succesful validate, spender can approve", async () => {
+            it("successful validate, spender can approve", async () => {
                 await withSigner(randomAddress(), async (signer) => {
                     let tokenAddress = randomAddress();
                     let spenderAddress = randomAddress();
@@ -77,7 +77,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
                 });
             });
 
-            it("succesful validate, sender is trusted strategy", async () => {
+            it("successful validate, sender is trusted strategy", async () => {
                 await withSigner(randomAddress(), async (signer) => {
                     let tokenAddress = randomAddress();
                     let spenderAddress = randomAddress();
@@ -117,7 +117,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
             });
 
             describe("edge cases:", () => {
-                describe("if value is not zero", () => {
+                describe("when value is not zero", () => {
                     it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(
@@ -135,7 +135,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("if selector is not approve", () => {
+                describe(`when selector is not ${APPROVE_SELECTOR}`, () => {
                     it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(
@@ -153,7 +153,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("if no transfer permission", () => {
+                describe("when no transfer permission", () => {
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await expect(
@@ -171,7 +171,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("if no approve permission", () => {
+                describe("when no approve permission", () => {
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             let tokenAddress = randomAddress();
