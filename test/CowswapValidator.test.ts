@@ -43,23 +43,7 @@ contract<CowswapValidator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("reverts if selector is not pre_signature", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                randomAddress(),
-                                generateSingleParams(uint256),
-                                randomBytes(4),
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
-                });
-            });
-
-            it("pass", async () => {
+            it("successful validate", async () => {
                 await withSigner(randomAddress(), async (signer) => {
                     await expect(
                         this.subject
@@ -72,6 +56,25 @@ contract<CowswapValidator, DeployOptions, CustomContext>(
                                 randomBytes(32)
                             )
                     ).to.not.be.reverted;
+                });
+            });
+            describe("edge cases:", async () => {
+                describe("if selector is not pre_signature", async () => {
+                    it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        randomAddress(),
+                                        randomAddress(),
+                                        generateSingleParams(uint256),
+                                        randomBytes(4),
+                                        randomBytes(32)
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
+                        });
+                    });
                 });
             });
         });

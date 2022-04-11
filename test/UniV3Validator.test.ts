@@ -69,96 +69,46 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("reverts if addr is not swap", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                randomAddress(),
-                                generateSingleParams(uint256),
-                                randomBytes(4),
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
-                });
-            });
-
-            it("reverts if value is not zero", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                generateSingleParams(uint256).add(1),
-                                randomBytes(4),
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                });
-            });
-
-            it("reverts if selector is wrong", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                0,
-                                randomBytes(4),
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
-                });
-            });
-
-            describe("EXACT_INPUT_SINGLE_SELECTOR", async () => {
-                it("reverts if recipient is not sender", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SINGLE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "address",
-                                            "address",
-                                            "uint24",
-                                            "address",
-                                            "uint256",
-                                            "uint256",
-                                            "uint256",
-                                            "uint160",
-                                        ],
-                                        [
-                                            randomAddress(),
-                                            randomAddress(),
-                                            generateSingleParams(uint8),
-                                            randomAddress(),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint8),
-                                        ]
+            describe("edge cases:", async () => {
+                describe("if addr is not swap", () => {
+                    it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        randomAddress(),
+                                        randomAddress(),
+                                        generateSingleParams(uint256),
+                                        randomBytes(4),
+                                        randomBytes(32)
                                     )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TARGET);
+                            ).to.be.revertedWith(Exceptions.INVALID_TARGET);
+                        });
                     });
                 });
 
-                it("reverts if not a vault token", async () => {
-                    await withSigner(
-                        this.erc20RootVaultSingleton.address,
-                        async (signer) => {
+                describe("if value is not zero", () => {
+                    it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        randomAddress(),
+                                        this.swapRouterAddress,
+                                        generateSingleParams(uint256).add(1),
+                                        randomBytes(4),
+                                        randomBytes(32)
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                        });
+                    });
+                });
+
+                describe("if selector is wrong", () => {
+                    it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
                             await expect(
                                 this.subject
                                     .connect(signer)
@@ -166,110 +116,17 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                         randomAddress(),
                                         this.swapRouterAddress,
                                         0,
-                                        this.EXACT_INPUT_SINGLE_SELECTOR,
-                                        encodeToBytes(
-                                            [
-                                                "address",
-                                                "address",
-                                                "uint24",
-                                                "address",
-                                                "uint256",
-                                                "uint256",
-                                                "uint256",
-                                                "uint160",
-                                            ],
-                                            [
-                                                randomAddress(),
-                                                randomAddress(),
-                                                generateSingleParams(uint8),
-                                                signer.address,
-                                                generateSingleParams(uint256),
-                                                generateSingleParams(uint256),
-                                                generateSingleParams(uint256),
-                                                generateSingleParams(uint8),
-                                            ]
-                                        )
+                                        randomBytes(4),
+                                        randomBytes(32)
                                     )
-                            ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                        }
-                    );
-                });
-
-                it("reverts if tokens are the same", async () => {
-                    await withSigner(this.vault.address, async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SINGLE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "address",
-                                            "address",
-                                            "uint24",
-                                            "address",
-                                            "uint256",
-                                            "uint256",
-                                            "uint256",
-                                            "uint160",
-                                        ],
-                                        [
-                                            this.usdc.address,
-                                            this.usdc.address,
-                                            generateSingleParams(uint8),
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint8),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                            ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
+                        });
                     });
                 });
+            });
 
-                it("reverts if pool has no permisson", async () => {
-                    await withSigner(this.vault.address, async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SINGLE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "address",
-                                            "address",
-                                            "uint24",
-                                            "address",
-                                            "uint256",
-                                            "uint256",
-                                            "uint256",
-                                            "uint160",
-                                        ],
-                                        [
-                                            this.dai.address,
-                                            this.usdc.address,
-                                            generateSingleParams(uint8),
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint8),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-
-                it("pass", async () => {
+            describe("EXACT_INPUT_SINGLE_SELECTOR", async () => {
+                it("succesful validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -321,163 +178,231 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     )
                                 )
                         ).to.not.be.reverted;
+                    });
+                });
+                describe("edge cases:", async () => {
+                    describe("if recipient is not sender", () => {
+                        it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        randomAddress(),
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TARGET
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if not a vault token", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                this.erc20RootVaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        randomAddress(),
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if tokens are the same", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        this.usdc.address,
+                                                        this.usdc.address,
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if pool has no permisson", () => {
+                        it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                            await withSigner(
+                                this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_INPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        this.dai.address,
+                                                        this.usdc.address,
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                                }
+                            );
+                        });
                     });
                 });
             });
 
             describe("EXACT_OUTPUT_SINGLE_SELECTOR", async () => {
-                it("reverts if recipient is not sender", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SINGLE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "address",
-                                            "address",
-                                            "uint24",
-                                            "address",
-                                            "uint256",
-                                            "uint256",
-                                            "uint256",
-                                            "uint160",
-                                        ],
-                                        [
-                                            randomAddress(),
-                                            randomAddress(),
-                                            generateSingleParams(uint8),
-                                            randomAddress(),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint8),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TARGET);
-                    });
-                });
-
-                it("reverts if not a vault token", async () => {
-                    await withSigner(
-                        this.erc20RootVaultSingleton.address,
-                        async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .validate(
-                                        randomAddress(),
-                                        this.swapRouterAddress,
-                                        0,
-                                        this.EXACT_OUTPUT_SINGLE_SELECTOR,
-                                        encodeToBytes(
-                                            [
-                                                "address",
-                                                "address",
-                                                "uint24",
-                                                "address",
-                                                "uint256",
-                                                "uint256",
-                                                "uint256",
-                                                "uint160",
-                                            ],
-                                            [
-                                                randomAddress(),
-                                                randomAddress(),
-                                                generateSingleParams(uint8),
-                                                signer.address,
-                                                generateSingleParams(uint256),
-                                                generateSingleParams(uint256),
-                                                generateSingleParams(uint256),
-                                                generateSingleParams(uint8),
-                                            ]
-                                        )
-                                    )
-                            ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                        }
-                    );
-                });
-
-                it("reverts if tokens are the same", async () => {
-                    await withSigner(this.vault.address, async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SINGLE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "address",
-                                            "address",
-                                            "uint24",
-                                            "address",
-                                            "uint256",
-                                            "uint256",
-                                            "uint256",
-                                            "uint160",
-                                        ],
-                                        [
-                                            this.usdc.address,
-                                            this.usdc.address,
-                                            generateSingleParams(uint8),
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint8),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    });
-                });
-
-                it("reverts if pool has no permisson", async () => {
-                    await withSigner(this.vault.address, async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SINGLE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "address",
-                                            "address",
-                                            "uint24",
-                                            "address",
-                                            "uint256",
-                                            "uint256",
-                                            "uint256",
-                                            "uint160",
-                                        ],
-                                        [
-                                            this.dai.address,
-                                            this.usdc.address,
-                                            generateSingleParams(uint8),
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint8),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-
-                it("pass", async () => {
+                it("succesfull validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -531,166 +456,230 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                         ).to.not.be.reverted;
                     });
                 });
+
+                describe("edge cases:", async () => {
+                    describe("if recipient is not sender", () => {
+                        it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        randomAddress(),
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TARGET
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if not a vault token", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                this.erc20RootVaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        randomAddress(),
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if tokens are the same", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        this.usdc.address,
+                                                        this.usdc.address,
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if pool has no permisson", () => {
+                        it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                            await withSigner(
+                                this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this
+                                                    .EXACT_OUTPUT_SINGLE_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "address",
+                                                        "address",
+                                                        "uint24",
+                                                        "address",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint256",
+                                                        "uint160",
+                                                    ],
+                                                    [
+                                                        this.dai.address,
+                                                        this.usdc.address,
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint8
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                                }
+                            );
+                        });
+                    });
+                });
             });
 
             describe("EXACT_INPUT_SELECTOR", async () => {
-                it("reverts if recipient is not sender", async () => {
-                    let inputParams = {
-                        path: randomBytes(40),
-                        recipient: randomAddress(),
-                        deadline: generateSingleParams(uint256),
-                        amountIn: generateSingleParams(uint256),
-                        amountOutMinimum: generateSingleParams(uint256),
-                    };
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TARGET);
-                    });
-                });
-
-                it("reverts if tokens are the same", async () => {
-                    let token = randomBytes(20);
-                    await withSigner(randomAddress(), async (signer) => {
-                        let inputParams = {
-                            path: Buffer.concat([token, randomBytes(3), token]),
-                            recipient: signer.address,
-                            deadline: generateSingleParams(uint256),
-                            amountIn: generateSingleParams(uint256),
-                            amountOutMinimum: generateSingleParams(uint256),
-                        };
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    });
-                });
-
-                it("reverts if no permission", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        let inputParams = {
-                            path: randomBytes(43),
-                            recipient: signer.address,
-                            deadline: generateSingleParams(uint256),
-                            amountIn: generateSingleParams(uint256),
-                            amountOutMinimum: generateSingleParams(uint256),
-                        };
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-
-                it("reverts if not a vault token", async () => {
-                    let pool = await this.uniswapV3Factory
-                        .connect(this.admin)
-                        .callStatic.getPool(
-                            this.dai.address,
-                            this.weth.address,
-                            this.fee
-                        );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(pool, [
-                            PermissionIdsLibrary.ERC20_APPROVE,
-                        ]);
-                    await sleep(
-                        await this.protocolGovernance.governanceDelay()
-                    );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .commitAllPermissionGrantsSurpassedDelay();
-                    let path = Buffer.concat([
-                        Buffer.from(this.dai.address.slice(2), "hex"),
-                        Buffer.from("000bb8", "hex"),
-                        Buffer.from(this.weth.address.slice(2), "hex"),
-                    ]);
-                    await withSigner(this.vault.address, async (signer) => {
-                        let inputParams = {
-                            path: path,
-                            recipient: signer.address,
-                            deadline: generateSingleParams(uint256),
-                            amountIn: generateSingleParams(uint256),
-                            amountOutMinimum: generateSingleParams(uint256),
-                        };
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_INPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    });
-                });
-
-                it("pass", async () => {
+                it("succesfull validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -743,168 +732,202 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     )
                                 )
                         ).to.not.be.reverted;
+                    });
+                });
+                describe("edge cases:", async () => {
+                    describe("if recipient is not sender", () => {
+                        it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                            let inputParams = {
+                                path: randomBytes(40),
+                                recipient: randomAddress(),
+                                deadline: generateSingleParams(uint256),
+                                amountIn: generateSingleParams(uint256),
+                                amountOutMinimum: generateSingleParams(uint256),
+                            };
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TARGET
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if tokens are the same", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            let token = randomBytes(20);
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    let inputParams = {
+                                        path: Buffer.concat([
+                                            token,
+                                            randomBytes(3),
+                                            token,
+                                        ]),
+                                        recipient: signer.address,
+                                        deadline: generateSingleParams(uint256),
+                                        amountIn: generateSingleParams(uint256),
+                                        amountOutMinimum:
+                                            generateSingleParams(uint256),
+                                    };
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if pool has no approve permission", () => {
+                        it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    let inputParams = {
+                                        path: randomBytes(43),
+                                        recipient: signer.address,
+                                        deadline: generateSingleParams(uint256),
+                                        amountIn: generateSingleParams(uint256),
+                                        amountOutMinimum:
+                                            generateSingleParams(uint256),
+                                    };
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if not a vault token", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            let pool = await this.uniswapV3Factory
+                                .connect(this.admin)
+                                .callStatic.getPool(
+                                    this.dai.address,
+                                    this.weth.address,
+                                    this.fee
+                                );
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(pool, [
+                                    PermissionIdsLibrary.ERC20_APPROVE,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .commitAllPermissionGrantsSurpassedDelay();
+                            let path = Buffer.concat([
+                                Buffer.from(this.dai.address.slice(2), "hex"),
+                                Buffer.from("000bb8", "hex"),
+                                Buffer.from(this.weth.address.slice(2), "hex"),
+                            ]);
+                            await withSigner(
+                                this.vault.address,
+                                async (signer) => {
+                                    let inputParams = {
+                                        path: path,
+                                        recipient: signer.address,
+                                        deadline: generateSingleParams(uint256),
+                                        amountIn: generateSingleParams(uint256),
+                                        amountOutMinimum:
+                                            generateSingleParams(uint256),
+                                    };
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
                     });
                 });
             });
 
             describe("EXACT_OUTPUT_SELECTOR", async () => {
-                it("reverts if recipient is not sender", async () => {
-                    let inputParams = {
-                        path: randomBytes(40),
-                        recipient: randomAddress(),
-                        deadline: generateSingleParams(uint256),
-                        amountIn: generateSingleParams(uint256),
-                        amountOutMinimum: generateSingleParams(uint256),
-                    };
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TARGET);
-                    });
-                });
-
-                it("reverts if tokens are the same", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        let token = randomBytes(20);
-                        let inputParams = {
-                            path: Buffer.concat([token, randomBytes(3), token]),
-                            recipient: signer.address,
-                            deadline: generateSingleParams(uint256),
-                            amountIn: generateSingleParams(uint256),
-                            amountOutMinimum: generateSingleParams(uint256),
-                        };
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    });
-                });
-
-                it("reverts if no permission", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        let inputParams = {
-                            path: randomBytes(43),
-                            recipient: signer.address,
-                            deadline: generateSingleParams(uint256),
-                            amountIn: generateSingleParams(uint256),
-                            amountOutMinimum: generateSingleParams(uint256),
-                        };
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                    });
-                });
-
-                it("reverts if not a vault token", async () => {
-                    let pool = await this.uniswapV3Factory
-                        .connect(this.admin)
-                        .callStatic.getPool(
-                            this.dai.address,
-                            this.weth.address,
-                            this.fee
-                        );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(pool, [
-                            PermissionIdsLibrary.ERC20_APPROVE,
-                        ]);
-                    await sleep(
-                        await this.protocolGovernance.governanceDelay()
-                    );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .commitAllPermissionGrantsSurpassedDelay();
-                    let path = Buffer.concat([
-                        Buffer.from(this.dai.address.slice(2), "hex"),
-                        Buffer.from("000bb8", "hex"),
-                        Buffer.from(this.weth.address.slice(2), "hex"),
-                    ]);
-                    await withSigner(this.vault.address, async (signer) => {
-                        let inputParams = {
-                            path: path,
-                            recipient: signer.address,
-                            deadline: generateSingleParams(uint256),
-                            amountIn: generateSingleParams(uint256),
-                            amountOutMinimum: generateSingleParams(uint256),
-                        };
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "tuple(" +
-                                                "bytes path, " +
-                                                "address recipient, " +
-                                                "uint256 deadline, " +
-                                                "uint256 amountIn, " +
-                                                "uint256 amountOutMinimum)",
-                                        ],
-                                        [inputParams]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    });
-                });
-
-                it("pass", async () => {
+                it("succesfull validate", async () => {
                     let pool = await this.uniswapV3Factory
                         .connect(this.admin)
                         .callStatic.getPool(
@@ -957,6 +980,196 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
                                     )
                                 )
                         ).to.not.be.reverted;
+                    });
+                });
+                describe("edge cases:", async () => {
+                    describe("if recipient is not sender", () => {
+                        it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                            let inputParams = {
+                                path: randomBytes(40),
+                                recipient: randomAddress(),
+                                deadline: generateSingleParams(uint256),
+                                amountIn: generateSingleParams(uint256),
+                                amountOutMinimum: generateSingleParams(uint256),
+                            };
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TARGET
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if tokens are the same", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    let token = randomBytes(20);
+                                    let inputParams = {
+                                        path: Buffer.concat([
+                                            token,
+                                            randomBytes(3),
+                                            token,
+                                        ]),
+                                        recipient: signer.address,
+                                        deadline: generateSingleParams(uint256),
+                                        amountIn: generateSingleParams(uint256),
+                                        amountOutMinimum:
+                                            generateSingleParams(uint256),
+                                    };
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if pool has no approve permission", () => {
+                        it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    let inputParams = {
+                                        path: randomBytes(43),
+                                        recipient: signer.address,
+                                        deadline: generateSingleParams(uint256),
+                                        amountIn: generateSingleParams(uint256),
+                                        amountOutMinimum:
+                                            generateSingleParams(uint256),
+                                    };
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if not a vault token", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            let pool = await this.uniswapV3Factory
+                                .connect(this.admin)
+                                .callStatic.getPool(
+                                    this.dai.address,
+                                    this.weth.address,
+                                    this.fee
+                                );
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(pool, [
+                                    PermissionIdsLibrary.ERC20_APPROVE,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .commitAllPermissionGrantsSurpassedDelay();
+                            let path = Buffer.concat([
+                                Buffer.from(this.dai.address.slice(2), "hex"),
+                                Buffer.from("000bb8", "hex"),
+                                Buffer.from(this.weth.address.slice(2), "hex"),
+                            ]);
+                            await withSigner(
+                                this.vault.address,
+                                async (signer) => {
+                                    let inputParams = {
+                                        path: path,
+                                        recipient: signer.address,
+                                        deadline: generateSingleParams(uint256),
+                                        amountIn: generateSingleParams(uint256),
+                                        amountOutMinimum:
+                                            generateSingleParams(uint256),
+                                    };
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "tuple(" +
+                                                            "bytes path, " +
+                                                            "address recipient, " +
+                                                            "uint256 deadline, " +
+                                                            "uint256 amountIn, " +
+                                                            "uint256 amountOutMinimum)",
+                                                    ],
+                                                    [inputParams]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
                     });
                 });
             });

@@ -4,7 +4,6 @@ import {
     encodeToBytes,
     generateSingleParams,
     randomAddress,
-    sleep,
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
@@ -61,109 +60,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("reverts if selector is not exchange", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                randomAddress(),
-                                randomInt(1, 1000),
-                                randomBytes(4),
-                                randomBytes(randomInt(32))
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
-                });
-            });
-
-            it("reverts if coin ids are equal", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    let amount = generateSingleParams(uint8);
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                randomAddress(),
-                                randomInt(1, 1000),
-                                CURVE_EXCHANGE_SELECTOR,
-                                encodeToBytes(
-                                    ["int128", "int128", "uint256", "uint256"],
-                                    [
-                                        amount,
-                                        amount,
-                                        generateSingleParams(uint256),
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                });
-            });
-
-            it("reverts if not a vault token", async () => {
-                await withSigner(
-                    this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    signer.address,
-                                    this.poolAddress,
-                                    randomInt(1, 1000),
-                                    CURVE_EXCHANGE_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "int128",
-                                            "int128",
-                                            "uint256",
-                                            "uint256",
-                                        ],
-                                        [
-                                            generateSingleParams(uint8),
-                                            0,
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    }
-                );
-            });
-
-            it("reverts", async () => {
-                await this.protocolGovernance
-                    .connect(this.admin)
-                    .revokePermissions(this.poolAddress, [
-                        PermissionIdsLibrary.ERC20_APPROVE,
-                    ]);
-                await withSigner(this.vault.address, async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                this.poolAddress,
-                                randomInt(1, 1000),
-                                CURVE_EXCHANGE_SELECTOR,
-                                encodeToBytes(
-                                    ["int128", "int128", "uint256", "uint256"],
-                                    [
-                                        generateSingleParams(uint8),
-                                        0,
-                                        generateSingleParams(uint256),
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                });
-            });
-
-            it("passes", async () => {
+            it("succesful validate", async () => {
                 await withSigner(this.vault.address, async (signer) => {
                     await expect(
                         this.subject
@@ -184,6 +81,131 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                                 )
                             )
                     ).to.not.be.reverted;
+                });
+            });
+            describe("edge cases:", async () => {
+                describe("if selector is not exchange", async () => {
+                    it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        randomAddress(),
+                                        randomInt(1, 1000),
+                                        randomBytes(4),
+                                        randomBytes(randomInt(32))
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
+                        });
+                    });
+                });
+
+                describe("if token ids are equal", async () => {
+                    it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            let amount = generateSingleParams(uint8);
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        randomAddress(),
+                                        randomInt(1, 1000),
+                                        CURVE_EXCHANGE_SELECTOR,
+                                        encodeToBytes(
+                                            [
+                                                "int128",
+                                                "int128",
+                                                "uint256",
+                                                "uint256",
+                                            ],
+                                            [
+                                                amount,
+                                                amount,
+                                                generateSingleParams(uint256),
+                                                generateSingleParams(uint256),
+                                            ]
+                                        )
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                        });
+                    });
+                });
+
+                describe("if not a vault token", async () => {
+                    it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                        await withSigner(
+                            this.erc20VaultSingleton.address,
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .validate(
+                                            signer.address,
+                                            this.poolAddress,
+                                            randomInt(1, 1000),
+                                            CURVE_EXCHANGE_SELECTOR,
+                                            encodeToBytes(
+                                                [
+                                                    "int128",
+                                                    "int128",
+                                                    "uint256",
+                                                    "uint256",
+                                                ],
+                                                [
+                                                    generateSingleParams(uint8),
+                                                    0,
+                                                    generateSingleParams(
+                                                        uint256
+                                                    ),
+                                                    generateSingleParams(
+                                                        uint256
+                                                    ),
+                                                ]
+                                            )
+                                        )
+                                ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                            }
+                        );
+                    });
+                });
+
+                describe("if pool has no approve permission", async () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .revokePermissions(this.poolAddress, [
+                                PermissionIdsLibrary.ERC20_APPROVE,
+                            ]);
+                        await withSigner(this.vault.address, async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        this.poolAddress,
+                                        randomInt(1, 1000),
+                                        CURVE_EXCHANGE_SELECTOR,
+                                        encodeToBytes(
+                                            [
+                                                "int128",
+                                                "int128",
+                                                "uint256",
+                                                "uint256",
+                                            ],
+                                            [
+                                                generateSingleParams(uint8),
+                                                0,
+                                                generateSingleParams(uint256),
+                                                generateSingleParams(uint256),
+                                            ]
+                                        )
+                                    )
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        });
+                    });
                 });
             });
         });
