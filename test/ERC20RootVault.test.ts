@@ -170,6 +170,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         );
                     }
 
+                    await this.weth.approve(
+                        this.subject.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.usdc.approve(
+                        this.subject.address,
+                        ethers.constants.MaxUint256
+                    );
+
                     return this.subject;
                 }
             );
@@ -724,6 +733,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             privateVault: true,
                             managementFee: BigNumber.from(randomInt(10 ** 6)),
                             performanceFee: BigNumber.from(randomInt(10 ** 6)),
+                            depositCallbackAddress:
+                                ethers.constants.AddressZero,
+                            withdrawCallbackAddress:
+                                ethers.constants.AddressZero,
                         };
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)

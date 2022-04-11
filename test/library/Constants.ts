@@ -15,3 +15,4 @@ export const YEARN_VAULT_INTERFACE_ID: string = "0x073ab565";
 export const PROTOCOL_GOVERNANCE_INTERFACE_ID: string = "0xca11fe03";
 export const VALIDATOR_INTERFACE_ID: string = "0x5e585c34";
 export const ERC20_ROOT_VAULT_INTERFACE_ID: string = "0x7681ee51";
+export const ERC20_ROOT_VAULT_GOVERNANCE: string = "0x38e18cd8";
