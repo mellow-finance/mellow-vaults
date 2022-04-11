@@ -2220,7 +2220,6 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                         await this.subject
                             .connect(this.admin)
                             .commitAllValidatorsSurpassedDelay();
-                        console.log(await this.subject.validatorsAddresses());
                         for (let i = 0; i < randomIndex; ++i) {
                             expect(
                                 await this.subject.validatorsAddresses()
