@@ -50,6 +50,7 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IYearnVaultGovernance).interfaceId == interfaceId;
     }

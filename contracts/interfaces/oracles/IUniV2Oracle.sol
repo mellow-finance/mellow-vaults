@@ -7,4 +7,7 @@ import "./IOracle.sol";
 interface IUniV2Oracle is IOracle {
     /// @notice Reference to UniV2 factory
     function factory() external returns (IUniswapV2Factory);
+
+    /// @notice Index of safety bit
+    function safetyIndex() external view returns (uint8);
 }

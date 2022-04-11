@@ -27,7 +27,7 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-
+    /// @inheritdoc IERC20Vault
     function initialize(uint256 nft_, address[] memory vaultTokens_) external {
         _initialize(vaultTokens_, nft_);
     }
