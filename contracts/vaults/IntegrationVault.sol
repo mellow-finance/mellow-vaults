@@ -37,7 +37,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
         return
             super.supportsInterface(interfaceId) ||
@@ -177,7 +176,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         return 0xffffffff;
     }
 
-    /// @inheritdoc IIntegrationVault
     function externalCall(
         address to,
         bytes4 selector,
