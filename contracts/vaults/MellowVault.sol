@@ -11,6 +11,7 @@ import "./IntegrationVault.sol";
 contract MellowVault is IMellowVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    /// @inheritdoc IMellowVault
     IERC20RootVault public vault;
 
     // -------------------  EXTERNAL, VIEW  -------------------

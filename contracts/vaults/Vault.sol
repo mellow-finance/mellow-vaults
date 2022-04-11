@@ -76,6 +76,7 @@ abstract contract Vault is IVault, ERC165 {
         return _pullExistentials;
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }

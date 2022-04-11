@@ -49,10 +49,12 @@ contract AaveVault is IAaveVault, IntegrationVault {
         }
     }
 
+    /// @inheritdoc IAaveVault
     function lendingPool() external view returns (ILendingPool) {
         return _lendingPool;
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return IntegrationVault.supportsInterface(interfaceId) || interfaceId == type(IAaveVault).interfaceId;
     }

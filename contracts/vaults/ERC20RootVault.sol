@@ -18,20 +18,25 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @inheritdoc IERC20RootVault
     uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
+    /// @inheritdoc IERC20RootVault
     uint64 public lastFeeCharge;
+    /// @inheritdoc IERC20RootVault
     uint64 public totalWithdrawnAmountsTimestamp;
+    /// @inheritdoc IERC20RootVault
     uint256[] public totalWithdrawnAmounts;
-
+    /// @inheritdoc IERC20RootVault
     uint256 public lpPriceHighWaterMarkD18;
     EnumerableSet.AddressSet private _depositorsAllowlist;
 
     // -------------------  EXTERNAL, VIEW  -------------------
-
+    /// @inheritdoc IERC20RootVault
     function depositorsAllowlist() external view returns (address[] memory) {
         return _depositorsAllowlist.values();
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -43,7 +48,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-
+    /// @inheritdoc IERC20RootVault
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -51,6 +56,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
+    /// @inheritdoc IERC20RootVault
     function removeDepositorsFromAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -58,6 +64,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
+    /// @inheritdoc IERC20RootVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -72,6 +79,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = uint64(block.timestamp);
     }
 
+    /// @inheritdoc IERC20RootVault
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
@@ -128,6 +136,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
+    /// @inheritdoc IERC20RootVault
     function withdraw(
         address to,
         uint256 lpTokenAmount,

@@ -21,10 +21,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 a1;
     }
 
+    /// @inheritdoc IUniV3Vault
     IUniswapV3Pool public pool;
-
+    /// @inheritdoc IUniV3Vault
     uint256 public uniV3Nft;
-
     INonfungiblePositionManager private _positionManager;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -91,6 +91,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         maxTokenAmounts[1] += amountMin1 < amountMax1 ? amountMax1 : amountMin1;
     }
 
+    /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
     }
@@ -117,7 +118,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-
+    /// @inheritdoc IUniV3Vault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -132,6 +133,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
 
+    /// @inheritdoc IERC721Receiver
     function onERC721Received(
         address operator,
         address from,
@@ -156,6 +158,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
+    /// @inheritdoc IUniV3Vault
     function collectEarnings() external nonReentrant returns (uint256[] memory collectedEarnings) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
@@ -190,9 +193,15 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
         (uint256[] memory prices, ) = oracle.price(_vaultTokens[0], _vaultTokens[1], 0x26);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
-        CommonLibrary.sortUint(prices);
         minPriceX96 = prices[0];
-        maxPriceX96 = prices[prices.length - 1];
+        maxPriceX96 = prices[0];
+        for (uint32 i = 0; i < prices.length; ++i) {
+            if (prices[i] < minPriceX96) {
+                minPriceX96 = prices[i];
+            } else if (prices[i] > maxPriceX96) {
+                maxPriceX96 = prices[i];
+            }
+        }
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
