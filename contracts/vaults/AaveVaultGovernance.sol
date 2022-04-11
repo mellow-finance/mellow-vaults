@@ -33,6 +33,7 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || interfaceId == type(IAaveVaultGovernance).interfaceId;
     }

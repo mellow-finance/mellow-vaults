@@ -40,6 +40,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV3VaultGovernance).interfaceId == interfaceId;
     }

@@ -11,6 +11,6 @@ export const VAULT_REGISTRY_INTERFACE_ID: string = "0x496f6121";
 export const INTEGRATION_VAULT_INTERFACE_ID: string = "0x7a63aa3a";
 export const UNIV3_VAULT_INTERFACE_ID: string = "0x58742a93";
 export const AAVE_VAULT_INTERFACE_ID: string = "0x0cba2eff";
-export const YEARN_VAULT_INTERFACE_ID: string = "0xa920b78c";
+export const YEARN_VAULT_INTERFACE_ID: string = "0x073ab565";
 export const PROTOCOL_GOVERNANCE_INTERFACE_ID: string = "0xca11fe03";
 export const ERC20_ROOT_VAULT_GOVERNANCE: string = "0x6a2c3330";
