@@ -11,6 +11,7 @@ import "../utils/ContractMeta.sol";
 contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
     /// @inheritdoc IUniV2Oracle
     IUniswapV2Factory public immutable factory;
+    /// @inheritdoc IUniV2Oracle
     uint8 public constant safetyIndex = 1;
 
     constructor(IUniswapV2Factory factory_) {

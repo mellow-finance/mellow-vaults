@@ -15,8 +15,8 @@ import "../utils/ContractMeta.sol";
 contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @inheritdoc IChainlinkOracle
     uint8 public constant safetyIndex = 5;
-
     /// @inheritdoc IChainlinkOracle
     mapping(address => address) public oraclesIndex;
     /// @inheritdoc IChainlinkOracle

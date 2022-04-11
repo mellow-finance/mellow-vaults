@@ -5,6 +5,9 @@ import "../external/chainlink/IAggregatorV3.sol";
 import "./IOracle.sol";
 
 interface IChainlinkOracle is IOracle {
+    /// @notice Index of safety bit
+    function safetyIndex() external view returns (uint8);
+
     /// @notice Checks if token has chainlink oracle
     /// @param token token address
     /// @return `true` if token is allowed, `false` o/w
