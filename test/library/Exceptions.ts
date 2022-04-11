@@ -17,7 +17,6 @@ export default class Exceptions {
     static readonly INVARIANT: string = "INVA";
     static readonly INVALID_TARGET: string = "INVTR";
     static readonly INVALID_TOKEN: string = "INVTO";
-    static readonly INVALID_LENGTH: string = "INVL";
     static readonly INVALID_SELECTOR: string = "INVS";
     static readonly LOCK: string = "LCKD";
     static readonly INVALID_INTERFACE: string = "INVI";
