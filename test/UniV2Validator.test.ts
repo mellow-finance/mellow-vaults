@@ -76,463 +76,622 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("reverts if addr is not swap", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                randomAddress(),
-                                generateSingleParams(uint256),
-                                randomBytes(4),
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
-                });
-            });
-
-            it("reverts if wrong selector", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                generateSingleParams(uint256),
-                                randomBytes(4),
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
-                });
-            });
-
-            it("reverts if path too small", async () => {
-                await withSigner(
-                    await this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    generateSingleParams(uint256),
-                                    this.EXACT_ETH_INPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "uint256",
-                                            "address[]",
-                                            "address",
-                                            "uint256",
-                                        ],
-                                        [
-                                            generateSingleParams(uint256),
-                                            [randomAddress()],
-                                            randomAddress(),
-                                            generateSingleParams(uint256),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
-                    }
-                );
-            });
-
-            it("reverts if not a vault token", async () => {
-                await withSigner(
-                    await this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    generateSingleParams(uint256),
-                                    this.EXACT_ETH_INPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "uint256",
-                                            "address[]",
-                                            "address",
-                                            "uint256",
-                                        ],
-                                        [
-                                            generateSingleParams(uint256),
-                                            [randomAddress(), randomAddress()],
-                                            randomAddress(),
-                                            generateSingleParams(uint256),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    }
-                );
-            });
-
-            it("reverts if tokens are the same", async () => {
-                await withSigner(await this.vault.address, async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                generateSingleParams(uint256),
-                                this.EXACT_ETH_INPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        [this.usdc.address, this.usdc.address],
+            describe("selector is EXACT_ETH_INPUT_SELECTOR or EXACT_TOKENS_OUTPUT_SELECTOR", async () => {
+                it("succesful validate", async () => {
+                    await withSigner(
+                        await this.vault.address,
+                        async (signer) => {
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(this.pool, [
+                                    PermissionIdsLibrary.ERC20_APPROVE,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .commitAllPermissionGrantsSurpassedDelay();
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
                                         randomAddress(),
+                                        this.swapRouterAddress,
                                         generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                });
-            });
-
-            it("reverts if pool has no approve permission", async () => {
-                await withSigner(await this.vault.address, async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                generateSingleParams(uint256),
-                                this.EXACT_ETH_INPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        [this.dai.address, this.usdc.address],
-                                        randomAddress(),
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                });
-            });
-
-            it("reverts if sender is not a reciever", async () => {
-                await withSigner(await this.vault.address, async (signer) => {
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(this.pool, [
-                            PermissionIdsLibrary.ERC20_APPROVE,
-                        ]);
-                    await sleep(
-                        await this.protocolGovernance.governanceDelay()
-                    );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .commitAllPermissionGrantsSurpassedDelay();
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                generateSingleParams(uint256),
-                                this.EXACT_ETH_INPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        [this.dai.address, this.usdc.address],
-                                        randomAddress(),
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.reverted;
-                });
-            });
-
-            it("pass", async () => {
-                await withSigner(await this.vault.address, async (signer) => {
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(this.pool, [
-                            PermissionIdsLibrary.ERC20_APPROVE,
-                        ]);
-                    await sleep(
-                        await this.protocolGovernance.governanceDelay()
-                    );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .commitAllPermissionGrantsSurpassedDelay();
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                generateSingleParams(uint256),
-                                this.EXACT_ETH_INPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        [this.dai.address, this.usdc.address],
-                                        signer.address,
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.not.be.reverted;
-                });
-            });
-
-            it("reverts if value is not zero", async () => {
-                await withSigner(
-                    await this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    generateSingleParams(uint256).add(1),
-                                    this.EXACT_ETH_OUTPUT_SELECTOR,
-                                    randomBytes(32)
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                    }
-                );
-            });
-
-            it("reverts if sender is not reciever", async () => {
-                await withSigner(
-                    await this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_ETH_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "uint256",
-                                            "uint256",
-                                            "address[]",
-                                            "address",
-                                            "uint256",
-                                        ],
-                                        [
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
+                                        this.EXACT_ETH_INPUT_SELECTOR,
+                                        encodeToBytes(
                                             [
-                                                this.dai.address,
-                                                this.usdc.address,
+                                                "uint256",
+                                                "address[]",
+                                                "address",
+                                                "uint256",
                                             ],
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                        ]
+                                            [
+                                                generateSingleParams(uint256),
+                                                [
+                                                    this.dai.address,
+                                                    this.usdc.address,
+                                                ],
+                                                signer.address,
+                                                generateSingleParams(uint256),
+                                            ]
+                                        )
                                     )
-                                )
-                        ).to.be.reverted;
-                    }
-                );
-            });
+                            ).to.not.be.reverted;
+                        }
+                    );
+                });
 
-            it("reverts if path too small", async () => {
-                await withSigner(
-                    await this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_ETH_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "uint256",
-                                            "uint256",
-                                            "address[]",
-                                            "address",
-                                            "uint256",
-                                        ],
-                                        [
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            [randomAddress()],
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
-                    }
-                );
-            });
-
-            it("reverts if not a vault token", async () => {
-                await withSigner(
-                    await this.erc20VaultSingleton.address,
-                    async (signer) => {
-                        await expect(
-                            this.subject
-                                .connect(signer)
-                                .validate(
-                                    randomAddress(),
-                                    this.swapRouterAddress,
-                                    0,
-                                    this.EXACT_ETH_OUTPUT_SELECTOR,
-                                    encodeToBytes(
-                                        [
-                                            "uint256",
-                                            "uint256",
-                                            "address[]",
-                                            "address",
-                                            "uint256",
-                                        ],
-                                        [
-                                            generateSingleParams(uint256),
-                                            generateSingleParams(uint256),
-                                            [randomAddress(), randomAddress()],
-                                            signer.address,
-                                            generateSingleParams(uint256),
-                                        ]
-                                    )
-                                )
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    }
-                );
-            });
-
-            it("reverts if tokens are the same", async () => {
-                await withSigner(await this.vault.address, async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
+                describe("edge cases:", () => {
+                    describe("if addr is not swap", () => {
+                        it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                            await withSigner(
                                 randomAddress(),
-                                this.swapRouterAddress,
-                                0,
-                                this.EXACT_ETH_OUTPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        generateSingleParams(uint256),
-                                        [this.usdc.address, this.usdc.address],
-                                        signer.address,
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                randomAddress(),
+                                                generateSingleParams(uint256),
+                                                randomBytes(4),
+                                                randomBytes(32)
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TARGET
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if wrong selector", () => {
+                        it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
+                            await withSigner(
+                                randomAddress(),
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(uint256),
+                                                randomBytes(4),
+                                                randomBytes(32)
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_SELECTOR
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if path is too small", () => {
+                        it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
+                            await withSigner(
+                                await this.erc20VaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(uint256),
+                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [randomAddress()],
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_LENGTH
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if not a vault token", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                await this.erc20VaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(uint256),
+                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            randomAddress(),
+                                                            randomAddress(),
+                                                        ],
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if tokens are the same", () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                await this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(uint256),
+                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            this.usdc.address,
+                                                            this.usdc.address,
+                                                        ],
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if pool has no approve permission", () => {
+                        it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                            await withSigner(
+                                await this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(uint256),
+                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            this.dai.address,
+                                                            this.usdc.address,
+                                                        ],
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if sender is not a reciever", () => {
+                        it(`reverts`, async () => {
+                            await withSigner(
+                                await this.vault.address,
+                                async (signer) => {
+                                    this.protocolGovernance
+                                        .connect(this.admin)
+                                        .stagePermissionGrants(this.pool, [
+                                            PermissionIdsLibrary.ERC20_APPROVE,
+                                        ]);
+                                    await sleep(
+                                        await this.protocolGovernance.governanceDelay()
+                                    );
+                                    this.protocolGovernance
+                                        .connect(this.admin)
+                                        .commitAllPermissionGrantsSurpassedDelay();
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(uint256),
+                                                this.EXACT_ETH_INPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            this.dai.address,
+                                                            this.usdc.address,
+                                                        ],
+                                                        randomAddress(),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.reverted;
+                                }
+                            );
+                        });
+                    });
                 });
             });
-
-            it("reverts if pool has no approve permission", async () => {
-                await withSigner(await this.vault.address, async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                0,
-                                this.EXACT_ETH_OUTPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        generateSingleParams(uint256),
-                                        [this.dai.address, this.usdc.address],
-                                        signer.address,
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            describe("selector is one of: EXACT_ETH_OUTPUT_SELECTOR, EXACT_TOKENS_INPUT_SELECTOR, EXACT_INPUT_SELECTOR, EXACT_OUTPUT_SELECTOR", async () => {
+                it("succesful validate", async () => {
+                    this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(this.pool, [
+                            PermissionIdsLibrary.ERC20_APPROVE,
+                        ]);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    this.protocolGovernance
+                        .connect(this.admin)
+                        .commitAllPermissionGrantsSurpassedDelay();
+                    await withSigner(
+                        await this.vault.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        randomAddress(),
+                                        this.swapRouterAddress,
+                                        0,
+                                        this.EXACT_ETH_OUTPUT_SELECTOR,
+                                        encodeToBytes(
+                                            [
+                                                "uint256",
+                                                "uint256",
+                                                "address[]",
+                                                "address",
+                                                "uint256",
+                                            ],
+                                            [
+                                                generateSingleParams(uint256),
+                                                generateSingleParams(uint256),
+                                                [
+                                                    this.dai.address,
+                                                    this.usdc.address,
+                                                ],
+                                                signer.address,
+                                                generateSingleParams(uint256),
+                                            ]
+                                        )
+                                    )
+                            ).to.not.be.reverted;
+                        }
+                    );
                 });
-            });
 
-            it("pass", async () => {
-                this.protocolGovernance
-                    .connect(this.admin)
-                    .stagePermissionGrants(this.pool, [
-                        PermissionIdsLibrary.ERC20_APPROVE,
-                    ]);
-                await sleep(await this.protocolGovernance.governanceDelay());
-                this.protocolGovernance
-                    .connect(this.admin)
-                    .commitAllPermissionGrantsSurpassedDelay();
-                await withSigner(await this.vault.address, async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                randomAddress(),
-                                this.swapRouterAddress,
-                                0,
-                                this.EXACT_ETH_OUTPUT_SELECTOR,
-                                encodeToBytes(
-                                    [
-                                        "uint256",
-                                        "uint256",
-                                        "address[]",
-                                        "address",
-                                        "uint256",
-                                    ],
-                                    [
-                                        generateSingleParams(uint256),
-                                        generateSingleParams(uint256),
-                                        [this.dai.address, this.usdc.address],
-                                        signer.address,
-                                        generateSingleParams(uint256),
-                                    ]
-                                )
-                            )
-                    ).to.not.be.reverted;
+                describe("edge cases:", async () => {
+                    describe("if value is not zero", async () => {
+                        it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
+                            await withSigner(
+                                await this.erc20VaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                generateSingleParams(
+                                                    uint256
+                                                ).add(1),
+                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                randomBytes(32)
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_VALUE
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if sender is not reciever", async () => {
+                        it(`reverts`, async () => {
+                            await withSigner(
+                                await this.erc20VaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            this.dai.address,
+                                                            this.usdc.address,
+                                                        ],
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.reverted;
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if path too small", async () => {
+                        it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
+                            await withSigner(
+                                await this.erc20VaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [randomAddress()],
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_LENGTH
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if not a vault token", async () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                await this.erc20VaultSingleton.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            randomAddress(),
+                                                            randomAddress(),
+                                                        ],
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if tokens are the same", async () => {
+                        it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
+                            await withSigner(
+                                await this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            this.usdc.address,
+                                                            this.usdc.address,
+                                                        ],
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(
+                                        Exceptions.INVALID_TOKEN
+                                    );
+                                }
+                            );
+                        });
+                    });
+
+                    describe("if pool has no approve permission", async () => {
+                        it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                            await withSigner(
+                                await this.vault.address,
+                                async (signer) => {
+                                    await expect(
+                                        this.subject
+                                            .connect(signer)
+                                            .validate(
+                                                randomAddress(),
+                                                this.swapRouterAddress,
+                                                0,
+                                                this.EXACT_ETH_OUTPUT_SELECTOR,
+                                                encodeToBytes(
+                                                    [
+                                                        "uint256",
+                                                        "uint256",
+                                                        "address[]",
+                                                        "address",
+                                                        "uint256",
+                                                    ],
+                                                    [
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                        [
+                                                            this.dai.address,
+                                                            this.usdc.address,
+                                                        ],
+                                                        signer.address,
+                                                        generateSingleParams(
+                                                            uint256
+                                                        ),
+                                                    ]
+                                                )
+                                            )
+                                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                                }
+                            );
+                        });
+                    });
                 });
             });
         });

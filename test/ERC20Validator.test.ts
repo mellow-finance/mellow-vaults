@@ -43,83 +43,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
         });
 
         describe("#validate", () => {
-            it("reverts if value != 0", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                randomAddress(),
-                                generateSingleParams(uint256),
-                                randomBytes(4),
-                                randomBytes(randomInt(32))
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                });
-            });
-
-            it("reverts if selector is not approve", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                randomAddress(),
-                                0,
-                                randomBytes(4),
-                                randomBytes(randomInt(32))
-                            )
-                    ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
-                });
-            });
-
-            it("reverts if no transfer permission", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                randomAddress(),
-                                0,
-                                APPROVE_SELECTOR,
-                                randomBytes(randomInt(32))
-                            )
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                });
-            });
-
-            it("reverts if no approve permission", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    let tokenAddress = randomAddress();
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .stagePermissionGrants(tokenAddress, [
-                            PermissionIdsLibrary.ERC20_TRANSFER,
-                        ]);
-                    await sleep(
-                        await this.protocolGovernance.governanceDelay()
-                    );
-                    this.protocolGovernance
-                        .connect(this.admin)
-                        .commitPermissionGrants(tokenAddress);
-                    await expect(
-                        this.subject
-                            .connect(signer)
-                            .validate(
-                                signer.address,
-                                tokenAddress,
-                                0,
-                                APPROVE_SELECTOR,
-                                randomBytes(32)
-                            )
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                });
-            });
-
-            it("return, because spender can approve", async () => {
+            it("succesful validate, spender can approve", async () => {
                 await withSigner(randomAddress(), async (signer) => {
                     let tokenAddress = randomAddress();
                     let spenderAddress = randomAddress();
@@ -153,7 +77,7 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
                 });
             });
 
-            it("return, because sender is trusted strategy", async () => {
+            it("succesful validate, sender is trusted strategy", async () => {
                 await withSigner(randomAddress(), async (signer) => {
                     let tokenAddress = randomAddress();
                     let spenderAddress = randomAddress();
@@ -189,6 +113,92 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
                                 encodeToBytes(["address"], [spenderAddress])
                             )
                     ).to.not.be.reverted;
+                });
+            });
+
+            describe("edge cases:", () => {
+                describe("if value is not zero", () => {
+                    it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        randomAddress(),
+                                        generateSingleParams(uint256),
+                                        randomBytes(4),
+                                        randomBytes(randomInt(32))
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                        });
+                    });
+                });
+
+                describe("if selector is not approve", () => {
+                    it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        randomAddress(),
+                                        0,
+                                        randomBytes(4),
+                                        randomBytes(randomInt(32))
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
+                        });
+                    });
+                });
+
+                describe("if no transfer permission", () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        randomAddress(),
+                                        0,
+                                        APPROVE_SELECTOR,
+                                        randomBytes(randomInt(32))
+                                    )
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        });
+                    });
+                });
+
+                describe("if no approve permission", () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            let tokenAddress = randomAddress();
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .stagePermissionGrants(tokenAddress, [
+                                    PermissionIdsLibrary.ERC20_TRANSFER,
+                                ]);
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            this.protocolGovernance
+                                .connect(this.admin)
+                                .commitPermissionGrants(tokenAddress);
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .validate(
+                                        signer.address,
+                                        tokenAddress,
+                                        0,
+                                        APPROVE_SELECTOR,
+                                        randomBytes(32)
+                                    )
+                            ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        });
+                    });
                 });
             });
         });
