@@ -836,14 +836,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         [0, 0],
                         []
                     );
-
-                console.log(
-                    (
-                        await this.subject
-                            .connect(this.mStrategyAdmin)
-                            .callStatic.rebalance()
-                    ).toString()
-                );
             });
 
             describe("access control", () => {
@@ -921,7 +913,20 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     .setOracleParams(oracleParams);
 
                 let res = await this.subject.callStatic.getAverageTick();
-                expect(res.averageTick).to.be.eq(params.observationsParams.tickCumulative - params.observationsParams.tickCumulativeLast)
+                let expectedAverageTick =
+                    (Number(params?.observationsParams?.tickCumulative) -
+                        Number(
+                            params?.observationsParams?.tickCumulativeLast
+                        )) /
+                    (Number(params?.observationsParams?.blockTimestamp) -
+                        Number(params?.observationsParams?.blockTimestampLast));
+
+                let expectedTickDeviation =
+                    Number(params?.slot0Params?.tick) - expectedAverageTick;
+
+                expect(res.averageTick).to.be.eq(expectedAverageTick);
+                expect(res.deviation).to.be.eq(expectedTickDeviation);
+
                 await expect(this.subject.getAverageTick()).to.not.be.reverted;
             });
 
