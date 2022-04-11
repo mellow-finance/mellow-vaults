@@ -15,12 +15,17 @@ import "../utils/ContractMeta.sol";
 contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @inheritdoc IUniV3Oracle
     uint16 public constant LOW_OBS = 10; // >= 2.5 min
+    /// @inheritdoc IUniV3Oracle
     uint16 public constant MID_OBS = 30; // >= 7.5 min
+    /// @inheritdoc IUniV3Oracle
     uint16 public constant HIGH_OBS = 100; // >= 30 min
 
+    /// @inheritdoc IUniV3Oracle
     IUniswapV3Factory public immutable factory;
-    mapping(address => mapping(address => IUniswapV3Pool)) poolsIndex;
+    /// @inheritdoc IUniV3Oracle
+    mapping(address => mapping(address => IUniswapV3Pool)) public poolsIndex;
     EnumerableSet.AddressSet private _pools;
 
     constructor(
@@ -40,6 +45,9 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
+        if (token0 > token1) {
+            (token0, token1) = (token1, token0);
+        }
         IUniswapV3Pool pool = poolsIndex[token0][token1];
         if (address(pool) == address(0)) {
             return (pricesX96, safetyIndices);
@@ -58,13 +66,14 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         for (uint256 i = 2; i < 5; i++) {
             if (safetyIndicesSet & (1 << i) > 0) {
                 uint16 bfAvg = _obsForSafety(i);
-                if (observationCardinality < bfAvg) {
+                if (observationCardinality <= bfAvg) {
                     continue;
                 }
                 uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
                     uint256(observationCardinality);
                 uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
                     uint256(observationCardinality);
+                require(obs0 < obs1, ExceptionsLibrary.INVALID_VALUE);
                 int256 tickAverage;
                 {
                     (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
@@ -79,24 +88,23 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         }
         assembly {
             mstore(pricesX96, len)
+            mstore(safetyIndices, len)
         }
-        bool revTokens = token0 > token1;
         for (uint256 i = 0; i < len; i++) {
-            if (revTokens) {
-                pricesX96[i] = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, pricesX96[i]);
-            }
             pricesX96[i] = FullMath.mulDiv(pricesX96[i], pricesX96[i], CommonLibrary.Q96);
         }
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IUniV3Oracle).interfaceId == interfaceId;
     }
 
     // -------------------------  EXTERNAL, MUTATING  ------------------------------
 
+    /// @inheritdoc IUniV3Oracle
     function addUniV3Pools(IUniswapV3Pool[] memory pools) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _requireAdmin();
         _addUniV3Pools(pools);
     }
 
@@ -115,15 +123,17 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             return LOW_OBS;
         } else if (safety == 3) {
             return MID_OBS;
-        } else if (safety == 4) {
+        } else {
+            require(safety == 4, ExceptionsLibrary.INVALID_VALUE);
             return HIGH_OBS;
         }
-        return 0;
     }
 
     function _addUniV3Pools(IUniswapV3Pool[] memory pools) internal {
         IUniswapV3Pool[] memory replaced = new IUniswapV3Pool[](pools.length);
+        IUniswapV3Pool[] memory added = new IUniswapV3Pool[](pools.length);
         uint256 j;
+        uint256 k;
         for (uint256 i = 0; i < pools.length; i++) {
             IUniswapV3Pool pool = pools[i];
             address token0 = pool.token0();
@@ -133,18 +143,27 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             if (address(currentPool) != address(0)) {
                 replaced[j] = currentPool;
                 j += 1;
+            } else {
+                added[k] = currentPool;
+                k += 1;
             }
             poolsIndex[token0][token1] = pool;
         }
         assembly {
             mstore(replaced, j)
+            mstore(added, k)
         }
-        emit PoolsAdded(tx.origin, msg.sender, pools, replaced);
+        emit PoolsUpdated(tx.origin, msg.sender, added, replaced);
     }
 
     // --------------------------  EVENTS  --------------------------
 
-    event PoolsAdded(
+    /// @notice Emitted when new pool is added or updated and become available for oracle prices
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param pools UniV3 pools added
+    /// @param replacedPools UniV3 pools updated
+    event PoolsUpdated(
         address indexed origin,
         address indexed sender,
         IUniswapV3Pool[] pools,

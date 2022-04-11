@@ -179,6 +179,9 @@ const config: HardhatUserConfig = {
             arbitrum: "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
             optimism: "0x4200000000000000000000000000000000000006",
         },
+        wsteth: {
+            default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
+        },
         dai: {
             default: "0x6b175474e89094c44da98b954eedeac495271d0f",
             kovan: "0x4f96fe3b7a6cf9725f59d353f723c1bdb64ca6aa",

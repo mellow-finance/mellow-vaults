@@ -15,10 +15,11 @@ import "../utils/ContractMeta.sol";
 contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @inheritdoc IChainlinkOracle
     uint8 public constant safetyIndex = 5;
-
     /// @inheritdoc IChainlinkOracle
     mapping(address => address) public oraclesIndex;
+    /// @inheritdoc IChainlinkOracle
     mapping(address => int256) public decimalsIndex;
     EnumerableSet.AddressSet private _tokens;
 
@@ -48,7 +49,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
-        if (safetyIndicesSet >> 5 != 1) {
+        if (((safetyIndicesSet >> safetyIndex) & 1) != 1) {
             return (pricesX96, safetyIndices);
         }
         IAggregatorV3 chainlinkOracle0 = IAggregatorV3(oraclesIndex[token0]);
@@ -78,9 +79,10 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
         pricesX96 = new uint256[](1);
         safetyIndices = new uint256[](1);
         pricesX96[0] = FullMath.mulDiv(price0, CommonLibrary.Q96, price1);
-        safetyIndices[0] = 5;
+        safetyIndices[0] = safetyIndex;
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
         return super.supportsInterface(interfaceId) || interfaceId == type(IChainlinkOracle).interfaceId;
     }
@@ -89,7 +91,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
 
     /// @inheritdoc IChainlinkOracle
     function addChainlinkOracles(address[] memory tokens, address[] memory oracles) external {
-        require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
+        _requireAdmin();
         _addChainlinkOracles(tokens, oracles);
     }
 
@@ -129,5 +131,10 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
 
     // --------------------------  EVENTS  --------------------------
 
+    /// @notice Emitted when new Chainlink oracle is added
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tokens Tokens added
+    /// @param oracles Orecles added for the tokens
     event OraclesAdded(address indexed origin, address indexed sender, address[] tokens, address[] oracles);
 }

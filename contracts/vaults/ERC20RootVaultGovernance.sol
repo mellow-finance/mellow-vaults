@@ -9,8 +9,11 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
+    /// @inheritdoc IERC20RootVaultGovernance
     uint256 public immutable MAX_PROTOCOL_FEE;
+    /// @inheritdoc IERC20RootVaultGovernance
     uint256 public immutable MAX_MANAGEMENT_FEE;
+    /// @inheritdoc IERC20RootVaultGovernance
     uint256 public immutable MAX_PERFORMANCE_FEE;
 
     /// @notice Creates a new contract.
@@ -70,7 +73,9 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                     strategyPerformanceTreasury: address(0),
                     privateVault: false,
                     managementFee: 0,
-                    performanceFee: 0
+                    performanceFee: 0,
+                    depositCallbackAddress: address(0),
+                    withdrawCallbackAddress: address(0)
                 });
         }
         return abi.decode(_stagedDelayedStrategyParams[nft], (DelayedStrategyParams));
@@ -93,7 +98,9 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                     strategyPerformanceTreasury: address(0),
                     privateVault: false,
                     managementFee: 0,
-                    performanceFee: 0
+                    performanceFee: 0,
+                    depositCallbackAddress: address(0),
+                    withdrawCallbackAddress: address(0)
                 });
         }
         return abi.decode(_delayedStrategyParams[nft], (DelayedStrategyParams));
@@ -107,6 +114,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
+    // @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernance).interfaceId == interfaceId;
     }

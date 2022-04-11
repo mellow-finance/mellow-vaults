@@ -9,6 +9,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
 import "../interfaces/vaults/IERC20RootVault.sol";
+import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
 
@@ -17,20 +18,25 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @inheritdoc IERC20RootVault
     uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
+    /// @inheritdoc IERC20RootVault
     uint64 public lastFeeCharge;
+    /// @inheritdoc IERC20RootVault
     uint64 public totalWithdrawnAmountsTimestamp;
+    /// @inheritdoc IERC20RootVault
     uint256[] public totalWithdrawnAmounts;
-
+    /// @inheritdoc IERC20RootVault
     uint256 public lpPriceHighWaterMarkD18;
     EnumerableSet.AddressSet private _depositorsAllowlist;
 
     // -------------------  EXTERNAL, VIEW  -------------------
-
+    /// @inheritdoc IERC20RootVault
     function depositorsAllowlist() external view returns (address[] memory) {
         return _depositorsAllowlist.values();
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -42,7 +48,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-
+    /// @inheritdoc IERC20RootVault
     function addDepositorsToAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -50,6 +56,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
+    /// @inheritdoc IERC20RootVault
     function removeDepositorsFromAllowlist(address[] calldata depositors) external {
         _requireAtLeastStrategy();
         for (uint256 i = 0; i < depositors.length; i++) {
@@ -57,6 +64,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
     }
 
+    /// @inheritdoc IERC20RootVault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -71,6 +79,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = uint64(block.timestamp);
     }
 
+    /// @inheritdoc IERC20RootVault
     function deposit(
         uint256[] memory tokenAmounts,
         uint256 minLpTokens,
@@ -120,9 +129,14 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
 
+        if (delayedStrategyParams.depositCallbackAddress != address(0)) {
+            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback();
+        }
+
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
     }
 
+    /// @inheritdoc IERC20RootVault
     function withdraw(
         address to,
         uint256 lpTokenAmount,
@@ -154,6 +168,22 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         _burn(msg.sender, lpTokenAmount);
+
+        uint256 thisNft = _nft;
+        IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
+            address(_vaultGovernance)
+        ).delayedStrategyParams(thisNft);
+
+        if (delayedStrategyParams.withdrawCallbackAddress != address(0)) {
+            try ILpCallback(delayedStrategyParams.withdrawCallbackAddress).withdrawCallback() {} catch Error(
+                string memory reason
+            ) {
+                emit WithdrawCallbackLog(reason);
+            } catch {
+                emit WithdrawCallbackLog("callback failed without reason");
+            }
+        }
+
         emit Withdraw(msg.sender, _vaultTokens, actualTokenAmounts, lpTokenAmount);
     }
 
@@ -430,4 +460,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+
+    /// @notice Emitted when callback in withdraw failed
+    /// @param reason Error reason
+    event WithdrawCallbackLog(string reason);
 }

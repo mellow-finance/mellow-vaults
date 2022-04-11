@@ -17,20 +17,22 @@ contract AggregateVault is IAggregateVault, Vault {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    /// @inheritdoc IVaultRoot
     function subvaultNfts() external view returns (uint256[] memory) {
         return _subvaultNfts;
     }
 
+    /// @inheritdoc IVaultRoot
     function subvaultOneBasedIndex(uint256 nft_) external view returns (uint256) {
         return _subvaultNftsIndex[nft_];
     }
 
-    function hasSubvault(address vault) external view returns (bool) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        uint256 subvaultNft = registry.nftForVault(vault);
-        return (_subvaultNftsIndex[subvaultNft] > 0);
+    /// @inheritdoc IVaultRoot
+    function hasSubvault(uint256 nft_) external view returns (bool) {
+        return (_subvaultNftsIndex[nft_] > 0);
     }
 
+    /// @inheritdoc IVaultRoot
     function subvaultAt(uint256 index) external view returns (address) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 subvaultNft = _subvaultNfts[index];
@@ -57,6 +59,7 @@ contract AggregateVault is IAggregateVault, Vault {
         }
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
         return super.supportsInterface(interfaceId) || type(IAggregateVault).interfaceId == interfaceId;
     }

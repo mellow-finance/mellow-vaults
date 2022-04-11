@@ -167,6 +167,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         privateVault: true,
                         managementFee: 0,
                         performanceFee: 0,
+                        depositCallbackAddress: ethers.constants.AddressZero,
+                        withdrawCallbackAddress: ethers.constants.AddressZero,
                     });
                 await sleep(this.governanceDelay);
                 await this.erc20RootVaultGovernance
@@ -316,6 +318,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             privateVault: true,
                             managementFee: BigNumber.from(20000000),
                             performanceFee: BigNumber.from(200000000),
+                            depositCallbackAddress:
+                                ethers.constants.AddressZero,
+                            withdrawCallbackAddress:
+                                ethers.constants.AddressZero,
                         });
                     await sleep(this.governanceDelay);
                     await this.erc20RootVaultGovernance
@@ -419,7 +425,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             Number(
                                                 (
                                                     await this.subject.FIRST_DEPOSIT_LIMIT()
-                                                ).add(1)
+                                                ).add(10 ** 4)
                                             ),
                                             Number(
                                                 this.wethDeployerSupply
@@ -447,7 +453,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             Number(
                                                 (
                                                     await this.subject.FIRST_DEPOSIT_LIMIT()
-                                                ).add(1)
+                                                ).add(10 ** 4)
                                             ),
                                             Number(
                                                 this.usdcDeployerSupply

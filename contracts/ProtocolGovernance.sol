@@ -8,7 +8,6 @@ import "./interfaces/IProtocolGovernance.sol";
 import "./libraries/ExceptionsLibrary.sol";
 import "./UnitPricesGovernance.sol";
 import "./utils/ContractMeta.sol";
-import "hardhat/console.sol";
 
 /// @notice Governance that manages all params common for Mellow Permissionless Vaults protocol.
 contract ProtocolGovernance is ContractMeta, IProtocolGovernance, ERC165, UnitPricesGovernance, Multicall {

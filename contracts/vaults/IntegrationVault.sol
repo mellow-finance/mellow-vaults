@@ -37,6 +37,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, Vault) returns (bool) {
         return
             super.supportsInterface(interfaceId) ||
@@ -101,7 +102,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
             address zeroVault = root.subvaultAt(0);
             if (zeroVault == address(this)) {
                 // If we pull from zero vault
-                require(root.hasSubvault(to) && to != address(this), ExceptionsLibrary.INVALID_TARGET);
+                require(
+                    root.hasSubvault(registry.nftForVault(to)) && to != address(this),
+                    ExceptionsLibrary.INVALID_TARGET
+                );
             } else {
                 // If we pull from other vault
                 require(zeroVault == to, ExceptionsLibrary.INVALID_TARGET);
@@ -173,6 +177,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         return 0xffffffff;
     }
 
+    /// @inheritdoc IIntegrationVault
     function externalCall(
         address to,
         bytes4 selector,

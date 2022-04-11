@@ -71,12 +71,14 @@ abstract contract Vault is IVault, ERC165 {
     /// @inheritdoc IVault
     function tvl() public view virtual returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts);
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
-    }
-
+    /// @inheritdoc IVault
     function pullExistentials() external view returns (uint256[] memory) {
         return _pullExistentials;
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -106,7 +108,6 @@ abstract contract Vault is IVault, ERC165 {
             IERC20Metadata token = IERC20Metadata(vaultTokens_[i]);
             _pullExistentials.push(10**(token.decimals() / 2));
         }
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         emit Initialized(tx.origin, msg.sender, vaultTokens_, nft_);
     }
 

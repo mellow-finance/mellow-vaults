@@ -5,8 +5,11 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "../interfaces/utils/IDefaultAccessControl.sol";
 import "../libraries/ExceptionsLibrary.sol";
 
-/// @notice This is a default access control with 2 roles -
-/// FORBIDDEN and FORBIDDEN_DELEGATE.
+/// @notice This is a default access control with 3 roles:
+///
+/// - ADMIN: allowed to do anything
+/// - ADMIN_DELEGATE: allowed to do anything except assigning ADMIN and ADMIN_DELEGATE roles
+/// - OPERATOR: low-privileged role, generally keeper or some other bot
 contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnumerable {
     bool public initialized;
 
@@ -16,20 +19,23 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
-    /// @notice Checks if the address is contract admin.
+    /// @notice Checks if the address is ADMIN or ADMIN_DELEGATE.
     /// @param sender Adddress to check
     /// @return `true` if sender is an admin, `false` otherwise
     function isAdmin(address sender) public view returns (bool) {
         return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
     }
 
+    /// @notice Checks if the address is OPERATOR.
+    /// @param sender Adddress to check
+    /// @return `true` if sender is an admin, `false` otherwise
     function isOperator(address sender) public view returns (bool) {
         return hasRole(OPERATOR, sender);
     }
 
     // -------------------------  EXTERNAL, MUTATING  ------------------------------
 
-    /// @notice Creates a new contract.
+    /// @notice Initializes a new contract with roles and single ADMIN.
     /// @param admin Admin of the contract
     function init(address admin) public {
         require(admin != address(0), ExceptionsLibrary.ADDRESS_ZERO);
