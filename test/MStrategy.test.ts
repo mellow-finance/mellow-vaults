@@ -3,6 +3,7 @@ import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
     mint,
+    now,
     randomAddress,
     sleep,
     toObject,
@@ -16,6 +17,9 @@ import {
     MStrategy,
     ProtocolGovernance,
     IYearnProtocolVault,
+    MockNonfungiblePositionManager,
+    MockUniswapV3Factory,
+    MockUniswapV3Pool,
 } from "./types";
 import {
     setupVault,
@@ -235,6 +239,75 @@ contract<MStrategy, DeployOptions, CustomContext>(
         beforeEach(async () => {
             await this.deploymentFixture();
         });
+
+        type DeployMockParams = {
+            slot0Params?: {
+                sqrtPriceX96?: BigNumber;
+                tick?: Number;
+                observationIndex?: Number;
+                observationCardinality?: Number;
+                observationCardinalityNext?: Number;
+                feeProtocol?: Number;
+                unlocked?: Boolean;
+            };
+            observationsParams?: {
+                blockTimestamp?: Number;
+                tickCumulative?: Number;
+                secondsPerLiquidityCumulativeX128?: BigNumber;
+                initialized?: Boolean;
+                blockTimestampLast?: Number;
+                tickCumulativeLast?: Number;
+            };
+        };
+        async function deployMockContracts(params?: DeployMockParams) {
+            let mockUniswapV3PoolFactory = await ethers.getContractFactory(
+                "MockUniswapV3Pool"
+            );
+            let mockUniswapV3Pool = await mockUniswapV3PoolFactory.deploy();
+
+            let mockUniswapV3FactoryFactory = await ethers.getContractFactory(
+                "MockUniswapV3Factory"
+            );
+            let mockUniswapV3Factory = await mockUniswapV3FactoryFactory.deploy(
+                mockUniswapV3Pool.address
+            );
+
+            let mockNonfungiblePositionManagerFcatory =
+                await ethers.getContractFactory(
+                    "MockNonfungiblePositionManager"
+                );
+            let mockNonfungiblePositionManager =
+                await mockNonfungiblePositionManagerFcatory.deploy(
+                    mockUniswapV3Factory.address
+                );
+
+            const { uniswapV3Router } = await getNamedAccounts();
+            const mStrategy = await (
+                await ethers.getContractFactory("MStrategy")
+            ).deploy(mockNonfungiblePositionManager.address, uniswapV3Router);
+
+            await mockUniswapV3Pool.setSlot0Params(
+                params?.slot0Params?.sqrtPriceX96 ?? 0,
+                params?.slot0Params?.tick ?? 0,
+                params?.slot0Params?.observationIndex ?? 0,
+                params?.slot0Params?.observationCardinality ?? 0,
+                params?.slot0Params?.observationCardinalityNext ?? 0,
+                params?.slot0Params?.feeProtocol ?? 0,
+                params?.slot0Params?.unlocked ?? true
+            );
+
+            await mockUniswapV3Pool.setObservationsParams(
+                params?.observationsParams?.blockTimestamp ?? 0,
+                params?.observationsParams?.tickCumulative ?? 0,
+                params?.observationsParams?.secondsPerLiquidityCumulativeX128 ??
+                    0,
+                params?.observationsParams?.initialized ?? false,
+                params?.observationsParams?.blockTimestampLast ?? 0,
+                params?.observationsParams?.tickCumulativeLast ?? 0
+            );
+
+            return mStrategy;
+        }
 
         describe("#constructor", () => {
             it("deploys a new contract", async () => {
@@ -785,6 +858,135 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         await expect(
                             this.subject.connect(s).rebalance()
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                    });
+                });
+            });
+        });
+
+        describe("#getAverageTick", () => {
+            it("returns average UniswapV3Pool price tick", async () => {
+                let params: DeployMockParams = {
+                    slot0Params: {
+                        tick: 198240,
+                        observationIndex: 10,
+                        observationCardinality: 100,
+                        observationCardinalityNext: 110,
+                        feeProtocol: 10,
+                        unlocked: false,
+                    },
+                    observationsParams: {
+                        blockTimestamp: 10 ** 8 + 100,
+                        blockTimestampLast: 10 ** 8,
+                        tickCumulative: 199240,
+                        tickCumulativeLast: 198240,
+                    },
+                };
+                let mStrategy: Contract = await deployMockContracts(params);
+                const address = await mStrategy.callStatic.createStrategy(
+                    this.params.tokens,
+                    this.params.erc20Vault,
+                    this.params.moneyVault,
+                    this.params.fee,
+                    this.params.admin
+                );
+                await mStrategy.createStrategy(
+                    this.params.tokens,
+                    this.params.erc20Vault,
+                    this.params.moneyVault,
+                    this.params.fee,
+                    this.params.admin
+                );
+                this.subject = await ethers.getContractAt("MStrategy", address);
+
+                const oracleParams: OracleParamsStruct = {
+                    oracleObservationDelta: 10,
+                    maxTickDeviation: 50,
+                    maxSlippageD: Math.round(0.1 * 10 ** 9),
+                };
+                const ratioParams: RatioParamsStruct = {
+                    tickMin: 198240 - 5000,
+                    tickMax: 198240 + 5000,
+                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                    minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                    minTickRebalanceThreshold: 180,
+                    tickNeighborhood: 60,
+                    tickIncrease: 180,
+                };
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setRatioParams(ratioParams);
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setOracleParams(oracleParams);
+
+                let res = await this.subject.callStatic.getAverageTick();
+                expect(res.averageTick).to.be.eq(params.observationsParams.tickCumulative - params.observationsParams.tickCumulativeLast)
+                await expect(this.subject.getAverageTick()).to.not.be.reverted;
+            });
+
+            describe("edge cases", () => {
+                describe("when observationCardinality <= oracleObservationDelta", () => {
+                    it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
+                        let params: DeployMockParams = {
+                            slot0Params: {
+                                tick: 198240,
+                                observationIndex: 10,
+                                observationCardinality: 100,
+                            },
+                        };
+                        let mStrategy: Contract = await deployMockContracts(
+                            params
+                        );
+                        const address =
+                            await mStrategy.callStatic.createStrategy(
+                                this.params.tokens,
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                this.params.fee,
+                                this.params.admin
+                            );
+                        await mStrategy.createStrategy(
+                            this.params.tokens,
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.fee,
+                            this.params.admin
+                        );
+                        this.subject = await ethers.getContractAt(
+                            "MStrategy",
+                            address
+                        );
+
+                        const oracleParams: OracleParamsStruct = {
+                            oracleObservationDelta: 101,
+                            maxTickDeviation: 50,
+                            maxSlippageD: Math.round(0.1 * 10 ** 9),
+                        };
+                        const ratioParams: RatioParamsStruct = {
+                            tickMin: 198240 - 5000,
+                            tickMax: 198240 + 5000,
+                            erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                            minErc20MoneyRatioDeviationD: Math.round(
+                                0.01 * 10 ** 9
+                            ),
+                            minTickRebalanceThreshold: 180,
+                            tickNeighborhood: 60,
+                            tickIncrease: 180,
+                        };
+
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(ratioParams);
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setOracleParams(oracleParams);
+
+                        await expect(
+                            this.subject
+                                .connect(this.mStrategyAdmin)
+                                .rebalance()
+                        ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                     });
                 });
             });
