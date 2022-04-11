@@ -52,6 +52,15 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         bool disableDeposit;
     }
 
+    /// @notice Number of maximum protocol fee
+    function MAX_PROTOCOL_FEE() external view returns (uint256);
+
+    /// @notice Number of maximum management fee
+    function MAX_MANAGEMENT_FEE() external view returns (uint256);
+
+    /// @notice Number of maximum performance fee
+    function MAX_PERFORMANCE_FEE() external view returns (uint256);
+
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
 

@@ -21,10 +21,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 a1;
     }
 
+    /// @inheritdoc IUniV3Vault
     IUniswapV3Pool public pool;
-
+    /// @inheritdoc IUniV3Vault
     uint256 public uniV3Nft;
-
     INonfungiblePositionManager private _positionManager;
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -91,6 +91,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         maxTokenAmounts[1] += amountMin1 < amountMax1 ? amountMax1 : amountMin1;
     }
 
+    /// @inheritdoc IntegrationVault
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IUniV3Vault).interfaceId);
     }
@@ -117,7 +118,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
-
+    /// @inheritdoc IUniV3Vault
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
@@ -132,6 +133,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
 
+    /// @inheritdoc IERC721Receiver
     function onERC721Received(
         address operator,
         address from,
@@ -156,6 +158,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return this.onERC721Received.selector;
     }
 
+    /// @inheritdoc IUniV3Vault
     function collectEarnings() external nonReentrant returns (uint256[] memory collectedEarnings) {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);

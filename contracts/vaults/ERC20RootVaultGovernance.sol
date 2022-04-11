@@ -9,8 +9,11 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
+    /// @inheritdoc IERC20RootVaultGovernance
     uint256 public immutable MAX_PROTOCOL_FEE;
+    /// @inheritdoc IERC20RootVaultGovernance
     uint256 public immutable MAX_MANAGEMENT_FEE;
+    /// @inheritdoc IERC20RootVaultGovernance
     uint256 public immutable MAX_PERFORMANCE_FEE;
 
     /// @notice Creates a new contract.
@@ -111,6 +114,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         return abi.decode(_strategyParams[nft], (StrategyParams));
     }
 
+    // @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || type(IERC20RootVaultGovernance).interfaceId == interfaceId;
     }
