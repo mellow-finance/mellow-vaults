@@ -83,7 +83,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#price", () => {
             describe("when pools index is zero", () => {
-                it("returns empty response", async () => {
+                it("does not return prices", async () => {
                     const pricesResult = await this.chainlinkOracle.price(
                         this.usdc.address,
                         this.weth.address,
@@ -98,7 +98,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("when one of tokens is zero", () => {
-                it("retruns empty response", async () => {
+                it("does not return prices", async () => {
                     const pricesResult = await this.chainlinkOracle.price(
                         ethers.constants.AddressZero,
                         this.usdc.address,
@@ -113,7 +113,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("when the first call of queryChainlinkOracle failed", () => {
-                it("retruns empty response", async () => {
+                it("does not return prices", async () => {
                     await this.chainlinkOracle
                         .connect(this.admin)
                         .addChainlinkOracles(
@@ -134,7 +134,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("when the second call of queryChainlinkOracle failed", () => {
-                it("retruns empty response", async () => {
+                it("does not return prices", async () => {
                     await this.chainlinkOracle
                         .connect(this.admin)
                         .addChainlinkOracles(
@@ -154,7 +154,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
-            it("returns correct pricesX96 and safetyIndexes", async () => {
+            it("returns prices", async () => {
                 await this.chainlinkOracle
                     .connect(this.admin)
                     .addChainlinkOracles(
@@ -220,7 +220,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#addChainlinkOracles", () => {
             describe("when oracles have set by addChainLinkOracles function", () => {
-                it("returns non-empty response", async () => {
+                it("returns prices", async () => {
                     await this.chainlinkOracle
                         .connect(this.admin)
                         .addChainlinkOracles(
@@ -293,7 +293,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("edge case:", () => {
+            describe("edge cases:", () => {
                 describe("when oracle is not supported", () => {
                     it("returns false", async () => {
                         [this.chainlinkEth].forEach(async (token) => {

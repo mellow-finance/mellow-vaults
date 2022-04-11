@@ -199,7 +199,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             tests.forEach((params) => {
                 describe(params.name, () => {
-                    it("returns correct response", async () => {
+                    it("returns prices", async () => {
                         await deployMellowOracle(params.opts);
                         const pricesResult = await this.mellowOracle.price(
                             this.usdc.address,
@@ -217,7 +217,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edge cases:", () => {
                 describe("when one of tokens is zero", () => {
-                    it("returns empty response", async () => {
+                    it("does not return prices", async () => {
                         await deployMellowOracle(DEFAULT_DEPLOY_PARAMS);
 
                         const pricesResult = await this.mellowOracle.price(

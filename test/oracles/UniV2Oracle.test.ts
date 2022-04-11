@@ -56,7 +56,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#price", () => {
-            it("retruns correct response for [uscd, weth] pair", async () => {
+            it("retruns prices for [uscd, weth] pair", async () => {
                 const pricesResult = await this.uniV2Oracle.price(
                     this.usdc.address,
                     this.weth.address,
@@ -70,7 +70,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(safetyIndices[0]).to.be.eq(BigNumber.from(1));
             });
 
-            it("retruns correct response for [weth, usdc] pair", async () => {
+            it("retruns prices for [weth, usdc] pair", async () => {
                 const pricesResult = await this.uniV2Oracle.price(
                     this.weth.address,
                     this.usdc.address,
@@ -86,7 +86,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edges cases:", () => {
                 describe("when one of tokens is zero", () => {
-                    it("returns empty response", async () => {
+                    it("does not return prices", async () => {
                         let pricesResult = await this.uniV2Oracle.price(
                             ethers.constants.AddressZero,
                             ethers.constants.AddressZero,
@@ -100,7 +100,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
                 describe("when first of safetyIndicesSet is missing", () => {
-                    it("returns empty response", async () => {
+                    it("does not return prices", async () => {
                         const badMask =
                             63 ^ (1 << (await this.uniV2Oracle.safetyIndex()));
                         let pricesResult = await this.uniV2Oracle.price(

@@ -67,7 +67,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe("#price", () => {
-            it("returns response", async () => {
+            it("returns prices", async () => {
                 for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
                     const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
                     const pricesResult = await this.uniV3Oracle.price(
@@ -91,7 +91,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edge cases:", () => {
                 describe("when index of one of pools is zero", () => {
-                    it("returns empty response", async () => {
+                    it("does not return prices", async () => {
                         const pricesResult = await this.uniV3Oracle.price(
                             this.usdc.address,
                             ADDRESS_ZERO,
@@ -244,7 +244,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#addUniV3Pools", () => {
             describe("when adding [weth, usdc] pools with fee = 500", () => {
-                it("returns correct response", async () => {
+                it("adds pools", async () => {
                     await testForFeeAndMask(
                         500,
                         this.weth.address,
@@ -256,7 +256,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("when adding [weth, usdc] pools with fee = 3000", () => {
-                it("returns correct response", async () => {
+                it("adds pools", async () => {
                     await testForFeeAndMask(
                         3000,
                         this.weth.address,
@@ -268,7 +268,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("when adding [weth, usdc] pools with fee = 10000", () => {
-                it("retruns correct response", async () => {
+                it("does not return prices", async () => {
                     await testForFeeAndMask(
                         10000,
                         this.weth.address,
