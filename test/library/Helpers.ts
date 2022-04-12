@@ -101,6 +101,12 @@ export const compareAddresses = (a: string, b: string) => {
     );
 };
 
+export const sortBigNumbers = (unsorted: BigNumber[]) => {
+    return unsorted.sort((a, b) => {
+        return a.lt(b) ? -1 : 1;
+    });
+};
+
 export const encodeToBytes = (
     types: string[],
     objectToEncode: readonly any[]

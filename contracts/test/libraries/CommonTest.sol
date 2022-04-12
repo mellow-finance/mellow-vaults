@@ -4,6 +4,11 @@ pragma solidity 0.8.9;
 import "../../libraries/CommonLibrary.sol";
 
 contract CommonTest {
+    function sortUint(uint256[] memory arr) external pure returns (uint256[] memory) {
+        CommonLibrary.sortUint(arr);
+        return arr;
+    }
+
     function isSortedAndUnique(address[] memory tokens) external pure returns (bool) {
         return CommonLibrary.isSortedAndUnique(tokens);
     }
