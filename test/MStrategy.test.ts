@@ -884,6 +884,70 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
             });
+
+            describe("when tick is less than tickMin - tickNeighborhood", () => {
+                it("tickMin is expanded by tickIncrease amount", async () => {
+                    let params: DeployMockParams = {
+                        slot0Params: {
+                            tick: 198240,
+                            observationIndex: 10,
+                            observationCardinality: 100,
+                            observationCardinalityNext: 110,
+                            feeProtocol: 10,
+                            unlocked: false,
+                        },
+                        observationsParams: {
+                            blockTimestamp: 10 ** 8 + 100,
+                            blockTimestampLast: 10 ** 8,
+                            tickCumulative: 19924000,
+                            tickCumulativeLast: 198240,
+                        },
+                    };
+                    let mStrategy: Contract = await deployMockContracts(params);
+                    const address = await mStrategy.callStatic.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
+                    await mStrategy.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
+                    this.subject = await ethers.getContractAt("MStrategy", address);
+        
+                    const oracleParams: OracleParamsStruct = {
+                        oracleObservationDelta: 10,
+                        maxTickDeviation: 10000,
+                        maxSlippageD: Math.round(0.1 * 10 ** 9),
+                    };
+                    const ratioParams: RatioParamsStruct = {
+                        tickMin: 197000 - 50,
+                        tickMax: 197000 + 50,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                        minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                        minTickRebalanceThreshold: 180,
+                        tickNeighborhood: 10,
+                        tickIncrease: 180,
+                    };
+        
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .setRatioParams(ratioParams);
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .setOracleParams(oracleParams);
+        
+                    let res = await this.subject.callStatic.getAverageTick();
+                    console.log(res);
+
+                    await this.subject.connect(this.mStrategyAdmin).rebalance();
+                });
+            });
         });
     });
 
