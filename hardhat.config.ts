@@ -60,9 +60,10 @@ const config: HardhatUserConfig = {
         polygon: {
             url: process.env["POLYGON_RPC"] || "https://polygon-rpc.com",
             accounts: process.env["POLYGON_DEPLOYER_PK"]
-                ? [process.env["POLYGON_DEPLOYER_PK"]]
+                ? (process.env["POLYGON_ADMIN_PK"] ? [process.env["POLYGON_DEPLOYER_PK"], process.env["POLYGON_ADMIN_PK"]] : [process.env["POLYGON_DEPLOYER_PK"]])
                 : undefined,
             chainId: 137,
+            gasMultiplier: 3,
         },
 
         bsc: {

@@ -71,6 +71,7 @@ const setupStrategy = async (
     } = await getNamedAccounts();
     const mStrategyName = `MStrategy${kind}`;
     const { address: mStrategyAddress } = await deployments.get(mStrategyName);
+    console.log("ADDRESS!!!!!!!!!!!!!", mStrategyAddress);
     const mStrategy = await hre.ethers.getContractAt(
         "MStrategy",
         mStrategyAddress
@@ -90,7 +91,7 @@ const setupStrategy = async (
         address,
     });
     const mStrategyWethUsdc = await hre.ethers.getContractAt(
-        mStrategyName,
+        "MStrategy",
         address
     );
 
@@ -99,14 +100,19 @@ const setupStrategy = async (
     const oracleParams = {
         oracleObservationDelta: 15,
         maxTickDeviation: 50,
-        maxSlippageD: Math.round(0.1 * 10 ** 9),
+        maxSlippageD: BigNumber.from(10).pow(8),
     };
+
     const ratioParams = {
         tickMin: 198240 - 5000,
         tickMax: 198240 + 5000,
-        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-        minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+        erc20MoneyRatioD: BigNumber.from(10).pow(8),
+        minErc20MoneyRatioDeviationD: BigNumber.from(10).pow(7),
+        minTickRebalanceThreshold: BigNumber.from(1200),
+        tickIncrease: 10,
+        tickNeighborhood: 50,
     };
+
     const txs = [];
     txs.push(
         mStrategyWethUsdc.interface.encodeFunctionData("setOracleParams", [
@@ -130,7 +136,7 @@ const setupStrategy = async (
     await execute(
         `${mStrategyName}_WETH_USDC`,
         {
-            from: deployer,
+            from: mStrategyAdmin,
             log: true,
             autoMine: true,
         },
@@ -145,16 +151,37 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
         const { log, execute, read, get } = deployments;
         const { deployer, mStrategyTreasury, weth, usdc } =
             await getNamedAccounts();
-        await deployMStrategy(hre, kind);
+        const mStrategyName = `MStrategy${kind}`;
+        let mStrategyContract;
+        let mStrategyDeployment = await deployments.getOrNull(`${mStrategyName}_WETH_USDC`);
+        if (!mStrategyDeployment) {
+            await deployMStrategy(hre, kind);
+        } else {
+            mStrategyContract = await hre.ethers.getContractAt(
+                "MStrategy",
+                (await deployments.get(`${mStrategyName}_WETH_USDC`)).address
+            )
+        }
 
         const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
         // const startNft = 1;
-        const startNft =
+        let currentFreeNft =
             (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
-        let yearnVaultNft = startNft;
-        let erc20VaultNft = startNft + 1;
+        let yearnVaultNft = 0;
+        let erc20VaultNft = 0;
         const moneyGovernance =
             kind === "Aave" ? "AaveVaultGovernance" : "YearnVaultGovernance";
+        if (mStrategyContract) {
+            yearnVaultNft = await read("VaultRegistry", "nftForVault", await mStrategyContract.moneyVault());
+            erc20VaultNft = await read("VaultRegistry", "nftForVault", await mStrategyContract.erc20Vault());
+        }
+        if (!yearnVaultNft) {
+            yearnVaultNft = currentFreeNft;
+            ++currentFreeNft;
+        }
+        if (!erc20VaultNft) {
+            erc20VaultNft = currentFreeNft;
+        }
         await setupVault(hre, yearnVaultNft, moneyGovernance, {
             createVaultArgs: [tokens, deployer],
         });

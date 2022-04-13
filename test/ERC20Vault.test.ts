@@ -98,8 +98,8 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
 
                 for (let address of [
                     this.deployer.address,
-                    this.subject.address,
-                    this.erc20Vault.address,
+                    // this.subject.address,
+                    // this.erc20Vault.address,
                 ]) {
                     await mint(
                         "USDC",
@@ -128,6 +128,22 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
 
     beforeEach(async () => {
         await this.deploymentFixture();
+    });
+
+    describe.only("roflan", () => {
+        it("rofl", async () => {
+            await this.weth.approve(
+                this.erc20RootVault.address,
+                ethers.constants.MaxUint256
+            );
+            await this.usdc.approve(
+                this.erc20RootVault.address,
+                ethers.constants.MaxUint256
+            );
+            await this.erc20RootVault.connect(this.admin).addDepositorsToAllowlist([this.deployer.address]);
+            await this.erc20RootVault.deposit([BigNumber.from(10**5), BigNumber.from(10**15)], 0, []);
+            await this.erc20RootVault.withdraw(this.deployer.address, BigNumber.from(10**15), [ethers.constants.Zero, ethers.constants.Zero], [[], []]);
+        });
     });
 
     describe("#tvl", () => {

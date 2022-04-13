@@ -85,11 +85,13 @@ export const setupVault = async (
         delayedStrategyParams,
         strategyParams,
         delayedProtocolPerVaultParams,
+        deploymentName,
     }: {
         createVaultArgs: any[];
         delayedStrategyParams?: { [key: string]: any };
         strategyParams?: { [key: string]: any };
         delayedProtocolPerVaultParams?: { [key: string]: any };
+        deploymentName?: string;
     }
 ) => {
     delayedStrategyParams ||= {};
