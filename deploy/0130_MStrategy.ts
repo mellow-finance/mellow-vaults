@@ -8,7 +8,7 @@ import {
     setupVault,
     toObject,
 } from "./0000_utils";
-import { BigNumber, ethers } from "ethers";
+import {BigNumber, ethers} from "ethers";
 import { map } from "ramda";
 
 type MoneyVault = "Aave" | "Yearn";
@@ -71,18 +71,16 @@ const setupStrategy = async (
     } = await getNamedAccounts();
     const mStrategyName = `MStrategy${kind}`;
     const { address: mStrategyAddress } = await deployments.get(mStrategyName);
-    console.log("ADDRESS!!!!!!!!!!!!!", mStrategyAddress);
     const mStrategy = await hre.ethers.getContractAt(
         "MStrategy",
         mStrategyAddress
     );
-
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
     const fee = 3000;
     await setupCardinality(hre, tokens, fee);
     const params = [tokens, erc20Vault, moneyVault, fee, mStrategyAdmin];
     const address = await mStrategy.callStatic.createStrategy(...params);
-    if (!(await deployments.getOrNull(`${mStrategyName}_WETH_USDC`))) {
+    if (await deployments.getOrNull(`${mStrategyName}_WETH_USDC`)) {
         return;
     }
     await mStrategy.createStrategy(...params);
@@ -90,11 +88,13 @@ const setupStrategy = async (
         abi: (await deployments.get(mStrategyName)).abi,
         address,
     });
+    console.log("1");
     const mStrategyWethUsdc = await hre.ethers.getContractAt(
         "MStrategy",
         address
     );
 
+    console.log("1");
     log("Setting Strategy params");
 
     const oracleParams = {
@@ -165,39 +165,36 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
 
         const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
         // const startNft = 1;
-        let currentFreeNft =
+        let startNft =
             (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
-        let yearnVaultNft = 0;
-        let erc20VaultNft = 0;
+        let yearnVaultNft = startNft;
+        let erc20VaultNft = startNft;
         const moneyGovernance =
             kind === "Aave" ? "AaveVaultGovernance" : "YearnVaultGovernance";
         if (mStrategyContract) {
             yearnVaultNft = await read("VaultRegistry", "nftForVault", await mStrategyContract.moneyVault());
             erc20VaultNft = await read("VaultRegistry", "nftForVault", await mStrategyContract.erc20Vault());
         }
-        if (!yearnVaultNft) {
-            yearnVaultNft = currentFreeNft;
-            ++currentFreeNft;
-        }
-        if (!erc20VaultNft) {
-            erc20VaultNft = currentFreeNft;
-        }
-        await setupVault(hre, yearnVaultNft, moneyGovernance, {
+        yearnVaultNft = await setupVault(hre, yearnVaultNft, moneyGovernance, {
             createVaultArgs: [tokens, deployer],
+            deploymentName: `${mStrategyName}_MONEY_VAULT`,
         });
-        await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+        erc20VaultNft = await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
             createVaultArgs: [tokens, deployer],
+            deploymentName: `${mStrategyName}_ERC20_VAULT`,
         });
 
         const strategy = await get(`MStrategy${kind}`);
-
+        console.log("\n\n\n\n\n\n\n\n");
         await combineVaults(
             hre,
-            erc20VaultNft + 1,
-            [erc20VaultNft, yearnVaultNft],
+            (startNft > erc20VaultNft.add(1).toNumber()) ? startNft : erc20VaultNft.add(1).toNumber(),
+            [erc20VaultNft.toNumber(), yearnVaultNft.toNumber()],
             strategy.address,
-            mStrategyTreasury
+            mStrategyTreasury,
+            `${mStrategyName}_ROOT_VAULT`
         );
+        console.log("\n\n\n\n\n\n\n\n");
         const erc20Vault = await read(
             "VaultRegistry",
             "vaultForNft",

@@ -63,7 +63,6 @@ const config: HardhatUserConfig = {
                 ? (process.env["POLYGON_ADMIN_PK"] ? [process.env["POLYGON_DEPLOYER_PK"], process.env["POLYGON_ADMIN_PK"]] : [process.env["POLYGON_DEPLOYER_PK"]])
                 : undefined,
             chainId: 137,
-            gasMultiplier: 3,
         },
 
         bsc: {

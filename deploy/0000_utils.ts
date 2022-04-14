@@ -96,11 +96,27 @@ export const setupVault = async (
 ) => {
     delayedStrategyParams ||= {};
     const { deployments, getNamedAccounts } = hre;
-    const { log, execute, read } = deployments;
+    const { log, execute, read, getArtifact } = deployments;
     const { deployer, admin } = await getNamedAccounts();
     const currentNft = await read("VaultRegistry", "vaultsCount");
-    if (currentNft <= expectedNft) {
+    let currentDeployment;
+    if (deploymentName) {
+        currentDeployment = await hre.ethers.getContractOrNull(deploymentName);
+    }
+    if (currentDeployment || currentNft > expectedNft) {
+        log(
+            `${contractName.replace(
+                "Governance",
+                ""
+            )} with nft = ${expectedNft} already deployed`
+        );
+        if (currentDeployment) {
+            expectedNft = await read("VaultRegistry", "nftForVault", currentDeployment.address);
+            console.log("ACTUAL EXPECTED NFT :: ", expectedNft, currentDeployment.address);
+        }
+    } else {
         log(`Deploying ${contractName.replace("Governance", "")}...`);
+        console.log(createVaultArgs.toString());
         await execute(
             contractName,
             {
@@ -112,13 +128,16 @@ export const setupVault = async (
             ...createVaultArgs
         );
         log(`Done, nft = ${expectedNft}`);
-    } else {
-        log(
-            `${contractName.replace(
-                "Governance",
-                ""
-            )} with nft = ${expectedNft} already deployed`
-        );
+    }
+    console.log("ACTUAL EXPECTED NFT :: ", expectedNft);
+    console.log(contractName, "!!!!!!!!!!!!!!!!!!!!!!!1");
+    if (deploymentName && !currentDeployment) {
+        let vault = await read("VaultRegistry", "vaultForNft", expectedNft);
+        console.log(contractName, vault);
+        await deployments.save(deploymentName, {
+            abi: (await getArtifact(contractName.replace("Governance", ""))).abi,
+            address: vault,
+        })
     }
     if (strategyParams) {
         const currentParams = await read(
@@ -152,7 +171,7 @@ export const setupVault = async (
         );
         strategyTreasury = data.strategyTreasury;
     } catch {
-        return;
+        return expectedNft;
     }
 
     if (strategyTreasury !== delayedStrategyParams.strategyTreasury) {
@@ -215,6 +234,8 @@ export const setupVault = async (
             );
         }
     }
+
+    return expectedNft;
 };
 
 export const combineVaults = async (
@@ -223,6 +244,7 @@ export const combineVaults = async (
     nfts: number[],
     strategyAddress: string,
     strategyTreasuryAddress: string,
+    deploymentName?: string,
     options?: {
         limits?: BigNumberish[];
         strategyPerformanceTreasuryAddress?: string;
@@ -237,6 +259,7 @@ export const combineVaults = async (
     }
     const { log } = deployments;
     const { deployer, admin } = await hre.getNamedAccounts();
+    console.log(nfts.toString(), expectedNft);
     const firstNft = nfts[0];
     const firstAddress = await deployments.read(
         "VaultRegistry",
@@ -246,7 +269,6 @@ export const combineVaults = async (
     const vault = await hre.ethers.getContractAt("IVault", firstAddress);
     const tokens = await vault.vaultTokens();
     const coder = hre.ethers.utils.defaultAbiCoder;
-
     const {
         limits = tokens.map((_: any) => ethers.constants.MaxUint256),
         strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
@@ -255,8 +277,7 @@ export const combineVaults = async (
         managementFee = 2 * 10 ** 7,
         performanceFee = 20 * 10 ** 7,
     } = options || {};
-
-    await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
+    expectedNft = await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
         createVaultArgs: [tokens, strategyAddress, nfts, deployer],
         delayedStrategyParams: {
             strategyTreasury: strategyTreasuryAddress,
@@ -271,7 +292,9 @@ export const combineVaults = async (
             tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
             tokenLimit: BigNumber.from(tokenLimit),
         },
+        deploymentName: deploymentName,
     });
+    console.log("VAULTS COMBINED, ROOT VAULT :: ", expectedNft);
     const rootVault = await deployments.read(
         "VaultRegistry",
         "vaultForNft",
