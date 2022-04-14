@@ -1,7 +1,6 @@
 import hre from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { contract } from "../library/setup";
-import { ERC20RootVault } from "../types/ERC20RootVault";
 import { expect } from "chai";
 import { CommonTest, MockERC20Token } from "../types";
 import Exceptions from "../library/Exceptions";
@@ -9,7 +8,6 @@ import { sleep } from "../library/Helpers";
 import { BigNumber } from "ethers";
 
 type CustomContext = {
-    erc20Token: MockERC20Token;
     commonTest: CommonTest;
 };
 
@@ -18,7 +16,7 @@ type DeployOptions = {};
 import { Bytes, concat } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 
-contract<ERC20RootVault, DeployOptions, CustomContext>(
+contract<MockERC20Token, DeployOptions, CustomContext>(
     "ERC20Token",
     function () {
         before(async () => {
@@ -35,9 +33,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         autoMine: true,
                     });
 
-                    this.erc20Token = await ethers.getContract(
-                        "MockERC20Token"
-                    );
+                    this.subject = await ethers.getContract("MockERC20Token");
 
                     await deploy("CommonTest", {
                         from: deployer,
@@ -60,14 +56,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#constructor", () => {
             it("deployes a new contract", async () => {
                 expect(ethers.constants.AddressZero).not.to.be.eq(
-                    this.erc20Token.address
+                    this.subject.address
                 );
             });
         });
 
         describe("#DOMAIN_SEPARATOR", () => {
             it("returns domaint separator", async () => {
-                var separator = await this.erc20Token.DOMAIN_SEPARATOR();
+                var separator = await this.subject.DOMAIN_SEPARATOR();
                 expect(ethers.constants.AddressZero).not.to.be.eq(separator);
             });
         });
@@ -76,8 +72,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             it("allows `sender` to transfer `spender` an `amount` and emits Approval", async () => {
                 var [spender] = await ethers.getSigners();
                 await expect(
-                    this.erc20Token.approve(spender.address, BigNumber.from(10))
-                ).to.emit(this.erc20Token, "Approval");
+                    this.subject.approve(spender.address, BigNumber.from(10))
+                ).to.emit(this.subject, "Approval");
             });
         });
 
@@ -85,10 +81,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             it("transfers `amount` from `msg.sender` to `to`", async () => {
                 var [to] = await ethers.getSigners();
                 var amount: BigNumber = BigNumber.from(10000);
-                await this.erc20Token.mint(this.deployer.address, amount);
-                await expect(
-                    this.erc20Token.transfer(to.address, amount)
-                ).to.emit(this.erc20Token, "Transfer");
+                await this.subject.mint(this.deployer.address, amount);
+                await expect(this.subject.transfer(to.address, amount)).to.emit(
+                    this.subject,
+                    "Transfer"
+                );
             });
         });
 
@@ -97,19 +94,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 var [from] = await ethers.getSigners();
 
                 var income = BigNumber.from(10000);
-                await this.erc20Token.mint(from.address, income);
+                await this.subject.mint(from.address, income);
                 var outcome = BigNumber.from(5000);
-                await this.erc20Token.burn(from.address, outcome);
+                await this.subject.burn(from.address, outcome);
                 var amount = income.sub(outcome);
                 var [to] = await ethers.getSigners();
-                await this.erc20Token.connect(from).approve(to.address, amount);
+                await this.subject.connect(from).approve(to.address, amount);
                 await expect(
-                    this.erc20Token.transferFrom(
-                        from.address,
-                        to.address,
-                        amount
-                    )
-                ).to.emit(this.erc20Token, "Transfer");
+                    this.subject.transferFrom(from.address, to.address, amount)
+                ).to.emit(this.subject, "Transfer");
             });
         });
 
@@ -129,7 +122,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#permit", () => {
             it("emits Approval", async () => {
-                await this.erc20Token.initERC20("ERC20", "ERC20");
+                await this.subject.initERC20("ERC20", "ERC20");
                 var owner = await this.deployer.getAddress();
                 var spender = await this.deployer.getAddress();
 
@@ -137,15 +130,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 var deadline = BigNumber.from(2).pow(100);
                 var nonces = BigNumber.from(0);
                 var message: Bytes = concat([
-                    convertToHex(await this.erc20Token.PERMIT_TYPEHASH()),
+                    convertToHex(await this.subject.PERMIT_TYPEHASH()),
                     convertToHex(owner),
                     convertToHex(spender),
                     convertBigNumberToHex(value),
                     convertBigNumberToHex(nonces),
                     convertBigNumberToHex(deadline),
                 ]);
-                const domainSeparator =
-                    await this.erc20Token.DOMAIN_SEPARATOR();
+                const domainSeparator = await this.subject.DOMAIN_SEPARATOR();
                 function hashMessage(message: Bytes): string {
                     return keccak256(
                         concat(["0x1901", domainSeparator, keccak256(message)])
@@ -162,10 +154,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 const getSignatureByTypedData = async () => {
                     const domain = {
-                        name: await this.erc20Token.name(),
+                        name: await this.subject.name(),
                         version: "1",
                         chainId: 31337,
-                        verifyingContract: this.erc20Token.address,
+                        verifyingContract: this.subject.address,
                     };
 
                     const types = {
@@ -196,7 +188,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const signature = await getSignatureByTypedData();
                 var [r, s, v] = await this.commonTest.splitSignature(signature);
                 await expect(
-                    this.erc20Token.permit(
+                    this.subject.permit(
                         owner,
                         spender,
                         value,
@@ -205,7 +197,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         r,
                         s
                     )
-                ).to.emit(this.erc20Token, "Approval");
+                ).to.emit(this.subject, "Approval");
             });
 
             describe("edge cases:", () => {
@@ -225,7 +217,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         );
 
                         await expect(
-                            this.erc20Token.permit(
+                            this.subject.permit(
                                 owner.address,
                                 spender.address,
                                 0,
@@ -251,7 +243,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             signature
                         );
                         await expect(
-                            this.erc20Token.permit(
+                            this.subject.permit(
                                 owner.address,
                                 spender.address,
                                 0,

@@ -1,17 +1,14 @@
 import hre from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { contract } from "../library/setup";
-import { ERC20RootVault } from "../types/ERC20RootVault";
 import { expect } from "chai";
 import { DefaultAccessControlLateInit } from "../types";
 
-type CustomContext = {
-    defaultAccessControlLateInit: DefaultAccessControlLateInit;
-};
+type CustomContext = {};
 
 type DeployOptions = {};
 
-contract<ERC20RootVault, DeployOptions, CustomContext>(
+contract<DefaultAccessControlLateInit, DeployOptions, CustomContext>(
     "DefaultAccessControlLateInit",
     function () {
         before(async () => {
@@ -28,10 +25,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         autoMine: true,
                     });
 
-                    this.defaultAccessControlLateInit =
-                        await ethers.getContract(
-                            "DefaultAccessControlLateInit"
-                        );
+                    this.subject = await ethers.getContract(
+                        "DefaultAccessControlLateInit"
+                    );
                     return this.subject;
                 }
             );
@@ -44,20 +40,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#isOperator", () => {
             it("returns `true` if sender is an operator, `false` otherwise", async () => {
                 {
-                    var isOperator =
-                        await this.defaultAccessControlLateInit.isOperator(
-                            this.admin.address
-                        );
+                    var isOperator = await this.subject.isOperator(
+                        this.admin.address
+                    );
                     expect(isOperator).to.be.false;
                 }
                 {
-                    await this.defaultAccessControlLateInit.init(
+                    await this.subject.init(this.admin.address);
+                    var isOperator = await this.subject.isOperator(
                         this.admin.address
                     );
-                    var isOperator =
-                        await this.defaultAccessControlLateInit.isOperator(
-                            this.admin.address
-                        );
                     expect(isOperator).to.be.true;
                 }
             });
@@ -66,20 +58,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#isAdmin", () => {
             it("returns `true` if sender is an admin, `false` otherwise", async () => {
                 {
-                    var isAdmin =
-                        await this.defaultAccessControlLateInit.isAdmin(
-                            this.admin.address
-                        );
+                    var isAdmin = await this.subject.isAdmin(
+                        this.admin.address
+                    );
                     expect(isAdmin).to.be.false;
                 }
                 {
-                    await this.defaultAccessControlLateInit.init(
+                    await this.subject.init(this.admin.address);
+                    var isAdmin = await this.subject.isAdmin(
                         this.admin.address
                     );
-                    var isAdmin =
-                        await this.defaultAccessControlLateInit.isAdmin(
-                            this.admin.address
-                        );
                     expect(isAdmin).to.be.true;
                 }
             });
