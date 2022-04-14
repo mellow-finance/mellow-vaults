@@ -181,8 +181,8 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                 });
             });
 
-            describe.only("access control", () => {
-                it.only("allowed: operator (deployer)", async () => {
+            describe("access control", () => {
+                it("allowed: operator (deployer)", async () => {
                     const semver = "1.0.1";
                     const name = "Random";
                     const mockFactory = await ethers.getContractFactory(
