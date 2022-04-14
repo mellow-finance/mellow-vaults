@@ -181,8 +181,21 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("access control", () => {
-                xit("allowed: operator (deployer)", async () => {});
+            describe.only("access control", () => {
+                it.only("allowed: operator (deployer)", async () => {
+                    const semver = "1.0.1";
+                    const name = "Random";
+                    const mockFactory = await ethers.getContractFactory(
+                        "ContractMetaMock"
+                    );
+
+                    const mock = await mockFactory.deploy(name, semver);
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .registerContract(mock.address)
+                    ).to.not.be.reverted;
+                });
                 it(`denied with ${Exceptions.FORBIDDEN}: random address`, async () => {
                     const semver = "1.0.1";
                     const name = "Random";
