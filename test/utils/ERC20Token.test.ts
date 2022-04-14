@@ -18,6 +18,9 @@ type DeployOptions = {};
 import { Bytes, concat } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { toUtf8Bytes } from "@ethersproject/strings";
+import { reduceWhile, T } from "ramda";
+import { string } from "fast-check";
+import { threadId } from "worker_threads";
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
     "ERC20Token",
@@ -58,7 +61,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#constructor", () => {
+        describe("#constructor", () => {
             it("deployes a new contract", async () => {
                 expect(ethers.constants.AddressZero).not.to.be.eq(
                     this.erc20Token.address
@@ -66,14 +69,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#DOMAIN_SEPARATOR", () => {
+        describe("#DOMAIN_SEPARATOR", () => {
             it("returns domaint separator", async () => {
                 var separator = await this.erc20Token.DOMAIN_SEPARATOR();
                 expect(ethers.constants.AddressZero).not.to.be.eq(separator);
             });
         });
 
-        describe.only("#approve", () => {
+        describe("#approve", () => {
             it("allows `sender` to transfer `spender` an `amount` and emits Approval", async () => {
                 var [spender] = await ethers.getSigners();
                 await expect(
@@ -82,7 +85,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#transfer", () => {
+        describe("#transfer", () => {
             it("transfers `amount` from `msg.sender` to `to`", async () => {
                 var [to] = await ethers.getSigners();
                 var amount: BigNumber = BigNumber.from(10000);
@@ -93,7 +96,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#transferFrom", () => {
+        describe("#transferFrom", () => {
             it("transfers `amount` from `from` to `to` if allowed", async () => {
                 var [from] = await ethers.getSigners();
 
@@ -114,29 +117,105 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
+        const convertToHex = (str: string) => {
+            str = str.substring(2);
+            while (str.length < 64) {
+                str = "0" + str;
+            }
+            str = "0x" + str;
+            return str;
+        };
+
+        const convertBigNumberToHex = (val: BigNumber) => {
+            var str = val.toHexString();
+            return convertToHex(str);
+        };
+
+        const bytesToHex = (arr: Bytes) => {
+            var x =
+                "0x" +
+                Array.from(arr, (byte) =>
+                    ("0" + (byte & 0xff).toString(16)).slice(-2)
+                ).join("");
+            return convertToHex(x);
+        };
+
         describe.only("#permit", () => {
             xit("emits Approval", async () => {
-                var owner = this.deployer.address;
-                var spender = this.deployer.address;
+                await this.erc20Token.initERC20("ERC20", "ERC20");
+                var owner = await this.deployer.getAddress();
+                var spender = await this.deployer.getAddress();
 
                 var value = BigNumber.from(0);
                 var deadline = BigNumber.from(2).pow(100);
                 var nonces = BigNumber.from(0);
+                var message: Bytes = concat([
+                    convertToHex(await this.erc20Token.PERMIT_TYPEHASH()),
+                    convertToHex(owner),
+                    convertToHex(spender),
+                    convertBigNumberToHex(value),
+                    convertBigNumberToHex(nonces),
+                    convertBigNumberToHex(deadline),
+                ]);
+                const domainSeparator =
+                    await this.erc20Token.DOMAIN_SEPARATOR();
+                function hashMessage(message: Bytes): string {
+                    return keccak256(
+                        concat(["0x1901", domainSeparator, keccak256(message)])
+                    );
+                }
 
-                let message: Bytes | string = keccak256(
-                    concat([
-                        await this.erc20Token.PERMIT_TYPEHASH(),
-                        owner,
-                        spender,
-                        value.toHexString(),
-                        nonces.toHexString(),
-                        deadline.toHexString(),
-                    ])
+                let messageHash = hashMessage(message).substring(2);
+
+                console.log("TEST# MessageHash:", messageHash);
+
+                const TOKEN_DIGEST =
+                    "0xe8cfbb4ac172b0e03c797967bcdfd655f1f46bafb0f4683c056cd11d388e1762".substring(
+                        2
+                    );
+                expect(TOKEN_DIGEST).to.be.eq(messageHash);
+
+                const domain = {
+                    name: await this.erc20Token.name(),
+                    version: "1",
+                    chainId: 31337,
+                    verifyingContract: this.erc20Token.address,
+                };
+
+                // const types = {
+
+                // };
+
+                // const value = {
+
+                // };
+
+                //const signature = await this.deployer._signTypedData(domain, types, value);
+                const signature = await this.deployer.signMessage(messageHash);
+
+                const getMessageHash = () => {
+                    return ethers.utils.keccak256(
+                        Array.from(
+                            `\x19Ethereum Signed Message:\n${messageHash.length.toString()}${messageHash}`, // works correctly
+                            //`0x1901${domainSeparator}${messageHash}`, // works incorrectly
+                            (x) => x.charCodeAt(0)
+                        )
+                    );
+                };
+
+                var hsh = getMessageHash();
+
+                var recoveredSignature = await this.commonTest.recoverSigner(
+                    hsh,
+                    signature
                 );
-                message = message.substring(2);
-                console.log("Message:", message);
+                console.log(
+                    "Recovered and my owner:",
+                    recoveredSignature,
+                    owner
+                );
+                expect(recoveredSignature).to.be.eq(owner);
 
-                const signature = await this.deployer.signMessage(message);
                 var [r, s, v] = await this.commonTest.splitSignature(signature);
 
                 await expect(
