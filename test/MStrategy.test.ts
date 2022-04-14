@@ -34,6 +34,7 @@ import { OracleParamsStruct, RatioParamsStruct } from "./types/MStrategy";
 import Exceptions from "./library/Exceptions";
 import { assert } from "console";
 import { randomInt } from "crypto";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -1020,5 +1021,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 });
             });
         });
+    });
+
+    ContractMetaBehaviour.call(this, {
+        contractName: "MStrategy",
+        contractVersion: "1.0.0",
     });
 });

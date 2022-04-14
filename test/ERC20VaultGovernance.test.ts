@@ -24,6 +24,7 @@ import {
     InternalParamsStruct,
     InternalParamsStructOutput,
 } from "./types/IVaultGovernance";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     nft: number;
@@ -111,5 +112,9 @@ contract<ERC20VaultGovernance, DeployOptions, CustomContext>(
         });
 
         vaultGovernanceBehavior.call(this, {});
+        ContractMetaBehaviour.call(this, {
+            contractName: "ERC20VaultGovernance",
+            contractVersion: "1.0.0",
+        });
     }
 );

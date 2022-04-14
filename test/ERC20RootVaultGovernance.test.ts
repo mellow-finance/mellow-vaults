@@ -24,6 +24,7 @@ import {
     OperatorParamsStruct,
 } from "./types/IERC20RootVaultGovernance";
 import { ERC20_ROOT_VAULT_GOVERNANCE } from "./library/Constants";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     nft: number;
@@ -166,6 +167,11 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             operatorParams,
             rootVaultGovernance: true,
             ...this,
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ERC20RootVaultGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

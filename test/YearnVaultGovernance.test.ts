@@ -20,6 +20,7 @@ import { Arbitrary } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IYearnVaultGovernance";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     nft: number;
@@ -312,6 +313,11 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
         vaultGovernanceBehavior.call(this, {
             delayedProtocolParams,
             ...this,
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "YearnVaultGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

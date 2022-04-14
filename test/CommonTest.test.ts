@@ -134,8 +134,12 @@ contract<CommonTest, DeployOptions, CustomContext>("CommonTest", function () {
                 randomAddress()
             );
             tokens = sortAddresses(tokens);
-            let swap1 = randomInt(0, tokens.length - 2);
-            let swap2 = randomInt(swap1 + 1, tokens.length - 1);
+            let swap1 =
+                tokens.length != 2 ? randomInt(0, tokens.length - 2) : 0;
+            let swap2 =
+                tokens.length != 2
+                    ? randomInt(swap1 + 1, tokens.length - 1)
+                    : 1;
             [tokens[swap1], tokens[swap2]] = [tokens[swap2], tokens[swap1]];
             expect(await this.subject.isSortedAndUnique(tokens)).to.be.false;
         });

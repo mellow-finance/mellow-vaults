@@ -10,6 +10,7 @@ import { AllowAllValidator } from "./types";
 import { ValidatorBehaviour } from "./behaviors/validator";
 import { randomBytes } from "crypto";
 import { uint256 } from "./library/property";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {};
 
@@ -57,5 +58,9 @@ contract<AllowAllValidator, DeployOptions, CustomContext>(
         });
 
         ValidatorBehaviour.call(this, {});
+        ContractMetaBehaviour.call(this, {
+            contractName: "AllowAllValidator",
+            contractVersion: "1.0.0",
+        });
     }
 );

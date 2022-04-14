@@ -11,6 +11,7 @@ import { contract } from "./library/setup";
 import { ERC20Validator } from "./types";
 import { PermissionIdsLibrary } from "../deploy/0000_utils";
 import { ValidatorBehaviour } from "./behaviors/validator";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 import Exceptions from "./library/Exceptions";
 import { randomBytes, randomInt } from "crypto";
 import { uint256 } from "./library/property";
@@ -204,5 +205,9 @@ contract<ERC20Validator, DeployOptions, CustomContext>(
         });
 
         ValidatorBehaviour.call(this, {});
+        ContractMetaBehaviour.call(this, {
+            contractName: "ERC20Validator",
+            contractVersion: "1.0.0",
+        });
     }
 );

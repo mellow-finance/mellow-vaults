@@ -22,6 +22,7 @@ import { Arbitrary, integer, tuple } from "fast-check";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IVaultGovernance";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     nft: number;
@@ -188,6 +189,11 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
         vaultGovernanceBehavior.call(this, {
             delayedProtocolParams,
             ...this,
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "AaveVaultGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

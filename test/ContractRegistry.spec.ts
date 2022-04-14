@@ -11,6 +11,7 @@ import {
     randomAddress,
     generateSingleParams,
 } from "./library/Helpers";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -197,6 +198,11 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                     ).to.not.be.reverted;
                 });
             });
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ContractRegistry",
+            contractVersion: "1.0.0",
         });
     }
 );
