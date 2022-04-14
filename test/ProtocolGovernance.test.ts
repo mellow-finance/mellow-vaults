@@ -24,6 +24,7 @@ import { randomInt } from "crypto";
 import { Address } from "hardhat-deploy/types";
 
 const MAX_GOVERNANCE_DELAY = BigNumber.from(60 * 60 * 24 * 7);
+const MIN_WITHDRAW_LIMIT = BigNumber.from(200 * 1000);
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -2585,6 +2586,21 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             let params = generateSingleParams(paramsArb);
                             params.governanceDelay = BigNumber.from(
                                 MAX_GOVERNANCE_DELAY.add(1)
+                            );
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .stageParams(params)
+                            ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                            return true;
+                        });
+                    });
+
+                    describe("when withdrawLimit less than MIN_WITHDRAW_LIMIT", () => {
+                        it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                            let params = generateSingleParams(paramsArb);
+                            params.withdrawLimit = BigNumber.from(
+                                MIN_WITHDRAW_LIMIT.sub(1)
                             );
                             await expect(
                                 this.subject
