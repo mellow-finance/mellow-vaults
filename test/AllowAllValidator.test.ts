@@ -1,14 +1,13 @@
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
 import {
-    generateSingleParams,
     randomAddress,
     withSigner,
+    generateSingleParams,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { CowswapValidator } from "./types";
+import { AllowAllValidator } from "./types";
 import { ValidatorBehaviour } from "./behaviors/validator";
-import Exceptions from "./library/Exceptions";
 import { randomBytes } from "crypto";
 import { uint256 } from "./library/property";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
@@ -17,23 +16,20 @@ type CustomContext = {};
 
 type DeployOptions = {};
 
-contract<CowswapValidator, DeployOptions, CustomContext>(
-    "CowswapValidator",
+contract<AllowAllValidator, DeployOptions, CustomContext>(
+    "AllowAllValidator",
     function () {
-        const PRE_SIGNATURE_SELECTOR = "0xec6cb13f";
-
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     await deployments.fixture();
                     const { address } = await deployments.get(
-                        "CowswapValidator"
+                        "AllowAllValidator"
                     );
                     this.subject = await ethers.getContractAt(
-                        "CowswapValidator",
+                        "AllowAllValidator",
                         address
                     );
-
                     return this.subject;
                 }
             );
@@ -53,36 +49,17 @@ contract<CowswapValidator, DeployOptions, CustomContext>(
                                 randomAddress(),
                                 randomAddress(),
                                 generateSingleParams(uint256),
-                                PRE_SIGNATURE_SELECTOR,
+                                randomBytes(4),
                                 randomBytes(32)
                             )
                     ).to.not.be.reverted;
-                });
-            });
-            describe("edge cases:", async () => {
-                describe(`when selector is not ${PRE_SIGNATURE_SELECTOR}`, async () => {
-                    it(`reverts with ${Exceptions.INVALID_SELECTOR}`, async () => {
-                        await withSigner(randomAddress(), async (signer) => {
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .validate(
-                                        randomAddress(),
-                                        randomAddress(),
-                                        generateSingleParams(uint256),
-                                        randomBytes(4),
-                                        randomBytes(32)
-                                    )
-                            ).to.be.revertedWith(Exceptions.INVALID_SELECTOR);
-                        });
-                    });
                 });
             });
         });
 
         ValidatorBehaviour.call(this, {});
         ContractMetaBehaviour.call(this, {
-            contractName: "CowswapValidator",
+            contractName: "AllowAllValidator",
             contractVersion: "1.0.0",
         });
     }

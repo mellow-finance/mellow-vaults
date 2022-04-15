@@ -16,6 +16,7 @@ import { ValidatorBehaviour } from "./behaviors/validator";
 import Exceptions from "./library/Exceptions";
 import { randomBytes, randomInt } from "crypto";
 import { uint256, uint8 } from "./library/property";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {};
 
@@ -211,5 +212,9 @@ contract<CurveValidator, DeployOptions, CustomContext>(
         });
 
         ValidatorBehaviour.call(this, {});
+        ContractMetaBehaviour.call(this, {
+            contractName: "CurveValidator",
+            contractVersion: "1.0.0",
+        });
     }
 );

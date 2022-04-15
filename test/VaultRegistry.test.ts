@@ -22,6 +22,7 @@ import {
     VAULT_REGISTRY_INTERFACE_ID,
 } from "./library/Constants";
 import { contract } from "./library/setup";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     ownerSigner: SignerWithAddress;
@@ -1011,6 +1012,11 @@ contract<VaultRegistry, DeployOptions, CustomContext>(
                     });
                 });
             });
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "VaultRegistry",
+            contractVersion: "1.0.0",
         });
     }
 );
