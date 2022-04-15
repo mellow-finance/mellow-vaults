@@ -19,16 +19,12 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
-    /// @notice Checks if the address is ADMIN or ADMIN_DELEGATE.
-    /// @param sender Adddress to check
-    /// @return `true` if sender is an admin, `false` otherwise
+    /// @inheritdoc IDefaultAccessControl
     function isAdmin(address sender) public view returns (bool) {
         return hasRole(ADMIN_ROLE, sender) || hasRole(ADMIN_DELEGATE_ROLE, sender);
     }
 
-    /// @notice Checks if the address is OPERATOR.
-    /// @param sender Adddress to check
-    /// @return `true` if sender is an admin, `false` otherwise
+    /// @inheritdoc IDefaultAccessControl
     function isOperator(address sender) public view returns (bool) {
         return hasRole(OPERATOR, sender);
     }

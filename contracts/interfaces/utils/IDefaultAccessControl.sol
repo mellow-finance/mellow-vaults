@@ -9,5 +9,8 @@ interface IDefaultAccessControl is IAccessControlEnumerable {
     /// @return `true` if who is admin, `false` otherwise
     function isAdmin(address who) external view returns (bool);
 
+    /// @notice Checks that the address is contract admin.
+    /// @param who Address to check
+    /// @return `true` if who is operator, `false` otherwise
     function isOperator(address who) external view returns (bool);
 }
