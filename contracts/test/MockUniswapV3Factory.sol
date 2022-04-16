@@ -16,9 +16,9 @@ contract MockUniswapV3Factory is IUniswapV3Factory {
     function feeAmountTickSpacing(uint24 fee) external view returns (int24) {}
 
     function getPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
+        address,
+        address,
+        uint24
     ) external view returns (address pool) {
         pool = address(uniV3Pool);
     }
