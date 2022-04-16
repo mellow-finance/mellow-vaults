@@ -36,6 +36,7 @@ import { OracleParamsStruct, RatioParamsStruct } from "./types/MStrategy";
 import Exceptions from "./library/Exceptions";
 import { assert } from "console";
 import { randomInt } from "crypto";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -1067,7 +1068,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.fee,
                         this.params.admin
                     );
-                    this.subject = await ethers.getContractAt(
+                    let subject = await ethers.getContractAt(
                         "MStrategy",
                         address
                     );
@@ -1089,15 +1090,15 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickIncrease: 180,
                     };
 
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setRatioParams(ratioParams);
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
-                        this.subject.connect(this.mStrategyAdmin).rebalance()
+                        subject.connect(this.mStrategyAdmin).rebalance()
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
             });
@@ -1352,7 +1353,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 this.params.fee,
                 this.params.admin
             );
-            this.subject = await ethers.getContractAt("MStrategy", address);
+            let subject = await ethers.getContractAt("MStrategy", address);
 
             const oracleParams: OracleParamsStruct = {
                 oracleObservationDelta: 10,
@@ -1369,14 +1370,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 tickIncrease: 180,
             };
 
-            await this.subject
+            await subject
                 .connect(this.mStrategyAdmin)
                 .setRatioParams(ratioParams);
-            await this.subject
+            await subject
                 .connect(this.mStrategyAdmin)
                 .setOracleParams(oracleParams);
 
-            let res = await this.subject.callStatic.getAverageTick();
+            let res = await subject.callStatic.getAverageTick();
             let expectedAverageTick =
                 (Number(params?.observationsParams?.tickCumulative) -
                     Number(params?.observationsParams?.tickCumulativeLast)) /
@@ -1389,7 +1390,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             expect(res.averageTick).to.be.eq(expectedAverageTick);
             expect(res.deviation).to.be.eq(expectedTickDeviation);
 
-            await expect(this.subject.getAverageTick()).to.not.be.reverted;
+            await expect(subject.getAverageTick()).to.not.be.reverted;
         });
 
         describe("edge cases", () => {
@@ -1417,7 +1418,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.fee,
                         this.params.admin
                     );
-                    this.subject = await ethers.getContractAt(
+                    let subject = await ethers.getContractAt(
                         "MStrategy",
                         address
                     );
@@ -1439,18 +1440,23 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickIncrease: 180,
                     };
 
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setRatioParams(ratioParams);
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
-                        this.subject.connect(this.mStrategyAdmin).rebalance()
+                        subject.connect(this.mStrategyAdmin).rebalance()
                     ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                 });
             });
         });
+    });
+
+    ContractMetaBehaviour.call(this, {
+        contractName: "MStrategy",
+        contractVersion: "1.0.0",
     });
 });

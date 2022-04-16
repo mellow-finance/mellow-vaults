@@ -327,8 +327,8 @@ export class PermissionIdsLibrary {
 }
 
 export const USDC_PRICE = BigNumber.from(10).pow(6);
-export const WETH_PRICE = USDC_PRICE.mul(3000);
-export const WBTC_PRICE = USDC_PRICE.mul(45000);
+export const WETH_PRICE = BigNumber.from(10).pow(18).div(3000);
+export const WBTC_PRICE = BigNumber.from(10).pow(18).div(45000);
 
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
