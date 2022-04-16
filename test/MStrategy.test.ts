@@ -1455,8 +1455,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
         });
     });
 
-    ContractMetaBehaviour.call(this, {
-        contractName: "MStrategy",
-        contractVersion: "1.0.0",
-    });
+    // ContractMetaBehaviour.call(this, {
+    //     contractName: "MStrategy",
+    //     contractVersion: "1.0.0",
+    // });
 });
