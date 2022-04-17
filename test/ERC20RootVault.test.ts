@@ -8,8 +8,6 @@ import {
     withSigner,
     randomAddress,
     sleep,
-    deployVault,
-    VaultParams,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
@@ -19,23 +17,18 @@ import {
     MockLpCallback,
     UniV3Vault,
     IERC20RootVaultGovernance,
-    IIntegrationVault,
-    UniV3VaultGovernance,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import Exceptions from "./library/Exceptions";
 import {
     ERC20_ROOT_VAULT_INTERFACE_ID,
-    INTEGRATION_VAULT_INTERFACE_ID,
     YEARN_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import { randomInt, sign } from "crypto";
 import { range } from "ramda";
 import { DelayedStrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
 import { Contract } from "ethers";
-import { REGISTER_VAULT, CREATE_VAULT } from "./library/PermissionIdsLibrary";
-import { createVault } from "../tasks/vaults";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
