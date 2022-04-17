@@ -191,7 +191,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#depositorsAllowlist", () => {
+        describe("#depositorsAllowlist", () => {
             it("returns non zero length of depositorsAllowlist", async () => {
                 expect(
                     (await this.subject.depositorsAllowlist()).length
@@ -199,7 +199,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#addDepositorsToAllowlist", () => {
+        describe("#addDepositorsToAllowlist", () => {
             it("adds depositor to allow list", async () => {
                 let newDepositor = randomAddress();
                 expect(await this.subject.depositorsAllowlist()).to.not.contain(
@@ -238,7 +238,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#removeDepositorsFromAllowlist", () => {
+        describe("#removeDepositorsFromAllowlist", () => {
             it("removes depositor to allow list", async () => {
                 let newDepositor = randomAddress();
                 expect(await this.subject.depositorsAllowlist()).to.not.contain(
@@ -287,7 +287,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#supportsInterface", () => {
+        describe("#supportsInterface", () => {
             it(`returns true if this contract supports ${ERC20_ROOT_VAULT_INTERFACE_ID} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
@@ -323,7 +323,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#initialize", () => {
+        describe("#initialize", () => {
             beforeEach(async () => {
                 this.nft = await ethers.provider.send("eth_getStorageAt", [
                     this.subject.address,
@@ -662,7 +662,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#deposit", () => {
+        describe("#deposit", () => {
             it("emits Deposit event", async () => {
                 await this.subject
                     .connect(this.admin)
@@ -920,7 +920,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#withdraw", () => {
+        describe("#withdraw", () => {
             it("emits Withdraw event", async () => {
                 await this.subject
                     .connect(this.admin)

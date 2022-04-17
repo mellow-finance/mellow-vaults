@@ -8,7 +8,6 @@ import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
-import "../libraries/PermissionIdsLibrary.sol";
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
 contract AggregateVault is IAggregateVault, Vault {
