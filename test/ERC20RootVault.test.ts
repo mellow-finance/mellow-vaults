@@ -7,25 +7,35 @@ import {
     mintUniV3Position_USDC_WETH,
     withSigner,
     randomAddress,
+    sleep,
+    deployVault,
+    VaultParams,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { StrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
 import {
     ERC20RootVault,
     ERC20Vault,
     IntegrationVault,
+    MockLpCallback,
     UniV3Vault,
-    ERC20RootVaultGovernance,
+    IERC20RootVaultGovernance,
+    IIntegrationVault,
+    UniV3VaultGovernance,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import Exceptions from "./library/Exceptions";
 import {
     ERC20_ROOT_VAULT_INTERFACE_ID,
+    INTEGRATION_VAULT_INTERFACE_ID,
     YEARN_VAULT_INTERFACE_ID,
 } from "./library/Constants";
-import { randomInt } from "crypto";
+import { randomInt, sign } from "crypto";
+import { range } from "ramda";
+import { DelayedStrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
+import { Contract } from "ethers";
+import { REGISTER_VAULT, CREATE_VAULT } from "./library/PermissionIdsLibrary";
+import { createVault } from "../tasks/vaults";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -188,7 +198,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe("#depositorsAllowlist", () => {
+        describe.only("#depositorsAllowlist", () => {
             it("returns non zero length of depositorsAllowlist", async () => {
                 expect(
                     (await this.subject.depositorsAllowlist()).length
@@ -196,7 +206,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#addDepositorsToAllowlist", () => {
+        describe.only("#addDepositorsToAllowlist", () => {
             it("adds depositor to allow list", async () => {
                 let newDepositor = randomAddress();
                 expect(await this.subject.depositorsAllowlist()).to.not.contain(
@@ -235,7 +245,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#removeDepositorsFromAllowlist", () => {
+        describe.only("#removeDepositorsFromAllowlist", () => {
             it("removes depositor to allow list", async () => {
                 let newDepositor = randomAddress();
                 expect(await this.subject.depositorsAllowlist()).to.not.contain(
@@ -284,7 +294,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#supportsInterface", () => {
+        describe.only("#supportsInterface", () => {
             it(`returns true if this contract supports ${ERC20_ROOT_VAULT_INTERFACE_ID} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
@@ -320,7 +330,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#initialize", () => {
+        describe.only("#initialize", () => {
             beforeEach(async () => {
                 this.nft = await ethers.provider.send("eth_getStorageAt", [
                     this.subject.address,
@@ -333,27 +343,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 ]);
             });
 
-            // it("initializes contract successfully", async () => {
-            //     await withSigner(
-            //         this.erc20VaultGovernance.address,
-            //         async (signer) => {
-            //             await expect(
-            //                 this.subject
-            //                     .connect(signer)
-            //                     .initialize(this.nft, [
-            //                         this.usdc.address,
-            //                         this.weth.address,
-            //                     ],
-            //                     randomAddress(),
-            //                     [
-            //                         this.usdc.address,
-            //                         this.weth.address,
-            //                     ],
-            //                     )
-            //             ).to.not.be.reverted;
-            //         }
-            //     );
-            // });
+            xit("initializes contract successfully", async () => {
+                await withSigner(
+                    this.uniV3VaultGovernance.address,
+                    async (signer) => {
+                        const nftIndex = (
+                            await this.vaultRegistry.vaultsCount()
+                        ).toNumber();
+                        await this.subject
+                            .connect(signer)
+                            .initialize(
+                                this.nft,
+                                [this.usdc.address, this.weth.address],
+                                randomAddress(),
+                                [nftIndex]
+                            );
+                    }
+                );
+            });
 
             describe("edge cases:", () => {
                 describe("when subvaultNfts length is 0", () => {
@@ -514,17 +521,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             "0x12", // address of vault
                             "0x0000000000000000000000000000000000000000000000000000000000000000",
                         ]);
-                        const newOwner = ethers.constants.AddressZero;
-                        // await withSigner(
-                        //     await this.vaultRegistry.ownerOf(startNft),
-                        //     async (signer) => {
-                        //         await this.vaultRegistry
-                        //         .connect(signer)
-                        //         .setApprovalForAll(newOwner, true);
-                        //         await this.vaultRegistry
-                        //         .connect(signer)
-                        //         .transferFrom(signer.address, newOwner, startNft)
-                        //     });
 
                         await withSigner(
                             this.erc20VaultGovernance.address,
@@ -673,22 +669,22 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#deposit", () => {
+        describe.only("#deposit", () => {
             it("emits Deposit event", async () => {
                 await this.subject
                     .connect(this.admin)
                     .addDepositorsToAllowlist([this.deployer.address]);
                 await this.weth
                     .connect(this.deployer)
-                    .approve(this.subject.address, BigNumber.from(100));
+                    .approve(this.subject.address, BigNumber.from(10001));
                 await this.usdc
                     .connect(this.deployer)
-                    .approve(this.subject.address, BigNumber.from(100));
+                    .approve(this.subject.address, BigNumber.from(10001));
                 await expect(
                     this.subject
                         .connect(this.deployer)
                         .deposit(
-                            [BigNumber.from(1), BigNumber.from(1)],
+                            [BigNumber.from(10001), BigNumber.from(10001)],
                             BigNumber.from(1),
                             []
                         )
@@ -697,7 +693,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("edge cases:", () => {
                 describe("when deposit is enabled", () => {
-                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .setOperatorParams({
@@ -714,10 +710,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
 
                 describe("when there is no depositor in allow list", () => {
-                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         await expect(
                             this.subject.deposit(
-                                [],
+                                [BigNumber.from(10001), BigNumber.from(10001)],
                                 BigNumber.from(randomInt(100)),
                                 []
                             )
@@ -726,7 +722,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
 
                 describe("when there is a private vault in delayedStrategyParams", () => {
-                    it(`reverted with ${Exceptions.FORBIDDEN}`, async () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         const params = {
                             strategyTreasury: randomAddress(),
                             strategyPerformanceTreasury: randomAddress(),
@@ -746,7 +742,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             );
                         await expect(
                             this.subject.deposit(
-                                [BigNumber.from(1), BigNumber.from(1)],
+                                [BigNumber.from(10001), BigNumber.from(10001)],
                                 BigNumber.from(1),
                                 []
                             )
@@ -755,7 +751,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
 
                 describe("when minLpTokens more than lpAmount", () => {
-                    it(`reverted with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
+                    it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
@@ -778,21 +774,58 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
 
                 describe("when lpAmount is 0", () => {
-                    it(`reverted with ${Exceptions.VALUE_ZERO}`, async () => {
+                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
                         await this.weth
                             .connect(this.deployer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
                         await this.usdc
                             .connect(this.deployer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
                         await expect(
                             this.subject
                                 .connect(this.deployer)
                                 .deposit(
-                                    [BigNumber.from(0), BigNumber.from(0)],
+                                    [
+                                        BigNumber.from(10001),
+                                        BigNumber.from(10001),
+                                    ],
+                                    BigNumber.from(0),
+                                    []
+                                )
+                        ).not.to.be.reverted;
+
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [
+                                        BigNumber.from(10001),
+                                        BigNumber.from(10001),
+                                    ],
                                     BigNumber.from(0),
                                     []
                                 )
@@ -801,59 +834,59 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
 
                 describe("when sum of lpAmount and sender balance is more than tokenLimitPerAddress", () => {
-                    it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
-                        await this.erc20RootVaultGovernance
-                            .connect(this.admin)
-                            .setStrategyParams(BigNumber.from(9), {
-                                tokenLimitPerAddress: BigNumber.from(0),
-                                tokenLimit: BigNumber.from(0),
-                            });
+                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        var value = BigNumber.from(10001);
+                        range(1, 15).forEach(async (nft) => {
+                            await this.erc20RootVaultGovernance
+                                .connect(this.admin)
+                                .setStrategyParams(BigNumber.from(nft), {
+                                    tokenLimitPerAddress: BigNumber.from(0),
+                                    tokenLimit: BigNumber.from(0),
+                                });
+                        });
+
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
                         await this.weth
                             .connect(this.deployer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(this.subject.address, value);
                         await this.usdc
                             .connect(this.deployer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(this.subject.address, value);
                         await expect(
                             this.subject
                                 .connect(this.deployer)
-                                .deposit(
-                                    [BigNumber.from(1), BigNumber.from(1)],
-                                    BigNumber.from(1),
-                                    []
-                                )
+                                .deposit([value, value], BigNumber.from(1), [])
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                     });
                 });
 
                 describe("when sum of lpAmount and totalSupply is more than tokenLimit", () => {
-                    it(`reverted with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
-                        await this.erc20RootVaultGovernance
-                            .connect(this.admin)
-                            .setStrategyParams(BigNumber.from(9), {
-                                tokenLimitPerAddress: BigNumber.from(10),
-                                tokenLimit: BigNumber.from(0),
-                            });
+                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                        var value = BigNumber.from(10001);
+                        range(1, 15).forEach(async (nft) => {
+                            await this.erc20RootVaultGovernance
+                                .connect(this.admin)
+                                .setStrategyParams(BigNumber.from(nft), {
+                                    tokenLimitPerAddress: value.mul(10),
+                                    tokenLimit: BigNumber.from(0),
+                                });
+                        });
+
                         await this.subject
                             .connect(this.admin)
                             .addDepositorsToAllowlist([this.deployer.address]);
                         await this.weth
                             .connect(this.deployer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(this.subject.address, value);
                         await this.usdc
                             .connect(this.deployer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(this.subject.address, value);
                         await expect(
                             this.subject
                                 .connect(this.deployer)
-                                .deposit(
-                                    [BigNumber.from(1), BigNumber.from(1)],
-                                    BigNumber.from(1),
-                                    []
-                                )
+                                .deposit([value, value], BigNumber.from(1), [])
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                     });
                 });
@@ -861,22 +894,30 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("access control:", () => {
                 it("allowed: any address", async () => {
-                    const depositor = randomAddress();
                     await this.subject
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
                     await withSigner(this.deployer.address, async (signer) => {
                         await this.weth
                             .connect(signer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
                         await this.usdc
                             .connect(signer)
-                            .approve(this.subject.address, BigNumber.from(100));
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
                         await expect(
                             this.subject
                                 .connect(signer)
                                 .deposit(
-                                    [BigNumber.from(1), BigNumber.from(1)],
+                                    [
+                                        BigNumber.from(10001),
+                                        BigNumber.from(10001),
+                                    ],
                                     BigNumber.from(1),
                                     []
                                 )
@@ -886,17 +927,41 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe("#withdraw", () => {
-            // it("emits Withdraw event", async () => {
-            //     expect(
-            //         await this.subject.withdraw(randomAddress(), BigNumber.from(randomInt(100)), []
-            //         )
-            //     ).to.emit(this.subject, "Withdraw");
-            // });
+        describe.only("#withdraw", () => {
+            it("emits Withdraw event", async () => {
+                await this.subject
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist([this.deployer.address]);
+                await this.weth
+                    .connect(this.deployer)
+                    .approve(this.subject.address, BigNumber.from(10001));
+                await this.usdc
+                    .connect(this.deployer)
+                    .approve(this.subject.address, BigNumber.from(10001));
+                await expect(
+                    this.subject
+                        .connect(this.deployer)
+                        .deposit(
+                            [BigNumber.from(10001), BigNumber.from(10001)],
+                            BigNumber.from(0),
+                            []
+                        )
+                ).not.to.be.reverted;
+
+                var to = randomAddress();
+                await expect(
+                    this.subject.withdraw(
+                        to,
+                        BigNumber.from(0),
+                        [BigNumber.from(0), BigNumber.from(0)],
+                        ["0x00", "0x00"]
+                    )
+                ).to.emit(this.subject, "Withdraw");
+            });
 
             describe("edge cases:", () => {
                 describe("when total supply is 0", () => {
-                    it(`reverted with ${Exceptions.VALUE_ZERO}`, async () => {
+                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
                         await expect(
                             this.subject.withdraw(
                                 randomAddress(),
@@ -908,10 +973,36 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when total supply is not 0", () => {
-                    it(`reverted with ${Exceptions.VALUE_ZERO}`, async () => {
-                        const toAddress = randomAddress();
-                        await mint("USDC", toAddress, BigNumber.from(100));
+                describe("when length of vaultsOptions and length of _subvaultNfts are differ", () => {
+                    it(`reverts with ${Exceptions.INVALID_LENGTH}`, async () => {
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [
+                                        BigNumber.from(10001),
+                                        BigNumber.from(10001),
+                                    ],
+                                    BigNumber.from(0),
+                                    []
+                                )
+                        ).not.to.be.reverted;
+
                         await expect(
                             this.subject.withdraw(
                                 randomAddress(),
@@ -919,24 +1010,147 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 [],
                                 []
                             )
-                        ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                        ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
+                    });
+                });
+
+                describe("When address of lpCallback is not null", () => {
+                    it("emits withdrawCallback", async () => {
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [
+                                        BigNumber.from(10001),
+                                        BigNumber.from(10001),
+                                    ],
+                                    BigNumber.from(0),
+                                    []
+                                )
+                        ).not.to.be.reverted;
+
+                        const { deployments } = hre;
+                        const { deploy } = deployments;
+                        const { address: lpCallbackAddress } = await deploy(
+                            "MockLpCallback",
+                            {
+                                from: this.deployer.address,
+                                args: [],
+                                log: true,
+                                autoMine: true,
+                            }
+                        );
+
+                        const lpCallback: Contract | MockLpCallback =
+                            await ethers.getContractAt(
+                                "MockLpCallback",
+                                lpCallbackAddress
+                            );
+                        var governanceAddress =
+                            await this.subject.vaultGovernance();
+                        var governance: IERC20RootVaultGovernance =
+                            await ethers.getContractAt(
+                                "IERC20RootVaultGovernance",
+                                governanceAddress
+                            );
+
+                        const nft = BigNumber.from(13);
+                        const { strategyTreasury: strategyTreasury } =
+                            await governance.delayedStrategyParams(nft);
+                        const {
+                            strategyPerformanceTreasury:
+                                strategyPerformanceTreasury,
+                        } = await governance.delayedStrategyParams(nft);
+
+                        await governance
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(nft, {
+                                strategyTreasury: strategyTreasury,
+                                strategyPerformanceTreasury:
+                                    strategyPerformanceTreasury,
+                                privateVault: true,
+                                managementFee: BigNumber.from(3000),
+                                performanceFee: BigNumber.from(3000),
+                                depositCallbackAddress: lpCallback.address,
+                                withdrawCallbackAddress: lpCallback.address,
+                            } as DelayedStrategyParamsStruct);
+                        await sleep(86400);
+                        await governance
+                            .connect(this.admin)
+                            .commitDelayedStrategyParams(nft);
+
+                        var to = randomAddress();
+                        await expect(
+                            this.subject.withdraw(
+                                to,
+                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                ["0x00", "0x00"]
+                            )
+                        ).to.emit(lpCallback, "WithdrawCallbackCalled");
                     });
                 });
             });
 
-            // describe("access control:", () => {
-            //     it("allowed: any address", async () => {
-            //         // when all edge cases will be done
-            //         await withSigner(randomAddress(), async (signer) => {
-            //             await expect(
-            //                 this.subject
-            //                     .connect(signer)
-            //                     .withdraw
-            //                     (randomAddress(), BigNumber.from(randomInt(100)), [])
-            //             ).to.not.be.reverted;
-            //         });
-            //     });
-            // });
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    // when all edge cases will be done
+                    await withSigner(randomAddress(), async (signer) => {
+                        await this.subject
+                            .connect(this.admin)
+                            .addDepositorsToAllowlist([this.deployer.address]);
+                        await this.weth
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await this.usdc
+                            .connect(this.deployer)
+                            .approve(
+                                this.subject.address,
+                                BigNumber.from(10001)
+                            );
+                        await expect(
+                            this.subject
+                                .connect(this.deployer)
+                                .deposit(
+                                    [
+                                        BigNumber.from(10001),
+                                        BigNumber.from(10001),
+                                    ],
+                                    BigNumber.from(0),
+                                    []
+                                )
+                        ).not.to.be.reverted;
+
+                        var to = randomAddress();
+                        await expect(
+                            this.subject.withdraw(
+                                to,
+                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                ["0x00", "0x00"]
+                            )
+                        ).to.emit(this.subject, "Withdraw");
+                    });
+                });
+            });
         });
     }
 );
