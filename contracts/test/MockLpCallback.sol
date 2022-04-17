@@ -13,7 +13,7 @@ contract MockLpCallback is ILpCallback {
 
     /// @notice Callback function
     function withdrawCallback() external {
-        emit WithdrawCallbackCalled();    
+        emit WithdrawCallbackCalled();
     }
 
     /// @notice Emitted when callback in depositCallback called

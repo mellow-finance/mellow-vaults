@@ -8,14 +8,7 @@ import "../interfaces/vaults/IVaultRoot.sol";
 import "../interfaces/vaults/IAggregateVault.sol";
 import "./Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
-<<<<<<< HEAD
-=======
 import "../libraries/PermissionIdsLibrary.sol";
-<<<<<<< HEAD
-import "hardhat/console.sol";
->>>>>>> 4291e02 (update deposit tests)
-=======
->>>>>>> c29be3f (remove console logs)
 
 /// @notice Vault that combines several integration layer Vaults into one Vault.
 contract AggregateVault is IAggregateVault, Vault {
