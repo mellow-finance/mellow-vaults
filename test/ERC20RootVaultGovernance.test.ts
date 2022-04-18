@@ -94,7 +94,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#supportsInterface", () => {
+        describe("#supportsInterface", () => {
             it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
