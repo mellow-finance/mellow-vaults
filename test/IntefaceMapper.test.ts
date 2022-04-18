@@ -1,9 +1,9 @@
 import hre from "hardhat";
 import { expect } from "chai";
 import { ethers, deployments } from "hardhat";
-import { contract } from "../library/setup";
+import { contract } from "./library/setup";
 
-import { InterfaceMapper } from "../types";
+import { InterfaceMapper } from "./types";
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -35,7 +35,7 @@ contract<InterfaceMapper, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("#constructor", () => {
+        describe("#constructor", () => {
             it("Check interface Ids", async () => {
                 expect(await this.subject.ERC165_INTERFACE_ID()).to.not.eq(
                     "0x00000000"
