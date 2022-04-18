@@ -71,7 +71,7 @@ contract<MellowOracle, DeployOptions, CustomContext>(
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeployOptions) => {
-                    deployMellowOracle(
+                    await deployMellowOracle(
                         options ? options : DEFAULT_DEPLOY_PARAMS
                     );
                     return this.subject;
@@ -97,9 +97,7 @@ contract<MellowOracle, DeployOptions, CustomContext>(
             });
 
             it("initializes version", async () => {
-                expect("1.0.0").to.be.eq(
-                    await this.subject.contractVersion()
-                );
+                expect("1.0.0").to.be.eq(await this.subject.contractVersion());
             });
 
             it("initializes IUniV3Oracle", async () => {
@@ -136,10 +134,9 @@ contract<MellowOracle, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when contract does not support the given interface", () => {
                     it("returns false", async () => {
-                        let isSupported =
-                            await this.subject.supportsInterface(
-                                UNIV2_ORACLE_INTERFACE_ID
-                            );
+                        let isSupported = await this.subject.supportsInterface(
+                            UNIV2_ORACLE_INTERFACE_ID
+                        );
                         expect(isSupported).to.be.false;
                     });
                 });
@@ -235,6 +232,9 @@ contract<MellowOracle, DeployOptions, CustomContext>(
             });
         });
 
-        ContractMetaBehaviour.call(this, { contractName:"MellowOracle", contractVersion:"1.0.0" });
+        ContractMetaBehaviour.call(this, {
+            contractName: "MellowOracle",
+            contractVersion: "1.0.0",
+        });
     }
 );
