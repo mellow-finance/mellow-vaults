@@ -71,19 +71,32 @@ export function integrationVaultBehavior<S extends Contract>(
 
         integrationVaultPushBehavior.call(this);
 
-        describe("when not enough balance", () => {
-            it("reverts", async () => {
-                const deployerBalance = await this.usdc.balanceOf(
-                    this.deployer.address
-                );
-                await expect(
-                    this.pushFunction(
-                        ...this.prefixArgs,
-                        [this.usdc.address],
-                        [BigNumber.from(deployerBalance).mul(2)],
-                        []
-                    )
-                ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+        it("emits Push event even when tokenAmounts are zero", async () => {
+            await expect(
+                this.pushFunction(
+                    ...this.prefixArgs,
+                    [this.usdc.address],
+                    [BigNumber.from(0)],
+                    []
+                )
+            ).to.emit(this.subject, "Push");
+        });
+        
+        describe("edge cases", () => {
+            describe("when not enough balance", () => {
+                it("reverts", async () => {
+                    const deployerBalance = await this.usdc.balanceOf(
+                        this.deployer.address
+                    );
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [this.usdc.address],
+                            [BigNumber.from(deployerBalance).mul(2)],
+                            []
+                        )
+                    ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+                });
             });
         });
 
@@ -210,6 +223,16 @@ export function integrationVaultBehavior<S extends Contract>(
         });
 
     describe("#pull", () => {
+        it.only("emits Pull event", async () => {
+            await expect(
+                this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [BigNumber.from(1)],
+                    []
+                )
+            ).to.emit(this.subject, "Pull");
+        });
         it("emits Pull event", async () => {
             await expect(
                 this.subject.pull(
