@@ -763,7 +763,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("#withdraw", () => {
+        describe("#withdraw", () => {
             const MIN_FIRST_DEPOSIT = BigNumber.from(10001);
             const DEFAULT_MIN_LP_TOKEN = BigNumber.from(1);
             const NON_EMPTY_DEFAULT_OPTIONS = ["0x00", "0x00"];
