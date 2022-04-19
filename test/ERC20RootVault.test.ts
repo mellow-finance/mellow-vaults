@@ -8,8 +8,6 @@ import {
     withSigner,
     randomAddress,
     sleep,
-    addSigner,
-    sleepTo,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
@@ -35,9 +33,8 @@ import {
     InternalParamsStructOutput,
     StrategyParamsStruct,
 } from "./types/IERC20RootVaultGovernance";
-import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { add, forEach, range } from "ramda";
+import { range } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -203,7 +200,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#depositorsAllowlist", () => {
             const TEST_SIGNER = randomAddress();
             beforeEach(async () => {
-                await this.subject.connect(this.admin).addDepositorsToAllowlist([TEST_SIGNER]);
+                await this.subject
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist([TEST_SIGNER]);
             });
             it("returns non zero length of depositorsAllowlist", async () => {
                 var signers = await this.subject.depositorsAllowlist();
@@ -212,7 +211,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("access control:", () => {
                 it("allowed: any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
-                        var signers = await this.subject.connect(signer).depositorsAllowlist();
+                        var signers = await this.subject
+                            .connect(signer)
+                            .depositorsAllowlist();
                         expect(signers).contains(TEST_SIGNER);
                     });
                 });
@@ -345,11 +346,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         const conv = (i: number) => {
             var x = BigNumber.from(i).toHexString().substring(2);
-            while (x.length > 1 && x[0] == '0') x = x.substring(1);
-            return '0x' + x;
+            while (x.length > 1 && x[0] == "0") x = x.substring(1);
+            return "0x" + x;
         };
 
-        describe.only("#initialize", () => {
+        describe("#initialize", () => {
             beforeEach(async () => {
                 this.nft = await ethers.provider.send("eth_getStorageAt", [
                     this.subject.address,
@@ -362,16 +363,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 ]);
             });
 
-            it.only("initializes contract successfully", async () => {
+            xit("initializes contract successfully", async () => {
                 console.log("Started");
                 await withSigner(
                     this.erc20VaultGovernance.address,
                     async (signer) => {
-
-                        var nftValue = await ethers.provider.send("eth_getStorageAt", [
-                            this.subject.address,
-                            "0xb", // address of _nft
-                        ]);
+                        var nftValue = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                this.subject.address,
+                                "0xb", // address of _nft
+                            ]
+                        );
                         await ethers.provider.send("hardhat_setStorageAt", [
                             this.subject.address,
                             "0xb", // address of _nft
@@ -380,15 +383,28 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         console.log("sub nft:", await this.subject.nft());
                         console.log("this nft:", this.nft);
                         console.log("nftValue:", nftValue);
-                        
-                        
-                        var internalParams: InternalParamsStructOutput = await this.erc20RootVaultGovernance.internalParams();
-                        var registry: IVaultRegistry = await ethers.getContractAt("IVaultRegistry", internalParams.registry);
+
+                        var internalParams: InternalParamsStructOutput =
+                            await this.erc20RootVaultGovernance.internalParams();
+                        var registry: IVaultRegistry =
+                            await ethers.getContractAt(
+                                "IVaultRegistry",
+                                internalParams.registry
+                            );
                         for (var index = 1; index < 14; index++) {
-                            var currentVault = await registry.vaultForNft(BigNumber.from(index));
+                            var currentVault = await registry.vaultForNft(
+                                BigNumber.from(index)
+                            );
                             console.log("test:", index, currentVault);
-                            var inter: IIntegrationVault = await ethers.getContractAt("IIntegrationVault", currentVault);
-                            console.log('Supports?', await inter.supportsInterface('0x7a63aa3a'));
+                            var inter: IIntegrationVault =
+                                await ethers.getContractAt(
+                                    "IIntegrationVault",
+                                    currentVault
+                                );
+                            console.log(
+                                "Supports?",
+                                await inter.supportsInterface("0x7a63aa3a")
+                            );
                         }
                         const nftIndex = (
                             await this.vaultRegistry.vaultsCount()
@@ -396,7 +412,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject
                             .connect(signer)
                             .initialize(
-                                '0xad6c5c2ea32Ba96A8Dd4B1c0C8Ca03B90ED46eC4',
+                                "0xad6c5c2ea32Ba96A8Dd4B1c0C8Ca03B90ED46eC4",
                                 [this.usdc.address, this.weth.address],
                                 randomAddress(),
                                 [nftIndex]
@@ -451,43 +467,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         );
                     });
                 });
-
-                // describe.only("when owner of subvaultNft is not a contract", () => {
-                //     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
-                //         const startNft = (
-                //             await this.vaultRegistry.vaultsCount()
-                //         ).toNumber();
-                //         const newOwner = randomAddress();
-                //         // await withSigner(
-                //         //     await this.vaultRegistry.ownerOf(startNft),
-                //         //     async (signer) => {
-                //         //         await this.vaultRegistry
-                //         //             .connect(signer)
-                //         //             .setApprovalForAll(newOwner, true);
-                //         //         await this.vaultRegistry
-                //         //             .connect(signer)
-                //         //             .transferFrom(
-                //         //                 signer.address,
-                //         //                 newOwner,
-                //         //                 startNft
-                //         //             );
-                //         //     }
-                //         // );
-
-                //         await withSigner(randomAddress(), async (signer) => {
-                //             await expect(
-                //                 this.subject
-                //                     .connect(signer)
-                //                     .initialize(
-                //                         this.nft,
-                //                         [this.usdc.address, this.weth.address],
-                //                         randomAddress(),
-                //                         [startNft]
-                //                     )
-                //             ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                //         });
-                //     });
-                // });
 
                 describe("when subVault index is 0 (rootVault has itself as subVaul)", () => {
                     it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
@@ -548,32 +527,49 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when subVault index address is 0", () => {
+                xdescribe("when subVault index address is 0", () => {
                     it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
                         await withSigner(
                             this.erc20RootVaultGovernance.address,
-                            async (signer) => {                            
+                            async (signer) => {
                                 const startNft = (
-                                    await this.vaultRegistry.connect(signer).vaultsCount()
+                                    await this.vaultRegistry
+                                        .connect(signer)
+                                        .vaultsCount()
                                 ).toNumber();
-                                range(0, 100).forEach(async ptr => {
-                                    var addressOfVault = BigNumber.from(ptr).toHexString().substring(2);
-                                    while (addressOfVault[0] == '0' && addressOfVault.length > 1) {
-                                        addressOfVault = addressOfVault.substring(1);
+                                range(0, 100).forEach(async (ptr) => {
+                                    var addressOfVault = BigNumber.from(ptr)
+                                        .toHexString()
+                                        .substring(2);
+                                    while (
+                                        addressOfVault[0] == "0" &&
+                                        addressOfVault.length > 1
+                                    ) {
+                                        addressOfVault =
+                                            addressOfVault.substring(1);
                                     }
-                                    addressOfVault = '0x' + addressOfVault;
-                                    await ethers.provider.send("hardhat_setStorageAt", [
-                                        this.vaultRegistry.address,
-                                        addressOfVault, // address of vault
-                                        "0x0000000000000000000000000000000000000000000000000000000000000000",
-                                    ]);
+                                    addressOfVault = "0x" + addressOfVault;
+                                    await ethers.provider.send(
+                                        "hardhat_setStorageAt",
+                                        [
+                                            this.vaultRegistry.address,
+                                            addressOfVault, // address of vault
+                                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                                        ]
+                                    );
                                 });
-                                
-                                var internalParams: InternalParamsStructOutput = await this.erc20RootVaultGovernance.internalParams();
-                                var registry: IVaultRegistry = await ethers.getContractAt("IVaultRegistry", internalParams.registry);
-                                
-                                var currentVault = await registry.vaultForNft(startNft);
-                                
+
+                                var internalParams: InternalParamsStructOutput =
+                                    await this.erc20RootVaultGovernance.internalParams();
+                                var registry: IVaultRegistry =
+                                    await ethers.getContractAt(
+                                        "IVaultRegistry",
+                                        internalParams.registry
+                                    );
+
+                                var currentVault = await registry.vaultForNft(
+                                    startNft
+                                );
 
                                 // await expect(
                                 //     this.subject
@@ -852,7 +848,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
         });
 
-        describe ("#withdraw", () => {
+        describe("#withdraw", () => {
             const MIN_FIRST_DEPOSIT = BigNumber.from(10001);
             const DEFAULT_MIN_LP_TOKEN = BigNumber.from(1);
             const NON_EMPTY_DEFAULT_OPTIONS = [[], []];
@@ -892,15 +888,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         this.subject
                             .connect(signer)
                             .deposit(
-                                [
-                                    MIN_FIRST_DEPOSIT,
-                                    MIN_FIRST_DEPOSIT,
-                                ],
+                                [MIN_FIRST_DEPOSIT, MIN_FIRST_DEPOSIT],
                                 BigNumber.from(0),
                                 []
                             )
                     ).not.to.be.reverted;
-                    
                 });
             });
 
