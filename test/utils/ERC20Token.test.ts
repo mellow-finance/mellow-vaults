@@ -144,14 +144,6 @@ contract<MockERC20Token, DeployOptions, CustomContext>(
                     );
                 }
 
-                let messageHash = hashMessage(message).substring(2);
-
-                const TOKEN_DIGEST =
-                    "0xe8cfbb4ac172b0e03c797967bcdfd655f1f46bafb0f4683c056cd11d388e1762".substring(
-                        2
-                    );
-                expect(TOKEN_DIGEST).to.be.eq(messageHash);
-
                 const getSignatureByTypedData = async () => {
                     const domain = {
                         name: await this.subject.name(),
