@@ -12,6 +12,7 @@ import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -410,6 +411,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory withdrawn = new uint256[](tokenAmounts.length);
         uint64 timestamp = uint64(block.timestamp);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
+        console.log("Timestamp:", timestamp, " totalWithdrawnAmountsTimestamp:", totalWithdrawnAmountsTimestamp);
         if (timestamp != totalWithdrawnAmountsTimestamp) {
             totalWithdrawnAmountsTimestamp = timestamp;
         } else {

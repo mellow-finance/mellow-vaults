@@ -74,6 +74,7 @@ contract AggregateVault is IAggregateVault, Vault {
     ) internal virtual {
         IVaultRegistry vaultRegistry = IVaultGovernance(msg.sender).internalParams().registry;
         require(subvaultNfts_.length > 0, ExceptionsLibrary.EMPTY_LIST);
+    
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
             uint256 subvaultNft = subvaultNfts_[i];
             require(subvaultNft > 0, ExceptionsLibrary.VALUE_ZERO);
