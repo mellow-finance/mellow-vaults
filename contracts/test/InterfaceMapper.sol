@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "../../interfaces/oracles/IChainlinkOracle.sol";
-import "../../interfaces/oracles/IMellowOracle.sol";
-import "../../interfaces/oracles/IUniV2Oracle.sol";
-import "../../interfaces/oracles/IUniV3Oracle.sol";
-import "../../interfaces/oracles/IOracle.sol";
-import "../../interfaces/vaults/IVault.sol";
-import "../../interfaces/IVaultRegistry.sol";
-import "../../interfaces/IProtocolGovernance.sol";
-import "../../interfaces/vaults/IIntegrationVault.sol";
-import "../../interfaces/vaults/IUniV3Vault.sol";
-import "../../interfaces/vaults/IAaveVault.sol";
-import "../../interfaces/vaults/IYearnVault.sol";
-import "../../interfaces/vaults/IAaveVault.sol";
-import "../../interfaces/validators/IValidator.sol";
-import "../../interfaces/vaults/IERC20RootVaultGovernance.sol";
-import "../../interfaces/vaults/IERC20RootVault.sol";
+import "../interfaces/oracles/IChainlinkOracle.sol";
+import "../interfaces/oracles/IMellowOracle.sol";
+import "../interfaces/oracles/IUniV2Oracle.sol";
+import "../interfaces/oracles/IUniV3Oracle.sol";
+import "../interfaces/oracles/IOracle.sol";
+import "../interfaces/vaults/IVault.sol";
+import "../interfaces/IVaultRegistry.sol";
+import "../interfaces/IProtocolGovernance.sol";
+import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/vaults/IUniV3Vault.sol";
+import "../interfaces/vaults/IAaveVault.sol";
+import "../interfaces/vaults/IYearnVault.sol";
+import "../interfaces/vaults/IAaveVault.sol";
+import "../interfaces/validators/IValidator.sol";
+import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IERC20RootVault.sol";
 
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 

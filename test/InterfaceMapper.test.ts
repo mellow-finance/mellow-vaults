@@ -35,7 +35,7 @@ contract<InterfaceMapper, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe("#constructor", () => {
+        describe.only("#constructor", () => {
             it("Check interface Ids", async () => {
                 expect(await this.subject.ERC165_INTERFACE_ID()).to.not.eq(
                     "0x00000000"
