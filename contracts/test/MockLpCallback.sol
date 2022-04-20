@@ -6,6 +6,19 @@ import "../interfaces/utils/ILpCallback.sol";
 import "hardhat/console.sol";
 
 contract MockLpCallback is ILpCallback {
+
+    enum WithdrawCallbackMode {
+        NO_ERROR,
+        EMPTY_ERROR,
+        NON_EMPTY_ERROR
+    }
+    
+    WithdrawCallbackMode private _mode;
+
+    constructor(WithdrawCallbackMode mode) {
+        _mode = mode;
+    }
+
     /// @notice Callback function
     function depositCallback() external {
         emit DepositCallbackCalled();
@@ -13,7 +26,14 @@ contract MockLpCallback is ILpCallback {
 
     /// @notice Callback function
     function withdrawCallback() external {
-        emit WithdrawCallbackCalled();
+        if (_mode == WithdrawCallbackMode.NO_ERROR) {
+            emit WithdrawCallbackCalled();        
+        } else if (_mode == WithdrawCallbackMode.EMPTY_ERROR) {
+            require(false);
+        } else {
+            require(_mode == WithdrawCallbackMode.NON_EMPTY_ERROR);
+            require(false, "Error description");
+        }
     }
 
     /// @notice Emitted when callback in depositCallback called
