@@ -414,7 +414,7 @@ contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
                     let erc20Factory = await ethers.getContractFactory(
                         "ERC20Token"
                     );
-                    let unlistedToken  = await erc20Factory.deploy();
+                    let unlistedToken = await erc20Factory.deploy();
                     this.protocolGovernance
                         .connect(this.admin)
                         .stagePermissionGrants(unlistedToken.address, [
@@ -431,10 +431,10 @@ contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
                         async (signer) => {
                             await expect(
                                 this.subject
-                                .connect(signer)
-                                .initialize(this.nft, [
-                                    unlistedToken.address
-                                ])
+                                    .connect(signer)
+                                    .initialize(this.nft, [
+                                        unlistedToken.address,
+                                    ])
                             ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                         }
                     );

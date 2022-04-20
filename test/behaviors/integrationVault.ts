@@ -31,7 +31,7 @@ export type IntegrationVaultContext<S extends Contract, F> = TestContext<
 
 export function integrationVaultBehavior<S extends Contract>(
     this: IntegrationVaultContext<S, {}>,
-    {}: {}
+    { skipReclaimTokensTest }: any
 ) {
     const APPROVE_SELECTOR = "0x095ea7b3";
     describe("#push", () => {
@@ -81,7 +81,7 @@ export function integrationVaultBehavior<S extends Contract>(
                 )
             ).to.emit(this.subject, "Push");
         });
-        
+
         describe("edge cases", () => {
             describe("when not enough balance", () => {
                 it("reverts", async () => {
@@ -95,7 +95,9 @@ export function integrationVaultBehavior<S extends Contract>(
                             [BigNumber.from(deployerBalance).mul(2)],
                             []
                         )
-                    ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+                    ).to.be.revertedWith(
+                        "ERC20: transfer amount exceeds balance"
+                    );
                 });
             });
         });
@@ -156,8 +158,7 @@ export function integrationVaultBehavior<S extends Contract>(
             });
         });
     });
-
-    this.skipReclaimTokensTest &&
+    skipReclaimTokensTest != true &&
         describe("#reclaimTokens", () => {
             it("emits ReclaimTokens event", async () => {
                 await expect(
@@ -223,16 +224,6 @@ export function integrationVaultBehavior<S extends Contract>(
         });
 
     describe("#pull", () => {
-        it.only("emits Pull event", async () => {
-            await expect(
-                this.subject.pull(
-                    this.erc20Vault.address,
-                    [this.usdc.address],
-                    [BigNumber.from(1)],
-                    []
-                )
-            ).to.emit(this.subject, "Pull");
-        });
         it("emits Pull event", async () => {
             await expect(
                 this.subject.pull(
@@ -321,6 +312,30 @@ export function integrationVaultBehavior<S extends Contract>(
                             []
                         )
                     ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+            describe("when pulling from zeroVault to wrong vault", () => {
+                it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                    await expect(
+                        this.erc20Vault.pull(
+                            randomAddress(),
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
+                });
+            });
+            describe("when pulling from zeroVault to itself", () => {
+                it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                    await expect(
+                        this.erc20Vault.pull(
+                            this.erc20Vault.address,
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
                 });
             });
         });

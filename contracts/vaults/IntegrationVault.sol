@@ -13,7 +13,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
-import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -99,13 +98,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(nft_);
         IVaultRoot root = _root(registry, nft_, owner);
-        console.log(msg.sender);
-        console.log(owner); 
         if (owner != msg.sender) {
             address zeroVault = root.subvaultAt(0);
-            console.log(zeroVault); 
-            console.log(address(this)); 
-            console.log(address(root)); 
             if (zeroVault == address(this)) {
                 // If we pull from zero vault
                 require(
