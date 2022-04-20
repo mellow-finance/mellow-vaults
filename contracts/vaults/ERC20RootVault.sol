@@ -12,7 +12,6 @@ import "../interfaces/vaults/IERC20RootVault.sol";
 import "../interfaces/utils/ILpCallback.sol";
 import "../utils/ERC20Token.sol";
 import "./AggregateVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Contract that mints and burns LP tokens in exchange for ERC20 liquidity.
 contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, AggregateVault {
@@ -108,27 +107,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 supply = totalSupply;
         uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
-      
         for (uint256 i = 0; i < tokens.length; ++i) {
             uint256 tokenAmount = tokenAmounts[i];
-            console.log("tokenAmounts[", i, "] =", tokenAmount);
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
         actualTokenAmounts = _push(normalizedAmounts, vaultOptions);
-        for (uint256 i = 0; i < maxTvl.length; i++) {
-            console.log("maxTvl[", i, "] =", maxTvl[i]);
-        }
-        for (uint256 i = 0; i < actualTokenAmounts.length; i++) {
-            console.log("actualTokenAmounts[", i, "] =", actualTokenAmounts[i]);
-        }
-        for (uint256 i = 0; i < normalizedAmounts.length; i++) {
-            console.log("normalizedAmounts[", i, "] =", normalizedAmounts[i]);
-        }
-        console.log("supply", supply);
-        console.log("preLpAmount", preLpAmount);
         uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
-        console.log("lpAmount", lpAmount);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
@@ -244,7 +229,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             if (tvl_[i] < _pullExistentials[i]) {
                 continue;
             }
-            console.log("ERC20RootVault 242:", amounts[i], supply, tvl_[i]);
             uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
             // take min of meaningful tokenLp amounts
             if ((tokenLpAmount < lpAmount) || (isLpAmountUpdated == false)) {
@@ -307,7 +291,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
         IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
-        console.log("elapsed < delayedProtocolParams.managementFeeChargeDelay", elapsed < delayedProtocolParams.managementFeeChargeDelay, elapsed, delayedProtocolParams.managementFeeChargeDelay);
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
             return;
         }
@@ -320,7 +303,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         );
         lastFeeCharge = uint64(block.timestamp);
         // don't charge on initial deposit as well as on the last withdraw
-        console.log("base supply", baseSupply);
         if (baseSupply == 0) {
             return;
         }
@@ -344,7 +326,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             tokens,
             delayedProtocolParams.oracle
         );
-        console.log("tmp");
     }
 
     function _getBaseParamsForFees(
@@ -412,7 +393,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 tvlToken0 = _getTvlToken0(baseTvls, tokens, oracle);
         uint256 lpPriceD18 = FullMath.mulDiv(tvlToken0, CommonLibrary.D18, baseSupply);
         uint256 hwmsD18 = lpPriceHighWaterMarkD18;
-        console.log("pPriceD18 <= hwmsD18", lpPriceD18 <= hwmsD18, lpPriceD18, hwmsD18);
         if (lpPriceD18 <= hwmsD18) {
             return;
         }

@@ -17,7 +17,7 @@ import {
     IntegrationVault,
     MockLpCallback,
     UniV3Vault,
-    IERC20RootVaultGovernance
+    IERC20RootVaultGovernance,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
@@ -27,9 +27,7 @@ import {
     YEARN_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import { randomInt } from "crypto";
-import {
-    DelayedStrategyParamsStruct
-} from "./types/IERC20RootVaultGovernance";
+import { DelayedStrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { DelayedProtocolParamsStruct } from "./types/IERC20RootVaultGovernance";
 
@@ -505,6 +503,36 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 .addDepositorsToAllowlist([signer.address]);
         };
 
+        const setupZeroPerformanceFee = async () => {
+            var governance: IERC20RootVaultGovernance =
+                await ethers.getContractAt(
+                    "IERC20RootVaultGovernance",
+                    await this.subject.vaultGovernance()
+                );
+
+            const nftIndex = await this.subject.nft();
+            const { strategyTreasury: strategyTreasury } =
+                await governance.delayedStrategyParams(nftIndex);
+            const { strategyPerformanceTreasury: strategyPerformanceTreasury } =
+                await governance.delayedStrategyParams(nftIndex);
+
+            await governance
+                .connect(this.admin)
+                .stageDelayedStrategyParams(nftIndex, {
+                    strategyTreasury: strategyTreasury,
+                    strategyPerformanceTreasury: strategyPerformanceTreasury,
+                    privateVault: true,
+                    managementFee: BigNumber.from(3000),
+                    performanceFee: BigNumber.from(0),
+                    depositCallbackAddress: ethers.constants.AddressZero,
+                    withdrawCallbackAddress: ethers.constants.AddressZero,
+                } as DelayedStrategyParamsStruct);
+            await sleep(86400);
+            await governance
+                .connect(this.admin)
+                .commitDelayedStrategyParams(nftIndex);
+        };
+
         const setupLpCallback = async (mode: number) => {
             const { deployments } = hre;
             const { deploy } = deployments;
@@ -518,11 +546,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 }
             );
 
-            const lpCallback: MockLpCallback =
-                await ethers.getContractAt(
-                    "MockLpCallback",
-                    lpCallbackAddress
-                );
+            const lpCallback: MockLpCallback = await ethers.getContractAt(
+                "MockLpCallback",
+                lpCallbackAddress
+            );
             var governance: IERC20RootVaultGovernance =
                 await ethers.getContractAt(
                     "IERC20RootVaultGovernance",
@@ -532,17 +559,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             const nftIndex = await this.subject.nft();
             const { strategyTreasury: strategyTreasury } =
                 await governance.delayedStrategyParams(nftIndex);
-            const {
-                strategyPerformanceTreasury:
-                    strategyPerformanceTreasury,
-            } = await governance.delayedStrategyParams(nftIndex);
+            const { strategyPerformanceTreasury: strategyPerformanceTreasury } =
+                await governance.delayedStrategyParams(nftIndex);
 
             await governance
                 .connect(this.admin)
                 .stageDelayedStrategyParams(nftIndex, {
                     strategyTreasury: strategyTreasury,
-                    strategyPerformanceTreasury:
-                        strategyPerformanceTreasury,
+                    strategyPerformanceTreasury: strategyPerformanceTreasury,
                     privateVault: true,
                     managementFee: BigNumber.from(3000),
                     performanceFee: BigNumber.from(3000),
@@ -560,7 +584,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         const EMPTY_ERROR = 1;
         const NON_EMPTY_ERROR = 2;
 
-        describe.only("#deposit", () => {
+        describe("#deposit", () => {
             const MIN_FIRST_DEPOSIT = BigNumber.from(10001);
             const DEFAULT_MIN_LP_TOKEN = BigNumber.from(1);
 
@@ -588,68 +612,109 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("edge cases:", () => {
-                describe.only("when deposit comes two times in a row for one token", () => {
-                    it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
-                        for (var i = 0; i < 20; i++) {
-                            var s = BigNumber.from(i).toHexString().substring(2);
-                            while (s.length > 1 && s[0] == '0') s = s.substring(1);
-                            s = '0x' + s;
-                            var tmp = await ethers.provider.send("eth_getStorageAt", [
-                                this.subject.address,
-                                s, // address of _nft
-                            ]);
-                            console.log(i, s, tmp);
-                        }
-
-                        var currentParams = await this.erc20RootVaultGovernance.connect(this.admin).stagedDelayedProtocolParams();
-                        const { deployments } = hre;
-                        const { deploy } = deployments;
-                        const { address: oracleAddress } = await deploy(
-                            "MellowOracle",
-                            {
-                                from: this.deployer.address,
-                                args: [],
-                                log: true,
-                                autoMine: true,
-                            }
-                        );
-
-                        console.log("Oracle:", oracleAddress);
-                        await this.erc20RootVaultGovernance.connect(this.admin).stageDelayedProtocolParams(
-                            {
+                describe("when lpPriceD18 <= hwmsD18", () => {
+                    it("do not charge performance fees", async () => {
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams({
                                 managementFeeChargeDelay: 0,
-                                oracle: oracleAddress
-                            } as DelayedProtocolParamsStruct
-                        );
+                                oracle: this.mellowOracle.address,
+                            } as DelayedProtocolParamsStruct);
 
                         await sleep(this.governanceDelay);
-                        await this.erc20RootVaultGovernance.connect(this.admin).commitDelayedProtocolParams();
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .commitDelayedProtocolParams();
 
                         var signer = await addSigner(randomAddress());
-                        const amount = BigNumber.from('3000000000000000010001');
+                        const amount = BigNumber.from("3000000000000000010001");
                         await preprocessSigner(signer, amount);
                         await this.subject
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from('32000000000000000'),
-                                    BigNumber.from('32000000000000000')
+                                    BigNumber.from("32000000000000000"),
+                                    BigNumber.from("32000000000000000"),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
-                        );
-                                
+                            );
+
                         await this.subject
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from('32000000000000000'),
-                                    BigNumber.from('32000000000000000')
+                                    BigNumber.from("32000000000000000"),
+                                    BigNumber.from("32000000000000000"),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
-                        );
-                            
+                            );
+
+                        await this.subject
+                            .connect(signer)
+                            .deposit(
+                                [
+                                    BigNumber.from("30000000000000000"),
+                                    BigNumber.from("30000000000000000"),
+                                ],
+                                DEFAULT_MIN_LP_TOKEN,
+                                []
+                            );
+                    });
+                });
+
+                describe("when performance fee is zero", () => {
+                    it("do not charge performance fees", async () => {
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams({
+                                managementFeeChargeDelay: 0,
+                                oracle: this.mellowOracle.address,
+                            } as DelayedProtocolParamsStruct);
+
+                        await sleep(this.governanceDelay);
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .commitDelayedProtocolParams();
+
+                        var signer = await addSigner(randomAddress());
+                        const amount = BigNumber.from("3000000000000000010001");
+                        await preprocessSigner(signer, amount);
+                        await setupZeroPerformanceFee();
+                        await this.subject
+                            .connect(signer)
+                            .deposit(
+                                [
+                                    BigNumber.from("32000000000000000"),
+                                    BigNumber.from("32000000000000000"),
+                                ],
+                                DEFAULT_MIN_LP_TOKEN,
+                                []
+                            );
+
+                        await this.subject
+                            .connect(signer)
+                            .deposit(
+                                [
+                                    BigNumber.from("32000000000000000"),
+                                    BigNumber.from("32000000000000000"),
+                                ],
+                                DEFAULT_MIN_LP_TOKEN,
+                                []
+                            );
+
+                        await this.subject
+                            .connect(signer)
+                            .deposit(
+                                [
+                                    BigNumber.from("30000000000000000"),
+                                    BigNumber.from("30000000000000000"),
+                                ],
+                                DEFAULT_MIN_LP_TOKEN,
+                                []
+                            );
+                        await setupLpCallback(NO_ERROR);
                     });
                 });
 
@@ -691,6 +756,28 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 this.deployer.address,
                             ]);
                         const nftIndex = await this.subject.nft();
+                        {
+                            var subvaultNfts =
+                                await this.subject.subvaultNfts();
+                            expect(subvaultNfts).to.be.not.empty;
+                            var index = 0;
+                            subvaultNfts.forEach(async (subvaultNft) => {
+                                expect(
+                                    await this.subject.subvaultAt(
+                                        BigNumber.from(index)
+                                    )
+                                ).not.to.be.eq(ethers.constants.AddressZero);
+                                expect(
+                                    await this.subject.hasSubvault(subvaultNft)
+                                ).to.be.true;
+                                expect(
+                                    await this.subject.subvaultOneBasedIndex(
+                                        subvaultNft
+                                    )
+                                ).not.to.be.eq(ethers.constants.AddressZero);
+                                index += 1;
+                            });
+                        }
                         const params = {
                             strategyTreasury: randomAddress(),
                             strategyPerformanceTreasury: randomAddress(),
@@ -758,7 +845,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     it("emits deposits callback called", async () => {
                         var lpCallback = await setupLpCallback(NO_ERROR);
 
-                        await preprocessSigner(this.deployer, MIN_FIRST_DEPOSIT);
+                        await preprocessSigner(
+                            this.deployer,
+                            MIN_FIRST_DEPOSIT
+                        );
                         await expect(
                             this.subject
                                 .connect(this.deployer)
@@ -768,7 +858,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     []
                                 )
                         ).to.emit(lpCallback, "DepositCallbackCalled");
-                    });                    
+                    });
                 });
 
                 describe("when lpAmount is zero", () => {
@@ -949,7 +1039,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe("when withdrawn is larger than protocol governance withdraw limit for vault token", () => {
                     it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
-                            await preprocessSigner(signer, MIN_FIRST_DEPOSIT.pow(3));
+                            await preprocessSigner(
+                                signer,
+                                MIN_FIRST_DEPOSIT.pow(3)
+                            );
                             await expect(
                                 this.subject
                                     .connect(signer)
@@ -968,7 +1061,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     .withdraw(
                                         randomAddress(),
                                         MIN_FIRST_DEPOSIT,
-                                        [DEFAULT_MIN_LP_TOKEN, DEFAULT_MIN_LP_TOKEN],
+                                        [
+                                            DEFAULT_MIN_LP_TOKEN,
+                                            DEFAULT_MIN_LP_TOKEN,
+                                        ],
                                         NON_EMPTY_DEFAULT_OPTIONS
                                     )
                             ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
@@ -988,9 +1084,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     []
                                 )
                         ).not.to.be.reverted;
-                        
+
                         var lpCallback = await setupLpCallback(NO_ERROR);
-                        
+
                         await expect(
                             this.subject.withdraw(
                                 randomAddress(),
@@ -1014,7 +1110,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     []
                                 )
                         ).not.to.be.reverted;
-                        
+
                         await setupLpCallback(EMPTY_ERROR);
 
                         await expect(
@@ -1028,8 +1124,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("When address of lpCallback is not null and lpCallback throws empty error", () => {
-                    it("emits withdrawCallback", async () => {
+                describe("When address of lpCallback is not null and lpCallback throws non empty error", () => {
+                    it("emits WithdrawCallbackLog", async () => {
                         await preprocessSigner(this.admin, MIN_FIRST_DEPOSIT);
                         await expect(
                             this.subject
@@ -1040,9 +1136,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     []
                                 )
                         ).not.to.be.reverted;
-                        
+
                         await setupLpCallback(NON_EMPTY_ERROR);
-                        
+
                         await expect(
                             this.subject.withdraw(
                                 randomAddress(),

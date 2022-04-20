@@ -3,20 +3,18 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/utils/ILpCallback.sol";
-import "hardhat/console.sol";
 
 contract MockLpCallback is ILpCallback {
-
     enum WithdrawCallbackMode {
         NO_ERROR,
         EMPTY_ERROR,
         NON_EMPTY_ERROR
     }
-    
+
     WithdrawCallbackMode private _mode;
 
-    constructor(WithdrawCallbackMode mode) {
-        _mode = mode;
+    constructor(WithdrawCallbackMode mode_) {
+        _mode = mode_;
     }
 
     /// @notice Callback function
@@ -27,7 +25,7 @@ contract MockLpCallback is ILpCallback {
     /// @notice Callback function
     function withdrawCallback() external {
         if (_mode == WithdrawCallbackMode.NO_ERROR) {
-            emit WithdrawCallbackCalled();        
+            emit WithdrawCallbackCalled();
         } else if (_mode == WithdrawCallbackMode.EMPTY_ERROR) {
             require(false);
         } else {
