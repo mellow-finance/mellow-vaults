@@ -108,7 +108,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < tokens.length; ++i) {
-            uint256 tokenAmount = tokenAmounts[i];
             normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
             IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
         }
@@ -229,6 +228,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             if (tvl_[i] < _pullExistentials[i]) {
                 continue;
             }
+
             uint256 tokenLpAmount = FullMath.mulDiv(amounts[i], supply, tvl_[i]);
             // take min of meaningful tokenLp amounts
             if ((tokenLpAmount < lpAmount) || (isLpAmountUpdated == false)) {
