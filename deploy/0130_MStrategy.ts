@@ -79,18 +79,15 @@ const setupStrategy = async (
     const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
     const fee = 3000;
     await setupCardinality(hre, tokens, fee);
-    const params = [tokens, erc20Vault, moneyVault, fee, mStrategyAdmin];
+    const params = [tokens, erc20Vault, moneyVault, fee, deployer];
     const address = await mStrategy.callStatic.createStrategy(...params);
-    if (!(await deployments.getOrNull(`${mStrategyName}_WETH_USDC`))) {
-        return;
-    }
     await mStrategy.createStrategy(...params);
     await deployments.save(`${mStrategyName}_WETH_USDC`, {
         abi: (await deployments.get(mStrategyName)).abi,
         address,
     });
     const mStrategyWethUsdc = await hre.ethers.getContractAt(
-        mStrategyName,
+        "MStrategy",
         address
     );
 
@@ -99,13 +96,16 @@ const setupStrategy = async (
     const oracleParams = {
         oracleObservationDelta: 15,
         maxTickDeviation: 50,
-        maxSlippageD: Math.round(0.1 * 10 ** 9),
+        maxSlippageD: BigNumber.from(10).pow(8),
     };
     const ratioParams = {
         tickMin: 198240 - 5000,
         tickMax: 198240 + 5000,
-        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-        minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+        erc20MoneyRatioD: BigNumber.from(10).pow(8),
+        minErc20MoneyRatioDeviationD: BigNumber.from(10).pow(7),
+        minTickRebalanceThreshold: BigNumber.from(1200),
+        tickIncrease: 10,
+        tickNeighborhood: 50,
     };
     const txs = [];
     txs.push(
@@ -137,6 +137,66 @@ const setupStrategy = async (
         "multicall",
         txs
     );
+
+    log("Transferring ownership to mStrategyAdmin")
+
+    const ADMIN_ROLE = "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
+    const ADMIN_DELEGATE_ROLE = "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
+    const OPERATOR_ROLE = "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
+    let permissionTxs = [];
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            ADMIN_ROLE, mStrategyAdmin
+        ])
+    );
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            ADMIN_DELEGATE_ROLE, mStrategyAdmin
+        ])
+    );
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            ADMIN_DELEGATE_ROLE, deployer
+        ])
+    );
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            OPERATOR_ROLE, mStrategyAdmin
+        ])
+    );
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
+            OPERATOR_ROLE, deployer
+        ])
+    );
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
+            ADMIN_DELEGATE_ROLE, deployer
+        ])
+    );
+
+    permissionTxs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
+            ADMIN_ROLE, deployer
+        ])
+    );
+
+    await execute(
+        `${mStrategyName}_WETH_USDC`,
+        {
+            from: deployer,
+            log: true,
+            autoMine: true,
+        },
+        "multicall",
+        permissionTxs
+    )
 };
 
 export const buildMStrategy: (kind: MoneyVault) => DeployFunction =

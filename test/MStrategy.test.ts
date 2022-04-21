@@ -1136,7 +1136,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.fee,
                         this.params.admin
                     );
-                    this.subject = await ethers.getContractAt(
+                    let subject = await ethers.getContractAt(
                         "MStrategy",
                         address
                     );
@@ -1158,17 +1158,17 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickIncrease: 180,
                     };
 
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setRatioParams(ratioParams);
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
-                    let res = await this.subject.callStatic.getAverageTick();
+                    let res = await subject.callStatic.getAverageTick();
 
-                    await this.subject.connect(this.mStrategyAdmin).rebalance();
-                    let actualRatioParams = await this.subject.ratioParams();
+                    await subject.connect(this.mStrategyAdmin).rebalance();
+                    let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMax).to.be.equal(
                         Number(ratioParams.tickIncrease) + res.averageTick
                     );
@@ -1208,7 +1208,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.fee,
                         this.params.admin
                     );
-                    this.subject = await ethers.getContractAt(
+                    let subject = await ethers.getContractAt(
                         "MStrategy",
                         address
                     );
@@ -1230,17 +1230,17 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickIncrease: 180,
                     };
 
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setRatioParams(ratioParams);
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
-                    let res = await this.subject.callStatic.getAverageTick();
+                    let res = await subject.callStatic.getAverageTick();
 
-                    await this.subject.connect(this.mStrategyAdmin).rebalance();
-                    let actualRatioParams = await this.subject.ratioParams();
+                    await subject.connect(this.mStrategyAdmin).rebalance();
+                    let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMin).to.be.equal(
                         res.averageTick - Number(ratioParams.tickIncrease)
                     );
@@ -1280,7 +1280,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.fee,
                         this.params.admin
                     );
-                    this.subject = await ethers.getContractAt(
+                    let subject = await ethers.getContractAt(
                         "MStrategy",
                         address
                     );
@@ -1302,18 +1302,18 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickIncrease: 180,
                     };
 
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setRatioParams(ratioParams);
-                    await this.subject
+                    await subject
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
                     await expect(
-                        this.subject.connect(this.mStrategyAdmin).rebalance()
+                        subject.connect(this.mStrategyAdmin).rebalance()
                     ).to.not.be.reverted;
                     await expect(
-                        this.subject.connect(this.mStrategyAdmin).rebalance()
+                        subject.connect(this.mStrategyAdmin).rebalance()
                     ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                 });
             });
@@ -1455,8 +1455,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
         });
     });
 
-    // ContractMetaBehaviour.call(this, {
-    //     contractName: "MStrategy",
-    //     contractVersion: "1.0.0",
-    // });
+    ContractMetaBehaviour.call(this, {
+        contractName: "MStrategy",
+        contractVersion: "1.0.0",
+    });
 });
