@@ -338,5 +338,10 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
             delayedProtocolParams,
             ...this,
         });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "YearnVaultGovernance",
+            contractVersion: "1.0.0",
+        });
     }
 );

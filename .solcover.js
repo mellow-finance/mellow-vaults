@@ -1,3 +1,9 @@
 module.exports = {
-  skipFiles: ["test/", "interfaces/", "libraries/external/", "trader/interfaces/"],
+  skipFiles: [
+    "test/",
+    "interfaces/",
+    "libraries/external/",
+    "vaults/MellowVault.sol",
+    "vaults/MellowVaultGovernance.sol",
+  ],
 };

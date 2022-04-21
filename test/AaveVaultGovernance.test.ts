@@ -214,5 +214,10 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
             delayedProtocolParams,
             ...this,
         });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "AaveVaultGovernance",
+            contractVersion: "1.0.0",
+        });
     }
 );

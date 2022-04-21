@@ -22,6 +22,7 @@ import {
 import assert from "assert";
 import { randomInt } from "crypto";
 import { Address } from "hardhat-deploy/types";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 const MAX_GOVERNANCE_DELAY = BigNumber.from(60 * 60 * 24 * 7);
 const MIN_WITHDRAW_LIMIT = BigNumber.from(200 * 1000);
@@ -2633,6 +2634,11 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     return true;
                 });
             });
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ProtocolGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

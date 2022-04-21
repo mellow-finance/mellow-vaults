@@ -169,5 +169,10 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             rootVaultGovernance: true,
             ...this,
         });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ERC20RootVaultGovernance",
+            contractVersion: "1.0.0",
+        });
     }
 );

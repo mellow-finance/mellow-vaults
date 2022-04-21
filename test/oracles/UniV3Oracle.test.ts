@@ -2,7 +2,6 @@ import hre from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "../library/setup";
-import { ERC20RootVault } from "../types/ERC20RootVault";
 import { expect } from "chai";
 import Common from "../library/Common";
 
@@ -13,6 +12,7 @@ import {
     UNIV3_ORACLE_INTERFACE_ID,
 } from "../library/Constants";
 import { ADDRESS_ZERO, TickMath } from "@uniswap/v3-sdk";
+import { ContractMetaBehaviour } from "../behaviors/contractMeta";
 
 type CustomContext = {
     uniV3Oracle: UniV3Oracle;
@@ -21,13 +21,13 @@ type CustomContext = {
 
 type DeployOptions = {};
 
-contract<ERC20RootVault, DeployOptions, CustomContext>(
+contract<UniV3Oracle, DeployOptions, CustomContext>(
     "UniV3Oracle",
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
-                    this.uniV3Oracle = await ethers.getContract("UniV3Oracle");
+                    this.subject = await ethers.getContract("UniV3Oracle");
 
                     const { uniswapV3Factory } = await hre.getNamedAccounts();
                     this.uniswapV3Factory = await hre.ethers.getContractAt(
@@ -46,22 +46,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#contructor", () => {
             it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    this.uniV3Oracle.address
+                    this.subject.address
                 );
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    await this.uniV3Oracle.factory()
-                );
-            });
-
-            it("initializes name", async () => {
-                expect("UniV3Oracle").to.be.eq(
-                    await this.uniV3Oracle.contractName()
-                );
-            });
-
-            it("initializes version", async () => {
-                expect("1.0.0").to.be.eq(
-                    await this.uniV3Oracle.contractVersion()
+                    await this.subject.factory()
                 );
             });
         });
@@ -70,7 +58,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             it("returns prices", async () => {
                 for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
                     const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
-                    const pricesResult = await this.uniV3Oracle.price(
+                    const pricesResult = await this.subject.price(
                         this.usdc.address,
                         this.weth.address,
                         mask
@@ -92,7 +80,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when index of one of pools is zero", () => {
                     it("does not return prices", async () => {
-                        const pricesResult = await this.uniV3Oracle.price(
+                        const pricesResult = await this.subject.price(
                             this.usdc.address,
                             ADDRESS_ZERO,
                             BigNumber.from(30)
@@ -109,7 +97,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#supportsInterface", () => {
             it(`returns true for IUniV3Oracle interface (${UNIV3_ORACLE_INTERFACE_ID})`, async () => {
-                let isSupported = await this.uniV3Oracle.supportsInterface(
+                let isSupported = await this.subject.supportsInterface(
                     UNIV3_ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
@@ -117,7 +105,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("when contract does not support the given interface", () => {
                 it("returns false", async () => {
-                    let isSupported = await this.uniV3Oracle.supportsInterface(
+                    let isSupported = await this.subject.supportsInterface(
                         UNIV2_ORACLE_INTERFACE_ID
                     );
                     expect(isSupported).to.be.false;
@@ -138,9 +126,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             var correctPricesX96: BigNumber[] = [];
             var correctSafetyIndexes: BigNumber[] = [];
             const avgs: number[] = [
-                await this.uniV3Oracle.LOW_OBS(),
-                await this.uniV3Oracle.MID_OBS(),
-                await this.uniV3Oracle.HIGH_OBS(),
+                await this.subject.LOW_OBS(),
+                await this.subject.MID_OBS(),
+                await this.subject.HIGH_OBS(),
             ];
 
             if (((safetyIndexes >> 1) & 1) > 0) {
@@ -208,7 +196,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 fee
             );
 
-            await this.uniV3Oracle
+            await this.subject
                 .connect(this.admin)
                 .addUniV3Pools([poolWethUsdcAddress]);
             const poolUsdcWeth: IUniswapV3Pool = await ethers.getContractAt(
@@ -226,7 +214,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     safetyIndicesSet
                 );
 
-            const pricesResult = await this.uniV3Oracle.price(
+            const pricesResult = await this.subject.price(
                 token0,
                 token1,
                 safetyIndicesSet
@@ -279,5 +267,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
         });
+        
+        ContractMetaBehaviour.call(this, { contractName:"UniV3Oracle", contractVersion:"1.0.0" });
     }
 );

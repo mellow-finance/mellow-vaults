@@ -239,5 +239,10 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
             },
             ...this,
         });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "UniV3VaultGovernance",
+            contractVersion: "1.0.0",
+        });
     }
 );
