@@ -29,6 +29,9 @@ import {
 } from "./types/IVaultGovernance";
 import { ERC20Token as ERC20, IUniswapV3Pool, UniV3Vault } from "./types";
 import { Signer } from "ethers";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
+import { UNIV3_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
+import { randomBytes } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -178,6 +181,28 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                                 autoMine: true,
                             })
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    });
+                });
+            });
+        });
+
+        describe("#supportsInterface", () => {
+            it(`returns true if this contract supports ${UNIV3_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        UNIV3_VAULT_GOVERNANCE_INTERFACE_ID
+                    )
+                ).to.be.true;
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .supportsInterface(randomBytes(4))
+                        ).to.not.be.reverted;
                     });
                 });
             });
