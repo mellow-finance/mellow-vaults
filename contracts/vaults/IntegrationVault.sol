@@ -226,7 +226,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 nft_ = _nft;
         if (nft_ == 0) {
-            return false; //uncoverable
+            return false;
         }
         return registry.getApproved(nft_) == sender || registry.ownerOf(nft_) == sender;
     }
