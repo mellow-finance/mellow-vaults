@@ -26,6 +26,7 @@ import { PermissionIdsLibrary } from "../../deploy/0000_utils";
 import { REGISTER_VAULT, CREATE_VAULT } from "../library/PermissionIdsLibrary";
 import { delayedProtocolPerVaultParamsBehavior } from "./vaultGovernanceDelayedProtocolPerVaultParams";
 import { operatorParamsBehavior } from "./vaultGovernanceOperatorParams";
+import { randomBytes, randomInt } from "crypto";
 
 export type VaultGovernanceContext<S extends Contract, F> = TestContext<
     S,
@@ -347,6 +348,173 @@ export function vaultGovernanceBehavior<
                             )
                         ).to.be.revertedWith(Exceptions.FORBIDDEN);
                     });
+                });
+            });
+        });
+    });
+
+    describe("#internalParamsTimestamp", () => {});
+
+    describe("#internalParams", () => {});
+
+    describe("#stagedInternalParams", () => {});
+
+    describe("#stageInternalParams", () => {
+        this.beforeEach(() => {
+            this.params = {
+                protocolGovernance: randomAddress(),
+                registry: randomAddress(),
+                singleton: randomAddress(),
+            };
+        })
+
+        it("emits StagedInternalParams", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                await expect(
+                    this.subject.connect(signer).stageInternalParams(this.params)
+                ).to.emit(this.subject, "StagedInternalParams");
+            });
+        });
+
+        it("updates _stagedInternalParams", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                this.subject.connect(signer).stageInternalParams(this.params);
+                await expect(
+                    await this.subject.stagedInternalParams()
+                ).to.be.equivalent(this.params);
+            });
+        });
+
+        it("updates _internalParamsTimestamp", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                let currentTimestamp = (
+                    await ethers.provider.getBlock("latest")
+                ).timestamp;
+                this.subject.connect(signer).stageInternalParams(this.params);
+                expect(await this.subject.internalParamsTimestamp()).to.eq(
+                    BigNumber.from(currentTimestamp)
+                        .add(await this.protocolGovernance.governanceDelay())
+                        .add(1)
+                );
+            });
+        });
+
+        describe("access control:", () => {
+            it("restricted: not an admin", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject.connect(signer).stageInternalParams(this.params)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+            it("allowed: admin", async () => {
+                await withSigner(this.admin.address, async (signer) => {
+                    await expect(
+                        this.subject.connect(signer).stageInternalParams(this.params)
+                    ).to.not.be.reverted;
+                });
+            });
+        });
+    });
+
+    describe("#commitInternalParams", () => {
+
+        it("updates _internalParams", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                this.subject.connect(signer).stageInternalParams(this.params);
+                let delay = await this.protocolGovernance.governanceDelay();
+                await sleep(delay);
+                await this.subject
+                    .connect(signer)
+                    .commitInternalParams()
+                expect(
+                    await this.subject
+                            .internalParams()
+                ).to.be.equivalent(this.params); 
+            });
+        });
+        it("deletes _internalParamsTimestamp", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                this.subject.connect(signer).stageInternalParams(this.params);
+                let delay = await this.protocolGovernance.governanceDelay();
+                await sleep(delay);
+                await this.subject
+                    .connect(signer)
+                    .commitInternalParams()
+                expect(
+                    await this.subject
+                            .internalParamsTimestamp()
+                ).to.be.equivalent(BigNumber.from(0));
+            });
+        });
+        it("deletes _stagedInternalParams", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                this.subject.connect(signer).stageInternalParams(this.params);
+                let delay = await this.protocolGovernance.governanceDelay();
+                await sleep(delay);
+                await this.subject
+                    .connect(signer)
+                    .commitInternalParams()
+                expect(
+                    await this.subject
+                            .stagedInternalParams()
+                ).to.be.equivalent(zeroify(this.params));
+            });
+        });
+        it("emits CommitedInternalParams", async () => {
+            await withSigner(this.admin.address, async (signer) => {
+                this.subject.connect(signer).stageInternalParams(this.params);
+                let delay = await this.protocolGovernance.governanceDelay();
+                await sleep(delay);
+                expect(
+                    await this.subject
+                        .connect(signer)
+                        .commitInternalParams()
+                ).to.emit(this.subject, "CommitedInternalParams");
+            });
+        });
+
+        describe("edge cases:", () => {
+            describe("when timestamp is not initialized", () => {
+                it(`reverts with ${Exceptions.NULL}`, async () => {
+                    await withSigner(this.admin.address, async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .commitInternalParams()
+                        ).to.be.revertedWith(Exceptions.NULL);
+                    });
+                });
+            })
+            describe("when governanceDelay is not passed", () => {
+                it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
+                    await withSigner(this.admin.address, async (signer) => {
+                        this.subject.connect(signer).stageInternalParams(this.params);
+                        let delay = await this.protocolGovernance.governanceDelay();
+                        await sleep(delay.sub(2));
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .commitInternalParams()
+                        ).to.be.revertedWith(Exceptions.TIMESTAMP); 
+                    });
+                });
+            })
+        });
+
+        describe("access control:", () => {
+            it("restricted: not an admin", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject.connect(signer).commitInternalParams()
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+            it("allowed: admin", async () => {
+                await withSigner(this.admin.address, async (signer) => {
+                    await expect(
+                        this.subject.connect(signer).commitInternalParams()
+                    ).to.not.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
         });
