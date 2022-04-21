@@ -19,7 +19,6 @@ import { integer, float } from "fast-check";
 import { ERC20RootVaultGovernance, MellowOracle, UniV3Vault } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
-import { max } from "ramda";
 import { randomInt } from "crypto";
 
 type CustomContext = {
@@ -155,7 +154,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("properties", () => {
+        describe("properties", () => {
             const setZeroFeesFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 let erc20RootVaultGovernance: ERC20RootVaultGovernance =
