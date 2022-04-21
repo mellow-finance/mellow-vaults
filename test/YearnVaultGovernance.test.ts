@@ -21,8 +21,6 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IYearnVaultGovernance";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
-import { YEARN_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
-import { randomBytes } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -142,28 +140,6 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
                                 autoMine: true,
                             })
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
-                    });
-                });
-            });
-        });
-
-        describe("#supportsInterface", () => {
-            it(`returns true if this contract supports ${YEARN_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
-                expect(
-                    await this.subject.supportsInterface(
-                        YEARN_VAULT_GOVERNANCE_INTERFACE_ID
-                    )
-                ).to.be.true;
-            });
-
-            describe("access control:", () => {
-                it("allowed: any address", async () => {
-                    await withSigner(randomAddress(), async (s) => {
-                        await expect(
-                            this.subject
-                                .connect(s)
-                                .supportsInterface(randomBytes(4))
-                        ).to.not.be.reverted;
                     });
                 });
             });

@@ -23,9 +23,8 @@ import {
     DelayedStrategyParamsStruct,
     OperatorParamsStruct,
 } from "./types/IERC20RootVaultGovernance";
-import { ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
+import { ERC20_ROOT_VAULT_GOVERNANCE } from "./library/Constants";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
-import { randomBytes } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -96,10 +95,10 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
         });
 
         describe("#supportsInterface", () => {
-            it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
+            it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
-                        ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID
+                        ERC20_ROOT_VAULT_GOVERNANCE
                     )
                 ).to.be.true;
             });
@@ -110,7 +109,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(s)
-                                .supportsInterface(randomBytes(4))
+                                .supportsInterface(ERC20_ROOT_VAULT_GOVERNANCE)
                         ).to.not.be.reverted;
                     });
                 });
