@@ -459,7 +459,7 @@ export function vaultGovernanceBehavior<
                         .connect(this.admin)
                         .stageInternalParams(this.params);
                     let delay = await this.protocolGovernance.governanceDelay();
-                    await sleep(delay.sub(2));
+                    await sleep(delay.sub(60));
                     await expect(
                         this.subject.connect(this.admin).commitInternalParams()
                     ).to.be.revertedWith(Exceptions.TIMESTAMP);
