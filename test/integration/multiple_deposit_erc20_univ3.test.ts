@@ -16,7 +16,12 @@ import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { integer, float } from "fast-check";
-import { ERC20RootVaultGovernance, MellowOracle, UniV3Vault } from "../types";
+import {
+    ERC20RootVaultGovernance,
+    MellowOracle,
+    UniV3Vault,
+    YearnVault,
+} from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
 import { randomInt } from "crypto";
@@ -24,6 +29,7 @@ import { randomInt } from "crypto";
 type CustomContext = {
     erc20Vault: ERC20Vault;
     uniV3Vault: UniV3Vault;
+    yearnVault: YearnVault;
     erc20RootVaultNft: number;
     usdcDeployerSupply: BigNumber;
     wethDeployerSupply: BigNumber;
@@ -51,6 +57,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     let erc20VaultNft = startNft;
                     let univ3VaultNft = startNft + 1;
+                    let yearnVaultNft = startNft + 2;
+
                     await setupVault(
                         hre,
                         erc20VaultNft,
@@ -59,6 +67,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             createVaultArgs: [tokens, this.deployer.address],
                         }
                     );
+
                     await setupVault(
                         hre,
                         univ3VaultNft,
@@ -72,10 +81,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         }
                     );
 
+                    await setupVault(
+                        hre,
+                        yearnVaultNft,
+                        "YearnVaultGovernance",
+                        {
+                            createVaultArgs: [tokens, this.deployer.address],
+                        }
+                    );
+
                     await combineVaults(
                         hre,
-                        univ3VaultNft + 1,
-                        [erc20VaultNft, univ3VaultNft],
+                        yearnVaultNft + 1,
+                        [erc20VaultNft, univ3VaultNft, yearnVaultNft],
                         this.deployer.address,
                         this.deployer.address
                     );
@@ -90,11 +108,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "vaultForNft",
                         univ3VaultNft
                     );
+                    const yearnVault = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        yearnVaultNft
+                    );
 
                     const erc20RootVault = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        univ3VaultNft + 1
+                        yearnVaultNft + 1
                     );
 
                     this.subject = await ethers.getContractAt(
@@ -110,6 +133,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         uniV3Vault
                     )) as UniV3Vault;
 
+                    this.yearnVault = (await ethers.getContractAt(
+                        "YearnVault",
+                        yearnVault
+                    )) as YearnVault;
+
                     await this.subject
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
@@ -122,6 +150,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         this.deployer.address,
                         this.usdcDeployerSupply
                     );
+
                     await mint(
                         "WETH",
                         this.deployer.address,
@@ -137,8 +166,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ethers.constants.MaxUint256
                     );
 
-                    this.erc20RootVaultNft = univ3VaultNft + 1;
-
+                    this.erc20RootVaultNft = yearnVault + 1;
                     this.strategyTreasury = randomAddress();
                     this.strategyPerformanceTreasury = randomAddress();
 
@@ -154,7 +182,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe("properties", () => {
+        describe.only("properties", () => {
             const setZeroFeesFixture = deployments.createFixture(async () => {
                 await this.deploymentFixture();
                 let erc20RootVaultGovernance: ERC20RootVaultGovernance =
@@ -250,29 +278,33 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         BigNumber.from(0)
                     );
 
-                    let erc20_tvl = await this.erc20Vault.tvl();
-                    let univ3_tvl = await this.uniV3Vault.tvl();
-                    let root_tvl = await this.subject.tvl();
+                    let erc20Tvl = await this.erc20Vault.tvl();
+                    let univ3Tvl = await this.uniV3Vault.tvl();
+                    let yearnTvl = await this.yearnVault.tvl();
+                    let rootTvl = await this.subject.tvl();
 
-                    expect(erc20_tvl[0][0].add(univ3_tvl[0][0])).to.deep.equals(
-                        root_tvl[0][0]
-                    );
-                    expect(erc20_tvl[0][1].add(univ3_tvl[0][1])).to.deep.equals(
-                        root_tvl[0][1]
-                    );
-                    expect(erc20_tvl[1][0].add(univ3_tvl[1][0])).to.deep.equals(
-                        root_tvl[1][0]
-                    );
-                    expect(erc20_tvl[1][1].add(univ3_tvl[1][1])).to.deep.equals(
-                        root_tvl[1][1]
-                    );
+                    for (var i = 0; i < 2; i++) {
+                        for (var j = 0; j < 2; j++) {
+                            expect(
+                                erc20Tvl[i][j]
+                                    .add(univ3Tvl[i][j])
+                                    .add(yearnTvl[i][j])
+                            ).to.deep.equals(rootTvl[i][j]);
+                        }
+                    }
+
+                    for (var i = 0; i < 2; i++) {
+                        expect(yearnTvl[0][i]).to.be.eq(yearnTvl[1][i]);
+                        expect(univ3Tvl[0][i]).to.be.lte(univ3Tvl[1][i]);
+                        expect(erc20Tvl[0][i]).to.be.lte(erc20Tvl[1][i]);
+                    }
 
                     for (let i = 0; i < numWithdraws; ++i) {
                         await this.subject.withdraw(
                             this.deployer.address,
                             BigNumber.from(lpTokensAmount).div(numWithdraws),
-                            [0, 0],
-                            [[], []]
+                            [0, 0, 0],
+                            [[], [], []]
                         );
                     }
 
@@ -284,8 +316,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject.withdraw(
                             this.deployer.address,
                             remainingLpTokenBalance,
-                            [0, 0],
-                            [[], []]
+                            [0, 0, 0],
+                            [[], [], []]
                         );
                     }
 
@@ -294,16 +326,128 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ).to.deep.equals(BigNumber.from(0));
 
                     expect(
-                        await this.weth.balanceOf(this.deployer.address)
+                            await this.weth.balanceOf(this.deployer.address)
                     ).to.be.equal(this.wethDeployerSupply);
 
                     expect(
                         await this.usdc.balanceOf(this.deployer.address)
-                    ).to.be.equal(this.usdcDeployerSupply);
-
+                    ).to.be.equal(this.usdcDeployerSupply.toNumber());
                     return true;
                 }
             );
+
+            // pit(
+            //     `
+            //     when fees are zero, sum of deposit[i] = sum of withdraw[j]
+            // `,
+            //     { numRuns: RUNS.mid, endOnFailure: true },
+            //     integer({ min: 1, max: 10 }),
+            //     integer({ min: 1, max: 10 }),
+            //     integer({ min: 10 ** 6, max: 10 ** 9 }).map((x) =>
+            //         BigNumber.from(x.toString())
+            //     ),
+            //     integer({ min: 10 ** 7, max: 10 ** 10 }).map((x) =>
+            //         BigNumber.from(x.toString())
+            //     ),
+            //     async (
+            //         numDeposits: number,
+            //         numWithdraws: number,
+            //         amountUSDC: BigNumber,
+            //         amountWETH: BigNumber
+            //     ) => {
+            //         await setZeroFeesFixture();
+            //         let lpAmounts: BigNumber[] = [];
+            //         assert(
+            //             (
+            //                 await this.subject.balanceOf(this.deployer.address)
+            //             ).eq(BigNumber.from(0))
+            //         );
+            //         for (let i = 0; i < numDeposits; ++i) {
+            //             await this.subject
+            //                 .connect(this.deployer)
+            //                 .deposit(
+            //                     [
+            //                         BigNumber.from(amountUSDC).div(numDeposits),
+            //                         BigNumber.from(amountWETH).div(numDeposits),
+            //                     ],
+            //                     0,
+            //                     []
+            //                 );
+            //             lpAmounts.push(
+            //                 await this.subject.balanceOf(this.deployer.address)
+            //             );
+            //         }
+
+            //         for (let i = 1; i < numDeposits; ++i) {
+            //             expect(lpAmounts[i].sub(lpAmounts[i - 1])).to.be.equal(
+            //                 lpAmounts[0]
+            //             );
+            //         }
+
+            //         const lpTokensAmount = await this.subject.balanceOf(
+            //             this.deployer.address
+            //         );
+            //         expect(lpTokensAmount).to.not.deep.equals(
+            //             BigNumber.from(0)
+            //         );
+
+            //         let erc20Tvl = await this.erc20Vault.tvl();
+            //         let univ3Tvl = await this.uniV3Vault.tvl();
+            //         let yearnTvl = await this.yearnVault.tvl();
+            //         let rootTvl = await this.subject.tvl();
+
+            //         for (var i = 0; i < 2; i++) {
+            //             for (var j = 0; j < 2; j++) {
+            //                 expect(
+            //                     erc20Tvl[i][j]
+            //                         .add(univ3Tvl[i][j])
+            //                         .add(yearnTvl[i][j])
+            //                 ).to.deep.equals(rootTvl[i][j]);
+            //             }
+            //         }
+
+            //         for (var i = 0; i < 2; i++) {
+            //             expect(yearnTvl[0][i]).to.be.eq(yearnTvl[1][i]);
+            //             expect(univ3Tvl[0][i]).to.be.lte(univ3Tvl[1][i]);
+            //             expect(erc20Tvl[0][i]).to.be.lte(erc20Tvl[1][i]);
+            //         }
+
+            //         for (let i = 0; i < numWithdraws; ++i) {
+            //             await this.subject.withdraw(
+            //                 this.deployer.address,
+            //                 BigNumber.from(lpTokensAmount).div(numWithdraws),
+            //                 [0, 0, 0],
+            //                 [[], [], []]
+            //             );
+            //         }
+
+            //         let remainingLpTokenBalance = await this.subject.balanceOf(
+            //             this.deployer.address
+            //         );
+            //         assert(remainingLpTokenBalance.lt(numWithdraws ** 2));
+            //         if (remainingLpTokenBalance.gt(0)) {
+            //             await this.subject.withdraw(
+            //                 this.deployer.address,
+            //                 remainingLpTokenBalance,
+            //                 [0, 0, 0],
+            //                 [[], [], []]
+            //             );
+            //         }
+
+            //         expect(
+            //             await this.subject.balanceOf(this.deployer.address)
+            //         ).to.deep.equals(BigNumber.from(0));
+
+            //         expect(
+            //                 await this.weth.balanceOf(this.deployer.address)
+            //         ).to.be.equal(this.wethDeployerSupply);
+
+            //         expect(
+            //             await this.usdc.balanceOf(this.deployer.address)
+            //         ).to.be.equal(this.usdcDeployerSupply.toNumber());
+            //         return true;
+            //     }
+            // );
 
             const setNonZeroFeesFixture = deployments.createFixture(
                 async () => {
@@ -401,10 +545,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         R -> ratio
                         U -> usdcDepositAmounts[i]
                         W -> wethDepositAmounts[i]
-
                         R = U / (U + W), R in range (0, 1)
                         let W be a random value, than
-
                         R * U + R * W = U
                         U * (1 - R) = W * R
                         U = W * (R / (1 - R))
@@ -578,7 +720,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     /*
                         in case deposit amounts are greater than 0
-
                         usdc balance must be different
                         weth balance must be different
                     */
@@ -598,31 +739,26 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     /* 
                         --------------------- CHECK TVLS ---------------------------
                         minTvl == maxTvl in case we do not have UniV3 vault in vault system
-                        rootVaultTvls == uniV3VaultTvls + erc20VaultTvls
+                        rootVaultTvls == yearnVaultTvls + erc20VaultTvls
                     */
 
                     let erc20_tvl = await this.erc20Vault.tvl();
                     let univ3_tvl = await this.uniV3Vault.tvl();
+                    let yearn_tvl = await this.yearnVault.tvl();
                     let root_tvl = await this.subject.tvl();
-
-                    expect(erc20_tvl[0][0].add(univ3_tvl[0][0])).to.deep.equals(
-                        root_tvl[0][0]
-                    );
-                    expect(erc20_tvl[0][1].add(univ3_tvl[0][1])).to.deep.equals(
-                        root_tvl[0][1]
-                    );
-                    expect(erc20_tvl[1][0].add(univ3_tvl[1][0])).to.deep.equals(
-                        root_tvl[1][0]
-                    );
-                    expect(erc20_tvl[1][1].add(univ3_tvl[1][1])).to.deep.equals(
-                        root_tvl[1][1]
-                    );
+                    
+                    for (var i = 0; i < 2; i++) {
+                        for (var j = 0; j < 2; j++) {
+                            expect(erc20_tvl[i][j].add(yearn_tvl[i][j]).add(univ3_tvl[i][j])).to.deep.equals(
+                                root_tvl[i][j]
+                            );
+                        }
+                    }
 
                     /* 
                         --------------------- EARN PERFORMANCE FEES ---------------------------
                         get WETH and USDC balances on each vault
                         donate the same balances to vaults using transfer
-
                         LpTokenAmount remains constant => it`s price increases
                     */
 
@@ -632,32 +768,41 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const usdcAmountOnERC20Vault = await this.usdc.balanceOf(
                         this.erc20Vault.address
                     );
+                    
+                    const wethAmountOnYearnVault = await this.weth.balanceOf(
+                        this.yearnVault.address
+                    );
+                    const usdcAmountOnYearnVault = await this.usdc.balanceOf(
+                        this.yearnVault.address
+                    );
+                    
                     const wethAmountOnUniV3Vault = await this.weth.balanceOf(
                         this.uniV3Vault.address
                     );
                     const usdcAmountOnUniV3Vault = await this.usdc.balanceOf(
                         this.uniV3Vault.address
                     );
-                    const additionalUsdcAmount = usdcAmountOnERC20Vault.add(
-                        usdcAmountOnUniV3Vault
-                    );
-                    const additionalWethAmount = wethAmountOnERC20Vault.add(
-                        wethAmountOnUniV3Vault
-                    );
+                
+                    const totalUsdcAmount = usdcAmountOnERC20Vault.add(
+                        usdcAmountOnYearnVault
+                    ).add(usdcAmountOnUniV3Vault);
+                    const totalWethAmount = wethAmountOnERC20Vault.add(
+                        wethAmountOnYearnVault
+                    ).add(wethAmountOnUniV3Vault);
 
                     // mint additional amounts
-                    if (additionalUsdcAmount.gt(0)) {
+                    if (totalUsdcAmount.gt(0)) {
                         await mint(
                             "USDC",
                             this.deployer.address,
-                            additionalUsdcAmount
+                            totalUsdcAmount
                         );
                     }
-                    if (additionalWethAmount.gt(0)) {
+                    if (totalWethAmount.gt(0)) {
                         await mint(
                             "WETH",
                             this.deployer.address,
-                            additionalWethAmount
+                            totalWethAmount
                         );
                     }
 
@@ -688,9 +833,22 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             usdcAmountOnUniV3Vault
                         );
 
+                    await this.weth
+                        .connect(this.deployer)
+                        .transfer(
+                            this.yearnVault.address,
+                            wethAmountOnYearnVault
+                        );
+                    await this.usdc
+                        .connect(this.deployer)
+                        .transfer(
+                            this.yearnVault.address,
+                            usdcAmountOnYearnVault
+                        );
+
                     /* 
                         --------------------- CALCULATE SOME PARAMETERS FOR PERFORMANCE FEES ---------------------------
-                        get average pricee for USDC to WETH
+                        get average price for USDC to WETH
                         get Tvls
                     */
 
@@ -731,7 +889,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         --------------------- CALCULATE SOME PARAMETERS FOR MANAGEMENT FEES ---------------------------
                         get real management and performance fees
                         management fees will be earned on the first withdraw after delay
-
                         calculate actual token amounts using Tvls
                         calculate baseSupply = lpBalance[deployer] + managementFees + performanceFees
                         calculate baseTvls = Tvls - actualTokenAmounts
@@ -814,7 +971,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         --------------------- COMPARE REAL FEES WITH EXPECTED FEES ---------------------------
                         if delay > governance.managementFeeChargeDelay 
                         assert (realFee - expectedFee) < (0.01 * 1%) * realFee
-
                     */
 
                     if (
@@ -1088,7 +1244,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                             .add(await this.weth.balanceOf(protocolTreasury))
                     ).to.be.equal(
-                        this.wethDeployerSupply.add(additionalWethAmount)
+                        this.wethDeployerSupply.add(totalUsdcAmount)
                     );
 
                     expect(
@@ -1101,12 +1257,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             )
                             .add(await this.usdc.balanceOf(protocolTreasury))
                     ).to.be.equal(
-                        this.usdcDeployerSupply.add(additionalUsdcAmount)
+                        this.usdcDeployerSupply.add(totalUsdcAmount)
                     );
 
                     return true;
                 }
             );
+
+
+
+
         });
     }
 );
