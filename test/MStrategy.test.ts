@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
+    encodeToBytes,
     mint,
     now,
     randomAddress,
@@ -32,11 +33,18 @@ import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
 import { pit, RUNS } from "./library/property";
 import { integer } from "fast-check";
-import { OracleParamsStruct, RatioParamsStruct } from "./types/MStrategy";
+import {
+    OracleParamsStruct,
+    RatioParamsStruct,
+    SwapToTargetParamsStruct,
+} from "./types/MStrategy";
 import Exceptions from "./library/Exceptions";
 import { assert } from "console";
 import { randomInt } from "crypto";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
+import { MockMStrategy } from "./types/MockMStrategy";
+import { type } from "os";
+import { MaxUint256 } from "@uniswap/sdk-core";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -1450,6 +1458,533 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         subject.connect(this.mStrategyAdmin).rebalance()
                     ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
+                });
+            });
+        });
+    });
+
+    describe("_targetTokenRatioD", () => {
+        it("returns targetTokenRatio multiplied by DENOMINATOR, according to current tick, tickMin, tickMax", async () => {
+            let { mockNonfungiblePositionManager, mockSwapRouter } =
+                await deployMockContracts();
+            let mockMStrategyFactory = await ethers.getContractFactory(
+                "MockMStrategy"
+            );
+            let mockMStrategy = await mockMStrategyFactory.deploy(
+                mockNonfungiblePositionManager.address,
+                mockSwapRouter.address
+            );
+
+            let tickMin = 198200;
+            let tickMax = 198300;
+            let tick = (tickMin + tickMax) / 2;
+            let resultTick = await mockMStrategy.callStatic.targetTokenRatioD(
+                tick,
+                tickMin,
+                tickMax
+            );
+
+            expect(Number(resultTick)).to.be.eq(
+                ((tickMax - tick) * 10 ** 9) / (tickMax - tickMin)
+            );
+        });
+
+        describe("edge cases", () => {
+            describe("when tick <= tickMin", () => {
+                it("targetTokenratioD = 0", async () => {
+                    let { mockNonfungiblePositionManager, mockSwapRouter } =
+                        await deployMockContracts();
+                    let mockMStrategyFactory = await ethers.getContractFactory(
+                        "MockMStrategy"
+                    );
+                    let mockMStrategy = await mockMStrategyFactory.deploy(
+                        mockNonfungiblePositionManager.address,
+                        mockSwapRouter.address
+                    );
+
+                    let tickMin = 198200;
+                    let tickMax = 198300;
+                    let tick = tickMin - 1;
+                    let resultTick =
+                        await mockMStrategy.callStatic.targetTokenRatioD(
+                            tick,
+                            tickMin,
+                            tickMax
+                        );
+                    expect(resultTick).to.be.eq(BigNumber.from(0));
+
+                    tick = tickMin;
+                    resultTick =
+                        await mockMStrategy.callStatic.targetTokenRatioD(
+                            tick,
+                            tickMin,
+                            tickMax
+                        );
+                    expect(resultTick).to.be.eq(BigNumber.from(0));
+                });
+            });
+
+            describe("when tick >= tickMin", () => {
+                it("targetTokenratioD = DENOMINATOR (10^9)", async () => {
+                    let { mockNonfungiblePositionManager, mockSwapRouter } =
+                        await deployMockContracts();
+                    let mockMStrategyFactory = await ethers.getContractFactory(
+                        "MockMStrategy"
+                    );
+                    let mockMStrategy = await mockMStrategyFactory.deploy(
+                        mockNonfungiblePositionManager.address,
+                        mockSwapRouter.address
+                    );
+
+                    let tickMin = 198200;
+                    let tickMax = 198300;
+                    let tick = tickMax + 1;
+                    let resultTick =
+                        await mockMStrategy.callStatic.targetTokenRatioD(
+                            tick,
+                            tickMin,
+                            tickMax
+                        );
+                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
+
+                    tick = tickMax;
+                    resultTick =
+                        await mockMStrategy.callStatic.targetTokenRatioD(
+                            tick,
+                            tickMin,
+                            tickMax
+                        );
+                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
+                });
+            });
+        });
+    });
+
+    describe("_swapToTarget", () => {
+        describe("edge cases", () => {
+            describe("when amountIn > erc20Tvl[tokenInIndex]", () => {
+                it("should pull extra token amounts from moneyVault to erc20Vault", async () => {
+                    let {
+                        mockNonfungiblePositionManager,
+                        mockSwapRouter,
+                        mockUniswapV3Pool,
+                    } = await deployMockContracts();
+                    let mockMStrategyFactory = await ethers.getContractFactory(
+                        "MockMStrategy"
+                    );
+                    let mockMStrategy = await mockMStrategyFactory.deploy(
+                        mockNonfungiblePositionManager.address,
+                        mockSwapRouter.address
+                    );
+
+                    const address =
+                        await mockMStrategy.callStatic.createStrategy(
+                            this.params.tokens,
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.fee,
+                            this.params.admin
+                        );
+                    await mockMStrategy.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
+                    let subject = await ethers.getContractAt(
+                        "MockMStrategy",
+                        address
+                    );
+
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(mockUniswapV3Pool.address, [
+                            PermissionIdsLibrary.ERC20_APPROVE,
+                        ]);
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitPermissionGrants(mockUniswapV3Pool.address);
+
+                    for (let i = 0; i < this.params.tokens.length; ++i) {
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .stagePermissionGrants(this.params.tokens[i], [
+                                PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                            ]);
+                    }
+
+                    await sleep(this.governanceDelay);
+
+                    for (let i = 0; i < this.params.tokens.length; ++i) {
+                        await this.protocolGovernance
+                            .connect(this.admin)
+                            .commitPermissionGrants(this.params.tokens[i]);
+                    }
+
+                    let validatorFactory = await ethers.getContractFactory(
+                        "MockValidator"
+                    );
+                    let validator = await validatorFactory.deploy(
+                        this.protocolGovernance.address
+                    );
+
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageValidator(
+                            mockSwapRouter.address,
+                            validator.address
+                        );
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageValidator(this.usdc.address, validator.address);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageValidator(this.weth.address, validator.address);
+
+                    await sleep(this.governanceDelay);
+
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitValidator(mockSwapRouter.address);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitValidator(this.usdc.address);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitValidator(this.weth.address);
+
+                    let erc20VaultNft = await this.vaultRegistry.nftForVault(
+                        this.params.erc20Vault
+                    );
+                    let moneyVaultNft = await this.vaultRegistry.nftForVault(
+                        this.params.moneyVault
+                    );
+
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(subject.address, erc20VaultNft);
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(subject.address, moneyVaultNft);
+
+                    let params: SwapToTargetParamsStruct = {
+                        amountIn: BigNumber.from(10 ** 8),
+                        tokens: this.params.tokens,
+                        tokenInIndex: 0,
+                        priceX96: BigNumber.from(1),
+                        erc20Tvl: [
+                            BigNumber.from(10 ** 3),
+                            BigNumber.from(10 ** 8),
+                        ],
+                        pool: mockUniswapV3Pool.address,
+                        router: mockSwapRouter.address,
+                        erc20Vault: this.params.erc20Vault,
+                        moneyVault: this.params.moneyVault,
+                    };
+
+                    await subject.swapToTarget(params, []);
+                });
+            });
+        });
+    });
+
+    describe("_rebalancePools", () => {
+        describe("edge cases", () => {
+            describe("when erc20Vault.tvl[i] + moneyVault.tvl[i] > uint256max / 2 or erc20tvl[i] > uint256max / 2", () => {
+                it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        ethers.constants.MaxUint256.div(2)
+                    );
+
+                    let {
+                        mockNonfungiblePositionManager,
+                        mockSwapRouter,
+                        mockUniswapV3Pool,
+                    } = await deployMockContracts();
+                    let mockMStrategyFactory = await ethers.getContractFactory(
+                        "MockMStrategy"
+                    );
+                    let mockMStrategy = await mockMStrategyFactory.deploy(
+                        mockNonfungiblePositionManager.address,
+                        mockSwapRouter.address
+                    );
+
+                    const address =
+                        await mockMStrategy.callStatic.createStrategy(
+                            this.params.tokens,
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.fee,
+                            this.params.admin
+                        );
+                    await mockMStrategy.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
+                    let subject = await ethers.getContractAt(
+                        "MockMStrategy",
+                        address
+                    );
+
+                    await this.usdc
+                        .connect(this.deployer)
+                        .transfer(
+                            this.params.erc20Vault,
+                            ethers.constants.MaxUint256.div(2)
+                        );
+
+                    await expect(
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalancePools(
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                this.params.tokens,
+                                BigNumber.from(0),
+                                []
+                            )
+                    ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                });
+            });
+
+            describe("when targetTokenAmount - erc20Vault.tvl > 0 for both tokens", () => {
+                it("pulls extra tokens from moneyVault for both tokens", async () => {
+                    await mint(
+                        "USDC",
+                        this.yearnVault.address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+                    await mint(
+                        "WETH",
+                        this.yearnVault.address,
+                        BigNumber.from(10).pow(18).mul(3000)
+                    );
+
+                    await this.yearnVault.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(9).mul(2),
+                            BigNumber.from(10).pow(9).mul(5),
+                        ],
+                        encodeToBytes(["uint256"], [BigNumber.from(1)])
+                    );
+
+                    let {
+                        mockNonfungiblePositionManager,
+                        mockSwapRouter,
+                        mockUniswapV3Pool,
+                    } = await deployMockContracts();
+                    let mockMStrategyFactory = await ethers.getContractFactory(
+                        "MockMStrategy"
+                    );
+                    let mockMStrategy = await mockMStrategyFactory.deploy(
+                        mockNonfungiblePositionManager.address,
+                        mockSwapRouter.address
+                    );
+
+                    const address =
+                        await mockMStrategy.callStatic.createStrategy(
+                            this.params.tokens,
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.fee,
+                            this.params.admin
+                        );
+                    await mockMStrategy.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
+                    let subject = await ethers.getContractAt(
+                        "MockMStrategy",
+                        address
+                    );
+
+                    let erc20VaultNft = await this.vaultRegistry.nftForVault(
+                        this.params.erc20Vault
+                    );
+                    let moneyVaultNft = await this.vaultRegistry.nftForVault(
+                        this.params.moneyVault
+                    );
+
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(this.params.erc20Vault, moneyVaultNft);
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(subject.address, moneyVaultNft);
+
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(this.params.moneyVault, erc20VaultNft);
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(subject.address, erc20VaultNft);
+
+                    const oracleParams: OracleParamsStruct = {
+                        oracleObservationDelta: 101,
+                        maxTickDeviation: 50,
+                        maxSlippageD: Math.round(0.1 * 10 ** 9),
+                    };
+                    const ratioParams: RatioParamsStruct = {
+                        tickMin: 198240 - 5000,
+                        tickMax: 198240 + 5000,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                        minErc20MoneyRatioDeviationD: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minTickRebalanceThreshold: 180,
+                        tickNeighborhood: 60,
+                        tickIncrease: 180,
+                    };
+
+                    await subject
+                        .connect(this.mStrategyAdmin)
+                        .setRatioParams(ratioParams);
+                    await subject
+                        .connect(this.mStrategyAdmin)
+                        .setOracleParams(oracleParams);
+
+                    await subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalancePools(
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.tokens,
+                            BigNumber.from(0),
+                            []
+                        );
+                });
+            });
+            describe("when targetTokenAmount - erc20Vault.tvl > 0 for only one token", () => {
+                it("pulls extra tokens from moneyVault for one token, and from erc20Vault for another token", async () => {
+                    await mint(
+                        "USDC",
+                        this.yearnVault.address,
+                        BigNumber.from(10).pow(9)
+                    );
+                    await mint(
+                        "WETH",
+                        this.yearnVault.address,
+                        BigNumber.from(10).pow(10).mul(2)
+                    );
+
+                    await mint(
+                        "USDC",
+                        this.erc20Vault.address,
+                        BigNumber.from(10).pow(10).mul(2)
+                    );
+                    await mint(
+                        "WETH",
+                        this.erc20Vault.address,
+                        BigNumber.from(10).pow(9)
+                    );
+
+                    await this.yearnVault.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(9),
+                            BigNumber.from(10).pow(10).mul(2),
+                        ],
+                        encodeToBytes(["uint256"], [BigNumber.from(1)])
+                    );
+
+                    let {
+                        mockNonfungiblePositionManager,
+                        mockSwapRouter,
+                        mockUniswapV3Pool,
+                    } = await deployMockContracts();
+                    let mockMStrategyFactory = await ethers.getContractFactory(
+                        "MockMStrategy"
+                    );
+                    let mockMStrategy = await mockMStrategyFactory.deploy(
+                        mockNonfungiblePositionManager.address,
+                        mockSwapRouter.address
+                    );
+
+                    const address =
+                        await mockMStrategy.callStatic.createStrategy(
+                            this.params.tokens,
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.fee,
+                            this.params.admin
+                        );
+                    await mockMStrategy.createStrategy(
+                        this.params.tokens,
+                        this.params.erc20Vault,
+                        this.params.moneyVault,
+                        this.params.fee,
+                        this.params.admin
+                    );
+                    let subject = await ethers.getContractAt(
+                        "MockMStrategy",
+                        address
+                    );
+
+                    let erc20VaultNft = await this.vaultRegistry.nftForVault(
+                        this.params.erc20Vault
+                    );
+                    let moneyVaultNft = await this.vaultRegistry.nftForVault(
+                        this.params.moneyVault
+                    );
+
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(this.params.erc20Vault, moneyVaultNft);
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(subject.address, moneyVaultNft);
+
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(this.params.moneyVault, erc20VaultNft);
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(subject.address, erc20VaultNft);
+
+                    const oracleParams: OracleParamsStruct = {
+                        oracleObservationDelta: 101,
+                        maxTickDeviation: 50,
+                        maxSlippageD: Math.round(0.1 * 10 ** 9),
+                    };
+                    const ratioParams: RatioParamsStruct = {
+                        tickMin: 198240 - 5000,
+                        tickMax: 198240 + 5000,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                        minErc20MoneyRatioDeviationD: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minTickRebalanceThreshold: 180,
+                        tickNeighborhood: 60,
+                        tickIncrease: 180,
+                    };
+
+                    await subject
+                        .connect(this.mStrategyAdmin)
+                        .setRatioParams(ratioParams);
+                    await subject
+                        .connect(this.mStrategyAdmin)
+                        .setOracleParams(oracleParams);
+
+                    await subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalancePools(
+                            this.params.erc20Vault,
+                            this.params.moneyVault,
+                            this.params.tokens,
+                            BigNumber.from(0),
+                            []
+                        );
                 });
             });
         });
