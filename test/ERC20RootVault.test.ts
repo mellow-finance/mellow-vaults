@@ -18,6 +18,7 @@ import {
     MockLpCallback,
     UniV3Vault,
     IERC20RootVaultGovernance,
+    ERC20Token,
 } from "./types";
 import { combineVaults, setupVault } from "../deploy/0000_utils";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
@@ -511,10 +512,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
 
             const nftIndex = await this.subject.nft();
-            const { strategyTreasury: strategyTreasury } =
-                await governance.delayedStrategyParams(nftIndex);
-            const { strategyPerformanceTreasury: strategyPerformanceTreasury } =
-                await governance.delayedStrategyParams(nftIndex);
+            const {
+                strategyTreasury: strategyTreasury,
+                strategyPerformanceTreasury: strategyPerformanceTreasury,
+            } = await governance.delayedStrategyParams(nftIndex);
 
             await governance
                 .connect(this.admin)
@@ -527,7 +528,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     depositCallbackAddress: ethers.constants.AddressZero,
                     withdrawCallbackAddress: ethers.constants.AddressZero,
                 } as DelayedStrategyParamsStruct);
-            await sleep(86400);
+            await sleep(this.governanceDelay);
             await governance
                 .connect(this.admin)
                 .commitDelayedStrategyParams(nftIndex);
@@ -573,16 +574,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     depositCallbackAddress: lpCallback.address,
                     withdrawCallbackAddress: lpCallback.address,
                 } as DelayedStrategyParamsStruct);
-            await sleep(86400);
+            await sleep(this.governanceDelay);
             await governance
                 .connect(this.admin)
                 .commitDelayedStrategyParams(nftIndex);
             return lpCallback;
         };
 
-        const NO_ERROR = 0;
-        const EMPTY_ERROR = 1;
-        const NON_EMPTY_ERROR = 2;
+        enum WithdrawCallbackMode {
+            NO_ERROR = 0,
+            EMPTY_ERROR = 1,
+            NON_EMPTY_ERROR = 2,
+        }
 
         describe("#deposit", () => {
             const MIN_FIRST_DEPOSIT = BigNumber.from(10001);
@@ -611,9 +614,54 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
+            const setupTreasure = async () => {
+                let erc20Factory = await ethers.getContractFactory(
+                    "ERC20Token"
+                );
+                var { address: treasureAddress } = await erc20Factory.deploy();
+                var governance: IERC20RootVaultGovernance =
+                    await ethers.getContractAt(
+                        "IERC20RootVaultGovernance",
+                        await this.subject.vaultGovernance()
+                    );
+
+                const nftIndex = await this.subject.nft();
+                const { strategyTreasury: strategyTreasury } =
+                    await governance.delayedStrategyParams(nftIndex);
+
+                await governance
+                    .connect(this.admin)
+                    .stageDelayedStrategyParams(nftIndex, {
+                        strategyTreasury: strategyTreasury,
+                        strategyPerformanceTreasury: treasureAddress,
+                        privateVault: true,
+                        managementFee: BigNumber.from(3000),
+                        performanceFee: BigNumber.from(0),
+                        depositCallbackAddress: ethers.constants.AddressZero,
+                        withdrawCallbackAddress: ethers.constants.AddressZero,
+                    } as DelayedStrategyParamsStruct);
+                await sleep(this.governanceDelay);
+                await governance
+                    .connect(this.admin)
+                    .commitDelayedStrategyParams(nftIndex);
+                return treasureAddress;
+            };
+
+            const getTreasureBalanceForSigner = async (
+                treasureAddress: string,
+                signer: string
+            ) => {
+                const treasure: ERC20Token = await ethers.getContractAt(
+                    "ERC20Token",
+                    treasureAddress
+                );
+                return treasure.balanceOf(signer);
+            };
+
             describe("edge cases:", () => {
                 describe("when lpPriceD18 <= hwmsD18", () => {
                     it("do not charge performance fees", async () => {
+                        const treasureAddress = await setupTreasure();
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -627,14 +675,23 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .commitDelayedProtocolParams();
 
                         var signer = await addSigner(randomAddress());
-                        const amount = BigNumber.from("3000000000000000010001");
+                        const treasuryBalanceBefore =
+                            await getTreasureBalanceForSigner(
+                                treasureAddress,
+                                signer.address
+                            );
+                        const amount = BigNumber.from(10)
+                            .pow(21)
+                            .mul(3)
+                            .add(MIN_FIRST_DEPOSIT);
+                        const defaultDepositAmount = BigNumber.from(10).pow(14);
                         await preprocessSigner(signer, amount);
                         await this.subject
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from("32000000000000000"),
-                                    BigNumber.from("32000000000000000"),
+                                    defaultDepositAmount.mul(32),
+                                    defaultDepositAmount.mul(32),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
@@ -644,8 +701,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from("32000000000000000"),
-                                    BigNumber.from("32000000000000000"),
+                                    defaultDepositAmount.mul(32),
+                                    defaultDepositAmount.mul(32),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
@@ -655,17 +712,27 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from("30000000000000000"),
-                                    BigNumber.from("30000000000000000"),
+                                    defaultDepositAmount.mul(30),
+                                    defaultDepositAmount.mul(30),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
                             );
+
+                        const treasuryBalanceAfter =
+                            await getTreasureBalanceForSigner(
+                                treasureAddress,
+                                signer.address
+                            );
+                        expect(treasuryBalanceBefore).to.be.eq(
+                            treasuryBalanceAfter
+                        );
                     });
                 });
 
                 describe("when performance fee is zero", () => {
                     it("do not charge performance fees", async () => {
+                        const treasureAddress = await setupTreasure();
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -679,15 +746,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .commitDelayedProtocolParams();
 
                         var signer = await addSigner(randomAddress());
-                        const amount = BigNumber.from("3000000000000000010001");
+                        const treasuryBalanceBefore =
+                            await getTreasureBalanceForSigner(
+                                treasureAddress,
+                                signer.address
+                            );
+                        const amount = BigNumber.from(10)
+                            .pow(21)
+                            .mul(3)
+                            .add(MIN_FIRST_DEPOSIT);
+                        const defaultDepositAmount = BigNumber.from(10).pow(14);
                         await preprocessSigner(signer, amount);
                         await setupZeroPerformanceFee();
                         await this.subject
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from("32000000000000000"),
-                                    BigNumber.from("32000000000000000"),
+                                    defaultDepositAmount.mul(32),
+                                    defaultDepositAmount.mul(32),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
@@ -697,8 +773,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from("32000000000000000"),
-                                    BigNumber.from("32000000000000000"),
+                                    defaultDepositAmount.mul(32),
+                                    defaultDepositAmount.mul(32),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
@@ -708,13 +784,22 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .connect(signer)
                             .deposit(
                                 [
-                                    BigNumber.from("30000000000000000"),
-                                    BigNumber.from("30000000000000000"),
+                                    defaultDepositAmount.mul(30),
+                                    defaultDepositAmount.mul(30),
                                 ],
                                 DEFAULT_MIN_LP_TOKEN,
                                 []
                             );
-                        await setupLpCallback(NO_ERROR);
+                        await setupLpCallback(WithdrawCallbackMode.NO_ERROR);
+
+                        const treasuryBalanceAfter =
+                            await getTreasureBalanceForSigner(
+                                treasureAddress,
+                                signer.address
+                            );
+                        expect(treasuryBalanceBefore).to.be.eq(
+                            treasuryBalanceAfter
+                        );
                     });
                 });
 
@@ -824,7 +909,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
-                describe("when tokenAmounts is lower than FIRST_DEPOSIT_LIMIT", () => {
+                describe("when tokenAmounts is less than or equal to FIRST_DEPOSIT_LIMIT", () => {
                     it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
                             await preprocessSigner(signer, MIN_FIRST_DEPOSIT);
@@ -843,7 +928,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 describe("when depositCallback Address is set", () => {
                     it("emits deposits callback called", async () => {
-                        var lpCallback = await setupLpCallback(NO_ERROR);
+                        var lpCallback = await setupLpCallback(
+                            WithdrawCallbackMode.NO_ERROR
+                        );
 
                         await preprocessSigner(
                             this.deployer,
@@ -1085,7 +1172,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 )
                         ).not.to.be.reverted;
 
-                        var lpCallback = await setupLpCallback(NO_ERROR);
+                        var lpCallback = await setupLpCallback(
+                            WithdrawCallbackMode.NO_ERROR
+                        );
 
                         await expect(
                             this.subject.withdraw(
@@ -1111,7 +1200,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 )
                         ).not.to.be.reverted;
 
-                        await setupLpCallback(EMPTY_ERROR);
+                        await setupLpCallback(WithdrawCallbackMode.EMPTY_ERROR);
 
                         await expect(
                             this.subject.withdraw(
@@ -1137,7 +1226,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 )
                         ).not.to.be.reverted;
 
-                        await setupLpCallback(NON_EMPTY_ERROR);
+                        await setupLpCallback(
+                            WithdrawCallbackMode.NON_EMPTY_ERROR
+                        );
 
                         await expect(
                             this.subject.withdraw(
