@@ -1,3 +1,4 @@
+import retry from "async-retry";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "@nomiclabs/hardhat-ethers";
@@ -215,12 +216,20 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
         let erc20VaultNft = startNft + 1;
         const moneyGovernance =
             kind === "Aave" ? "AaveVaultGovernance" : "YearnVaultGovernance";
-        await setupVault(hre, yearnVaultNft, moneyGovernance, {
-            createVaultArgs: [tokens, deployer],
-        });
-        await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
-            createVaultArgs: [tokens, deployer],
-        });
+        await retry(
+            async () => {
+                await setupVault(hre, yearnVaultNft, moneyGovernance, {
+                    createVaultArgs: [tokens, deployer],
+                });
+                await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+                    createVaultArgs: [tokens, deployer],
+                });
+            },
+            {
+                retries: 3,
+            }
+        );
+
 
         const strategy = await get(`MStrategy${kind}`);
 
