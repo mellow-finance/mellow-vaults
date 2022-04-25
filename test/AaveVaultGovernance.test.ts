@@ -23,6 +23,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { vaultGovernanceBehavior } from "./behaviors/vaultGovernance";
 import { InternalParamsStruct } from "./types/IVaultGovernance";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
+import { AAVE_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
+import { randomBytes } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -181,6 +183,28 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                 autoMine: true,
                             })
                         ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                    });
+                });
+            });
+        });
+
+        describe("#supportsInterface", () => {
+            it(`returns true if this contract supports ${AAVE_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        AAVE_VAULT_GOVERNANCE_INTERFACE_ID
+                    )
+                ).to.be.true;
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .supportsInterface(randomBytes(4))
+                        ).to.not.be.reverted;
                     });
                 });
             });

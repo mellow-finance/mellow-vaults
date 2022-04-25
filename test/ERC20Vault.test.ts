@@ -28,7 +28,6 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
                 const { read } = deployments;
-                this.skipReclaimTokensTest = true;
 
                 const { curveRouter } = await getNamedAccounts();
                 this.curveRouter = curveRouter;
@@ -335,5 +334,5 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
         });
     });
 
-    integrationVaultBehavior.call(this, {});
+    integrationVaultBehavior.call(this, { skipReclaimTokensTest: true });
 });
