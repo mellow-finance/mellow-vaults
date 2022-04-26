@@ -57,6 +57,11 @@ export const randomAddress = () => {
     return wallet.address;
 };
 
+export const randomChoice = (choices: Array<any>) => {
+    var index = Math.floor(Math.random() * choices.length);
+    return choices[index];
+};
+
 export const toObject = (obj: any) =>
     pipe(
         keys,

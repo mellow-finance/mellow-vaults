@@ -13,6 +13,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
+import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -97,6 +98,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN); // Also checks that the token exists
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(nft_);
+        console.log(owner);
+        console.log(msg.sender);
         IVaultRoot root = _root(registry, nft_, owner);
         if (owner != msg.sender) {
             address zeroVault = root.subvaultAt(0);
