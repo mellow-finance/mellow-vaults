@@ -6,6 +6,7 @@ import {
     encodeToBytes,
     mint,
     mintUniV3Position_USDC_WETH,
+    mintUniV3Position_WBTC_WETH,
     randomAddress,
     sleep,
     withSigner,
@@ -25,6 +26,7 @@ import {
     UNIV3_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import Exceptions from "./library/Exceptions";
+import { Signer } from "ethers";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -333,6 +335,66 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         }
                     );
+                });
+            });
+            describe("when UniV3 token is not valid", () => {
+                it("reverts", async () => {
+                    const result = await mintUniV3Position_WBTC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        wethAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wbtcAmount: BigNumber.from(10).pow(6),
+                    });
+                    await withSigner(
+                        this.positionManager.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .onERC721Received(
+                                        this.deployer.address,
+                                        this.deployer.address,
+                                        result.tokenId,
+                                        [],
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                        }
+                    );
+                });
+            });
+            describe("prevent from adding nft while liquidity is not empty", () => {
+                it("reverts", async () => {
+                    const result = await mintUniV3Position_USDC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wethAmount: BigNumber.from(10).pow(18),
+                    });
+                    await withSigner(this.positionManager.address, async (signer) => {
+                        await this.subject
+                            .connect(signer)
+                            .onERC721Received(
+                                this.deployer.address,
+                                this.deployer.address,
+                                result.tokenId,
+                                []
+                            );
+                    });
+                    expect(await this.subject.uniV3Nft()).to.be.equal(result.tokenId);
+                    await withSigner(this.positionManager.address, async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .onERC721Received(
+                                    this.deployer.address,
+                                    this.deployer.address,
+                                    result.tokenId,
+                                    []
+                            )
+                        ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                    });
                 });
             });
         });
