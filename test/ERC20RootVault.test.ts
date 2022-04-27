@@ -614,7 +614,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
-            const setupTreasure = async () => {
+            const setupPerformanceTreasure = async (managementFee: number, performanceFee: number) => {
                 let erc20Factory = await ethers.getContractFactory(
                     "ERC20Token"
                 );
@@ -635,8 +635,41 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         strategyTreasury: strategyTreasury,
                         strategyPerformanceTreasury: treasureAddress,
                         privateVault: true,
-                        managementFee: BigNumber.from(3000),
-                        performanceFee: BigNumber.from(0),
+                        managementFee: managementFee,
+                        performanceFee: performanceFee,
+                        depositCallbackAddress: ethers.constants.AddressZero,
+                        withdrawCallbackAddress: ethers.constants.AddressZero,
+                    } as DelayedStrategyParamsStruct);
+                await sleep(this.governanceDelay);
+                await governance
+                    .connect(this.admin)
+                    .commitDelayedStrategyParams(nftIndex);
+                return treasureAddress;
+            };
+
+            const setupStrategyTreasure = async (managementFee: number, performanceFee: number) => {
+                let erc20Factory = await ethers.getContractFactory(
+                    "ERC20Token"
+                );
+                var { address: treasureAddress } = await erc20Factory.deploy();
+                var governance: IERC20RootVaultGovernance =
+                    await ethers.getContractAt(
+                        "IERC20RootVaultGovernance",
+                        await this.subject.vaultGovernance()
+                    );
+
+                const nftIndex = await this.subject.nft();
+                const { strategyPerformanceTreasury: strategyPerformanceTreasury } =
+                    await governance.delayedStrategyParams(nftIndex);
+
+                await governance
+                    .connect(this.admin)
+                    .stageDelayedStrategyParams(nftIndex, {
+                        strategyTreasury: treasureAddress,
+                        strategyPerformanceTreasury: strategyPerformanceTreasury,
+                        privateVault: true,
+                        managementFee: managementFee,
+                        performanceFee: performanceFee,
                         depositCallbackAddress: ethers.constants.AddressZero,
                         withdrawCallbackAddress: ethers.constants.AddressZero,
                     } as DelayedStrategyParamsStruct);
@@ -661,7 +694,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when lpPriceD18 <= hwmsD18", () => {
                     it("do not charge performance fees", async () => {
-                        const treasureAddress = await setupTreasure();
+                        const treasureAddress = await setupPerformanceTreasure(3000, 1);
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -732,7 +765,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 describe("when performance fee is zero", () => {
                     it("do not charge performance fees", async () => {
-                        const treasureAddress = await setupTreasure();
+                        const treasureAddress = await setupPerformanceTreasure(3000, 0);
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -800,6 +833,72 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         expect(treasuryBalanceBefore).to.be.eq(
                             treasuryBalanceAfter
                         );
+                    });
+                });
+
+                describe("when management fee is zero", () => {
+                    it(`not charges management fees`, async () => {
+                        const TreasuryAddress = await setupStrategyTreasure(0, 3000);
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams({
+                                managementFeeChargeDelay: 0,
+                                oracle: this.mellowOracle.address,
+                            } as DelayedProtocolParamsStruct);
+
+                        await sleep(this.governanceDelay);
+                        await this.erc20RootVaultGovernance
+                            .connect(this.admin)
+                            .commitDelayedProtocolParams();
+
+                        var signer = await addSigner(randomAddress());
+                        const amount = BigNumber.from(10)
+                            .pow(21);
+                        const defaultDepositAmount = BigNumber.from(10).pow(14);
+                        await preprocessSigner(signer, amount);
+
+                        const treasuryBalanceBefore =
+                            await getTreasureBalanceForSigner(
+                                TreasuryAddress,
+                                signer.address
+                            );
+
+                            await expect(
+                                this.subject
+                                .connect(signer)
+                                .deposit(
+                                    [
+                                        defaultDepositAmount,
+                                        defaultDepositAmount,
+                                    ],
+                                    DEFAULT_MIN_LP_TOKEN,
+                                    []
+                                )
+                            ).not.to.be.reverted;
+
+                        await expect(
+                            this.subject
+                            .connect(signer)
+                            .deposit(
+                                [
+                                    defaultDepositAmount,
+                                    defaultDepositAmount,
+                                ],
+                                DEFAULT_MIN_LP_TOKEN,
+                                []
+                            )
+                        ).not.to.emit(this.subject, "ManagementFeesCharged");
+                        
+                        await setupLpCallback(WithdrawCallbackMode.NO_ERROR);
+                        const treasuryBalanceAfter =
+                            await getTreasureBalanceForSigner(
+                                TreasuryAddress,
+                                signer.address
+                            );
+                        expect(treasuryBalanceBefore).to.be.eq(
+                            treasuryBalanceAfter
+                        );
+                        
                     });
                 });
 
@@ -1120,6 +1219,36 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 []
                             )
                         ).to.be.revertedWith(Exceptions.INVALID_LENGTH);
+                    });
+                });
+
+                describe("when tries to withdraw less than stated minimal amount", () => {
+                    it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
+                        await withSigner(randomAddress(), async (signer) => {
+                            await preprocessSigner(signer, MIN_FIRST_DEPOSIT.pow(3));
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .deposit(
+                                        [
+                                            MIN_FIRST_DEPOSIT.pow(3),
+                                            MIN_FIRST_DEPOSIT.pow(3),
+                                        ],
+                                        BigNumber.from(0),
+                                        []
+                                    )
+                            ).not.to.be.reverted;
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .withdraw(
+                                        randomAddress(),
+                                        BigNumber.from(1),
+                                        [MIN_FIRST_DEPOSIT.pow(3), MIN_FIRST_DEPOSIT.pow(3)],
+                                        NON_EMPTY_DEFAULT_OPTIONS
+                                    )
+                            ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
+                        });
                     });
                 });
 
