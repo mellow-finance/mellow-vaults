@@ -124,7 +124,7 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
 
     function feeGrowthGlobal1X128() external view returns (uint256) {}
 
-    function protocolPerformanceFees() external view returns (uint128 token0, uint128 token1) {}
+    function protocolPerformanceFees() external view returns (uint128, uint128) {}
 
     function liquidity() external view returns (uint128) {}
 

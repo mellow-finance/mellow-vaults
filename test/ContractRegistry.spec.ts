@@ -10,7 +10,9 @@ import {
     withSigner,
     randomAddress,
     generateSingleParams,
+    addSigner,
 } from "./library/Helpers";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -181,8 +183,35 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
             });
 
             describe("access control", () => {
-                xit("allowed: operator (deployer)", async () => {});
-                xit("denied: random address", async () => {});
+                it("allowed: operator (deployer)", async () => {
+                    const semver = "1.0.1";
+                    const name = "Random";
+                    const mockFactory = await ethers.getContractFactory(
+                        "ContractMetaMock"
+                    );
+
+                    const mock = await mockFactory.deploy(name, semver);
+                    await expect(
+                        this.subject
+                            .connect(this.deployer)
+                            .registerContract(mock.address)
+                    ).to.not.be.reverted;
+                });
+                it(`denied with ${Exceptions.FORBIDDEN}: random address`, async () => {
+                    const semver = "1.0.1";
+                    const name = "Random";
+                    const mockFactory = await ethers.getContractFactory(
+                        "ContractMetaMock"
+                    );
+
+                    var signer = await addSigner(randomAddress());
+                    const mock = await mockFactory.deploy(name, semver);
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .registerContract(mock.address)
+                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
                 it("allowed: protocol admin", async () => {
                     const semver = "1.0.1";
                     const name = "Admin";
@@ -197,6 +226,11 @@ contract<ContractRegistry, DeployOptions, CustomContext>(
                     ).to.not.be.reverted;
                 });
             });
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ContractRegistry",
+            contractVersion: "1.0.0",
         });
     }
 );

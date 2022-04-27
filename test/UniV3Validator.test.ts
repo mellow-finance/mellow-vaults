@@ -14,6 +14,7 @@ import { ValidatorBehaviour } from "./behaviors/validator";
 import Exceptions from "./library/Exceptions";
 import { randomBytes } from "crypto";
 import { uint256, uint8 } from "./library/property";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {};
 
@@ -1164,5 +1165,9 @@ contract<UniV3Validator, DeployOptions, CustomContext>(
         });
 
         ValidatorBehaviour.call(this, {});
+        ContractMetaBehaviour.call(this, {
+            contractName: "UniV3Validator",
+            contractVersion: "1.0.0",
+        });
     }
 );

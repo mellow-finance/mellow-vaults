@@ -5,6 +5,7 @@ import { arrayify } from "@ethersproject/bytes";
 import { SemverLibraryTest } from "./types/SemverLibraryTest";
 import { uint256, uint8, pit, RUNS } from "./library/property";
 import { contract } from "./library/setup";
+import { generateSingleParams } from "./library/Helpers";
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -48,6 +49,35 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
             }
         );
 
+        describe("#stringifySemver", () => {
+            it("succesful stringify", async () => {
+                let number = generateSingleParams(uint256).mod(
+                    BigNumber.from(2).pow(24)
+                );
+                let major = number.div(BigNumber.from(2).pow(16));
+                let minor = number
+                    .div(BigNumber.from(2).pow(8))
+                    .mod(BigNumber.from(2).pow(8));
+                let patch = number.mod(BigNumber.from(2).pow(8));
+                expect(await this.subject.stringifySemver(number)).to.be.eq(
+                    `${major}.${minor}.${patch}`
+                );
+            });
+            describe("edge cases", () => {
+                describe("when num is too large", () => {
+                    it('returns "0"', async () => {
+                        expect(
+                            await this.subject.stringifySemver(
+                                generateSingleParams(uint256).add(
+                                    BigNumber.from(2).pow(24)
+                                )
+                            )
+                        ).to.be.eq("0");
+                    });
+                });
+            });
+        });
+
         describe("#numberifySemver", () => {
             describe("edge cases", () => {
                 it("returns zero on '0.0.0'", async () => {
@@ -68,7 +98,6 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
                 });
                 it("returns zero on '42'", async () => {
                     const semver = "42";
-                    // const input = ethers.utils.formatBytes32String(semver);
                     const numberified = await this.subject.numberifySemver(
                         semver
                     );
@@ -106,41 +135,5 @@ contract<SemverLibraryTest, DeployOptions, CustomContext>(
                 });
             });
         });
-
-        // describe("#numberify", () => {
-        //     pit(
-        //         "converts number to string",
-        //         { numRuns: RUNS.low },
-        //         uint256,
-        //         async (a: BigNumber) => {
-        //             const input: number[] = a
-        //                 .toString()
-        //                 .split("")
-        //                 .map((x) => x.charCodeAt(0));
-        //             const result: BigNumber = await this.subject.numberify(
-        //                 input
-        //             );
-        //             expect(result).to.eq(a);
-        //             return true;
-        //         }
-        //     );
-        // });
-
-        // describe("#stringify", () => {
-        //     pit(
-        //         "converts string to number",
-        //         { numRuns: RUNS.low },
-        //         uint256,
-        //         async (a: BigNumber) => {
-        //             const response = arrayify(await this.subject.stringify(a));
-        //             let result: string = "";
-        //             for (const i of response) {
-        //                 result += String.fromCharCode(i);
-        //             }
-        //             expect(result).to.eq(a.toString());
-        //             return true;
-        //         }
-        //     );
-        // });
     }
 );

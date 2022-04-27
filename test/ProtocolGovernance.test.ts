@@ -22,8 +22,10 @@ import {
 import assert from "assert";
 import { randomInt } from "crypto";
 import { Address } from "hardhat-deploy/types";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 const MAX_GOVERNANCE_DELAY = BigNumber.from(60 * 60 * 24 * 7);
+const MIN_WITHDRAW_LIMIT = BigNumber.from(200 * 1000);
 
 type CustomContext = {};
 type DeployOptions = {};
@@ -2594,6 +2596,21 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                             return true;
                         });
                     });
+
+                    describe("when withdrawLimit less than MIN_WITHDRAW_LIMIT", () => {
+                        it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
+                            let params = generateSingleParams(paramsArb);
+                            params.withdrawLimit = BigNumber.from(
+                                MIN_WITHDRAW_LIMIT.sub(1)
+                            );
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .stageParams(params)
+                            ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                            return true;
+                        });
+                    });
                 });
             });
 
@@ -2617,6 +2634,11 @@ contract<IProtocolGovernance, CustomContext, DeployOptions>(
                     return true;
                 });
             });
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ProtocolGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

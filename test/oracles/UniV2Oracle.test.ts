@@ -1,7 +1,6 @@
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "../library/setup";
-import { ERC20RootVault } from "../types/ERC20RootVault";
 import { expect } from "chai";
 import { UniV2Oracle } from "../types";
 
@@ -9,6 +8,7 @@ import {
     UNIV2_ORACLE_INTERFACE_ID,
     UNIV3_VAULT_INTERFACE_ID,
 } from "../library/Constants";
+import { ContractMetaBehaviour } from "../behaviors/contractMeta";
 
 type CustomContext = {
     uniV2Oracle: UniV2Oracle;
@@ -16,13 +16,13 @@ type CustomContext = {
 
 type DeployOptions = {};
 
-contract<ERC20RootVault, DeployOptions, CustomContext>(
+contract<UniV2Oracle, DeployOptions, CustomContext>(
     "UniV2Oracle",
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
-                    this.uniV2Oracle = await ethers.getContract("UniV2Oracle");
+                    this.subject = await ethers.getContract("UniV2Oracle");
                     return this.subject;
                 }
             );
@@ -35,32 +35,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#contructor", () => {
             it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    this.uniV2Oracle.address
+                    this.subject.address
                 );
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    await this.uniV2Oracle.factory()
-                );
-            });
-
-            it("initializes name", async () => {
-                expect("UniV2Oracle").to.be.eq(
-                    await this.uniV2Oracle.contractName()
-                );
-            });
-
-            it("initializes version", async () => {
-                expect("1.0.0").to.be.eq(
-                    await this.uniV2Oracle.contractVersion()
+                    await this.subject.factory()
                 );
             });
         });
 
         describe("#price", () => {
             it("retruns prices for [uscd, weth] pair", async () => {
-                const pricesResult = await this.uniV2Oracle.price(
+                const pricesResult = await this.subject.price(
                     this.usdc.address,
                     this.weth.address,
-                    BigNumber.from(1 << (await this.uniV2Oracle.safetyIndex()))
+                    BigNumber.from(1 << (await this.subject.safetyIndex()))
                 );
 
                 const pricesX96 = pricesResult.pricesX96;
@@ -71,10 +59,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             it("retruns prices for [weth, usdc] pair", async () => {
-                const pricesResult = await this.uniV2Oracle.price(
+                const pricesResult = await this.subject.price(
                     this.weth.address,
                     this.usdc.address,
-                    BigNumber.from(1 << (await this.uniV2Oracle.safetyIndex()))
+                    BigNumber.from(1 << (await this.subject.safetyIndex()))
                 );
 
                 const pricesX96 = pricesResult.pricesX96;
@@ -87,11 +75,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("edges cases:", () => {
                 describe("when one of tokens is zero", () => {
                     it("does not return prices", async () => {
-                        let pricesResult = await this.uniV2Oracle.price(
+                        let pricesResult = await this.subject.price(
                             ethers.constants.AddressZero,
                             ethers.constants.AddressZero,
                             BigNumber.from(
-                                1 << (await this.uniV2Oracle.safetyIndex())
+                                1 << (await this.subject.safetyIndex())
                             )
                         );
 
@@ -102,8 +90,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe("when first of safetyIndicesSet is missing", () => {
                     it("does not return prices", async () => {
                         const badMask =
-                            63 ^ (1 << (await this.uniV2Oracle.safetyIndex()));
-                        let pricesResult = await this.uniV2Oracle.price(
+                            63 ^ (1 << (await this.subject.safetyIndex()));
+                        let pricesResult = await this.subject.price(
                             this.usdc.address,
                             this.weth.address,
                             badMask
@@ -117,7 +105,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#supportsInterface", () => {
             it(`returns true for IUniV2Oracle interface (${UNIV2_ORACLE_INTERFACE_ID})`, async () => {
-                let isSupported = await this.uniV2Oracle.supportsInterface(
+                let isSupported = await this.subject.supportsInterface(
                     UNIV2_ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
@@ -127,7 +115,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe("when contract does not support the given interface", () => {
                     it("returns false", async () => {
                         let isSupported =
-                            await this.uniV2Oracle.supportsInterface(
+                            await this.subject.supportsInterface(
                                 UNIV3_VAULT_INTERFACE_ID
                             );
                         expect(isSupported).to.be.false;
@@ -135,5 +123,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
         });
+
+        ContractMetaBehaviour.call(this, { contractName:"UniV2Oracle", contractVersion:"1.0.0" });
     }
 );

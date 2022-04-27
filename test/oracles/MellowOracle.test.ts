@@ -2,7 +2,6 @@ import hre from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import { contract } from "../library/setup";
-import { ERC20RootVault } from "../types/ERC20RootVault";
 import { expect } from "chai";
 import { MellowOracle } from "../types";
 
@@ -10,6 +9,7 @@ import {
     UNIV2_ORACLE_INTERFACE_ID,
     ORACLE_INTERFACE_ID,
 } from "../library/Constants";
+import { ContractMetaBehaviour } from "../behaviors/contractMeta";
 
 type CustomContext = {
     mellowOracle: MellowOracle;
@@ -27,7 +27,7 @@ const DEFAULT_DEPLOY_PARAMS: DeployOptions = {
     isActiveUniV3Oracle: true,
 };
 
-contract<ERC20RootVault, DeployOptions, CustomContext>(
+contract<MellowOracle, DeployOptions, CustomContext>(
     "MellowOracle",
     function () {
         const deployMellowOracle = async (options: DeployOptions) => {
@@ -65,13 +65,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 autoMine: true,
             });
 
-            this.mellowOracle = await ethers.getContract("MellowOracle");
+            this.subject = await ethers.getContract("MellowOracle");
         };
 
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeployOptions) => {
-                    deployMellowOracle(
+                    await deployMellowOracle(
                         options ? options : DEFAULT_DEPLOY_PARAMS
                     );
                     return this.subject;
@@ -86,31 +86,29 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         describe("#contructor", () => {
             it("deploys a new contract", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    this.mellowOracle.address
+                    this.subject.address
                 );
             });
 
             it("initializes name", async () => {
                 expect("MellowOracle").to.be.eq(
-                    await this.mellowOracle.contractName()
+                    await this.subject.contractName()
                 );
             });
 
             it("initializes version", async () => {
-                expect("1.0.0").to.be.eq(
-                    await this.mellowOracle.contractVersion()
-                );
+                expect("1.0.0").to.be.eq(await this.subject.contractVersion());
             });
 
             it("initializes IUniV3Oracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    await this.mellowOracle.univ3Oracle()
+                    await this.subject.univ3Oracle()
                 );
             });
 
             it("initializes IChainlinkOracle", async () => {
                 expect(ethers.constants.AddressZero).to.not.eq(
-                    await this.mellowOracle.chainlinkOracle()
+                    await this.subject.chainlinkOracle()
                 );
             });
 
@@ -118,7 +116,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe("when creates by default", () => {
                     it("does not initialize IUniV2Oracle", async () => {
                         expect(ethers.constants.AddressZero).to.be.eq(
-                            await this.mellowOracle.univ2Oracle()
+                            await this.subject.univ2Oracle()
                         );
                     });
                 });
@@ -127,7 +125,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         describe("#supportsInterface", () => {
             it(`returns true for IUniV3Oracle interface (${ORACLE_INTERFACE_ID})`, async () => {
-                let isSupported = await this.mellowOracle.supportsInterface(
+                let isSupported = await this.subject.supportsInterface(
                     ORACLE_INTERFACE_ID
                 );
                 expect(isSupported).to.be.true;
@@ -136,10 +134,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when contract does not support the given interface", () => {
                     it("returns false", async () => {
-                        let isSupported =
-                            await this.mellowOracle.supportsInterface(
-                                UNIV2_ORACLE_INTERFACE_ID
-                            );
+                        let isSupported = await this.subject.supportsInterface(
+                            UNIV2_ORACLE_INTERFACE_ID
+                        );
                         expect(isSupported).to.be.false;
                     });
                 });
@@ -201,7 +198,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe(params.name, () => {
                     it("returns prices", async () => {
                         await deployMellowOracle(params.opts);
-                        const pricesResult = await this.mellowOracle.price(
+                        const pricesResult = await this.subject.price(
                             this.usdc.address,
                             this.weth.address,
                             BigNumber.from(params.mask)
@@ -220,7 +217,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     it("does not return prices", async () => {
                         await deployMellowOracle(DEFAULT_DEPLOY_PARAMS);
 
-                        const pricesResult = await this.mellowOracle.price(
+                        const pricesResult = await this.subject.price(
                             ethers.constants.AddressZero,
                             this.weth.address,
                             BigNumber.from(31)
@@ -233,6 +230,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
             });
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "MellowOracle",
+            contractVersion: "1.0.0",
         });
     }
 );

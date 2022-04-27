@@ -23,7 +23,9 @@ import {
     DelayedStrategyParamsStruct,
     OperatorParamsStruct,
 } from "./types/IERC20RootVaultGovernance";
-import { ERC20_ROOT_VAULT_GOVERNANCE } from "./library/Constants";
+import { ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
+import { randomBytes } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -94,10 +96,10 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
         });
 
         describe("#supportsInterface", () => {
-            it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE} interface`, async () => {
+            it(`returns true if this contract supports ${ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
                 expect(
                     await this.subject.supportsInterface(
-                        ERC20_ROOT_VAULT_GOVERNANCE
+                        ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID
                     )
                 ).to.be.true;
             });
@@ -108,7 +110,7 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(s)
-                                .supportsInterface(ERC20_ROOT_VAULT_GOVERNANCE)
+                                .supportsInterface(randomBytes(4))
                         ).to.not.be.reverted;
                     });
                 });
@@ -166,6 +168,11 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             operatorParams,
             rootVaultGovernance: true,
             ...this,
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "ERC20RootVaultGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

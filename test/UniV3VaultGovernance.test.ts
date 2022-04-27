@@ -29,6 +29,9 @@ import {
 } from "./types/IVaultGovernance";
 import { ERC20Token as ERC20, IUniswapV3Pool, UniV3Vault } from "./types";
 import { Signer } from "ethers";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
+import { UNIV3_VAULT_GOVERNANCE_INTERFACE_ID } from "./library/Constants";
+import { randomBytes } from "crypto";
 
 type CustomContext = {
     nft: number;
@@ -183,6 +186,28 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
             });
         });
 
+        describe("#supportsInterface", () => {
+            it(`returns true if this contract supports ${UNIV3_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        UNIV3_VAULT_GOVERNANCE_INTERFACE_ID
+                    )
+                ).to.be.true;
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (s) => {
+                        await expect(
+                            this.subject
+                                .connect(s)
+                                .supportsInterface(randomBytes(4))
+                        ).to.not.be.reverted;
+                    });
+                });
+            });
+        });
+
         describe("#createVault", () => {
             describe("edge cases", () => {
                 describe("when fee is not supported by uni v3", () => {
@@ -213,6 +238,11 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                     .createVault(tokenAddresses, owner, 3000);
             },
             ...this,
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "UniV3VaultGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );

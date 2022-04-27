@@ -43,12 +43,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         actualTokenAmounts = new uint256[](tokens.length);
     }
 
-    // -------------------  INTERNAL, VIEW  -------------------
-
-    function _isStrategy(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
-    }
-
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory)

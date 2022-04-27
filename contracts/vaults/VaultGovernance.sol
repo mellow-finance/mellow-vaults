@@ -209,7 +209,7 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
         _strategyParams[nft] = params;
     }
 
-    /// @notice Set immediate protocol params
+    /// @notice Set immediate operator params
     /// @param params New params
     function _setOperatorParams(bytes memory params) internal {
         _requireAtLeastOperator();
