@@ -1,5 +1,6 @@
 import { Assertion, expect } from "chai";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
+import { AAVE_VAULT_GOVERNANCE_INTERFACE_ID, YEARN_VAULT_INTERFACE_ID } from "./library/Constants";
 import {
     addSigner,
     now,
@@ -229,6 +230,42 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                 estimatedAaveAPY: maxEstimatedAaveAPY.add(1),
                             })
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
+                    });
+                });
+            });
+        });
+
+        describe("#supportsInterface", () => {
+            it(`returns true if this contract supports ${AAVE_VAULT_GOVERNANCE_INTERFACE_ID} interface`, async () => {
+                expect(
+                    await this.subject.supportsInterface(
+                        AAVE_VAULT_GOVERNANCE_INTERFACE_ID
+                    )
+                ).to.be.true;
+            });
+
+            describe("edge cases:", () => {
+                describe("when contract does not support the given interface", () => {
+                    it("returns false", async () => {
+                        expect(
+                            await this.subject.supportsInterface(
+                                YEARN_VAULT_INTERFACE_ID
+                            )
+                        ).to.be.false;
+                    });
+                });
+            });
+
+            describe("access control:", () => {
+                it("allowed: any address", async () => {
+                    await withSigner(randomAddress(), async (signer) => {
+                        await expect(
+                            this.subject
+                                .connect(signer)
+                                .supportsInterface(
+                                    AAVE_VAULT_GOVERNANCE_INTERFACE_ID
+                                )
+                        ).to.not.be.reverted;
                     });
                 });
             });

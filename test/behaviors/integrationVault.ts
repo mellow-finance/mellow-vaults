@@ -270,6 +270,19 @@ export function integrationVaultBehavior<S extends Contract>(
                     });
                 }
             });
+            it("nothing is pulled when zero tokens pulled", async () => {
+                const args = [
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [BigNumber.from(0)],
+                    [],
+                ];
+                const pulledAmounts = await this.subject.callStatic.pull(
+                    ...args
+                );
+                await this.subject.pull(...args);
+                expect(pulledAmounts[0]).to.equal(BigNumber.from(0));
+            });
             it("nothing is pulled when nothing is pushed", async () => {
                 const args = [
                     this.erc20Vault.address,
