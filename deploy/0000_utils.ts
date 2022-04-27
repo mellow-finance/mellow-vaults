@@ -73,8 +73,9 @@ export const ALL_NETWORKS = [
     "polygon",
     "fantom",
     "xdai",
+    "rinkeby",
 ];
-export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan"];
+export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan", "rinkeby"];
 
 export const setupVault = async (
     hre: HardhatRuntimeEnvironment,
@@ -99,6 +100,7 @@ export const setupVault = async (
     const currentNft = await read("VaultRegistry", "vaultsCount");
     if (currentNft <= expectedNft) {
         log(`Deploying ${contractName.replace("Governance", "")}...`);
+        console.log("ROOOOOOOFLAAN");
         await execute(
             contractName,
             {

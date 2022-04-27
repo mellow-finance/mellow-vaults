@@ -11,6 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, read } = deployments;
     const { deployer, uniswapV3PositionManager, cowswap, weth, wsteth, mStrategyTreasury } = await getNamedAccounts();
     const tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
+    console.log(tokens.toString());
     const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
     let uniV3LowerVaultNft = startNft;
