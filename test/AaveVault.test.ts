@@ -22,6 +22,8 @@ import {
     INTEGRATION_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import Exceptions from "./library/Exceptions";
+import { timeStamp } from "console";
+import { uint256 } from "./library/property";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -37,9 +39,9 @@ contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
-                const { read } = deployments;
+                const { read, deploy } = deployments;
 
-                const { curveRouter } = await getNamedAccounts();
+                const { curveRouter, deployer } = await getNamedAccounts();
                 this.curveRouter = curveRouter;
                 this.preparePush = async () => {
                     await sleep(0);
@@ -195,6 +197,41 @@ contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
                 ],
                 encodeToBytes(["uint256"], [BigNumber.from(1)])
             );
+            const result = await this.subject.tvl();
+            for (let amountsId = 0; amountsId < 2; ++amountsId) {
+                for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                    expect(result[amountsId][tokenId]).gt(0);
+                }
+            }
+        });
+
+        it("returns total value locked, no time passed from initialization", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+
+            await this.preparePush();
+            await this.subject.push(
+                [this.usdc.address, this.weth.address],
+                [
+                    BigNumber.from(10).pow(6).mul(3000),
+                    BigNumber.from(10).pow(18).mul(1),
+                ],
+                encodeToBytes(["uint256"], [BigNumber.from(1)])
+            );
+            const { timestamp } = await ethers.provider.getBlock("latest");
+            await ethers.provider.send("hardhat_setStorageAt", [
+                this.subject.address,
+                "0x8", // address of _lastTvlUpdateTimestamp
+                encodeToBytes(["uint256"], [BigNumber.from(timestamp)]),
+            ]);
             const result = await this.subject.tvl();
             for (let amountsId = 0; amountsId < 2; ++amountsId) {
                 for (let tokenId = 0; tokenId < 2; ++tokenId) {
@@ -370,6 +407,37 @@ contract<AaveVault, DeployOptions, CustomContext>("AaveVault", function () {
                             this.weth.address,
                         ])
                     ).to.be.revertedWith(Exceptions.VALUE_ZERO);
+                });
+            });
+            describe("when setting token with address zero", () => {
+                it(`reverts with ${Exceptions.ADDRESS_ZERO}`, async () => {
+                    let erc20Factory = await ethers.getContractFactory(
+                        "ERC20Token"
+                    );
+                    let unlistedToken = await erc20Factory.deploy();
+                    this.protocolGovernance
+                        .connect(this.admin)
+                        .stagePermissionGrants(unlistedToken.address, [
+                            PermissionIdsLibrary.ERC20_VAULT_TOKEN,
+                        ]);
+                    await sleep(
+                        await this.protocolGovernance.governanceDelay()
+                    );
+                    this.protocolGovernance
+                        .connect(this.admin)
+                        .commitAllPermissionGrantsSurpassedDelay();
+                    await withSigner(
+                        this.aaveVaultGovernance.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(this.nft, [
+                                        unlistedToken.address,
+                                    ])
+                            ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                        }
+                    );
                 });
             });
             describe("when token has no permission to become a vault token", () => {

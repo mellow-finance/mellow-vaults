@@ -17,3 +17,6 @@ export const VALIDATOR_INTERFACE_ID: string = "0x5e585c34";
 export const ERC20_ROOT_VAULT_INTERFACE_ID: string = "0x880f3d14";
 export const ERC20_ROOT_VAULT_GOVERNANCE: string = "0x6a2c3330";
 export const AAVE_VAULT_GOVERNANCE_INTERFACE_ID: string = "0x2f8c3ff3";
+export const ERC20_ROOT_VAULT_GOVERNANCE_INTERFACE_ID: string = "0x6a2c3330";
+export const UNIV3_VAULT_GOVERNANCE_INTERFACE_ID: string = "0x9e5885a8";
+export const YEARN_VAULT_GOVERNANCE_INTERFACE_ID: string = "0x15482137";
