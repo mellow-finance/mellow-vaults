@@ -614,7 +614,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
-            const setupPerformanceTreasure = async (managementFee: number, performanceFee: number) => {
+            const setupPerformanceTreasure = async (
+                managementFee: number,
+                performanceFee: number
+            ) => {
                 let erc20Factory = await ethers.getContractFactory(
                     "ERC20Token"
                 );
@@ -647,7 +650,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 return treasureAddress;
             };
 
-            const setupStrategyTreasure = async (managementFee: number, performanceFee: number) => {
+            const setupStrategyTreasure = async (
+                managementFee: number,
+                performanceFee: number
+            ) => {
                 let erc20Factory = await ethers.getContractFactory(
                     "ERC20Token"
                 );
@@ -659,14 +665,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
 
                 const nftIndex = await this.subject.nft();
-                const { strategyPerformanceTreasury: strategyPerformanceTreasury } =
-                    await governance.delayedStrategyParams(nftIndex);
+                const {
+                    strategyPerformanceTreasury: strategyPerformanceTreasury,
+                } = await governance.delayedStrategyParams(nftIndex);
 
                 await governance
                     .connect(this.admin)
                     .stageDelayedStrategyParams(nftIndex, {
                         strategyTreasury: treasureAddress,
-                        strategyPerformanceTreasury: strategyPerformanceTreasury,
+                        strategyPerformanceTreasury:
+                            strategyPerformanceTreasury,
                         privateVault: true,
                         managementFee: managementFee,
                         performanceFee: performanceFee,
@@ -694,7 +702,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("edge cases:", () => {
                 describe("when lpPriceD18 <= hwmsD18", () => {
                     it("do not charge performance fees", async () => {
-                        const treasureAddress = await setupPerformanceTreasure(3000, 1);
+                        const treasureAddress = await setupPerformanceTreasure(
+                            3000,
+                            1
+                        );
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -765,7 +776,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 describe("when performance fee is zero", () => {
                     it("do not charge performance fees", async () => {
-                        const treasureAddress = await setupPerformanceTreasure(3000, 0);
+                        const treasureAddress = await setupPerformanceTreasure(
+                            3000,
+                            0
+                        );
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -838,7 +852,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 describe("when management fee is zero", () => {
                     it(`not charges management fees`, async () => {
-                        const TreasuryAddress = await setupStrategyTreasure(0, 3000);
+                        const TreasuryAddress = await setupStrategyTreasure(
+                            0,
+                            3000
+                        );
                         await this.erc20RootVaultGovernance
                             .connect(this.admin)
                             .stageDelayedProtocolParams({
@@ -852,8 +869,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .commitDelayedProtocolParams();
 
                         var signer = await addSigner(randomAddress());
-                        const amount = BigNumber.from(10)
-                            .pow(21);
+                        const amount = BigNumber.from(10).pow(21);
                         const defaultDepositAmount = BigNumber.from(10).pow(14);
                         await preprocessSigner(signer, amount);
 
@@ -863,8 +879,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 signer.address
                             );
 
-                            await expect(
-                                this.subject
+                        await expect(
+                            this.subject
                                 .connect(signer)
                                 .deposit(
                                     [
@@ -874,21 +890,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     DEFAULT_MIN_LP_TOKEN,
                                     []
                                 )
-                            ).not.to.be.reverted;
+                        ).not.to.be.reverted;
 
                         await expect(
                             this.subject
-                            .connect(signer)
-                            .deposit(
-                                [
-                                    defaultDepositAmount,
-                                    defaultDepositAmount,
-                                ],
-                                DEFAULT_MIN_LP_TOKEN,
-                                []
-                            )
+                                .connect(signer)
+                                .deposit(
+                                    [
+                                        defaultDepositAmount,
+                                        defaultDepositAmount,
+                                    ],
+                                    DEFAULT_MIN_LP_TOKEN,
+                                    []
+                                )
                         ).not.to.emit(this.subject, "ManagementFeesCharged");
-                        
+
                         await setupLpCallback(WithdrawCallbackMode.NO_ERROR);
                         const treasuryBalanceAfter =
                             await getTreasureBalanceForSigner(
@@ -898,7 +914,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         expect(treasuryBalanceBefore).to.be.eq(
                             treasuryBalanceAfter
                         );
-                        
                     });
                 });
 
@@ -1225,7 +1240,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe("when tries to withdraw less than stated minimal amount", () => {
                     it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
-                            await preprocessSigner(signer, MIN_FIRST_DEPOSIT.pow(3));
+                            await preprocessSigner(
+                                signer,
+                                MIN_FIRST_DEPOSIT.pow(3)
+                            );
                             await expect(
                                 this.subject
                                     .connect(signer)
@@ -1244,7 +1262,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     .withdraw(
                                         randomAddress(),
                                         BigNumber.from(1),
-                                        [MIN_FIRST_DEPOSIT.pow(3), MIN_FIRST_DEPOSIT.pow(3)],
+                                        [
+                                            MIN_FIRST_DEPOSIT.pow(3),
+                                            MIN_FIRST_DEPOSIT.pow(3),
+                                        ],
                                         NON_EMPTY_DEFAULT_OPTIONS
                                     )
                             ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);

@@ -372,9 +372,9 @@ export function vaultGovernanceBehavior<
 
         it("updates _stagedInternalParams", async () => {
             this.subject.connect(this.admin).stageInternalParams(this.params);
-            expect(
-                await this.subject.stagedInternalParams()
-            ).to.be.equivalent(this.params);
+            expect(await this.subject.stagedInternalParams()).to.be.equivalent(
+                this.params
+            );
         });
 
         it("updates _internalParamsTimestamp", async () => {

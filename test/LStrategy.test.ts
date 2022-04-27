@@ -2097,9 +2097,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
             await expect(
-                this.subject
-                    .connect(this.admin)
-                    .depositCallback()
+                this.subject.connect(this.admin).depositCallback()
             ).to.emit(this.subject, "RebalancedErc20UniV3");
         });
         describe("access control:", () => {
@@ -2110,8 +2108,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
 
             it("allowed: admin", async () => {
-                await expect(this.subject.connect(this.admin).depositCallback()).to
-                    .not.be.reverted;
+                await expect(this.subject.connect(this.admin).depositCallback())
+                    .to.not.be.reverted;
             });
             it("allowed: operator", async () => {
                 await withSigner(randomAddress(), async (signer) => {
@@ -2121,14 +2119,14 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             await this.subject.ADMIN_DELEGATE_ROLE(),
                             signer.address
                         );
-                    await expect(this.subject.connect(signer).depositCallback()).to
-                        .not.be.reverted;
+                    await expect(this.subject.connect(signer).depositCallback())
+                        .to.not.be.reverted;
                 });
             });
             it("not allowed: any address", async () => {
                 await withSigner(randomAddress(), async (signer) => {
-                    await expect(this.subject.connect(signer).depositCallback()).to
-                        .be.reverted;
+                    await expect(this.subject.connect(signer).depositCallback())
+                        .to.be.reverted;
                 });
             });
         });
@@ -2139,9 +2137,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
             await expect(
-                this.subject
-                    .connect(this.admin)
-                    .withdrawCallback()
+                this.subject.connect(this.admin).withdrawCallback()
             ).to.emit(this.subject, "RebalancedErc20UniV3");
         });
         describe("access control:", () => {
@@ -2152,8 +2148,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
 
             it("allowed: admin", async () => {
-                await expect(this.subject.connect(this.admin).withdrawCallback()).to
-                    .not.be.reverted;
+                await expect(
+                    this.subject.connect(this.admin).withdrawCallback()
+                ).to.not.be.reverted;
             });
             it("allowed: operator", async () => {
                 await withSigner(randomAddress(), async (signer) => {
@@ -2163,14 +2160,16 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             await this.subject.ADMIN_DELEGATE_ROLE(),
                             signer.address
                         );
-                    await expect(this.subject.connect(signer).withdrawCallback()).to
-                        .not.be.reverted;
+                    await expect(
+                        this.subject.connect(signer).withdrawCallback()
+                    ).to.not.be.reverted;
                 });
             });
             it("not allowed: any address", async () => {
                 await withSigner(randomAddress(), async (signer) => {
-                    await expect(this.subject.connect(signer).withdrawCallback()).to
-                        .be.reverted;
+                    await expect(
+                        this.subject.connect(signer).withdrawCallback()
+                    ).to.be.reverted;
                 });
             });
         });
