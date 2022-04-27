@@ -59,7 +59,7 @@ export const randomAddress = () => {
 
 export const randomChoice = (choices: Array<any>) => {
     var index = Math.floor(Math.random() * choices.length);
-    return choices[index];
+    return {item:choices[index], index:index};
 };
 
 export const toObject = (obj: any) =>
