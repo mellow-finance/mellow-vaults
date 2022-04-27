@@ -212,7 +212,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-        console.log("started _push");
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
 
@@ -222,7 +221,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         }
 
         Options memory opts = _parseOptions(options);
-        console.log("pushing");
         Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
         Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
         (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
@@ -238,7 +236,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
         }
-        console.log("updated actualTokenAmounts");
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
     }

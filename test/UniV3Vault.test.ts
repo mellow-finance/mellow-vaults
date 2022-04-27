@@ -194,7 +194,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             });
         });
 
-        it("returns total value locked", async () => {
+        it.only("returns total value locked", async () => {
             await mint(
                 "USDC",
                 this.subject.address,
