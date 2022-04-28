@@ -16,10 +16,10 @@ import {
     INTEGRATION_VAULT_INTERFACE_ID,
     VAULT_REGISTRY_INTERFACE_ID,
 } from "../library/Constants";
-import { ERC20RootVault, ERC20Vault} from "../types";
-import { ethers, getNamedAccounts, deployments} from "hardhat";
+import { ERC20RootVault, ERC20Vault } from "../types";
+import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
-import { PermissionIdsLibrary, setupVault} from "../../deploy/0000_utils";
+import { PermissionIdsLibrary, setupVault } from "../../deploy/0000_utils";
 import { integrationVaultPushBehavior } from "./integrationVaultPush";
 
 export type IntegrationVaultContext<S extends Contract, F> = TestContext<
@@ -351,13 +351,20 @@ export function integrationVaultBehavior<S extends Contract>(
                         .sort();
 
                     const startNft =
-                        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+                        (
+                            await read("VaultRegistry", "vaultsCount")
+                        ).toNumber() + 1;
 
                     let erc20VaultNft = startNft;
 
-                    await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
-                        createVaultArgs: [tokens, this.deployer.address],
-                    });
+                    await setupVault(
+                        hre,
+                        erc20VaultNft,
+                        "ERC20VaultGovernance",
+                        {
+                            createVaultArgs: [tokens, this.deployer.address],
+                        }
+                    );
 
                     const mockVaultPrepare = await read(
                         "VaultRegistry",
@@ -394,7 +401,7 @@ export function integrationVaultBehavior<S extends Contract>(
                 });
             });
         });
-        
+
         describe("access control:", () => {
             it("allowed: owner", async () => {
                 await withSigner(

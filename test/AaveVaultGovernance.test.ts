@@ -254,9 +254,7 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                         await expect(
                             this.subject
                                 .connect(signer)
-                                .supportsInterface(
-                                    AAVE_VAULT_GOVERNANCE_INTERFACE_ID
-                                )
+                                .supportsInterface(randomBytes(4))
                         ).to.not.be.reverted;
                     });
                 });

@@ -616,7 +616,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             describe("checking fees", () => {
                 it("charges expected fees", async () => {
-                    const treasureAddress = await setupPerformanceTreasure(3000, 0);
+                    const treasureAddress = await setupPerformanceTreasure(
+                        3000,
+                        0
+                    );
                     const nftIndex = await this.subject.nft();
                     await this.erc20RootVaultGovernance
                         .connect(this.admin)
