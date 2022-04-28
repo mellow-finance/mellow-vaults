@@ -634,7 +634,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(
                             nftIndex
                         );
-                    console.log(protocolPerVaultParams.protocolFee.toNumber());
                     var signer = await addSigner(randomAddress());
                     const treasuryBalanceBefore =
                         await getTreasureBalanceForSigner(
