@@ -3,7 +3,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
 import {ALL_NETWORKS, combineVaults, MAIN_NETWORKS, setupVault} from "./0000_utils";
-import {lstat} from "fs";
 import {BigNumber} from "ethers";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -11,7 +10,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy, get, read } = deployments;
     const { deployer, uniswapV3PositionManager, cowswap, weth, wsteth, mStrategyTreasury } = await getNamedAccounts();
     const tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
-    console.log(tokens.toString());
     const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
     let uniV3LowerVaultNft = startNft;
