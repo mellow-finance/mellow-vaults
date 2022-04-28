@@ -356,7 +356,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                         this.deployer.address,
                                         this.deployer.address,
                                         result.tokenId,
-                                        [],
+                                        []
                                     )
                             ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
                         }
@@ -372,29 +372,37 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         usdcAmount: BigNumber.from(10).pow(6).mul(3000),
                         wethAmount: BigNumber.from(10).pow(18),
                     });
-                    await withSigner(this.positionManager.address, async (signer) => {
-                        await this.subject
-                            .connect(signer)
-                            .onERC721Received(
-                                this.deployer.address,
-                                this.deployer.address,
-                                result.tokenId,
-                                []
-                            );
-                    });
-                    expect(await this.subject.uniV3Nft()).to.be.equal(result.tokenId);
-                    await withSigner(this.positionManager.address, async (signer) => {
-                        await expect(
-                            this.subject
+                    await withSigner(
+                        this.positionManager.address,
+                        async (signer) => {
+                            await this.subject
                                 .connect(signer)
                                 .onERC721Received(
                                     this.deployer.address,
                                     this.deployer.address,
                                     result.tokenId,
                                     []
-                            )
-                        ).to.be.revertedWith(Exceptions.INVALID_VALUE);
-                    });
+                                );
+                        }
+                    );
+                    expect(await this.subject.uniV3Nft()).to.be.equal(
+                        result.tokenId
+                    );
+                    await withSigner(
+                        this.positionManager.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .onERC721Received(
+                                        this.deployer.address,
+                                        this.deployer.address,
+                                        result.tokenId,
+                                        []
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                        }
+                    );
                 });
             });
         });
@@ -694,7 +702,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     this.subject.address,
                     BigNumber.from(10).pow(18).mul(3000)
                 );
-    
+
                 await this.preparePush();
                 await expect(
                     this.subject.push(
@@ -727,13 +735,13 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         BigNumber.from(10).pow(6).mul(3000),
                         BigNumber.from(10).pow(18),
                     ],
-                    [],
+                    []
                 );
                 const { value } = await this.subject.pull(
                     this.erc20Vault.address,
                     [this.usdc.address],
                     [BigNumber.from(0)],
-                    [],
+                    []
                 );
                 expect(value.toNumber()).to.be.equal(0);
             });
@@ -749,27 +757,17 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 });
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
-                ](
-                    this.deployer.address,
-                    this.subject.address,
-                    result.tokenId
-                );
+                ](this.deployer.address, this.subject.address, result.tokenId);
                 await this.subject.push(
                     [this.usdc.address, this.weth.address],
-                    [
-                        BigNumber.from(1),
-                        BigNumber.from(10).pow(6),
-                    ],
-                    [],
+                    [BigNumber.from(1), BigNumber.from(10).pow(6)],
+                    []
                 );
                 const { value } = await this.subject.pull(
                     this.erc20Vault.address,
                     [this.usdc.address, this.weth.address],
-                    [
-                        BigNumber.from(1),
-                        BigNumber.from(1),
-                    ],
-                    [],
+                    [BigNumber.from(1), BigNumber.from(1)],
+                    []
                 );
             });
         });

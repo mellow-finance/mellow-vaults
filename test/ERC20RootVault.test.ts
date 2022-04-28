@@ -620,22 +620,23 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const nftIndex = await this.subject.nft();
                     await this.erc20RootVaultGovernance
                         .connect(this.admin)
-                        .stageDelayedProtocolPerVaultParams(
-                            nftIndex,
-                            { protocolFee: 3000 },
-                        );
+                        .stageDelayedProtocolPerVaultParams(nftIndex, {
+                            protocolFee: 3000,
+                        });
                     await sleep(this.governanceDelay);
                     await this.erc20RootVaultGovernance
                         .connect(this.admin)
                         .commitDelayedProtocolPerVaultParams(nftIndex);
-                    const protocolPerVaultParams = await
-                        this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(nftIndex);
+                    const protocolPerVaultParams =
+                        await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(
+                            nftIndex
+                        );
                     console.log(protocolPerVaultParams.protocolFee.toNumber());
                     var signer = await addSigner(randomAddress());
-                    const treasuryBalanceBefore = 
+                    const treasuryBalanceBefore =
                         await getTreasureBalanceForSigner(
                             treasureAddress,
-                            signer.address,
+                            signer.address
                         );
                     const defaultDepositAmount = BigNumber.from(10).pow(14);
                     const amount = BigNumber.from(10)
@@ -653,8 +654,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             DEFAULT_MIN_LP_TOKEN,
                             []
                         );
-                    const { managementFeeChargeDelay } = await this.erc20RootVaultGovernance
-                            .delayedProtocolParams();
+                    const { managementFeeChargeDelay } =
+                        await this.erc20RootVaultGovernance.delayedProtocolParams();
                     await sleep(managementFeeChargeDelay);
                     await this.subject
                         .connect(signer)
@@ -666,7 +667,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             DEFAULT_MIN_LP_TOKEN,
                             []
                         );
-                    const treasureBalance = getTreasureBalanceForSigner(treasureAddress, signer.address);
+                    const treasureBalance = getTreasureBalanceForSigner(
+                        treasureAddress,
+                        signer.address
+                    );
                     expect(treasuryBalanceBefore).to.be.equal(treasureBalance);
                 });
             });

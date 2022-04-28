@@ -190,7 +190,8 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                         await deployments.fixture();
                         const lendingPoolAddress = (await getNamedAccounts())
                             .aaveLendingPool;
-                        const maxEstimatedAaveAPY = await this.aaveVaultGovernance.MAX_ESTIMATED_AAVE_APY();
+                        const maxEstimatedAaveAPY =
+                            await this.aaveVaultGovernance.MAX_ESTIMATED_AAVE_APY();
                         await expect(
                             deployments.deploy("AaveVaultGovernance", {
                                 from: this.deployer.address,
@@ -204,13 +205,14 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                                     },
                                     {
                                         lendingPool: lendingPoolAddress,
-                                        estimatedAaveAPY: maxEstimatedAaveAPY.add(1),
+                                        estimatedAaveAPY:
+                                            maxEstimatedAaveAPY.add(1),
                                     },
                                 ],
                                 autoMine: true,
                             })
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
-                    })
+                    });
                 });
             });
         });
@@ -221,15 +223,16 @@ contract<AaveVaultGovernance, DeployOptions, CustomContext>(
                     it("reverts", async () => {
                         const lendingPoolAddress = (await getNamedAccounts())
                             .aaveLendingPool;
-                        const maxEstimatedAaveAPY = await this.aaveVaultGovernance.MAX_ESTIMATED_AAVE_APY();
+                        const maxEstimatedAaveAPY =
+                            await this.aaveVaultGovernance.MAX_ESTIMATED_AAVE_APY();
                         await expect(
-                            this
-                            .subject
-                            .connect(this.admin)
-                            .stageDelayedProtocolParams({
-                                lendingPool: lendingPoolAddress,
-                                estimatedAaveAPY: maxEstimatedAaveAPY.add(1),
-                            })
+                            this.subject
+                                .connect(this.admin)
+                                .stageDelayedProtocolParams({
+                                    lendingPool: lendingPoolAddress,
+                                    estimatedAaveAPY:
+                                        maxEstimatedAaveAPY.add(1),
+                                })
                         ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
                     });
                 });
