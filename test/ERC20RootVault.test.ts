@@ -969,7 +969,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 )
                         ).not.to.emit(this.subject, "ManagementFeesCharged");
 
-                        await setupLpCallback(WithdrawCallbackMode.NO_ERROR);
                         const treasuryBalanceAfter =
                             await getTreasureBalanceForSigner(
                                 TreasuryAddress,
