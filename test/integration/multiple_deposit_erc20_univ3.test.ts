@@ -3,6 +3,7 @@ import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
     mint,
+    mintUniV3Position_USDC_WETH,
     now,
     randomAddress,
     sleep,
@@ -21,7 +22,9 @@ import {
     ERC20Token,
     IERC20RootVault,
     IntegrationVault,
+    IUniswapV3Pool,
     MellowOracle,
+    MockUniswapV3Pool,
     UniV3Vault,
     YearnVault,
 } from "../types";
@@ -30,6 +33,10 @@ import { randomInt } from "crypto";
 import Common from "../library/Common";
 import { assert } from "console";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { init, min } from "ramda";
+import { IUniswapV3PoolImmutablesInterface } from "../types/IUniswapV3PoolImmutables";
+import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
+import { Contract } from "ethers";
 
 enum EventType {
     DEPOSIT,
@@ -238,9 +245,13 @@ type CustomContext = {
     strategyTreasury: Address;
     strategyPerformanceTreasury: Address;
     mellowOracle: MellowOracle;
+    positionManager: Contract;
 };
 
 type DeployOptions = {};
+
+const UNIV3_FEE = BigNumber.from(500); // corresponds to 0.05% fee UniV3 pool
+const YEARN_FEE = BigNumber.from(100); // corresponds to 0.01% fee Yearn pool
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
     "Integration__erc20_univ3",
@@ -375,6 +386,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.mellowOracle = await ethers.getContract(
                         "MellowOracle"
                     );
+                    const { uniswapV3PositionManager } =
+                        await getNamedAccounts();
+
+                    this.positionManager = await ethers.getContractAt(
+                        INonfungiblePositionManager,
+                        uniswapV3PositionManager
+                    );
+
                     return this.subject;
                 }
             );
@@ -426,10 +445,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             const checkTvls = async (withPull: boolean) => {
-                let erc20Tvl = await this.erc20Vault.tvl();
-                let univ3Tvl = await this.uniV3Vault.tvl();
-                let yearnTvl = await this.yearnVault.tvl();
-                let rootTvl = await this.subject.tvl();
+                const erc20Tvl = await this.erc20Vault.tvl();
+                const univ3Tvl = await this.uniV3Vault.tvl();
+                const yearnTvl = await this.yearnVault.tvl();
+                const rootTvl = await this.subject.tvl();
 
                 for (var i = 0; i < 2; i++) {
                     for (var j = 0; j < 2; j++) {
@@ -443,18 +462,232 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 for (var i = 0; i < 2; i++) {
                     if (withPull) {
                         expect(yearnTvl[0][i]).to.be.eq(yearnTvl[1][i]); // property of yearnVault
-                        expect(univ3Tvl[0][i]).to.be.lte(univ3Tvl[1][i]);
+                        expect(univ3Tvl[0][i]).to.be.lt(univ3Tvl[1][i]);
                         expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]); // property of erc20Vault
                     } else {
                         for (var j = 0; j < 2; j++) {
                             expect(yearnTvl[j][i]).to.be.eq(0);
-                            expect(univ3Tvl[j][i]).to.be.eq(0);
-                            expect(erc20Tvl[j][i]).not.to.be.eq(0);
+                            expect(univ3Tvl[j][i]).not.to.be.eq(0); // initial state
+                            expect(erc20Tvl[j][i]).not.to.be.eq(0); // initial state
                         }
                         expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]);
                     }
                 }
             };
+
+            const getAverageTokenPrices = async () => {
+                let pricesResult = await this.mellowOracle.price(
+                    this.usdc.address,
+                    this.weth.address,
+                    0x28
+                );
+                let pricesX96 = pricesResult.pricesX96;
+                let averagePrice = BigNumber.from(0);
+                for (let i = 0; i < pricesX96.length; ++i) {
+                    averagePrice = averagePrice.add(pricesX96[i]);
+                }
+                return averagePrice.div(pricesX96.length);
+            };
+
+            const calculateBalanceAfterPulling = async (
+                priceBefore: BigNumber,
+                priceAfter: BigNumber,
+                startTime: number,
+                endTime: number,
+                tokenAmounts: BigNumber[]
+            ) => {
+                console.log("Price before pulling:", priceBefore.toString());
+                console.log("Price after pulling:", priceAfter.toString());
+
+                console.log("Start / finish times:", startTime, endTime);
+                console.log(
+                    "Token amounts: ",
+                    tokenAmounts.map((x) => x.toString())
+                );
+
+                // before * amount_old == after * amount_new
+                var result: BigNumber[] = [];
+                for (var i = 0; i < tokenAmounts.length; i++) {
+                    const oldAmount = tokenAmounts[i];
+                    const newAmount = priceBefore
+                        .mul(oldAmount)
+                        .div(priceAfter);
+                    result.push(newAmount);
+                }
+
+                return result;
+            };
+
+            const initUniV3Vault = async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: 500,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(20),
+                    wethAmount: BigNumber.from(10).pow(20),
+                });
+
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](
+                    this.deployer.address,
+                    this.uniV3Vault.address,
+                    result.tokenId
+                );
+                expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
+                    result.tokenId
+                );
+            };
+
+            const debugTvl = (
+                tvl: [BigNumber[], BigNumber[]] & {
+                    minTokenAmounts: BigNumber[];
+                    maxTokenAmounts: BigNumber[];
+                }
+            ) => {
+                console.log(
+                    "tvl min:",
+                    tvl[0].map((x) => x.toString())
+                );
+                console.log(
+                    "tvl max:",
+                    tvl[1].map((x) => x.toString())
+                );
+            };
+
+            it.only("test", async () => {
+                const numDeposits = 1;
+                const numWithdraws = 1;
+                const amountUSDC = BigNumber.from(10).pow(10);
+                const amountWETH = BigNumber.from(10).pow(10);
+                await setZeroFeesFixture();
+                await initUniV3Vault();
+                const feesWrapper = new FeesWrapper(
+                    [this.usdc.address, this.weth.address],
+                    [
+                        this.erc20Vault.address,
+                        this.uniV3Vault.address,
+                        this.yearnVault.address,
+                        this.subject.address,
+                    ],
+                    [
+                        VaultType.ERC20,
+                        VaultType.UNIV3,
+                        VaultType.YEARN,
+                        VaultType.ROOT,
+                    ]
+                );
+
+                const usdcInitBalance = await this.usdc.balanceOf(
+                    this.deployer.address
+                );
+                const wethInitBalance = await this.weth.balanceOf(
+                    this.deployer.address
+                );
+
+                for (let i = 0; i < numDeposits; ++i) {
+                    await feesWrapper.deposit(
+                        this.subject,
+                        this.deployer,
+                        [
+                            BigNumber.from(amountUSDC).div(numDeposits),
+                            BigNumber.from(amountWETH).div(numDeposits),
+                        ],
+                        BigNumber.from(0)
+                    );
+                }
+
+                const lpTokensAmount = await this.subject.balanceOf(
+                    this.deployer.address
+                );
+
+                expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
+
+                const amountForPullUsdc = amountUSDC;
+                const amountForPullWeth = amountWETH;
+                {
+                    await checkTvls(false);
+
+                    const erc20TvlBeforePulls = await this.erc20Vault.tvl();
+                    const univ3TvlBeforePulls = await this.uniV3Vault.tvl();
+                    const yearnTvlBeforePulls = await this.yearnVault.tvl();
+
+                    await feesWrapper.pull(
+                        this.erc20Vault,
+                        this.deployer,
+                        [amountForPullUsdc, amountForPullWeth],
+                        this.uniV3Vault.address
+                    );
+
+                    // await feesWrapper.pull(
+                    //     this.erc20Vault,
+                    //     this.deployer,
+                    //     [amountForPullUsdc, amountForPullWeth],
+                    //     this.yearnVault.address
+                    // );
+                    await sleep(this.governanceDelay);
+
+                    await checkTvls(true);
+
+                    const erc20TvlAfterPulls = await this.erc20Vault.tvl();
+                    const univ3TvlAfterPulls = await this.uniV3Vault.tvl();
+                    const yearnTvlAfterPulls = await this.yearnVault.tvl();
+                    console.log("Before states (erc20 univ3 yearn):");
+                    debugTvl(erc20TvlBeforePulls);
+                    debugTvl(univ3TvlBeforePulls);
+                    debugTvl(yearnTvlBeforePulls);
+                    console.log("After states (erc20 univ3 yearn):");
+                    debugTvl(erc20TvlAfterPulls);
+                    debugTvl(univ3TvlAfterPulls);
+                    debugTvl(yearnTvlAfterPulls);
+                }
+
+                for (let i = 0; i < numWithdraws; ++i) {
+                    await feesWrapper.withdraw(
+                        this.subject,
+                        this.deployer,
+                        this.deployer.address,
+                        BigNumber.from(lpTokensAmount).div(numWithdraws),
+                        [
+                            BigNumber.from(0),
+                            BigNumber.from(0),
+                            BigNumber.from(0),
+                        ]
+                    );
+                }
+
+                let remainingLpTokenBalance = await this.subject.balanceOf(
+                    this.deployer.address
+                );
+                if (remainingLpTokenBalance.gt(0)) {
+                    await feesWrapper.withdraw(
+                        this.subject,
+                        this.deployer,
+                        this.deployer.address,
+                        remainingLpTokenBalance,
+                        [
+                            BigNumber.from(0),
+                            BigNumber.from(0),
+                            BigNumber.from(0),
+                        ]
+                    );
+                }
+
+                const { usdcFees, wethFees } = await feesWrapper.getFees();
+
+                expect(
+                    await this.subject.balanceOf(this.deployer.address)
+                ).to.deep.equals(BigNumber.from(0));
+
+                const wethBalance = await this.weth.balanceOf(
+                    this.deployer.address
+                );
+                const usdcBalance = await this.usdc.balanceOf(
+                    this.deployer.address
+                );
+
+                return true;
+            });
 
             pit(
                 `
@@ -528,13 +761,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     await checkTvls(false);
 
-                    const amountUSDCToYearn = amountUSDC.div(2);
-                    const amountWETHToUniV3 = amountWETH.div(2);
+                    const amountUSDCForPull = amountUSDC.div(3);
+                    const amountWETHForPull = amountWETH.div(3);
+
+                    const timeBeforePulling = now();
+                    const averagePricesBefore = await getAverageTokenPrices();
+                    const amountTokensForPull =
+                        amountUSDCForPull.add(amountWETHForPull);
 
                     await feesWrapper.pull(
                         this.erc20Vault,
                         this.deployer,
-                        [amountUSDCToYearn, BigNumber.from(0)],
+                        [amountUSDCForPull, amountWETHForPull],
                         this.yearnVault.address
                     );
                     await sleep(this.governanceDelay);
@@ -542,7 +780,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await feesWrapper.pull(
                         this.erc20Vault,
                         this.deployer,
-                        [BigNumber.from(0), amountWETHToUniV3],
+                        [amountUSDCForPull, amountWETHForPull],
                         this.uniV3Vault.address
                     );
                     await sleep(this.governanceDelay);
@@ -582,19 +820,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     const { usdcFees, wethFees } = await feesWrapper.getFees();
 
+                    const timeAfterPulling = now();
+                    const averagePriceAfterPulling =
+                        await getAverageTokenPrices();
+
                     expect(
                         await this.subject.balanceOf(this.deployer.address)
                     ).to.deep.equals(BigNumber.from(0));
-
-                    // at most 0.01 * 1% fees for UniV3Vault
-                    expect(
-                        await this.weth.balanceOf(this.deployer.address)
-                    ).to.be.gte(amountWETHToUniV3.sub(usdcFees));
-
-                    // at most 0.01 * 1% fees for YearnVault
-                    expect(
-                        await this.usdc.balanceOf(this.deployer.address)
-                    ).to.be.gte(amountUSDCToYearn.sub(wethFees));
 
                     return true;
                 }
@@ -928,11 +1160,28 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const totalWethAmount = totalAmounts[0];
                     const totalUsdcAmount = totalAmounts[1];
 
+                    const getAverageTokenPrices = async () => {
+                        let pricesResult = await this.mellowOracle.price(
+                            this.usdc.address,
+                            this.weth.address,
+                            0x28
+                        );
+                        let pricesX96 = pricesResult.pricesX96;
+                        let averagePrice = BigNumber.from(0);
+                        for (let i = 0; i < pricesX96.length; ++i) {
+                            averagePrice = averagePrice.add(pricesX96[i]);
+                        }
+                        return averagePrice.div(pricesX96.length);
+                    };
+
                     /*
                         --------------------- CALCULATE SOME PARAMETERS FOR PERFORMANCE FEES ---------------------------
                         get average price for USDC to WETH
                         get Tvls
                     */
+
+                    const averagePricesBeforePull =
+                        await getAverageTokenPrices();
 
                     let tvls = await this.subject.tvl();
                     let minTvl = tvls[0];
