@@ -72,12 +72,12 @@ contract UniV3Validator is ContractMeta, Validator {
         address recipient,
         bytes memory path
     ) private view {
+        require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
         uint256 i;
         address token0;
         address token1;
         uint24 fee;
         uint256 feeMask = (1 << 24) - 1;
-        require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
         while (path.length - i > 20) {
             // the sample UniV3 path structure is (DAI address,DAI-USDC fee, USDC, USDC-WETH fee, WETH)
             // addresses are 20 bytes, fees are 3 bytes

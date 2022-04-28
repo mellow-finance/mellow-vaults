@@ -55,11 +55,10 @@ contract UniV2Validator is ContractMeta, Validator {
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         IVault vault = IVault(msg.sender);
-
+        require(to == msg.sender);
         if ((selector == EXACT_ETH_INPUT_SELECTOR) || (selector == EXACT_TOKENS_OUTPUT_SELECTOR)) {
             (, address[] memory path, address to, ) = abi.decode(data, (uint256, address[], address, uint256));
             _verifyPath(vault, path);
-            require(to == msg.sender);
         } else if (
             (selector == EXACT_ETH_OUTPUT_SELECTOR) ||
             (selector == EXACT_TOKENS_INPUT_SELECTOR) ||
@@ -71,7 +70,6 @@ contract UniV2Validator is ContractMeta, Validator {
                 data,
                 (uint256, uint256, address[], address, uint256)
             );
-            require(to == msg.sender);
             _verifyPath(vault, path);
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
@@ -90,8 +88,8 @@ contract UniV2Validator is ContractMeta, Validator {
 
     function _verifyPath(IVault vault, address[] memory path) private view {
         require(path.length > 1, ExceptionsLibrary.INVALID_LENGTH);
-        IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         require(vault.isVaultToken(path[path.length - 1]), ExceptionsLibrary.INVALID_TOKEN);
+        IProtocolGovernance protocolGovernance = _validatorParams.protocolGovernance;
         for (uint256 i = 0; i < path.length - 1; i++) {
             address token0 = path[i];
             address token1 = path[i + 1];
