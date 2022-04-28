@@ -7,16 +7,19 @@ import {
     encodeToBytes,
     randomAddress,
     sleep,
+    addSigner,
     withSigner,
 } from "../library/Helpers";
+import { REGISTER_VAULT } from "../library/PermissionIdsLibrary";
 import {
+    VAULT_INTERFACE_ID,
     INTEGRATION_VAULT_INTERFACE_ID,
     VAULT_REGISTRY_INTERFACE_ID,
 } from "../library/Constants";
-import { ERC20RootVault, ERC20Vault } from "../types";
-import { ethers } from "hardhat";
+import { ERC20RootVault, ERC20Vault} from "../types";
+import { ethers, getNamedAccounts, deployments} from "hardhat";
 import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
-import { PermissionIdsLibrary } from "../../deploy/0000_utils";
+import { PermissionIdsLibrary, setupVault} from "../../deploy/0000_utils";
 import { integrationVaultPushBehavior } from "./integrationVaultPush";
 
 export type IntegrationVaultContext<S extends Contract, F> = TestContext<
@@ -338,8 +341,60 @@ export function integrationVaultBehavior<S extends Contract>(
                     ).to.be.revertedWith(Exceptions.INVALID_TARGET);
                 });
             });
-        });
+            describe("when owner nft is zero", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await deployments.fixture();
+                    const { read } = deployments;
 
+                    const tokens = [this.weth.address, this.usdc.address]
+                        .map((t) => t.toLowerCase())
+                        .sort();
+
+                    const startNft =
+                        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+
+                    let erc20VaultNft = startNft;
+
+                    await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+                        createVaultArgs: [tokens, this.deployer.address],
+                    });
+
+                    const mockVaultPrepare = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20VaultNft
+                    );
+
+                    this.mockVault = await ethers.getContractAt(
+                        "ERC20Vault",
+                        mockVaultPrepare
+                    );
+
+                    await expect(
+                        this.mockVault.pull(
+                            randomAddress(),
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+
+            describe("when pulling from other vault to wrong vault", () => {
+                it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                    await expect(
+                        this.subject.pull(
+                            randomAddress(),
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
+                });
+            });
+        });
+        
         describe("access control:", () => {
             it("allowed: owner", async () => {
                 await withSigner(
