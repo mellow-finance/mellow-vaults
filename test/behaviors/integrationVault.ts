@@ -7,12 +7,9 @@ import {
     encodeToBytes,
     randomAddress,
     sleep,
-    addSigner,
     withSigner,
 } from "../library/Helpers";
-import { REGISTER_VAULT } from "../library/PermissionIdsLibrary";
 import {
-    VAULT_INTERFACE_ID,
     INTEGRATION_VAULT_INTERFACE_ID,
     VAULT_REGISTRY_INTERFACE_ID,
 } from "../library/Constants";

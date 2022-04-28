@@ -27,7 +27,7 @@ import {
     ERC20_ROOT_VAULT_INTERFACE_ID,
     YEARN_VAULT_INTERFACE_ID,
 } from "./library/Constants";
-import { randomInt, sign } from "crypto";
+import { randomInt } from "crypto";
 import { DelayedStrategyParamsStruct } from "./types/IERC20RootVaultGovernance";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { DelayedProtocolParamsStruct } from "./types/IERC20RootVaultGovernance";

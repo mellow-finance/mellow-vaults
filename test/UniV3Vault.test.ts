@@ -8,7 +8,6 @@ import {
     mintUniV3Position_USDC_WETH,
     mintUniV3Position_WBTC_WETH,
     randomAddress,
-    sleep,
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
@@ -26,7 +25,6 @@ import {
     UNIV3_VAULT_INTERFACE_ID,
 } from "./library/Constants";
 import Exceptions from "./library/Exceptions";
-import { Signer } from "ethers";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
