@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BSL-1.1
 pragma solidity 0.8.9;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -289,15 +288,12 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens,
         bool isWithdraw
     ) internal {
-        console.log("Charging fees");
         IERC20RootVaultGovernance vg = IERC20RootVaultGovernance(address(_vaultGovernance));
         uint256 elapsed = block.timestamp - uint256(lastFeeCharge);
         IERC20RootVaultGovernance.DelayedProtocolParams memory delayedProtocolParams = vg.delayedProtocolParams();
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
-            console.log("Early return");
             return;
         }
-        console.log("Supply");
         (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
             tvls,
             supply,
@@ -308,12 +304,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         lastFeeCharge = uint64(block.timestamp);
         // don't charge on initial deposit as well as on the last withdraw
         if (baseSupply == 0) {
-            console.log("First supply");
             return;
         }
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
-        console.log("Actual protocol fee is", protocolFee);
         address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
         _chargeManagementFees(
             strategyParams.managementFee,
@@ -365,7 +359,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256 elapsed,
         uint256 lpSupply
     ) internal {
-        console.log("Charging management fees");
         if (managementFee > 0) {
             uint256 toMint = FullMath.mulDiv(
                 managementFee * elapsed,
@@ -376,7 +369,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             emit ManagementFeesCharged(strategyTreasury, managementFee, toMint);
         }
         if (protocolFee > 0) {
-            console.log("We are here!");
             uint256 toMint = FullMath.mulDiv(
                 protocolFee * elapsed,
                 lpSupply,
