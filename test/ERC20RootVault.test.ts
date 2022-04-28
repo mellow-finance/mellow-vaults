@@ -1261,7 +1261,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     .connect(signer)
                                     .withdraw(
                                         randomAddress(),
-                                        BigNumber.from(2),
+                                        BigNumber.from(1),
                                         [
                                             MIN_FIRST_DEPOSIT.pow(3),
                                             MIN_FIRST_DEPOSIT.pow(3),
