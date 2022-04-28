@@ -681,5 +681,99 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         });
     });
 
+    describe("#push", () => {
+        describe("edge cases", () => {
+            it("reverts because of invalid params", async () => {
+                await mint(
+                    "USDC",
+                    this.subject.address,
+                    BigNumber.from(10).pow(18).mul(3000)
+                );
+                await mint(
+                    "WETH",
+                    this.subject.address,
+                    BigNumber.from(10).pow(18).mul(3000)
+                );
+    
+                await this.preparePush();
+                await expect(
+                    this.subject.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
+                        ],
+                        encodeToBytes(
+                            ["uint256", "uint256"],
+                            [
+                                ethers.constants.Zero,
+                                ethers.constants.Zero,
+                                // ethers.constants.MaxUint256,
+                            ]
+                        )
+                    )
+                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+            });
+        });
+    });
+
+    describe("#pull", () => {
+        describe("pulls nothing pulled when zero tokens pulled", () => {
+            it("expected to be zero", async () => {
+                await this.preparePush();
+                await this.subject.push(
+                    [this.usdc.address, this.weth.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18),
+                    ],
+                    [],
+                );
+                const { value } = await this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [BigNumber.from(0)],
+                    [],
+                );
+                expect(value.toNumber()).to.be.equal(0);
+            });
+        });
+        describe("works correctly when current price is lower than tickPrice", () => {
+            it("works", async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: 3000,
+                    tickLower: 840000,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(1),
+                    wethAmount: BigNumber.from(10).pow(6),
+                });
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](
+                    this.deployer.address,
+                    this.subject.address,
+                    result.tokenId
+                );
+                await this.subject.push(
+                    [this.usdc.address, this.weth.address],
+                    [
+                        BigNumber.from(1),
+                        BigNumber.from(10).pow(6),
+                    ],
+                    [],
+                );
+                const { value } = await this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address, this.weth.address],
+                    [
+                        BigNumber.from(1),
+                        BigNumber.from(1),
+                    ],
+                    [],
+                );
+            });
+        });
+    });
+
     integrationVaultBehavior.call(this, {});
 });
