@@ -2,13 +2,7 @@ import hre from "hardhat";
 import { expect } from "chai";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import {
-    encodeToBytes,
-    mint,
-    randomNft,
-    sleep,
-    withSigner,
-} from "./library/Helpers";
+import { encodeToBytes, mint, sleep, withSigner } from "./library/Helpers";
 import { contract } from "./library/setup";
 import { ERC20RootVault, ERC20Vault } from "./types";
 import {
