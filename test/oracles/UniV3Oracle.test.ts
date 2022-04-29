@@ -11,7 +11,7 @@ import {
     UNIV2_ORACLE_INTERFACE_ID,
     UNIV3_ORACLE_INTERFACE_ID,
 } from "../library/Constants";
-import { ADDRESS_ZERO, FullMath, TickMath } from "@uniswap/v3-sdk";
+import { ADDRESS_ZERO, TickMath } from "@uniswap/v3-sdk";
 import { ContractMetaBehaviour } from "../behaviors/contractMeta";
 
 type CustomContext = {
