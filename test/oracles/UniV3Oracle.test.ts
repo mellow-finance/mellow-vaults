@@ -11,7 +11,7 @@ import {
     UNIV2_ORACLE_INTERFACE_ID,
     UNIV3_ORACLE_INTERFACE_ID,
 } from "../library/Constants";
-import { ADDRESS_ZERO, TickMath } from "@uniswap/v3-sdk";
+import { ADDRESS_ZERO, FullMath, TickMath } from "@uniswap/v3-sdk";
 import { ContractMetaBehaviour } from "../behaviors/contractMeta";
 
 type CustomContext = {
@@ -74,6 +74,40 @@ contract<UniV3Oracle, DeployOptions, CustomContext>(
                             BigNumber.from(i + 1)
                         );
                     }
+                }
+            });
+
+            it("correctly calculates prices for swapped tokens", async () => {
+                for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
+                    const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
+                    const DENOMINATOR_POWER = 96;
+                    const EPS_POWER = 32;
+
+                    const pricesResult = await this.subject.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        mask
+                    );
+
+                    const pricesResultSwapped = await this.subject.price(
+                        this.weth.address,
+                        this.usdc.address,
+                        mask
+                    );
+
+                    const pricesX96 = pricesResult.pricesX96;
+                    const swappedPricesX96 = pricesResultSwapped.pricesX96;
+
+                    for (var i = 0; i < pricesX96.length; i++) {
+                        // checks that prices[i] * swapped_prices[i] is (2^96)^2 with relative precision at least 2^(-32)
+                        const multiplication = pricesX96[i].mul(swappedPricesX96[i]); 
+                        const expected_multiplication = BigNumber.from(2).pow(DENOMINATOR_POWER * 2);
+
+                        const delta = multiplication.sub(expected_multiplication).abs(); 
+                        expect(delta.mul(BigNumber.from(2).pow(EPS_POWER))).to.be.lt(multiplication);
+                    }
+                    
+                    expect(pricesX96.length).to.be.eq(setBitsCount);
                 }
             });
 

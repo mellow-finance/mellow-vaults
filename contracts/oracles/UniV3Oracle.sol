@@ -45,8 +45,11 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
+        bool isSwapped = false;
+
         if (token0 > token1) {
             (token0, token1) = (token1, token0);
+            isSwapped = true;
         }
         IUniswapV3Pool pool = poolsIndex[token0][token1];
         if (address(pool) == address(0)) {
@@ -92,6 +95,9 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         }
         for (uint256 i = 0; i < len; i++) {
             pricesX96[i] = FullMath.mulDiv(pricesX96[i], pricesX96[i], CommonLibrary.Q96);
+            if (isSwapped) {
+                pricesX96[i] = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, pricesX96[i]);
+            }
         }
     }
 
