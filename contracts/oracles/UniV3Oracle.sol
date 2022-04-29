@@ -46,7 +46,6 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
         bool isSwapped = false;
-
         if (token0 > token1) {
             (token0, token1) = (token1, token0);
             isSwapped = true;

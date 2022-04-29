@@ -102,8 +102,8 @@ contract<UniV3Oracle, DeployOptions, CustomContext>(
                         // checks that prices[i] * swapped_prices[i] is (2^96)^2 with relative precision at least 2^(-32)
                         const multiplication = pricesX96[i].mul(swappedPricesX96[i]); 
                         const expected_multiplication = BigNumber.from(2).pow(DENOMINATOR_POWER * 2);
-
                         const delta = multiplication.sub(expected_multiplication).abs(); 
+                        
                         expect(delta.mul(BigNumber.from(2).pow(EPS_POWER))).to.be.lt(multiplication);
                     }
                     
