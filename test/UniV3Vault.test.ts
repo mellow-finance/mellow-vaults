@@ -167,7 +167,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         const blockNumBefore = await ethers.provider.getBlockNumber();
         const blockBefore = await ethers.provider.getBlock(blockNumBefore);
         const timestampBefore = blockBefore.timestamp;
-        return timestampBefore
+        return timestampBefore;
     };
 
     describe("#tvl", () => {
@@ -812,7 +812,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
 
         describe("when decrease liquidity called earlier", () => {
             describe("pulls no more than requested", () => {
-                it("works", async() => {
+                it("works", async () => {
                     const result = await mintUniV3Position_USDC_WETH({
                         fee: 3000,
                         tickLower: -887220,
@@ -844,27 +844,39 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         ],
                         []
                     );
-                    const prevWethBalance = await this.weth.balanceOf(this.erc20Vault.address);
-                    const prevUsdcBalance = await this.usdc.balanceOf(this.erc20Vault.address);
+                    const prevWethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const prevUsdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
                     await this.subject.pull(
                         this.erc20Vault.address,
                         [this.usdc.address, this.weth.address],
                         [BigNumber.from(10), BigNumber.from(10)],
-                        [],
+                        []
                     );
-                    const wethBalance = await this.weth.balanceOf(this.erc20Vault.address);
-                    const usdcBalance = await this.usdc.balanceOf(this.erc20Vault.address);
-                    const pulledWeth = wethBalance.sub(prevWethBalance).toNumber();
-                    const pulledUsdc = usdcBalance.sub(prevUsdcBalance).toNumber();
+                    const wethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const usdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const pulledWeth = wethBalance
+                        .sub(prevWethBalance)
+                        .toNumber();
+                    const pulledUsdc = usdcBalance
+                        .sub(prevUsdcBalance)
+                        .toNumber();
                     expect(pulledWeth).to.be.greaterThan(0);
                     expect(pulledWeth).to.be.lessThanOrEqual(10);
                     expect(pulledUsdc).to.be.greaterThan(0);
                     expect(pulledUsdc).to.be.lessThanOrEqual(10);
                 });
             });
-            
+
             describe("pull something from previous decrease", () => {
-                it("works", async() => {
+                it("works", async () => {
                     const result = await mintUniV3Position_USDC_WETH({
                         fee: 3000,
                         tickLower: -887220,
@@ -896,18 +908,30 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         ],
                         []
                     );
-                    const prevWethBalance = await this.weth.balanceOf(this.erc20Vault.address);
-                    const prevUsdcBalance = await this.usdc.balanceOf(this.erc20Vault.address);
+                    const prevWethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const prevUsdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
                     await this.subject.pull(
                         this.erc20Vault.address,
                         [this.usdc.address, this.weth.address],
                         [BigNumber.from(10), BigNumber.from(10)],
-                        [],
+                        []
                     );
-                    const wethBalance = await this.weth.balanceOf(this.erc20Vault.address);
-                    const usdcBalance = await this.usdc.balanceOf(this.erc20Vault.address);
-                    const pulledWeth = wethBalance.sub(prevWethBalance).toNumber();
-                    const pulledUsdc = usdcBalance.sub(prevUsdcBalance).toNumber();
+                    const wethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const usdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const pulledWeth = wethBalance
+                        .sub(prevWethBalance)
+                        .toNumber();
+                    const pulledUsdc = usdcBalance
+                        .sub(prevUsdcBalance)
+                        .toNumber();
                     expect(pulledWeth).to.be.greaterThan(0);
                     expect(pulledWeth).to.be.lessThanOrEqual(10);
                     expect(pulledUsdc).to.be.greaterThan(0);
