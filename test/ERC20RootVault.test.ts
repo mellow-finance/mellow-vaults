@@ -400,6 +400,37 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     });
                 });
 
+                describe("when root vault is not owner of subvault nft", () => {
+                    it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
+                        const startVaultNft = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                this.uniV3Vault.address,
+                                "0x4", // address of _nft
+                            ]
+                        );
+
+                        await withSigner(
+                            this.erc20VaultGovernance.address,
+                            async (signer) => {
+                                await expect(
+                                    this.subject
+                                        .connect(signer)
+                                        .initialize(
+                                            this.nft,
+                                            [
+                                                this.usdc.address,
+                                                this.weth.address,
+                                            ],
+                                            randomAddress(),
+                                            [startVaultNft - 1]
+                                        )
+                                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                            }
+                        );
+                    });
+                });
+
                 describe("when subVault index is 0 (rootVault has itself as subVaul)", () => {
                     it(`reverts with ${Exceptions.DUPLICATE}`, async () => {
                         const startNft =
