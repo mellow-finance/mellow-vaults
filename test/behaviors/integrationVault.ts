@@ -14,7 +14,7 @@ import {
     VAULT_REGISTRY_INTERFACE_ID,
 } from "../library/Constants";
 import { ERC20RootVault, ERC20Vault } from "../types";
-import { ethers, getNamedAccounts, deployments } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
 import { PermissionIdsLibrary, setupVault } from "../../deploy/0000_utils";
 import { integrationVaultPushBehavior } from "./integrationVaultPush";

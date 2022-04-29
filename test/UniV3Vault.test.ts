@@ -750,26 +750,59 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     fee: 3000,
                     tickLower: 840000,
                     tickUpper: 887220,
-                    usdcAmount: BigNumber.from(1),
-                    wethAmount: BigNumber.from(10).pow(6),
+                    usdcAmount: BigNumber.from(10),
+                    wethAmount: BigNumber.from(10),
                 });
                 await this.positionManager.functions[
                     "safeTransferFrom(address,address,uint256)"
                 ](this.deployer.address, this.subject.address, result.tokenId);
+                const origTvl = await this.subject.tvl();
+                for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                    expect(origTvl[0][tokenId]).deep.equal(origTvl[1][tokenId]);
+                }
                 await this.subject.push(
                     [this.usdc.address, this.weth.address],
-                    [BigNumber.from(1), BigNumber.from(10).pow(6)],
+                    [BigNumber.from(10), BigNumber.from(10)],
                     []
                 );
-                const { value } = await this.subject.pull(
+
+                {
+                    const { minTokenAmounts, maxTokenAmounts } =
+                        await this.subject.tvl();
+                    const expectedTvl0 = 10 + origTvl[0][0].toNumber();
+                    const expectedTvl1 = 0;
+                    expect(minTokenAmounts[0].toNumber()).to.be.equal(
+                        expectedTvl0
+                    );
+                    expect(maxTokenAmounts[0].toNumber()).to.be.equal(
+                        expectedTvl0
+                    );
+                    expect(minTokenAmounts[1].toNumber()).to.be.equal(
+                        expectedTvl1
+                    );
+                    expect(maxTokenAmounts[1].toNumber()).to.be.equal(
+                        expectedTvl1
+                    );
+                }
+
+                await this.subject.pull(
                     this.erc20Vault.address,
                     [this.usdc.address, this.weth.address],
-                    [BigNumber.from(1), BigNumber.from(1)],
+                    [BigNumber.from(10), BigNumber.from(10)],
                     []
                 );
+
+                {
+                    const { minTokenAmounts, maxTokenAmounts } =
+                        await this.subject.tvl();
+                    expect(minTokenAmounts[0]).deep.equal(origTvl[0][0]);
+                    expect(maxTokenAmounts[0]).deep.equal(origTvl[0][0]);
+                    expect(minTokenAmounts[1].toNumber()).to.be.equal(0);
+                    expect(maxTokenAmounts[1].toNumber()).to.be.equal(0);
+                }
             });
         });
     });
 
-    integrationVaultBehavior.call(this, {});
+    // integrationVaultBehavior.call(this, {});
 });
