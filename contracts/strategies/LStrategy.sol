@@ -507,7 +507,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param lowerLiquidity Lower vault liquidity
     /// @param upperLiquidity Upper vault liquidity
     /// @param targetLiquidityRatioD Target liquidity ratio (multiplied by DENOMINATOR)
-    /// @param minDeviation Minimum allowed deviation between current and target liquidities (if real is less, zero liquidity delta returned)
+    /// @param minDeviation Minimum allowed deviation between current and target liquidities (if the real is less, zero liquidity delta returned)
     /// @return delta Liquidity required to reach targetLiquidityRatioD
     /// @return isNegative If `true` then delta needs to be bought to reach targetLiquidityRatioD, o/w needs to be sold
     function _liquidityDelta(
