@@ -22,7 +22,7 @@ import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect, assert } from "chai";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { AaveVault, ERC20RootVaultGovernance, MellowOracle, UniV3Vault } from "../types";
+import { AaveVault, ERC20RootVaultGovernance, ILendingPool, MellowOracle, UniV3Vault } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { generateKeyPair, randomBytes, randomInt } from "crypto";
 import { none } from "ramda";
@@ -48,8 +48,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
 
-                    this.tokens = [this.weth, this.usdc];
-                    this.tokens = this.tokens.sort((a, b) => compareAddresses(a.address, b.address));
+                    this.tokens = [this.usdc, this.weth];
+                    for (let i = 1; i < this.tokens.length; i++) {
+                        assert(compareAddresses(this.tokens[i - 1].address, this.tokens[i].address) < 0);
+                    }
                     this.tokensAdresses = this.tokens
                         .map((t) => t.address.toLowerCase());
                     const startNft =
@@ -181,8 +183,26 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.strategyPerformanceTreasury = randomAddress();
 
 
-                    const { uniswapV3PositionManager } = await getNamedAccounts();
+                    const { uniswapV3PositionManager, aaveLendingPool } = await getNamedAccounts();
+                    this.aaveLendingPool = (await ethers.getContractAt(
+                        "ILendingPool",
+                        aaveLendingPool
+                    )) as ILendingPool;
 
+                    this.aTokensAddresses = await Promise.all(this.tokens.map(async token => {
+                        return (await this.aaveLendingPool.getReserveData(token.address)).aTokenAddress
+                    }))
+
+                    console.log("atokenaddresses");
+                    console.log(this.aTokensAddresses);
+
+                    this.aTokens = await Promise.all(this.aTokensAddresses.map(async (aTokenAddress:string) => {
+                        return (await ethers.getContractAt("ERC20Token", aTokenAddress))
+                    }));
+
+                    console.log("atokens:");
+                    console.log(this.aTokens);
+                        
                     this.positionManager = await ethers.getContractAt(
                         INonfungiblePositionManager,
                         uniswapV3PositionManager
@@ -204,7 +224,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             result.tokenId
                         );
                     };
-
+                
                     this.erc20RootVaultNft = yearnVaultNft + 1;
                     return this.subject;
                 }
@@ -214,6 +234,34 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         beforeEach(async () => {
             await this.deploymentFixture();
         });
+
+        async function printVaults(vaults:any[], tokens:any[]) {
+            let allCurrenciesBalancePromises = vaults.map(async target => {
+                let currentBalancesPromises = tokens.map(token => token.balanceOf(target.address))
+                let currentBalancesResults = await Promise.all(currentBalancesPromises);
+                return currentBalancesResults
+            });
+            let allCurrenciesBalanceResult = await Promise.all(allCurrenciesBalancePromises);
+            console.log("Currencies balances:")
+            for (let i = 0; i < vaults.length; i++) {
+                process.stdout.write(allCurrenciesBalanceResult[i][0].toString() + " " + allCurrenciesBalanceResult[i][1].toString() + " | ");
+            }
+            process.stdout.write("\n");
+            console.log("MinTvls:");
+            let tvlPromises = vaults.map(target => target.tvl());
+            let tvlResults = await Promise.all(tvlPromises);
+            vaults.filter((target, index) =>  
+                process.stdout.write(tvlResults[index][0] + " ")
+            );
+            process.stdout.write("\n");
+            console.log("MaxTvls:");
+            vaults.filter((target, index) =>  
+                process.stdout.write(tvlResults[index][1] + " ")
+            );
+            process.stdout.write("\n");
+
+            return tvlResults;
+        }
 
         describe("properties", () => {
             const setZeroFeesFixture = deployments.createFixture(async () => {
@@ -256,6 +304,43 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .commitParams();
             });
 
+            it.only("aave amounts", async () => {
+                await setZeroFeesFixture();
+                let depositAmount = [BigNumber.from(10).pow(6).mul(10), BigNumber.from(10).pow(18).mul(10)];
+                
+                await this.subject.connect(this.deployer).deposit(depositAmount, 0, []);  
+                
+                await printVaults([this.erc20Vault, this.aaveVault], this.tokens);
+
+                await withSigner(this.subject.address, async (signer) => {
+                    let options = encodeToBytes(
+                        ["uint256"],
+                        [
+                            ethers.constants.Zero
+                        ]
+                    )
+                    await this.erc20Vault.connect(signer).pull(this.aaveVault.address, this.tokensAdresses, depositAmount, options);
+                });
+
+                await printVaults([this.erc20Vault, this.aaveVault], this.tokens);
+
+                console.log("sleeping");
+                await sleep(100);
+
+                let tvlResults = await printVaults([this.erc20Vault, this.aaveVault], this.tokens);
+
+                this.aTokens.map(async (aToken: any) => {
+                    process.stdout.write((await aToken.balanceOf(this.aaveVault.address)).toString() + " ")
+                })
+                process.stdout.write("\n");
+                
+                await withSigner(this.subject.address, async (signer) => {
+                    await this.aaveVault.connect(signer).pull(this.erc20Vault.address, this.tokensAdresses, tvlResults[1][1], []);
+                });
+
+                await printVaults([this.erc20Vault, this.aaveVault], this.tokens);
+            });
+
             it("zero fees", async () => {
                 await setZeroFeesFixture();
                 let depositAmount = [randomInt(100_0000_0000, 1000_0000_0000), randomInt(100_0000_0000, 1000_0000_0000)];
@@ -278,37 +363,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 // let depositedTokens = deposits[0].args["actualTokenAmounts"];
                 // console.log(depositedTokens[0].toString() + " " + depositedTokens[1].toString());
                 // console.log("Vaults inside:" + (await this.subject.subvaultNfts()).length);
-                let targets = [this.erc20Vault, this.uniV3Vault];
+                let targets = [this.erc20Vault, this.aaveVault, this.yearnVault];
                 let first = true;
-                for (let i = 0; i < 2; i++) {
-                    let allCurrenciesBalancePromises = targets.map(async target => {
-                        let currentBalancesPromises = this.tokens.map(token => token.balanceOf(target.address))
-                        let currentBalancesResults = await Promise.all(currentBalancesPromises);
-                        return currentBalancesResults
-                    });
-                    let allCurrenciesBalanceResult = await Promise.all(allCurrenciesBalancePromises);
-                    console.log("Currencies balances:")
-                    for (let i = 0; i < targets.length; i++) {
-                        process.stdout.write(allCurrenciesBalanceResult[i][0].toString() + " " + allCurrenciesBalanceResult[i][1].toString() + " | ");
-                    }
-                    process.stdout.write("\n");
-                    console.log("MinTvls:");
+                for (let i = 0; i < 10; i++) {
                     let tvlPromises = targets.map(target => target.tvl());
                     let tvlResults = await Promise.all(tvlPromises);
-                    for (let result in tvlResults) {
-                        process.stdout.write(result[0] + " ");
-                    }
-                    process.stdout.write("\n");
-                    console.log("MaxTvls:");
-                    for (let result in tvlResults) {
-                        process.stdout.write(result[1] + " ");
-                    }
-                    process.stdout.write("\n");
-                    let {item:from, index:fromIndex} = randomChoice(nonEmptyVaults);
-                    let {item:to} = randomChoice(targets.filter((target) => target != from));
+                    let nonEmptyVaults = targets.filter((target, index) => {
+                        return ((tvlResults[index][0][0] > 0) || (tvlResults[index][0][1] > 0))
+                    });
+                    let {item:from} = randomChoice(nonEmptyVaults);
+                    let fromIndex = targets.indexOf(from);
+                    let {item:to} = randomChoice(targets.filter((target) => target.address != from.address));
                     let toIndex = targets.indexOf(to); 
-                    let maxPullAmounts = await Promise.all(this.tokens.map(token => token.balanceOf(from.address)));
-                    let pullAmount = maxPullAmounts.map(result => result);
+                    let pullAmount = this.tokens.map((token, index) => BigNumber.from(tvlResults[fromIndex][0][index]).mul(randomInt(1, 4)).div(3));
                     console.log("Pulling " + pullAmount + " from " + fromIndex + " to " + toIndex);
                     await withSigner(this.subject.address, async (signer) => {
                         let options:any = [];
@@ -326,9 +393,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 ]
                             )
                         }
+                        if (to.address == this.aaveVault.address) {
+                            options = encodeToBytes(
+                                ["uint256"],
+                                [
+                                    ethers.constants.Zero
+                                ]
+                            )
+                        }
                         let actualPulled = await from.connect(signer).callStatic.pull(to.address, this.tokensAdresses, pullAmount, options); 
                         await from.connect(signer).pull(to.address, this.tokensAdresses, pullAmount, options);
                         console.log("Actually pulled " + actualPulled);
+                        console.log("");
                     
                     });
                 }
