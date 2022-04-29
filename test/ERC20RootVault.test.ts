@@ -402,10 +402,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 describe("when root vault is not owner of subvault nft", () => {
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
-                        const startVaultNft = await ethers.provider.send("eth_getStorageAt", [
-                            this.uniV3Vault.address,
-                            "0x4", // address of _nft
-                        ]);
+                        const startVaultNft = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                this.uniV3Vault.address,
+                                "0x4", // address of _nft
+                            ]
+                        );
 
                         await withSigner(
                             this.erc20VaultGovernance.address,
