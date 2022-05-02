@@ -16,7 +16,7 @@ import { ERC20RootVault } from "../types/ERC20RootVault";
 import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect } from "chai";
-import { integer, float } from "fast-check";
+import { integer, float, bigInt } from "fast-check";
 import {
     ERC20RootVaultGovernance,
     ERC20Token,
@@ -31,7 +31,7 @@ import {
 import { Address } from "hardhat-deploy/dist/types";
 import { randomInt } from "crypto";
 import Common from "../library/Common";
-import { assert } from "console";
+import { assert, debug } from "console";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { init, min } from "ramda";
 import { IUniswapV3PoolImmutablesInterface } from "../types/IUniswapV3PoolImmutables";
@@ -73,8 +73,8 @@ type FeesResult = {
     totalFees: BigNumber;
 };
 
-const UNIV3_FEE = BigNumber.from(500); // corresponds to 0.05% fee in UniV3 pool
-const YEARN_FEE = BigNumber.from(100); // corresponds to 0.01% fee in Yearn pool
+const UNIV3_FEE = 3000; // corresponds to 0.05% fee in UniV3 pool
+const YEARN_FEE = 100; // corresponds to 0.01% fee in Yearn pool
 
 class FeesWrapper {
     tokens: string[] = [];
@@ -244,16 +244,14 @@ type CustomContext = {
     uniV3Vault: UniV3Vault;
     yearnVault: YearnVault;
     erc20RootVaultNft: number;
-    usdcDeployerSupply: BigNumber;
-    wethDeployerSupply: BigNumber;
     strategyTreasury: Address;
     strategyPerformanceTreasury: Address;
     mellowOracle: MellowOracle;
-    positionManager: Contract;
+    wethDeployerSupply: BigNumber;
+    usdcDeployerSupply: BigNumber;
 };
 
 type DeployOptions = {};
-
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
     "Integration__erc20_univ3",
@@ -291,7 +289,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             createVaultArgs: [
                                 tokens,
                                 this.deployer.address,
-                                500,
+                                UNIV3_FEE,
                             ],
                         }
                     );
@@ -357,8 +355,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethDeployerSupply = BigNumber.from(10).pow(10).mul(5);
-                    this.usdcDeployerSupply = BigNumber.from(10).pow(10).mul(5);
+                    this.wethDeployerSupply = BigNumber.from(10).pow(13).mul(8000);
+                    this.usdcDeployerSupply = BigNumber.from(10).pow(8).mul(5);
+                    console.log("Weth:", this.wethDeployerSupply.mul(2).toString());
+                    console.log("Usdc:", this.usdcDeployerSupply.mul(2).toString());
+
+                    await mint(
+                        "USDC",
+                        this.deployer.address,
+                        this.usdcDeployerSupply
+                    );
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        this.wethDeployerSupply
+                    );
 
                     const { uniswapV3PositionManager } =
                     await getNamedAccounts();
@@ -369,11 +380,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
 
                     const result = await mintUniV3Position_USDC_WETH({
-                        fee: 500,
+                        fee: UNIV3_FEE,
                         tickLower: -887220,
                         tickUpper: 887220,
-                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                        wethAmount: BigNumber.from(10).pow(18),
+                        usdcAmount: this.usdcDeployerSupply,
+                        wethAmount: this.wethDeployerSupply,
                     });
 
                     await this.positionManager.functions[
@@ -410,46 +421,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         });
 
         describe.only("properties", () => {
-            const setZeroFeesFixture = deployments.createFixture(async () => {
-                await this.deploymentFixture();
-                let erc20RootVaultGovernance: ERC20RootVaultGovernance =
-                    await ethers.getContract("ERC20RootVaultGovernance");
-
-                await erc20RootVaultGovernance
-                    .connect(this.admin)
-                    .stageDelayedStrategyParams(this.erc20RootVaultNft, {
-                        strategyTreasury: this.strategyTreasury,
-                        strategyPerformanceTreasury:
-                            this.strategyPerformanceTreasury,
-                        privateVault: true,
-                        managementFee: 0,
-                        performanceFee: 0,
-                        depositCallbackAddress: ethers.constants.AddressZero,
-                        withdrawCallbackAddress: ethers.constants.AddressZero,
-                    });
-                await sleep(this.governanceDelay);
-                await this.erc20RootVaultGovernance
-                    .connect(this.admin)
-                    .commitDelayedStrategyParams(this.erc20RootVaultNft);
-
-                const { protocolTreasury } = await getNamedAccounts();
-
-                const params = {
-                    forceAllowMask: ALLOW_MASK,
-                    maxTokensPerVault: 10,
-                    governanceDelay: 86400,
-                    protocolTreasury,
-                    withdrawLimit: BigNumber.from(10).pow(20),
-                };
-                await this.protocolGovernance
-                    .connect(this.admin)
-                    .stageParams(params);
-                await sleep(this.governanceDelay);
-                await this.protocolGovernance
-                    .connect(this.admin)
-                    .commitParams();
-            });
-
             const checkTvls = async (withPull: boolean) => {
                 const erc20Tvl = await this.erc20Vault.tvl();
                 const univ3Tvl = await this.uniV3Vault.tvl();
@@ -481,76 +452,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 }
             };
 
-            const getAverageTokenPrices = async () => {
-                let pricesResult = await this.mellowOracle.price(
-                    this.usdc.address,
-                    this.weth.address,
-                    0x28
-                );
-                let pricesX96 = pricesResult.pricesX96;
-                let averagePrice = BigNumber.from(0);
-                for (let i = 0; i < pricesX96.length; ++i) {
-                    averagePrice = averagePrice.add(pricesX96[i]);
-                }
-                return averagePrice.div(pricesX96.length);
-            };
-
-            const calculateBalanceAfterPulling = async (
-                priceBefore: BigNumber,
-                priceAfter: BigNumber,
-                startTime: number,
-                endTime: number,
-                tokenAmounts: BigNumber[]
-            ) => {
-                console.log("Price before pulling:", priceBefore.toString());
-                console.log("Price after pulling:", priceAfter.toString());
-
-                console.log("Start / finish times:", startTime, endTime);
-                console.log(
-                    "Token amounts: ",
-                    tokenAmounts.map((x) => x.toString())
-                );
-
-                // before * amount_old == after * amount_new
-                var result: BigNumber[] = [];
-                for (var i = 0; i < tokenAmounts.length; i++) {
-                    const oldAmount = tokenAmounts[i];
-                    const newAmount = priceBefore
-                        .mul(oldAmount)
-                        .div(priceAfter);
-                    result.push(newAmount);
-                }
-
-                return result;
-            };
-
-            const initUniV3Vault = async () => {
-                const result = await mintUniV3Position_USDC_WETH({
-                    fee: 500,
-                    tickLower: -887220,
-                    tickUpper: 887220,
-                    usdcAmount: BigNumber.from(10).pow(20),
-                    wethAmount: BigNumber.from(10).pow(20),
-                });
-
-                await this.positionManager.functions[
-                    "safeTransferFrom(address,address,uint256)"
-                ](
-                    this.deployer.address,
-                    this.uniV3Vault.address,
-                    result.tokenId
-                );
-                expect(await this.uniV3Vault.uniV3Nft()).to.deep.equal(
-                    result.tokenId
-                );
-            };
-
             const debugTvl = (
                 tvl: [BigNumber[], BigNumber[]] & {
                     minTokenAmounts: BigNumber[];
                     maxTokenAmounts: BigNumber[];
-                }
+                },
+                name: string
             ) => {
+                console.log("Tvls for:", name);
                 console.log(
                     "tvl min:",
                     tvl[0].map((x) => x.toString())
@@ -559,9 +468,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "tvl max:",
                     tvl[1].map((x) => x.toString())
                 );
+                console.log();
             };
-            
-            
+
+            const debugTvls = async () => {
+                const univ3Tvl = await this.uniV3Vault.tvl();
+                const yearnTvl = await this.yearnVault.tvl();
+                const erc20Tvl = await this.erc20Vault.tvl();
+                const rootvTvl = await this.subject.tvl();
+                debugTvl(univ3Tvl, "univ3");
+                debugTvl(yearnTvl, "yearn");
+                debugTvl(erc20Tvl, "erc20");
+                debugTvl(rootvTvl, "root");
+            };
+
             const debugTokenBalances = async (flag: string) => {
                 const wethBalance = await this.weth.balanceOf(
                     this.deployer.address
@@ -569,7 +489,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const usdcBalance = await this.usdc.balanceOf(
                     this.deployer.address
                 );
-                const userBalance = await this.subject.balanceOf(this.deployer.address);
+                const userBalance = await this.subject.balanceOf(
+                    this.deployer.address
+                );
 
                 console.log();
                 console.log("Flag:", flag);
@@ -579,901 +501,677 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 console.log();
             };
 
-            it("test", async () => {
-                const numDeposits = 1;
-                const numWithdraws = 1;
-                const amountUSDC = BigNumber.from(10).pow(10);
-                const amountWETH = BigNumber.from(10).pow(10);
-                await setZeroFeesFixture();
-                await debugTokenBalances("init");
+            const setNonZeroFeesFixture = deployments.createFixture(
+                async () => {
+                    await this.deploymentFixture();
+                    let erc20RootVaultGovernance: ERC20RootVaultGovernance =
+                        await ethers.getContract("ERC20RootVaultGovernance");
 
-                const feesWrapper = new FeesWrapper(
-                    [this.usdc.address, this.weth.address],
-                    [
-                        this.erc20Vault.address,
-                        this.uniV3Vault.address,
-                        this.yearnVault.address,
-                        this.subject.address,
-                    ],
-                    [
-                        VaultType.ERC20,
-                        VaultType.UNIV3,
-                        VaultType.YEARN,
-                        VaultType.ROOT,
-                    ]
-                );
-                
-                console.log("Test deployer:", this.deployer.address);
-                await mint("WETH", this.deployer.address, BigNumber.from(10).pow(18));
-                await mint("USDC", this.deployer.address, BigNumber.from(10).pow(18));
-                
+                    await erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .stageDelayedStrategyParams(this.erc20RootVaultNft, {
+                            strategyTreasury: this.strategyTreasury,
+                            strategyPerformanceTreasury:
+                                this.strategyPerformanceTreasury,
+                            privateVault: true,
+                            managementFee: BigNumber.from(20000000),
+                            performanceFee: BigNumber.from(200000000),
+                            depositCallbackAddress:
+                                ethers.constants.AddressZero,
+                            withdrawCallbackAddress:
+                                ethers.constants.AddressZero,
+                        });
+                    await sleep(this.governanceDelay);
+                    await this.erc20RootVaultGovernance
+                        .connect(this.admin)
+                        .commitDelayedStrategyParams(this.erc20RootVaultNft);
 
-                for (let i = 0; i < numDeposits; ++i) {
+                    const { protocolTreasury } = await getNamedAccounts();
+
+                    const params = {
+                        forceAllowMask: ALLOW_MASK,
+                        maxTokensPerVault: 10,
+                        governanceDelay: 86400,
+                        protocolTreasury,
+                        withdrawLimit: Common.D18.mul(100),
+                    };
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .stageParams(params);
+                    await sleep(this.governanceDelay);
+                    await this.protocolGovernance
+                        .connect(this.admin)
+                        .commitParams();
+                }
+            );
+
+            pit(
+                `
+            when fees are not zero, sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
+            `,
+                { numRuns: 1, endOnFailure: true },
+                integer({ min: 0, max: 5 * 86400 }),
+                integer({ min: 2, max: 10 }),
+                integer({ min: 2, max: 10 }),
+                float({ min: 0.01, max: 0.99 }),
+                async (
+                    delay: number,
+                    numDeposits: number,
+                    numWithdraws: number,
+                    tokensDepositRatio: number
+                ) => {
+
+                    const usdcAmount = BigNumber.from(10).pow(10).mul(5);
+                    var wethResult = usdcAmount;
+                    var left = BigNumber.from(10).pow(3);
+                    var right = BigNumber.from(10).pow(20).mul(10);
+                    while (left.lte(right)) {
+                        const diff = right.sub(left);
+                        const mid1 = left.add(diff.div(3));
+                        const mid2 = right.sub(diff.div(3));
+                        const {amount0:amount01, amount1:amount11} = await mintUniV3Position_USDC_WETH({
+                            fee: UNIV3_FEE,
+                            tickLower: -887220,
+                            tickUpper: 887220,
+                            usdcAmount: usdcAmount,
+                            wethAmount: mid1,
+                        });
+                        const {amount0:amount02, amount1:amount12} = await mintUniV3Position_USDC_WETH({
+                            fee: UNIV3_FEE,
+                            tickLower: -887220,
+                            tickUpper: 887220,
+                            usdcAmount: usdcAmount,
+                            wethAmount: mid1,
+                        });
+                        
+                        var leftDiff = (usdcAmount.sub(amount01).abs()).add((mid1).sub(amount11).abs());
+                        var rightDiff = (usdcAmount.sub(amount02).abs()).add((mid2).sub(amount12).abs());
+                        leftDiff = leftDiff.mul(mid2);
+                        rightDiff = rightDiff.mul(mid1);
+                        if (leftDiff.lte(rightDiff)) {
+                            wethResult = mid1;
+                            right = mid2.sub(1);
+                        } else {
+                            wethResult = mid2;
+                            left = mid1.add(1);
+                        }
+                        console.log(left.toString(), wethResult.toString(), right.toString());
+                        console.log(amount01.toString(), amount02.toString(), amount11.toString(), amount12.toString());
+                    }
+
+                    console.log(wethResult.toString());
+                    const {amount0, amount1} = await mintUniV3Position_USDC_WETH({
+                        fee: UNIV3_FEE,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        usdcAmount: usdcAmount,
+                        wethAmount: wethResult,
+                    });
+                    
+                    console.log(amount0.toString(), amount1.toString());
+                    
+                    if (true) return true;
+
+                    await debugTokenBalances("Start");
+                    if (true) return true;
+                    await setNonZeroFeesFixture();
+                    await debugTokenBalances("After non-zero fees fixture");
+                    const feesWrapper = new FeesWrapper(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            this.erc20Vault.address,
+                            this.uniV3Vault.address,
+                            this.yearnVault.address,
+                            this.subject.address,
+                        ],
+                        [
+                            VaultType.ERC20,
+                            VaultType.UNIV3,
+                            VaultType.YEARN,
+                            VaultType.ROOT,
+                        ]
+                    );
+
+                    if (true) return true;
+
+                    let roundedTokensDepositRatio = BigNumber.from(
+                        Math.round(tokensDepositRatio * 10 ** 3)
+                    );
+
+                    let usdcDepositAmounts: BigNumber[] = [];
+                    let wethDepositAmounts: BigNumber[] = [];
+
+                    let usdcDepositedAmount = BigNumber.from(0);
+                    let wethDepositedAmount = BigNumber.from(0);
+
+                    // operations:
+                    // deposit
+                    // withdraw
+                    // pull from one to another (x3)
+
+                    for (let i = 0; i < numDeposits; ++i) {
+                        if (i == 0) {
+                            if (
+                                roundedTokensDepositRatio
+                                    .div(
+                                        BigNumber.from(10)
+                                            .pow(3)
+                                            .sub(roundedTokensDepositRatio)
+                                    )
+                                    .gt(1)
+                            ) {
+                                let wethNextDepositAmount = BigNumber.from(
+                                    BigNumber.from(
+                                        randomInt(
+                                            Number(
+                                                (
+                                                    await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                ).add(10 ** 4)
+                                            ),
+                                            Number(
+                                                this.wethDeployerS  
+                                                    .div(10 ** 4)
+                                                    .div(numDeposits)
+                                            )
+                                        )
+                                    )
+                                );
+                                let usdcNextDepositAmount =
+                                    wethNextDepositAmount
+                                        .mul(roundedTokensDepositRatio)
+                                        .div(
+                                            BigNumber.from(10)
+                                                .pow(3)
+                                                .sub(roundedTokensDepositRatio)
+                                        );
+
+                                usdcDepositAmounts.push(usdcNextDepositAmount);
+                                wethDepositAmounts.push(wethNextDepositAmount);
+                            } else {
+                                let usdcNextDepositAmount = BigNumber.from(
+                                    BigNumber.from(
+                                        randomInt(
+                                            Number(
+                                                (
+                                                    await this.subject.FIRST_DEPOSIT_LIMIT()
+                                                ).add(10 ** 4)
+                                            ),
+                                            Number(
+                                                this.usdcDeployerSupply
+                                                    .div(10 ** 4)
+                                                    .div(numDeposits)
+                                            )
+                                        )
+                                    )
+                                );
+                                let wethNextDepositAmount =
+                                    usdcNextDepositAmount
+                                        .mul(
+                                            BigNumber.from(10)
+                                                .pow(3)
+                                                .sub(roundedTokensDepositRatio)
+                                        )
+                                        .div(roundedTokensDepositRatio);
+
+                                usdcDepositAmounts.push(usdcNextDepositAmount);
+                                wethDepositAmounts.push(wethNextDepositAmount);
+                            }
+                        } else {
+                            wethDepositAmounts.push(
+                                BigNumber.from(
+                                    randomInt(
+                                        1,
+                                        Number(
+                                            this.wethDeployerSupply
+                                                .div(10 ** 4)
+                                                .div(numDeposits)
+                                        )
+                                    )
+                                )
+                            );
+                            usdcDepositAmounts.push(
+                                wethDepositAmounts[i]
+                                    .mul(roundedTokensDepositRatio)
+                                    .div(
+                                        BigNumber.from(10)
+                                            .pow(3)
+                                            .sub(roundedTokensDepositRatio)
+                                    )
+                            );
+                        }
+
+                        usdcDepositedAmount = usdcDepositedAmount.add(
+                            usdcDepositAmounts[i]
+                        );
+                        wethDepositedAmount = wethDepositedAmount.add(
+                            wethDepositAmounts[i]
+                        );
+                    }
+
+                    /*
+                        --------------------- MAKE DEPOSITS ---------------------------
+                        deposit U and W numDeposit times
+                        set lpPriceHighWaterMarkD18
+                        get lpToken balance after first deposit
+                    */
+
+                    let currentTimestamp = now() + 10 ** 6;
+                    await sleepTo(currentTimestamp);
+
                     await feesWrapper.deposit(
                         this.subject,
                         this.deployer,
-                        [
-                            BigNumber.from(amountUSDC).div(numDeposits),
-                            BigNumber.from(amountWETH).div(numDeposits),
-                        ],
+                        [usdcDepositAmounts[0], wethDepositAmounts[0]],
                         BigNumber.from(0)
                     );
-                    await debugTokenBalances("on " + i.toString() + " deposit");
-                }
+                    const lpTokenAmountAfterFirstDeposit =
+                        await this.subject.balanceOf(this.deployer.address);
 
-                const lpTokensAmount = await this.subject.balanceOf(
-                    this.deployer.address
-                );
+                    let lpPriceHighWaterMarkD18 = BigNumber.from(
+                        usdcDepositAmounts[0]
+                    )
+                        .mul(Common.D18)
+                        .div(lpTokenAmountAfterFirstDeposit);
 
-                expect(lpTokensAmount).to.not.deep.equals(BigNumber.from(0));
+                    if (delay > 86400) {
+                        await sleepTo(currentTimestamp + delay);
+                    } else {
+                        await sleep(delay);
+                    }
 
-                const amountForPullUsdc = amountUSDC.div(3 * 3000);
-                const amountForPullWeth = amountWETH.div(3);
-                {
+                    for (let i = 1; i < numDeposits; ++i) {
+                        await feesWrapper.deposit(
+                            this.subject,
+                            this.deployer,
+                            [usdcDepositAmounts[i], wethDepositAmounts[i]],
+                            BigNumber.from(0)
+                        );
+                    }
+
+                    /*
+                        --------------------- CHECK THAT SMTH HAS BEEN DEPOSITED TO VAULTS --------
+                    */
+
+                    const {
+                        strategyTreasury: strategyTreasury,
+                        strategyPerformanceTreasury:
+                            strategyPerformanceTreasury,
+                    } = await this.erc20RootVaultGovernance.delayedStrategyParams(
+                        this.erc20RootVaultNft
+                    );
+                    let protocolTreasury =
+                        await this.protocolGovernance.protocolTreasury();
+
+                    const lpTokensAmount = await this.subject.balanceOf(
+                        this.deployer.address
+                    );
+
+                    // make sure that we aquired some lpTokens
+                    expect(lpTokensAmount).to.not.deep.equals(
+                        BigNumber.from(0)
+                    );
+
+                    /*
+                        in case deposit amounts are greater than 0
+                        usdc balance must be different
+                        weth balance must be different
+                    */
+
+                    if (wethDepositedAmount.gt(0)) {
+                        expect(
+                            await this.weth.balanceOf(this.deployer.address)
+                        ).to.not.be.equal(this.wethDeployerSupply);
+                    }
+
+                    if (usdcDepositedAmount.gt(0)) {
+                        expect(
+                            await this.usdc.balanceOf(this.deployer.address)
+                        ).to.not.be.equal(this.usdcDeployerSupply);
+                    }
+
+                    /*
+                        --------------------- CHECK TVLS ---------------------------
+                        minTvl <= maxTvl in case we have UniV3 vault in vault system
+                        rootVaultTvls == yearnVaultTvls + erc20VaultTvls + uniV3VaultTvls
+                    */
+
                     await checkTvls(false);
 
-                    const erc20TvlBeforePulls = await this.erc20Vault.tvl();
-                    const univ3TvlBeforePulls = await this.uniV3Vault.tvl();
-                    const yearnTvlBeforePulls = await this.yearnVault.tvl();
+                    /*
+                        --------------------- EARN PERFORMANCE FEES ---------------------------
+                        get WETH and USDC balances on each vault
+                        donate the same balances to vaults using transfer
+                        LpTokenAmount remains constant => it`s price increases
+                    */
 
-                    await feesWrapper.pull(
-                        this.erc20Vault,
-                        this.deployer,
-                        [amountForPullUsdc, amountForPullWeth],
-                        this.uniV3Vault.address
+                    var totalAmounts: BigNumber[] = [];
+                    [
+                        [this.weth, "WETH"],
+                        [this.usdc, "USDC"],
+                    ].forEach(async (pair) => {
+                        var token = pair[0] as ERC20Token;
+                        var name = pair[1] as string;
+                        var totalAmount = BigNumber.from(0);
+                        const vaults = [
+                            this.erc20Vault.address,
+                            this.uniV3Vault.address,
+                            this.yearnVault.address,
+                        ];
+                        vaults.forEach(async (vault) => {
+                            const currentAmout = await token.balanceOf(vault);
+                            totalAmount = totalAmount.add(currentAmout);
+                        });
+                        if (totalAmount.gt(0)) {
+                            await mint(
+                                name,
+                                this.deployer.address,
+                                totalAmount
+                            );
+                        }
+                        vaults.forEach(async (vault) => {
+                            const currentAmout = await token.balanceOf(vault);
+                            await token
+                                .connect(this.deployer)
+                                .transfer(vault, currentAmout);
+                        });
+                        totalAmounts.push(totalAmount);
+                    });
+
+                    const totalWethAmount = totalAmounts[0];
+                    const totalUsdcAmount = totalAmounts[1];
+
+                    const getAverageTokenPrices = async () => {
+                        let pricesResult = await this.mellowOracle.price(
+                            this.usdc.address,
+                            this.weth.address,
+                            0x28
+                        );
+                        let pricesX96 = pricesResult.pricesX96;
+                        let averagePrice = BigNumber.from(0);
+                        for (let i = 0; i < pricesX96.length; ++i) {
+                            averagePrice = averagePrice.add(pricesX96[i]);
+                        }
+                        return averagePrice.div(pricesX96.length);
+                    };
+
+                    /*
+                        --------------------- CALCULATE SOME PARAMETERS FOR PERFORMANCE FEES ---------------------------
+                        get average price for USDC to WETH
+                        get Tvls
+                    */
+
+                    const averagePricesBeforePull =
+                        await getAverageTokenPrices();
+
+                    let tvls = await this.subject.tvl();
+                    let minTvl = tvls[0];
+
+                    /*
+                        --------------------- SET RANDOMISED WITHDRAW AMOUNTS ---------------------------
+                        set randomised withdrawAmounts
+                    */
+
+                    let withdrawAmounts: BigNumber[] = [];
+                    let withdrawSum: BigNumber = BigNumber.from(0);
+                    for (let i = 0; i < numWithdraws - 1; ++i) {
+                        withdrawAmounts.push(
+                            BigNumber.from(Math.round(Math.random() * 10 ** 6))
+                                .mul(lpTokensAmount)
+                                .div(numWithdraws)
+                                .div(Common.UNI_FEE_DENOMINATOR)
+                        );
+                        withdrawSum = withdrawSum.add(withdrawAmounts[i]);
+                    }
+                    withdrawAmounts.push(
+                        lpTokensAmount.mul(2).sub(withdrawSum)
                     );
 
-                    await debugTokenBalances("Balance after first pull");
-                    await feesWrapper.pull(
-                        this.erc20Vault,
-                        this.deployer,
-                        [amountForPullUsdc, amountForPullWeth],
-                        this.yearnVault.address
-                    );
+                    if (delay > 86400) {
+                        await sleepTo(currentTimestamp + 2 * delay);
+                    } else {
+                        await sleep(delay);
+                    }
 
-                    await debugTokenBalances("Balance after second pull");
-                    await sleep(this.governanceDelay);
+                    /*
+                        --------------------- MAKE WITHDRAWS ---------------------------
+                        make randomised withdraws numWithdraws times
+                    */
 
-                    await debugTokenBalances("Balance after sleep");
-                    await checkTvls(true);
+                    for (let i = 0; i < numWithdraws; ++i) {
+                        await feesWrapper.withdraw(
+                            this.subject,
+                            this.deployer,
+                            this.deployer.address,
+                            withdrawAmounts[i],
+                            [
+                                BigNumber.from(0),
+                                BigNumber.from(0),
+                                BigNumber.from(0),
+                            ]
+                        );
+                    }
 
-                    const erc20TvlAfterPulls = await this.erc20Vault.tvl();
-                    const univ3TvlAfterPulls = await this.uniV3Vault.tvl();
-                    const yearnTvlAfterPulls = await this.yearnVault.tvl();
-                    console.log("Before states (erc20 univ3 yearn):");
-                    debugTvl(erc20TvlBeforePulls);
-                    debugTvl(univ3TvlBeforePulls);
-                    debugTvl(yearnTvlBeforePulls);
-                    console.log("After states (erc20 univ3 yearn):");
-                    debugTvl(erc20TvlAfterPulls);
-                    debugTvl(univ3TvlAfterPulls);
-                    debugTvl(yearnTvlAfterPulls);
+                    /*
+                        --------------------- COLLECT ALL FEES ---------------------------
+                        withdraw all fees as LpTokens and get USDC and WETH
+                        make sure that received USDC/WETH equals expected USDC/WETH
+                    */
+
+                    // collect management fees
+                    if (
+                        (await this.subject.balanceOf(strategyTreasury)).gt(0)
+                    ) {
+                        let managementFee = await this.subject.balanceOf(
+                            strategyTreasury
+                        );
+                        let performanceFee = await this.subject.balanceOf(
+                            strategyPerformanceTreasury
+                        );
+
+                        let currentDeployerBalance =
+                            await this.subject.balanceOf(this.deployer.address);
+                        let totalLpSupply = Number(
+                            currentDeployerBalance
+                                .add(managementFee)
+                                .add(performanceFee)
+                        );
+                        let tvls = (await this.subject.tvl())[0];
+
+                        /*
+                            tokenFee / tokenTvl = lpTokenBalance[strategyTreasury] / totalLpTokenSupply
+                        */
+                        // calculate expected fees
+
+                        let usdcFee = managementFee
+                            .mul(tvls[0])
+                            .div(totalLpSupply);
+                        let wethFee = managementFee
+                            .mul(tvls[1])
+                            .div(totalLpSupply);
+
+                        // --------------------- WITHDRAW ---------------------------
+                        await withSigner(strategyTreasury, async (s) => {
+                            await feesWrapper.withdraw(
+                                this.subject,
+                                s,
+                                strategyTreasury,
+                                ethers.constants.MaxUint256,
+                                [
+                                    BigNumber.from(0),
+                                    BigNumber.from(0),
+                                    BigNumber.from(0),
+                                ]
+                            );
+                        });
+
+                        let usdcBalanceStrategyTreasury =
+                            await this.usdc.balanceOf(this.strategyTreasury);
+                        let wethBalanceStrategyTreasury =
+                            await this.weth.balanceOf(this.strategyTreasury);
+
+                        let usdcFeeAbsDifference = usdcFee
+                            .sub(usdcBalanceStrategyTreasury)
+                            .abs();
+                        let wethFeeAbsDifference = wethFee
+                            .sub(wethBalanceStrategyTreasury)
+                            .abs();
+
+                        expect(
+                            usdcFeeAbsDifference
+                                .mul(10000)
+                                .sub(usdcBalanceStrategyTreasury)
+                                .lte(0)
+                        ).to.be.true;
+                        expect(
+                            wethFeeAbsDifference
+                                .mul(10000)
+                                .sub(wethBalanceStrategyTreasury)
+                                .lte(0)
+                        ).to.be.true;
+                    }
+
+                    // collect performance fees
+                    if (
+                        (
+                            await this.subject.balanceOf(
+                                strategyPerformanceTreasury
+                            )
+                        ).gt(0)
+                    ) {
+                        let performanceFee = await this.subject.balanceOf(
+                            strategyPerformanceTreasury
+                        );
+
+                        let currentDeployerBalance =
+                            await this.subject.balanceOf(this.deployer.address);
+                        let totalLpSupply = Number(
+                            currentDeployerBalance.add(performanceFee)
+                        );
+                        let tvls = (await this.subject.tvl())[0];
+
+                        // --------------------- WITHDRAW ---------------------------
+                        await withSigner(
+                            strategyPerformanceTreasury,
+                            async (s) => {
+                                await feesWrapper.withdraw(
+                                    this.subject,
+                                    s,
+                                    strategyPerformanceTreasury,
+                                    ethers.constants.MaxUint256,
+                                    [
+                                        BigNumber.from(0),
+                                        BigNumber.from(0),
+                                        BigNumber.from(0),
+                                    ]
+                                );
+                            }
+                        );
+
+                        /*
+                            tokenFee / tokenTvl = lpTokenBalance[strategyTreasury] / totalLpTokenSupply
+                        */
+                        // calculate expected fees
+
+                        let usdcFee = performanceFee
+                            .mul(tvls[0])
+                            .div(totalLpSupply);
+                        let wethFee = performanceFee
+                            .mul(tvls[1])
+                            .div(totalLpSupply);
+
+                        let usdcBalanceStrategyPerformanceTreasury =
+                            await this.usdc.balanceOf(
+                                this.strategyPerformanceTreasury
+                            );
+                        let wethBalanceStrategyPerformanceTreasury =
+                            await this.weth.balanceOf(
+                                this.strategyPerformanceTreasury
+                            );
+
+                        let usdcFeeAbsDifference = usdcFee
+                            .sub(usdcBalanceStrategyPerformanceTreasury)
+                            .abs();
+                        let wethFeeAbsDifference = wethFee
+                            .sub(wethBalanceStrategyPerformanceTreasury)
+                            .abs();
+
+                        expect(
+                            usdcFeeAbsDifference
+                                .mul(10000)
+                                .sub(usdcBalanceStrategyPerformanceTreasury)
+                                .lte(0)
+                        ).to.be.true;
+                        expect(
+                            wethFeeAbsDifference
+                                .mul(10000)
+                                .sub(wethBalanceStrategyPerformanceTreasury)
+                                .lte(0)
+                        ).to.be.true;
+                    }
+
+                    // collect protocol fees
+                    if (
+                        (await this.subject.balanceOf(protocolTreasury)).gt(0)
+                    ) {
+                        await withSigner(protocolTreasury, async (s) => {
+                            await feesWrapper.withdraw(
+                                this.subject,
+                                s,
+                                protocolTreasury,
+                                ethers.constants.MaxUint256,
+                                [
+                                    BigNumber.from(0),
+                                    BigNumber.from(0),
+                                    BigNumber.from(0),
+                                ]
+                            );
+                        });
+                    }
+
+                    /*
+                        --------------------- CHECK BALANCES EQUALITY ---------------------------
+                        assert lpTokenBalance[deployer] == 0
+                        assert usdcSupply + usdcAdditionalAmount ==
+                                    usdcBalance[deployer] +
+                                    + usdcBalance[strategyTreeasury]
+                                    + usdcBalance[strategyPerformanceTreasury]
+                                    + usdcBalance[protocolTreasury]
+                        assert  wethSupply + wethAdditionalAmount ==
+                                    wethBalance[deployer] +
+                                    + wethBalance[strategyTreeasury]
+                                    + wethBalance[strategyPerformanceTreasury]
+                                    + wethBalance[protocolTreasury]
+                    */
+
+                    expect(
+                        await this.subject.balanceOf(this.deployer.address)
+                    ).to.deep.equals(BigNumber.from(0));
+
+                    expect(
+                        (await this.weth.balanceOf(this.deployer.address))
+                            .add(await this.weth.balanceOf(strategyTreasury))
+                            .add(
+                                await this.weth.balanceOf(
+                                    strategyPerformanceTreasury
+                                )
+                            )
+                            .add(await this.weth.balanceOf(protocolTreasury))
+                    ).to.be.eq(this.wethDeployerSupply.add(totalWethAmount));
+
+                    expect(
+                        (await this.usdc.balanceOf(this.deployer.address))
+                            .add(await this.usdc.balanceOf(strategyTreasury))
+                            .add(
+                                await this.usdc.balanceOf(
+                                    strategyPerformanceTreasury
+                                )
+                            )
+                            .add(await this.usdc.balanceOf(protocolTreasury))
+                    ).to.be.eq(this.usdcDeployerSupply.add(totalUsdcAmount));
+
+                    return true;
                 }
-
-                for (let i = 0; i < numWithdraws; ++i) {
-                    await feesWrapper.withdraw(
-                        this.subject,
-                        this.deployer,
-                        this.deployer.address,
-                        BigNumber.from(lpTokensAmount).div(numWithdraws),
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                        ]
-                    );
-                    await debugTokenBalances("after " + i.toString() + " withdraw");
-                }
-
-                let remainingLpTokenBalance = await this.subject.balanceOf(
-                    this.deployer.address
-                );
-                if (remainingLpTokenBalance.gt(0)) {
-                    await feesWrapper.withdraw(
-                        this.subject,
-                        this.deployer,
-                        this.deployer.address,
-                        remainingLpTokenBalance,
-                        [
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                            BigNumber.from(0),
-                        ]
-                    );
-                }
-                await debugTokenBalances("after last withdraw");
-
-                const { usdcFees, wethFees } = await feesWrapper.getFees();
-
-                expect(
-                    await this.subject.balanceOf(this.deployer.address)
-                ).to.deep.equals(BigNumber.from(0));
-                return true;
-            });
-
-            // pit(
-            //     `
-            //     when fees are zero, sum of deposit[i] = sum of withdraw[j] without inernal vaults fees
-            // `,
-            //     { numRuns: RUNS.mid, endOnFailure: true },
-            //     integer({ min: 1, max: 10 }),
-            //     integer({ min: 1, max: 10 }),
-            //     integer({ min: 10 ** 6, max: 10 ** 9 }).map((x) =>
-            //         BigNumber.from(x.toString())
-            //     ),
-            //     integer({ min: 10 ** 7, max: 10 ** 10 }).map((x) =>
-            //         BigNumber.from(x.toString())
-            //     ),
-            //     async (
-            //         numDeposits: number,
-            //         numWithdraws: number,
-            //         amountUSDC: BigNumber,
-            //         amountWETH: BigNumber
-            //     ) => {
-            //         await setZeroFeesFixture();
-            //         const feesWrapper = new FeesWrapper(
-            //             [this.usdc.address, this.weth.address],
-            //             [
-            //                 this.erc20Vault.address,
-            //                 this.uniV3Vault.address,
-            //                 this.yearnVault.address,
-            //                 this.subject.address,
-            //             ],
-            //             [
-            //                 VaultType.ERC20,
-            //                 VaultType.UNIV3,
-            //                 VaultType.YEARN,
-            //                 VaultType.ROOT,
-            //             ]
-            //         );
-
-            //         let lpAmounts: BigNumber[] = [];
-            //         assert(
-            //             (
-            //                 await this.subject.balanceOf(this.deployer.address)
-            //             ).eq(BigNumber.from(0))
-            //         );
-            //         for (let i = 0; i < numDeposits; ++i) {
-            //             await feesWrapper.deposit(
-            //                 this.subject,
-            //                 this.deployer,
-            //                 [
-            //                     BigNumber.from(amountUSDC).div(numDeposits),
-            //                     BigNumber.from(amountWETH).div(numDeposits),
-            //                 ],
-            //                 BigNumber.from(0)
-            //             );
-            //             lpAmounts.push(
-            //                 await this.subject.balanceOf(this.deployer.address)
-            //             );
-            //         }
-
-            //         for (let i = 1; i < numDeposits; ++i) {
-            //             expect(lpAmounts[i].sub(lpAmounts[i - 1])).to.be.equal(
-            //                 lpAmounts[0]
-            //             );
-            //         }
-
-            //         const lpTokensAmount = await this.subject.balanceOf(
-            //             this.deployer.address
-            //         );
-            //         expect(lpTokensAmount).to.not.deep.equals(
-            //             BigNumber.from(0)
-            //         );
-
-            //         await checkTvls(false);
-
-            //         const amountUSDCForPull = amountUSDC.div(3);
-            //         const amountWETHForPull = amountWETH.div(3);
-
-            //         const timeBeforePulling = now();
-            //         const averagePricesBefore = await getAverageTokenPrices();
-            //         const amountTokensForPull =
-            //             amountUSDCForPull.add(amountWETHForPull);
-
-            //         await feesWrapper.pull(
-            //             this.erc20Vault,
-            //             this.deployer,
-            //             [amountUSDCForPull, amountWETHForPull],
-            //             this.yearnVault.address
-            //         );
-            //         await sleep(this.governanceDelay);
-
-            //         await feesWrapper.pull(
-            //             this.erc20Vault,
-            //             this.deployer,
-            //             [amountUSDCForPull, amountWETHForPull],
-            //             this.uniV3Vault.address
-            //         );
-            //         await sleep(this.governanceDelay);
-
-            //         await checkTvls(true);
-
-            //         for (let i = 0; i < numWithdraws; ++i) {
-            //             await feesWrapper.withdraw(
-            //                 this.subject,
-            //                 this.deployer,
-            //                 this.deployer.address,
-            //                 BigNumber.from(lpTokensAmount).div(numWithdraws),
-            //                 [
-            //                     BigNumber.from(0),
-            //                     BigNumber.from(0),
-            //                     BigNumber.from(0),
-            //                 ]
-            //             );
-            //         }
-
-            //         let remainingLpTokenBalance = await this.subject.balanceOf(
-            //             this.deployer.address
-            //         );
-            //         if (remainingLpTokenBalance.gt(0)) {
-            //             await feesWrapper.withdraw(
-            //                 this.subject,
-            //                 this.deployer,
-            //                 this.deployer.address,
-            //                 remainingLpTokenBalance,
-            //                 [
-            //                     BigNumber.from(0),
-            //                     BigNumber.from(0),
-            //                     BigNumber.from(0),
-            //                 ]
-            //             );
-            //         }
-
-            //         const { usdcFees, wethFees } = await feesWrapper.getFees();
-
-            //         const timeAfterPulling = now();
-            //         const averagePriceAfterPulling =
-            //             await getAverageTokenPrices();
-
-            //         expect(
-            //             await this.subject.balanceOf(this.deployer.address)
-            //         ).to.deep.equals(BigNumber.from(0));
-
-            //         return true;
-            //     }
-            // );
-
-            // const setNonZeroFeesFixture = deployments.createFixture(
-            //     async () => {
-            //         await this.deploymentFixture();
-            //         let erc20RootVaultGovernance: ERC20RootVaultGovernance =
-            //             await ethers.getContract("ERC20RootVaultGovernance");
-
-            //         await erc20RootVaultGovernance
-            //             .connect(this.admin)
-            //             .stageDelayedStrategyParams(this.erc20RootVaultNft, {
-            //                 strategyTreasury: this.strategyTreasury,
-            //                 strategyPerformanceTreasury:
-            //                     this.strategyPerformanceTreasury,
-            //                 privateVault: true,
-            //                 managementFee: BigNumber.from(20000000),
-            //                 performanceFee: BigNumber.from(200000000),
-            //                 depositCallbackAddress:
-            //                     ethers.constants.AddressZero,
-            //                 withdrawCallbackAddress:
-            //                     ethers.constants.AddressZero,
-            //             });
-            //         await sleep(this.governanceDelay);
-            //         await this.erc20RootVaultGovernance
-            //             .connect(this.admin)
-            //             .commitDelayedStrategyParams(this.erc20RootVaultNft);
-
-            //         const { protocolTreasury } = await getNamedAccounts();
-
-            //         const params = {
-            //             forceAllowMask: ALLOW_MASK,
-            //             maxTokensPerVault: 10,
-            //             governanceDelay: 86400,
-            //             protocolTreasury,
-            //             withdrawLimit: Common.D18.mul(100),
-            //         };
-            //         await this.protocolGovernance
-            //             .connect(this.admin)
-            //             .stageParams(params);
-            //         await sleep(this.governanceDelay);
-            //         await this.protocolGovernance
-            //             .connect(this.admin)
-            //             .commitParams();
-            //     }
-            // );
-
-            // pit(
-            //     `
-            // when fees are not zero, sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
-            // `,
-            //     { numRuns: RUNS.mid, endOnFailure: true },
-            //     integer({ min: 0, max: 5 * 86400 }),
-            //     integer({ min: 2, max: 10 }),
-            //     integer({ min: 2, max: 10 }),
-            //     float({ min: 0.01, max: 0.99 }),
-            //     async (
-            //         delay: number,
-            //         numDeposits: number,
-            //         numWithdraws: number,
-            //         tokensDepositRatio: number
-            //     ) => {
-            //         await setNonZeroFeesFixture();
-            //         const feesWrapper = new FeesWrapper(
-            //             [this.usdc.address, this.weth.address],
-            //             [
-            //                 this.erc20Vault.address,
-            //                 this.uniV3Vault.address,
-            //                 this.yearnVault.address,
-            //                 this.subject.address,
-            //             ],
-            //             [
-            //                 VaultType.ERC20,
-            //                 VaultType.UNIV3,
-            //                 VaultType.YEARN,
-            //                 VaultType.ROOT,
-            //             ]
-            //         );
-            //         let roundedTokensDepositRatio = BigNumber.from(
-            //             Math.round(tokensDepositRatio * 10 ** 3)
-            //         );
-
-            //         let usdcDepositAmounts: BigNumber[] = [];
-            //         let wethDepositAmounts: BigNumber[] = [];
-
-            //         let usdcDepositedAmount = BigNumber.from(0);
-            //         let wethDepositedAmount = BigNumber.from(0);
-
-            //         /*
-            //             --------------------- SET DEPOSIT AMOUNTS ---------------------------
-            //             R -> ratio
-            //             U -> usdcDepositAmounts[i]
-            //             W -> wethDepositAmounts[i]
-            //             R = U / (U + W), R in range (0, 1)
-            //             let W be a random value, than
-            //             R * U + R * W = U
-            //             U * (1 - R) = W * R
-            //             U = W * (R / (1 - R))
-            //         */
-
-            //         for (let i = 0; i < numDeposits; ++i) {
-            //             if (i == 0) {
-            //                 if (
-            //                     roundedTokensDepositRatio
-            //                         .div(
-            //                             BigNumber.from(10)
-            //                                 .pow(3)
-            //                                 .sub(roundedTokensDepositRatio)
-            //                         )
-            //                         .gt(1)
-            //                 ) {
-            //                     let wethNextDepositAmount = BigNumber.from(
-            //                         BigNumber.from(
-            //                             randomInt(
-            //                                 Number(
-            //                                     (
-            //                                         await this.subject.FIRST_DEPOSIT_LIMIT()
-            //                                     ).add(10 ** 4)
-            //                                 ),
-            //                                 Number(
-            //                                     this.wethDeployerSupply
-            //                                         .div(10 ** 4)
-            //                                         .div(numDeposits)
-            //                                 )
-            //                             )
-            //                         )
-            //                     );
-            //                     let usdcNextDepositAmount =
-            //                         wethNextDepositAmount
-            //                             .mul(roundedTokensDepositRatio)
-            //                             .div(
-            //                                 BigNumber.from(10)
-            //                                     .pow(3)
-            //                                     .sub(roundedTokensDepositRatio)
-            //                             );
-
-            //                     usdcDepositAmounts.push(usdcNextDepositAmount);
-            //                     wethDepositAmounts.push(wethNextDepositAmount);
-            //                 } else {
-            //                     let usdcNextDepositAmount = BigNumber.from(
-            //                         BigNumber.from(
-            //                             randomInt(
-            //                                 Number(
-            //                                     (
-            //                                         await this.subject.FIRST_DEPOSIT_LIMIT()
-            //                                     ).add(10 ** 4)
-            //                                 ),
-            //                                 Number(
-            //                                     this.usdcDeployerSupply
-            //                                         .div(10 ** 4)
-            //                                         .div(numDeposits)
-            //                                 )
-            //                             )
-            //                         )
-            //                     );
-            //                     let wethNextDepositAmount =
-            //                         usdcNextDepositAmount
-            //                             .mul(
-            //                                 BigNumber.from(10)
-            //                                     .pow(3)
-            //                                     .sub(roundedTokensDepositRatio)
-            //                             )
-            //                             .div(roundedTokensDepositRatio);
-
-            //                     usdcDepositAmounts.push(usdcNextDepositAmount);
-            //                     wethDepositAmounts.push(wethNextDepositAmount);
-            //                 }
-            //             } else {
-            //                 wethDepositAmounts.push(
-            //                     BigNumber.from(
-            //                         randomInt(
-            //                             1,
-            //                             Number(
-            //                                 this.wethDeployerSupply
-            //                                     .div(10 ** 4)
-            //                                     .div(numDeposits)
-            //                             )
-            //                         )
-            //                     )
-            //                 );
-            //                 usdcDepositAmounts.push(
-            //                     wethDepositAmounts[i]
-            //                         .mul(roundedTokensDepositRatio)
-            //                         .div(
-            //                             BigNumber.from(10)
-            //                                 .pow(3)
-            //                                 .sub(roundedTokensDepositRatio)
-            //                         )
-            //                 );
-            //             }
-
-            //             usdcDepositedAmount = usdcDepositedAmount.add(
-            //                 usdcDepositAmounts[i]
-            //             );
-            //             wethDepositedAmount = wethDepositedAmount.add(
-            //                 wethDepositAmounts[i]
-            //             );
-            //         }
-
-            //         /*
-            //             --------------------- MAKE DEPOSITS ---------------------------
-            //             deposit U and W numDeposit times
-            //             set lpPriceHighWaterMarkD18
-            //             get lpToken balance after first deposit
-            //         */
-
-            //         let currentTimestamp = now() + 10 ** 6;
-            //         await sleepTo(currentTimestamp);
-
-            //         await feesWrapper.deposit(
-            //             this.subject,
-            //             this.deployer,
-            //             [usdcDepositAmounts[0], wethDepositAmounts[0]],
-            //             BigNumber.from(0)
-            //         );
-            //         const lpTokenAmountAfterFirstDeposit =
-            //             await this.subject.balanceOf(this.deployer.address);
-
-            //         let lpPriceHighWaterMarkD18 = BigNumber.from(
-            //             usdcDepositAmounts[0]
-            //         )
-            //             .mul(Common.D18)
-            //             .div(lpTokenAmountAfterFirstDeposit);
-
-            //         if (delay > 86400) {
-            //             await sleepTo(currentTimestamp + delay);
-            //         } else {
-            //             await sleep(delay);
-            //         }
-
-            //         for (let i = 1; i < numDeposits; ++i) {
-            //             await feesWrapper.deposit(
-            //                 this.subject,
-            //                 this.deployer,
-            //                 [usdcDepositAmounts[i], wethDepositAmounts[i]],
-            //                 BigNumber.from(0)
-            //             );
-            //         }
-
-            //         /*
-            //             --------------------- CHECK THAT SMTH HAS BEEN DEPOSITED TO VAULTS --------
-            //         */
-
-            //         const {
-            //             strategyTreasury: strategyTreasury,
-            //             strategyPerformanceTreasury:
-            //                 strategyPerformanceTreasury,
-            //         } = await this.erc20RootVaultGovernance.delayedStrategyParams(
-            //             this.erc20RootVaultNft
-            //         );
-            //         let protocolTreasury =
-            //             await this.protocolGovernance.protocolTreasury();
-
-            //         const lpTokensAmount = await this.subject.balanceOf(
-            //             this.deployer.address
-            //         );
-
-            //         // make sure that we aquired some lpTokens
-            //         expect(lpTokensAmount).to.not.deep.equals(
-            //             BigNumber.from(0)
-            //         );
-
-            //         /*
-            //             in case deposit amounts are greater than 0
-            //             usdc balance must be different
-            //             weth balance must be different
-            //         */
-
-            //         if (wethDepositedAmount.gt(0)) {
-            //             expect(
-            //                 await this.weth.balanceOf(this.deployer.address)
-            //             ).to.not.be.equal(this.wethDeployerSupply);
-            //         }
-
-            //         if (usdcDepositedAmount.gt(0)) {
-            //             expect(
-            //                 await this.usdc.balanceOf(this.deployer.address)
-            //             ).to.not.be.equal(this.usdcDeployerSupply);
-            //         }
-
-            //         /*
-            //             --------------------- CHECK TVLS ---------------------------
-            //             minTvl <= maxTvl in case we have UniV3 vault in vault system
-            //             rootVaultTvls == yearnVaultTvls + erc20VaultTvls + uniV3VaultTvls
-            //         */
-
-            //         await checkTvls(false);
-
-            //         /*
-            //             --------------------- EARN PERFORMANCE FEES ---------------------------
-            //             get WETH and USDC balances on each vault
-            //             donate the same balances to vaults using transfer
-            //             LpTokenAmount remains constant => it`s price increases
-            //         */
-
-            //         var totalAmounts: BigNumber[] = [];
-            //         [
-            //             [this.weth, "WETH"],
-            //             [this.usdc, "USDC"],
-            //         ].forEach(async (pair) => {
-            //             var token = pair[0] as ERC20Token;
-            //             var name = pair[1] as string;
-            //             var totalAmount = BigNumber.from(0);
-            //             const vaults = [
-            //                 this.erc20Vault.address,
-            //                 this.uniV3Vault.address,
-            //                 this.yearnVault.address,
-            //             ];
-            //             vaults.forEach(async (vault) => {
-            //                 const currentAmout = await token.balanceOf(vault);
-            //                 totalAmount = totalAmount.add(currentAmout);
-            //             });
-            //             if (totalAmount.gt(0)) {
-            //                 await mint(
-            //                     name,
-            //                     this.deployer.address,
-            //                     totalAmount
-            //                 );
-            //             }
-            //             vaults.forEach(async (vault) => {
-            //                 const currentAmout = await token.balanceOf(vault);
-            //                 await token
-            //                     .connect(this.deployer)
-            //                     .transfer(vault, currentAmout);
-            //             });
-            //             totalAmounts.push(totalAmount);
-            //         });
-
-            //         const totalWethAmount = totalAmounts[0];
-            //         const totalUsdcAmount = totalAmounts[1];
-
-            //         const getAverageTokenPrices = async () => {
-            //             let pricesResult = await this.mellowOracle.price(
-            //                 this.usdc.address,
-            //                 this.weth.address,
-            //                 0x28
-            //             );
-            //             let pricesX96 = pricesResult.pricesX96;
-            //             let averagePrice = BigNumber.from(0);
-            //             for (let i = 0; i < pricesX96.length; ++i) {
-            //                 averagePrice = averagePrice.add(pricesX96[i]);
-            //             }
-            //             return averagePrice.div(pricesX96.length);
-            //         };
-
-            //         /*
-            //             --------------------- CALCULATE SOME PARAMETERS FOR PERFORMANCE FEES ---------------------------
-            //             get average price for USDC to WETH
-            //             get Tvls
-            //         */
-
-            //         const averagePricesBeforePull =
-            //             await getAverageTokenPrices();
-
-            //         let tvls = await this.subject.tvl();
-            //         let minTvl = tvls[0];
-
-            //         /*
-            //             --------------------- SET RANDOMISED WITHDRAW AMOUNTS ---------------------------
-            //             set randomised withdrawAmounts
-            //         */
-
-            //         let withdrawAmounts: BigNumber[] = [];
-            //         let withdrawSum: BigNumber = BigNumber.from(0);
-            //         for (let i = 0; i < numWithdraws - 1; ++i) {
-            //             withdrawAmounts.push(
-            //                 BigNumber.from(Math.round(Math.random() * 10 ** 6))
-            //                     .mul(lpTokensAmount)
-            //                     .div(numWithdraws)
-            //                     .div(Common.UNI_FEE_DENOMINATOR)
-            //             );
-            //             withdrawSum = withdrawSum.add(withdrawAmounts[i]);
-            //         }
-            //         withdrawAmounts.push(
-            //             lpTokensAmount.mul(2).sub(withdrawSum)
-            //         );
-
-            //         if (delay > 86400) {
-            //             await sleepTo(currentTimestamp + 2 * delay);
-            //         } else {
-            //             await sleep(delay);
-            //         }
-
-            //         /*
-            //             --------------------- MAKE WITHDRAWS ---------------------------
-            //             make randomised withdraws numWithdraws times
-            //         */
-
-            //         for (let i = 0; i < numWithdraws; ++i) {
-            //             await feesWrapper.withdraw(
-            //                 this.subject,
-            //                 this.deployer,
-            //                 this.deployer.address,
-            //                 withdrawAmounts[i],
-            //                 [
-            //                     BigNumber.from(0),
-            //                     BigNumber.from(0),
-            //                     BigNumber.from(0),
-            //                 ]
-            //             );
-            //         }
-
-            //         /*
-            //             --------------------- COLLECT ALL FEES ---------------------------
-            //             withdraw all fees as LpTokens and get USDC and WETH
-            //             make sure that received USDC/WETH equals expected USDC/WETH
-            //         */
-
-            //         // collect management fees
-            //         if (
-            //             (await this.subject.balanceOf(strategyTreasury)).gt(0)
-            //         ) {
-            //             let managementFee = await this.subject.balanceOf(
-            //                 strategyTreasury
-            //             );
-            //             let performanceFee = await this.subject.balanceOf(
-            //                 strategyPerformanceTreasury
-            //             );
-
-            //             let currentDeployerBalance =
-            //                 await this.subject.balanceOf(this.deployer.address);
-            //             let totalLpSupply = Number(
-            //                 currentDeployerBalance
-            //                     .add(managementFee)
-            //                     .add(performanceFee)
-            //             );
-            //             let tvls = (await this.subject.tvl())[0];
-
-            //             /*
-            //                 tokenFee / tokenTvl = lpTokenBalance[strategyTreasury] / totalLpTokenSupply
-            //             */
-            //             // calculate expected fees
-
-            //             let usdcFee = managementFee
-            //                 .mul(tvls[0])
-            //                 .div(totalLpSupply);
-            //             let wethFee = managementFee
-            //                 .mul(tvls[1])
-            //                 .div(totalLpSupply);
-
-            //             // --------------------- WITHDRAW ---------------------------
-            //             await withSigner(strategyTreasury, async (s) => {
-            //                 await feesWrapper.withdraw(
-            //                     this.subject,
-            //                     s,
-            //                     strategyTreasury,
-            //                     ethers.constants.MaxUint256,
-            //                     [
-            //                         BigNumber.from(0),
-            //                         BigNumber.from(0),
-            //                         BigNumber.from(0),
-            //                     ]
-            //                 );
-            //             });
-
-            //             let usdcBalanceStrategyTreasury =
-            //                 await this.usdc.balanceOf(this.strategyTreasury);
-            //             let wethBalanceStrategyTreasury =
-            //                 await this.weth.balanceOf(this.strategyTreasury);
-
-            //             let usdcFeeAbsDifference = usdcFee
-            //                 .sub(usdcBalanceStrategyTreasury)
-            //                 .abs();
-            //             let wethFeeAbsDifference = wethFee
-            //                 .sub(wethBalanceStrategyTreasury)
-            //                 .abs();
-
-            //             expect(
-            //                 usdcFeeAbsDifference
-            //                     .mul(10000)
-            //                     .sub(usdcBalanceStrategyTreasury)
-            //                     .lte(0)
-            //             ).to.be.true;
-            //             expect(
-            //                 wethFeeAbsDifference
-            //                     .mul(10000)
-            //                     .sub(wethBalanceStrategyTreasury)
-            //                     .lte(0)
-            //             ).to.be.true;
-            //         }
-
-            //         // collect performance fees
-            //         if (
-            //             (
-            //                 await this.subject.balanceOf(
-            //                     strategyPerformanceTreasury
-            //                 )
-            //             ).gt(0)
-            //         ) {
-            //             let performanceFee = await this.subject.balanceOf(
-            //                 strategyPerformanceTreasury
-            //             );
-
-            //             let currentDeployerBalance =
-            //                 await this.subject.balanceOf(this.deployer.address);
-            //             let totalLpSupply = Number(
-            //                 currentDeployerBalance.add(performanceFee)
-            //             );
-            //             let tvls = (await this.subject.tvl())[0];
-
-            //             // --------------------- WITHDRAW ---------------------------
-            //             await withSigner(
-            //                 strategyPerformanceTreasury,
-            //                 async (s) => {
-            //                     await feesWrapper.withdraw(
-            //                         this.subject,
-            //                         s,
-            //                         strategyPerformanceTreasury,
-            //                         ethers.constants.MaxUint256,
-            //                         [
-            //                             BigNumber.from(0),
-            //                             BigNumber.from(0),
-            //                             BigNumber.from(0),
-            //                         ]
-            //                     );
-            //                 }
-            //             );
-
-            //             /*
-            //                 tokenFee / tokenTvl = lpTokenBalance[strategyTreasury] / totalLpTokenSupply
-            //             */
-            //             // calculate expected fees
-
-            //             let usdcFee = performanceFee
-            //                 .mul(tvls[0])
-            //                 .div(totalLpSupply);
-            //             let wethFee = performanceFee
-            //                 .mul(tvls[1])
-            //                 .div(totalLpSupply);
-
-            //             let usdcBalanceStrategyPerformanceTreasury =
-            //                 await this.usdc.balanceOf(
-            //                     this.strategyPerformanceTreasury
-            //                 );
-            //             let wethBalanceStrategyPerformanceTreasury =
-            //                 await this.weth.balanceOf(
-            //                     this.strategyPerformanceTreasury
-            //                 );
-
-            //             let usdcFeeAbsDifference = usdcFee
-            //                 .sub(usdcBalanceStrategyPerformanceTreasury)
-            //                 .abs();
-            //             let wethFeeAbsDifference = wethFee
-            //                 .sub(wethBalanceStrategyPerformanceTreasury)
-            //                 .abs();
-
-            //             expect(
-            //                 usdcFeeAbsDifference
-            //                     .mul(10000)
-            //                     .sub(usdcBalanceStrategyPerformanceTreasury)
-            //                     .lte(0)
-            //             ).to.be.true;
-            //             expect(
-            //                 wethFeeAbsDifference
-            //                     .mul(10000)
-            //                     .sub(wethBalanceStrategyPerformanceTreasury)
-            //                     .lte(0)
-            //             ).to.be.true;
-            //         }
-
-            //         // collect protocol fees
-            //         if (
-            //             (await this.subject.balanceOf(protocolTreasury)).gt(0)
-            //         ) {
-            //             await withSigner(protocolTreasury, async (s) => {
-            //                 await feesWrapper.withdraw(
-            //                     this.subject,
-            //                     s,
-            //                     protocolTreasury,
-            //                     ethers.constants.MaxUint256,
-            //                     [
-            //                         BigNumber.from(0),
-            //                         BigNumber.from(0),
-            //                         BigNumber.from(0),
-            //                     ]
-            //                 );
-            //             });
-            //         }
-
-            //         /*
-            //             --------------------- CHECK BALANCES EQUALITY ---------------------------
-            //             assert lpTokenBalance[deployer] == 0
-            //             assert usdcSupply + usdcAdditionalAmount ==
-            //                         usdcBalance[deployer] +
-            //                         + usdcBalance[strategyTreeasury]
-            //                         + usdcBalance[strategyPerformanceTreasury]
-            //                         + usdcBalance[protocolTreasury]
-            //             assert  wethSupply + wethAdditionalAmount ==
-            //                         wethBalance[deployer] +
-            //                         + wethBalance[strategyTreeasury]
-            //                         + wethBalance[strategyPerformanceTreasury]
-            //                         + wethBalance[protocolTreasury]
-            //         */
-
-            //         expect(
-            //             await this.subject.balanceOf(this.deployer.address)
-            //         ).to.deep.equals(BigNumber.from(0));
-
-            //         expect(
-            //             (await this.weth.balanceOf(this.deployer.address))
-            //                 .add(await this.weth.balanceOf(strategyTreasury))
-            //                 .add(
-            //                     await this.weth.balanceOf(
-            //                         strategyPerformanceTreasury
-            //                     )
-            //                 )
-            //                 .add(await this.weth.balanceOf(protocolTreasury))
-            //         ).to.be.eq(this.wethDeployerSupply.add(totalWethAmount));
-
-            //         expect(
-            //             (await this.usdc.balanceOf(this.deployer.address))
-            //                 .add(await this.usdc.balanceOf(strategyTreasury))
-            //                 .add(
-            //                     await this.usdc.balanceOf(
-            //                         strategyPerformanceTreasury
-            //                     )
-            //                 )
-            //                 .add(await this.usdc.balanceOf(protocolTreasury))
-            //         ).to.be.eq(this.usdcDeployerSupply.add(totalUsdcAmount));
-
-            //         return true;
-            //     }
-            // );
+            );
         });
     }
 );
