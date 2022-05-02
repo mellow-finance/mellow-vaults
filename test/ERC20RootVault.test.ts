@@ -645,32 +645,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("checking fees", () => {
-                it("charges expected fees", async () => {
-                    const treasureAddress = await setupPerformanceTreasure(
-                        3000,
-                        0
-                    );
-                    const nftIndex = await this.subject.nft();
-                    await this.erc20RootVaultGovernance
-                        .connect(this.admin)
-                        .stageDelayedProtocolPerVaultParams(nftIndex, {
-                            protocolFee: 3000,
-                        });
-                    await sleep(this.governanceDelay);
-                    await this.erc20RootVaultGovernance
-                        .connect(this.admin)
-                        .commitDelayedProtocolPerVaultParams(nftIndex);
-                    const protocolPerVaultParams =
-                        await this.erc20RootVaultGovernance.delayedProtocolPerVaultParams(
-                            nftIndex
-                        );
+            describe("checking protocol fees", () => {
+                it("charges fees", async () => {
+                    const treasureAddress = await setupProtocolTreasure(3000);
                     var signer = await addSigner(randomAddress());
-                    const treasuryBalanceBefore =
-                        await getTreasureBalanceForSigner(
-                            treasureAddress,
-                            signer.address
-                        );
+                    const treasuryBalanceBefore = await getTreasureBalance(
+                        treasureAddress
+                    );
                     const defaultDepositAmount = BigNumber.from(10).pow(14);
                     const amount = BigNumber.from(10)
                         .pow(21)
@@ -700,11 +681,14 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             DEFAULT_MIN_LP_TOKEN,
                             []
                         );
-                    const treasureBalance = getTreasureBalanceForSigner(
-                        treasureAddress,
-                        signer.address
+                    const treasuryBalanceAfter = await getTreasureBalance(
+                        treasureAddress
                     );
-                    // expect(treasuryBalanceBefore).to.be.equal(treasureBalance);
+                    expect(
+                        treasuryBalanceAfter
+                            .sub(treasuryBalanceBefore)
+                            .toNumber()
+                    ).to.be.greaterThan(0);
                 });
             });
 
@@ -712,10 +696,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 managementFee: number,
                 performanceFee: number
             ) => {
-                let erc20Factory = await ethers.getContractFactory(
-                    "ERC20Token"
-                );
-                var { address: treasureAddress } = await erc20Factory.deploy();
+                const treasureAddress = randomAddress();
                 var governance: IERC20RootVaultGovernance =
                     await ethers.getContractAt(
                         "IERC20RootVaultGovernance",
@@ -725,6 +706,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const nftIndex = await this.subject.nft();
                 const { strategyTreasury: strategyTreasury } =
                     await governance.delayedStrategyParams(nftIndex);
+                const result = await governance.delayedStrategyParams(nftIndex);
 
                 await governance
                     .connect(this.admin)
@@ -748,10 +730,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 managementFee: number,
                 performanceFee: number
             ) => {
-                let erc20Factory = await ethers.getContractFactory(
-                    "ERC20Token"
-                );
-                var { address: treasureAddress } = await erc20Factory.deploy();
+                let treasureAddress = randomAddress();
                 var governance: IERC20RootVaultGovernance =
                     await ethers.getContractAt(
                         "IERC20RootVaultGovernance",
@@ -763,6 +742,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     strategyPerformanceTreasury: strategyPerformanceTreasury,
                 } = await governance.delayedStrategyParams(nftIndex);
 
+                const result = await governance.delayedStrategyParams(nftIndex);
                 await governance
                     .connect(this.admin)
                     .stageDelayedStrategyParams(nftIndex, {
@@ -782,15 +762,35 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 return treasureAddress;
             };
 
-            const getTreasureBalanceForSigner = async (
-                treasureAddress: string,
-                signer: string
-            ) => {
-                const treasure: ERC20Token = await ethers.getContractAt(
-                    "ERC20Token",
-                    treasureAddress
-                );
-                return treasure.balanceOf(signer);
+            const setupProtocolTreasure = async (fee: number) => {
+                let treasureAddress = randomAddress();
+                const params = await this.protocolGovernance.params();
+                await this.protocolGovernance.connect(this.admin).stageParams({
+                    maxTokensPerVault: params.maxTokensPerVault,
+                    governanceDelay: params.governanceDelay,
+                    protocolTreasury: treasureAddress,
+                    forceAllowMask: params.forceAllowMask,
+                    withdrawLimit: params.withdrawLimit,
+                });
+                await sleep(params.governanceDelay);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitParams();
+                const nftIndex = await this.subject.nft();
+                await this.erc20RootVaultGovernance
+                    .connect(this.admin)
+                    .stageDelayedProtocolPerVaultParams(nftIndex, {
+                        protocolFee: fee,
+                    });
+                await sleep(this.governanceDelay);
+                await this.erc20RootVaultGovernance
+                    .connect(this.admin)
+                    .commitDelayedProtocolPerVaultParams(nftIndex);
+                return treasureAddress;
+            };
+
+            const getTreasureBalance = async (treasureAddress: string) => {
+                return await this.subject.balanceOf(treasureAddress);
             };
 
             describe("edge cases:", () => {
@@ -813,11 +813,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .commitDelayedProtocolParams();
 
                         var signer = await addSigner(randomAddress());
-                        const treasuryBalanceBefore =
-                            await getTreasureBalanceForSigner(
-                                treasureAddress,
-                                signer.address
-                            );
+                        const treasuryBalanceBefore = await getTreasureBalance(
+                            treasureAddress
+                        );
                         const amount = BigNumber.from(10)
                             .pow(21)
                             .mul(3)
@@ -857,11 +855,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 []
                             );
 
-                        const treasuryBalanceAfter =
-                            await getTreasureBalanceForSigner(
-                                treasureAddress,
-                                signer.address
-                            );
+                        const treasuryBalanceAfter = await getTreasureBalance(
+                            treasureAddress
+                        );
                         expect(treasuryBalanceBefore).to.be.eq(
                             treasuryBalanceAfter
                         );
@@ -887,11 +883,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .commitDelayedProtocolParams();
 
                         var signer = await addSigner(randomAddress());
-                        const treasuryBalanceBefore =
-                            await getTreasureBalanceForSigner(
-                                treasureAddress,
-                                signer.address
-                            );
+                        const treasuryBalanceBefore = await getTreasureBalance(
+                            treasureAddress
+                        );
                         const amount = BigNumber.from(10)
                             .pow(21)
                             .mul(3)
@@ -933,11 +927,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             );
                         await setupLpCallback(WithdrawCallbackMode.NO_ERROR);
 
-                        const treasuryBalanceAfter =
-                            await getTreasureBalanceForSigner(
-                                treasureAddress,
-                                signer.address
-                            );
+                        const treasuryBalanceAfter = await getTreasureBalance(
+                            treasureAddress
+                        );
                         expect(treasuryBalanceBefore).to.be.eq(
                             treasuryBalanceAfter
                         );
@@ -967,11 +959,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         const defaultDepositAmount = BigNumber.from(10).pow(14);
                         await preprocessSigner(signer, amount);
 
-                        const treasuryBalanceBefore =
-                            await getTreasureBalanceForSigner(
-                                TreasuryAddress,
-                                signer.address
-                            );
+                        const treasuryBalanceBefore = await getTreasureBalance(
+                            TreasuryAddress
+                        );
 
                         await expect(
                             this.subject
@@ -999,11 +989,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 )
                         ).not.to.emit(this.subject, "ManagementFeesCharged");
 
-                        const treasuryBalanceAfter =
-                            await getTreasureBalanceForSigner(
-                                TreasuryAddress,
-                                signer.address
-                            );
+                        const treasuryBalanceAfter = await getTreasureBalance(
+                            TreasuryAddress
+                        );
                         expect(treasuryBalanceBefore).to.be.eq(
                             treasuryBalanceAfter
                         );
