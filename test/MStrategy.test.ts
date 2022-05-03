@@ -891,9 +891,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 await this.usdc
                     .connect(this.deployer)
                     .transfer(this.params.erc20Vault, BigNumber.from(10 ** 8));
-                await highRatioMStrategy
-                    .connect(this.mStrategyAdmin)
-                    .rebalance();
+
+                await expect(
+                    highRatioMStrategy.connect(this.mStrategyAdmin).rebalance()
+                ).to.not.be.reverted;
             });
 
             it("when token0/token1 ratio is less than required", async () => {
@@ -1020,9 +1021,9 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     .connect(this.admin)
                     .commitValidator(this.weth.address);
 
-                await lowRatioMStrategy
-                    .connect(this.mStrategyAdmin)
-                    .rebalance();
+                await expect(
+                    lowRatioMStrategy.connect(this.mStrategyAdmin).rebalance()
+                ).to.not.be.reverted;
             });
         });
 
@@ -1175,7 +1176,9 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
                     let res = await subject.callStatic.getAverageTick();
 
-                    await subject.connect(this.mStrategyAdmin).rebalance();
+                    await expect(
+                        subject.connect(this.mStrategyAdmin).rebalance()
+                    ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMax).to.be.equal(
                         Number(ratioParams.tickIncrease) + res.averageTick
@@ -1247,7 +1250,9 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
                     let res = await subject.callStatic.getAverageTick();
 
-                    await subject.connect(this.mStrategyAdmin).rebalance();
+                    await expect(
+                        subject.connect(this.mStrategyAdmin).rebalance()
+                    ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMin).to.be.equal(
                         res.averageTick - Number(ratioParams.tickIncrease)
