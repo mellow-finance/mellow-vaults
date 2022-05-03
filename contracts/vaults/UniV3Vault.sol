@@ -11,7 +11,6 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -236,9 +235,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
         }
-        console.log("UniV3 tokens:", tokenAmounts[0], tokenAmounts[1]);
-        console.log("UniV3 amounts:", amount0, amount1);
-        console.log("univ3 min amounts ", minAmounts.a0, minAmounts.a1);
         actualTokenAmounts[0] = amount0;
         actualTokenAmounts[1] = amount1;
     }
