@@ -15,9 +15,9 @@ contract MockSwapRouter is ISwapRouter {
         exactInputSingleArgs.amountOut = amountOut_;
     }
 
-    function exactInputSingle(ExactInputSingleParams calldata) external payable returns (uint256 amountOut) {
+    function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut) {
         amountOut = 0;
-        emit ExactInputSingle();
+        emit ExactInputSingle(params.amountIn);
     }
 
     function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut) {}
@@ -26,5 +26,5 @@ contract MockSwapRouter is ISwapRouter {
 
     function exactOutput(ExactOutputParams calldata params) external payable returns (uint256 amountIn) {}
 
-    event ExactInputSingle();
+    event ExactInputSingle(uint256 amountIn);
 }

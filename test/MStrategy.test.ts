@@ -45,6 +45,7 @@ import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 import { MockMStrategy } from "./types/MockMStrategy";
 import { type } from "os";
 import { MaxUint256 } from "@uniswap/sdk-core";
+import { min } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -1689,10 +1690,16 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         moneyVault: this.params.moneyVault,
                     };
 
-                    await expect(subject.swapToTarget(params, [])).to.emit(
-                        mockSwapRouter,
-                        "ExactInputSingle"
+                    let expectedAmountIn = min(
+                        Number(params.amountIn),
+                        Number(
+                            await this.usdc.balanceOf(this.erc20Vault.address)
+                        )
                     );
+
+                    await expect(subject.swapToTarget(params, []))
+                        .to.emit(mockSwapRouter, "ExactInputSingle")
+                        .withArgs(expectedAmountIn);
                 });
             });
         });
