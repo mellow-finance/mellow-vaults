@@ -1684,7 +1684,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         moneyVault: this.params.moneyVault,
                     };
 
-                    await subject.swapToTarget(params, []);
+                    await expect(subject.swapToTarget(params, [])).to.emit(
+                        mockSwapRouter,
+                        "ExactInputSingle"
+                    );
                 });
             });
         });
@@ -1754,7 +1757,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 });
             });
 
-            describe("when targetTokenAmount - erc20Vault.tvl > 0 for both tokens", () => {
+            describe("when targetTokenAmount - erc20Vault.tvl >= 0 for both tokens", () => {
                 it("pulls extra tokens from moneyVault for both tokens", async () => {
                     await mint(
                         "USDC",
@@ -1854,15 +1857,17 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
-                    await subject
-                        .connect(this.mStrategyAdmin)
-                        .rebalancePools(
-                            this.params.erc20Vault,
-                            this.params.moneyVault,
-                            this.params.tokens,
-                            BigNumber.from(0),
-                            []
-                        );
+                    await expect(
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalancePools(
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                this.params.tokens,
+                                BigNumber.from(0),
+                                []
+                            )
+                    ).to.emit(this.yearnVault, "Pull");
                 });
             });
             describe("when targetTokenAmount - erc20Vault.tvl > 0 for only one token", () => {
@@ -1976,15 +1981,19 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
-                    await subject
-                        .connect(this.mStrategyAdmin)
-                        .rebalancePools(
-                            this.params.erc20Vault,
-                            this.params.moneyVault,
-                            this.params.tokens,
-                            BigNumber.from(0),
-                            []
-                        );
+                    await expect(
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalancePools(
+                                this.params.erc20Vault,
+                                this.params.moneyVault,
+                                this.params.tokens,
+                                BigNumber.from(0),
+                                []
+                            )
+                    )
+                        .to.emit(this.yearnVault, "Pull")
+                        .to.emit(this.erc20Vault, "Pull");
                 });
             });
         });
