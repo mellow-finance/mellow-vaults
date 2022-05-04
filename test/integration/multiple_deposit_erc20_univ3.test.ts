@@ -1,33 +1,39 @@
-import hre, { getNamedAccounts } from "hardhat";
-import { ethers, deployments } from "hardhat";
+import hre from "hardhat";
+import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
     mint,
     mintUniV3Position_USDC_WETH,
     randomAddress,
     sleep,
+    withSigner,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
-import { pit } from "../library/property";
-import { ERC20RootVault } from "../types/ERC20RootVault";
-import { ERC20Vault } from "../types/ERC20Vault";
-import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
-import { expect } from "chai";
-import { integer } from "fast-check";
 import {
+    ERC20RootVault,
+    YearnVault,
+    ERC20Vault,
+    MStrategy,
+    ProtocolGovernance,
+    UniV3Vault,
     ERC20RootVaultGovernance,
     IERC20RootVault,
     IntegrationVault,
-    MellowOracle,
-    UniV3Vault,
-    YearnVault,
+    IVaultRegistry,
+    ISwapRouter as SwapRouterInterface,
 } from "../types";
-import { Address } from "hardhat-deploy/dist/types";
-import { randomBytes } from "crypto";
+import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
+import { expect } from "chai";
+import { Contract } from "@ethersproject/contracts";
+import { pit, RUNS } from "../library/property";
+import { integer } from "fast-check";
+import { OracleParamsStruct, RatioParamsStruct } from "../types/MStrategy";
 import Common from "../library/Common";
 import { assert } from "console";
+import { randomBytes, sign } from "crypto";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
+import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 
 enum EventType {
     DEPOSIT,
@@ -230,20 +236,20 @@ class FeesWrapper {
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
-    uniV3Vault: UniV3Vault;
     yearnVault: YearnVault;
-    erc20RootVaultNft: number;
-    strategyTreasury: Address;
-    strategyPerformanceTreasury: Address;
-    mellowOracle: MellowOracle;
-    wethDeployerSupply: BigNumber;
+    uniV3Vault: UniV3Vault;
+    erc20RootVault: ERC20RootVault;
+    positionManager: Contract;
+    protocolGovernance: ProtocolGovernance;
     usdcDeployerSupply: BigNumber;
+    wethDeployerSupply: BigNumber;
+    swapRouter: SwapRouterInterface;
 };
 
 type DeployOptions = {};
 
-contract<ERC20RootVault, DeployOptions, CustomContext>(
-    "Integration__erc20_univ3",
+contract<MStrategy, DeployOptions, CustomContext>(
+    "Integration__mstrategy_with_UniV3Vault",
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
@@ -322,7 +328,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         yearnVaultNft + 1
                     );
 
-                    this.subject = await ethers.getContractAt(
+                    this.erc20RootVault = await ethers.getContractAt(
                         "ERC20RootVault",
                         erc20RootVault
                     );
@@ -340,7 +346,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         yearnVault
                     )) as YearnVault;
 
-                    await this.subject
+                    await this.erc20RootVault
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
@@ -391,11 +397,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
 
                     await this.weth.approve(
-                        this.subject.address,
+                        this.erc20RootVault.address,
                         ethers.constants.MaxUint256
                     );
                     await this.usdc.approve(
-                        this.subject.address,
+                        this.erc20RootVault.address,
                         ethers.constants.MaxUint256
                     );
 
@@ -406,6 +412,78 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.mellowOracle = await ethers.getContract(
                         "MellowOracle"
                     );
+
+                    /*
+                     * Deploy MStrategy
+                     */
+                    const { uniswapV3Router } = await getNamedAccounts();
+                    const mStrategy = await (
+                        await ethers.getContractFactory("MStrategy")
+                    ).deploy(uniswapV3PositionManager, uniswapV3Router);
+                    const params = [
+                        tokens,
+                        erc20Vault,
+                        yearnVault,
+                        UNIV3_FEE,
+                        this.mStrategyAdmin.address,
+                    ];
+                    const address = await mStrategy.callStatic.createStrategy(
+                        ...params
+                    );
+                    await mStrategy.createStrategy(...params);
+                    this.subject = await ethers.getContractAt(
+                        "MStrategy",
+                        address
+                    );
+
+                    /*
+                     * Configure oracles for the MStrategy
+                     */
+                    const oracleParams: OracleParamsStruct = {
+                        oracleObservationDelta: 15,
+                        maxTickDeviation: 50,
+                        maxSlippageD: Math.round(0.1 * 10 ** 9),
+                    };
+                    const ratioParams: RatioParamsStruct = {
+                        tickMin: 198240 - 5000,
+                        tickMax: 198240 + 5000,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
+                        minErc20MoneyRatioDeviationD: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minTickRebalanceThreshold: 180,
+                        tickNeighborhood: 60,
+                        tickIncrease: 180,
+                    };
+                    let txs = [];
+                    txs.push(
+                        this.subject.interface.encodeFunctionData(
+                            "setOracleParams",
+                            [oracleParams]
+                        )
+                    );
+                    txs.push(
+                        this.subject.interface.encodeFunctionData(
+                            "setRatioParams",
+                            [ratioParams]
+                        )
+                    );
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .functions["multicall"](txs);
+
+                    this.swapRouter = await ethers.getContractAt(
+                        ISwapRouter,
+                        uniswapV3Router
+                    );
+                    await this.usdc.approve(
+                        this.swapRouter.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await this.weth.approve(
+                        this.swapRouter.address,
+                        ethers.constants.MaxUint256
+                    );
                     return this.subject;
                 }
             );
@@ -415,434 +493,319 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe.only("properties", () => {
-            const checkTvls = async (withPull: boolean) => {
-                const erc20Tvl = await this.erc20Vault.tvl();
-                const univ3Tvl = await this.uniV3Vault.tvl();
-                const yearnTvl = await this.yearnVault.tvl();
-                const rootTvl = await this.subject.tvl();
+        const checkTvls = async (withPull: boolean) => {
+            const erc20Tvl = await this.erc20Vault.tvl();
+            const univ3Tvl = await this.uniV3Vault.tvl();
+            const yearnTvl = await this.yearnVault.tvl();
+            const rootTvl = await this.erc20RootVault.tvl();
 
-                for (var i = 0; i < 2; i++) {
+            for (var i = 0; i < 2; i++) {
+                for (var j = 0; j < 2; j++) {
+                    expect(
+                        erc20Tvl[i][j].add(univ3Tvl[i][j]).add(yearnTvl[i][j])
+                    ).to.deep.equals(rootTvl[i][j]);
+                }
+            }
+            for (var i = 0; i < 2; i++) {
+                if (withPull) {
+                    expect(yearnTvl[0][i]).to.be.eq(yearnTvl[1][i]); // property of yearnVault
+                    // expect(univ3Tvl[0][i]).to.be.lt(univ3Tvl[1][i]);
+                    expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]); // property of erc20Vault
+                } else {
                     for (var j = 0; j < 2; j++) {
-                        expect(
-                            erc20Tvl[i][j]
-                                .add(univ3Tvl[i][j])
-                                .add(yearnTvl[i][j])
-                        ).to.deep.equals(rootTvl[i][j]);
+                        expect(yearnTvl[j][i]).to.be.eq(0);
+                        // expect(univ3Tvl[j][i]).not.to.be.eq(0); // initial state
+                        expect(erc20Tvl[j][i]).not.to.be.eq(0); // initial state
                     }
+                    expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]);
                 }
-                for (var i = 0; i < 2; i++) {
-                    if (withPull) {
-                        expect(yearnTvl[0][i]).to.be.eq(yearnTvl[1][i]); // property of yearnVault
-                        // expect(univ3Tvl[0][i]).to.be.lt(univ3Tvl[1][i]);
-                        expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]); // property of erc20Vault
-                    } else {
-                        for (var j = 0; j < 2; j++) {
-                            expect(yearnTvl[j][i]).to.be.eq(0);
-                            // expect(univ3Tvl[j][i]).not.to.be.eq(0); // initial state
-                            expect(erc20Tvl[j][i]).not.to.be.eq(0); // initial state
-                        }
-                        expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]);
-                    }
-                }
-            };
+            }
+        };
 
-            const debugTvl = (
-                tvl: [BigNumber[], BigNumber[]] & {
-                    minTokenAmounts: BigNumber[];
-                    maxTokenAmounts: BigNumber[];
-                },
-                name: string
-            ) => {
-                console.log("Tvls for:", name);
-                console.log(
-                    "tvl min:",
-                    tvl[0].map((x) => x.toString())
-                );
-                console.log(
-                    "tvl max:",
-                    tvl[1].map((x) => x.toString())
-                );
-                console.log();
-            };
+        const debugTvl = (
+            tvl: [BigNumber[], BigNumber[]] & {
+                minTokenAmounts: BigNumber[];
+                maxTokenAmounts: BigNumber[];
+            },
+            name: string
+        ) => {
+            console.log("Tvls for:", name);
+            console.log(
+                "tvl min:",
+                tvl[0].map((x) => x.toString())
+            );
+            console.log(
+                "tvl max:",
+                tvl[1].map((x) => x.toString())
+            );
+            console.log();
+        };
 
-            const debugTvls = async () => {
-                const univ3Tvl = await this.uniV3Vault.tvl();
-                const yearnTvl = await this.yearnVault.tvl();
-                const erc20Tvl = await this.erc20Vault.tvl();
-                const rootvTvl = await this.subject.tvl();
-                debugTvl(univ3Tvl, "univ3");
-                debugTvl(yearnTvl, "yearn");
-                debugTvl(erc20Tvl, "erc20");
-                debugTvl(rootvTvl, "root");
-            };
+        const debugTvls = async () => {
+            const univ3Tvl = await this.uniV3Vault.tvl();
+            const yearnTvl = await this.yearnVault.tvl();
+            const erc20Tvl = await this.erc20Vault.tvl();
+            const rootvTvl = await this.erc20RootVault.tvl();
+            debugTvl(univ3Tvl, "univ3");
+            debugTvl(yearnTvl, "yearn");
+            debugTvl(erc20Tvl, "erc20");
+            debugTvl(rootvTvl, "root");
+        };
 
-            const debugTokenBalances = async (flag: string) => {
-                const wethBalance = await this.weth.balanceOf(
-                    this.deployer.address
-                );
-                const usdcBalance = await this.usdc.balanceOf(
-                    this.deployer.address
-                );
-                const userBalance = await this.subject.balanceOf(
-                    this.deployer.address
-                );
-
-                console.log();
-                console.log("Flag:", flag);
-                console.log("WethBalance:", wethBalance.toString());
-                console.log("UsdcBalance:", usdcBalance.toString());
-                console.log("SubjectBalance:", userBalance.toString());
-                console.log();
-            };
-
-            const setNonZeroFeesFixture = deployments.createFixture(
-                async () => {
-                    await this.deploymentFixture();
-                    let erc20RootVaultGovernance: ERC20RootVaultGovernance =
-                        await ethers.getContract("ERC20RootVaultGovernance");
-
-                    await erc20RootVaultGovernance
-                        .connect(this.admin)
-                        .stageDelayedStrategyParams(this.erc20RootVaultNft, {
-                            strategyTreasury: this.strategyTreasury,
-                            strategyPerformanceTreasury:
-                                this.strategyPerformanceTreasury,
-                            privateVault: true,
-                            managementFee: BigNumber.from(20000000),
-                            performanceFee: BigNumber.from(200000000),
-                            depositCallbackAddress:
-                                ethers.constants.AddressZero,
-                            withdrawCallbackAddress:
-                                ethers.constants.AddressZero,
-                        });
-                    await sleep(this.governanceDelay);
-                    await this.erc20RootVaultGovernance
-                        .connect(this.admin)
-                        .commitDelayedStrategyParams(this.erc20RootVaultNft);
-
-                    const { protocolTreasury } = await getNamedAccounts();
-
-                    const params = {
-                        forceAllowMask: ALLOW_MASK,
-                        maxTokensPerVault: 10,
-                        governanceDelay: 86400,
-                        protocolTreasury,
-                        withdrawLimit: Common.D18.mul(100),
-                    };
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .stageParams(params);
-                    await sleep(this.governanceDelay);
-                    await this.protocolGovernance
-                        .connect(this.admin)
-                        .commitParams();
-                }
+        const debugTokenBalances = async (flag: string) => {
+            const wethBalance = await this.weth.balanceOf(
+                this.deployer.address
+            );
+            const usdcBalance = await this.usdc.balanceOf(
+                this.deployer.address
+            );
+            const userBalance = await this.erc20RootVault.balanceOf(
+                this.deployer.address
             );
 
-            const generateRandomBignumber = (limit: BigNumber) => {
-                assert(limit.gt(0), "Bignumber underflow");
-                const bytes =
-                    "0x" + randomBytes(limit._hex.length * 2).toString("hex");
-                return BigNumber.from(bytes).mod(limit);
-            };
+            console.log();
+            console.log("*===*", flag, "*===*");
+            console.log("WethBalance:", wethBalance.toString());
+            console.log("UsdcBalance:", usdcBalance.toString());
+            console.log("RootBalance:", userBalance.toString());
+            console.log("*=================*");
+            console.log();
+        };
 
-            const generateArraySplit = (
-                w: BigNumber,
-                n: number,
-                from: BigNumber
-            ) => {
-                assert(n >= 0, "Zero length array");
-                var result: BigNumber[] = [];
-                if (w.lt(from.mul(n))) {
-                    throw "Weight underflow";
-                }
+        const setNonZeroFeesFixture = deployments.createFixture(async () => {
+            await this.deploymentFixture();
+            let erc20RootVaultGovernance: ERC20RootVaultGovernance =
+                await ethers.getContract("ERC20RootVaultGovernance");
 
-                for (var i = 0; i < n; i++) {
-                    result.push(BigNumber.from(from));
-                    w = w.sub(from);
-                }
-
-                var splits: BigNumber[] = [BigNumber.from(0)];
-                for (var i = 0; i < n - 1; i++) {
-                    splits.push(generateRandomBignumber(w.add(1)));
-                }
-
-                splits = splits.sort((x, y) => {
-                    return x.lt(y) ? -1 : 1;
+            await erc20RootVaultGovernance
+                .connect(this.admin)
+                .stageDelayedStrategyParams(this.erc20RootVaultNft, {
+                    strategyTreasury: this.strategyTreasury,
+                    strategyPerformanceTreasury:
+                        this.strategyPerformanceTreasury,
+                    privateVault: true,
+                    managementFee: BigNumber.from(20000000),
+                    performanceFee: BigNumber.from(200000000),
+                    depositCallbackAddress: ethers.constants.AddressZero,
+                    withdrawCallbackAddress: ethers.constants.AddressZero,
                 });
+            await sleep(this.governanceDelay);
+            await this.erc20RootVaultGovernance
+                .connect(this.admin)
+                .commitDelayedStrategyParams(this.erc20RootVaultNft);
 
-                var deltas: BigNumber[] = [];
-                for (var i = 0; i < n - 1; i++) {
-                    deltas.push(splits[i + 1].sub(splits[i]));
-                    w = w.sub(deltas[i]);
-                }
-                deltas.push(w);
+            const { protocolTreasury } = await getNamedAccounts();
 
-                for (var i = 0; i < n; i++) {
-                    result[i] = result[i].add(deltas[i]);
-                }
-                return result;
+            const params = {
+                forceAllowMask: ALLOW_MASK,
+                maxTokensPerVault: 10,
+                governanceDelay: 86400,
+                protocolTreasury,
+                withdrawLimit: Common.D18.mul(100),
             };
+            await this.protocolGovernance
+                .connect(this.admin)
+                .stageParams(params);
+            await sleep(this.governanceDelay);
+            await this.protocolGovernance.connect(this.admin).commitParams();
+        });
 
-            pit(
-                `
-            when fees are not zero, sum of deposit[i] = sum of withdraw[j] + sum of fees[i]
-            `,
-                { numRuns: 1, endOnFailure: true },
-                integer({ min: 2, max: 20 }),
-                integer({ min: 2, max: 20 }),
-                async (numDeposits: number, numWithdraws: number) => {
-                    await setNonZeroFeesFixture();
+        const generateRandomBignumber = (limit: BigNumber) => {
+            assert(limit.gt(0), "Bignumber underflow");
+            const bytes =
+                "0x" + randomBytes(limit._hex.length * 2).toString("hex");
+            return BigNumber.from(bytes).mod(limit);
+        };
 
-                    const feesWrapper = new FeesWrapper(
-                        [this.usdc.address, this.weth.address],
-                        [
-                            this.erc20Vault.address,
-                            this.uniV3Vault.address,
-                            this.yearnVault.address,
-                            this.subject.address,
-                        ],
-                        [
-                            VaultType.ERC20,
-                            VaultType.UNIV3,
-                            VaultType.YEARN,
-                            VaultType.ROOT,
-                        ]
-                    );
+        const generateArraySplit = (
+            w: BigNumber,
+            n: number,
+            from: BigNumber
+        ) => {
+            assert(n >= 0, "Zero length array");
+            var result: BigNumber[] = [];
+            if (w.lt(from.mul(n))) {
+                throw "Weight underflow";
+            }
 
-                    /*
-                        Generate different events
-                     **/
+            for (var i = 0; i < n; i++) {
+                result.push(BigNumber.from(from));
+                w = w.sub(from);
+            }
 
-                    const FIRST_DEPOSIT_LIMIT =
-                        await this.subject.FIRST_DEPOSIT_LIMIT();
-                    const wethDeposits = generateArraySplit(
-                        this.wethDeployerSupply,
-                        numDeposits,
-                        FIRST_DEPOSIT_LIMIT.add(10 ** 4)
-                    );
-                    const usdcDeposits = wethDeposits.map((wethDeposit) => {
-                        return this.usdcDeployerSupply
-                            .mul(wethDeposit)
-                            .div(
-                                this.usdcDeployerSupply.add(
-                                    this.wethDeployerSupply
-                                )
-                            );
-                    });
+            var splits: BigNumber[] = [BigNumber.from(0)];
+            for (var i = 0; i < n - 1; i++) {
+                splits.push(generateRandomBignumber(w.add(1)));
+            }
 
-                    const wethWithdraws = generateArraySplit(
-                        this.wethDeployerSupply,
-                        numWithdraws,
-                        BigNumber.from(0)
-                    );
+            splits = splits.sort((x, y) => {
+                return x.lt(y) ? -1 : 1;
+            });
 
-                    const usdcWithdraws = wethWithdraws.map((wethWithdraw) => {
-                        return this.usdcDeployerSupply
-                            .mul(wethWithdraw)
-                            .div(
-                                this.usdcDeployerSupply.add(
-                                    this.wethDeployerSupply
-                                )
-                            );
-                    });
+            var deltas: BigNumber[] = [];
+            for (var i = 0; i < n - 1; i++) {
+                deltas.push(splits[i + 1].sub(splits[i]));
+                w = w.sub(deltas[i]);
+            }
+            deltas.push(w);
 
-                    var events: {
-                        type: EventType;
-                        weth: BigNumber;
-                        usdc: BigNumber;
-                        vault: VaultType;
-                    }[] = [];
-                    var currentUsdcBalance = BigNumber.from(0);
-                    var currentWethBalance = BigNumber.from(0);
-                    var withdrawIndex = 0;
-                    for (
-                        var depositIndex = 0;
-                        depositIndex < numDeposits;
-                        depositIndex++
-                    ) {
-                        currentUsdcBalance = currentUsdcBalance.add(
-                            usdcDeposits[depositIndex]
-                        );
-                        currentWethBalance = currentWethBalance.add(
-                            wethDeposits[depositIndex]
-                        );
-                        events.push({
-                            type: EventType.DEPOSIT,
-                            weth: wethDeposits[depositIndex],
-                            usdc: usdcDeposits[depositIndex],
-                            vault: VaultType.ERC20,
-                        });
-                        {
-                            const vaultType =
-                                Math.random() < 0.5
-                                    ? VaultType.UNIV3
-                                    : VaultType.YEARN;
-                            events.push({
-                                type: EventType.PULL,
-                                weth: BigNumber.from(0),
-                                usdc: BigNumber.from(0),
-                                vault: vaultType,
-                            });
-                        }
-                        while (
-                            withdrawIndex < numWithdraws &&
-                            currentUsdcBalance.gte(
-                                usdcWithdraws[withdrawIndex]
-                            ) &&
-                            currentWethBalance.gte(wethWithdraws[withdrawIndex])
-                        ) {
-                            currentUsdcBalance = currentUsdcBalance.sub(
-                                usdcWithdraws[withdrawIndex]
-                            );
-                            currentWethBalance = currentWethBalance.sub(
-                                wethWithdraws[withdrawIndex]
-                            );
-                            events.push({
-                                type: EventType.WITHDRAW,
-                                weth: wethWithdraws[withdrawIndex],
-                                usdc: usdcWithdraws[withdrawIndex],
-                                vault: VaultType.ERC20,
-                            });
-                            withdrawIndex++;
-                        }
-                    }
+            for (var i = 0; i < n; i++) {
+                result[i] = result[i].add(deltas[i]);
+            }
+            return result;
+        };
 
-                    assert(withdrawIndex == numWithdraws, "Index error");
-
-                    /*
-                        Apply events
-                     **/
-
-                    const getLpAmounts = async () => {
-                        const rootAmount = await this.subject.balanceOf(
-                            this.deployer.address
-                        );
-                        const rootTvl = (await this.subject.tvl())[0][1]; // min weth
-                        if (rootAmount.eq(0)) {
-                            return {
-                                rootAmount: BigNumber.from(0),
-                                univ3Amount: BigNumber.from(0),
-                                yearnAmount: BigNumber.from(0),
-                                erc20Amount: BigNumber.from(0),
-                            };
-                        }
-                        const erc20Tvl = (await this.erc20Vault.tvl())[0][1];
-                        const univ3Tvl = (await this.uniV3Vault.tvl())[0][1];
-                        const yearnTvl = (await this.yearnVault.tvl())[0][1];
-
-                        const erc20Amount = rootAmount
-                            .mul(erc20Tvl)
-                            .div(rootTvl);
-                        const univ3Amount = rootAmount
-                            .mul(univ3Tvl)
-                            .div(rootTvl);
-                        const yearnAmount = rootAmount
-                            .mul(yearnTvl)
-                            .div(rootTvl);
-
-                        return {
-                            rootAmount: rootAmount,
-                            univ3Amount: univ3Amount,
-                            yearnAmount: yearnAmount,
-                            erc20Amount: erc20Amount,
-                        };
-                    };
-
-                    const getLpByValue = async (value: BigNumber) => {
-                        const rootAmount = await this.subject.balanceOf(
-                            this.deployer.address
-                        );
-                        const rootTvl = (await this.subject.tvl())[0][1]; // min weth
-                        return rootAmount.mul(value).div(rootTvl);
-                    };
-
-                    for (var i = 0; i < events.length; i++) {
-                        var event = events[i];
-                        await debugTokenBalances(
-                            "Next iteration. Event: " + event.type.toString()
-                        );
-                        if (event.type == EventType.DEPOSIT) {
-                            await feesWrapper.deposit(
-                                this.subject,
-                                this.deployer,
-                                [event.usdc, event.weth],
-                                BigNumber.from(0)
-                            );
-                        } else if (event.type == EventType.WITHDRAW) {
-                            const amountForWithdraw = await getLpByValue(
-                                event.weth
-                            );
-                            await feesWrapper.withdraw(
-                                this.subject,
-                                this.deployer,
-                                this.deployer.address,
-                                amountForWithdraw,
-                                [
-                                    BigNumber.from(0),
-                                    BigNumber.from(0),
-                                    BigNumber.from(0),
-                                ]
-                            );
-                        } else if (event.type == EventType.PULL) {
-                            const vaultType = event.vault;
-                            const amounts = await getLpAmounts();
-                            const subvaultAmount =
-                                vaultType == VaultType.UNIV3
-                                    ? amounts.univ3Amount
-                                    : amounts.yearnAmount;
-                            const erc20Amount = amounts.erc20Amount;
-
-                            var to =
-                                vaultType == VaultType.UNIV3
-                                    ? this.uniV3Vault.address
-                                    : this.yearnVault.address;
-                            var from = this.erc20Vault.address;
-                            var source: IntegrationVault = this.erc20Vault;
-                            if (subvaultAmount.gt(erc20Amount)) {
-                                var tmp = from;
-                                from = to;
-                                to = tmp;
-                                source =
-                                    vaultType == VaultType.UNIV3
-                                        ? this.uniV3Vault
-                                        : this.yearnVault;
-                            }
-
-                            const percentage = BigNumber.from(
-                                Math.ceil(Math.random() * 10 ** 2)
-                            );
-                            var sourceTvl = await (subvaultAmount.gt(
-                                erc20Amount
-                            )
-                                ? vaultType == VaultType.UNIV3
-                                    ? this.uniV3Vault.tvl()
-                                    : this.yearnVault.tvl()
-                                : this.erc20Vault.tvl());
-
-                            const wethAmountForPull = sourceTvl[0][1]
-                                .mul(percentage)
-                                .div(100);
-                            const usdcAmountForPull = sourceTvl[0][0]
-                                .mul(percentage)
-                                .div(100);
-                            await feesWrapper.pull(
-                                source,
-                                this.deployer,
-                                [usdcAmountForPull, wethAmountForPull],
-                                to
-                            );
-                        }
-                    }
-
-                    /*
-                        Check parameters
-                     **/
-
-                    return true;
-                }
+        const getLpAmounts = async () => {
+            const rootAmount = await this.erc20RootVault.balanceOf(
+                this.deployer.address
             );
+            const rootTvl = (await this.erc20RootVault.tvl())[0][1]; // min weth
+            if (rootAmount.eq(0)) {
+                return {
+                    rootAmount: BigNumber.from(0),
+                    univ3Amount: BigNumber.from(0),
+                    yearnAmount: BigNumber.from(0),
+                    erc20Amount: BigNumber.from(0),
+                };
+            }
+            const erc20Tvl = (await this.erc20Vault.tvl())[0][1];
+            const univ3Tvl = (await this.uniV3Vault.tvl())[0][1];
+            const yearnTvl = (await this.yearnVault.tvl())[0][1];
+
+            const erc20Amount = rootAmount.mul(erc20Tvl).div(rootTvl);
+            const univ3Amount = rootAmount.mul(univ3Tvl).div(rootTvl);
+            const yearnAmount = rootAmount.mul(yearnTvl).div(rootTvl);
+
+            return {
+                rootAmount: rootAmount,
+                univ3Amount: univ3Amount,
+                yearnAmount: yearnAmount,
+                erc20Amount: erc20Amount,
+            };
+        };
+
+        const getLpByValue = async (value: BigNumber) => {
+            const rootAmount = await this.erc20RootVault.balanceOf(
+                this.deployer.address
+            );
+            const rootTvl = (await this.erc20RootVault.tvl())[0][1]; // min weth
+            return rootAmount.mul(value).div(rootTvl);
+        };
+
+        describe.only("properties", () => {
+            it("Execute integration test", async () => {
+                await setNonZeroFeesFixture();
+
+                await debugTokenBalances("State A [init] initial state");
+                await debugTvls();
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.erc20Vault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.yearnVault.nft()
+                    );
+
+                const usdcAmountForDeposit = this.usdcDeployerSupply;
+                const wethAmountForDeposit = this.wethDeployerSupply;
+
+                await this.erc20RootVault
+                    .connect(this.deployer)
+                    .deposit(
+                        [usdcAmountForDeposit, wethAmountForDeposit],
+                        0,
+                        []
+                    );
+                await debugTokenBalances(
+                    "State B [deposit] after increased liquidity"
+                );
+                await debugTvls();
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .manualPull(
+                        this.erc20Vault.address,
+                        this.yearnVault.address,
+                        [usdcAmountForDeposit, wethAmountForDeposit],
+                        []
+                    );
+
+                await debugTokenBalances(
+                    "State C [manualPull] after giving liqudity for YearnVault"
+                );
+                await debugTvls();
+
+                await this.subject.connect(this.mStrategyAdmin).rebalance();
+                await debugTokenBalances(
+                    "State D [rebalance] after rebalance strategy with default params"
+                );
+                await debugTvls();
+
+                {
+                    // await this.preparePush();
+                    // await this.subject.push(
+                    //     [this.usdc.address, this.weth.address],
+                    //     [
+                    //         BigNumber.from(10).pow(6).mul(3000),
+                    //         BigNumber.from(10).pow(18).mul(1),
+                    //     ],
+                    //     []
+                    // );
+
+                    const { uniswapV3Router } = await getNamedAccounts();
+                    let swapRouter = await ethers.getContractAt(
+                        ISwapRouter,
+                        uniswapV3Router
+                    );
+                    await this.usdc.approve(
+                        swapRouter.address,
+                        ethers.constants.MaxUint256
+                    );
+                    let params = {
+                        tokenIn: this.usdc.address,
+                        tokenOut: this.weth.address,
+                        fee: UNIV3_FEE,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                        amountIn: BigNumber.from(10).pow(6).mul(5000),
+                        amountOutMinimum: 0,
+                        sqrtPriceLimitX96: 0,
+                    };
+                    await swapRouter.exactInputSingle(params);
+                }
+
+                let params = {
+                    tokenIn: this.usdc.address,
+                    tokenOut: this.weth.address,
+                    fee: UNIV3_FEE,
+                    recipient: this.deployer.address,
+                    deadline: ethers.constants.MaxUint256,
+                    amountIn: BigNumber.from(10).pow(9),
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0,
+                };
+
+                await this.swapRouter
+                    .connect(this.deployer)
+                    .exactInputSingle(params);
+                await debugTokenBalances(
+                    "State E [swap] after swap by SwapRouter"
+                );
+                await debugTvls();
+
+                await this.subject.connect(this.mStrategyAdmin).rebalance();
+                await debugTokenBalances(
+                    "State F [rebalance] after rebalance strategy with new price params"
+                );
+                await debugTvls();
+
+                return true;
+            });
         });
     }
 );
