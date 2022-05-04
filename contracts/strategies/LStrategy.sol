@@ -579,6 +579,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) internal returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
+        if (desiredLiquidity == 0) {
+            return (new uint256[](2), new uint256[](2));
+        }
         uint128 liquidity = desiredLiquidity;
 
         // Cut for available liquidity in the vault
@@ -614,7 +617,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         //--- End cut
         {
             uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(liquidity);
-            uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
+            uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(
+                desiredLiquidity == type(uint128).max ? desiredLiquidity : liquidity
+            );
             pulledAmounts = fromVault.pull(
                 address(erc20Vault),
                 tokens,
@@ -622,6 +627,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 _makeUniswapVaultOptions(minWithdrawTokens, deadline)
             );
             // The pull is on best effort so we don't worry on overflow
+            require((depositTokenAmounts[0] != 0 || depositTokenAmounts[1] != 0), ExceptionsLibrary.VALUE_ZERO);
             pushedAmounts = erc20Vault.pull(
                 address(toVault),
                 tokens,
