@@ -141,6 +141,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 tokenId,
         bytes memory
     ) external returns (bytes4) {
+        console.log("hehehe");
+        console.log(msg.sender);
+        console.log(address(_positionManager));
+        console.log(operator);
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, , , , , , , , ) = _positionManager.positions(tokenId);

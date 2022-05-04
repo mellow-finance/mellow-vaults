@@ -22,7 +22,7 @@ import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect, assert } from "chai";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { AaveVault, AaveVault__factory, ERC20RootVaultGovernance, ERC20Token, IIntegrationVault, ILendingPool, IntegrationVault, MellowOracle, UniV3Vault, Vault } from "../types";
+import { AaveVault, AaveVault__factory, ERC20RootVaultGovernance, ERC20Token, IIntegrationVault, ILendingPool, IntegrationVault, IUniswapV3Pool, MellowOracle, UniV3Vault, Vault } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { generateKeyPair, randomBytes, randomInt } from "crypto";
 import { last, none } from "ramda";
@@ -79,13 +79,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     const uniV3PoolFee = 3000;
 
-                    let erc20VaultNft = startNft;
-                    let aaveVaultNft = startNft + 1;
-                    let uniV3VaultNft = startNft + 2;
-                    let yearnVaultNft = startNft + 3;
+                    this.erc20VaultNft = startNft;
+                    this.aaveVaultNft = startNft + 1;
+                    this.uniV3VaultNft = startNft + 2;
+                    this.yearnVaultNft = startNft + 3;
                     await setupVault(
                         hre,
-                        erc20VaultNft,
+                        this.erc20VaultNft,
                         "ERC20VaultGovernance",
                         {
                             createVaultArgs: [this.tokenAddresses, this.deployer.address],
@@ -93,7 +93,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
                     await setupVault(
                         hre,
-                        aaveVaultNft,
+                        this.aaveVaultNft,
                         "AaveVaultGovernance",
                         {
                             createVaultArgs: [this.tokenAddresses, this.deployer.address],
@@ -101,7 +101,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
                     await setupVault(
                         hre,
-                        uniV3VaultNft,
+                        this.uniV3VaultNft,
                         "UniV3VaultGovernance",
                         {
                             createVaultArgs: [this.tokenAddresses, this.deployer.address, uniV3PoolFee],
@@ -109,7 +109,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
                     await setupVault(
                         hre,
-                        yearnVaultNft,
+                        this.yearnVaultNft,
                         "YearnVaultGovernance",
                         {
                             createVaultArgs: [this.tokenAddresses, this.deployer.address],
@@ -117,8 +117,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
                     await combineVaults(
                         hre,
-                        yearnVaultNft + 1,
-                        [erc20VaultNft, aaveVaultNft, uniV3VaultNft, yearnVaultNft],
+                        this.yearnVaultNft + 1,
+                        [this.erc20VaultNft, this.aaveVaultNft, this.uniV3VaultNft, this.yearnVaultNft],
                         this.deployer.address,
                         this.deployer.address
                     );
@@ -126,27 +126,27 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const erc20Vault = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        erc20VaultNft
+                        this.erc20VaultNft
                     );
                     const aaveVault = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        aaveVaultNft
+                        this.aaveVaultNft
                     );
                     const uniV3Vault = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        uniV3VaultNft
+                        this.uniV3VaultNft
                     );
                     const yearnVault = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        yearnVaultNft
+                        this.yearnVaultNft
                     );
                     const erc20RootVault = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        yearnVaultNft + 1
+                        this.yearnVaultNft + 1
                     );
 
                     this.subject = await ethers.getContractAt(
@@ -228,30 +228,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         uniswapV3PositionManager
                     );
                     
-                    this.prepareUniV3Push = async () => {
-                        const result = await mintUniV3Position_USDC_WETH({
-                            fee: 3000,
-                            tickLower: -887220,
-                            tickUpper: 887220,
-                            usdcAmount: BigNumber.from(10).pow(18).mul(30),
-                            wethAmount: BigNumber.from(10).pow(18).mul(30),
-                        });
-                        await this.positionManager.functions[
-                            "safeTransferFrom(address,address,uint256)"
-                        ](
-                            this.deployer.address,
-                            this.uniV3Vault.address,
-                            result.tokenId
-                        );
-                    };
-                
                     this.mapVaultsToNames = {};
                     this.mapVaultsToNames[this.erc20Vault.address] = "zeroVault";
                     this.mapVaultsToNames[this.aaveVault.address] = "aaveVault";
                     this.mapVaultsToNames[this.yearnVault.address] = "yearnVault";
                     this.mapVaultsToNames[this.uniV3Vault.address] = "uniV3Vault";
 
-                    this.erc20RootVaultNft = yearnVaultNft + 1;
+                    this.erc20RootVaultNft = this.yearnVaultNft + 1;
                     return this.subject;
                 }
             );
@@ -365,6 +348,52 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             this.vaultChanges[action.from.address].push({amount:action.amount.map(amount => amount.mul(-1)), timestamp: currentTimestamp, balanceBefore:fromBalanceBefore, balanceAfter:fromBalanceAfter});
             this.vaultChanges[action.to.address].push({amount:action.amount, timestamp: currentTimestamp, balanceBefore:toBalanceBefore, balanceAfter:toBalanceAfter});
             
+        }
+
+        async function pullToUniV3Vault(this:TestContext<ERC20RootVault, DeployOptions> & CustomContext, sender:any, options:any) {
+            for (let token of this.tokens) {
+                if (
+                    (await token.allowance(sender.address, this.positionManager.address)).eq(
+                        BigNumber.from(0)
+                    )
+                ) {
+                    await withSigner(sender.address, async (signer) => {
+                        await token.connect(signer).approve(
+                            this.positionManager.address,
+                            ethers.constants.MaxUint256
+                        );
+                    });
+                }
+            }
+
+            const mintParams = {
+                token0: this.tokens[0].address,
+                token1: this.tokens[1].address,
+                fee: options.fee,
+                tickLower: options.tickLower,
+                tickUpper: options.tickUpper,
+                amount0Desired: options.token0Amount,
+                amount1Desired: options.token1Amount,
+                amount0Min: 0,
+                amount1Min: 0,
+                recipient: sender.address,
+                deadline: ethers.constants.MaxUint256,
+            };
+
+            await withSigner(sender.address, async (signer) => {
+                const result = await this.positionManager.connect(signer).callStatic.mint(mintParams);
+                await this.positionManager.connect(signer).mint(mintParams);
+                await withSigner(this.subject.address, async(root) => {
+                    await this.vaultRegistry.connect(root).approve(sender.address, this.uniV3VaultNft);
+                })
+                await this.positionManager.connect(signer).functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](
+                    sender.address,
+                    this.uniV3Vault.address,
+                    result.tokenId
+                );
+            });
         }
 
         async function countProfit(this:TestContext<ERC20RootVault, DeployOptions> & CustomContext, vaultAddress:string) {
@@ -617,13 +646,33 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             it.only("testing univ3", async () => {
                 await setZeroFeesFixture();
-                let depositAmount = [BigNumber.from(10).pow(6).mul(10), BigNumber.from(10).pow(18).mul(10)];
+                let depositAmount = [BigNumber.from(10).pow(6).mul(20), BigNumber.from(10).pow(18).mul(20)];
                 
                 await this.subject.connect(this.deployer).deposit(depositAmount, 0, []);  
                 this.targets = [this.erc20Vault, this.uniV3Vault];
                 await printVaults.call(this);
 
-                await this.prepareUniV3Push();  
+                await pullToUniV3Vault.call(this, this.erc20Vault, {
+                    fee: 3000,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    token0Amount: BigNumber.from(10).pow(6).mul(10),
+                    token1Amount: BigNumber.from(10).pow(18).mul(10),
+                })
+
+                let poolAddress = await this.uniswapV3Factory.getPool(
+                                            this.tokens[0],
+                                            this.tokens[1],
+                                            3000
+                                        );
+                const pool: IUniswapV3Pool = await ethers.getContractAt(
+                    "IUniswapV3Pool",
+                    poolAddress
+                );
+                let poolSlot0 = await pool.slot0();
+                console.log("end this");
+                console.log(poolSlot0.sqrtPriceX96);
+                await printVaults.call(this);
 
                 let optionsAave = encodeToBytes(
                     ["uint256"],
@@ -640,14 +689,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ]
                 )
 
-                await withSigner(this.subject.address, async (signer) => {
-                    await this.erc20Vault.connect(signer).pull(this.uniV3Vault.address, this.tokenAddresses, depositAmount, optionsUniV3);
-                });
-
-                await printVaults.call(this)
-
                 console.log("sleeping");
                 await sleep(1000000000);
+
+                
+                let tvlResults1 = await printVaults.call(this)
+
+                await withSigner(this.subject.address, async (signer) => {
+                    await this.erc20Vault.connect(signer).pull(this.uniV3Vault.address, this.tokenAddresses, tvlResults1[0][0], optionsUniV3);
+                });
 
                 let tvlResults = await printVaults.call(this)
 
