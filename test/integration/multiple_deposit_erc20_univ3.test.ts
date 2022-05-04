@@ -4,41 +4,30 @@ import { BigNumber } from "@ethersproject/bignumber";
 import {
     mint,
     mintUniV3Position_USDC_WETH,
-    now,
     randomAddress,
     sleep,
-    sleepTo,
-    withSigner,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
-import { pit, RUNS } from "../library/property";
+import { pit } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { ERC20Vault } from "../types/ERC20Vault";
 import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect } from "chai";
-import { integer, float, bigInt, Random, PureRandom } from "fast-check";
+import { integer } from "fast-check";
 import {
     ERC20RootVaultGovernance,
-    ERC20Token,
     IERC20RootVault,
-    IIntegrationVault,
     IntegrationVault,
-    IUniswapV3Pool,
     MellowOracle,
-    MockUniswapV3Pool,
     UniV3Vault,
     YearnVault,
 } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
-import { randomBytes, randomInt } from "crypto";
+import { randomBytes } from "crypto";
 import Common from "../library/Common";
-import { assert, debug } from "console";
+import { assert } from "console";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { init, min, split } from "ramda";
-import { IUniswapV3PoolImmutablesInterface } from "../types/IUniswapV3PoolImmutables";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { Contract } from "ethers";
-import { threadId } from "worker_threads";
 
 enum EventType {
     DEPOSIT,
@@ -563,7 +552,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 n: number,
                 from: BigNumber
             ) => {
-                const tot = w;
                 assert(n >= 0, "Zero length array");
                 var result: BigNumber[] = [];
                 if (w.lt(from.mul(n))) {
@@ -769,14 +757,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         const rootTvl = (await this.subject.tvl())[0][1]; // min weth
                         return rootAmount.mul(value).div(rootTvl);
                     };
-                
+
                     for (var i = 0; i < events.length; i++) {
                         var event = events[i];
                         await debugTokenBalances(
                             "Next iteration. Event: " + event.type.toString()
                         );
                         if (event.type == EventType.DEPOSIT) {
-                            console.log("Deposit");
                             await feesWrapper.deposit(
                                 this.subject,
                                 this.deployer,
@@ -784,18 +771,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 BigNumber.from(0)
                             );
                         } else if (event.type == EventType.WITHDRAW) {
-                            console.log("Withdraw");
-                            const amountForWithdraw = await getLpByValue(event.weth);
-                            console.log("Amount for withdraw:", amountForWithdraw.toString());
+                            const amountForWithdraw = await getLpByValue(
+                                event.weth
+                            );
                             await feesWrapper.withdraw(
                                 this.subject,
                                 this.deployer,
                                 this.deployer.address,
                                 amountForWithdraw,
-                                [BigNumber.from(0), BigNumber.from(0)]
+                                [
+                                    BigNumber.from(0),
+                                    BigNumber.from(0),
+                                    BigNumber.from(0),
+                                ]
                             );
                         } else if (event.type == EventType.PULL) {
-                            console.log("Pull");
                             const vaultType = event.vault;
                             const amounts = await getLpAmounts();
                             const subvaultAmount =
@@ -820,7 +810,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                         : this.yearnVault;
                             }
 
-                            const percentage = Number(Math.random() * 10 ** 2);
+                            const percentage = BigNumber.from(
+                                Math.ceil(Math.random() * 10 ** 2)
+                            );
                             var sourceTvl = await (subvaultAmount.gt(
                                 erc20Amount
                             )
@@ -843,7 +835,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             );
                         }
                     }
-
 
                     /*
                         Check parameters
