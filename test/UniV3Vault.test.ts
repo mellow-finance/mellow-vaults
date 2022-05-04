@@ -11,7 +11,7 @@ import {
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
-import { ERC20RootVault, ERC20Vault, UniV3Vault } from "./types";
+import { ERC20RootVault, ERC20Vault, IUniswapV3Factory, IUniswapV3Factory__factory, UniV3Vault } from "./types";
 import {
     combineVaults,
     PermissionIdsLibrary,

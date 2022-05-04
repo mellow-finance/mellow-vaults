@@ -15,6 +15,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
+import "hardhat/console.sol";
 
 contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
@@ -239,7 +240,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         // // we crossed the interval right to left
         if (isNegativeLiquidityRatio) {
             (, , uint128 liquidity) = _getVaultStats(upperVault);
+            console.log("liquidity: ", liquidity);
             if (liquidity > 0) {
+                console.log("not swap");
                 // pull all liquidity to other vault and swap intervals
                 return
                     _rebalanceUniV3Liquidity(
@@ -251,6 +254,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                         deadline
                     );
             } else {
+                console.log("swap_vaults");
                 _swapVaults(false, deadline);
                 return (new uint256[](2), new uint256[](2));
             }
@@ -437,7 +441,10 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function updateRatioParams(RatioParams calldata newRatioParams) external {
         _requireAdmin();
         require(
-            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) && (newRatioParams.erc20TokenRatioD <= DENOMINATOR),
+            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) && (newRatioParams.erc20TokenRatioD <= DENOMINATOR)
+            && (newRatioParams.minErc20UniV3CapitalRatioDeviationD <= DENOMINATOR)
+            && (newRatioParams.minErc20TokenRatioDeviationD <= DENOMINATOR)
+            && (newRatioParams.minUniV3LiquidityRatioDeviationD <= DENOMINATOR),
             ExceptionsLibrary.INVARIANT
         );
         ratioParams = newRatioParams;
@@ -448,6 +455,13 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param newOtherParams New other parameters to set
     function updateOtherParams(OtherParams calldata newOtherParams) external {
         _requireAdmin();
+        require(
+            (newOtherParams.intervalWidthInTicks <= 100000) &&
+            (newOtherParams.minToken0ForOpening <= DENOMINATOR) &&
+            (newOtherParams.minToken1ForOpening <= DENOMINATOR) &&
+            (newOtherParams.rebalanceDeadline <= 86400 * 30 * 2),
+            ExceptionsLibrary.INVARIANT
+        );
         otherParams = newOtherParams;
         emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
     }
@@ -585,6 +599,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         (, , uint128 fromVaultLiquidity) = _getVaultStats(fromVault);
         liquidity = fromVaultLiquidity > liquidity ? liquidity : fromVaultLiquidity;
 
+        console.log("liquidity inside rebalance: ", liquidity);
+
         //--- Cut rebalance to available token balances on ERC20 Vault
         // The rough idea is to translate one unit of liquituty into tokens for each interval shouldDepositTokenAmountsD, shouldWithdrawTokenAmountsD
         // Then the actual tokens in the vault are shouldDepositTokenAmountsD * l, shouldWithdrawTokenAmountsD * l
@@ -593,10 +609,15 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             (uint256[] memory availableBalances, ) = erc20Vault.tvl();
             uint256[] memory shouldDepositTokenAmountsD = toVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
             uint256[] memory shouldWithdrawTokenAmountsD = fromVault.liquidityToTokenAmounts(uint128(DENOMINATOR));
+            console.log(shouldDepositTokenAmountsD[0]);
+            console.log(shouldDepositTokenAmountsD[1]);
+            console.log(shouldWithdrawTokenAmountsD[0]);
+            console.log(shouldWithdrawTokenAmountsD[1]);
             for (uint256 i = 0; i < 2; i++) {
                 uint256 availableBalance = availableBalances[i] +
                     FullMath.mulDiv(shouldWithdrawTokenAmountsD[i], liquidity, DENOMINATOR);
                 uint256 requiredBalance = FullMath.mulDiv(shouldDepositTokenAmountsD[i], liquidity, DENOMINATOR);
+                console.log("available/required balance: ", i, availableBalance, requiredBalance);
                 if (availableBalance < requiredBalance) {
                     // since balances >= 0, this case means that shouldWithdrawTokenAmountsD < shouldDepositTokenAmountsD
                     // this also means that liquidity on the line below will decrease compared to the liqiduity above
@@ -607,20 +628,28 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                             shouldDepositTokenAmountsD[i] - shouldWithdrawTokenAmountsD[i]
                         )
                     );
+                    console.log("potential liquidity: ", potentialLiquidity);
                     liquidity = potentialLiquidity < liquidity ? potentialLiquidity : liquidity;
                 }
             }
         }
         //--- End cut
         {
+            console.log("final liquidity 1: ", liquidity);
             uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(liquidity);
             uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
+            console.log(depositTokenAmounts[0]);
+            console.log(depositTokenAmounts[1]);
+            console.log(withdrawTokenAmounts[0]);
+            console.log(withdrawTokenAmounts[1]);
             pulledAmounts = fromVault.pull(
                 address(erc20Vault),
                 tokens,
                 withdrawTokenAmounts,
                 _makeUniswapVaultOptions(minWithdrawTokens, deadline)
             );
+            console.log("pulled amounts: ", pulledAmounts[0]);
+            console.log("pulled amounts: ", pulledAmounts[1]);
             // The pull is on best effort so we don't worry on overflow
             pushedAmounts = erc20Vault.pull(
                 address(toVault),
@@ -628,6 +657,13 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 depositTokenAmounts,
                 _makeUniswapVaultOptions(minDepositTokens, deadline)
             );
+            console.log("pushed amounts: ", pushedAmounts[0]);
+            console.log("pushed amounts: ", pushedAmounts[1]);
+            (, , uint128 kek) = _getVaultStats(fromVault);
+            uint256[] memory final_kek = toVault.liquidityToTokenAmounts(kek);
+            console.log("final liquidity 2: ", kek);
+            console.log(final_kek[0]);
+            console.log(final_kek[1]);
         }
         emit RebalancedUniV3(
             tx.origin,

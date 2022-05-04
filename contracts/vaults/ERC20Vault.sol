@@ -8,6 +8,7 @@ import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is IERC20Vault, IntegrationVault {
@@ -47,7 +48,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
         internal
-        pure
         override
         returns (uint256[] memory actualTokenAmounts)
     {
@@ -79,13 +79,17 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         }
         if (owner != to) {
             // if we pull as a strategy, make sure everything is pushed
+            console.log("WE WERE HERE");
             IIntegrationVault(to).push(tokens, actualTokenAmounts, options);
+            console.log("WE WERE HERE 2");
             // any accidental prior balances + push leftovers
             uint256[] memory reclaimed = IIntegrationVault(to).reclaimTokens(tokens);
+            console.log("WE WERE HERE 3");
             for (uint256 i = 0; i < tokenAmounts.length; i++) {
                 // equals to exactly how much is pushed
                 actualTokenAmounts[i] -= reclaimed[i];
             }
+            console.log("WE WERE HERE 4");
         }
     }
 }

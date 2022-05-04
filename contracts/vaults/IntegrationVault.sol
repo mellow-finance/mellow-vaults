@@ -13,6 +13,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
+import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -53,15 +54,24 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256[] memory tokenAmounts,
         bytes memory options
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
+        console.log("PASSED");
         uint256 nft_ = _nft;
         require(nft_ != 0, ExceptionsLibrary.INIT);
+        console.log("R1");
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
+        console.log("R2");
         IVault ownerVault = IVault(vaultRegistry.ownerOf(nft_)); // Also checks that the token exists
+        console.log("R3");
         uint256 ownerNft = vaultRegistry.nftForVault(address(ownerVault));
+        console.log("R4");
         require(ownerNft != 0, ExceptionsLibrary.NOT_FOUND); // require deposits only through Vault
+        console.log("R5");
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
+        console.log("R6");
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
+        console.log("R7");
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
+        console.log("R8");
         emit Push(pActualTokenAmounts);
     }
 
@@ -112,7 +122,11 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
             }
         }
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
+        console.log("pta: ", pTokenAmounts[0]);
+        console.log("pta: ", pTokenAmounts[1]);
         uint256[] memory pActualTokenAmounts = _pull(to, pTokenAmounts, options);
+        console.log("ta: ", pActualTokenAmounts[0]);
+        console.log("ta: ", pActualTokenAmounts[1]);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
         emit Pull(to, actualTokenAmounts);
     }

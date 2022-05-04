@@ -26,6 +26,9 @@ import {
 import Exceptions from "./library/Exceptions";
 import { ERC20 } from "./library/Types";
 import { randomBytes } from "ethers/lib/utils";
+import { basename } from "path";
+import exp from "constants";
+import { TickMath } from "@uniswap/v3-sdk";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -154,10 +157,83 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ethers.constants.MaxUint256
                 );
 
+                this.submitFunds = async ({
+                    base = BigNumber.from(10).pow(18),
+                } : {
+                    base?: BigNumber;
+                }) => {
+                    const curvePool = await ethers.getContractAt(
+                        ICurvePool,
+                        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+                    );
+    
+                    const steth = await ethers.getContractAt(
+                        "ERC20Token",
+                        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+                    );
+                    const weth = await ethers.getContractAt(
+                        IWETH,
+                        this.weth.address
+                    );
+    
+                    const wsteth = await ethers.getContractAt(
+                        IWSTETH,
+                        this.wsteth.address
+                    );
+    
+                    await mint(
+                        "WETH",
+                        this.subject.address,
+                        base.mul(4000)
+                    );
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        base.mul(4000)
+                    );
+    
+                    await this.weth.approve(
+                        curvePool.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await steth.approve(
+                        this.wsteth.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await weth.withdraw(base.mul(2000));
+                    const options = { value: base.mul(2000) };
+                    await curvePool.exchange(
+                        0,
+                        1,
+                        base.mul(2000),
+                        ethers.constants.Zero,
+                        options
+                    );
+                    await wsteth.wrap(base.mul(1999));
+    /*
+                    for (let address of [
+                        this.uniV3UpperVault.address,
+                        this.uniV3LowerVault.address,
+                        this.erc20Vault.address,
+                    ]) {
+                        for (let token of [this.weth, this.wsteth]) {
+                            await token.transfer(
+                                address,
+                                base.mul(500)
+                            );
+                        }
+                    }
+*/
+                    await wsteth.transfer(
+                        this.subject.address,
+                        base.mul(3)
+                    );
+                }
+
                 this.preparePush = async ({
                     vault,
-                    tickLower = -887220,
-                    tickUpper = 887220,
+                    tickLower = 0,
+                    tickUpper = 120,
                     wethAmount = BigNumber.from(10).pow(18).mul(100),
                     wstethAmount = BigNumber.from(10).pow(18).mul(100),
                 }: {
@@ -187,6 +263,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await this.positionManager.functions[
                         "safeTransferFrom(address,address,uint256)"
                     ](this.deployer.address, vault.address, result.tokenId);
+                    return result.tokenId;
                 };
 
                 await this.protocolGovernance
@@ -375,72 +452,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     strategyDeployParams.address
                 );
 
-                const weth = await ethers.getContractAt(
-                    IWETH,
-                    this.weth.address
-                );
-
-                const wsteth = await ethers.getContractAt(
-                    IWSTETH,
-                    this.wsteth.address
-                );
-
-                const curvePool = await ethers.getContractAt(
-                    ICurvePool,
-                    "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
-                );
-
-                const steth = await ethers.getContractAt(
-                    "ERC20Token",
-                    "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
-                );
-
-                await mint(
-                    "WETH",
-                    this.subject.address,
-                    BigNumber.from(10).pow(18).mul(4000)
-                );
-                await mint(
-                    "WETH",
-                    this.deployer.address,
-                    BigNumber.from(10).pow(18).mul(4000)
-                );
-                await this.weth.approve(
-                    curvePool.address,
-                    ethers.constants.MaxUint256
-                );
-                await steth.approve(
-                    this.wsteth.address,
-                    ethers.constants.MaxUint256
-                );
-                await weth.withdraw(BigNumber.from(10).pow(18).mul(2000));
-                const options = { value: BigNumber.from(10).pow(18).mul(2000) };
-                await curvePool.exchange(
-                    0,
-                    1,
-                    BigNumber.from(10).pow(18).mul(2000),
-                    ethers.constants.Zero,
-                    options
-                );
-                await wsteth.wrap(BigNumber.from(10).pow(18).mul(1999));
-
-                for (let address of [
-                    this.uniV3UpperVault.address,
-                    this.uniV3LowerVault.address,
-                    this.erc20Vault.address,
-                ]) {
-                    for (let token of [this.weth, this.wsteth]) {
-                        await token.transfer(
-                            address,
-                            BigNumber.from(10).pow(18).mul(500)
-                        );
-                    }
-                }
-
-                await wsteth.transfer(
-                    this.subject.address,
-                    BigNumber.from(10).pow(18).mul(3)
-                );
+                await this.submitFunds(BigNumber.from(10).pow(18));
 
                 let oracleDeployParams = await deploy("MockOracle", {
                     from: this.deployer.address,
@@ -488,7 +500,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
-                    intervalWidthInTicks: 100,
+                    intervalWidthInTicks: 120,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(10).pow(6),
@@ -503,6 +515,123 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         await this.deploymentFixture();
     });
 
+    describe("#reb", () => {
+        beforeEach(async () => {
+            this.grantPermissionsUniV3Vaults = async () => {
+                for (let vault of [
+                    this.uniV3UpperVault,
+                    this.uniV3LowerVault,
+                ]) {
+                    let tokenId = await ethers.provider.send(
+                        "eth_getStorageAt",
+                        [
+                            vault.address,
+                            "0x4", // address of _nft
+                        ]
+                    );
+                    await withSigner(
+                        this.erc20RootVault.address,
+                        async (erc20RootVaultSigner) => {
+                            await this.vaultRegistry
+                                .connect(erc20RootVaultSigner)
+                                .approve(this.subject.address, tokenId);
+                        }
+                    );
+                }
+            };
+            this.drainLiquidity = async (vault: UniV3Vault) => {
+                let vaultNft = await vault.uniV3Nft();
+                await withSigner(vault.address, async (signer) => {
+                    let [, , , , , , , liquidity, , , ,] =
+                        await this.positionManager.positions(vaultNft);
+                    await this.positionManager
+                        .connect(signer)
+                        .decreaseLiquidity({
+                            tokenId: vaultNft,
+                            liquidity: liquidity,
+                            amount0Min: 0,
+                            amount1Min: 0,
+                            deadline: ethers.constants.MaxUint256,
+                        });
+                });
+            };
+            this.calculateTvl = async () => {
+                const uniV3LowerTvl = (await this.uniV3LowerVault.tvl())[0];
+                const uniV3UpperTvl = (await this.uniV3UpperVault.tvl())[0];
+                return [
+                    uniV3LowerTvl[0].add(uniV3LowerTvl[1]),
+                    uniV3UpperTvl[0].add(uniV3UpperTvl[1]),
+                ];
+            };
+
+            this.updateOracle = async (currentTick: BigNumber) => {
+                let sqrtPriceX96 = BigNumber.from(TickMath.getSqrtRatioAtTick(currentTick.toNumber()).toString());
+                let priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
+                this.mockOracle.updatePrice(priceX96);
+            }
+
+            await this.grantPermissions();
+        });
+        it("some test", async () => {
+
+            let pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                await this.uniV3LowerVault.pool()
+            );
+
+            let currentState = await pool.slot0();
+            let currentTick = BigNumber.from(currentState.tick);
+            console.log(currentTick);
+            this.updateOracle(currentTick);
+
+            let tickLower = currentTick.div(60).mul(60);
+            let tickUpper = (currentTick.add(59).div(60)).mul(60);
+
+            if (tickLower == tickUpper) {
+                tickLower = tickLower.sub(60);
+                tickUpper = tickUpper.add(60);
+            }
+            
+            this.lowerVaultTokenId = await this.preparePush({ vault: this.uniV3LowerVault, tickLower: tickLower, tickUpper: tickUpper});
+            this.upperVaultTokenId = await this.preparePush({ vault: this.uniV3UpperVault, tickLower: tickLower, tickUpper: tickUpper});
+            await this.grantPermissionsUniV3Vaults();
+
+            console.log(await this.calculateTvl());
+
+            expect (currentTick).to.be.gt(tickLower);
+            expect (currentTick).to.be.lt(tickUpper);
+
+            console.log(currentTick, tickLower, tickUpper);
+
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+            
+
+            console.log(await this.calculateTvl());
+
+            await this.drainLiquidity (
+                this.uniV3UpperVault
+            );
+                
+            await this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    );
+
+            console.log(await this.calculateTvl());
+        });
+    });
+/*
     describe("#updateTradingParams", () => {
         beforeEach(async () => {
             this.baseParams = {
@@ -2091,4 +2220,5 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
+*/
 });
