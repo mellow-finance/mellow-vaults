@@ -26,6 +26,9 @@ import {
 import Exceptions from "./library/Exceptions";
 import { ERC20 } from "./library/Types";
 import { randomBytes } from "ethers/lib/utils";
+import { basename } from "path";
+import exp from "constants";
+import { TickMath } from "@uniswap/v3-sdk";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -154,6 +157,77 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ethers.constants.MaxUint256
                 );
 
+                this.submitFunds = async ({
+                    base = BigNumber.from(10).pow(18),
+                } : {
+                    base?: BigNumber;
+                }) => {
+                    const curvePool = await ethers.getContractAt(
+                        ICurvePool,
+                        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+                    );
+    
+                    const steth = await ethers.getContractAt(
+                        "ERC20Token",
+                        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+                    );
+                    const weth = await ethers.getContractAt(
+                        IWETH,
+                        this.weth.address
+                    );
+    
+                    const wsteth = await ethers.getContractAt(
+                        IWSTETH,
+                        this.wsteth.address
+                    );
+    
+                    await mint(
+                        "WETH",
+                        this.subject.address,
+                        base.mul(4000)
+                    );
+                    await mint(
+                        "WETH",
+                        this.deployer.address,
+                        base.mul(4000)
+                    );
+    
+                    await this.weth.approve(
+                        curvePool.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await steth.approve(
+                        this.wsteth.address,
+                        ethers.constants.MaxUint256
+                    );
+                    await weth.withdraw(base.mul(2000));
+                    const options = { value: base.mul(2000) };
+                    await curvePool.exchange(
+                        0,
+                        1,
+                        base.mul(2000),
+                        ethers.constants.Zero,
+                        options
+                    );
+                    await wsteth.wrap(base.mul(1999));
+                    for (let address of [
+                        this.uniV3UpperVault.address,
+                        this.uniV3LowerVault.address,
+                        this.erc20Vault.address,
+                    ]) {
+                        for (let token of [this.weth, this.wsteth]) {
+                            await token.transfer(
+                                address,
+                                base.mul(500)
+                            );
+                        }
+                    }
+                    await wsteth.transfer(
+                        this.subject.address,
+                        base.mul(3)
+                    );
+                }
+
                 this.preparePush = async ({
                     vault,
                     tickLower = -887220,
@@ -187,6 +261,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await this.positionManager.functions[
                         "safeTransferFrom(address,address,uint256)"
                     ](this.deployer.address, vault.address, result.tokenId);
+                    return result.tokenId;
                 };
 
                 await this.protocolGovernance
@@ -375,72 +450,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     strategyDeployParams.address
                 );
 
-                const weth = await ethers.getContractAt(
-                    IWETH,
-                    this.weth.address
-                );
-
-                const wsteth = await ethers.getContractAt(
-                    IWSTETH,
-                    this.wsteth.address
-                );
-
-                const curvePool = await ethers.getContractAt(
-                    ICurvePool,
-                    "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
-                );
-
-                const steth = await ethers.getContractAt(
-                    "ERC20Token",
-                    "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
-                );
-
-                await mint(
-                    "WETH",
-                    this.subject.address,
-                    BigNumber.from(10).pow(18).mul(4000)
-                );
-                await mint(
-                    "WETH",
-                    this.deployer.address,
-                    BigNumber.from(10).pow(18).mul(4000)
-                );
-                await this.weth.approve(
-                    curvePool.address,
-                    ethers.constants.MaxUint256
-                );
-                await steth.approve(
-                    this.wsteth.address,
-                    ethers.constants.MaxUint256
-                );
-                await weth.withdraw(BigNumber.from(10).pow(18).mul(2000));
-                const options = { value: BigNumber.from(10).pow(18).mul(2000) };
-                await curvePool.exchange(
-                    0,
-                    1,
-                    BigNumber.from(10).pow(18).mul(2000),
-                    ethers.constants.Zero,
-                    options
-                );
-                await wsteth.wrap(BigNumber.from(10).pow(18).mul(1999));
-
-                for (let address of [
-                    this.uniV3UpperVault.address,
-                    this.uniV3LowerVault.address,
-                    this.erc20Vault.address,
-                ]) {
-                    for (let token of [this.weth, this.wsteth]) {
-                        await token.transfer(
-                            address,
-                            BigNumber.from(10).pow(18).mul(500)
-                        );
-                    }
-                }
-
-                await wsteth.transfer(
-                    this.subject.address,
-                    BigNumber.from(10).pow(18).mul(3)
-                );
+                await this.submitFunds(BigNumber.from(10).pow(18));
 
                 let oracleDeployParams = await deploy("MockOracle", {
                     from: this.deployer.address,
@@ -454,6 +464,47 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     "MockOracle",
                     oracleDeployParams.address
                 );
+
+                this.getUniV3Tick = async () => {
+                    let pool = await ethers.getContractAt(
+                        "IUniswapV3Pool",
+                        await this.uniV3LowerVault.pool()
+                    );
+        
+                    const currentState = await pool.slot0();
+                    return BigNumber.from(currentState.tick);
+                };
+
+                this.updateMockOracle = (currentTick: BigNumber) => {
+                    let sqrtPriceX96 = BigNumber.from(TickMath.getSqrtRatioAtTick(currentTick.toNumber()).toString());
+                    let priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
+                    this.mockOracle.updatePrice(priceX96);
+                };
+
+                this.getCapital = async (vault: UniV3Vault, price: BigNumber) => {
+                    const { minTokenAmounts } = await vault.tvl();
+                    return minTokenAmounts[0].mul(price).div(BigNumber.from(2).pow(96)).add(minTokenAmounts[1]);
+                };
+
+                this.getVaultsLiquidityRatio = async () => {
+                    const [, , , , , , , lowerVaultLiquidity, , , ,] = await
+                        this.positionManager.positions(await this.uniV3LowerVault.nft());
+                    const [, , , , , , , upperVaultLiquidity, , , ,] = await
+                        this.positionManager.positions(await this.uniV3UpperVault.nft()); 
+                    const total = lowerVaultLiquidity.add(upperVaultLiquidity);
+                    return lowerVaultLiquidity.mul(await this.subject.DENOMINATOR()).div(total);
+                };
+
+                this.getExpectedRatio = async () => {
+                    const targetTick = await this.getUniV3Tick();
+                    return await this.subject.targetUniV3LiquidityRatio(targetTick);
+                };
+
+                this.getTicks = async (vault: UniV3Vault) => {
+                    const [, , , , , tickLower, tickUpper, , , , ,] = 
+                        await this.positionManager.positions(await vault.nft());
+                    return [tickLower, tickUpper];
+                }
 
                 await this.uniV3VaultGovernance
                     .connect(this.admin)
@@ -488,11 +539,58 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
-                    intervalWidthInTicks: 100,
+                    intervalWidthInTicks: 120,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(10).pow(6),
                 });
+
+                this.grantPermissionsUniV3Vaults = async () => {
+                    for (let vault of [
+                        this.uniV3UpperVault,
+                        this.uniV3LowerVault,
+                    ]) {
+                        let tokenId = await ethers.provider.send(
+                            "eth_getStorageAt",
+                            [
+                                vault.address,
+                                "0x4", // address of _nft
+                            ]
+                        );
+                        await withSigner(
+                            this.erc20RootVault.address,
+                            async (erc20RootVaultSigner) => {
+                                await this.vaultRegistry
+                                    .connect(erc20RootVaultSigner)
+                                    .approve(this.subject.address, tokenId);
+                            }
+                        );
+                    }
+                };
+                this.drainLiquidity = async (vault: UniV3Vault) => {
+                    let vaultNft = await vault.uniV3Nft();
+                    await withSigner(vault.address, async (signer) => {
+                        let [, , , , , , , liquidity, , , ,] =
+                            await this.positionManager.positions(vaultNft);
+                        await this.positionManager
+                            .connect(signer)
+                            .decreaseLiquidity({
+                                tokenId: vaultNft,
+                                liquidity: liquidity,
+                                amount0Min: 0,
+                                amount1Min: 0,
+                                deadline: ethers.constants.MaxUint256,
+                            });
+                    });
+                };
+                this.calculateTvl = async () => {
+                    const uniV3LowerTvl = (await this.uniV3LowerVault.tvl())[0];
+                    const uniV3UpperTvl = (await this.uniV3UpperVault.tvl())[0];
+                    return [
+                        uniV3LowerTvl[0].add(uniV3LowerTvl[1]),
+                        uniV3UpperTvl[0].add(uniV3UpperTvl[1]),
+                    ];
+                };
 
                 return this.subject;
             }
@@ -501,6 +599,68 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
     beforeEach(async () => {
         await this.deploymentFixture();
+    });
+
+    describe("#reb", () => {
+        beforeEach(async () => {
+            await this.grantPermissions();
+        });
+        it("some test", async () => {
+
+            const currentTick = await this.getUniV3Tick();
+            let tickLower = currentTick.div(60).mul(60);
+            let tickUpper = (currentTick.add(59).div(60)).mul(60);
+            await this.updateMockOracle(currentTick);
+
+            if (tickLower == tickUpper) {
+                tickLower = tickLower.sub(60);
+                tickUpper = tickUpper.add(60);
+            }
+
+            const positionRange = tickUpper.sub(tickLower);
+            await this.preparePush({ vault: this.uniV3LowerVault, tickLower: tickLower, tickUpper: tickUpper});
+            await this.preparePush({ vault: this.uniV3UpperVault, tickLower: tickUpper, tickUpper: tickUpper.add(positionRange)});
+            await this.grantPermissionsUniV3Vaults();
+
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+
+            await expect(
+                this.subject
+                    .connect(this.admin)
+                    .rebalanceUniV3Vaults(
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    )
+            ).to.not.be.reverted;
+
+            const [neededRatio, flag] = await this.getExpectedRatio();
+            const liquidityRatio = await this.getVaultsLiquidityRatio();
+
+            console.log(neededRatio);
+            console.log(liquidityRatio);
+            const DENOMINATOR = await this.subject.DENOMINATOR();
+
+            console.log(DENOMINATOR.div(neededRatio.sub(liquidityRatio)).toNumber());
+        });
     });
 
     describe("#updateTradingParams", () => {
@@ -1178,52 +1338,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
     describe("#rebalanceUniV3Vaults", () => {
         beforeEach(async () => {
-            this.grantPermissionsUniV3Vaults = async () => {
-                for (let vault of [
-                    this.uniV3UpperVault,
-                    this.uniV3LowerVault,
-                ]) {
-                    let tokenId = await ethers.provider.send(
-                        "eth_getStorageAt",
-                        [
-                            vault.address,
-                            "0x4", // address of _nft
-                        ]
-                    );
-                    await withSigner(
-                        this.erc20RootVault.address,
-                        async (erc20RootVaultSigner) => {
-                            await this.vaultRegistry
-                                .connect(erc20RootVaultSigner)
-                                .approve(this.subject.address, tokenId);
-                        }
-                    );
-                }
-            };
-            this.drainLiquidity = async (vault: UniV3Vault) => {
-                let vaultNft = await vault.uniV3Nft();
-                await withSigner(vault.address, async (signer) => {
-                    let [, , , , , , , liquidity, , , ,] =
-                        await this.positionManager.positions(vaultNft);
-                    await this.positionManager
-                        .connect(signer)
-                        .decreaseLiquidity({
-                            tokenId: vaultNft,
-                            liquidity: liquidity,
-                            amount0Min: 0,
-                            amount1Min: 0,
-                            deadline: ethers.constants.MaxUint256,
-                        });
-                });
-            };
-            this.calculateTvl = async () => {
-                const uniV3LowerTvl = (await this.uniV3LowerVault.tvl())[0];
-                const uniV3UpperTvl = (await this.uniV3UpperVault.tvl())[0];
-                return [
-                    uniV3LowerTvl[0].add(uniV3LowerTvl[1]),
-                    uniV3UpperTvl[0].add(uniV3UpperTvl[1]),
-                ];
-            };
             await this.grantPermissions();
         });
         it("rebalances when delta is positive", async () => {
