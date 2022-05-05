@@ -11,6 +11,7 @@ import {
 } from "ramda";
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
+import retry from "async-retry";
 
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
@@ -100,16 +101,22 @@ export const setupVault = async (
     const currentNft = await read("VaultRegistry", "vaultsCount");
     if (currentNft <= expectedNft) {
         log(`Deploying ${contractName.replace("Governance", "")}...`);
-        console.log("ROOOOOOOFLAAN");
-        await execute(
-            contractName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
+        await retry(
+            async () => {
+                await execute(
+                    contractName,
+                    {
+                        from: deployer,
+                        log: true,
+                        autoMine: true,
+                    },
+                    "createVault",
+                    ...createVaultArgs
+                );
             },
-            "createVault",
-            ...createVaultArgs
+            {
+                retries: 3,
+            }
         );
         log(`Done, nft = ${expectedNft}`);
     } else {
@@ -130,17 +137,24 @@ export const setupVault = async (
         if (!equals(strategyParams, toObject(currentParams))) {
             log(`Setting Strategy params for ${contractName}`);
             log(strategyParams);
-            await execute(
-                contractName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
+            await retry(
+                async () => {
+                    await execute(
+                        contractName,
+                        {
+                            from: deployer,
+                            log: true,
+                            autoMine: true,
+                        },
+                        "setStrategyParams",
+                        expectedNft,
+                        strategyParams
+                    );
                 },
-                "setStrategyParams",
-                expectedNft,
-                strategyParams
-            );
+                {
+                    retries: 3
+                }
+            )
         }
     }
     let strategyTreasury;
@@ -158,26 +172,33 @@ export const setupVault = async (
     if (strategyTreasury !== delayedStrategyParams.strategyTreasury) {
         log(`Setting delayed strategy params for ${contractName}`);
         log(delayedStrategyParams);
-        await execute(
-            contractName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
+        await retry(
+            async () => {
+                await execute(
+                    contractName,
+                    {
+                        from: deployer,
+                        log: true,
+                        autoMine: true,
+                    },
+                    "stageDelayedStrategyParams",
+                    expectedNft,
+                    delayedStrategyParams
+                );
+                await execute(
+                    contractName,
+                    {
+                        from: deployer,
+                        log: true,
+                        autoMine: true,
+                    },
+                    "commitDelayedStrategyParams",
+                    expectedNft
+                );
             },
-            "stageDelayedStrategyParams",
-            expectedNft,
-            delayedStrategyParams
-        );
-        await execute(
-            contractName,
             {
-                from: deployer,
-                log: true,
-                autoMine: true,
-            },
-            "commitDelayedStrategyParams",
-            expectedNft
+                retries: 3,
+            }
         );
     }
     if (delayedProtocolPerVaultParams) {
@@ -191,28 +212,35 @@ export const setupVault = async (
                 `Setting delayed protocol per vault params for ${contractName}`
             );
             log(delayedProtocolPerVaultParams);
+            await retry(
+                async () => {
+                    await execute(
+                        contractName,
+                        {
+                            from: deployer,
+                            log: true,
+                            autoMine: true,
+                        },
+                        "stageDelayedProtocolPerVaultParams",
+                        expectedNft,
+                        delayedProtocolPerVaultParams
+                    );
+                    await execute(
+                        contractName,
+                        {
+                            from: deployer,
+                            log: true,
+                            autoMine: true,
+                        },
+                        "commitDelayedProtocolPerVaultParams",
+                        expectedNft
+                    );
+                },
+                {
+                    retries: 3,
+                }
+            );
 
-            await execute(
-                contractName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                },
-                "stageDelayedProtocolPerVaultParams",
-                expectedNft,
-                delayedProtocolPerVaultParams
-            );
-            await execute(
-                contractName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                },
-                "commitDelayedProtocolPerVaultParams",
-                expectedNft
-            );
         }
     }
 };
@@ -287,26 +315,40 @@ export const combineVaults = async (
         );
         if (!depositors.includes(admin)) {
             log("Adding admin to depositors");
-            const tx =
-                await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
-                    [admin]
-                );
-            const [operator] = await hre.ethers.getSigners();
-            const txResp = await operator.sendTransaction(tx);
-            log(
-                `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
-            );
-            const receipt = await txResp.wait(1);
+            await retry(
+                async () => {
+                    const tx =
+                        await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
+                            [admin]
+                        );
+                    const [operator] = await hre.ethers.getSigners();
+                    const txResp = await operator.sendTransaction(tx);
+                    log(
+                        `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
+                    );
+                    const receipt = await txResp.wait(1);
+                },
+                {
+                    retries: 3,
+                }
+            )
             log("Transaction confirmed");
         }
     }
-    await deployments.execute(
-        "VaultRegistry",
-        { from: deployer, autoMine: true },
-        "transferFrom(address,address,uint256)",
-        deployer,
-        rootVault,
-        expectedNft
+    await retry(
+        async () => {
+            await deployments.execute(
+                "VaultRegistry",
+                { from: deployer, autoMine: true },
+                "transferFrom(address,address,uint256)",
+                deployer,
+                rootVault,
+                expectedNft
+            );
+        },
+        {
+            retries: 3,
+        }
     );
 };
 

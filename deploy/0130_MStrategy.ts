@@ -65,25 +65,30 @@ const setupStrategy = async (
     const {
         deployer,
         weth,
-        usdc,
+        wbtc,
         uniswapV3Router,
         uniswapV3Factory,
         mStrategyAdmin,
     } = await getNamedAccounts();
     const mStrategyName = `MStrategy${kind}`;
+    console.log(-1);
     const { address: mStrategyAddress } = await deployments.get(mStrategyName);
+    console.log(0);
     const mStrategy = await hre.ethers.getContractAt(
         "MStrategy",
         mStrategyAddress
     );
-
-    const tokens = [weth, usdc].map((x) => x.toLowerCase()).sort();
+    console.log(1);
+    const tokens = [weth, wbtc].map((x) => x.toLowerCase()).sort();
     const fee = 3000;
+
     await setupCardinality(hre, tokens, fee);
+    console.log(2);
     const params = [tokens, erc20Vault, moneyVault, fee, deployer];
     const address = await mStrategy.callStatic.createStrategy(...params);
     await mStrategy.createStrategy(...params);
-    await deployments.save(`${mStrategyName}_WETH_USDC`, {
+    console.log(3);
+    await deployments.save(`${mStrategyName}_WBTC_WETH`, {
         abi: (await deployments.get(mStrategyName)).abi,
         address,
     });
@@ -108,95 +113,109 @@ const setupStrategy = async (
         tickIncrease: 10,
         tickNeighborhood: 50,
     };
-    const txs = [];
-    txs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("setOracleParams", [
-            oracleParams,
-        ])
-    );
-    txs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("setRatioParams", [
-            ratioParams,
-        ])
-    );
+    await retry(
+        async () => {
+            const txs = [];
+            txs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("setOracleParams", [
+                    oracleParams,
+                ])
+            );
+            txs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("setRatioParams", [
+                    ratioParams,
+                ])
+            );
 
-    log(
-        `Oracle Params:`,
-        map((x) => x.toString(), oracleParams)
-    );
-    log(
-        `Ratio Params:`,
-        map((x) => x.toString(), ratioParams)
-    );
-    await execute(
-        `${mStrategyName}_WETH_USDC`,
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
+            log(
+                `Oracle Params:`,
+                map((x) => x.toString(), oracleParams)
+            );
+            log(
+                `Ratio Params:`,
+                map((x) => x.toString(), ratioParams)
+            );
+            await execute(
+                `${mStrategyName}_WETH_USDC`,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "multicall",
+                txs
+            );
         },
-        "multicall",
-        txs
-    );
+        {
+            retries: 3
+        }
+    )
 
     log("Transferring ownership to mStrategyAdmin")
 
-    const ADMIN_ROLE = "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
-    const ADMIN_DELEGATE_ROLE = "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
-    const OPERATOR_ROLE = "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
-    let permissionTxs = [];
+    await retry(
+        async () => {
+            const ADMIN_ROLE = "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
+            const ADMIN_DELEGATE_ROLE = "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
+            const OPERATOR_ROLE = "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
+            let permissionTxs = [];
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_ROLE, mStrategyAdmin
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+                    ADMIN_ROLE, mStrategyAdmin
+                ])
+            );
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_DELEGATE_ROLE, mStrategyAdmin
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+                    ADMIN_DELEGATE_ROLE, mStrategyAdmin
+                ])
+            );
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_DELEGATE_ROLE, deployer
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+                    ADMIN_DELEGATE_ROLE, deployer
+                ])
+            );
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            OPERATOR_ROLE, mStrategyAdmin
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+                    OPERATOR_ROLE, mStrategyAdmin
+                ])
+            );
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            OPERATOR_ROLE, deployer
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
+                    OPERATOR_ROLE, deployer
+                ])
+            );
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            ADMIN_DELEGATE_ROLE, deployer
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
+                    ADMIN_DELEGATE_ROLE, deployer
+                ])
+            );
 
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            ADMIN_ROLE, deployer
-        ])
-    );
+            permissionTxs.push(
+                mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
+                    ADMIN_ROLE, deployer
+                ])
+            );
 
-    await execute(
-        `${mStrategyName}_WETH_USDC`,
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
+            await execute(
+                `${mStrategyName}_WETH_USDC`,
+                {
+                    from: deployer,
+                    log: true,
+                    autoMine: true,
+                },
+                "multicall",
+                permissionTxs
+            )
         },
-        "multicall",
-        permissionTxs
+        {
+            retries: 3,
+        }
     )
 };
 
@@ -204,11 +223,11 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
     (kind) => async (hre: HardhatRuntimeEnvironment) => {
         const { deployments, getNamedAccounts } = hre;
         const { log, execute, read, get } = deployments;
-        const { deployer, mStrategyTreasury, weth, usdc } =
+        const { deployer, mStrategyTreasury, weth, wbtc } =
             await getNamedAccounts();
         await deployMStrategy(hre, kind);
 
-        const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
+        const tokens = [weth, wbtc].map((t) => t.toLowerCase()).sort();
         // const startNft = 1;
         const startNft =
             (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
@@ -216,19 +235,13 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
         let erc20VaultNft = startNft + 1;
         const moneyGovernance =
             kind === "Aave" ? "AaveVaultGovernance" : "YearnVaultGovernance";
-        await retry(
-            async () => {
-                await setupVault(hre, yearnVaultNft, moneyGovernance, {
-                    createVaultArgs: [tokens, deployer],
-                });
-                await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
-                    createVaultArgs: [tokens, deployer],
-                });
-            },
-            {
-                retries: 3,
-            }
-        );
+
+        await setupVault(hre, yearnVaultNft, moneyGovernance, {
+            createVaultArgs: [tokens, deployer],
+        });
+        await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
+            createVaultArgs: [tokens, deployer],
+        });
 
 
         const strategy = await get(`MStrategy${kind}`);
@@ -240,17 +253,21 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
             strategy.address,
             mStrategyTreasury
         );
+        console.log("AAAAAAAAAAAAA");
         const erc20Vault = await read(
             "VaultRegistry",
             "vaultForNft",
             erc20VaultNft
         );
+        console.log("BBBBBBBBBBBBBBBB");
         const moneyVault = await read(
             "VaultRegistry",
             "vaultForNft",
             yearnVaultNft
         );
+        console.log("CCCCCCCCCCCCCC");
         await setupStrategy(hre, kind, erc20Vault, moneyVault);
+        console.log("DDDDDDDDDDDDDDDDD");
     };
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
