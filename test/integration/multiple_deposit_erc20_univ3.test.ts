@@ -6,8 +6,6 @@ import {
     mintUniV3Position_USDC_WETH,
     randomAddress,
     sleep,
-    sleepTo,
-    withSigner,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
 import {
@@ -18,222 +16,21 @@ import {
     ProtocolGovernance,
     UniV3Vault,
     ERC20RootVaultGovernance,
-    IERC20RootVault,
-    IntegrationVault,
-    IVaultRegistry,
     ISwapRouter as SwapRouterInterface,
+    IUniswapV3Pool,
 } from "../types";
 import { setupVault, combineVaults, ALLOW_MASK } from "../../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
-import { pit, RUNS } from "../library/property";
-import { integer } from "fast-check";
 import { OracleParamsStruct, RatioParamsStruct } from "../types/MStrategy";
 import Common from "../library/Common";
 import { assert } from "console";
-import { randomBytes, sign } from "crypto";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { randomBytes } from "crypto";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-
-enum EventType {
-    DEPOSIT,
-    WITHDRAW,
-    PULL,
-}
-
-enum VaultType {
-    ROOT,
-    UNIV3,
-    ERC20,
-    YEARN,
-}
-
-type Event = {
-    subject: string;
-    type: EventType;
-    token: string;
-    amount: BigNumber;
-    from: string;
-    to: string;
-    signer: SignerWithAddress;
-};
-
-type VaultFeesParameters = {
-    fees: BigNumber;
-};
-
-type FeesResult = {
-    usdcFees: BigNumber;
-    wethFees: BigNumber;
-    totalFees: BigNumber;
-};
+import { FullMath, TickMath } from "@uniswap/v3-sdk";
 
 const UNIV3_FEE = 3000; // corresponds to 0.05% fee in UniV3 pool
-const YEARN_FEE = 100; // corresponds to 0.01% fee in Yearn pool
-
-class FeesWrapper {
-    tokens: string[] = [];
-    typeByAddress = new Map<string, VaultType>();
-    events: Event[] = [];
-    vaultParameters = new Map<VaultType, VaultFeesParameters>();
-
-    constructor(
-        _token: string[],
-        _vaultAddresses: string[],
-        _vaultTypes: VaultType[]
-    ) {
-        this.tokens = _token;
-        for (var i = 0; i < _vaultAddresses.length; i++) {
-            this.typeByAddress.set(_vaultAddresses[i], _vaultTypes[i]);
-        }
-    }
-
-    addVaultParameters(type: VaultType, parameters: VaultFeesParameters) {
-        this.vaultParameters.set(type, parameters);
-    }
-
-    async pull(
-        subject: IntegrationVault,
-        signer: SignerWithAddress,
-        amounts: BigNumber[],
-        to: string
-    ) {
-        await subject.connect(signer).pull(to, this.tokens, amounts, []);
-
-        for (var i = 0; i < this.tokens.length; i++) {
-            this.events.push({
-                subject: subject.address,
-                type: EventType.PULL,
-                token: this.tokens[i],
-                amount: amounts[i],
-                from: signer.address,
-                to: to,
-                signer: signer,
-            } as Event);
-        }
-    }
-
-    async withdraw(
-        subject: IERC20RootVault,
-        signer: SignerWithAddress,
-        to: string,
-        amount: BigNumber,
-        minTokenAmount: BigNumber[]
-    ) {
-        var opts = [];
-        for (var i = 0; i < minTokenAmount.length; i++) {
-            opts.push([]);
-        }
-        await subject
-            .connect(signer)
-            .withdraw(to, amount, minTokenAmount, opts);
-        this.events.push({
-            subject: subject.address,
-            type: EventType.WITHDRAW,
-            amount: amount,
-            from: signer.address,
-            to: to,
-            signer: signer,
-        } as Event);
-    }
-
-    async deposit(
-        subject: IERC20RootVault,
-        signer: SignerWithAddress,
-        amounts: BigNumber[],
-        minLpToken: BigNumber
-    ) {
-        await subject.connect(signer).deposit(amounts, minLpToken, []);
-        for (var i = 0; i < this.tokens.length; i++) {
-            this.events.push({
-                subject: subject.address,
-                type: EventType.DEPOSIT,
-                token: this.tokens[i],
-                amount: amounts[i],
-                from: signer.address,
-                signer: signer,
-            } as Event);
-        }
-    }
-
-    async getFees() {
-        let usdcFees = BigNumber.from(0);
-        let wethFees = BigNumber.from(0);
-        let totalAmount = BigNumber.from(0);
-
-        const increaseResultForToken = (token: string, fees: BigNumber) => {
-            totalAmount = totalAmount.add(fees);
-            if (token == "WETH") {
-                wethFees = wethFees.add(fees);
-            } else {
-                usdcFees = usdcFees.add(fees);
-            }
-        };
-
-        const accumulateFeesForVault = (
-            type: VaultType,
-            event: Event,
-            parameters: VaultFeesParameters
-        ) => {
-            switch (type) {
-                case (VaultType.ERC20, VaultType.YEARN): {
-                    increaseResultForToken(
-                        event.token,
-                        event.amount.div(100).div(100)
-                    );
-                    break;
-                }
-                case VaultType.UNIV3: {
-                    increaseResultForToken(
-                        event.token,
-                        event.amount.div(100).div(100)
-                    );
-                    break;
-                }
-                case VaultType.ROOT: {
-                    throw "Impossible operation";
-                }
-            }
-        };
-
-        this.events.forEach((event) => {
-            if (!this.typeByAddress.has(event.subject)) {
-                throw "Cannot parse subject of event! Event:" + event;
-            }
-            const vaultType = this.typeByAddress.get(
-                event.subject
-            ) as VaultType;
-
-            var parameters =
-                this.vaultParameters.get(vaultType) ||
-                ({ fees: BigNumber.from(0) } as VaultFeesParameters);
-            switch (event.type) {
-                case EventType.DEPOSIT:
-                case EventType.WITHDRAW: {
-                    if (parameters.fees.gt(0)) {
-                        // TODO: handle non zeroFees
-                    }
-                    break;
-                }
-                case EventType.PULL: {
-                    accumulateFeesForVault(vaultType, event, parameters);
-                    break;
-                }
-                default: {
-                    console.log("Error while parsing type!", event.type);
-                    break;
-                }
-            }
-        });
-
-        return {
-            usdcFees: usdcFees,
-            wethFees: wethFees,
-            totalFees: totalAmount,
-        } as FeesResult;
-    }
-}
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -494,85 +291,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        const checkTvls = async (withPull: boolean) => {
-            const erc20Tvl = await this.erc20Vault.tvl();
-            const univ3Tvl = await this.uniV3Vault.tvl();
-            const yearnTvl = await this.yearnVault.tvl();
-            const rootTvl = await this.erc20RootVault.tvl();
-
-            for (var i = 0; i < 2; i++) {
-                for (var j = 0; j < 2; j++) {
-                    expect(
-                        erc20Tvl[i][j].add(univ3Tvl[i][j]).add(yearnTvl[i][j])
-                    ).to.deep.equals(rootTvl[i][j]);
-                }
-            }
-            for (var i = 0; i < 2; i++) {
-                if (withPull) {
-                    expect(yearnTvl[0][i]).to.be.eq(yearnTvl[1][i]); // property of yearnVault
-                    // expect(univ3Tvl[0][i]).to.be.lt(univ3Tvl[1][i]);
-                    expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]); // property of erc20Vault
-                } else {
-                    for (var j = 0; j < 2; j++) {
-                        expect(yearnTvl[j][i]).to.be.eq(0);
-                        // expect(univ3Tvl[j][i]).not.to.be.eq(0); // initial state
-                        expect(erc20Tvl[j][i]).not.to.be.eq(0); // initial state
-                    }
-                    expect(erc20Tvl[0][i]).to.be.eq(erc20Tvl[1][i]);
-                }
-            }
-        };
-
-        const debugTvl = (
-            tvl: [BigNumber[], BigNumber[]] & {
-                minTokenAmounts: BigNumber[];
-                maxTokenAmounts: BigNumber[];
-            },
-            name: string
-        ) => {
-            console.log("Tvls for:", name);
-            console.log(
-                "tvl min:",
-                tvl[0].map((x) => x.toString())
-            );
-            console.log(
-                "tvl max:",
-                tvl[1].map((x) => x.toString())
-            );
-            console.log();
-        };
-
-        const debugTvls = async () => {
-            const univ3Tvl = await this.uniV3Vault.tvl();
-            const yearnTvl = await this.yearnVault.tvl();
-            const erc20Tvl = await this.erc20Vault.tvl();
-            const rootvTvl = await this.erc20RootVault.tvl();
-            debugTvl(univ3Tvl, "univ3");
-            debugTvl(yearnTvl, "yearn");
-            debugTvl(erc20Tvl, "erc20");
-            debugTvl(rootvTvl, "root");
-        };
-
-        const debugTokenBalances = async (flag: string) => {
-            const wethBalance = await this.weth.balanceOf(
-                this.deployer.address
-            );
-            const usdcBalance = await this.usdc.balanceOf(
-                this.deployer.address
-            );
-            const userBalance = await this.erc20RootVault.balanceOf(
-                this.deployer.address
-            );
-
-            console.log();
-            console.log("*===*", flag, "*===*");
-            console.log("WethBalance:", wethBalance.toString());
-            console.log("UsdcBalance:", usdcBalance.toString());
-            console.log("RootBalance:", userBalance.toString());
-            console.log("*=================*");
-            console.log();
-        };
-
         const setNonZeroFeesFixture = deployments.createFixture(async () => {
             await this.deploymentFixture();
             let erc20RootVaultGovernance: ERC20RootVaultGovernance =
@@ -656,49 +374,54 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return result;
         };
 
-        const getLpAmounts = async () => {
-            const rootAmount = await this.erc20RootVault.balanceOf(
-                this.deployer.address
+        const getSqrtPriceX96 = async () => {
+            const poolAddress = await this.uniV3Vault.pool();
+            const pool: IUniswapV3Pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                poolAddress
             );
-            const rootTvl = (await this.erc20RootVault.tvl())[0][1]; // min weth
-            if (rootAmount.eq(0)) {
-                return {
-                    rootAmount: BigNumber.from(0),
-                    univ3Amount: BigNumber.from(0),
-                    yearnAmount: BigNumber.from(0),
-                    erc20Amount: BigNumber.from(0),
-                };
+            return (await pool.slot0()).sqrtPriceX96;
+        };
+
+        const push = async (
+            delta: BigNumber,
+            from: string,
+            to: string,
+            tokenName: string
+        ) => {
+            const n = 20;
+            const amounts = generateArraySplit(
+                delta,
+                n,
+                BigNumber.from(10).pow(6)
+            );
+            await mint(tokenName, this.deployer.address, delta);
+            for (var i = 0; i < n; i++) {
+                await this.swapRouter.exactInputSingle({
+                    tokenIn: from,
+                    tokenOut: to,
+                    fee: UNIV3_FEE,
+                    recipient: this.deployer.address,
+                    deadline: ethers.constants.MaxUint256,
+                    amountIn: amounts[i],
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0,
+                });
             }
-            const erc20Tvl = (await this.erc20Vault.tvl())[0][1];
-            const univ3Tvl = (await this.uniV3Vault.tvl())[0][1];
-            const yearnTvl = (await this.yearnVault.tvl())[0][1];
-
-            const erc20Amount = rootAmount.mul(erc20Tvl).div(rootTvl);
-            const univ3Amount = rootAmount.mul(univ3Tvl).div(rootTvl);
-            const yearnAmount = rootAmount.mul(yearnTvl).div(rootTvl);
-
-            return {
-                rootAmount: rootAmount,
-                univ3Amount: univ3Amount,
-                yearnAmount: yearnAmount,
-                erc20Amount: erc20Amount,
-            };
         };
 
-        const getLpByValue = async (value: BigNumber) => {
-            const rootAmount = await this.erc20RootVault.balanceOf(
-                this.deployer.address
-            );
-            const rootTvl = (await this.erc20RootVault.tvl())[0][1]; // min weth
-            return rootAmount.mul(value).div(rootTvl);
+        const pushPriceDown = async (delta: BigNumber) => {
+            await push(delta, this.usdc.address, this.weth.address, "USDC");
         };
 
-        describe.only("properties", () => {
-            it("Execute integration test", async () => {
+        const pushPriceUp = async (delta: BigNumber) => {
+            await push(delta, this.weth.address, this.usdc.address, "WETH");
+        };
+
+        describe("Multiple price swappings and rebalances in mstrategy", () => {
+            it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
 
-                await debugTokenBalances("State A [init] initial state");
-                await debugTvls();
                 await this.vaultRegistry
                     .connect(this.admin)
                     .adminApprove(
@@ -722,10 +445,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         0,
                         []
                     );
-                await debugTokenBalances(
-                    "State B [deposit] after increased liquidity"
-                );
-                await debugTvls();
 
                 await this.subject
                     .connect(this.mStrategyAdmin)
@@ -736,62 +455,334 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         []
                     );
 
-                await debugTokenBalances(
-                    "State C [manualPull] after giving liqudity for YearnVault"
-                );
-                await debugTvls();
+                const getBestPrice = async () => {
+                    const { pricesX96 } = await this.mellowOracle.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        0x61
+                    );
+                    var result = BigNumber.from(0);
+                    for (var i = 0; i < pricesX96.length; i++) {
+                        result = result.add(pricesX96[i]);
+                    }
 
-                await this.subject.connect(this.mStrategyAdmin).rebalance();
-                await debugTokenBalances(
-                    "State D [rebalance] after rebalance strategy with default params"
-                );
-                await debugTvls();
+                    return result.div(pricesX96.length);
+                };
 
-                // =================================================================
-                const amount = BigNumber.from(10).pow(14);
-                await mint("USDC", this.deployer.address, amount);
-                await debugTokenBalances("State E [mint] minted tokens.");
-                await debugTvls();
+                const maxAmountForPush = BigNumber.from(2).pow(70).sub(100);
+                var pricesHistory: BigNumber[][] = [];
 
-                // =================================================================
-                await this.swapRouter.exactInputSingle({
-                    tokenIn: this.usdc.address,
-                    tokenOut: this.weth.address,
-                    fee: UNIV3_FEE,
-                    recipient: this.deployer.address,
-                    deadline: ethers.constants.MaxUint256,
-                    amountIn: amount,
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                });
-                await debugTokenBalances(
-                    "State F [swap] after swap by SwapRouter"
-                );
-                await debugTvls();
+                for (var i = 1; i <= 3; i++) {
+                    pricesHistory.push([]);
+                    var deltaValue = BigNumber.from(0);
+                    for (var j = 1; j <= 10; j++) {
+                        const currentVault = BigNumber.from(10).pow(12).mul(2);
+                        deltaValue = deltaValue.add(
+                            currentVault.mul(1000000 + UNIV3_FEE).div(1000000)
+                        );
+                        await pushPriceDown(currentVault);
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance();
+                        pricesHistory[i - 1].push(await getSqrtPriceX96());
+                    }
 
-                // pull of dust ===============================================
-                await sleep(this.governanceDelay);
+                    deltaValue = deltaValue
+                        .mul(await getBestPrice())
+                        .div(Common.Q96);
+
+                    while (deltaValue.gt(maxAmountForPush)) {
+                        await pushPriceUp(maxAmountForPush);
+                        deltaValue = deltaValue.sub(maxAmountForPush);
+                    }
+
+                    await pushPriceUp(deltaValue);
+                    await this.subject.connect(this.mStrategyAdmin).rebalance();
+                    pricesHistory[i - 1].push(await getSqrtPriceX96());
+                }
+
+                for (var i = 0; i < 2; i++) {
+                    for (var j = 0; j < pricesHistory[i].length; j++) {
+                        const currentPrice = pricesHistory[i][j];
+                        const nextPrice = pricesHistory[i + 1][j];
+                        // currentPrice <= nextPrice <= 1.003 * currentPrice
+                        expect(currentPrice.lte(nextPrice));
+                        expect(
+                            currentPrice
+                                .mul(1000000 + UNIV3_FEE)
+                                .div(1000000)
+                                .gte(nextPrice)
+                        );
+                    }
+                }
+
+                return true;
+            });
+        });
+
+        describe("Multiple price swappings and rebalances with mstrategy with liqidity cycle changing using UniV3Vault", () => {
+            it("change liquidity only on fees", async () => {
+                await setNonZeroFeesFixture();
+
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.erc20Vault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.yearnVault.nft()
+                    );
+
+                const usdcAmountForDeposit = this.usdcDeployerSupply;
+                const wethAmountForDeposit = this.wethDeployerSupply;
+
+                await this.erc20RootVault
+                    .connect(this.deployer)
+                    .deposit(
+                        [usdcAmountForDeposit, wethAmountForDeposit],
+                        0,
+                        []
+                    );
+
                 await this.subject
                     .connect(this.mStrategyAdmin)
                     .manualPull(
                         this.erc20Vault.address,
-                        this.uniV3Vault.address,
-                        [BigNumber.from(10).pow(8), BigNumber.from(10).pow(8)],
+                        this.yearnVault.address,
+                        [usdcAmountForDeposit, wethAmountForDeposit],
                         []
                     );
 
-                await debugTokenBalances(
-                    "State G [manualPull] after pulling small amount from erc20 to univ3"
-                );
-                await debugTvls();
+                const getBestPrice = async () => {
+                    const { pricesX96 } = await this.mellowOracle.price(
+                        this.usdc.address,
+                        this.weth.address,
+                        0x61
+                    );
+                    var result = BigNumber.from(0);
+                    for (var i = 0; i < pricesX96.length; i++) {
+                        result = result.add(pricesX96[i]);
+                    }
 
-                // =================================================================
+                    return result.div(pricesX96.length);
+                };
 
-                await this.subject.connect(this.mStrategyAdmin).rebalance();
-                await debugTokenBalances(
-                    "State H [rebalance] after rebalance strategy with new price params"
-                );
-                await debugTvls();
+                const getLiquidityForAmount0 = (
+                    sqrtRatioAX96: BigNumber,
+                    sqrtRatioBX96: BigNumber,
+                    amount0: BigNumber
+                ) => {
+                    if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
+                        var tmp = sqrtRatioAX96;
+                        sqrtRatioAX96 = sqrtRatioBX96;
+                        sqrtRatioBX96 = tmp;
+                    }
+                    var intermediate = sqrtRatioAX96
+                        .mul(sqrtRatioBX96)
+                        .div(Common.Q96);
+                    return amount0
+                        .mul(intermediate)
+                        .div(sqrtRatioBX96.sub(sqrtRatioAX96));
+                };
+
+                const getLiquidityForAmount1 = (
+                    sqrtRatioAX96: BigNumber,
+                    sqrtRatioBX96: BigNumber,
+                    amount1: BigNumber
+                ) => {
+                    if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
+                        var tmp = sqrtRatioAX96;
+                        sqrtRatioAX96 = sqrtRatioBX96;
+                        sqrtRatioBX96 = tmp;
+                    }
+                    return amount1
+                        .mul(Common.Q96)
+                        .div(sqrtRatioBX96.sub(sqrtRatioAX96));
+                };
+
+                const getLiquidityByTokenAmounts = async (
+                    amount0: BigNumber,
+                    amount1: BigNumber
+                ) => {
+                    const { tickLower, tickUpper } =
+                        await this.positionManager.positions(
+                            await this.uniV3Vault.nft()
+                        );
+                    var sqrtRatioX96 = await getSqrtPriceX96();
+                    var sqrtRatioAX96 = BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(tickLower)
+                    );
+                    var sqrtRatioBX96 = BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(tickUpper)
+                    );
+
+                    if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
+                        var tmp = sqrtRatioAX96;
+                        sqrtRatioAX96 = sqrtRatioBX96;
+                        sqrtRatioBX96 = tmp;
+                    }
+                    var liquidity = BigNumber.from(0);
+                    if (sqrtRatioX96.lte(sqrtRatioAX96)) {
+                        liquidity = getLiquidityForAmount0(
+                            sqrtRatioAX96,
+                            sqrtRatioBX96,
+                            amount0
+                        );
+                    } else if (sqrtRatioX96 < sqrtRatioBX96) {
+                        const liquidity0 = getLiquidityForAmount0(
+                            sqrtRatioX96,
+                            sqrtRatioBX96,
+                            amount0
+                        );
+                        const liquidity1 = getLiquidityForAmount1(
+                            sqrtRatioAX96,
+                            sqrtRatioX96,
+                            amount1
+                        );
+
+                        liquidity =
+                            liquidity0 < liquidity1 ? liquidity0 : liquidity1;
+                    } else {
+                        liquidity = getLiquidityForAmount1(
+                            sqrtRatioAX96,
+                            sqrtRatioBX96,
+                            amount1
+                        );
+                    }
+                    return liquidity;
+                };
+
+                const maxAmountForPush = BigNumber.from(2).pow(70).sub(100);
+                var pricesHistory: BigNumber[][] = [];
+
+                // if positive - deposit to erc20 and then to UniV3Vault
+                // else withdraw
+
+                // wethAmountChanges will be calculated by price functions
+                var usdcAmountChanges: BigNumber[] = [];
+                const limit = BigNumber.from(10).pow(9);
+                var currentBalance = BigNumber.from(0);
+                for (var i = 0; i < 9; i++) {
+                    var amount = generateRandomBignumber(limit).add(
+                        BigNumber.from(10).pow(8)
+                    );
+                    if (currentBalance.gte(amount.mul(2))) {
+                        amount = amount.mul(-1);
+                    }
+                    currentBalance = currentBalance.add(amount);
+                    usdcAmountChanges.push(currentBalance);
+                }
+                currentBalance = currentBalance.mul(-1);
+                usdcAmountChanges.push(currentBalance);
+
+                for (var i = 1; i <= 3; i++) {
+                    pricesHistory.push([]);
+                    var deltaValue = BigNumber.from(0);
+                    for (var j = 1; j <= 10; j++) {
+                        // change liquidity:
+                        var currentUsdcChange = usdcAmountChanges[i - 1];
+                        if (currentBalance.gt(0)) {
+                            var currentWethChange = currentUsdcChange
+                                .mul(await getBestPrice())
+                                .div(Common.Q96);
+                            await mint(
+                                "USDC",
+                                this.deployer.address,
+                                currentUsdcChange
+                            );
+                            await mint(
+                                "WETH",
+                                this.deployer.address,
+                                currentWethChange
+                            );
+                            await this.erc20RootVault.deposit(
+                                [currentUsdcChange, currentWethChange],
+                                BigNumber.from(0),
+                                []
+                            );
+                            await this.erc20Vault.pull(
+                                this.uniV3Vault.address,
+                                [this.usdc.address, this.weth.address],
+                                [currentUsdcChange, currentWethChange],
+                                []
+                            );
+                        } else {
+                            currentUsdcChange = currentUsdcChange.mul(-1);
+                            var currentWethChange = currentUsdcChange
+                                .mul(await getBestPrice())
+                                .div(Common.Q96);
+                            await mint(
+                                "USDC",
+                                this.deployer.address,
+                                currentUsdcChange
+                            );
+                            await mint(
+                                "WETH",
+                                this.deployer.address,
+                                currentWethChange
+                            );
+
+                            await this.uniV3Vault.pull(
+                                this.erc20Vault.address,
+                                [this.usdc.address, this.weth.address],
+                                [currentUsdcChange, currentWethChange],
+                                []
+                            );
+
+                            await this.erc20RootVault.withdraw(
+                                this.deployer.address,
+                                await getLiquidityByTokenAmounts(
+                                    currentUsdcChange,
+                                    currentWethChange
+                                ),
+                                [currentUsdcChange, currentWethChange],
+                                []
+                            );
+                        }
+
+                        const currentVault = BigNumber.from(10).pow(12).mul(2);
+                        deltaValue = deltaValue.add(
+                            currentVault.mul(1000000 + UNIV3_FEE).div(1000000)
+                        );
+                        await pushPriceDown(currentVault);
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance();
+                        pricesHistory[i - 1].push(await getSqrtPriceX96());
+                    }
+
+                    deltaValue = deltaValue
+                        .mul(await getBestPrice())
+                        .div(Common.Q96);
+
+                    while (deltaValue.gt(maxAmountForPush)) {
+                        await pushPriceUp(maxAmountForPush);
+                        deltaValue = deltaValue.sub(maxAmountForPush);
+                    }
+
+                    await pushPriceUp(deltaValue);
+                    await this.subject.connect(this.mStrategyAdmin).rebalance();
+                    pricesHistory[i - 1].push(await getSqrtPriceX96());
+                }
+
+                for (var i = 0; i < 2; i++) {
+                    for (var j = 0; j < pricesHistory[i].length; j++) {
+                        const currentPrice = pricesHistory[i][j];
+                        const nextPrice = pricesHistory[i + 1][j];
+                        // currentPrice <= nextPrice <= 1.003 * currentPrice
+                        expect(currentPrice.lte(nextPrice));
+                        expect(
+                            currentPrice
+                                .mul(1000000 + UNIV3_FEE)
+                                .div(1000000)
+                                .gte(nextPrice)
+                        );
+                    }
+                }
 
                 return true;
             });
