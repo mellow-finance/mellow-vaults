@@ -6,6 +6,7 @@ import {
     mintUniV3Position_USDC_WETH,
     randomAddress,
     sleep,
+    sleepTo,
     withSigner,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
@@ -441,7 +442,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                      */
                     const oracleParams: OracleParamsStruct = {
                         oracleObservationDelta: 15,
-                        maxTickDeviation: 50,
+                        maxTickDeviation: 10000,
                         maxSlippageD: Math.round(0.1 * 10 ** 9),
                     };
                     const ratioParams: RatioParamsStruct = {
@@ -451,7 +452,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         minErc20MoneyRatioDeviationD: Math.round(
                             0.01 * 10 ** 9
                         ),
-                        minTickRebalanceThreshold: 180,
+                        minTickRebalanceThreshold: 0,
                         tickNeighborhood: 60,
                         tickIncrease: 180,
                     };
@@ -746,61 +747,49 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 );
                 await debugTvls();
 
-                {
-                    // await this.preparePush();
-                    // await this.subject.push(
-                    //     [this.usdc.address, this.weth.address],
-                    //     [
-                    //         BigNumber.from(10).pow(6).mul(3000),
-                    //         BigNumber.from(10).pow(18).mul(1),
-                    //     ],
-                    //     []
-                    // );
+                // =================================================================
+                const amount = BigNumber.from(10).pow(14);
+                await mint("USDC", this.deployer.address, amount);
+                await debugTokenBalances("State E [mint] minted tokens.");
+                await debugTvls();
 
-                    const { uniswapV3Router } = await getNamedAccounts();
-                    let swapRouter = await ethers.getContractAt(
-                        ISwapRouter,
-                        uniswapV3Router
-                    );
-                    await this.usdc.approve(
-                        swapRouter.address,
-                        ethers.constants.MaxUint256
-                    );
-                    let params = {
-                        tokenIn: this.usdc.address,
-                        tokenOut: this.weth.address,
-                        fee: UNIV3_FEE,
-                        recipient: this.deployer.address,
-                        deadline: ethers.constants.MaxUint256,
-                        amountIn: BigNumber.from(10).pow(6).mul(5000),
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: 0,
-                    };
-                    await swapRouter.exactInputSingle(params);
-                }
-
-                let params = {
+                // =================================================================
+                await this.swapRouter.exactInputSingle({
                     tokenIn: this.usdc.address,
                     tokenOut: this.weth.address,
                     fee: UNIV3_FEE,
                     recipient: this.deployer.address,
                     deadline: ethers.constants.MaxUint256,
-                    amountIn: BigNumber.from(10).pow(9),
+                    amountIn: amount,
                     amountOutMinimum: 0,
                     sqrtPriceLimitX96: 0,
-                };
-
-                await this.swapRouter
-                    .connect(this.deployer)
-                    .exactInputSingle(params);
+                });
                 await debugTokenBalances(
-                    "State E [swap] after swap by SwapRouter"
+                    "State F [swap] after swap by SwapRouter"
                 );
                 await debugTvls();
 
+                // pull of dust ===============================================
+                await sleep(this.governanceDelay);
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .manualPull(
+                        this.erc20Vault.address,
+                        this.uniV3Vault.address,
+                        [BigNumber.from(10).pow(8), BigNumber.from(10).pow(8)],
+                        []
+                    );
+
+                await debugTokenBalances(
+                    "State G [manualPull] after pulling small amount from erc20 to univ3"
+                );
+                await debugTvls();
+
+                // =================================================================
+
                 await this.subject.connect(this.mStrategyAdmin).rebalance();
                 await debugTokenBalances(
-                    "State F [rebalance] after rebalance strategy with new price params"
+                    "State H [rebalance] after rebalance strategy with new price params"
                 );
                 await debugTvls();
 
