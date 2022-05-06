@@ -28,7 +28,7 @@ import { assert } from "console";
 import { randomBytes } from "crypto";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-import { FullMath, TickMath } from "@uniswap/v3-sdk";
+import { TickMath } from "@uniswap/v3-sdk";
 
 const UNIV3_FEE = 3000; // corresponds to 0.05% fee in UniV3 pool
 
@@ -282,6 +282,25 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         this.swapRouter.address,
                         ethers.constants.MaxUint256
                     );
+
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(
+                            this.subject.address,
+                            await this.erc20Vault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(
+                            this.subject.address,
+                            await this.yearnVault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(this.admin)
+                        .adminApprove(
+                            this.subject.address,
+                            await this.uniV3Vault.nft()
+                        );
                     return this.subject;
                 }
             );
@@ -333,7 +352,8 @@ contract<MStrategy, DeployOptions, CustomContext>(
             assert(limit.gt(0), "Bignumber underflow");
             const bytes =
                 "0x" + randomBytes(limit._hex.length * 2).toString("hex");
-            return BigNumber.from(bytes).mod(limit);
+            const result = BigNumber.from(bytes).mod(limit);
+            return result;
         };
 
         const generateArraySplit = (
@@ -418,23 +438,104 @@ contract<MStrategy, DeployOptions, CustomContext>(
             await push(delta, this.weth.address, this.usdc.address, "WETH");
         };
 
+        const getBestPrice = async () => {
+            const { pricesX96 } = await this.mellowOracle.price(
+                this.usdc.address,
+                this.weth.address,
+                0x28
+            );
+            var result = BigNumber.from(0);
+            for (var i = 0; i < pricesX96.length; i++) {
+                result = result.add(pricesX96[i]);
+            }
+            return result.div(pricesX96.length);
+        };
+
+        const getLiquidityForAmount0 = (
+            sqrtRatioAX96: BigNumber,
+            sqrtRatioBX96: BigNumber,
+            amount0: BigNumber
+        ) => {
+            if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
+                var tmp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = tmp;
+            }
+            var intermediate = sqrtRatioAX96.mul(sqrtRatioBX96).div(Common.Q96);
+            return amount0
+                .mul(intermediate)
+                .div(sqrtRatioBX96.sub(sqrtRatioAX96));
+        };
+
+        const getLiquidityForAmount1 = (
+            sqrtRatioAX96: BigNumber,
+            sqrtRatioBX96: BigNumber,
+            amount1: BigNumber
+        ) => {
+            if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
+                var tmp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = tmp;
+            }
+            return amount1
+                .mul(Common.Q96)
+                .div(sqrtRatioBX96.sub(sqrtRatioAX96));
+        };
+
+        const getLiquidityByTokenAmounts = async (
+            amount0: BigNumber,
+            amount1: BigNumber
+        ) => {
+            const { tickLower, tickUpper } =
+                await this.positionManager.positions(
+                    await this.uniV3Vault.nft()
+                );
+            var sqrtRatioX96 = await getSqrtPriceX96();
+            var sqrtRatioAX96 = BigNumber.from(
+                TickMath.getSqrtRatioAtTick(tickLower).toString(10)
+            );
+            var sqrtRatioBX96 = BigNumber.from(
+                TickMath.getSqrtRatioAtTick(tickUpper).toString(10)
+            );
+
+            if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
+                var tmp = sqrtRatioAX96;
+                sqrtRatioAX96 = sqrtRatioBX96;
+                sqrtRatioBX96 = tmp;
+            }
+            var liquidity = BigNumber.from(0);
+            if (sqrtRatioX96.lte(sqrtRatioAX96)) {
+                liquidity = getLiquidityForAmount0(
+                    sqrtRatioAX96,
+                    sqrtRatioBX96,
+                    amount0
+                );
+            } else if (sqrtRatioX96 < sqrtRatioBX96) {
+                const liquidity0 = getLiquidityForAmount0(
+                    sqrtRatioX96,
+                    sqrtRatioBX96,
+                    amount0
+                );
+                const liquidity1 = getLiquidityForAmount1(
+                    sqrtRatioAX96,
+                    sqrtRatioX96,
+                    amount1
+                );
+
+                liquidity = liquidity0 < liquidity1 ? liquidity0 : liquidity1;
+            } else {
+                liquidity = getLiquidityForAmount1(
+                    sqrtRatioAX96,
+                    sqrtRatioBX96,
+                    amount1
+                );
+            }
+            return liquidity;
+        };
+
         describe("Multiple price swappings and rebalances in mstrategy", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
-
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.erc20Vault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.yearnVault.nft()
-                    );
-
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
                 const wethAmountForDeposit = this.wethDeployerSupply;
 
@@ -454,20 +555,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         [usdcAmountForDeposit, wethAmountForDeposit],
                         []
                     );
-
-                const getBestPrice = async () => {
-                    const { pricesX96 } = await this.mellowOracle.price(
-                        this.usdc.address,
-                        this.weth.address,
-                        0x61
-                    );
-                    var result = BigNumber.from(0);
-                    for (var i = 0; i < pricesX96.length; i++) {
-                        result = result.add(pricesX96[i]);
-                    }
-
-                    return result.div(pricesX96.length);
-                };
 
                 const maxAmountForPush = BigNumber.from(2).pow(70).sub(100);
                 var pricesHistory: BigNumber[][] = [];
@@ -524,19 +611,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
 
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.erc20Vault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.yearnVault.nft()
-                    );
-
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
                 const wethAmountForDeposit = this.wethDeployerSupply;
 
@@ -557,105 +631,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         []
                     );
 
-                const getBestPrice = async () => {
-                    const { pricesX96 } = await this.mellowOracle.price(
-                        this.usdc.address,
-                        this.weth.address,
-                        0x61
-                    );
-                    var result = BigNumber.from(0);
-                    for (var i = 0; i < pricesX96.length; i++) {
-                        result = result.add(pricesX96[i]);
-                    }
-
-                    return result.div(pricesX96.length);
-                };
-
-                const getLiquidityForAmount0 = (
-                    sqrtRatioAX96: BigNumber,
-                    sqrtRatioBX96: BigNumber,
-                    amount0: BigNumber
-                ) => {
-                    if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
-                        var tmp = sqrtRatioAX96;
-                        sqrtRatioAX96 = sqrtRatioBX96;
-                        sqrtRatioBX96 = tmp;
-                    }
-                    var intermediate = sqrtRatioAX96
-                        .mul(sqrtRatioBX96)
-                        .div(Common.Q96);
-                    return amount0
-                        .mul(intermediate)
-                        .div(sqrtRatioBX96.sub(sqrtRatioAX96));
-                };
-
-                const getLiquidityForAmount1 = (
-                    sqrtRatioAX96: BigNumber,
-                    sqrtRatioBX96: BigNumber,
-                    amount1: BigNumber
-                ) => {
-                    if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
-                        var tmp = sqrtRatioAX96;
-                        sqrtRatioAX96 = sqrtRatioBX96;
-                        sqrtRatioBX96 = tmp;
-                    }
-                    return amount1
-                        .mul(Common.Q96)
-                        .div(sqrtRatioBX96.sub(sqrtRatioAX96));
-                };
-
-                const getLiquidityByTokenAmounts = async (
-                    amount0: BigNumber,
-                    amount1: BigNumber
-                ) => {
-                    const { tickLower, tickUpper } =
-                        await this.positionManager.positions(
-                            await this.uniV3Vault.nft()
-                        );
-                    var sqrtRatioX96 = await getSqrtPriceX96();
-                    var sqrtRatioAX96 = BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(tickLower)
-                    );
-                    var sqrtRatioBX96 = BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(tickUpper)
-                    );
-
-                    if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
-                        var tmp = sqrtRatioAX96;
-                        sqrtRatioAX96 = sqrtRatioBX96;
-                        sqrtRatioBX96 = tmp;
-                    }
-                    var liquidity = BigNumber.from(0);
-                    if (sqrtRatioX96.lte(sqrtRatioAX96)) {
-                        liquidity = getLiquidityForAmount0(
-                            sqrtRatioAX96,
-                            sqrtRatioBX96,
-                            amount0
-                        );
-                    } else if (sqrtRatioX96 < sqrtRatioBX96) {
-                        const liquidity0 = getLiquidityForAmount0(
-                            sqrtRatioX96,
-                            sqrtRatioBX96,
-                            amount0
-                        );
-                        const liquidity1 = getLiquidityForAmount1(
-                            sqrtRatioAX96,
-                            sqrtRatioX96,
-                            amount1
-                        );
-
-                        liquidity =
-                            liquidity0 < liquidity1 ? liquidity0 : liquidity1;
-                    } else {
-                        liquidity = getLiquidityForAmount1(
-                            sqrtRatioAX96,
-                            sqrtRatioBX96,
-                            amount1
-                        );
-                    }
-                    return liquidity;
-                };
-
                 const maxAmountForPush = BigNumber.from(2).pow(70).sub(100);
                 var pricesHistory: BigNumber[][] = [];
 
@@ -670,22 +645,39 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     var amount = generateRandomBignumber(limit).add(
                         BigNumber.from(10).pow(8)
                     );
-                    if (currentBalance.gte(amount.mul(2))) {
-                        amount = amount.mul(-1);
+                    if (currentBalance.gt(amount.mul(2))) {
+                        amount = amount.mul(BigNumber.from(-1));
                     }
                     currentBalance = currentBalance.add(amount);
-                    usdcAmountChanges.push(currentBalance);
+                    usdcAmountChanges.push(amount);
                 }
-                currentBalance = currentBalance.mul(-1);
+                currentBalance = currentBalance.mul(BigNumber.from(-1));
                 usdcAmountChanges.push(currentBalance);
-
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.erc20Vault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.yearnVault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.uniV3Vault.nft()
+                    );
                 for (var i = 1; i <= 3; i++) {
                     pricesHistory.push([]);
                     var deltaValue = BigNumber.from(0);
                     for (var j = 1; j <= 10; j++) {
                         // change liquidity:
                         var currentUsdcChange = usdcAmountChanges[i - 1];
-                        if (currentBalance.gt(0)) {
+                        if (currentUsdcChange.gte(0)) {
                             var currentWethChange = currentUsdcChange
                                 .mul(await getBestPrice())
                                 .div(Common.Q96);
@@ -699,49 +691,46 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 this.deployer.address,
                                 currentWethChange
                             );
-                            await this.erc20RootVault.deposit(
-                                [currentUsdcChange, currentWethChange],
-                                BigNumber.from(0),
-                                []
-                            );
-                            await this.erc20Vault.pull(
-                                this.uniV3Vault.address,
-                                [this.usdc.address, this.weth.address],
-                                [currentUsdcChange, currentWethChange],
-                                []
-                            );
+                            await this.erc20RootVault
+                                .connect(this.deployer)
+                                .deposit(
+                                    [currentUsdcChange, currentWethChange],
+                                    BigNumber.from(0),
+                                    []
+                                );
+                            await this.subject
+                                .connect(this.mStrategyAdmin)
+                                .manualPull(
+                                    this.uniV3Vault.address,
+                                    this.erc20Vault.address,
+                                    [currentUsdcChange, currentWethChange],
+                                    []
+                                );
                         } else {
                             currentUsdcChange = currentUsdcChange.mul(-1);
                             var currentWethChange = currentUsdcChange
                                 .mul(await getBestPrice())
                                 .div(Common.Q96);
-                            await mint(
-                                "USDC",
-                                this.deployer.address,
-                                currentUsdcChange
-                            );
-                            await mint(
-                                "WETH",
-                                this.deployer.address,
-                                currentWethChange
-                            );
+                            await this.subject
+                                .connect(this.mStrategyAdmin)
+                                .manualPull(
+                                    this.uniV3Vault.address,
+                                    this.erc20Vault.address,
+                                    [currentUsdcChange, currentWethChange],
+                                    []
+                                );
 
-                            await this.uniV3Vault.pull(
-                                this.erc20Vault.address,
-                                [this.usdc.address, this.weth.address],
-                                [currentUsdcChange, currentWethChange],
-                                []
-                            );
-
-                            await this.erc20RootVault.withdraw(
-                                this.deployer.address,
-                                await getLiquidityByTokenAmounts(
-                                    currentUsdcChange,
-                                    currentWethChange
-                                ),
-                                [currentUsdcChange, currentWethChange],
-                                []
-                            );
+                            await this.erc20RootVault
+                                .connect(this.deployer)
+                                .withdraw(
+                                    this.deployer.address,
+                                    await getLiquidityByTokenAmounts(
+                                        currentUsdcChange,
+                                        currentWethChange
+                                    ),
+                                    [currentUsdcChange, currentWethChange],
+                                    []
+                                );
                         }
 
                         const currentVault = BigNumber.from(10).pow(12).mul(2);
