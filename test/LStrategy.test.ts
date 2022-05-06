@@ -28,7 +28,10 @@ import { ERC20 } from "./library/Types";
 import { randomBytes } from "ethers/lib/utils";
 import { basename } from "path";
 import exp from "constants";
-import { TickMath } from "@uniswap/v3-sdk";
+import { SqrtPriceMath, TickMath } from "@uniswap/v3-sdk";
+import { sqrt } from "@uniswap/sdk-core";
+import JSBI from 'jsbi';
+import { T } from "ramda";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -498,7 +501,13 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
 
                 this.getExpectedRatio = async () => {
-                    const targetTick = await this.getUniV3Tick();
+                    const tokens = [this.wsteth.address, this.weth.address]
+                    const targetPriceX96 = await this.subject.targetPrice(tokens, await this.subject.tradingParams());
+                    const sqrtTargetPriceX96 = BigNumber.from(sqrt(JSBI.BigInt(targetPriceX96)).toString());
+                    const targetTick = TickMath.getTickAtSqrtRatio(
+                        JSBI.BigInt(sqrtTargetPriceX96.mul(BigNumber.from(2).pow(48)).toString())
+                    );
+                    console.log("Target tick expected: ", targetTick);
                     return await this.subject.targetUniV3LiquidityRatio(targetTick);
                 };
 
