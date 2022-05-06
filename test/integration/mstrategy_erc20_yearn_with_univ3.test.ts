@@ -729,7 +729,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                         currentWethChange
                                     ),
                                     [currentUsdcChange, currentWethChange],
-                                    []
+                                    [[], [], []]
                                 );
                         }
 
