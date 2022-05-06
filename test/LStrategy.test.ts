@@ -495,7 +495,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     const [, , , , , , , upperVaultLiquidity, , , ,] = await
                         this.positionManager.positions(await upperVault.uniV3Nft());
                     const total = lowerVaultLiquidity.add(upperVaultLiquidity);
-                    // console.log("Total liquidity: ", total.toString());
                     return lowerVaultLiquidity.mul(await this.subject.DENOMINATOR()).div(total);
                 };
 
@@ -603,13 +602,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                 //swaps other token if some token is 0 in ERC20
                 this.trySwapERC20 = async () => {
-                    // console.log("called");
                     let erc20Tvl = await this.erc20Vault.tvl();
                     let tokens = [this.wsteth, this.weth];
                     for (let i = 0; i < 2; ++i) {
                         if (erc20Tvl[0][i].eq(BigNumber.from(0))) {
                             let otherTokenAmount = erc20Tvl[0][1 - i];
-                            // console.log(i, otherTokenAmount);
                             await this.swapTokens(
                                 this.erc20Vault.address,
                                 this.erc20Vault.address,
@@ -617,8 +614,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 tokens[i],
                                 otherTokenAmount.div(2)
                             );
-                            // let kek = await this.erc20Vault.tvl();
-                            // console.log(kek);
                         }
                     }
                 }
@@ -640,7 +635,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         await this.deploymentFixture();
     });
 
-    describe("#reb", () => {
+    describe("#rebalance integration scenarios", () => {
         //open initial positions of equal size and some ticks
         beforeEach(async () => {
             await this.grantPermissions();
@@ -655,18 +650,13 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             let tickRightLower = tickLeftLower + this.semiPositionRange;
             let tickRightUpper = tickLeftUpper + this.semiPositionRange;
 
-            console.log(tickLeftLower, tickLeftUpper, tickRightLower, tickRightUpper);
-
             await this.updateMockOracle(currentTick);
 
             await this.preparePush({ vault: this.uniV3LowerVault, tickLower: tickLeftLower, tickUpper: tickLeftUpper});
             await this.preparePush({ vault: this.uniV3UpperVault, tickLower: tickRightLower, tickUpper: tickRightUpper});
             await this.grantPermissionsUniV3Vaults();
         });
-        /////////////////////// FAILS??
-        /////////////////////// CHECK IF IT'S OK
         describe("ERC20 is initially empty", () => {
-            /*
             describe("UniV3rebalance when ERC20 is empty and no UniV3ERC20rebalance happens", () => {
                 it("reverts with ${Exceptions.VALUE_ZERO} in general case", async () => {
 
@@ -786,90 +776,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
-*/
-            describe("batches of rebalances after huge price changes", () => {
-                it("rebalance converges to target ratio", async () => {
-
-                    const initialTick = await this.getUniV3Tick();
-
-                    const mintParams = {
-                        token0: this.wsteth.address,
-                        token1: this.weth.address,
-                        fee: 500,
-                        tickLower: -20*this.semiPositionRange,
-                        tickUpper: 20*this.semiPositionRange,
-                        amount0Desired: BigNumber.from(10).pow(20),
-                        amount1Desired: BigNumber.from(10).pow(20),
-                        amount0Min: 0,
-                        amount1Min: 0,
-                        recipient: this.deployer.address,
-                        deadline: ethers.constants.MaxUint256,
-                    };
-                    //mint a position in pull to provide liquidity for future swaps
-                    await this.positionManager.mint(mintParams);
-                    
-                    //change price up to some level
-                    while (true) {
-                        await this.swapTokens(
-                            this.deployer.address,
-                            this.deployer.address,
-                            this.wsteth,
-                            this.weth,
-                            BigNumber.from(10).pow(18).mul(5)
-                        );
-
-                        const currentTick = await this.getUniV3Tick();
-                        console.log(currentTick);
-                        const delta = currentTick.sub(initialTick).abs();
-                        if (delta.gt(BigNumber.from(5).mul(this.semiPositionRange))) {
-                            break;
-                        }
-                    }
-
-                    await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .rebalanceERC20UniV3Vaults(
-                                [ethers.constants.Zero, ethers.constants.Zero],
-                                [ethers.constants.Zero, ethers.constants.Zero],
-                                ethers.constants.MaxUint256
-                            )
-                    ).not.to.be.reverted;
-
-                    for (let iter = 0; iter < 20; ++iter) {
-
-                        await this.trySwapERC20();
-
-                        const currentTick = await this.getUniV3Tick();
-                        await this.updateMockOracle(currentTick);
-
-                        await expect(
-                            this.subject
-                                .connect(this.admin)
-                                .rebalanceUniV3Vaults(
-                                    [ethers.constants.Zero, ethers.constants.Zero],
-                                    [ethers.constants.Zero, ethers.constants.Zero],
-                                    ethers.constants.MaxUint256
-                                )
-                        ).not.to.be.reverted;
-
-                        console.log(iter);
-                        console.log(await this.calculateTvl());
-                    }
-
-                    /*
-                    const [neededRatio, flag] = await this.getExpectedRatio();
-                    const liquidityRatio = await this.getVaultsLiquidityRatio();
-                    expect (
-                        await this.calculateRatioDeviationMeasure(neededRatio, liquidityRatio)
-                    ).true;
-                    */
-
-                });
-            });
-
         });
-        /*
+        
         describe("ERC20 has inititally a lot of liquidity", () => {
             beforeEach(async () => {
                 await this.submitToERC20Vault();
@@ -934,10 +842,78 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
+            describe("batches of rebalances after huge price changes", () => {
+                it("rebalance converges to target ratio", async () => {
+
+                    await this.submitToERC20Vault();
+                    const initialTick = await this.getUniV3Tick();
+
+                    const mintParams = {
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
+                        fee: 500,
+                        tickLower: -20*this.semiPositionRange,
+                        tickUpper: 20*this.semiPositionRange,
+                        amount0Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount1Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    };
+                    //mint a position in pull to provide liquidity for future swaps
+                    await this.positionManager.mint(mintParams);
+                    
+                    //change price up to some level
+                    while (true) {
+                        await this.swapTokens(
+                            this.deployer.address,
+                            this.deployer.address,
+                            this.wsteth,
+                            this.weth,
+                            BigNumber.from(10).pow(18).mul(5)
+                        );
+
+                        const currentTick = await this.getUniV3Tick();
+                        const delta = currentTick.sub(initialTick).abs();
+                        if (delta.gt(BigNumber.from(5).mul(this.semiPositionRange))) {
+                            break;
+                        }
+                    }
+
+                    for (let iter = 0; iter < 20; ++iter) {
+
+                        const currentTick = await this.getUniV3Tick();
+                        await this.updateMockOracle(currentTick);
+
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .rebalanceUniV3Vaults(
+                                    [ethers.constants.Zero, ethers.constants.Zero],
+                                    [ethers.constants.Zero, ethers.constants.Zero],
+                                    ethers.constants.MaxUint256
+                                )
+                        ).not.to.be.reverted;
+
+                        const [neededRatio, flag] = await this.getExpectedRatio();
+                        const liquidityRatio = await this.getVaultsLiquidityRatio();
+                    }
+
+                    
+                    const [neededRatio, flag] = await this.getExpectedRatio();
+                    const liquidityRatio = await this.getVaultsLiquidityRatio();
+                    expect (
+                        await this.calculateRatioDeviationMeasure(neededRatio, liquidityRatio)
+                    ).true;
+                    
+
+                });
+            });
         });
-        */
+        
     });
-/*
+
     describe("#updateTradingParams", () => {
         beforeEach(async () => {
             this.baseParams = {
@@ -2480,5 +2456,4 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
-    */
 });
