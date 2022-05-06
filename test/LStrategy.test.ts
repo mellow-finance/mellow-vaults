@@ -646,14 +646,14 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.grantPermissions();
             await this.mintFunds(BigNumber.from(10).pow(18));
 
-            const semiPositionRange = 60;
+            this.semiPositionRange = 60;
 
             const currentTick = await this.getUniV3Tick();
-            let tickLeftLower = currentTick.div(semiPositionRange).mul(semiPositionRange) - semiPositionRange;
-            let tickLeftUpper = tickLeftLower + 2 * semiPositionRange;
+            let tickLeftLower = currentTick.div(this.semiPositionRange).mul(this.semiPositionRange) - this.semiPositionRange;
+            let tickLeftUpper = tickLeftLower + 2 * this.semiPositionRange;
 
-            let tickRightLower = tickLeftLower + semiPositionRange;
-            let tickRightUpper = tickLeftUpper + semiPositionRange;
+            let tickRightLower = tickLeftLower + this.semiPositionRange;
+            let tickRightUpper = tickLeftUpper + this.semiPositionRange;
 
             console.log(tickLeftLower, tickLeftUpper, tickRightLower, tickRightUpper);
 
@@ -790,19 +790,26 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("batches of rebalances after huge price changes", () => {
                 it("rebalance converges to target ratio", async () => {
 
-                    const cc = await this.getUniV3Tick();
-                    console.log(cc);
+                    const initialTick = await this.getUniV3Tick();
 
-                    await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .rebalanceERC20UniV3Vaults(
-                                [ethers.constants.Zero, ethers.constants.Zero],
-                                [ethers.constants.Zero, ethers.constants.Zero],
-                                ethers.constants.MaxUint256
-                            )
-                    ).not.to.be.reverted;
-                    for (let i = 0; i < 200; ++i) {
+                    const mintParams = {
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
+                        fee: 500,
+                        tickLower: -20*this.semiPositionRange,
+                        tickUpper: 20*this.semiPositionRange,
+                        amount0Desired: BigNumber.from(10).pow(20),
+                        amount1Desired: BigNumber.from(10).pow(20),
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    };
+                    //mint a position in pull to provide liquidity for future swaps
+                    await this.positionManager.mint(mintParams);
+                    
+                    //change price up to some level
+                    while (true) {
                         await this.swapTokens(
                             this.deployer.address,
                             this.deployer.address,
@@ -813,9 +820,23 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                         const currentTick = await this.getUniV3Tick();
                         console.log(currentTick);
+                        const delta = currentTick.sub(initialTick).abs();
+                        if (delta.gt(BigNumber.from(5).mul(this.semiPositionRange))) {
+                            break;
+                        }
                     }
-/*
-                    for (let rebalance = 0; rebalance < 4; ++rebalance) {
+
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceERC20UniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            )
+                    ).not.to.be.reverted;
+
+                    for (let iter = 0; iter < 20; ++iter) {
 
                         await this.trySwapERC20();
 
@@ -831,13 +852,19 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                     ethers.constants.MaxUint256
                                 )
                         ).not.to.be.reverted;
+
+                        console.log(iter);
+                        console.log(await this.calculateTvl());
                     }
+
+                    /*
                     const [neededRatio, flag] = await this.getExpectedRatio();
                     const liquidityRatio = await this.getVaultsLiquidityRatio();
                     expect (
                         await this.calculateRatioDeviationMeasure(neededRatio, liquidityRatio)
                     ).true;
-*/
+                    */
+
                 });
             });
 
