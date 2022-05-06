@@ -69,6 +69,8 @@ const config: HardhatUserConfig = {
                 ? [process.env["POLYGON_DEPLOYER_PK"]]
                 : undefined,
             chainId: 137,
+            gas: 120,
+            gasMultiplier: 10,
         },
 
         bsc: {
@@ -194,7 +196,7 @@ const config: HardhatUserConfig = {
         },
         wsteth: {
             default: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
-            rinkeby: "0xb770Ea0F1762D73c8719B52eF981f7F1D824d9a7",
+            rinkeby: "0x2ca788280fb10384946d3ecc838d94deca505cf4",
         },
         dai: {
             default: "0x6b175474e89094c44da98b954eedeac495271d0f",

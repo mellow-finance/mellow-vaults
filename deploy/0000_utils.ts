@@ -103,6 +103,7 @@ export const setupVault = async (
         log(`Deploying ${contractName.replace("Governance", "")}...`);
         await retry(
             async () => {
+                console.log(createVaultArgs.toString());
                 await execute(
                     contractName,
                     {

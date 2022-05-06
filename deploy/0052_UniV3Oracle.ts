@@ -13,13 +13,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         uniswapV3Factory
     );
     const pools = [];
+    // usdc 0x2791
+    // weth 0x7ceb
+    // wbtc 0x1bf
     for (const tokens of [
         [usdc, weth],
         [wbtc, weth],
         [usdc, wbtc],
     ]) {
-        pools.push(await factory.getPool(tokens[0], tokens[1], 3000));
+        console.log("TOKENS:", tokens[0], tokens[1]);
+        console.log(await factory.getPool(tokens[0].toLowerCase(), tokens[1].toLowerCase(), 3000));
+        pools.push(await factory.getPool(tokens[0].toLowerCase(), tokens[1].toLowerCase(), 3000));
     }
+
+    console.log(uniswapV3Factory);
+    console.log("pools:", pools);
+    console.log(admin);
 
     await deploy("UniV3Oracle", {
         from: deployer,
