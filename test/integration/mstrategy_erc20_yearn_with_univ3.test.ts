@@ -24,12 +24,11 @@ import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
 import { OracleParamsStruct, RatioParamsStruct } from "../types/MStrategy";
 import Common from "../library/Common";
-import { assert, debug } from "console";
+import { assert } from "console";
 import { randomBytes } from "crypto";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { TickMath } from "@uniswap/v3-sdk";
-import { threadId } from "worker_threads";
 
 const UNIV3_FEE = 3000; // corresponds to 0.05% fee in UniV3 pool
 
@@ -504,62 +503,6 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return (await pool.slot0()).sqrtPriceX96;
         };
 
-        const getTick = async () => {
-            const poolAddress = await this.uniV3Vault.pool();
-            const pool: IUniswapV3Pool = await ethers.getContractAt(
-                "IUniswapV3Pool",
-                poolAddress
-            );
-            return (await pool.slot0()).tick;
-        };
-
-        const logSlot0 = async () => {
-            const poolAddress = await this.uniV3Vault.pool();
-            const pool: IUniswapV3Pool = await ethers.getContractAt(
-                "IUniswapV3Pool",
-                poolAddress
-            );
-            const {
-                sqrtPriceX96,
-                tick,
-                observationIndex,
-                observationCardinality,
-                observationCardinalityNext,
-                feeProtocol,
-                unlocked,
-            } = await pool.slot0();
-            console.log("Slot0:");
-            console.log("sqrtPrice:", sqrtPriceX96.toString());
-            console.log("tick:", tick.toString());
-            console.log("observationIndex:", observationIndex.toString());
-            console.log(
-                "observationCardinality:",
-                observationCardinality.toString()
-            );
-            console.log(
-                "observationCardinalityNext:",
-                observationCardinalityNext.toString()
-            );
-            console.log("feeProtocol:", feeProtocol.toString());
-            console.log("unlocked", unlocked.toString());
-        };
-
-        const debugTvls = async (title: string) => {
-            console.log(title);
-            const erc20Tvl = await this.erc20Vault.tvl();
-            const yearnTvl = await this.yearnVault.tvl();
-            console.log("Tvls:");
-            console.log(
-                "Erc20Vault:",
-                erc20Tvl.minTokenAmounts.map((x) => x.toString())
-            );
-            console.log(
-                "YearnVault:",
-                yearnTvl.minTokenAmounts.map((x) => x.toString())
-            );
-            console.log();
-        };
-
         const push = async (
             delta: BigNumber,
             from: string,
@@ -953,7 +896,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("Rebalance work correctly", () => {
+        describe("Rebalance work correctly", () => {
             it("for every different tickLower, tickUpper and tick given", async () => {
                 await setZeroFeesFixture();
                 await this.vaultRegistry
