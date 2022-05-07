@@ -220,10 +220,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 tickMax
     ) internal pure returns (uint256) {
         if (tick <= tickMin) {
-            return 0;
+            return DENOMINATOR;
         }
         if (tick >= tickMax) {
-            return DENOMINATOR;
+            return 0;
         }
         return (uint256(uint24(tickMax - tick)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
     }
@@ -319,14 +319,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             {
                 int24 tick = _getAverageTickChecked(pool_);
                 if (ratioParams.tickMin + ratioParams.tickNeighborhood > tick) {
-                    ratioParams.tickMin =
-                        (tick < ratioParams.tickMin ? tick : ratioParams.tickMin) -
-                        ratioParams.tickIncrease;
+                    ratioParams.tickMin = ratioParams.tickMin - ratioParams.tickIncrease;
                 }
                 if (ratioParams.tickMax - ratioParams.tickNeighborhood < tick) {
-                    ratioParams.tickMax =
-                        (tick > ratioParams.tickMax ? tick : ratioParams.tickMax) +
-                        ratioParams.tickIncrease;
+                    ratioParams.tickMax = ratioParams.tickMax + ratioParams.tickIncrease;
                 }
 
                 require(
@@ -351,9 +347,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         SwapToTargetParams memory params;
         if (targetToken0 < token0) {
+            amountIn = token0 - targetToken0;
             index = 0;
             params = SwapToTargetParams({
-                amountIn: token0 - targetToken0,
+                amountIn: amountIn,
                 tokens: tokens_,
                 tokenInIndex: index,
                 priceX96: priceX96,
