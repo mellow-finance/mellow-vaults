@@ -728,7 +728,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                         currentUsdcChange,
                                         currentWethChange
                                     ),
-                                    [currentUsdcChange, currentWethChange],
+                                    [BigNumber.from(0), BigNumber.from(0)],
                                     [[], [], []]
                                 );
                         }
