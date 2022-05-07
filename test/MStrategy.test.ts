@@ -1182,7 +1182,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMax).to.be.equal(
-                        Number(ratioParams.tickIncrease) + res.averageTick
+                        Number(ratioParams.tickIncrease) +
+                            Number(ratioParams.tickMax)
                     );
                 });
             });
@@ -1249,14 +1250,15 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
-                    let res = await subject.callStatic.getAverageTick();
+                    await subject.callStatic.getAverageTick();
 
                     await expect(
                         subject.connect(this.mStrategyAdmin).rebalance()
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMin).to.be.equal(
-                        res.averageTick - Number(ratioParams.tickIncrease)
+                        Number(ratioParams.tickMax) -
+                            Number(ratioParams.tickIncrease)
                     );
                 });
             });

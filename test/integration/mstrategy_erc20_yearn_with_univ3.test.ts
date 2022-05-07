@@ -24,11 +24,12 @@ import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
 import { OracleParamsStruct, RatioParamsStruct } from "../types/MStrategy";
 import Common from "../library/Common";
-import { assert } from "console";
+import { assert, debug } from "console";
 import { randomBytes } from "crypto";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { TickMath } from "@uniswap/v3-sdk";
+import { threadId } from "worker_threads";
 
 const UNIV3_FEE = 3000; // corresponds to 0.05% fee in UniV3 pool
 
@@ -45,6 +46,68 @@ type CustomContext = {
 };
 
 type DeployOptions = {};
+
+class RebalanceChecker {
+    x: BigNumber = BigNumber.from(0);
+    y: BigNumber = BigNumber.from(0);
+    lower: number = 0;
+    upper: number = 0;
+    fee: number = 0;
+
+    DENOMINATOR = BigNumber.from(10).pow(9);
+
+    constructor(
+        token0: BigNumber,
+        token1: BigNumber,
+        tickMin: number,
+        tickMax: number,
+        fee: number = 0
+    ) {
+        this.x = token0;
+        this.y = token1;
+        this.lower = tickMin;
+        this.upper = tickMax;
+        this.fee = fee;
+    }
+
+    rebalance(tick: number) {
+        var price = BigNumber.from(Math.floor(1.0001 ** tick));
+
+        var xFraction = this.calculateFractionToX(tick);
+        if (xFraction.lt(0)) {
+            xFraction = BigNumber.from(0);
+        }
+        if (xFraction.gt(this.DENOMINATOR)) {
+            xFraction = this.DENOMINATOR;
+        }
+
+        var yFraction = this.DENOMINATOR.sub(xFraction);
+
+        var dv = yFraction.mul(price).mul(this.x).sub(xFraction.mul(this.y));
+        if (dv.gt(0)) {
+            var dx = dv.div(price);
+            this.x = this.x.sub(dx.div(this.DENOMINATOR));
+            var dy = dx.mul(price).mul(1 - this.fee);
+            this.y = this.y.add(dy.div(this.DENOMINATOR));
+        } else if (dv.lt(0)) {
+            var dy = dv.abs();
+            this.y = this.y.sub(dy.div(this.DENOMINATOR));
+            var dx = dy.mul(1 - this.fee).div(price);
+            this.x = this.x.add(dx.div(this.DENOMINATOR));
+        }
+
+        return {
+            newToken0: this.x,
+            newToken1: this.y,
+        };
+    }
+
+    calculateFractionToX(tick: number) {
+        return this.DENOMINATOR.mul(this.upper - tick).div(
+            this.upper - this.lower
+        );
+    }
+}
 
 contract<MStrategy, DeployOptions, CustomContext>(
     "Integration__mstrategy_with_UniV3Vault",
@@ -322,8 +385,46 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     strategyPerformanceTreasury:
                         this.strategyPerformanceTreasury,
                     privateVault: true,
-                    managementFee: BigNumber.from(20000000),
+                    managementFee: BigNumber.from(200000000),
                     performanceFee: BigNumber.from(200000000),
+                    depositCallbackAddress: ethers.constants.AddressZero,
+                    withdrawCallbackAddress: ethers.constants.AddressZero,
+                });
+            await sleep(this.governanceDelay);
+            await this.erc20RootVaultGovernance
+                .connect(this.admin)
+                .commitDelayedStrategyParams(this.erc20RootVaultNft);
+
+            const { protocolTreasury } = await getNamedAccounts();
+
+            const params = {
+                forceAllowMask: ALLOW_MASK,
+                maxTokensPerVault: 10,
+                governanceDelay: 86400,
+                protocolTreasury,
+                withdrawLimit: Common.D18.mul(100),
+            };
+            await this.protocolGovernance
+                .connect(this.admin)
+                .stageParams(params);
+            await sleep(this.governanceDelay);
+            await this.protocolGovernance.connect(this.admin).commitParams();
+        });
+
+        const setZeroFeesFixture = deployments.createFixture(async () => {
+            await this.deploymentFixture();
+            let erc20RootVaultGovernance: ERC20RootVaultGovernance =
+                await ethers.getContract("ERC20RootVaultGovernance");
+
+            await erc20RootVaultGovernance
+                .connect(this.admin)
+                .stageDelayedStrategyParams(this.erc20RootVaultNft, {
+                    strategyTreasury: this.strategyTreasury,
+                    strategyPerformanceTreasury:
+                        this.strategyPerformanceTreasury,
+                    privateVault: true,
+                    managementFee: BigNumber.from(0),
+                    performanceFee: BigNumber.from(0),
                     depositCallbackAddress: ethers.constants.AddressZero,
                     withdrawCallbackAddress: ethers.constants.AddressZero,
                 });
@@ -403,6 +504,62 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return (await pool.slot0()).sqrtPriceX96;
         };
 
+        const getTick = async () => {
+            const poolAddress = await this.uniV3Vault.pool();
+            const pool: IUniswapV3Pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                poolAddress
+            );
+            return (await pool.slot0()).tick;
+        };
+
+        const logSlot0 = async () => {
+            const poolAddress = await this.uniV3Vault.pool();
+            const pool: IUniswapV3Pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                poolAddress
+            );
+            const {
+                sqrtPriceX96,
+                tick,
+                observationIndex,
+                observationCardinality,
+                observationCardinalityNext,
+                feeProtocol,
+                unlocked,
+            } = await pool.slot0();
+            console.log("Slot0:");
+            console.log("sqrtPrice:", sqrtPriceX96.toString());
+            console.log("tick:", tick.toString());
+            console.log("observationIndex:", observationIndex.toString());
+            console.log(
+                "observationCardinality:",
+                observationCardinality.toString()
+            );
+            console.log(
+                "observationCardinalityNext:",
+                observationCardinalityNext.toString()
+            );
+            console.log("feeProtocol:", feeProtocol.toString());
+            console.log("unlocked", unlocked.toString());
+        };
+
+        const debugTvls = async (title: string) => {
+            console.log(title);
+            const erc20Tvl = await this.erc20Vault.tvl();
+            const yearnTvl = await this.yearnVault.tvl();
+            console.log("Tvls:");
+            console.log(
+                "Erc20Vault:",
+                erc20Tvl.minTokenAmounts.map((x) => x.toString())
+            );
+            console.log(
+                "YearnVault:",
+                yearnTvl.minTokenAmounts.map((x) => x.toString())
+            );
+            console.log();
+        };
+
         const push = async (
             delta: BigNumber,
             from: string,
@@ -428,6 +585,25 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     sqrtPriceLimitX96: 0,
                 });
             }
+
+            const usdcAmount = BigNumber.from(10).pow(6).mul(3000);
+            const wethAmount = BigNumber.from(10).pow(18);
+            await mint("USDC", this.deployer.address, usdcAmount);
+            await mint("WETH", this.deployer.address, wethAmount);
+
+            await this.erc20RootVault.deposit(
+                [usdcAmount, wethAmount],
+                BigNumber.from(0),
+                []
+            );
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .manualPull(
+                    this.erc20Vault.address,
+                    this.uniV3Vault.address,
+                    [usdcAmount, wethAmount],
+                    []
+                );
         };
 
         const pushPriceDown = async (delta: BigNumber) => {
@@ -773,6 +949,140 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     }
                 }
 
+                return true;
+            });
+        });
+
+        describe.only("Rebalance work correctly", () => {
+            it("for every different tickLower, tickUpper and tick given", async () => {
+                await setZeroFeesFixture();
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.erc20Vault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.yearnVault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.uniV3Vault.nft()
+                    );
+
+                const usdcAmount = BigNumber.from(10).pow(6).mul(3000);
+                const wethAmount = BigNumber.from(10).pow(18);
+                await mint("USDC", this.deployer.address, usdcAmount);
+                await mint("WETH", this.deployer.address, wethAmount);
+
+                await this.erc20RootVault.deposit(
+                    [usdcAmount, wethAmount],
+                    BigNumber.from(0),
+                    []
+                );
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .manualPull(
+                        this.erc20Vault.address,
+                        this.yearnVault.address,
+                        [usdcAmount, wethAmount],
+                        []
+                    );
+
+                const oracleParams: OracleParamsStruct = {
+                    oracleObservationDelta: 15,
+                    maxTickDeviation: 2 ** 23,
+                    maxSlippageD: Math.round(10 ** 9),
+                };
+
+                const ratioParams: RatioParamsStruct = {
+                    tickMin: 198240 - 5000,
+                    tickMax: 198240 + 5000,
+                    erc20MoneyRatioD: 0,
+                    minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                    minTickRebalanceThreshold: 0,
+                    tickNeighborhood: 60,
+                    tickIncrease: 180,
+                };
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setOracleParams(oracleParams);
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setRatioParams(ratioParams);
+
+                const getTokens = async () => {
+                    const yearnTvls = (await this.yearnVault.tvl())[0];
+                    const token0 = yearnTvls[0];
+                    const token1 = yearnTvls[1];
+                    return {
+                        token0,
+                        token1,
+                    };
+                };
+
+                for (var i = 0; i < 10; i++) {
+                    const {
+                        token0: token0BeforeRebalance,
+                        token1: token1BeforeRebalance,
+                    } = await getTokens();
+                    const { tickMin, tickMax } =
+                        await this.subject.ratioParams();
+                    const checker = new RebalanceChecker(
+                        token0BeforeRebalance,
+                        token1BeforeRebalance,
+                        tickMin,
+                        tickMax,
+                        0
+                    );
+
+                    const { averageTick: tick } =
+                        await this.subject.getAverageTick();
+
+                    await this.subject.connect(this.mStrategyAdmin).rebalance();
+                    const { newToken0, newToken1 } = checker.rebalance(tick);
+
+                    const {
+                        token0: token0AfterRebalance,
+                        token1: token1AfterRebalance,
+                    } = await getTokens();
+
+                    expect(
+                        newToken0.mul(99).div(100).lte(token0AfterRebalance)
+                    );
+                    expect(
+                        newToken1.mul(99).div(100).lte(token1AfterRebalance)
+                    );
+                    expect(
+                        newToken0.mul(101).div(100).gte(token0AfterRebalance)
+                    );
+                    expect(
+                        newToken1.mul(101).div(100).gte(token1AfterRebalance)
+                    );
+
+                    if (Math.random() < 0.5) {
+                        var delta = generateRandomBignumber(
+                            BigNumber.from(10).pow(13)
+                        );
+                        delta = delta.add(BigNumber.from(10).pow(13));
+
+                        await pushPriceDown(delta);
+                    } else {
+                        var delta = generateRandomBignumber(
+                            BigNumber.from(10).pow(18)
+                        );
+                        delta = delta.add(BigNumber.from(10).pow(18));
+
+                        await pushPriceUp(delta);
+                    }
+                }
                 return true;
             });
         });
