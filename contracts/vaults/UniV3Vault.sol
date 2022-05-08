@@ -11,6 +11,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -140,6 +141,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         uint256 tokenId,
         bytes memory
     ) external returns (bytes4) {
+        console.log("hehehe");
+        console.log(msg.sender);
+        console.log(address(_positionManager));
+        console.log(operator);
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, , , , , , , , ) = _positionManager.positions(tokenId);

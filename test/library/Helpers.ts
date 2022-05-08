@@ -22,6 +22,8 @@ import {
     UniV3VaultGovernance,
     VaultRegistry,
     ERC20Token as ERC20,
+    ERC20Token,
+    ISwapRouter,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -59,7 +61,7 @@ export const randomAddress = () => {
 
 export const randomChoice = (choices: Array<any>) => {
     var index = Math.floor(Math.random() * choices.length);
-    return {item:choices[index], index:index};
+    return { item: choices[index], index: index };
 };
 
 export const toObject = (obj: any) =>
@@ -498,3 +500,85 @@ export async function mintUniV3Position_USDC_WETH(options: {
     await positionManagerContract.mint(mintParams);
     return result;
 }
+
+export async function uniSwapTokens(
+    router: ISwapRouter,
+    tokens: ERC20Token[],
+    fee: number,
+    amount: BigNumberish
+) {
+    let provider = randomAddress();
+
+    let swapParams = {
+        tokenIn: tokens[0].address,
+        tokenOut: tokens[1].address,
+        fee: fee,
+        recipient: provider,
+        deadline: ethers.constants.MaxUint256,
+        amountIn: amount,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0,
+    };
+
+    await mint(tokens[0].address, provider, amount);
+
+    await withSigner(provider, async (signer) => {
+        await tokens[0].connect(signer).approve(router.address, amount);
+        let amountOut = await router
+            .connect(signer)
+            .callStatic.exactInputSingle(swapParams);
+        await router.connect(signer).exactInputSingle(swapParams);
+        console.log(
+            "Swapped " + amount.toString() + ", amouts outputted:" + amountOut
+        );
+    });
+}
+
+// export async function uniSwapTokens(
+//     provider: string,
+//     pool: any,
+//     tokens: ERC20Token[],
+//     amount: BigNumberish
+// ) {
+//     const MIN_SQRT_RATIO = BigNumber.from("4295128739");
+//     const MAX_SQRT_RATIO = BigNumber.from("1461446703485210103287273052203988822378723970342");
+//     let zeroForOne = true;
+//     let tokenIndex = 1;
+//     let priceLimit = MIN_SQRT_RATIO.add(1);
+//     if (amount < 0) {
+//         zeroForOne !== true;
+//         amount = -amount;
+//         tokenIndex = 1 - tokenIndex;
+//         priceLimit = MAX_SQRT_RATIO.sub(1);
+//     }
+//     await mint(tokens[tokenIndex].address, provider, amount);
+//     await mint(tokens[1 - tokenIndex].address, provider, amount);
+//     await withSigner(provider, async (signer) => {
+//         let amounts = await pool
+//             .connect(signer)
+//             .callStatic.swap(
+//                 provider,
+//                 zeroForOne,
+//                 amount,
+//                 priceLimit,
+//                 []
+//             );
+//         await pool
+//             .connect(signer)
+//             .swap(
+//                 provider,
+//                 zeroForOne,
+//                 amount,
+//                 priceLimit,
+//                 []
+//             );
+//         console.log(
+//             "Swapped " +
+//                 amount.toString() +
+//                 ", amouts outputted:" +
+//                 amounts[0] +
+//                 ", " +
+//                 amounts[1]
+//         );
+//     });
+// }
