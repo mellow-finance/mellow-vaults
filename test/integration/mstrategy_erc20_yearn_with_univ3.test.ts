@@ -652,7 +652,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return liquidity;
         };
 
-        describe.only("Multiple price swappings and rebalances in mstrategy", () => {
+        describe("Multiple price swappings and rebalances in mstrategy", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
@@ -777,7 +777,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("Multiple price swappings and rebalances with mstrategy with liqidity cycle changing using UniV3Vault", () => {
+        describe("Multiple price swappings and rebalances with mstrategy with liqidity cycle changing using UniV3Vault", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
 
