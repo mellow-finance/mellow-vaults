@@ -384,8 +384,8 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     strategyPerformanceTreasury:
                         this.strategyPerformanceTreasury,
                     privateVault: true,
-                    managementFee: BigNumber.from(200000000),
-                    performanceFee: BigNumber.from(200000000),
+                    managementFee: BigNumber.from(10).pow(5),
+                    performanceFee: BigNumber.from(10).pow(5),
                     depositCallbackAddress: ethers.constants.AddressZero,
                     withdrawCallbackAddress: ethers.constants.AddressZero,
                 });
@@ -652,7 +652,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return liquidity;
         };
 
-        describe("Multiple price swappings and rebalances in mstrategy", () => {
+        describe.only("Multiple price swappings and rebalances in mstrategy", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
@@ -682,15 +682,66 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     pricesHistory.push([]);
                     var deltaValue = BigNumber.from(0);
                     for (var j = 1; j <= 10; j++) {
+                        const ratioParams: RatioParamsStruct = {
+                            tickMin: 198240 - 5000,
+                            tickMax: 198240 + 5000,
+                            erc20MoneyRatioD: Math.round(j * 0.01 * 10 ** 9),
+                            minErc20MoneyRatioDeviationD: Math.round(
+                                0.01 * 10 ** 9
+                            ),
+                            minTickRebalanceThreshold: 0,
+                            tickNeighborhood: 0,
+                            tickIncrease: 100,
+                        };
+
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(ratioParams);
+
                         const currentVault = BigNumber.from(10).pow(12).mul(2);
                         deltaValue = deltaValue.add(
                             currentVault.mul(1000000 + UNIV3_FEE).div(1000000)
                         );
+
                         await pushPriceDown(currentVault);
                         await this.subject
                             .connect(this.mStrategyAdmin)
                             .rebalance();
                         pricesHistory[i - 1].push(await getSqrtPriceX96());
+
+                        const erc20Tvls = (await this.erc20Vault.tvl())
+                            .minTokenAmounts;
+                        const yearnTvls = (await this.yearnVault.tvl())
+                            .minTokenAmounts;
+
+                        for (var tokenIndex = 0; tokenIndex < 2; tokenIndex++) {
+                            const tokenOnErc20 = erc20Tvls[tokenIndex];
+                            const tokenOnMoney = yearnTvls[tokenIndex];
+                            const expectedPercentOnErc20 = j;
+                            const expectedPercentOnMoney = 100 - j;
+                            const totalAmount = tokenOnErc20.add(tokenOnMoney);
+                            const expectedOnErc20 = totalAmount
+                                .mul(expectedPercentOnErc20)
+                                .div(100);
+                            const expectedOnMoney = totalAmount
+                                .mul(expectedPercentOnMoney)
+                                .div(100);
+                            // token on vault <= expected + 1% of deviation
+                            expect(
+                                tokenOnErc20.lte(
+                                    expectedOnErc20.add(
+                                        expectedOnErc20.div(100)
+                                    )
+                                )
+                            );
+                            expect(
+                                tokenOnMoney.lte(
+                                    expectedOnMoney.add(
+                                        expectedOnMoney.div(100)
+                                    )
+                                )
+                            );
+                        }
                     }
 
                     deltaValue = deltaValue
@@ -726,7 +777,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe("Multiple price swappings and rebalances with mstrategy with liqidity cycle changing using UniV3Vault", () => {
+        describe.only("Multiple price swappings and rebalances with mstrategy with liqidity cycle changing using UniV3Vault", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
 
@@ -896,7 +947,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe("Rebalance work correctly", () => {
+        describe("Rebalance distributes tokens in a given ratio", () => {
             it("for every different tickLower, tickUpper and tick given", async () => {
                 await setZeroFeesFixture();
                 await this.vaultRegistry
@@ -988,42 +1039,64 @@ contract<MStrategy, DeployOptions, CustomContext>(
 
                     const { averageTick: tick } =
                         await this.subject.getAverageTick();
+                    try {
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance();
+                        const { newToken0, newToken1 } =
+                            checker.rebalance(tick);
 
-                    await this.subject.connect(this.mStrategyAdmin).rebalance();
-                    const { newToken0, newToken1 } = checker.rebalance(tick);
+                        const {
+                            token0: token0AfterRebalance,
+                            token1: token1AfterRebalance,
+                        } = await getTokens();
 
-                    const {
-                        token0: token0AfterRebalance,
-                        token1: token1AfterRebalance,
-                    } = await getTokens();
+                        expect(
+                            newToken0.mul(99).div(100).lte(token0AfterRebalance)
+                        );
+                        expect(
+                            newToken1.mul(99).div(100).lte(token1AfterRebalance)
+                        );
+                        expect(
+                            newToken0
+                                .mul(101)
+                                .div(100)
+                                .gte(token0AfterRebalance)
+                        );
+                        expect(
+                            newToken1
+                                .mul(101)
+                                .div(100)
+                                .gte(token1AfterRebalance)
+                        );
+                    } catch {
+                        // if the ticks have not changed, then do another iteration
+                        i--;
+                    }
 
-                    expect(
-                        newToken0.mul(99).div(100).lte(token0AfterRebalance)
-                    );
-                    expect(
-                        newToken1.mul(99).div(100).lte(token1AfterRebalance)
-                    );
-                    expect(
-                        newToken0.mul(101).div(100).gte(token0AfterRebalance)
-                    );
-                    expect(
-                        newToken1.mul(101).div(100).gte(token1AfterRebalance)
-                    );
-
+                    const currentTick = await this.subject.getAverageTick();
                     if (Math.random() < 0.5) {
-                        var delta = generateRandomBignumber(
-                            BigNumber.from(10).pow(13)
-                        );
-                        delta = delta.add(BigNumber.from(10).pow(13));
+                        do {
+                            var delta = generateRandomBignumber(
+                                BigNumber.from(10).pow(13)
+                            );
+                            delta = delta.add(BigNumber.from(10).pow(13));
 
-                        await pushPriceDown(delta);
+                            await pushPriceDown(delta);
+                        } while (
+                            currentTick == (await this.subject.getAverageTick())
+                        );
                     } else {
-                        var delta = generateRandomBignumber(
-                            BigNumber.from(10).pow(18)
-                        );
-                        delta = delta.add(BigNumber.from(10).pow(18));
+                        do {
+                            var delta = generateRandomBignumber(
+                                BigNumber.from(10).pow(18)
+                            );
+                            delta = delta.add(BigNumber.from(10).pow(18));
 
-                        await pushPriceUp(delta);
+                            await pushPriceUp(delta);
+                        } while (
+                            currentTick == (await this.subject.getAverageTick())
+                        );
                     }
                 }
                 return true;

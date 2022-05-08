@@ -4,7 +4,6 @@ import { BigNumber } from "@ethersproject/bignumber";
 import {
     encodeToBytes,
     mint,
-    now,
     randomAddress,
     sleep,
     toObject,
@@ -18,11 +17,6 @@ import {
     MStrategy,
     ProtocolGovernance,
     IYearnProtocolVault,
-    MockNonfungiblePositionManager,
-    MockUniswapV3Factory,
-    MockUniswapV3Pool,
-    MockValidator,
-    MockSwapRouter,
 } from "./types";
 import {
     setupVault,
@@ -31,8 +25,6 @@ import {
 } from "./../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
-import { pit, RUNS } from "./library/property";
-import { integer } from "fast-check";
 import {
     OracleParamsStruct,
     RatioParamsStruct,
@@ -42,9 +34,6 @@ import Exceptions from "./library/Exceptions";
 import { assert } from "console";
 import { randomInt } from "crypto";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
-import { MockMStrategy } from "./types/MockMStrategy";
-import { type } from "os";
-import { MaxUint256 } from "@uniswap/sdk-core";
 import { min } from "ramda";
 
 type CustomContext = {
@@ -1257,7 +1246,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMin).to.be.equal(
-                        Number(ratioParams.tickMax) -
+                        Number(ratioParams.tickMin) -
                             Number(ratioParams.tickIncrease)
                     );
                 });
@@ -1499,7 +1488,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
         describe("edge cases", () => {
             describe("when tick <= tickMin", () => {
-                it("targetTokenratioD = 0", async () => {
+                it("targetTokenratioD = DENOMINATOR (10^9)", async () => {
                     let { mockNonfungiblePositionManager, mockSwapRouter } =
                         await deployMockContracts();
                     let mockMStrategyFactory = await ethers.getContractFactory(
@@ -1519,7 +1508,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(0));
+                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
 
                     tick = tickMin;
                     resultTick =
@@ -1528,12 +1517,12 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(0));
+                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
                 });
             });
 
             describe("when tick >= tickMin", () => {
-                it("targetTokenratioD = DENOMINATOR (10^9)", async () => {
+                it("targetTokenratioD = 0", async () => {
                     let { mockNonfungiblePositionManager, mockSwapRouter } =
                         await deployMockContracts();
                     let mockMStrategyFactory = await ethers.getContractFactory(
@@ -1553,7 +1542,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
+                    expect(resultTick).to.be.eq(BigNumber.from(0));
 
                     tick = tickMax;
                     resultTick =
@@ -1562,7 +1551,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
+                    expect(resultTick).to.be.eq(BigNumber.from(0));
                 });
             });
         });
@@ -1917,11 +1906,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         encodeToBytes(["uint256"], [BigNumber.from(1)])
                     );
 
-                    let {
-                        mockNonfungiblePositionManager,
-                        mockSwapRouter,
-                        mockUniswapV3Pool,
-                    } = await deployMockContracts();
+                    let { mockNonfungiblePositionManager, mockSwapRouter } =
+                        await deployMockContracts();
                     let mockMStrategyFactory = await ethers.getContractFactory(
                         "MockMStrategy"
                     );
