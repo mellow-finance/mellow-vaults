@@ -305,8 +305,8 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         maxSlippageD: Math.round(0.1 * 10 ** 9),
                     };
                     const ratioParams: RatioParamsStruct = {
-                        tickMin: 198240 - 5000,
-                        tickMax: 198240 + 5000,
+                        tickMin: 198240 - 15000,
+                        tickMax: 198240 + 15000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviationD: Math.round(
                             0.01 * 10 ** 9
@@ -846,11 +846,11 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     var deltaValue = BigNumber.from(0);
                     for (var j = 1; j <= 10; j++) {
                         // change liquidity:
-                        var currentUsdcChange = usdcAmountChanges[i - 1];
+                        var currentUsdcChange = usdcAmountChanges[j - 1];
+                        var currentWethChange = currentUsdcChange
+                            .mul(await getBestPrice())
+                            .div(Common.Q96);
                         if (currentUsdcChange.gte(0)) {
-                            var currentWethChange = currentUsdcChange
-                                .mul(await getBestPrice())
-                                .div(Common.Q96);
                             await mint(
                                 "USDC",
                                 this.deployer.address,
@@ -878,9 +878,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 );
                         } else {
                             currentUsdcChange = currentUsdcChange.mul(-1);
-                            var currentWethChange = currentUsdcChange
-                                .mul(await getBestPrice())
-                                .div(Common.Q96);
+                            currentWethChange = currentWethChange.mul(-1);
                             await this.subject
                                 .connect(this.mStrategyAdmin)
                                 .manualPull(
