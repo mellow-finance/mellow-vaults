@@ -43,7 +43,7 @@ const config: HardhatUserConfig = {
                 : undefined,
         },
         rinkeby: {
-            url: process.env["RINKEBY_RPC"],
+            url: process.env["RINKEBY_RPC"] || "https://rinkeby-light.eth.linkpool.io",
             accounts: process.env["RINKEBY_DEPLOYER_PK"]
                 ? [process.env["RINKEBY_DEPLOYER_PK"]]
                 : undefined,
