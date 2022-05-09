@@ -73,8 +73,9 @@ export const ALL_NETWORKS = [
     "polygon",
     "fantom",
     "xdai",
+    "rinkeby",
 ];
-export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan"];
+export const MAIN_NETWORKS = ["hardhat", "localhost", "mainnet", "kovan", "rinkeby"];
 
 export const setupVault = async (
     hre: HardhatRuntimeEnvironment,
