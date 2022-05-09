@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/Multicall.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
@@ -17,8 +17,6 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/ContractMeta.sol";
 
 contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
-    using SafeERC20 for IERC20;
-
     // IMMUTABLES
     uint256 public constant DENOMINATOR = 10**9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
