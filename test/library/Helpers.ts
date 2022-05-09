@@ -493,3 +493,64 @@ export async function mintUniV3Position_USDC_WETH(options: {
     await positionManagerContract.mint(mintParams);
     return result;
 }
+
+export async function mintUniV3Position_WBTC_WETH(options: {
+    tickLower: BigNumberish;
+    tickUpper: BigNumberish;
+    wethAmount: BigNumberish;
+    wbtcAmount: BigNumberish;
+    fee: 500 | 3000 | 10000;
+}): Promise<any> {
+    const { weth, wbtc, deployer, uniswapV3PositionManager } =
+        await getNamedAccounts();
+
+    const wethContract = await ethers.getContractAt("ERC20Token", weth);
+    const wbtcContract = await ethers.getContractAt("ERC20Token", wbtc);
+
+    const positionManagerContract = await ethers.getContractAt(
+        INonfungiblePositionManager,
+        uniswapV3PositionManager
+    );
+
+    await mint("WETH", deployer, options.wethAmount);
+    await mint("WBTC", deployer, options.wbtcAmount);
+
+    if (
+        (await wethContract.allowance(deployer, uniswapV3PositionManager)).eq(
+            BigNumber.from(0)
+        )
+    ) {
+        await wethContract.approve(
+            uniswapV3PositionManager,
+            ethers.constants.MaxUint256
+        );
+    }
+    if (
+        (await wbtcContract.allowance(deployer, uniswapV3PositionManager)).eq(
+            BigNumber.from(0)
+        )
+    ) {
+        await wbtcContract.approve(
+            uniswapV3PositionManager,
+            ethers.constants.MaxUint256
+        );
+    }
+
+    const mintParams = {
+        token0: wbtc,
+        token1: weth,
+        fee: options.fee,
+        tickLower: options.tickLower,
+        tickUpper: options.tickUpper,
+        amount0Desired: options.wbtcAmount,
+        amount1Desired: options.wethAmount,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: deployer,
+        deadline: ethers.constants.MaxUint256,
+    };
+
+    const result = await positionManagerContract.callStatic.mint(mintParams);
+    await positionManagerContract.mint(mintParams);
+    return result;
+}
