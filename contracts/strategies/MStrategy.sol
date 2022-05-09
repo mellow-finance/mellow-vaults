@@ -319,10 +319,14 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             {
                 int24 tick = _getAverageTickChecked(pool_);
                 if (ratioParams.tickMin + ratioParams.tickNeighborhood > tick) {
-                    ratioParams.tickMin = ratioParams.tickMin - ratioParams.tickIncrease;
+                    ratioParams.tickMin =
+                        (tick < ratioParams.tickMin ? tick : ratioParams.tickMin) -
+                        ratioParams.tickIncrease;
                 }
                 if (ratioParams.tickMax - ratioParams.tickNeighborhood < tick) {
-                    ratioParams.tickMax = ratioParams.tickMax + ratioParams.tickIncrease;
+                    ratioParams.tickMax =
+                        (tick > ratioParams.tickMax ? tick : ratioParams.tickMax) +
+                        ratioParams.tickIncrease;
                 }
 
                 require(
