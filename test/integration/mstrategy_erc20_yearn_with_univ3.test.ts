@@ -871,8 +871,8 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             await this.subject
                                 .connect(this.mStrategyAdmin)
                                 .manualPull(
-                                    this.uniV3Vault.address,
                                     this.erc20Vault.address,
+                                    this.uniV3Vault.address,
                                     [currentUsdcChange, currentWethChange],
                                     []
                                 );

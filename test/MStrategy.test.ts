@@ -822,7 +822,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickCumulativeLast: 198240,
                     },
                 };
-                let { mStrategy } = await deployMockContracts(params);
+                let { mStrategy, mockUniswapV3Pool, mockSwapRouter } =
+                    await deployMockContracts(params);
                 const address = await mStrategy.callStatic.createStrategy(
                     this.params.tokens,
                     this.params.erc20Vault,
@@ -882,6 +883,45 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     .connect(this.deployer)
                     .transfer(this.params.erc20Vault, BigNumber.from(10 ** 8));
 
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(mockUniswapV3Pool.address, [
+                        PermissionIdsLibrary.ERC20_APPROVE,
+                    ]);
+                await sleep(this.governanceDelay);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(mockUniswapV3Pool.address);
+
+                let validatorFactory = await ethers.getContractFactory(
+                    "MockValidator"
+                );
+                let validator = await validatorFactory.deploy(
+                    this.protocolGovernance.address
+                );
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(mockSwapRouter.address, validator.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(this.usdc.address, validator.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(this.weth.address, validator.address);
+
+                await sleep(this.governanceDelay);
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(mockSwapRouter.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(this.usdc.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(this.weth.address);
+
                 await expect(
                     highRatioMStrategy.connect(this.mStrategyAdmin).rebalance()
                 ).to.not.be.reverted;
@@ -904,12 +944,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickCumulativeLast: 198240,
                     },
                 };
-                let {
-                    mStrategy,
-                    mockUniswapV3Pool,
-                    mockUniswapV3Factory,
-                    mockSwapRouter,
-                } = await deployMockContracts(params);
+                let { mStrategy, mockUniswapV3Pool, mockSwapRouter } =
+                    await deployMockContracts(params);
                 const address = await mStrategy.callStatic.createStrategy(
                     this.params.tokens,
                     this.params.erc20Vault,
