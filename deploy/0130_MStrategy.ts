@@ -99,8 +99,8 @@ const setupStrategy = async (
         maxSlippageD: BigNumber.from(10).pow(8),
     };
     const ratioParams = {
-        tickMin: 198240 - 5000,
-        tickMax: 198240 + 5000,
+        tickMin: 189324,
+        tickMax: 207242,
         erc20MoneyRatioD: BigNumber.from(10).pow(8),
         minErc20MoneyRatioDeviationD: BigNumber.from(10).pow(7),
         minTickRebalanceThreshold: BigNumber.from(1200),
