@@ -54,6 +54,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         if (address(pool) == address(0)) {
             return (pricesX96, safetyIndices);
         }
+        uint256[] memory sqrtPricesX96 = new uint256[](4);
         pricesX96 = new uint256[](4);
         safetyIndices = new uint256[](4);
         uint256 len = 0;
@@ -61,7 +62,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             pool
         ).slot0();
         if (safetyIndicesSet & 0x2 > 0) {
-            pricesX96[len] = spotSqrtPriceX96;
+            sqrtPricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
             len += 1;
         }
@@ -78,12 +79,12 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                 require(obs0 < obs1, ExceptionsLibrary.INVALID_VALUE);
                 int256 tickAverage;
                 {
-                    (uint32 timestamp0, int56 tick0, , ) = IUniswapV3Pool(pool).observations(obs0);
-                    (uint32 timestamp1, int56 tick1, , ) = IUniswapV3Pool(pool).observations(obs1);
+                    (uint32 timestamp0, int56 tickCumulative0, , ) = IUniswapV3Pool(pool).observations(obs0);
+                    (uint32 timestamp1, int56 tickCumulative1, , ) = IUniswapV3Pool(pool).observations(obs1);
                     uint256 timespan = timestamp1 - timestamp0;
-                    tickAverage = (int256(tick1) - int256(tick0)) / int256(timespan);
+                    tickAverage = (int256(tickCumulative1) - int256(tickCumulative0)) / int256(timespan);
                 }
-                pricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
+                sqrtPricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
                 safetyIndices[len] = i;
                 len += 1;
             }
@@ -93,7 +94,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             mstore(safetyIndices, len)
         }
         for (uint256 i = 0; i < len; i++) {
-            pricesX96[i] = FullMath.mulDiv(pricesX96[i], pricesX96[i], CommonLibrary.Q96);
+            pricesX96[i] = FullMath.mulDiv(sqrtPricesX96[i], sqrtPricesX96[i], CommonLibrary.Q96);
             if (isSwapped) {
                 pricesX96[i] = FullMath.mulDiv(CommonLibrary.Q96, CommonLibrary.Q96, pricesX96[i]);
             }
