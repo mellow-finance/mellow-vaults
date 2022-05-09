@@ -710,11 +710,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.subject.connect(this.admin).updateRatioParams({
                 erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
                 erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
-                minErc20UniV3CapitalRatioDeviationD:
-                    BigNumber.from(10).pow(5),
-                minErc20TokenRatioDeviationD: BigNumber.from(10)
-                    .pow(8)
-                    .div(2),
+                minErc20UniV3CapitalRatioDeviationD: BigNumber.from(10).pow(5),
+                minErc20TokenRatioDeviationD: BigNumber.from(10).pow(8).div(2),
                 minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
                     .pow(7)
                     .div(2),

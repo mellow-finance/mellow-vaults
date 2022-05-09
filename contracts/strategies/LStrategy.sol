@@ -437,10 +437,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function updateRatioParams(RatioParams calldata newRatioParams) external {
         _requireAdmin();
         require(
-            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) && (newRatioParams.erc20TokenRatioD <= DENOMINATOR)
-            && (newRatioParams.minErc20UniV3CapitalRatioDeviationD <= DENOMINATOR)
-            && (newRatioParams.minErc20TokenRatioDeviationD <= DENOMINATOR)
-            && (newRatioParams.minUniV3LiquidityRatioDeviationD <= DENOMINATOR),
+            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) &&
+                (newRatioParams.erc20TokenRatioD <= DENOMINATOR) &&
+                (newRatioParams.minErc20UniV3CapitalRatioDeviationD <= DENOMINATOR) &&
+                (newRatioParams.minErc20TokenRatioDeviationD <= DENOMINATOR) &&
+                (newRatioParams.minUniV3LiquidityRatioDeviationD <= DENOMINATOR),
             ExceptionsLibrary.INVARIANT
         );
         ratioParams = newRatioParams;
@@ -453,10 +454,10 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         _requireAdmin();
         require(
             (newOtherParams.minToken0ForOpening > 0) &&
-            (newOtherParams.minToken1ForOpening > 0) &&
-            (newOtherParams.minToken0ForOpening <= 1000000000) &&
-            (newOtherParams.minToken1ForOpening <= 1000000000) &&
-            (newOtherParams.rebalanceDeadline <= 86400 * 30),
+                (newOtherParams.minToken1ForOpening > 0) &&
+                (newOtherParams.minToken0ForOpening <= 1000000000) &&
+                (newOtherParams.minToken1ForOpening <= 1000000000) &&
+                (newOtherParams.rebalanceDeadline <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         otherParams = newOtherParams;
