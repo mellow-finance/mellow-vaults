@@ -29,6 +29,7 @@ import {
 } from "./types/IVaultGovernance";
 import { ERC20Token as ERC20, IUniswapV3Pool, UniV3Vault } from "./types";
 import { Signer } from "ethers";
+import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 
 type CustomContext = {
     nft: number;
@@ -213,6 +214,11 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                     .createVault(tokenAddresses, owner, 3000);
             },
             ...this,
+        });
+
+        ContractMetaBehaviour.call(this, {
+            contractName: "UniV3VaultGovernance",
+            contractVersion: "1.0.0",
         });
     }
 );
