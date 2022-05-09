@@ -39,10 +39,11 @@ import {
 } from "../types";
 import { Address } from "hardhat-deploy/dist/types";
 import { generateKeyPair, randomBytes, randomInt } from "crypto";
-import { last, none } from "ramda";
+import { last, none, range } from "ramda";
 import { runInThisContext } from "vm";
 import { fromAscii } from "ethjs-util";
 import { resourceLimits } from "worker_threads";
+import { BigNumberish } from "ethers";
 
 type PullAction = {
     from: IIntegrationVault;
@@ -355,6 +356,25 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             process.stdout.write("\n");
         }
 
+        async function printLiquidityStats(
+            this: TestContext<ERC20RootVault, DeployOptions> & CustomContext
+        ) {
+            let uniV3Nft = await this.uniV3Vault.uniV3Nft();
+            if (uniV3Nft != 0) {
+                let result = await this.positionManager.positions(
+                    uniV3Nft
+                );
+                console.log("liquidity");
+                console.log(result["liquidity"].toString());
+                console.log(result["tokensOwed0"].toString());
+                console.log(result["tokensOwed1"].toString());
+                return result;
+            } else {
+                console.log("nft is 0");
+            }
+        }
+
+
         async function printVaults(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext
         ) {
@@ -427,6 +447,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             return { from: pullTarget, to: pushTarget, amount: pullAmount };
         }
 
+        function randomBignumber(min: BigNumber, max: BigNumber) {
+            assert(max.gt(min), "Bignumber underflow");
+            const big = generateSingleParams(uint256);
+            let sub = max.sub(min);
+            return big.mod(sub).add(min);
+        };
+
         async function doRandomEnvironmentChange(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext
         ) {
@@ -441,12 +468,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             await getRatioFromPriceX96(poolSlot0.sqrtPriceX96)
                         ).toString()
                 );
-
+                
+                let swapAmount = randomBignumber(BigNumber.from(10).pow(6), BigNumber.from(10).pow(10))
+                if (randomInt(0, 2) == 0) {
+                    swapAmount = swapAmount.mul(-1);
+                }
                 await uniSwapTokens(
                     this.swapRouter,
                     this.tokens,
                     this.uniV3PoolFee,
-                    BigNumber.from(10).pow(10)
+                    swapAmount,
                 );
 
                 poolSlot0 = await this.uniV3Pool.slot0();
@@ -459,7 +490,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             }
         }
 
-        async function getRatioFromPriceX96(priceX96: BigNumber) {
+        async function getFeesFromSwap(
+            this: TestContext<ERC20RootVault, DeployOptions> & CustomContext,
+            amount:BigNumberish, tickLower:number, tickUpper:number
+        ) {
+            let currentTick = (await this.uniV3Pool.slot0()).tick;
+            let currentPrice = (await this.uniV3Pool.slot0()).sqrtPriceX96;
+            let currentTickLiquidity = await this.uniV3Pool.liquidity();
+            let fees = 0;
+            while (amount > currentTickLiquidity.to_y) {
+                amount -= currentTickLiquidity.to_y;
+                fees += myLiquiduty / currentTickLiquidity * currentTickLiquidity.to_y;
+                currentTick -= 1;
+                currentTickLiquidity = currentTickLiquidity + this.uniV3Pool.ticks(currentTick).liquidityNet;
+            }
+            //+ remaining fees
+        }
+
+        function getRatioFromPriceX96(priceX96: BigNumber): BigNumber {
             return priceX96.pow(2).div(BigNumber.from(2).pow(192));
         }
 
@@ -720,7 +768,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .commitParams();
             });
 
-            it.only("zero fees", async () => {
+            it("zero fees", async () => {
                 await setZeroFeesFixture();
                 let depositAmount = [
                     BigNumber.from(10).pow(6).mul(10),
@@ -1090,27 +1138,23 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
             });
 
+            it.only("testing pool maths", async () => {
+                let slot0 = await this.uniV3Pool.slot0()
+                console.log("spacing is " + await this.uniV3Pool.tickSpacing());
+                for (let i = 0; i < 15; i++) {
+                    slot0 = await this.uniV3Pool.slot0()
+                    console.log("tick is " + slot0.tick);
+                    console.log("price is " + getRatioFromPriceX96(slot0.sqrtPriceX96).toString());
+                    await uniSwapTokens(
+                        this.swapRouter,
+                        this.tokens,
+                        this.uniV3PoolFee,
+                        BigNumber.from(10).pow(13).mul(2),
+                    );
+                }
+            });
+
             it("testing univ3", async () => {
-                await setZeroFeesFixture();
-                let depositAmount = [
-                    BigNumber.from(10).pow(6).mul(20),
-                    BigNumber.from(10).pow(18).mul(20),
-                ];
-
-                await this.subject
-                    .connect(this.deployer)
-                    .deposit(depositAmount, 0, []);
-                this.targets = [this.erc20Vault, this.uniV3Vault];
-                await printVaults.call(this);
-
-                await pullToUniV3Vault.call(this, this.erc20Vault, {
-                    fee: this.uniV3PoolFee,
-                    tickLower: -887220,
-                    tickUpper: 887220,
-                    token0Amount: BigNumber.from("10000000"),
-                    token1Amount: BigNumber.from("6666666666666666666"),
-                });
-
                 let optionsAave = encodeToBytes(
                     ["uint256"],
                     [ethers.constants.Zero]
@@ -1124,33 +1168,30 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ]
                 );
 
+                await setZeroFeesFixture();
+                let depositAmount = [
+                    BigNumber.from(10).pow(6).mul(20),
+                    BigNumber.from(10).pow(18).mul(20),
+                ];
+                await this.subject
+                    .connect(this.deployer)
+                    .deposit(depositAmount, 0, []);
+
+                this.targets = [this.erc20Vault, this.uniV3Vault];
+                await printVaults.call(this);
+                await pullToUniV3Vault.call(this, this.erc20Vault, {
+                    fee: this.uniV3PoolFee,
+                    tickLower: -887220,
+                    tickUpper: -887220,
+                    token0Amount: BigNumber.from("10000000"),
+                    token1Amount: BigNumber.from("6666666666666666666"),
+                });
+
                 let tvlResults = await printVaults.call(this);
 
                 await withSigner(this.subject.address, async (signer) => {
-                    // console.log("check stats:");
-                    // let uniV3Nft = await this.uniV3Vault.uniV3Nft();
-                    // if (uniV3Nft != 0) {
-                    //     let result = await this.positionManager.positions(uniV3Nft);
-                    //     console.log("liquidity");
-                    //     console.log(result["liquidity"].toString());
-                    //     console.log(result["tokensOwed0"].toString());
-                    //     console.log(result["tokensOwed1"].toString());
-                    // } else {
-                    //     console.log("nft is 0");
-                    // }
                     console.log("stats were:");
-                    let uniV3Nft = await this.uniV3Vault.uniV3Nft();
-                    if (uniV3Nft != 0) {
-                        let result = await this.positionManager.positions(
-                            uniV3Nft
-                        );
-                        console.log("liquidity");
-                        console.log(result["liquidity"].toString());
-                        console.log(result["tokensOwed0"].toString());
-                        console.log(result["tokensOwed1"].toString());
-                    } else {
-                        console.log("nft is 0");
-                    }
+                    await printLiquidityStats.call(this);
                     console.log("sending back to zero");
                     await this.uniV3Vault
                         .connect(signer)
@@ -1166,19 +1207,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     tvlResults = await printVaults.call(this);
                     console.log("stats are:");
-                    uniV3Nft = await this.uniV3Vault.uniV3Nft();
-                    if (uniV3Nft != 0) {
-                        let result = await this.positionManager.positions(
-                            uniV3Nft
-                        );
-                        console.log("liquidity");
-                        console.log(result["liquidity"].toString());
-                        console.log(result["tokensOwed0"].toString());
-                        console.log(result["tokensOwed1"].toString());
-                    } else {
-                        console.log("nft is 0");
-                    }
-
+                    await printLiquidityStats.call(this);
+                    
                     console.log("owing more tokens");
                     await this.uniV3Vault
                         .connect(signer)
@@ -1191,12 +1221,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     tvlResults = await printVaults.call(this);
                     console.log("stats are:");
-                    uniV3Nft = await this.uniV3Vault.uniV3Nft();
-                    let result = await this.positionManager.positions(uniV3Nft);
-                    console.log("liquidity");
-                    console.log(result["liquidity"].toString());
-                    console.log(result["tokensOwed0"].toString());
-                    console.log(result["tokensOwed1"].toString());
+                    let liquidityStats = await printLiquidityStats.call(this);
 
                     console.log("take owed tokens");
                     await this.uniV3Vault
@@ -1204,46 +1229,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .pull(
                             this.erc20Vault.address,
                             this.tokenAddresses,
-                            [result["tokensOwed0"], result["tokensOwed1"]],
+                            [liquidityStats["tokensOwed0"], liquidityStats["tokensOwed1"]],
                             []
                         );
 
                     tvlResults = await printVaults.call(this);
                     console.log("stats are:");
-                    uniV3Nft = await this.uniV3Vault.uniV3Nft();
-                    if (uniV3Nft != 0) {
-                        let result = await this.positionManager.positions(
-                            uniV3Nft
-                        );
-                        console.log("liquidity");
-                        console.log(result["liquidity"].toString());
-                        console.log(result["tokensOwed0"].toString());
-                        console.log(result["tokensOwed1"].toString());
-                    } else {
-                        console.log("nft is 0");
-                    }
+                    await printLiquidityStats.call(this);
 
                     console.log("collect shit");
                     await this.uniV3Vault.connect(signer).collectEarnings();
 
                     tvlResults = await printVaults.call(this);
                     console.log("stats are:");
-                    uniV3Nft = await this.uniV3Vault.uniV3Nft();
-                    if (uniV3Nft != 0) {
-                        let result = await this.positionManager.positions(
-                            uniV3Nft
-                        );
-                        console.log("liquidity");
-                        console.log(result["liquidity"].toString());
-                        console.log(result["tokensOwed0"].toString());
-                        console.log(result["tokensOwed1"].toString());
-                    } else {
-                        console.log("nft is 0");
-                    }
-                    // console.log("\nvse");
-                    // await this.erc20Vault.connect(signer).pull(this.uniV3Vault.address, this.tokenAddresses, [BigNumber.from(1), BigNumber.from(0)], optionsUniV3);
-
-                    // tvlResults = await printVaults.call(this)
+                    await printLiquidityStats.call(this);
 
                     console.log("vse");
                     await this.uniV3Vault
