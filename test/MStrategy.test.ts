@@ -610,6 +610,20 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 });
             });
         });
+
+        describe("edge cases:", () => {
+            describe("when maxSlippageD is more than DENOMINATOR", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = oracleParams;
+                    params.maxSlippageD = BigNumber.from(10).pow(9).mul(2);
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setOracleParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+        });
     });
 
     describe("#setRatioParams", () => {
@@ -648,6 +662,45 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         this.subject.connect(s).setRatioParams(ratioParams)
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+        });
+
+        describe("edge cases:", () => {
+            describe("tickMin is greater than tickMax", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = ratioParams;
+                    params.tickMin = 60;
+                    params.tickMax = 0;
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when erc20MoneyRatioD is more than DENOMINATOR", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = ratioParams;
+                    params.erc20MoneyRatioD = BigNumber.from(10).pow(9).mul(2);
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when minErc20MoneyRatioDeviationD is more than DENOMINATOR", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = ratioParams;
+                    params.minErc20MoneyRatioDeviationD = BigNumber.from(10)
+                        .pow(9)
+                        .mul(2);
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
             });
         });

@@ -461,6 +461,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             ExceptionsLibrary.INVARIANT
         );
         otherParams = newOtherParams;
+        emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
     }
 
     /// @notice Callback function called after for ERC20RootVault::deposit

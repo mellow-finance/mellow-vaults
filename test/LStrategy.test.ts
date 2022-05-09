@@ -1225,6 +1225,43 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ).to.be.revertedWith(Exceptions.INVARIANT);
                     });
                 });
+                describe("when minErc20UniV3CapitalRatioDeviationD is more than DENOMINATOR", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minErc20UniV3CapitalRatioDeviationD =
+                            BigNumber.from(10).pow(9).mul(2);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateRatioParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("when minErc20TokenRatioDeviationD is more than DENOMINATOR", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minErc20TokenRatioDeviationD = BigNumber.from(10)
+                            .pow(9)
+                            .mul(2);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateRatioParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("when minUniV3LiquidityRatioDeviationD is more than DENOMINATOR", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minUniV3LiquidityRatioDeviationD =
+                            BigNumber.from(10).pow(9).mul(2);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateRatioParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
             });
 
             describe("access control:", () => {
@@ -1281,6 +1318,68 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         .connect(this.admin)
                         .updateOtherParams(this.baseParams)
                 ).to.emit(this.subject, "OtherParamsUpdated");
+            });
+
+            describe("edge cases:", () => {
+                describe("when minToken0ForOpening equals zero", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minToken0ForOpening = BigNumber.from(0);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateOtherParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("when minToken0ForOpening is more than 10^9", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minToken0ForOpening = BigNumber.from(10)
+                            .pow(9)
+                            .mul(2);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateOtherParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("when minToken1ForOpening equals zero", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minToken1ForOpening = BigNumber.from(0);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateOtherParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("when minToken1ForOpening is more than 10^9", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.minToken1ForOpening = BigNumber.from(10)
+                            .pow(9)
+                            .mul(2);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateOtherParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("when rebalanceDeadline is incorrect", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.rebalanceDeadline = BigNumber.from(86400 * 31);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateOtherParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
             });
 
             describe("access control:", () => {
