@@ -503,6 +503,15 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return (await pool.slot0()).sqrtPriceX96;
         };
 
+        const increasePoolCardinality = async (amount: BigNumber) => {
+            const poolAddress = await this.uniV3Vault.pool();
+            const pool: IUniswapV3Pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                poolAddress
+            );
+            await pool.increaseObservationCardinalityNext(amount);
+        };
+
         const push = async (
             delta: BigNumber,
             from: string,
@@ -780,7 +789,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
         describe("Multiple price swappings and rebalances with mstrategy with liqidity cycle changing using UniV3Vault", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
-
+                await increasePoolCardinality(BigNumber.from(2000));
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
                 const wethAmountForDeposit = this.wethDeployerSupply;
 
