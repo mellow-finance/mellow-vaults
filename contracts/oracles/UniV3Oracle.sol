@@ -11,7 +11,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../utils/ContractMeta.sol";
-import "hardhat/console.sol";
 
 contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -56,9 +55,8 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         pricesX96 = new uint256[](4);
         safetyIndices = new uint256[](4);
         uint256 len = 0;
-        (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, uint16 observationCardinalityNext, , ) = IUniswapV3Pool(
-            pool
-        ).slot0();
+        (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , ) = IUniswapV3Pool(pool)
+            .slot0();
         if (safetyIndicesSet & 0x2 > 0) {
             pricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
@@ -74,8 +72,6 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                     uint256(observationCardinality);
                 uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
                     uint256(observationCardinality);
-                console.log("Data:", obs0, obs1, uint256(observationCardinality));
-                console.log(uint256(observationCardinalityNext));
                 require(obs0 < obs1, ExceptionsLibrary.INVALID_VALUE);
                 int256 tickAverage;
                 {
