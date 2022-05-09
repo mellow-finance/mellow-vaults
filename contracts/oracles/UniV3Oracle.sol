@@ -55,8 +55,9 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         pricesX96 = new uint256[](4);
         safetyIndices = new uint256[](4);
         uint256 len = 0;
-        (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , ) = IUniswapV3Pool(pool)
-            .slot0();
+        (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
+            pool
+        ).slot0();
         if (safetyIndicesSet & 0x2 > 0) {
             pricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
