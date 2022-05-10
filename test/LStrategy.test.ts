@@ -674,7 +674,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
     beforeEach(async () => {
         await this.deploymentFixture();
     });
-    /*
 
     describe("#rebalance integration scenarios", () => {
         //open initial positions of equal size and some ticks
@@ -1032,7 +1031,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
-    */
 
     describe("unit tests", () => {
         beforeEach(async () => {
@@ -1049,7 +1047,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 }
             }
         });
-        /*
+
         describe("#updateTradingParams", () => {
             beforeEach(async () => {
                 this.baseParams = {
@@ -2827,15 +2825,14 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
             });
         });
-        */
+
         describe("#depositCallback", () => {
             it("calls rebalance inside", async () => {
                 await this.grantPermissions();
                 await this.preparePush({ vault: this.uniV3LowerVault });
                 await this.preparePush({ vault: this.uniV3UpperVault });
-                await expect(
-                    this.subject.connect(this.admin).depositCallback()
-                ).to.not.be.reverted;
+                await expect(this.subject.connect(this.admin).depositCallback())
+                    .to.not.be.reverted;
             });
             describe("access control:", () => {
                 beforeEach(async () => {
