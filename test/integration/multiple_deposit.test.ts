@@ -479,7 +479,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             wethDepositAmounts.push(
                                 BigNumber.from(
                                     randomInt(
-                                        1,
+                                        10 ** 3,
                                         Number(
                                             this.wethDeployerSupply
                                                 .div(10 ** 4)
