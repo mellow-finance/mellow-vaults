@@ -55,11 +55,12 @@ contract UniV2Validator is ContractMeta, Validator {
     ) external view {
         require(address(swapRouter) == addr, ExceptionsLibrary.INVALID_TARGET);
         IVault vault = IVault(msg.sender);
-        (, address[] memory path, address to, ) = abi.decode(data, (uint256, address[], address, uint256));
-        require(to == msg.sender);
+
+        address[] memory path;
+        address to;
 
         if ((selector == EXACT_ETH_INPUT_SELECTOR) || (selector == EXACT_TOKENS_OUTPUT_SELECTOR)) {
-            _verifyPath(vault, path);
+            (, path, to, ) = abi.decode(data, (uint256, address[], address, uint256));
         } else if (
             (selector == EXACT_ETH_OUTPUT_SELECTOR) ||
             (selector == EXACT_TOKENS_INPUT_SELECTOR) ||
@@ -67,10 +68,13 @@ contract UniV2Validator is ContractMeta, Validator {
             (selector == EXACT_OUTPUT_SELECTOR)
         ) {
             require(value == 0, ExceptionsLibrary.INVALID_VALUE);
-            _verifyPath(vault, path);
+            (, , path, to, ) = abi.decode(data, (uint256, uint256, address[], address, uint256));
         } else {
             revert(ExceptionsLibrary.INVALID_SELECTOR);
         }
+
+        require(to == msg.sender);
+        _verifyPath(vault, path);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
