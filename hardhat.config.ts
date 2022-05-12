@@ -152,6 +152,7 @@ const config: HardhatUserConfig = {
         yearnVaultRegistry: {
             default: "0x50c1a2eA0a861A967D9d0FFE2AE4012c2E053804",
             fantom: "0x41679043846d1B16b44FBf6E7FE531390e5bf092",
+            arbitrum: "0x3199437193625DCcD6F9C9e98BDf93582200Eb1f",
         },
         // only for tests
         yearnWethPool: {
