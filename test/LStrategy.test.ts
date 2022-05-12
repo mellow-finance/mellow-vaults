@@ -392,6 +392,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ICurvePool,
                     "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
                 );
+                this.curvePool = curvePool;
 
                 const steth = await ethers.getContractAt(
                     "ERC20Token",
@@ -445,12 +446,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     BigNumber.from(10).pow(18).mul(3)
                 );
 
-                this.mintFunds = async (base: BigNumber) => {
-                    const curvePool = await ethers.getContractAt(
-                        ICurvePool,
-                        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
-                    );
+                this.curvePoll = await ethers.getContractAt(
+                    ICurvePool,
+                    "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+                );
 
+                this.mintFunds = async (base: BigNumber) => {
                     const steth = await ethers.getContractAt(
                         "ERC20Token",
                         "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
@@ -468,17 +469,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await mint("WETH", this.subject.address, base.mul(4000));
                     await mint("WETH", this.deployer.address, base.mul(4000));
 
-                    await this.weth.approve(
-                        curvePool.address,
-                        ethers.constants.MaxUint256
-                    );
-                    await steth.approve(
-                        this.wsteth.address,
-                        ethers.constants.MaxUint256
-                    );
                     await weth.withdraw(base.mul(2000));
                     const options = { value: base.mul(2000) };
-                    await curvePool.exchange(
+                    await this.curvePool.exchange(
                         0,
                         1,
                         base.mul(2000),
@@ -534,19 +527,61 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     this.mockOracle.updatePrice(priceX96);
                 };
 
+                this.swapWethToWsteth = async (number: BigNumber) => {
+                    const weth = await ethers.getContractAt(
+                        IWETH,
+                        this.weth.address
+                    );
+                    const wsteth = await ethers.getContractAt(
+                        IWSTETH,
+                        this.wsteth.address
+                    );
+                    const balance = await wsteth.balanceOf(this.deployer.address);
+                    number = number.lt(balance) ? number: balance;
+                    await withSigner(this.erc20Vault.address, async (signer) => {
+                        await weth.connect(signer).transfer(this.deployer.address, number);
+                    });
+                    await wsteth.transfer(this.erc20Vault.address, number);
+                };
+
+                this.swapWstethToWeth = async (number: BigNumber) => {
+                    const weth = await ethers.getContractAt(
+                        IWETH,
+                        this.weth.address
+                    );
+                    const wsteth = await ethers.getContractAt(
+                        IWSTETH,
+                        this.wsteth.address
+                    );
+                    const balance = await weth.balanceOf(this.deployer.address);
+                    number = number.lt(balance) ? number: balance;
+                    await withSigner(this.erc20Vault.address, async (signer) => {
+                        await wsteth.connect(signer).transfer(this.deployer.address, number);
+                    });
+                    await weth.transfer(this.erc20Vault.address, number);
+                };
+
                 this.trySwapERC20 = async () => {
+                    console.log("Try swap");
                     let erc20Tvl = await this.erc20Vault.tvl();
                     let tokens = [this.wsteth, this.weth];
                     for (let i = 0; i < 2; ++i) {
                         if (erc20Tvl[0][i].eq(BigNumber.from(0))) {
-                            let otherTokenAmount = erc20Tvl[0][1 - i];
-                            await this.swapTokens(
-                                this.erc20Vault.address,
-                                this.erc20Vault.address,
-                                tokens[1 - i],
-                                tokens[i],
-                                otherTokenAmount.div(2)
-                            );
+                            if (i == 0) {
+                                console.log("First branch");
+                                await this.swapWethToWsteth(erc20Tvl[0][1 - i].div(2));
+                            } else {
+                                console.log("Second branch");
+                                await this.swapWstethToWeth(erc20Tvl[0][1 - i].div(2));
+                            }
+                            // let otherTokenAmount = erc20Tvl[0][1 - i];
+                            // await this.swapTokens(
+                                // this.erc20Vault.address,
+                                // this.erc20Vault.address,
+                                // tokens[1 - i],
+                                // tokens[i],
+                                // otherTokenAmount.div(2)
+                            // );
                         }
                     }
                 };
