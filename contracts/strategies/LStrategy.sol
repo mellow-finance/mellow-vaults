@@ -284,7 +284,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             (liquidityDelta, isNegativeLiquidityDelta) = _liquidityDelta(
                 lowerLiquidity,
                 upperLiquidity,
-                targetUniV3LiquidityRatioD,
+                DENOMINATOR - targetUniV3LiquidityRatioD,
                 ratioParams.minUniV3LiquidityRatioDeviationD
             );
             if (isNegativeLiquidityDelta) {
