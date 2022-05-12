@@ -15,6 +15,7 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
+import "hardhat/console.sol";
 
 contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
@@ -640,12 +641,16 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             );
             // The pull is on best effort so we don't worry on overflow
             require((depositTokenAmounts[0] != 0 || depositTokenAmounts[1] != 0), ExceptionsLibrary.VALUE_ZERO);
+            console.log("Before pull");
+            console.log("deposit Amount0: ", depositTokenAmounts[0]);
+            console.log("deposit Amount1: ", depositTokenAmounts[1]);
             pushedAmounts = erc20Vault.pull(
                 address(toVault),
                 tokens,
                 depositTokenAmounts,
                 _makeUniswapVaultOptions(minDepositTokens, deadline)
             );
+            console.log("After pull");
         }
         emit RebalancedUniV3(
             tx.origin,

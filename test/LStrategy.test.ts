@@ -577,6 +577,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     y: BigNumber
                 ) => {
                     let delta = x.sub(y).abs();
+                    console.log("Delta: ", delta.toNumber());
                     return (await this.subject.DENOMINATOR())
                         .div(delta.add(1))
                         .gt(BigNumber.from(50));
@@ -613,9 +614,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             await upperVault.uniV3Nft()
                         );
                     const total = lowerVaultLiquidity.add(upperVaultLiquidity);
-                    return lowerVaultLiquidity
-                        .mul(await this.subject.DENOMINATOR())
-                        .div(total);
+                    const DENOMINATOR = await this.subject.DENOMINATOR();
+                    return DENOMINATOR.sub(
+                        lowerVaultLiquidity
+                        .mul(DENOMINATOR)
+                        .div(total)
+                    );
                 };
 
                 this.submitToERC20Vault = async () => {
@@ -771,8 +775,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
                     for (let i = 0; i < 30; ++i) {
-                        await expect(
-                            this.subject
+                        // await expect(
+                        await    this.subject
                                 .connect(this.admin)
                                 .rebalanceERC20UniV3Vaults(
                                     [
@@ -784,8 +788,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                         ethers.constants.Zero,
                                     ],
                                     ethers.constants.MaxUint256
-                                )
-                        ).not.to.be.reverted;
+                                );
+                        // ).not.to.be.reverted;
 
                         //swaps other token if some token is 0 in ERC20
                         await this.trySwapERC20();
@@ -802,8 +806,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         const currentTick = await this.getUniV3Tick();
                         await this.updateMockOracle(currentTick);
 
-                        await expect(
-                            this.subject
+                        // await expect(
+                        await    this.subject
                                 .connect(this.admin)
                                 .rebalanceUniV3Vaults(
                                     [
@@ -815,15 +819,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                         ethers.constants.Zero,
                                     ],
                                     ethers.constants.MaxUint256
-                                )
-                        ).not.to.be.reverted;
+                                );
+                        // ).not.to.be.reverted;
                     }
                 });
             });
 
             describe("batches of rebalances after small price changes", () => {
                 it("rebalance converges to target ratio", async () => {
+                    let tokenFirst = this.weth;
+                    let tokenSecond = this.wsteth;
                     for (let iter = 0; iter < 4; ++iter) {
+                        console.log("Iter: ", iter);
                         await expect(
                             this.subject
                                 .connect(this.admin)
@@ -842,19 +849,20 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         await this.swapTokens(
                             this.deployer.address,
                             this.deployer.address,
-                            this.weth,
-                            this.wsteth,
+                            tokenFirst,
+                            tokenSecond,
                             BigNumber.from(10).pow(18).mul(5)
                         );
 
-                        for (let rebalance = 0; rebalance < 4; ++rebalance) {
+
+                        for (let rebalance = 0; rebalance < 10; ++rebalance) {
                             await this.trySwapERC20();
 
                             const currentTick = await this.getUniV3Tick();
                             await this.updateMockOracle(currentTick);
 
-                            await expect(
-                                this.subject
+                            // await expect(
+                            await    this.subject
                                     .connect(this.admin)
                                     .rebalanceUniV3Vaults(
                                         [
@@ -866,19 +874,25 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                             ethers.constants.Zero,
                                         ],
                                         ethers.constants.MaxUint256
-                                    )
-                            ).not.to.be.reverted;
+                                    );
+                            // ).not.to.be.reverted;
+                            // if (newLiquidityRatio.eq(prevLiquidityRatio)) {
+                                // break;
+                            // }
                         }
                         const [neededRatio, flag] =
                             await this.getExpectedRatio();
                         const liquidityRatio =
                             await this.getVaultsLiquidityRatio();
+                        console.log("Expected ratio: ", neededRatio.toNumber());
+                        console.log("Liquidity ratio: ", liquidityRatio.toNumber());
                         expect(
                             await this.calculateRatioDeviationMeasure(
                                 neededRatio,
                                 liquidityRatio
                             )
                         ).true;
+                        [tokenFirst, tokenSecond] = [tokenSecond, tokenFirst];
                     }
                 });
             });

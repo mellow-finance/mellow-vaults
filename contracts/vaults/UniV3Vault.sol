@@ -11,6 +11,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "hardhat/console.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -212,6 +213,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         returns (uint256[] memory actualTokenAmounts)
     {
         actualTokenAmounts = new uint256[](2);
+        console.log("Push tokenAmount0: ", tokenAmounts[0]);
+        console.log("Push tokenAmount1: ", tokenAmounts[1]);
         if (uniV3Nft == 0) return actualTokenAmounts;
 
         address[] memory tokens = _vaultTokens;
