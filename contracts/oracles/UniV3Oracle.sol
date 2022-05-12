@@ -76,11 +76,11 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                     uint256(observationCardinality);
                 uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
                     uint256(observationCardinality);
-                require(obs0 < obs1, ExceptionsLibrary.INVALID_VALUE);
                 int256 tickAverage;
                 {
                     (uint32 timestamp0, int56 tickCumulative0, , ) = IUniswapV3Pool(pool).observations(obs0);
                     (uint32 timestamp1, int56 tickCumulative1, , ) = IUniswapV3Pool(pool).observations(obs1);
+                    require(timestamp0 < timestamp1, ExceptionsLibrary.INVALID_VALUE);
                     uint256 timespan = timestamp1 - timestamp0;
                     tickAverage = (int256(tickCumulative1) - int256(tickCumulative0)) / int256(timespan);
                 }
