@@ -586,6 +586,33 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 };
 
+                this.balanceERC20 = async () => {
+                    let erc20Tvl = await this.erc20Vault.tvl();
+                    let tokens = [this.wsteth, this.weth];
+                    let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
+
+                    if (delta.lt(BigNumber.from(-1))) {
+                        await this.swapTokens(
+                            this.erc20Vault.address,
+                            this.erc20Vault.address,
+                            tokens[1],
+                            tokens[0],
+                            delta.div(2).mul(-1)
+                        );
+                    } 
+
+
+                    if (delta.gt(BigNumber.from(1))) {
+                        await this.swapTokens(
+                            this.erc20Vault.address,
+                            this.erc20Vault.address,
+                            tokens[0],
+                            tokens[1],
+                            delta.div(2)
+                        );
+                    }
+                };
+
                 this.getExpectedRatio = async () => {
                     const tokens = [this.wsteth.address, this.weth.address];
                     const targetPriceX96 = await this.subject.targetPrice(
@@ -810,8 +837,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
                     for (let i = 0; i < 30; ++i) {
-                        // await expect(
-                        await    this.subject
+
+                        //balance tokens in ERC20
+                        await this.balanceERC20();
+
+                        await expect(
+                            this.subject
                                 .connect(this.admin)
                                 .rebalanceERC20UniV3Vaults(
                                     [
@@ -823,10 +854,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                         ethers.constants.Zero,
                                     ],
                                     ethers.constants.MaxUint256
-                                );
-                        // ).not.to.be.reverted;
+                                )
+                        ).not.to.be.reverted;
 
-                        //swaps other token if some token is 0 in ERC20
                         await this.trySwapERC20();
 
                         // changes price
@@ -841,8 +871,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         const currentTick = await this.getUniV3Tick();
                         await this.updateMockOracle(currentTick);
 
-                        // await expect(
-                        await    this.subject
+                        await expect(
+                            this.subject
                                 .connect(this.admin)
                                 .rebalanceUniV3Vaults(
                                     [
@@ -854,8 +884,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                         ethers.constants.Zero,
                                     ],
                                     ethers.constants.MaxUint256
-                                );
-                        // ).not.to.be.reverted;
+                                )
+                        ).not.to.be.reverted;
                     }
                 });
             });
