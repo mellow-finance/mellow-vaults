@@ -10,7 +10,7 @@ import "./IntegrationVault.sol";
 /// @dev Notes:
 /// **TVL**
 ///
-/// The TVL of the vault is cached and updated after each deposit withdraw.
+/// The TVL of the vault is updated after each deposit withdraw.
 ///
 /// **yTokens**
 /// yTokens are fixed at the token creation and addresses are taken from YearnVault governance and if missing there
