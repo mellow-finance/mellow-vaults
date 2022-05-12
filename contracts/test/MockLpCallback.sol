@@ -3,7 +3,6 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/utils/ILpCallback.sol";
-import "hardhat/console.sol";
 
 contract MockLpCallback is ILpCallback {
     /// @notice Callback function

@@ -13,7 +13,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
-import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:

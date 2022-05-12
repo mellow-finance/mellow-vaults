@@ -501,17 +501,18 @@ export async function mintUniV3Position_USDC_WETH(options: {
     return result;
 }
 
-export async function uniSwapTokens(
+export async function uniSwapTokensGivenInput(
     router: ISwapRouter,
     tokens: ERC20Token[],
     fee: number,
+    zeroForOne: boolean,
     amount: BigNumberish
 ) {
     let provider = randomAddress();
-
+    let tokenIndex = zeroForOne ? 1 : 0;
     let swapParams = {
-        tokenIn: tokens[0].address,
-        tokenOut: tokens[1].address,
+        tokenIn: tokens[tokenIndex].address,
+        tokenOut: tokens[1 - tokenIndex].address,
         fee: fee,
         recipient: provider,
         deadline: ethers.constants.MaxUint256,
@@ -520,11 +521,11 @@ export async function uniSwapTokens(
         sqrtPriceLimitX96: 0,
     };
 
-    await mint(tokens[0].address, provider, amount);
-
+    await mint(tokens[tokenIndex].address, provider, amount);
+    let amountOut: BigNumber = BigNumber.from(0);
     await withSigner(provider, async (signer) => {
-        await tokens[0].connect(signer).approve(router.address, amount);
-        let amountOut = await router
+        await tokens[tokenIndex].connect(signer).approve(router.address, amount);
+        amountOut = await router
             .connect(signer)
             .callStatic.exactInputSingle(swapParams);
         await router.connect(signer).exactInputSingle(swapParams);
@@ -532,4 +533,43 @@ export async function uniSwapTokens(
             "Swapped " + amount.toString() + ", amouts outputted:" + amountOut
         );
     });
+    return amountOut;
+}
+
+export async function uniSwapTokensGivenOutput(
+    router: ISwapRouter,
+    tokens: ERC20Token[],
+    fee: number,
+    zeroForOne: boolean,
+    amount: BigNumberish
+) {
+    const MAXIMUM_TO_SPEND = BigNumber.from(10).pow(21);
+    let provider = randomAddress();
+    let tokenIndex = zeroForOne ? 1 : 0;
+    let swapParams = {
+        tokenIn: tokens[tokenIndex].address,
+        tokenOut: tokens[1 - tokenIndex].address,
+        fee: fee,
+        recipient: provider,
+        deadline: ethers.constants.MaxUint256,
+        amountOut: amount,
+        amountInMaximum: MAXIMUM_TO_SPEND,
+        sqrtPriceLimitX96: 0,
+    };
+
+    await mint(tokens[tokenIndex].address, provider, MAXIMUM_TO_SPEND);
+    await withSigner(provider, async (signer) => {
+        await tokens[tokenIndex].connect(signer).approve(router.address, MAXIMUM_TO_SPEND);
+        let amountIn = await router
+            .connect(signer)
+            .callStatic.exactOutputSingle(swapParams);
+        await router.connect(signer).exactOutputSingle(swapParams);
+        console.log(
+            "Swapped " + amount.toString() + ", amounts spent:" + amountIn
+        );
+        // await tokens[tokenIndex].connect(signer).approve(router.address, 0);
+        // await tokens[tokenIndex].connect(signer).transferFrom(router.address, signer.address, MAXIMUM_TO_SPEND.sub(amountIn));
+        //burn?
+    });
+
 }
