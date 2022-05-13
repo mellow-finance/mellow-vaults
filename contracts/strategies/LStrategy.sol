@@ -152,15 +152,20 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256 deadline
     ) public returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
         _requireAtLeastOperator();
-        uint256 capitalDelta;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
         uint256[] memory pulledAmounts = new uint256[](2);
+        uint128 lowerVaultLiquidity;
+        uint128 upperVaultLiquidity;
+
+        totalPulledAmounts = new uint256[](2);
+
         {
             uint256 priceX96 = targetPrice(tokens, tradingParams);
             uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
             uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
+            uint256 capitalDelta;
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
                 lowerVaultCapital + upperVaultCapital,
@@ -175,8 +180,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 capitalDelta,
                 lowerVaultCapital + upperVaultCapital
             );
-            (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
-            (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
+            (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
+            (, , upperVaultLiquidity) = _getVaultStats(upperVault);
             lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(
                 uint128(FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR))
             );
@@ -186,20 +191,24 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         }
 
         if (!isNegativeCapitalDelta) {
-            totalPulledAmounts = erc20Vault.pull(
-                address(lowerVault),
-                tokens,
-                lowerTokenAmounts,
-                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
-            );
-            pulledAmounts = erc20Vault.pull(
-                address(upperVault),
-                tokens,
-                upperTokenAmounts,
-                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
-            );
-            for (uint256 i = 0; i < 2; i++) {
-                totalPulledAmounts[i] += pulledAmounts[i];
+            if (lowerVaultLiquidity > 0) {
+                totalPulledAmounts = erc20Vault.pull(
+                    address(lowerVault),
+                    tokens,
+                    lowerTokenAmounts,
+                    _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
+                );
+            }
+            if (upperVaultLiquidity > 0) {
+                pulledAmounts = erc20Vault.pull(
+                    address(upperVault),
+                    tokens,
+                    upperTokenAmounts,
+                    _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
+                );
+                for (uint256 i = 0; i < 2; i++) {
+                    totalPulledAmounts[i] += pulledAmounts[i];
+                }
             }
         } else {
             totalPulledAmounts = lowerVault.pull(

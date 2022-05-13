@@ -392,6 +392,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     ICurvePool,
                     "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
                 );
+                this.curvePool = curvePool;
 
                 const steth = await ethers.getContractAt(
                     "ERC20Token",
@@ -445,12 +446,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     BigNumber.from(10).pow(18).mul(3)
                 );
 
-                this.mintFunds = async (base: BigNumber) => {
-                    const curvePool = await ethers.getContractAt(
-                        ICurvePool,
-                        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
-                    );
+                this.curvePoll = await ethers.getContractAt(
+                    ICurvePool,
+                    "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+                );
 
+                this.mintFunds = async (base: BigNumber) => {
                     const steth = await ethers.getContractAt(
                         "ERC20Token",
                         "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
@@ -468,17 +469,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await mint("WETH", this.subject.address, base.mul(4000));
                     await mint("WETH", this.deployer.address, base.mul(4000));
 
-                    await this.weth.approve(
-                        curvePool.address,
-                        ethers.constants.MaxUint256
-                    );
-                    await steth.approve(
-                        this.wsteth.address,
-                        ethers.constants.MaxUint256
-                    );
                     await weth.withdraw(base.mul(2000));
                     const options = { value: base.mul(2000) };
-                    await curvePool.exchange(
+                    await this.curvePool.exchange(
                         0,
                         1,
                         base.mul(2000),
@@ -534,20 +527,101 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     this.mockOracle.updatePrice(priceX96);
                 };
 
+                this.swapWethToWsteth = async (number: BigNumber) => {
+                    const weth = await ethers.getContractAt(
+                        IWETH,
+                        this.weth.address
+                    );
+                    const wsteth = await ethers.getContractAt(
+                        IWSTETH,
+                        this.wsteth.address
+                    );
+                    const balance = await wsteth.balanceOf(
+                        this.deployer.address
+                    );
+                    number = number.lt(balance) ? number : balance;
+                    await withSigner(
+                        this.erc20Vault.address,
+                        async (signer) => {
+                            await weth
+                                .connect(signer)
+                                .transfer(this.deployer.address, number);
+                        }
+                    );
+                    await wsteth.transfer(this.erc20Vault.address, number);
+                };
+
+                this.swapWstethToWeth = async (number: BigNumber) => {
+                    const weth = await ethers.getContractAt(
+                        IWETH,
+                        this.weth.address
+                    );
+                    const wsteth = await ethers.getContractAt(
+                        IWSTETH,
+                        this.wsteth.address
+                    );
+                    const balance = await weth.balanceOf(this.deployer.address);
+                    number = number.lt(balance) ? number : balance;
+                    await withSigner(
+                        this.erc20Vault.address,
+                        async (signer) => {
+                            await wsteth
+                                .connect(signer)
+                                .transfer(this.deployer.address, number);
+                        }
+                    );
+                    await weth.transfer(this.erc20Vault.address, number);
+                };
+
                 this.trySwapERC20 = async () => {
                     let erc20Tvl = await this.erc20Vault.tvl();
                     let tokens = [this.wsteth, this.weth];
                     for (let i = 0; i < 2; ++i) {
                         if (erc20Tvl[0][i].eq(BigNumber.from(0))) {
-                            let otherTokenAmount = erc20Tvl[0][1 - i];
-                            await this.swapTokens(
-                                this.erc20Vault.address,
-                                this.erc20Vault.address,
-                                tokens[1 - i],
-                                tokens[i],
-                                otherTokenAmount.div(2)
-                            );
+                            if (i == 0) {
+                                await this.swapWethToWsteth(
+                                    erc20Tvl[0][1 - i].div(2)
+                                );
+                            } else {
+                                await this.swapWstethToWeth(
+                                    erc20Tvl[0][1 - i].div(2)
+                                );
+                            }
+                            // let otherTokenAmount = erc20Tvl[0][1 - i];
+                            // await this.swapTokens(
+                            // this.erc20Vault.address,
+                            // this.erc20Vault.address,
+                            // tokens[1 - i],
+                            // tokens[i],
+                            // otherTokenAmount.div(2)
+                            // );
                         }
+                    }
+                };
+
+                this.balanceERC20 = async () => {
+                    let erc20Tvl = await this.erc20Vault.tvl();
+                    let tokens = [this.wsteth, this.weth];
+                    let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
+
+                    if (delta.lt(BigNumber.from(-1))) {
+                        await this.swapTokens(
+                            this.erc20Vault.address,
+                            this.erc20Vault.address,
+                            tokens[1],
+                            tokens[0],
+                            delta.div(2).mul(-1)
+                        );
+                    }
+
+                    if (delta.gt(BigNumber.from(1))) {
+                        await this.swapTokens(
+                            this.erc20Vault.address,
+                            this.erc20Vault.address,
+                            tokens[0],
+                            tokens[1],
+                            delta.div(2)
+                        );
                     }
                 };
 
@@ -613,9 +687,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             await upperVault.uniV3Nft()
                         );
                     const total = lowerVaultLiquidity.add(upperVaultLiquidity);
-                    return lowerVaultLiquidity
-                        .mul(await this.subject.DENOMINATOR())
-                        .div(total);
+                    const DENOMINATOR = await this.subject.DENOMINATOR();
+                    return DENOMINATOR.sub(
+                        lowerVaultLiquidity.mul(DENOMINATOR).div(total)
+                    );
                 };
 
                 this.submitToERC20Vault = async () => {
@@ -771,6 +846,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
                     for (let i = 0; i < 30; ++i) {
+                        //balance tokens in ERC20
+                        await this.balanceERC20();
+
                         await expect(
                             this.subject
                                 .connect(this.admin)
@@ -787,7 +865,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 )
                         ).not.to.be.reverted;
 
-                        //swaps other token if some token is 0 in ERC20
                         await this.trySwapERC20();
 
                         // changes price
@@ -823,6 +900,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
             describe("batches of rebalances after small price changes", () => {
                 it("rebalance converges to target ratio", async () => {
+                    let tokenFirst = this.weth;
+                    let tokenSecond = this.wsteth;
                     for (let iter = 0; iter < 4; ++iter) {
                         await expect(
                             this.subject
@@ -842,32 +921,35 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         await this.swapTokens(
                             this.deployer.address,
                             this.deployer.address,
-                            this.weth,
-                            this.wsteth,
+                            tokenFirst,
+                            tokenSecond,
                             BigNumber.from(10).pow(18).mul(5)
                         );
 
-                        for (let rebalance = 0; rebalance < 4; ++rebalance) {
+                        for (let rebalance = 0; rebalance < 10; ++rebalance) {
                             await this.trySwapERC20();
 
                             const currentTick = await this.getUniV3Tick();
                             await this.updateMockOracle(currentTick);
 
-                            await expect(
-                                this.subject
-                                    .connect(this.admin)
-                                    .rebalanceUniV3Vaults(
-                                        [
-                                            ethers.constants.Zero,
-                                            ethers.constants.Zero,
-                                        ],
-                                        [
-                                            ethers.constants.Zero,
-                                            ethers.constants.Zero,
-                                        ],
-                                        ethers.constants.MaxUint256
-                                    )
-                            ).not.to.be.reverted;
+                            // await expect(
+                            await this.subject
+                                .connect(this.admin)
+                                .rebalanceUniV3Vaults(
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    ethers.constants.MaxUint256
+                                );
+                            // ).not.to.be.reverted;
+                            // if (newLiquidityRatio.eq(prevLiquidityRatio)) {
+                            // break;
+                            // }
                         }
                         const [neededRatio, flag] =
                             await this.getExpectedRatio();
@@ -879,6 +961,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 liquidityRatio
                             )
                         ).true;
+                        [tokenFirst, tokenSecond] = [tokenSecond, tokenFirst];
                     }
                 });
             });
