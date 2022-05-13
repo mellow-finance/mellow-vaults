@@ -536,11 +536,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         IWSTETH,
                         this.wsteth.address
                     );
-                    const balance = await wsteth.balanceOf(this.deployer.address);
-                    number = number.lt(balance) ? number: balance;
-                    await withSigner(this.erc20Vault.address, async (signer) => {
-                        await weth.connect(signer).transfer(this.deployer.address, number);
-                    });
+                    const balance = await wsteth.balanceOf(
+                        this.deployer.address
+                    );
+                    number = number.lt(balance) ? number : balance;
+                    await withSigner(
+                        this.erc20Vault.address,
+                        async (signer) => {
+                            await weth
+                                .connect(signer)
+                                .transfer(this.deployer.address, number);
+                        }
+                    );
                     await wsteth.transfer(this.erc20Vault.address, number);
                 };
 
@@ -554,10 +561,15 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.wsteth.address
                     );
                     const balance = await weth.balanceOf(this.deployer.address);
-                    number = number.lt(balance) ? number: balance;
-                    await withSigner(this.erc20Vault.address, async (signer) => {
-                        await wsteth.connect(signer).transfer(this.deployer.address, number);
-                    });
+                    number = number.lt(balance) ? number : balance;
+                    await withSigner(
+                        this.erc20Vault.address,
+                        async (signer) => {
+                            await wsteth
+                                .connect(signer)
+                                .transfer(this.deployer.address, number);
+                        }
+                    );
                     await weth.transfer(this.erc20Vault.address, number);
                 };
 
@@ -569,18 +581,22 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         if (erc20Tvl[0][i].eq(BigNumber.from(0))) {
                             if (i == 0) {
                                 console.log("First branch");
-                                await this.swapWethToWsteth(erc20Tvl[0][1 - i].div(2));
+                                await this.swapWethToWsteth(
+                                    erc20Tvl[0][1 - i].div(2)
+                                );
                             } else {
                                 console.log("Second branch");
-                                await this.swapWstethToWeth(erc20Tvl[0][1 - i].div(2));
+                                await this.swapWstethToWeth(
+                                    erc20Tvl[0][1 - i].div(2)
+                                );
                             }
                             // let otherTokenAmount = erc20Tvl[0][1 - i];
                             // await this.swapTokens(
-                                // this.erc20Vault.address,
-                                // this.erc20Vault.address,
-                                // tokens[1 - i],
-                                // tokens[i],
-                                // otherTokenAmount.div(2)
+                            // this.erc20Vault.address,
+                            // this.erc20Vault.address,
+                            // tokens[1 - i],
+                            // tokens[i],
+                            // otherTokenAmount.div(2)
                             // );
                         }
                     }
@@ -599,8 +615,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             tokens[0],
                             delta.div(2).mul(-1)
                         );
-                    } 
-
+                    }
 
                     if (delta.gt(BigNumber.from(1))) {
                         await this.swapTokens(
@@ -678,9 +693,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     const total = lowerVaultLiquidity.add(upperVaultLiquidity);
                     const DENOMINATOR = await this.subject.DENOMINATOR();
                     return DENOMINATOR.sub(
-                        lowerVaultLiquidity
-                        .mul(DENOMINATOR)
-                        .div(total)
+                        lowerVaultLiquidity.mul(DENOMINATOR).div(total)
                     );
                 };
 
@@ -837,7 +850,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
                     for (let i = 0; i < 30; ++i) {
-
                         //balance tokens in ERC20
                         await this.balanceERC20();
 
@@ -919,7 +931,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             BigNumber.from(10).pow(18).mul(5)
                         );
 
-
                         for (let rebalance = 0; rebalance < 10; ++rebalance) {
                             await this.trySwapERC20();
 
@@ -927,22 +938,22 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             await this.updateMockOracle(currentTick);
 
                             // await expect(
-                            await    this.subject
-                                    .connect(this.admin)
-                                    .rebalanceUniV3Vaults(
-                                        [
-                                            ethers.constants.Zero,
-                                            ethers.constants.Zero,
-                                        ],
-                                        [
-                                            ethers.constants.Zero,
-                                            ethers.constants.Zero,
-                                        ],
-                                        ethers.constants.MaxUint256
-                                    );
+                            await this.subject
+                                .connect(this.admin)
+                                .rebalanceUniV3Vaults(
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    ethers.constants.MaxUint256
+                                );
                             // ).not.to.be.reverted;
                             // if (newLiquidityRatio.eq(prevLiquidityRatio)) {
-                                // break;
+                            // break;
                             // }
                         }
                         const [neededRatio, flag] =
@@ -950,7 +961,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         const liquidityRatio =
                             await this.getVaultsLiquidityRatio();
                         console.log("Expected ratio: ", neededRatio.toNumber());
-                        console.log("Liquidity ratio: ", liquidityRatio.toNumber());
+                        console.log(
+                            "Liquidity ratio: ",
+                            liquidityRatio.toNumber()
+                        );
                         expect(
                             await this.calculateRatioDeviationMeasure(
                                 neededRatio,
