@@ -574,18 +574,15 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
 
                 this.trySwapERC20 = async () => {
-                    console.log("Try swap");
                     let erc20Tvl = await this.erc20Vault.tvl();
                     let tokens = [this.wsteth, this.weth];
                     for (let i = 0; i < 2; ++i) {
                         if (erc20Tvl[0][i].eq(BigNumber.from(0))) {
                             if (i == 0) {
-                                console.log("First branch");
                                 await this.swapWethToWsteth(
                                     erc20Tvl[0][1 - i].div(2)
                                 );
                             } else {
-                                console.log("Second branch");
                                 await this.swapWstethToWeth(
                                     erc20Tvl[0][1 - i].div(2)
                                 );
@@ -654,7 +651,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     y: BigNumber
                 ) => {
                     let delta = x.sub(y).abs();
-                    console.log("Delta: ", delta.toNumber());
                     return (await this.subject.DENOMINATOR())
                         .div(delta.add(1))
                         .gt(BigNumber.from(50));
@@ -907,7 +903,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     let tokenFirst = this.weth;
                     let tokenSecond = this.wsteth;
                     for (let iter = 0; iter < 4; ++iter) {
-                        console.log("Iter: ", iter);
                         await expect(
                             this.subject
                                 .connect(this.admin)
@@ -960,11 +955,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             await this.getExpectedRatio();
                         const liquidityRatio =
                             await this.getVaultsLiquidityRatio();
-                        console.log("Expected ratio: ", neededRatio.toNumber());
-                        console.log(
-                            "Liquidity ratio: ",
-                            liquidityRatio.toNumber()
-                        );
                         expect(
                             await this.calculateRatioDeviationMeasure(
                                 neededRatio,
