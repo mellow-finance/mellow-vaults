@@ -329,21 +329,17 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             ratioParams.minErc20TokenRatioDeviationD
         );
         TradingParams memory tradingParams_ = tradingParams;
-        uint256 minAmountOut;
+
         uint256 isNegativeInt = isNegative ? 1 : 0;
-        if (isNegative) {
-            minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
-        } else {
-            minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
-        }
-        minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
+        uint256[2] memory tokenValuesToTransfer = [FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96), tokenDelta];
         preOrder_ = PreOrder({
             tokenIn: tokens[0 ^ isNegativeInt],
             tokenOut: tokens[1 ^ isNegativeInt],
-            amountIn: tokenDelta,
-            minAmountOut: minAmountOut,
+            amountIn: tokenValuesToTransfer[0 ^ isNegativeInt],
+            minAmountOut: FullMath.mulDiv(tokenValuesToTransfer[1 ^ isNegativeInt], DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR),
             deadline: block.timestamp + tradingParams_.orderDeadline
         });
+
         preOrder = preOrder_;
         emit PreOrderPosted(tx.origin, msg.sender, preOrder_);
     }
