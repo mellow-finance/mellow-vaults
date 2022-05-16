@@ -331,12 +331,19 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         TradingParams memory tradingParams_ = tradingParams;
 
         uint256 isNegativeInt = isNegative ? 1 : 0;
-        uint256[2] memory tokenValuesToTransfer = [FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96), tokenDelta];
+        uint256[2] memory tokenValuesToTransfer = [
+            FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96),
+            tokenDelta
+        ];
         preOrder_ = PreOrder({
             tokenIn: tokens[0 ^ isNegativeInt],
             tokenOut: tokens[1 ^ isNegativeInt],
             amountIn: tokenValuesToTransfer[0 ^ isNegativeInt],
-            minAmountOut: FullMath.mulDiv(tokenValuesToTransfer[1 ^ isNegativeInt], DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR),
+            minAmountOut: FullMath.mulDiv(
+                tokenValuesToTransfer[1 ^ isNegativeInt],
+                DENOMINATOR - tradingParams_.maxSlippageD,
+                DENOMINATOR
+            ),
             deadline: block.timestamp + tradingParams_.orderDeadline
         });
 
