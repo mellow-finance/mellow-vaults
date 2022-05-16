@@ -524,7 +524,9 @@ export async function uniSwapTokensGivenInput(
     await mint(tokens[tokenIndex].address, provider, amount);
     let amountOut: BigNumber = BigNumber.from(0);
     await withSigner(provider, async (signer) => {
-        await tokens[tokenIndex].connect(signer).approve(router.address, amount);
+        await tokens[tokenIndex]
+            .connect(signer)
+            .approve(router.address, amount);
         amountOut = await router
             .connect(signer)
             .callStatic.exactInputSingle(swapParams);
@@ -559,7 +561,9 @@ export async function uniSwapTokensGivenOutput(
 
     await mint(tokens[tokenIndex].address, provider, MAXIMUM_TO_SPEND);
     await withSigner(provider, async (signer) => {
-        await tokens[tokenIndex].connect(signer).approve(router.address, MAXIMUM_TO_SPEND);
+        await tokens[tokenIndex]
+            .connect(signer)
+            .approve(router.address, MAXIMUM_TO_SPEND);
         let amountIn = await router
             .connect(signer)
             .callStatic.exactOutputSingle(swapParams);
@@ -571,5 +575,4 @@ export async function uniSwapTokensGivenOutput(
         // await tokens[tokenIndex].connect(signer).transferFrom(router.address, signer.address, MAXIMUM_TO_SPEND.sub(amountIn));
         //burn?
     });
-
 }
