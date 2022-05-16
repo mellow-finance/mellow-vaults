@@ -140,7 +140,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
             );
             IERC20 token = IERC20(tokens[i]);
             actualTokenAmounts[i] = token.balanceOf(address(this));
-            if (actualTokenAmounts[i] <= _pullExistentials[i]) continue;
+            int32 vaultTokenIndex = getVaultTokenIndex(token[i]);
+            if ((vaultTokenIndex != -1) && (actualTokenAmounts[i] <= _pullExistentials[vaultTokenIndex])) continue;
 
             token.safeTransfer(to, actualTokenAmounts[i]);
         }

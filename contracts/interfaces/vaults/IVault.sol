@@ -22,6 +22,11 @@ interface IVault is IERC165 {
     /// @return `true` if this token is managed by Vault
     function isVaultToken(address token) external view returns (bool);
 
+    /// @notice Index of token among vault tokens
+    /// @param token Address of the token to find out
+    /// @return Index of vault token that is equal to token, -1 if given token is not a vault token
+    function getVaultTokenIndex(address token) internal returns (int32);
+
     /// @notice Total value locked for this contract.
     /// @dev Generally it is the underlying token value of this contract in some
     /// other DeFi protocol. For example, for USDC Yearn Vault this would be total USDC balance that could be withdrawn for Yearn to this contract.
