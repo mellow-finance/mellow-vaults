@@ -28,7 +28,6 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
             async (_, __?: DeployOptions) => {
                 await deployments.fixture();
                 const { read } = deployments;
-                this.skipReclaimTokensTest = true;
 
                 const { curveRouter } = await getNamedAccounts();
                 this.curveRouter = curveRouter;
@@ -280,6 +279,11 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
                     ).to.be.revertedWith(Exceptions.INIT);
                 });
             });
+            describe("not initialized when vault's nft is 0", () => {
+                it(`returns false`, async () => {
+                    expect(await this.subject.initialized()).to.be.equal(false);
+                });
+            });
             describe("when tokens are not sorted", () => {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     await expect(
@@ -310,6 +314,20 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
                     ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                 });
             });
+            describe("when setting empty tokens array", () => {
+                it(`reverts with ${Exceptions.INVALID_VALUE}`, async () => {
+                    await withSigner(
+                        this.erc20VaultGovernance.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .initialize(this.nft, [])
+                            ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+                        }
+                    );
+                });
+            });
             describe("when token has no permission to become a vault token", () => {
                 it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                     await this.protocolGovernance
@@ -335,5 +353,5 @@ contract<ERC20Vault, DeployOptions, CustomContext>("ERC20Vault", function () {
         });
     });
 
-    integrationVaultBehavior.call(this, {});
+    integrationVaultBehavior.call(this, { skipReclaimTokensTest: true });
 });

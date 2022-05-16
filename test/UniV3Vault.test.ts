@@ -6,8 +6,8 @@ import {
     encodeToBytes,
     mint,
     mintUniV3Position_USDC_WETH,
+    mintUniV3Position_WBTC_WETH,
     randomAddress,
-    sleep,
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
@@ -162,6 +162,13 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
     beforeEach(async () => {
         await this.deploymentFixture();
     });
+
+    const beforeBlockTimestamp = async () => {
+        const blockNumBefore = await ethers.provider.getBlockNumber();
+        const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+        const timestampBefore = blockBefore.timestamp;
+        return timestampBefore;
+    };
 
     describe("#tvl", () => {
         beforeEach(async () => {
@@ -331,6 +338,74 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                         []
                                     )
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                        }
+                    );
+                });
+            });
+            describe("when UniV3 token is not valid", () => {
+                it("reverts", async () => {
+                    const result = await mintUniV3Position_WBTC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        wethAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wbtcAmount: BigNumber.from(10).pow(6),
+                    });
+                    await withSigner(
+                        this.positionManager.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .onERC721Received(
+                                        this.deployer.address,
+                                        this.deployer.address,
+                                        result.tokenId,
+                                        []
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
+                        }
+                    );
+                });
+            });
+            describe("prevent from adding nft while liquidity is not empty", () => {
+                it("reverts", async () => {
+                    const result = await mintUniV3Position_USDC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wethAmount: BigNumber.from(10).pow(18),
+                    });
+                    await withSigner(
+                        this.positionManager.address,
+                        async (signer) => {
+                            await this.subject
+                                .connect(signer)
+                                .onERC721Received(
+                                    this.deployer.address,
+                                    this.deployer.address,
+                                    result.tokenId,
+                                    []
+                                );
+                        }
+                    );
+                    expect(await this.subject.uniV3Nft()).to.be.equal(
+                        result.tokenId
+                    );
+                    await withSigner(
+                        this.positionManager.address,
+                        async (signer) => {
+                            await expect(
+                                this.subject
+                                    .connect(signer)
+                                    .onERC721Received(
+                                        this.deployer.address,
+                                        this.deployer.address,
+                                        result.tokenId,
+                                        []
+                                    )
+                            ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                         }
                     );
                 });
@@ -615,6 +690,253 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             it("allowed: all addresses", async () => {
                 await this.preparePush();
                 await expect(this.subject.collectEarnings()).to.not.be.reverted;
+            });
+        });
+    });
+
+    describe("#push", () => {
+        describe("edge cases", () => {
+            it("reverts because of invalid params", async () => {
+                await mint(
+                    "USDC",
+                    this.subject.address,
+                    BigNumber.from(10).pow(18).mul(3000)
+                );
+                await mint(
+                    "WETH",
+                    this.subject.address,
+                    BigNumber.from(10).pow(18).mul(3000)
+                );
+
+                await this.preparePush();
+                await expect(
+                    this.subject.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18).mul(1),
+                        ],
+                        encodeToBytes(
+                            ["uint256", "uint256"],
+                            [
+                                ethers.constants.Zero,
+                                ethers.constants.Zero,
+                                // ethers.constants.MaxUint256,
+                            ]
+                        )
+                    )
+                ).to.be.revertedWith(Exceptions.INVALID_VALUE);
+            });
+        });
+    });
+
+    describe("#pull", () => {
+        describe("pulls nothing pulled when zero tokens pulled", () => {
+            it("expected to be zero", async () => {
+                await this.preparePush();
+                await this.subject.push(
+                    [this.usdc.address, this.weth.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18),
+                    ],
+                    []
+                );
+                const { value } = await this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address],
+                    [BigNumber.from(0)],
+                    []
+                );
+                expect(value.toNumber()).to.be.equal(0);
+            });
+        });
+        describe("works correctly when current price is lower than tickPrice", () => {
+            it("works", async () => {
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: 3000,
+                    tickLower: 840000,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10),
+                    wethAmount: BigNumber.from(10),
+                });
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](this.deployer.address, this.subject.address, result.tokenId);
+                const origTvl = await this.subject.tvl();
+                for (let tokenId = 0; tokenId < 2; ++tokenId) {
+                    expect(origTvl[0][tokenId]).deep.equal(origTvl[1][tokenId]);
+                }
+                await this.subject.push(
+                    [this.usdc.address, this.weth.address],
+                    [BigNumber.from(10), BigNumber.from(10)],
+                    []
+                );
+
+                {
+                    const { minTokenAmounts, maxTokenAmounts } =
+                        await this.subject.tvl();
+                    const expectedTvl0 = 10 + origTvl[0][0].toNumber();
+                    const expectedTvl1 = 0;
+                    expect(minTokenAmounts[0].toNumber()).to.be.equal(
+                        expectedTvl0
+                    );
+                    expect(maxTokenAmounts[0].toNumber()).to.be.equal(
+                        expectedTvl0
+                    );
+                    expect(minTokenAmounts[1].toNumber()).to.be.equal(
+                        expectedTvl1
+                    );
+                    expect(maxTokenAmounts[1].toNumber()).to.be.equal(
+                        expectedTvl1
+                    );
+                }
+
+                await this.subject.pull(
+                    this.erc20Vault.address,
+                    [this.usdc.address, this.weth.address],
+                    [BigNumber.from(10), BigNumber.from(10)],
+                    []
+                );
+
+                {
+                    const { minTokenAmounts, maxTokenAmounts } =
+                        await this.subject.tvl();
+                    expect(minTokenAmounts[0]).deep.equal(origTvl[0][0]);
+                    expect(maxTokenAmounts[0]).deep.equal(origTvl[0][0]);
+                    expect(minTokenAmounts[1].toNumber()).to.be.equal(0);
+                    expect(maxTokenAmounts[1].toNumber()).to.be.equal(0);
+                }
+            });
+        });
+
+        describe("when decrease liquidity called earlier", () => {
+            describe("pulls no more than requested", () => {
+                it("works", async () => {
+                    const result = await mintUniV3Position_USDC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wethAmount: BigNumber.from(10).pow(18),
+                    });
+                    await this.positionManager.functions[
+                        "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))"
+                    ]([
+                        result.tokenId,
+                        result.liquidity,
+                        100,
+                        100,
+                        (await beforeBlockTimestamp()) + 600,
+                    ]);
+                    await this.positionManager.functions[
+                        "safeTransferFrom(address,address,uint256)"
+                    ](
+                        this.deployer.address,
+                        this.subject.address,
+                        result.tokenId
+                    );
+                    await this.subject.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18),
+                        ],
+                        []
+                    );
+                    const prevWethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const prevUsdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    await this.subject.pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address, this.weth.address],
+                        [BigNumber.from(10), BigNumber.from(10)],
+                        []
+                    );
+                    const wethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const usdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const pulledWeth = wethBalance
+                        .sub(prevWethBalance)
+                        .toNumber();
+                    const pulledUsdc = usdcBalance
+                        .sub(prevUsdcBalance)
+                        .toNumber();
+                    expect(pulledWeth).to.be.greaterThan(0);
+                    expect(pulledWeth).to.be.lessThanOrEqual(10);
+                    expect(pulledUsdc).to.be.greaterThan(0);
+                    expect(pulledUsdc).to.be.lessThanOrEqual(10);
+                });
+            });
+
+            describe("pull something from previous decrease", () => {
+                it("works", async () => {
+                    const result = await mintUniV3Position_USDC_WETH({
+                        fee: 3000,
+                        tickLower: -887220,
+                        tickUpper: 887220,
+                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                        wethAmount: BigNumber.from(10).pow(18),
+                    });
+                    await this.positionManager.functions[
+                        "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))"
+                    ]([
+                        result.tokenId,
+                        result.liquidity,
+                        100,
+                        100,
+                        (await beforeBlockTimestamp()) + 600,
+                    ]);
+                    await this.positionManager.functions[
+                        "safeTransferFrom(address,address,uint256)"
+                    ](
+                        this.deployer.address,
+                        this.subject.address,
+                        result.tokenId
+                    );
+                    await this.subject.push(
+                        [this.usdc.address, this.weth.address],
+                        [
+                            BigNumber.from(10).pow(6).mul(3000),
+                            BigNumber.from(10).pow(18),
+                        ],
+                        []
+                    );
+                    const prevWethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const prevUsdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    await this.subject.pull(
+                        this.erc20Vault.address,
+                        [this.usdc.address, this.weth.address],
+                        [BigNumber.from(10), BigNumber.from(10)],
+                        []
+                    );
+                    const wethBalance = await this.weth.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const usdcBalance = await this.usdc.balanceOf(
+                        this.erc20Vault.address
+                    );
+                    const pulledWeth = wethBalance
+                        .sub(prevWethBalance)
+                        .toNumber();
+                    const pulledUsdc = usdcBalance
+                        .sub(prevUsdcBalance)
+                        .toNumber();
+                    expect(pulledWeth).to.be.greaterThan(0);
+                    expect(pulledWeth).to.be.lessThanOrEqual(10);
+                    expect(pulledUsdc).to.be.greaterThan(0);
+                    expect(pulledUsdc).to.be.lessThanOrEqual(10);
+                });
             });
         });
     });

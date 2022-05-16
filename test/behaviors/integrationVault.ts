@@ -14,9 +14,9 @@ import {
     VAULT_REGISTRY_INTERFACE_ID,
 } from "../library/Constants";
 import { ERC20RootVault, ERC20Vault } from "../types";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 import { randomHash } from "hardhat/internal/hardhat-network/provider/fork/random";
-import { PermissionIdsLibrary } from "../../deploy/0000_utils";
+import { PermissionIdsLibrary, setupVault } from "../../deploy/0000_utils";
 import { integrationVaultPushBehavior } from "./integrationVaultPush";
 
 export type IntegrationVaultContext<S extends Contract, F> = TestContext<
@@ -31,7 +31,7 @@ export type IntegrationVaultContext<S extends Contract, F> = TestContext<
 
 export function integrationVaultBehavior<S extends Contract>(
     this: IntegrationVaultContext<S, {}>,
-    {}: {}
+    { skipReclaimTokensTest }: any
 ) {
     const APPROVE_SELECTOR = "0x095ea7b3";
     describe("#push", () => {
@@ -71,19 +71,34 @@ export function integrationVaultBehavior<S extends Contract>(
 
         integrationVaultPushBehavior.call(this);
 
-        describe("when not enough balance", () => {
-            it("reverts", async () => {
-                const deployerBalance = await this.usdc.balanceOf(
-                    this.deployer.address
-                );
-                await expect(
-                    this.pushFunction(
-                        ...this.prefixArgs,
-                        [this.usdc.address],
-                        [BigNumber.from(deployerBalance).mul(2)],
-                        []
-                    )
-                ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+        it("emits Push event even when tokenAmounts are zero", async () => {
+            await expect(
+                this.pushFunction(
+                    ...this.prefixArgs,
+                    [this.usdc.address],
+                    [BigNumber.from(0)],
+                    []
+                )
+            ).to.emit(this.subject, "Push");
+        });
+
+        describe("edge cases", () => {
+            describe("when not enough balance", () => {
+                it("reverts", async () => {
+                    const deployerBalance = await this.usdc.balanceOf(
+                        this.deployer.address
+                    );
+                    await expect(
+                        this.pushFunction(
+                            ...this.prefixArgs,
+                            [this.usdc.address],
+                            [BigNumber.from(deployerBalance).mul(2)],
+                            []
+                        )
+                    ).to.be.revertedWith(
+                        "ERC20: transfer amount exceeds balance"
+                    );
+                });
             });
         });
 
@@ -143,8 +158,7 @@ export function integrationVaultBehavior<S extends Contract>(
             });
         });
     });
-
-    this.skipReclaimTokensTest &&
+    skipReclaimTokensTest != true &&
         describe("#reclaimTokens", () => {
             it("emits ReclaimTokens event", async () => {
                 await expect(
@@ -298,6 +312,89 @@ export function integrationVaultBehavior<S extends Contract>(
                             []
                         )
                     ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+            describe("when pulling from zeroVault to wrong vault", () => {
+                it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                    await expect(
+                        this.erc20Vault.pull(
+                            randomAddress(),
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
+                });
+            });
+            describe("when pulling from zeroVault to itself", () => {
+                it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                    await expect(
+                        this.erc20Vault.pull(
+                            this.erc20Vault.address,
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
+                });
+            });
+            describe("when owner nft is zero", () => {
+                it(`reverts with ${Exceptions.INIT}`, async () => {
+                    await deployments.fixture();
+                    const { read } = deployments;
+
+                    const tokens = [this.weth.address, this.usdc.address]
+                        .map((t) => t.toLowerCase())
+                        .sort();
+
+                    const startNft =
+                        (
+                            await read("VaultRegistry", "vaultsCount")
+                        ).toNumber() + 1;
+
+                    let erc20VaultNft = startNft;
+
+                    await setupVault(
+                        hre,
+                        erc20VaultNft,
+                        "ERC20VaultGovernance",
+                        {
+                            createVaultArgs: [tokens, this.deployer.address],
+                        }
+                    );
+
+                    const mockVaultPrepare = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        erc20VaultNft
+                    );
+
+                    this.mockVault = await ethers.getContractAt(
+                        "ERC20Vault",
+                        mockVaultPrepare
+                    );
+
+                    await expect(
+                        this.mockVault.pull(
+                            randomAddress(),
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INIT);
+                });
+            });
+
+            describe("when pulling from other vault to wrong vault", () => {
+                it(`reverts with ${Exceptions.INVALID_TARGET}`, async () => {
+                    await expect(
+                        this.subject.pull(
+                            randomAddress(),
+                            [this.usdc.address],
+                            [BigNumber.from(1)],
+                            []
+                        )
+                    ).to.be.revertedWith(Exceptions.INVALID_TARGET);
                 });
             });
         });
