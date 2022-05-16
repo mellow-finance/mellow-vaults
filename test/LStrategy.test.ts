@@ -2995,4 +2995,87 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
+    describe("#depositCallback", () => {
+        it("calls rebalance inside", async () => {
+            await this.grantPermissions();
+            await this.preparePush({ vault: this.uniV3LowerVault });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            await expect(
+                this.subject.connect(this.admin).depositCallback()
+            ).to.emit(this.subject, "RebalancedErc20UniV3");
+        });
+        describe("access control:", () => {
+            beforeEach(async () => {
+                await this.grantPermissions();
+                await this.preparePush({ vault: this.uniV3LowerVault });
+                await this.preparePush({ vault: this.uniV3UpperVault });
+            });
+
+            it("allowed: admin", async () => {
+                await expect(this.subject.connect(this.admin).depositCallback())
+                    .to.not.be.reverted;
+            });
+            it("allowed: operator", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject
+                        .connect(this.admin)
+                        .grantRole(
+                            await this.subject.ADMIN_DELEGATE_ROLE(),
+                            signer.address
+                        );
+                    await expect(this.subject.connect(signer).depositCallback())
+                        .to.not.be.reverted;
+                });
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(this.subject.connect(signer).depositCallback())
+                        .to.be.reverted;
+                });
+            });
+        });
+    });
+    describe("#withdrawCallback", () => {
+        it("calls rebalance inside", async () => {
+            await this.grantPermissions();
+            await this.preparePush({ vault: this.uniV3LowerVault });
+            await this.preparePush({ vault: this.uniV3UpperVault });
+            await expect(
+                this.subject.connect(this.admin).withdrawCallback()
+            ).to.emit(this.subject, "RebalancedErc20UniV3");
+        });
+        describe("access control:", () => {
+            beforeEach(async () => {
+                await this.grantPermissions();
+                await this.preparePush({ vault: this.uniV3LowerVault });
+                await this.preparePush({ vault: this.uniV3UpperVault });
+            });
+
+            it("allowed: admin", async () => {
+                await expect(
+                    this.subject.connect(this.admin).withdrawCallback()
+                ).to.not.be.reverted;
+            });
+            it("allowed: operator", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await this.subject
+                        .connect(this.admin)
+                        .grantRole(
+                            await this.subject.ADMIN_DELEGATE_ROLE(),
+                            signer.address
+                        );
+                    await expect(
+                        this.subject.connect(signer).withdrawCallback()
+                    ).to.not.be.reverted;
+                });
+            });
+            it("not allowed: any address", async () => {
+                await withSigner(randomAddress(), async (signer) => {
+                    await expect(
+                        this.subject.connect(signer).withdrawCallback()
+                    ).to.be.reverted;
+                });
+            });
+        });
+    });
 });
