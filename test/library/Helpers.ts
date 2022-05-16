@@ -531,9 +531,6 @@ export async function uniSwapTokensGivenInput(
             .connect(signer)
             .callStatic.exactInputSingle(swapParams);
         await router.connect(signer).exactInputSingle(swapParams);
-        console.log(
-            "Swapped " + amount.toString() + ", amouts outputted:" + amountOut
-        );
     });
     return amountOut;
 }
@@ -568,11 +565,6 @@ export async function uniSwapTokensGivenOutput(
             .connect(signer)
             .callStatic.exactOutputSingle(swapParams);
         await router.connect(signer).exactOutputSingle(swapParams);
-        console.log(
-            "Swapped " + amount.toString() + ", amounts spent:" + amountIn
-        );
-        // await tokens[tokenIndex].connect(signer).approve(router.address, 0);
-        // await tokens[tokenIndex].connect(signer).transferFrom(router.address, signer.address, MAXIMUM_TO_SPEND.sub(amountIn));
         //burn?
     });
 }
