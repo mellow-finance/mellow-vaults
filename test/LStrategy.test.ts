@@ -3000,9 +3000,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.grantPermissions();
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
-            await expect(
-                this.subject.connect(this.admin).depositCallback()
-            ).to.not.be.reverted;
+            await expect(this.subject.connect(this.admin).depositCallback()).to
+                .not.be.reverted;
         });
         describe("access control:", () => {
             beforeEach(async () => {
@@ -3040,9 +3039,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.grantPermissions();
             await this.preparePush({ vault: this.uniV3LowerVault });
             await this.preparePush({ vault: this.uniV3UpperVault });
-            await expect(
-                this.subject.connect(this.admin).withdrawCallback()
-            ).to.not.be.reverted;
+            await expect(this.subject.connect(this.admin).withdrawCallback()).to
+                .not.be.reverted;
         });
         describe("access control:", () => {
             beforeEach(async () => {
