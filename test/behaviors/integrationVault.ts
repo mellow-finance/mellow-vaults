@@ -199,7 +199,11 @@ export function integrationVaultBehavior<S extends Contract>(
                     [],
                 ];
                 await this.subject.push(...args);
-                await mint(this.wbtc.address, this.subject.address, BigNumber.from(10).pow(8).mul(100));
+                await mint(
+                    this.wbtc.address,
+                    this.subject.address,
+                    BigNumber.from(10).pow(8).mul(100)
+                );
                 await this.subject.reclaimTokens([
                     this.wbtc.address,
                     this.usdc.address,
