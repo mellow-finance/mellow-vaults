@@ -472,15 +472,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     return undefined;
                 }
                 pushTarget = randomChoice(pushCandidates).item;
+            } else if (pullTarget == this.uniV3Vault) {
+                if (tvls[pullTargetIndex][1][0].eq(pullAmount[0]) && tvls[pullTargetIndex][1][1].eq(pullAmount[1])) {
+                    pullAmount = pullAmount.map(amount => amount.mul(2))
+                }
             }
             return { from: pullTarget, to: pushTarget, amount: pullAmount };
-        }
-
-        function randomBignumber(min: BigNumber, max: BigNumber) {
-            assert(max.gt(min), "Bignumber underflow");
-            const big = generateSingleParams(uint256);
-            let sub = max.sub(min);
-            return big.mod(sub).add(min);
         }
 
         async function doRandomEnvironmentChange(
@@ -854,10 +851,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     currentTick - (currentTick % tickSpacing) - tickSpacing;
                 let lowerTick =
                     lowestTickAvailible +
-                    tickSpacing * 4;//randomInt(0, 4 - positionLength);
+                    tickSpacing * randomInt(0, 4 - positionLength);
                 let upperTick = lowerTick + tickSpacing * positionLength;
-                // lowerTick = -887220;
-                // upperTick = 887220;
+                lowerTick = -887220;
+                upperTick = 887220;
                 await pullToUniV3Vault.call(this, action.from, {
                     fee: this.uniV3PoolFee,
                     tickLower: lowerTick,
@@ -1071,7 +1068,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         })
         describe("properties", () => {
-            it("zero fees", async () => {
+            it.only("zero fees", async () => {
                 let targets = [this.erc20Vault, this.uniV3Vault];
                 await this.setZeroFeesFixture({targets:targets});
                 
@@ -1111,6 +1108,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 await this.uniV3Vault.connect(this.deployer).collectEarnings();
 
                 await printVaults.call(this);
+
+                
+                await this.uniV3Vault.connect(this.deployer).reclaimTokens(this.tokenAddresses);
 
                 //WITHDRAW
                 let lpAmount = await this.subject.balanceOf(
@@ -1169,17 +1169,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     tokenIndex < this.tokens.length;
                     tokenIndex++
                 ) {
-                    let expectedWithdraw = depositAmount[tokenIndex];
+                    let actualChanges = actualWithdraw[tokenIndex].sub(depositAmount[tokenIndex]);
+                    let expectedChanges = BigNumber.from(0);
                     for (let changes of targetChanges) {
-                        expectedWithdraw = expectedWithdraw.add(
+                        expectedChanges = expectedChanges.add(
                             changes[tokenIndex]
                         );
                     }
-                    expect(expectedWithdraw).to.be.gt(
-                        actualWithdraw[tokenIndex].mul(99).div(100)
+                    expect(expectedChanges).to.be.gt(
+                        actualChanges.mul(9).div(10)
                     );
-                    expect(expectedWithdraw).to.be.lt(
-                        actualWithdraw[tokenIndex].mul(101).div(100)
+                    expect(expectedChanges).to.be.lt(
+                        expectedChanges.mul(11).div(10)
                     );
                 }
             });
@@ -1616,7 +1617,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             " MLP")
                 );
             });
-            it.only("testing univ3 edge cases 2", async () => {
+            it("testing univ3 edge cases 2", async () => {
                 await this.setZeroFeesFixture({targets :[this.erc20Vault, this.uniV3Vault]});
                 let depositAmount = [
                     BigNumber.from(10).pow(6).mul(3000).mul(200),
@@ -1641,7 +1642,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     token0Amount: BigNumber.from(10).pow(6).mul(3000).mul(50),
                     token1Amount: BigNumber.from(10).pow(18).mul(50),
                 });
-                
+
                 this.uniV3Nft = await this.uniV3Vault.uniV3Nft();
                 let tvlResults = await printVaults.call(this);
                 await printLiquidityStats.call(this);
@@ -1653,7 +1654,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .pull(
                             this.erc20Vault.address,
                             this.tokenAddresses,
-                            [BigNumber.from("149999999999"), 0],
+                            [BigNumber.from("149999999999").mul(11).div(10), 0],
                             []
                         );
 
