@@ -26,8 +26,10 @@ contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
         address token1,
         uint256 safetyIndicesSet
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
+        bool isSwapped = false;
         if (token0 > token1) {
             (token0, token1) = (token1, token0);
+            isSwapped = true;
         }
         if (((safetyIndicesSet >> safetyIndex) & 1) != 1) {
             return (pricesX96, safetyIndices);
@@ -39,7 +41,11 @@ contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
         (uint112 reserve0, uint112 reserve1, ) = pool.getReserves();
         pricesX96 = new uint256[](1);
         safetyIndices = new uint256[](1);
-        pricesX96[0] = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+        if (isSwapped) {
+            pricesX96[0] = FullMath.mulDiv(reserve0, CommonLibrary.Q96, reserve1);
+        } else {
+            pricesX96[0] = FullMath.mulDiv(reserve1, CommonLibrary.Q96, reserve0);
+        }
         safetyIndices[0] = safetyIndex;
     }
 

@@ -119,6 +119,7 @@ const config: HardhatUserConfig = {
             avalanche: process.env["AVALANCHE_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
+            arbitrum: process.env["ARBITRUM_PROTOCOL_ADMIN_ADDRESS"] || "0x0",
         },
         mStrategyAdmin: {
             hardhat: "0x1aD91ee08f21bE3dE0BA2ba6918E714dA6B45836",
@@ -127,6 +128,7 @@ const config: HardhatUserConfig = {
             avalanche: process.env["AVALANCHE_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_STRATEGY_ADMIN_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_ADMIN_ADDRESS"] || "0x0",
+            arbitrum: process.env["ARBITRUM_STRATEGY_ADMIN_ADDRESS"] || "0x0",
         },
         mStrategyTreasury: {
             hardhat: "0x52bc44d5378309EE2abF1539BF71dE1b7d7bE3b5",
@@ -136,6 +138,7 @@ const config: HardhatUserConfig = {
                 process.env["AVALANCHE_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_STRATEGY_TREASURY_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_STRATEGY_TREASURY_ADDRESS"] || "0x0",
+            arbitrum: process.env["ARBITRUM_STRATEGY_TREASURY_ADDRESS"] || "0x0",
         },
         protocolTreasury: {
             hardhat: "0x00192Fb10dF37c9FB26829eb2CC623cd1BF599E8",
@@ -145,6 +148,7 @@ const config: HardhatUserConfig = {
                 process.env["AVALANCHE_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             polygon: process.env["POLYGON_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
             rinkeby: process.env["RINKEBY_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
+            arbitrum: process.env["ARBITRUM_PROTOCOL_TREASURY_ADDRESS"] || "0x0",
         },
         test: {
             default: "0x9a3CB5A473e1055a014B9aE4bc63C21BBb8b82B3",
