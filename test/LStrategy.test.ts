@@ -3002,7 +3002,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.preparePush({ vault: this.uniV3UpperVault });
             await expect(
                 this.subject.connect(this.admin).depositCallback()
-            ).to.emit(this.subject, "RebalancedErc20UniV3");
+            ).to.not.be.reverted;
         });
         describe("access control:", () => {
             beforeEach(async () => {
@@ -3042,7 +3042,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.preparePush({ vault: this.uniV3UpperVault });
             await expect(
                 this.subject.connect(this.admin).withdrawCallback()
-            ).to.emit(this.subject, "RebalancedErc20UniV3");
+            ).to.not.be.reverted;
         });
         describe("access control:", () => {
             beforeEach(async () => {
