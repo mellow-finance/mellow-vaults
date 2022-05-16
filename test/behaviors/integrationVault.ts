@@ -5,6 +5,7 @@ import { TestContext } from "../library/setup";
 import Exceptions from "../library/Exceptions";
 import {
     encodeToBytes,
+    mint,
     randomAddress,
     sleep,
     withSigner,
@@ -180,6 +181,37 @@ export function integrationVaultBehavior<S extends Contract>(
                     this.usdc.address,
                     this.weth.address,
                 ]);
+                expect(
+                    await this.usdc.balanceOf(this.subject.address)
+                ).to.deep.equal(BigNumber.from(0));
+                expect(
+                    await this.weth.balanceOf(this.subject.address)
+                ).to.deep.equal(BigNumber.from(0));
+            });
+            it("reclaims successfully using token not from vaultToken", async () => {
+                await this.preparePush();
+                const args = [
+                    [this.usdc.address, this.weth.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(3000),
+                        BigNumber.from(10).pow(18).mul(1),
+                    ],
+                    [],
+                ];
+                await this.subject.push(...args);
+                await mint(
+                    this.wbtc.address,
+                    this.subject.address,
+                    BigNumber.from(10).pow(8).mul(100)
+                );
+                await this.subject.reclaimTokens([
+                    this.wbtc.address,
+                    this.usdc.address,
+                    this.weth.address,
+                ]);
+                expect(
+                    await this.wbtc.balanceOf(this.subject.address)
+                ).to.deep.equal(BigNumber.from(0));
                 expect(
                     await this.usdc.balanceOf(this.subject.address)
                 ).to.deep.equal(BigNumber.from(0));

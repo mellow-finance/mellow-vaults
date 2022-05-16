@@ -33,5 +33,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 export default func;
-func.tags = ["YearnVaultGovernance", "core", ...MAIN_NETWORKS, "fantom"];
+func.tags = ["YearnVaultGovernance", "core", ...MAIN_NETWORKS, "fantom", "arbitrum"];
 func.dependencies = ["ProtocolGovernance", "VaultRegistry"];

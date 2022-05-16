@@ -4,7 +4,6 @@ import { BigNumber } from "@ethersproject/bignumber";
 import {
     encodeToBytes,
     mint,
-    now,
     randomAddress,
     sleep,
     toObject,
@@ -18,11 +17,6 @@ import {
     MStrategy,
     ProtocolGovernance,
     IYearnProtocolVault,
-    MockNonfungiblePositionManager,
-    MockUniswapV3Factory,
-    MockUniswapV3Pool,
-    MockValidator,
-    MockSwapRouter,
 } from "./types";
 import {
     setupVault,
@@ -31,8 +25,6 @@ import {
 } from "./../deploy/0000_utils";
 import { expect } from "chai";
 import { Contract } from "@ethersproject/contracts";
-import { pit, RUNS } from "./library/property";
-import { integer } from "fast-check";
 import {
     OracleParamsStruct,
     RatioParamsStruct,
@@ -42,9 +34,6 @@ import Exceptions from "./library/Exceptions";
 import { assert } from "console";
 import { randomInt } from "crypto";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
-import { MockMStrategy } from "./types/MockMStrategy";
-import { type } from "os";
-import { MaxUint256 } from "@uniswap/sdk-core";
 import { min } from "ramda";
 
 type CustomContext = {
@@ -610,6 +599,20 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 });
             });
         });
+
+        describe("edge cases:", () => {
+            describe("when maxSlippageD is more than DENOMINATOR", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = oracleParams;
+                    params.maxSlippageD = BigNumber.from(10).pow(9).mul(2);
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setOracleParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+        });
     });
 
     describe("#setRatioParams", () => {
@@ -648,6 +651,45 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         this.subject.connect(s).setRatioParams(ratioParams)
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
+                });
+            });
+        });
+
+        describe("edge cases:", () => {
+            describe("tickMin is greater than tickMax", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = ratioParams;
+                    params.tickMin = 60;
+                    params.tickMax = 0;
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when erc20MoneyRatioD is more than DENOMINATOR", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = ratioParams;
+                    params.erc20MoneyRatioD = BigNumber.from(10).pow(9).mul(2);
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
+                });
+            });
+            describe("when minErc20MoneyRatioDeviationD is more than DENOMINATOR", () => {
+                it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                    let params = ratioParams;
+                    params.minErc20MoneyRatioDeviationD = BigNumber.from(10)
+                        .pow(9)
+                        .mul(2);
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .setRatioParams(params)
+                    ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
             });
         });
@@ -833,7 +875,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickCumulativeLast: 198240,
                     },
                 };
-                let { mStrategy } = await deployMockContracts(params);
+                let { mStrategy, mockUniswapV3Pool, mockSwapRouter } =
+                    await deployMockContracts(params);
                 const address = await mStrategy.callStatic.createStrategy(
                     this.params.tokens,
                     this.params.erc20Vault,
@@ -893,6 +936,45 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     .connect(this.deployer)
                     .transfer(this.params.erc20Vault, BigNumber.from(10 ** 8));
 
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stagePermissionGrants(mockUniswapV3Pool.address, [
+                        PermissionIdsLibrary.ERC20_APPROVE,
+                    ]);
+                await sleep(this.governanceDelay);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitPermissionGrants(mockUniswapV3Pool.address);
+
+                let validatorFactory = await ethers.getContractFactory(
+                    "MockValidator"
+                );
+                let validator = await validatorFactory.deploy(
+                    this.protocolGovernance.address
+                );
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(mockSwapRouter.address, validator.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(this.usdc.address, validator.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .stageValidator(this.weth.address, validator.address);
+
+                await sleep(this.governanceDelay);
+
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(mockSwapRouter.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(this.usdc.address);
+                await this.protocolGovernance
+                    .connect(this.admin)
+                    .commitValidator(this.weth.address);
+
                 await expect(
                     highRatioMStrategy.connect(this.mStrategyAdmin).rebalance()
                 ).to.not.be.reverted;
@@ -915,12 +997,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickCumulativeLast: 198240,
                     },
                 };
-                let {
-                    mStrategy,
-                    mockUniswapV3Pool,
-                    mockUniswapV3Factory,
-                    mockSwapRouter,
-                } = await deployMockContracts(params);
+                let { mStrategy, mockUniswapV3Pool, mockSwapRouter } =
+                    await deployMockContracts(params);
                 const address = await mStrategy.callStatic.createStrategy(
                     this.params.tokens,
                     this.params.erc20Vault,
@@ -1497,7 +1575,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
 
         describe("edge cases", () => {
             describe("when tick <= tickMin", () => {
-                it("targetTokenratioD = 0", async () => {
+                it("targetTokenratioD = DENOMINATOR (10^9)", async () => {
                     let { mockNonfungiblePositionManager, mockSwapRouter } =
                         await deployMockContracts();
                     let mockMStrategyFactory = await ethers.getContractFactory(
@@ -1517,7 +1595,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(0));
+                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
 
                     tick = tickMin;
                     resultTick =
@@ -1526,12 +1604,12 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(0));
+                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
                 });
             });
 
             describe("when tick >= tickMin", () => {
-                it("targetTokenratioD = DENOMINATOR (10^9)", async () => {
+                it("targetTokenratioD = 0", async () => {
                     let { mockNonfungiblePositionManager, mockSwapRouter } =
                         await deployMockContracts();
                     let mockMStrategyFactory = await ethers.getContractFactory(
@@ -1551,7 +1629,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
+                    expect(resultTick).to.be.eq(BigNumber.from(0));
 
                     tick = tickMax;
                     resultTick =
@@ -1560,7 +1638,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickMin,
                             tickMax
                         );
-                    expect(resultTick).to.be.eq(BigNumber.from(10).pow(9));
+                    expect(resultTick).to.be.eq(BigNumber.from(0));
                 });
             });
         });

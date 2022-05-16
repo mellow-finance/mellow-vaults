@@ -152,15 +152,20 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256 deadline
     ) public returns (uint256[] memory totalPulledAmounts, bool isNegativeCapitalDelta) {
         _requireAtLeastOperator();
-        uint256 capitalDelta;
         uint256[] memory lowerTokenAmounts;
         uint256[] memory upperTokenAmounts;
         uint256[] memory pulledAmounts = new uint256[](2);
+        uint128 lowerVaultLiquidity;
+        uint128 upperVaultLiquidity;
+
+        totalPulledAmounts = new uint256[](2);
+
         {
             uint256 priceX96 = targetPrice(tokens, tradingParams);
             uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
             uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
+            uint256 capitalDelta;
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
                 lowerVaultCapital + upperVaultCapital,
@@ -175,8 +180,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 capitalDelta,
                 lowerVaultCapital + upperVaultCapital
             );
-            (, , uint128 lowerVaultLiquidity) = _getVaultStats(lowerVault);
-            (, , uint128 upperVaultLiquidity) = _getVaultStats(upperVault);
+            (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
+            (, , upperVaultLiquidity) = _getVaultStats(upperVault);
             lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(
                 uint128(FullMath.mulDiv(percentageIncreaseD, lowerVaultLiquidity, DENOMINATOR))
             );
@@ -186,20 +191,24 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         }
 
         if (!isNegativeCapitalDelta) {
-            totalPulledAmounts = erc20Vault.pull(
-                address(lowerVault),
-                tokens,
-                lowerTokenAmounts,
-                _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
-            );
-            pulledAmounts = erc20Vault.pull(
-                address(upperVault),
-                tokens,
-                upperTokenAmounts,
-                _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
-            );
-            for (uint256 i = 0; i < 2; i++) {
-                totalPulledAmounts[i] += pulledAmounts[i];
+            if (lowerVaultLiquidity > 0) {
+                totalPulledAmounts = erc20Vault.pull(
+                    address(lowerVault),
+                    tokens,
+                    lowerTokenAmounts,
+                    _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
+                );
+            }
+            if (upperVaultLiquidity > 0) {
+                pulledAmounts = erc20Vault.pull(
+                    address(upperVault),
+                    tokens,
+                    upperTokenAmounts,
+                    _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
+                );
+                for (uint256 i = 0; i < 2; i++) {
+                    totalPulledAmounts[i] += pulledAmounts[i];
+                }
             }
         } else {
             totalPulledAmounts = lowerVault.pull(
@@ -284,7 +293,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             (liquidityDelta, isNegativeLiquidityDelta) = _liquidityDelta(
                 lowerLiquidity,
                 upperLiquidity,
-                targetUniV3LiquidityRatioD,
+                DENOMINATOR - targetUniV3LiquidityRatioD,
                 ratioParams.minUniV3LiquidityRatioDeviationD
             );
             if (isNegativeLiquidityDelta) {
@@ -320,21 +329,24 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             ratioParams.minErc20TokenRatioDeviationD
         );
         TradingParams memory tradingParams_ = tradingParams;
-        uint256 minAmountOut;
+
         uint256 isNegativeInt = isNegative ? 1 : 0;
-        if (isNegative) {
-            minAmountOut = FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96);
-        } else {
-            minAmountOut = FullMath.mulDiv(tokenDelta, priceX96, CommonLibrary.Q96);
-        }
-        minAmountOut = FullMath.mulDiv(minAmountOut, DENOMINATOR - tradingParams_.maxSlippageD, DENOMINATOR);
+        uint256[2] memory tokenValuesToTransfer = [
+            FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96),
+            tokenDelta
+        ];
         preOrder_ = PreOrder({
             tokenIn: tokens[0 ^ isNegativeInt],
             tokenOut: tokens[1 ^ isNegativeInt],
-            amountIn: tokenDelta,
-            minAmountOut: minAmountOut,
+            amountIn: tokenValuesToTransfer[0 ^ isNegativeInt],
+            minAmountOut: FullMath.mulDiv(
+                tokenValuesToTransfer[1 ^ isNegativeInt],
+                DENOMINATOR - tradingParams_.maxSlippageD,
+                DENOMINATOR
+            ),
             deadline: block.timestamp + tradingParams_.orderDeadline
         });
+
         preOrder = preOrder_;
         emit PreOrderPosted(tx.origin, msg.sender, preOrder_);
     }
@@ -437,7 +449,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function updateRatioParams(RatioParams calldata newRatioParams) external {
         _requireAdmin();
         require(
-            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) && (newRatioParams.erc20TokenRatioD <= DENOMINATOR),
+            (newRatioParams.erc20UniV3CapitalRatioD <= DENOMINATOR) &&
+                (newRatioParams.erc20TokenRatioD <= DENOMINATOR) &&
+                (newRatioParams.minErc20UniV3CapitalRatioDeviationD <= DENOMINATOR) &&
+                (newRatioParams.minErc20TokenRatioDeviationD <= DENOMINATOR) &&
+                (newRatioParams.minUniV3LiquidityRatioDeviationD <= DENOMINATOR),
             ExceptionsLibrary.INVARIANT
         );
         ratioParams = newRatioParams;
@@ -448,6 +464,14 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param newOtherParams New other parameters to set
     function updateOtherParams(OtherParams calldata newOtherParams) external {
         _requireAdmin();
+        require(
+            (newOtherParams.minToken0ForOpening > 0) &&
+                (newOtherParams.minToken1ForOpening > 0) &&
+                (newOtherParams.minToken0ForOpening <= 1000000000) &&
+                (newOtherParams.minToken1ForOpening <= 1000000000) &&
+                (newOtherParams.rebalanceDeadline <= 86400 * 30),
+            ExceptionsLibrary.INVARIANT
+        );
         otherParams = newOtherParams;
         emit OtherParamsUpdated(tx.origin, msg.sender, otherParams);
     }
@@ -506,7 +530,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @notice Liquidity required to be sold to reach targetLiquidityRatioD
     /// @param lowerLiquidity Lower vault liquidity
     /// @param upperLiquidity Upper vault liquidity
-    /// @param targetLiquidityRatioD Tardet liquidity ratio (multiplied by DENOMINATOR)
+    /// @param targetLiquidityRatioD Target liquidity ratio (multiplied by DENOMINATOR)
+    /// @param minDeviation Minimum allowed deviation between current and target liquidities (if the real is less, zero liquidity delta returned)
     /// @return delta Liquidity required to reach targetLiquidityRatioD
     /// @return isNegative If `true` then delta needs to be bought to reach targetLiquidityRatioD, o/w needs to be sold
     function _liquidityDelta(
@@ -578,6 +603,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256[] memory minDepositTokens,
         uint256 deadline
     ) internal returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
+        if (desiredLiquidity == 0) {
+            return (new uint256[](2), new uint256[](2));
+        }
         uint128 liquidity = desiredLiquidity;
 
         // Cut for available liquidity in the vault
@@ -613,7 +641,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         //--- End cut
         {
             uint256[] memory depositTokenAmounts = toVault.liquidityToTokenAmounts(liquidity);
-            uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(liquidity);
+            uint256[] memory withdrawTokenAmounts = fromVault.liquidityToTokenAmounts(
+                desiredLiquidity == type(uint128).max ? desiredLiquidity : liquidity
+            );
             pulledAmounts = fromVault.pull(
                 address(erc20Vault),
                 tokens,
@@ -621,6 +651,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 _makeUniswapVaultOptions(minWithdrawTokens, deadline)
             );
             // The pull is on best effort so we don't worry on overflow
+            require((depositTokenAmounts[0] != 0 || depositTokenAmounts[1] != 0), ExceptionsLibrary.VALUE_ZERO);
             pushedAmounts = erc20Vault.pull(
                 address(toVault),
                 tokens,

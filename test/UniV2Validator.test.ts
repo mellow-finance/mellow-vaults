@@ -190,7 +190,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                             uint256
                                                         ),
                                                         [randomAddress()],
-                                                        randomAddress(),
+                                                        signer.address,
                                                         generateSingleParams(
                                                             uint256
                                                         ),
@@ -233,7 +233,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                             randomAddress(),
                                                             randomAddress(),
                                                         ],
-                                                        randomAddress(),
+                                                        signer.address,
                                                         generateSingleParams(
                                                             uint256
                                                         ),
@@ -276,7 +276,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                             this.usdc.address,
                                                             this.usdc.address,
                                                         ],
-                                                        randomAddress(),
+                                                        signer.address,
                                                         generateSingleParams(
                                                             uint256
                                                         ),
@@ -319,7 +319,7 @@ contract<UniV2Validator, DeployOptions, CustomContext>(
                                                             this.dai.address,
                                                             this.usdc.address,
                                                         ],
-                                                        randomAddress(),
+                                                        signer.address,
                                                         generateSingleParams(
                                                             uint256
                                                         ),
