@@ -8,7 +8,6 @@ import {
     mintUniV3Position_USDC_WETH,
     randomAddress,
     addSigner,
-    now,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
@@ -21,15 +20,11 @@ import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/in
 
 import {
     ERC20RootVaultGovernance,
-    IUniswapV3Pool,
     IVaultRegistry,
     ISwapRouter as SwapRouterInterface,
 } from "../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { TickMath } from "@uniswap/v3-sdk";
-import Common from "../library/Common";
-import { randomBytes, randomInt } from "crypto";
-import { assert } from "console";
+import { randomInt } from "crypto";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -385,118 +380,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
             };
 
-            const getLiquidityForAmount0 = (
-                sqrtRatioAX96: BigNumber,
-                sqrtRatioBX96: BigNumber,
-                amount0: BigNumber
-            ) => {
-                if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
-                    var tmp = sqrtRatioAX96;
-                    sqrtRatioAX96 = sqrtRatioBX96;
-                    sqrtRatioBX96 = tmp;
-                }
-                var intermediate = sqrtRatioAX96
-                    .mul(sqrtRatioBX96)
-                    .div(Common.Q96);
-                return amount0
-                    .mul(intermediate)
-                    .div(sqrtRatioBX96.sub(sqrtRatioAX96));
-            };
-
-            const getLiquidityForAmount1 = (
-                sqrtRatioAX96: BigNumber,
-                sqrtRatioBX96: BigNumber,
-                amount1: BigNumber
-            ) => {
-                if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
-                    var tmp = sqrtRatioAX96;
-                    sqrtRatioAX96 = sqrtRatioBX96;
-                    sqrtRatioBX96 = tmp;
-                }
-                return amount1
-                    .mul(Common.Q96)
-                    .div(sqrtRatioBX96.sub(sqrtRatioAX96));
-            };
-
-            const getSqrtPriceX96 = async () => {
-                const poolAddress = await this.uniV3Vault.pool();
-                const pool: IUniswapV3Pool = await ethers.getContractAt(
-                    "IUniswapV3Pool",
-                    poolAddress
-                );
-                return (await pool.slot0()).sqrtPriceX96;
-            };
-
-            const getLiquidityByTokenAmounts = async (
-                amount0: BigNumber,
-                amount1: BigNumber
-            ) => {
-                const { tickLower, tickUpper } =
-                    await this.positionManager.positions(
-                        await this.uniV3Vault.nft()
-                    );
-                var sqrtRatioX96 = await getSqrtPriceX96();
-                var sqrtRatioAX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(tickLower).toString(10)
-                );
-                var sqrtRatioBX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(tickUpper).toString(10)
-                );
-
-                if (sqrtRatioAX96.gt(sqrtRatioBX96)) {
-                    var tmp = sqrtRatioAX96;
-                    sqrtRatioAX96 = sqrtRatioBX96;
-                    sqrtRatioBX96 = tmp;
-                }
-                var liquidity = BigNumber.from(0);
-                if (sqrtRatioX96.lte(sqrtRatioAX96)) {
-                    liquidity = getLiquidityForAmount0(
-                        sqrtRatioAX96,
-                        sqrtRatioBX96,
-                        amount0
-                    );
-                } else if (sqrtRatioX96 < sqrtRatioBX96) {
-                    const liquidity0 = getLiquidityForAmount0(
-                        sqrtRatioX96,
-                        sqrtRatioBX96,
-                        amount0
-                    );
-                    const liquidity1 = getLiquidityForAmount1(
-                        sqrtRatioAX96,
-                        sqrtRatioX96,
-                        amount1
-                    );
-
-                    liquidity =
-                        liquidity0 < liquidity1 ? liquidity0 : liquidity1;
-                } else {
-                    liquidity = getLiquidityForAmount1(
-                        sqrtRatioAX96,
-                        sqrtRatioBX96,
-                        amount1
-                    );
-                }
-                return liquidity;
-            };
-
-            const getLiquidity = async (
-                signer: SignerWithAddress,
-                usdcAmount: BigNumber,
-                wethAmount: BigNumber
-            ) => {
+            const getLiquidity = async (signer: SignerWithAddress) => {
                 await setApprovedSignerForNft(
                     await this.uniV3Vault.nft(),
                     signer
                 );
-
-                await this.uniV3Vault
-                    .connect(signer)
-                    .pull(
-                        this.erc20Vault.address,
-                        [this.usdc.address, this.weth.address],
-                        [usdcAmount, wethAmount],
-                        []
-                    );
 
                 const usdcBalanceBefore = await this.usdc
                     .connect(this.admin)
@@ -525,119 +413,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 };
             };
 
-            const generateRandomBignumber = (limit: BigNumber) => {
-                assert(limit.gt(0), "Bignumber underflow");
-                const bytes =
-                    "0x" + randomBytes(limit._hex.length * 2).toString("hex");
-                const result = BigNumber.from(bytes).mod(limit);
-                return result;
-            };
-
-            const generateArraySplit = (
-                w: BigNumber,
-                n: number,
-                from: BigNumber
-            ) => {
-                assert(n >= 0, "Zero length array");
-                var result: BigNumber[] = [];
-                if (w.lt(from.mul(n))) {
-                    throw "Weight underflow";
-                }
-
-                for (var i = 0; i < n; i++) {
-                    result.push(BigNumber.from(from));
-                    w = w.sub(from);
-                }
-
-                var splits: BigNumber[] = [BigNumber.from(0)];
-                for (var i = 0; i < n - 1; i++) {
-                    splits.push(generateRandomBignumber(w.add(1)));
-                }
-
-                splits = splits.sort((x, y) => {
-                    return x.lt(y) ? -1 : 1;
-                });
-
-                var deltas: BigNumber[] = [];
-                for (var i = 0; i < n - 1; i++) {
-                    deltas.push(splits[i + 1].sub(splits[i]));
-                    w = w.sub(deltas[i]);
-                }
-                deltas.push(w);
-
-                for (var i = 0; i < n; i++) {
-                    result[i] = result[i].add(deltas[i]);
-                }
-                return result;
-            };
-
-            const push = async (
-                delta: BigNumber,
-                from: string,
-                to: string,
-                tokenName: string
-            ) => {
-                const n = 20;
-                const amounts = generateArraySplit(
-                    delta,
-                    n,
-                    BigNumber.from(10).pow(6)
-                );
-                await mint(tokenName, this.deployer.address, delta);
-                for (var i = 0; i < n; i++) {
-                    await this.swapRouter.exactInputSingle({
-                        tokenIn: from,
-                        tokenOut: to,
-                        fee: uniV3PoolFee,
-                        recipient: this.deployer.address,
-                        deadline: ethers.constants.MaxUint256,
-                        amountIn: amounts[i],
-                        amountOutMinimum: 0,
-                        sqrtPriceLimitX96: 0,
-                    });
-                }
-            };
-
-            const pushPriceDown = async (delta: BigNumber) => {
-                await push(delta, this.usdc.address, this.weth.address, "USDC");
-            };
-
-            const pushPriceUp = async (delta: BigNumber) => {
-                await push(delta, this.weth.address, this.usdc.address, "WETH");
-            };
-
-            const pushPriceTo = async (price: BigNumber) => {
-                var flag = price.lt(await getSqrtPriceX96());
-                for (var power = 30; power >= 0; power--) {
-                    if (flag) {
-                        while (flag) {
-                            await pushPriceDown(BigNumber.from(10).pow(power));
-                            const currentPrice = await getSqrtPriceX96();
-                            flag = price.lt(currentPrice);
-                            console.log(
-                                `Positive; power: ${power}; price: ${currentPrice.toString()}.`
-                            );
-                        }
-                    } else {
-                        while (!flag) {
-                            await pushPriceUp(BigNumber.from(10).pow(power));
-                            const currentPrice = await getSqrtPriceX96();
-                            flag = price.lt(currentPrice);
-                            console.log(
-                                `Negative; power: ${power}; price: ${currentPrice.toString()}.`
-                            );
-                        }
-                    }
-
-                    if (price.eq(await getSqrtPriceX96())) {
-                        break;
-                    }
-                }
-            };
-
             it.only("multiple deposits for different depositors", async () => {
                 await setZeroFeesFixture();
-                const numberOfDepositors = 10;
+                const numberOfDepositors = 5;
                 var depositors: SignerWithAddress[] = [];
                 var deposited: BigNumber[][] = [];
 
@@ -662,15 +440,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .connect(this.admin)
                     .addDepositorsToAllowlist(depositors.map((x) => x.address));
 
-                const initialUsdcAmount = BigNumber.from(10).pow(6).mul(3000);
-                const initialWethAmount = BigNumber.from(10).pow(18);
-
                 const result = await mintUniV3Position_USDC_WETH({
                     fee: uniV3PoolFee,
                     tickLower: -887220,
                     tickUpper: 887220,
-                    usdcAmount: initialUsdcAmount,
-                    wethAmount: initialWethAmount,
+                    usdcAmount: BigNumber.from(10).pow(4),
+                    wethAmount: BigNumber.from(10).pow(6),
                 });
 
                 const { deployer } = await getNamedAccounts();
@@ -678,51 +453,43 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     "safeTransferFrom(address,address,uint256)"
                 ](deployer, this.uniV3Vault.address, result.tokenId);
 
-                const firstDepositorAmountUsdc = initialUsdcAmount;
-                const firstDepositorAmountWeth = initialWethAmount;
-
-                // remove all remaining liqidity
-                // for (var i = 0; i < depositors.length; i++) {
-                //     await getLiquidity(depositors[i], BigNumber.from(0), BigNumber.from(0));
-                // }
+                const firstDepositUsdc = BigNumber.from(10).pow(6).mul(3000);
+                const firstDepositWeth = BigNumber.from(10).pow(18);
 
                 await addLiquidity(
                     depositors[0],
-                    firstDepositorAmountUsdc,
-                    firstDepositorAmountWeth
-                );
-                // deposited[0][0] = deposited[0][0].add(fir)
-
-                // const start = now();
-
-                // for (var iteration = 0; iteration < 100; iteration++) {
-                //     console.log("Iteration:", iteration, (now() - start));
-                //     // pick random signer
-                //     var signerIndex = randomInt(depositors.length - 2) + 1;
-                //     var signer = depositors[signerIndex];
-                    
-                //     // [20, 99]
-                //     var depositRatio = randomInt(80) + 20;
-                //     const usdcDeposit = firstDepositorAmountUsdc.mul(depositRatio).div(100);
-                //     const wethDeposit = firstDepositorAmountUsdc.mul(depositRatio).div(100);
-                //     await addLiquidity(signer, usdcDeposit, wethDeposit);
-                // }
-                // console.log("Deposits finished")
-
-                // console.log("Make withdraws")
-                // for (var i = 1; i < depositors.length; i++) {
-                //     await getLiquidity(depositors[i], BigNumber.from(0), BigNumber.from(0));
-                // }
-                // console.log("Withdraws finished")
-
-                const {usdc, weth} = await getLiquidity(
-                    depositors[0],
-                    BigNumber.from(0),
-                    BigNumber.from(0)
+                    firstDepositUsdc,
+                    firstDepositWeth
                 );
 
-                console.log(firstDepositorAmountUsdc.toString(), firstDepositorAmountWeth.toString());
-                console.log(usdc.toString(), weth.toString());
+                for (var iteration = 0; iteration < 100; iteration++) {
+                    var signerIndex = randomInt(depositors.length - 2) + 1;
+                    var signer = depositors[signerIndex];
+                    var usdcDepositRatio = randomInt(80) + 20;
+                    var wethDepositRatio = randomInt(80) + 20;
+                    const usdcDeposit = firstDepositUsdc
+                        .mul(usdcDepositRatio)
+                        .div(100)
+                        .mul(1000);
+                    const wethDeposit = firstDepositUsdc
+                        .mul(wethDepositRatio)
+                        .div(100)
+                        .mul(1000);
+                    await addLiquidity(signer, usdcDeposit, wethDeposit);
+                }
+
+                for (var i = 1; i < depositors.length; i++) {
+                    await getLiquidity(depositors[i]);
+                }
+
+                const { usdc, weth } = await getLiquidity(depositors[0]);
+
+                expect(usdc.lte(firstDepositUsdc)).to.be.true;
+                expect(usdc.mul(1001).div(1000).gte(firstDepositUsdc)).to.be
+                    .true; // withdraw = 0.999 of deposit
+                expect(weth.lte(firstDepositWeth)).to.be.true;
+                expect(weth.mul(1001).div(1000).gte(firstDepositWeth)).to.be
+                    .true; // withdraw = 0.999 of deposit
             });
         });
     }
