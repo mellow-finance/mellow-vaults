@@ -42,7 +42,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
     struct TradingParams {
         uint32 maxSlippageD;
-        uint32 minRebalanceWaitTime;
         uint32 orderDeadline;
         uint8 oracleSafety;
         IOracle oracle;
@@ -109,6 +108,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         view
         returns (uint256 priceX96)
     {
+        require(tokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         (uint256[] memory prices, ) = tradingParams_.oracle.price(
             tokens_[0],
             tokens_[1],
@@ -435,7 +435,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         require(
             (newTradingParams.maxSlippageD <= DENOMINATOR) &&
                 (newTradingParams.oracleSafety <= 5) &&
-                (newTradingParams.minRebalanceWaitTime <= 86400 * 30) &&
                 (newTradingParams.orderDeadline <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
