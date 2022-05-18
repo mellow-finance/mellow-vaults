@@ -163,23 +163,22 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         {
             uint256 priceX96 = targetPrice(tokens, tradingParams);
             uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
-            uint256 lowerVaultCapital = _getCapital(priceX96, lowerVault);
-            uint256 upperVaultCapital = _getCapital(priceX96, upperVault);
+            uint256 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
             uint256 capitalDelta;
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
-                lowerVaultCapital + upperVaultCapital,
+                sumUniV3Capital,
                 ratioParams.erc20UniV3CapitalRatioD,
                 ratioParams.minErc20UniV3CapitalRatioDeviationD
             );
             if (capitalDelta == 0) {
                 return (pulledAmounts, false);
             }
-            require((lowerVaultCapital + upperVaultCapital > 0), ExceptionsLibrary.VALUE_ZERO);
+            require((sumUniV3Capital > 0), ExceptionsLibrary.VALUE_ZERO);
             uint256 percentageIncreaseD = FullMath.mulDiv(
                 DENOMINATOR,
                 capitalDelta,
-                lowerVaultCapital + upperVaultCapital
+                sumUniV3Capital
             );
             (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
             (, , upperVaultLiquidity) = _getVaultStats(upperVault);
