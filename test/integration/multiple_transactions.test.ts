@@ -111,6 +111,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ).toNumber() + 1;
 
                     this.uniV3PoolFee = 3000;
+                    this.uniV3PoolFeeDenominator = 1000000;
 
                     this.erc20VaultNft = startNft;
                     this.aaveVaultNft = startNft + 1;
@@ -518,11 +519,31 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 this.uniV3Fees[0] = this.uniV3Fees[0].add(swapFees[0]);
                 this.uniV3Fees[1] = this.uniV3Fees[1].add(swapFees[1]);
-                await uniSwapTokensGivenOutput(
+                let amountIn = await uniSwapTokensGivenOutput(
                     this.swapRouter,
                     this.tokens,
                     this.uniV3PoolFee,
                     zeroForOne,
+                    recieveFromSwapAmount
+                );
+
+                recieveFromSwapAmount = amountIn.mul(this.uniV3PoolFee + this.uniV3PoolFeeDenominator)
+                                                .div(this.uniV3PoolFeeDenominator),
+                
+                swapFees = await getFeesFromSwap.call(
+                    this,
+                    recieveFromSwapAmount
+                    .div(this.uniV3PoolFeeDenominator),
+                    !zeroForOne
+                );
+                
+                this.uniV3Fees[0] = this.uniV3Fees[0].add(swapFees[0]);
+                this.uniV3Fees[1] = this.uniV3Fees[1].add(swapFees[1]);
+                await uniSwapTokensGivenOutput(
+                    this.swapRouter,
+                    this.tokens,
+                    this.uniV3PoolFee,
+                    !zeroForOne,
                     recieveFromSwapAmount
                 );
             }
@@ -696,7 +717,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             .mul(myLiquidity)
                             .mul(this.uniV3PoolFee)
                             .div(currentLiquidity)
-                            .div(1000000)
+                            .div(this.uniV3PoolFeeDenominator)
                     );
                 }
                 amount = amount.sub(currentSwapAmount);
@@ -994,6 +1015,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let liquidityBefore = stateChanges[i].liquidityStateBefore[0]
                     let liquidityAfter = stateChanges[i].liquidityStateAfter[0]
                     if (!liquidityBefore.eq(liquidityAfter)) {
+                        let currentChanges = [BigNumber.from(0), BigNumber.from(0)];
                         let currentPrice = stateChanges[i].liquidityStateAfter[1];
                         if (liquidityAfter.gt(liquidityBefore)) {
                             liquidityStates.push({liquidity: liquidityAfter.sub(liquidityBefore), price: currentPrice});
@@ -1004,10 +1026,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 let liquidityToChange = liquidityWithdrawn.gt(lastLiquidityDeposit.liquidity) ? lastLiquidityDeposit.liquidity : liquidityWithdrawn;
                                 let liquidityChanges = await countLiquidityChanges.call(this, liquidityToChange, lastLiquidityDeposit.price, currentPrice, stateChanges[i].tickUpper, stateChanges[i].tickLower);
                                 liquidityWithdrawn = liquidityWithdrawn.sub(liquidityToChange);
-                                changes[0] = changes[0].add(liquidityChanges[0]);
-                                changes[1] = changes[1].add(liquidityChanges[1]);
+                                currentChanges[0] = currentChanges[0].add(liquidityChanges[0]);
+                                currentChanges[1] = currentChanges[1].add(liquidityChanges[1]);
                             }
                         }
+                        console.log("Changes should be zero, theyre " + currentChanges[0].toString() + ", " + currentChanges[1].toString());
+                        changes[0] = changes[0].add(currentChanges[0]);
+                        changes[1] = changes[1].add(currentChanges[1]);
                     }
                 }
                 changes[0] = changes[0].sub(this.uniV3Fees[0]);

@@ -557,16 +557,18 @@ export async function uniSwapTokensGivenOutput(
     };
 
     await mint(tokens[tokenIndex].address, provider, MAXIMUM_TO_SPEND);
+    let amountIn = BigNumber.from(0);
     await withSigner(provider, async (signer) => {
         await tokens[tokenIndex]
             .connect(signer)
             .approve(router.address, MAXIMUM_TO_SPEND);
-        let amountIn = await router
+        amountIn = await router
             .connect(signer)
             .callStatic.exactOutputSingle(swapParams);
         await router.connect(signer).exactOutputSingle(swapParams);
         //burn?
     });
+    return amountIn;
 }
 
 export async function mintUniV3Position_WBTC_WETH(options: {
