@@ -457,8 +457,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             const pushPriceUp = async (coef: BigNumber) => {
                 await push(coef, this.weth.address, this.usdc.address, "WETH");
             };
-            for (var i = 1; i <= 9; i++) {
+            for (var i = 1; i <= 7; i++) {
                 const numberOfDepositors = 1 << i;
+                this.retries(5);
                 it.only(`multiple deposits for different number of depositors = ${numberOfDepositors}`, async () => {
                     await setZeroFeesFixture();
                     var depositors: SignerWithAddress[] = [];
