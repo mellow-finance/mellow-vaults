@@ -28,6 +28,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomInt } from "crypto";
 import Common from "../library/Common";
 import { withdraw } from "../../tasks/vaults";
+import { min } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -406,22 +407,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 return (await pool.slot0()).sqrtPriceX96;
             };
 
+            const USDC_AMOUNT_FOR_PUSH = BigNumber.from(10).pow(14);
+            const WETH_AMOUNT_FOR_PUSH = BigNumber.from(10).pow(22).div(3);
+
             const push = async (
-                delta: BigNumber,
+                coef: BigNumber,
                 from: string,
                 to: string,
-                tokenName: string
+                token: string
             ) => {
                 const n = 20;
-                var amounts: BigNumber[] = [];
-                var used = BigNumber.from(0);
-                for (var i = 0; i < 20; i++) {
-                    amounts.push(delta.div(n));
-                    used = used.add(amounts[i]);
-                }
-                amounts[0] = amounts[0].add(delta.sub(used));
+                await mint("USDC", this.deployer.address, USDC_AMOUNT_FOR_PUSH.div(coef));
+                await mint("WETH", this.deployer.address, WETH_AMOUNT_FOR_PUSH.div(coef));
 
-                await mint(tokenName, this.deployer.address, delta);
+                await addLiquidity(
+                    this.deployer,
+                    USDC_AMOUNT_FOR_PUSH.div(coef),
+                    WETH_AMOUNT_FOR_PUSH.div(coef)
+                );
                 for (var i = 0; i < n; i++) {
                     await this.swapRouter.exactInputSingle({
                         tokenIn: from,
@@ -429,21 +432,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         fee: uniV3PoolFee,
                         recipient: this.deployer.address,
                         deadline: ethers.constants.MaxUint256,
-                        amountIn: amounts[i],
+                        amountIn:
+                            token == "USDC"
+                                ? USDC_AMOUNT_FOR_PUSH.div(coef).div(n)
+                                : WETH_AMOUNT_FOR_PUSH.div(coef).div(n),
                         amountOutMinimum: 0,
                         sqrtPriceLimitX96: 0,
                     });
                 }
             };
 
-            const pushPriceDown = async (delta: BigNumber) => {
-                await push(delta, this.usdc.address, this.weth.address, "USDC");
+            const pushPriceDown = async (coef: BigNumber) => {
+                await push(coef, this.usdc.address, this.weth.address, "USDC");
             };
 
-            const pushPriceUp = async (delta: BigNumber) => {
-                await push(delta, this.weth.address, this.usdc.address, "WETH");
+            const pushPriceUp = async (coef: BigNumber) => {
+                await push(coef, this.weth.address, this.usdc.address, "WETH");
             };
-            for (var i = 1; i <= 9; i++) {
+            for (var i = 1; i <= 1; i++) {
                 const numberOfDepositors = 1 << i;
                 it.only(`multiple deposits for different number of depositors = ${numberOfDepositors}`, async () => {
                     await setZeroFeesFixture();
@@ -496,9 +502,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     ](deployer, this.uniV3Vault.address, result.tokenId);
                     console.log("univ3nft minted");
                     const firstUserDepositUsdc = BigNumber.from(10)
-                        .pow(6)
+                        .pow(3)
                         .mul(3000);
-                    const firstUserDepositWeth = BigNumber.from(10).pow(18);
+                    const firstUserDepositWeth = BigNumber.from(10).pow(15);
 
                     const deposit = async (
                         signer: number,
@@ -533,7 +539,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     };
 
                     const numberOfIterations = Math.max(
-                        100,
+                        10,
                         numberOfDepositors * 4
                     );
 
@@ -549,7 +555,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         iteration < numberOfIterations;
                         iteration++
                     ) {
-                        var signerIndex = randomInt(depositors.length);
+                        var signerIndex = randomInt(depositors.length - 1) + 1;
 
                         var usdcDepositRatio = randomInt(80) + 20;
                         var wethDepositRatio = randomInt(80) + 20;
@@ -563,11 +569,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await deposit(signerIndex, usdcDeposit, wethDeposit);
 
                         if (iteration < numberOfIterations / 2) {
-                            await pushPriceDown(BigNumber.from(10).pow(14));
+                            await pushPriceDown(BigNumber.from(1));
                         } else {
-                            await pushPriceUp(
-                                BigNumber.from(10).pow(21).div(3)
-                            );
+                            await pushPriceUp(BigNumber.from(1));
                         }
                     }
 
@@ -577,22 +581,38 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         let currentPrice = await getSqrtPriceX96();
                         if (currentPrice.gt(initialPrice)) {
                             while (currentPrice.gt(initialPrice)) {
-                                await pushPriceDown(
-                                    BigNumber.from(10).pow(13).div(k)
-                                );
+                                await pushPriceDown(k);
                                 currentPrice = await getSqrtPriceX96();
                             }
                         } else {
                             while (currentPrice.lt(initialPrice)) {
-                                await pushPriceUp(
-                                    BigNumber.from(10).pow(22).div(3).div(k)
-                                );
+                                await pushPriceUp(k);
                                 currentPrice = await getSqrtPriceX96();
                             }
                         }
                     }
 
                     console.log("balanced");
+
+                    for (
+                        var iteration = 0;
+                        iteration < numberOfIterations;
+                        iteration++
+                    ) {
+                        var signerIndex = randomInt(depositors.length - 1) + 1;
+
+                        var usdcDepositRatio = randomInt(80) + 20;
+                        var wethDepositRatio = randomInt(80) + 20;
+                        const usdcDeposit = firstUserDepositUsdc
+                            .mul(usdcDepositRatio)
+                            .div(100);
+                        const wethDeposit = firstUserDepositWeth
+                            .mul(wethDepositRatio)
+                            .div(100);
+
+                        await deposit(signerIndex, usdcDeposit, wethDeposit);
+                    }
+
                     for (var i = depositors.length - 1; i >= 0; i--) {
                         await withdraw(i);
                     }
@@ -622,6 +642,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     .toNumber() / 1000;
                             result += `\tusdc delta: ${usdcDelta}%,\tweth delta: ${wethDelta}%`;
                         }
+
+                        result += ` usdc: ${depositUsdc.toString()} -> ${withdrawUsdc.toString()}; weth ${depositWeth.toString()} -> ${withdrawWeth.toString()}`;
                         console.log(result);
                     }
                     console.log("----------------------------------");
