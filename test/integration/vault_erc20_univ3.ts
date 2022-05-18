@@ -407,7 +407,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 return (await pool.slot0()).sqrtPriceX96;
             };
 
-            const USDC_AMOUNT_FOR_PUSH = BigNumber.from(10).pow(14);
+            const USDC_AMOUNT_FOR_PUSH = BigNumber.from(10).pow(13);
             const WETH_AMOUNT_FOR_PUSH = BigNumber.from(10).pow(22).div(3);
 
             const push = async (
@@ -417,8 +417,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 token: string
             ) => {
                 const n = 20;
-                await mint("USDC", this.deployer.address, USDC_AMOUNT_FOR_PUSH.div(coef));
-                await mint("WETH", this.deployer.address, WETH_AMOUNT_FOR_PUSH.div(coef));
+                await mint(
+                    "USDC",
+                    this.deployer.address,
+                    USDC_AMOUNT_FOR_PUSH.div(coef)
+                );
+                await mint(
+                    "WETH",
+                    this.deployer.address,
+                    WETH_AMOUNT_FOR_PUSH.div(coef)
+                );
 
                 await addLiquidity(
                     this.deployer,
@@ -449,7 +457,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             const pushPriceUp = async (coef: BigNumber) => {
                 await push(coef, this.weth.address, this.usdc.address, "WETH");
             };
-            for (var i = 1; i <= 1; i++) {
+            for (var i = 1; i <= 9; i++) {
                 const numberOfDepositors = 1 << i;
                 it.only(`multiple deposits for different number of depositors = ${numberOfDepositors}`, async () => {
                     await setZeroFeesFixture();
