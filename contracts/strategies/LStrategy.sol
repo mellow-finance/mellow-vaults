@@ -175,6 +175,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             if (capitalDelta == 0) {
                 return (pulledAmounts, false);
             }
+            require((lowerVaultCapital + upperVaultCapital > 0), ExceptionsLibrary.VALUE_ZERO);
             uint256 percentageIncreaseD = FullMath.mulDiv(
                 DENOMINATOR,
                 capitalDelta,
