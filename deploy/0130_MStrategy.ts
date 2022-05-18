@@ -225,15 +225,6 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
             createVaultArgs: [tokens, deployer],
         });
 
-        const strategy = await get(`MStrategy${kind}_WETH_USDC`);
-
-        await combineVaults(
-            hre,
-            erc20VaultNft + 1,
-            [erc20VaultNft, yearnVaultNft],
-            strategy.address,
-            mStrategyTreasury
-        );
         const erc20Vault = await read(
             "VaultRegistry",
             "vaultForNft",
@@ -245,6 +236,16 @@ export const buildMStrategy: (kind: MoneyVault) => DeployFunction =
             yearnVaultNft
         );
         await setupStrategy(hre, kind, erc20Vault, moneyVault);
+
+        const strategy = await get(`MStrategy${kind}_WETH_USDC`);
+
+        await combineVaults(
+            hre,
+            erc20VaultNft + 1,
+            [erc20VaultNft, yearnVaultNft],
+            strategy.address,
+            mStrategyTreasury
+        );
     };
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {};
