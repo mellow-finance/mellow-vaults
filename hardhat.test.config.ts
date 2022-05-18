@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
         alwaysGenerateOverloads: false,
     },
     mocha: {
-        timeout: 800000,
+        timeout: 6400000,
         reporter: process.env["REPORTER"],
     },
 };

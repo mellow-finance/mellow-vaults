@@ -416,7 +416,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 to: string,
                 token: string
             ) => {
-                const n = 20;
+                const n = 1;
                 await mint(
                     "USDC",
                     this.deployer.address,
@@ -585,6 +585,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
 
                     console.log("deposited");
+                    var balanceIterations = 0;
                     for (var pwr = 0; pwr < 30; pwr++) {
                         const k = BigNumber.from(2).pow(pwr);
                         let currentPrice = await getSqrtPriceX96();
@@ -592,16 +593,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             while (currentPrice.gt(initialPrice)) {
                                 await pushPriceDown(k);
                                 currentPrice = await getSqrtPriceX96();
+                                balanceIterations++;
                             }
                         } else {
                             while (currentPrice.lt(initialPrice)) {
                                 await pushPriceUp(k);
                                 currentPrice = await getSqrtPriceX96();
+                                balanceIterations++;
                             }
                         }
                     }
 
-                    console.log("balanced");
+                    console.log("balanced", balanceIterations);
 
                     for (
                         var iteration = 0;
