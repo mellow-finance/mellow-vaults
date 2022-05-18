@@ -389,31 +389,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     signer
                 );
 
-                const usdcBalanceBefore = await this.usdc
-                    .connect(this.admin)
-                    .balanceOf(signer.address);
-                const wethBalanceBefore = await this.weth
-                    .connect(this.admin)
-                    .balanceOf(signer.address);
-
                 await this.subject.connect(signer).withdraw(
                     signer.address,
                     ethers.constants.MaxUint256, // take all liquidity, that user has
                     [BigNumber.from(0), BigNumber.from(0)],
                     [[], []]
                 );
-
-                const usdcBalanceAfter = await this.usdc
-                    .connect(this.admin)
-                    .balanceOf(signer.address);
-                const wethBalanceAfter = await this.weth
-                    .connect(this.admin)
-                    .balanceOf(signer.address);
-
-                return {
-                    usdc: usdcBalanceAfter.sub(usdcBalanceBefore),
-                    weth: wethBalanceAfter.sub(wethBalanceBefore),
-                };
             };
 
             const getSqrtPriceX96 = async () => {
@@ -462,11 +443,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             const pushPriceUp = async (delta: BigNumber) => {
                 await push(delta, this.weth.address, this.usdc.address, "WETH");
             };
-            for (
-                var numberOfDepositors = 2;
-                numberOfDepositors <= 128;
-                numberOfDepositors *= 2
-            ) {
+            for (var i = 1; i <= 9; i++) {
+                const numberOfDepositors = 1 << i;
                 it.only(`multiple deposits for different number of depositors = ${numberOfDepositors}`, async () => {
                     await setZeroFeesFixture();
                     var depositors: SignerWithAddress[] = [];
@@ -522,28 +500,57 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .mul(3000);
                     const firstUserDepositWeth = BigNumber.from(10).pow(18);
 
-                    await addLiquidity(
-                        depositors[0],
-                        firstUserDepositUsdc,
-                        firstUserDepositWeth
-                    );
-                    deposited[0] = {
-                        usdc: firstUserDepositUsdc,
-                        weth: firstUserDepositWeth,
+                    const deposit = async (
+                        signer: number,
+                        usdc: BigNumber,
+                        weth: BigNumber
+                    ) => {
+                        await addLiquidity(depositors[signer], usdc, weth);
+
+                        const { usdc: currentUsdc, weth: currentWeth } =
+                            deposited[signer];
+
+                        deposited[signer] = {
+                            usdc: currentUsdc.add(usdc),
+                            weth: currentWeth.add(weth),
+                        };
+                    };
+
+                    const withdraw = async (signer: number) => {
+                        await getLiquidity(depositors[signer]);
+
+                        const usdc = await this.usdc
+                            .connect(this.admin)
+                            .balanceOf(depositors[signer].address);
+                        const weth = await this.weth
+                            .connect(this.admin)
+                            .balanceOf(depositors[signer].address);
+
+                        withdrawed[signer] = {
+                            usdc,
+                            weth,
+                        };
                     };
 
                     const numberOfIterations = Math.max(
                         100,
                         numberOfDepositors * 4
                     );
+
                     const initialPrice = await getSqrtPriceX96();
+
+                    await deposit(
+                        0,
+                        firstUserDepositUsdc,
+                        firstUserDepositWeth
+                    );
                     for (
                         var iteration = 0;
                         iteration < numberOfIterations;
                         iteration++
                     ) {
-                        var signerIndex = randomInt(depositors.length - 1) + 1;
-                        var signer = depositors[signerIndex];
+                        var signerIndex = randomInt(depositors.length);
+
                         var usdcDepositRatio = randomInt(80) + 20;
                         var wethDepositRatio = randomInt(80) + 20;
                         const usdcDeposit = firstUserDepositUsdc
@@ -552,11 +559,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         const wethDeposit = firstUserDepositWeth
                             .mul(wethDepositRatio)
                             .div(100);
-                        await addLiquidity(signer, usdcDeposit, wethDeposit);
-                        deposited[signerIndex].usdc =
-                            deposited[signerIndex].usdc.add(usdcDeposit);
-                        deposited[signerIndex].weth =
-                            deposited[signerIndex].weth.add(wethDeposit);
+
+                        await deposit(signerIndex, usdcDeposit, wethDeposit);
+
                         if (iteration < numberOfIterations / 2) {
                             await pushPriceDown(BigNumber.from(10).pow(14));
                         } else {
@@ -588,15 +593,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
 
                     console.log("balanced");
-
                     for (var i = depositors.length - 1; i >= 0; i--) {
-                        await getLiquidity(depositors[i]);
-                        withdrawed[i].usdc = await this.usdc
-                            .connect(this.admin)
-                            .balanceOf(depositors[i].address);
-                        withdrawed[i].weth = await this.weth
-                            .connect(this.admin)
-                            .balanceOf(depositors[i].address);
+                        await withdraw(i);
                     }
 
                     console.log("Number of depositors:", numberOfDepositors);
@@ -606,7 +604,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         const depositWeth = deposited[i].weth;
                         const withdrawUsdc = withdrawed[i].usdc;
                         const withdrawWeth = withdrawed[i].weth;
-                        let result: string = `depositor ${i + 1}`;
+                        let result: string = `depositor ${i}`;
                         if (depositUsdc.eq(0)) {
                             result += " has no operations";
                         } else {
