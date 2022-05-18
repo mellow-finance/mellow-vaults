@@ -175,11 +175,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 return (pulledAmounts, false);
             }
             require((sumUniV3Capital > 0), ExceptionsLibrary.VALUE_ZERO);
-            uint256 percentageIncreaseD = FullMath.mulDiv(
-                DENOMINATOR,
-                capitalDelta,
-                sumUniV3Capital
-            );
+            uint256 percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, sumUniV3Capital);
             (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
             (, , upperVaultLiquidity) = _getVaultStats(upperVault);
             lowerTokenAmounts = lowerVault.liquidityToTokenAmounts(
