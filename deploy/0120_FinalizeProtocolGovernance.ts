@@ -11,7 +11,7 @@ import {
     PRIVATE_VAULT,
     WBTC_PRICE,
     USDC_PRICE,
-    WETH_PRICE
+    WETH_PRICE, TRANSACTION_GAS_LIMITS
 } from "./0000_utils";
 import { ethers } from "ethers";
 import { deployments } from "hardhat";
@@ -88,6 +88,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             from: deployer,
             autoMine: true,
             log: true,
+            ...TRANSACTION_GAS_LIMITS
         },
         "multicall",
         txDatas
@@ -134,6 +135,9 @@ async function registerTokens(
     const { weth, wbtc, usdc, dai, wsteth } = await hre.getNamedAccounts();
     const tokens = [weth, wbtc, usdc, dai, wsteth].map((t) => t.toLowerCase()).sort();
     for (const token of tokens) {
+        if (!token) {
+            continue
+        }
         let tx =
             await protocolGovernance.populateTransaction.stagePermissionGrants(
                 token,

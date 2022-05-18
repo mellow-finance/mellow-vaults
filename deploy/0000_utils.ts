@@ -12,6 +12,11 @@ import {
 import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
+export const TRANSACTION_GAS_LIMITS = {
+    maxFeePerGas: BigNumber.from(300000000000),
+    maxPriorityFeePerGas: BigNumber.from(80000000000),
+}
+
 export const ALLOWED_APPROVE_LIST = {
     mainnet: {
         uniV3: [
@@ -106,6 +111,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
+                ...TRANSACTION_GAS_LIMITS
             },
             "createVault",
             ...createVaultArgs
@@ -135,6 +141,7 @@ export const setupVault = async (
                     from: deployer,
                     log: true,
                     autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS
                 },
                 "setStrategyParams",
                 expectedNft,
@@ -163,6 +170,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
+                ...TRANSACTION_GAS_LIMITS
             },
             "stageDelayedStrategyParams",
             expectedNft,
@@ -174,6 +182,7 @@ export const setupVault = async (
                 from: deployer,
                 log: true,
                 autoMine: true,
+                ...TRANSACTION_GAS_LIMITS
             },
             "commitDelayedStrategyParams",
             expectedNft
@@ -197,6 +206,7 @@ export const setupVault = async (
                     from: deployer,
                     log: true,
                     autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS
                 },
                 "stageDelayedProtocolPerVaultParams",
                 expectedNft,
@@ -208,6 +218,7 @@ export const setupVault = async (
                     from: deployer,
                     log: true,
                     autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS
                 },
                 "commitDelayedProtocolPerVaultParams",
                 expectedNft
@@ -301,7 +312,7 @@ export const combineVaults = async (
     }
     await deployments.execute(
         "VaultRegistry",
-        { from: deployer, autoMine: true },
+        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
         "transferFrom(address,address,uint256)",
         deployer,
         rootVault,
