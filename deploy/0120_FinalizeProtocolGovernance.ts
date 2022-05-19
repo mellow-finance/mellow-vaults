@@ -190,6 +190,9 @@ async function registerExternalProtocols(
     };
     for (const key in validators) {
         // @ts-ignore
+        if (!(key in data)) {
+            continue
+        }
         const validator = await deployments.get(validators[key]);
         for (const address of data[key]) {
             const tx =
