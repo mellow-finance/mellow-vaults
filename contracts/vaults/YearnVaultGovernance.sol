@@ -10,7 +10,7 @@ import "./VaultGovernance.sol";
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGovernance {
     mapping(address => address) private _yTokens;
-    bool private _tokensCommited;
+    bool public tokensCommited;
 
     /// @notice Creates a new contract
     /// @param internalParams_ Initial Internal Params
@@ -77,7 +77,7 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
     /// @inheritdoc IYearnVaultGovernance
     function setYTokenForToken(address token, address yToken) external {
         _requireProtocolAdmin();
-        require(!_tokensCommited, ExceptionsLibrary.FORBIDDEN);
+        require(!tokensCommited, ExceptionsLibrary.FORBIDDEN);
         _yTokens[token] = yToken;
         emit SetYToken(tx.origin, msg.sender, token, yToken);
     }
@@ -95,7 +95,7 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
     }
 
     function commitYTokens() external {
-        _tokensCommited = true;
+        tokensCommited = true;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
