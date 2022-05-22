@@ -26,9 +26,6 @@ import {
 } from "../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomInt } from "crypto";
-import Common from "../library/Common";
-import { withdraw } from "../../tasks/vaults";
-import { min } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -457,210 +454,185 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             const pushPriceUp = async (coef: BigNumber) => {
                 await push(coef, this.weth.address, this.usdc.address, "WETH");
             };
-            for (var i = 1; i <= 7; i++) {
-                const numberOfDepositors = 1 << i;
-                this.retries(5);
-                it.only(`multiple deposits for different number of depositors = ${numberOfDepositors}`, async () => {
-                    await setZeroFeesFixture();
-                    var depositors: SignerWithAddress[] = [];
-                    var deposited: { usdc: BigNumber; weth: BigNumber }[] = [];
-                    var withdrawed: { usdc: BigNumber; weth: BigNumber }[] = [];
-                    for (var i = 0; i < numberOfDepositors; i++) {
-                        depositors.push(await addSigner(randomAddress()));
-                        deposited.push({
-                            usdc: BigNumber.from(0),
-                            weth: BigNumber.from(0),
-                        });
-                        withdrawed.push({
-                            usdc: BigNumber.from(0),
-                            weth: BigNumber.from(0),
-                        });
 
-                        for (var address of [
-                            this.subject.address,
-                            this.uniV3Vault.address,
-                            this.erc20Vault.address,
-                        ]) {
-                            await this.weth
-                                .connect(depositors[i])
-                                .approve(address, ethers.constants.MaxUint256);
-                            await this.usdc
-                                .connect(depositors[i])
-                                .approve(address, ethers.constants.MaxUint256);
-                        }
-                    }
-
-                    console.log("Approved");
-                    await this.subject
-                        .connect(this.admin)
-                        .addDepositorsToAllowlist(
-                            depositors.map((x) => x.address)
-                        );
-
-                    const result = await mintUniV3Position_USDC_WETH({
-                        fee: uniV3PoolFee,
-                        tickLower: -887220,
-                        tickUpper: 887220,
-                        usdcAmount: BigNumber.from(10).pow(4),
-                        wethAmount: BigNumber.from(10).pow(6),
+            const numberOfDepositors = 8;
+            it(`multiple deposits for different number of depositors = ${numberOfDepositors}`, async () => {
+                await setZeroFeesFixture();
+                var depositors: SignerWithAddress[] = [];
+                var deposited: { usdc: BigNumber; weth: BigNumber }[] = [];
+                var withdrawed: { usdc: BigNumber; weth: BigNumber }[] = [];
+                for (var i = 0; i < numberOfDepositors; i++) {
+                    depositors.push(await addSigner(randomAddress()));
+                    deposited.push({
+                        usdc: BigNumber.from(0),
+                        weth: BigNumber.from(0),
+                    });
+                    withdrawed.push({
+                        usdc: BigNumber.from(0),
+                        weth: BigNumber.from(0),
                     });
 
-                    const { deployer } = await getNamedAccounts();
-                    await this.positionManager.functions[
-                        "safeTransferFrom(address,address,uint256)"
-                    ](deployer, this.uniV3Vault.address, result.tokenId);
-                    console.log("univ3nft minted");
-                    const firstUserDepositUsdc = BigNumber.from(10)
-                        .pow(3)
-                        .mul(3000);
-                    const firstUserDepositWeth = BigNumber.from(10).pow(15);
-
-                    const deposit = async (
-                        signer: number,
-                        usdc: BigNumber,
-                        weth: BigNumber
-                    ) => {
-                        await addLiquidity(depositors[signer], usdc, weth);
-
-                        const { usdc: currentUsdc, weth: currentWeth } =
-                            deposited[signer];
-
-                        deposited[signer] = {
-                            usdc: currentUsdc.add(usdc),
-                            weth: currentWeth.add(weth),
-                        };
-                    };
-
-                    const withdraw = async (signer: number) => {
-                        await getLiquidity(depositors[signer]);
-
-                        const usdc = await this.usdc
-                            .connect(this.admin)
-                            .balanceOf(depositors[signer].address);
-                        const weth = await this.weth
-                            .connect(this.admin)
-                            .balanceOf(depositors[signer].address);
-
-                        withdrawed[signer] = {
-                            usdc,
-                            weth,
-                        };
-                    };
-
-                    const numberOfIterations = Math.max(
-                        10,
-                        numberOfDepositors * 4
-                    );
-
-                    const initialPrice = await getSqrtPriceX96();
-
-                    await deposit(
-                        0,
-                        firstUserDepositUsdc,
-                        firstUserDepositWeth
-                    );
-                    for (
-                        var iteration = 0;
-                        iteration < numberOfIterations;
-                        iteration++
-                    ) {
-                        var signerIndex = randomInt(depositors.length - 1) + 1;
-
-                        var usdcDepositRatio = randomInt(80) + 20;
-                        var wethDepositRatio = randomInt(80) + 20;
-                        const usdcDeposit = firstUserDepositUsdc
-                            .mul(usdcDepositRatio)
-                            .div(100);
-                        const wethDeposit = firstUserDepositWeth
-                            .mul(wethDepositRatio)
-                            .div(100);
-
-                        await deposit(signerIndex, usdcDeposit, wethDeposit);
-
-                        if (iteration < numberOfIterations / 2) {
-                            await pushPriceDown(BigNumber.from(1));
-                        } else {
-                            await pushPriceUp(BigNumber.from(1));
-                        }
+                    for (var address of [
+                        this.subject.address,
+                        this.uniV3Vault.address,
+                        this.erc20Vault.address,
+                    ]) {
+                        await this.weth
+                            .connect(depositors[i])
+                            .approve(address, ethers.constants.MaxUint256);
+                        await this.usdc
+                            .connect(depositors[i])
+                            .approve(address, ethers.constants.MaxUint256);
                     }
+                }
 
-                    console.log("deposited");
-                    var balanceIterations = 0;
-                    for (var pwr = 0; pwr < 30; pwr++) {
-                        const k = BigNumber.from(2).pow(pwr);
-                        let currentPrice = await getSqrtPriceX96();
-                        if (currentPrice.gt(initialPrice)) {
-                            while (currentPrice.gt(initialPrice)) {
-                                await pushPriceDown(k);
-                                currentPrice = await getSqrtPriceX96();
-                                balanceIterations++;
-                            }
-                        } else {
-                            while (currentPrice.lt(initialPrice)) {
-                                await pushPriceUp(k);
-                                currentPrice = await getSqrtPriceX96();
-                                balanceIterations++;
-                            }
-                        }
-                    }
+                await this.subject
+                    .connect(this.admin)
+                    .addDepositorsToAllowlist(depositors.map((x) => x.address));
 
-                    console.log("balanced", balanceIterations);
-
-                    for (
-                        var iteration = 0;
-                        iteration < numberOfIterations;
-                        iteration++
-                    ) {
-                        var signerIndex = randomInt(depositors.length - 1) + 1;
-
-                        var usdcDepositRatio = randomInt(80) + 20;
-                        var wethDepositRatio = randomInt(80) + 20;
-                        const usdcDeposit = firstUserDepositUsdc
-                            .mul(usdcDepositRatio)
-                            .div(100);
-                        const wethDeposit = firstUserDepositWeth
-                            .mul(wethDepositRatio)
-                            .div(100);
-
-                        await deposit(signerIndex, usdcDeposit, wethDeposit);
-                    }
-
-                    for (var i = depositors.length - 1; i >= 0; i--) {
-                        await withdraw(i);
-                    }
-
-                    console.log("Number of depositors:", numberOfDepositors);
-                    console.log("Number of iterations:", numberOfIterations);
-                    for (var i = 0; i < numberOfDepositors; i++) {
-                        const depositUsdc = deposited[i].usdc;
-                        const depositWeth = deposited[i].weth;
-                        const withdrawUsdc = withdrawed[i].usdc;
-                        const withdrawWeth = withdrawed[i].weth;
-                        let result: string = `depositor ${i}`;
-                        if (depositUsdc.eq(0)) {
-                            result += " has no operations";
-                        } else {
-                            const usdcDelta =
-                                withdrawUsdc
-                                    .mul(100000)
-                                    .div(depositUsdc)
-                                    .sub(100000)
-                                    .toNumber() / 1000;
-                            const wethDelta =
-                                withdrawWeth
-                                    .mul(100000)
-                                    .div(depositWeth)
-                                    .sub(100000)
-                                    .toNumber() / 1000;
-                            result += `\tusdc delta: ${usdcDelta}%,\tweth delta: ${wethDelta}%`;
-                        }
-
-                        result += ` usdc: ${depositUsdc.toString()} -> ${withdrawUsdc.toString()}; weth ${depositWeth.toString()} -> ${withdrawWeth.toString()}`;
-                        console.log(result);
-                    }
-                    console.log("----------------------------------");
+                const result = await mintUniV3Position_USDC_WETH({
+                    fee: uniV3PoolFee,
+                    tickLower: -887220,
+                    tickUpper: 887220,
+                    usdcAmount: BigNumber.from(10).pow(4),
+                    wethAmount: BigNumber.from(10).pow(6),
                 });
-            }
+
+                const { deployer } = await getNamedAccounts();
+                await this.positionManager.functions[
+                    "safeTransferFrom(address,address,uint256)"
+                ](deployer, this.uniV3Vault.address, result.tokenId);
+
+                const firstUserDepositUsdc = BigNumber.from(10)
+                    .pow(3)
+                    .mul(3000);
+                const firstUserDepositWeth = BigNumber.from(10).pow(15);
+
+                const deposit = async (
+                    signer: number,
+                    usdc: BigNumber,
+                    weth: BigNumber
+                ) => {
+                    await addLiquidity(depositors[signer], usdc, weth);
+
+                    const { usdc: currentUsdc, weth: currentWeth } =
+                        deposited[signer];
+
+                    deposited[signer] = {
+                        usdc: currentUsdc.add(usdc),
+                        weth: currentWeth.add(weth),
+                    };
+                };
+
+                const withdraw = async (signer: number) => {
+                    await getLiquidity(depositors[signer]);
+
+                    const usdc = await this.usdc
+                        .connect(this.admin)
+                        .balanceOf(depositors[signer].address);
+                    const weth = await this.weth
+                        .connect(this.admin)
+                        .balanceOf(depositors[signer].address);
+
+                    withdrawed[signer] = {
+                        usdc,
+                        weth,
+                    };
+                };
+
+                const numberOfIterations = numberOfDepositors * 4;
+
+                const initialPrice = await getSqrtPriceX96();
+
+                await deposit(0, firstUserDepositUsdc, firstUserDepositWeth);
+                for (
+                    var iteration = 0;
+                    iteration < numberOfIterations;
+                    iteration++
+                ) {
+                    var signerIndex = randomInt(depositors.length - 1) + 1;
+
+                    var usdcDepositRatio = randomInt(80) + 20;
+                    var wethDepositRatio = randomInt(80) + 20;
+                    const usdcDeposit = firstUserDepositUsdc
+                        .mul(usdcDepositRatio)
+                        .div(100);
+                    const wethDeposit = firstUserDepositWeth
+                        .mul(wethDepositRatio)
+                        .div(100);
+
+                    await deposit(signerIndex, usdcDeposit, wethDeposit);
+
+                    if (iteration < numberOfIterations / 2) {
+                        await pushPriceDown(BigNumber.from(1));
+                    } else {
+                        await pushPriceUp(BigNumber.from(1));
+                    }
+                }
+
+                // move with swaps price to intial state
+                for (var pwr = 0; pwr < 30; pwr++) {
+                    const k = BigNumber.from(2).pow(pwr);
+                    let currentPrice = await getSqrtPriceX96();
+                    if (currentPrice.gt(initialPrice)) {
+                        while (currentPrice.gt(initialPrice)) {
+                            await pushPriceDown(k);
+                            currentPrice = await getSqrtPriceX96();
+                        }
+                    } else {
+                        while (currentPrice.lt(initialPrice)) {
+                            await pushPriceUp(k);
+                            currentPrice = await getSqrtPriceX96();
+                        }
+                    }
+                }
+
+                for (
+                    var iteration = 0;
+                    iteration < numberOfIterations;
+                    iteration++
+                ) {
+                    var signerIndex = randomInt(depositors.length - 1) + 1;
+
+                    var usdcDepositRatio = randomInt(80) + 20;
+                    var wethDepositRatio = randomInt(80) + 20;
+                    const usdcDeposit = firstUserDepositUsdc
+                        .mul(usdcDepositRatio)
+                        .div(100);
+                    const wethDeposit = firstUserDepositWeth
+                        .mul(wethDepositRatio)
+                        .div(100);
+
+                    await deposit(signerIndex, usdcDeposit, wethDeposit);
+                }
+
+                for (var i = depositors.length - 1; i >= 0; i--) {
+                    await withdraw(i);
+                }
+
+                for (var i = 0; i < numberOfDepositors; i++) {
+                    const depositUsdc = deposited[i].usdc;
+                    const depositWeth = deposited[i].weth;
+                    const withdrawUsdc = withdrawed[i].usdc;
+                    const withdrawWeth = withdrawed[i].weth;
+                    if (depositUsdc.gt(0)) {
+                        const usdcDelta =
+                            withdrawUsdc
+                                .mul(100000)
+                                .div(depositUsdc)
+                                .sub(100000)
+                                .toNumber() / 1000;
+                        const wethDelta =
+                            withdrawWeth
+                                .mul(100000)
+                                .div(depositWeth)
+                                .sub(100000)
+                                .toNumber() / 1000;
+                        expect(Math.abs(usdcDelta)).lt(20);
+                        expect(Math.abs(wethDelta)).lt(50);
+                    }
+                }
+            });
         });
     }
 );
