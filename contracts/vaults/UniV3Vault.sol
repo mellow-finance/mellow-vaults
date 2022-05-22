@@ -306,7 +306,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             INonfungiblePositionManager.DecreaseLiquidityParams({
                 tokenId: uniV3Nft,
                 liquidity: liquidityToPull,
-                amount0Min: minAmounts.a0,  
+                amount0Min: minAmounts.a0,
                 amount1Min: minAmounts.a1,
                 deadline: opts.deadline
             })
