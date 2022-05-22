@@ -56,13 +56,6 @@ type PullAction = {
     amount: BigNumber[];
 };
 
-type VaultStateChange = {
-    amount: BigNumber[];
-    timestamp: BigNumber;
-    balanceBefore: BigNumber;
-    balanceAfter: BigNumber;
-};
-
 type CustomContext = {
     erc20Vault: ERC20Vault;
     yearnVault: YearnVault;
@@ -80,6 +73,7 @@ type CustomContext = {
     uniV3Fees: BigNumber[];
     positionManager: INonfungiblePositionManager;
     uniV3Nft: BigNumber;
+    expectedUniV3Changes: BigNumber[];
 }
 
 type DeployOptions = {
@@ -364,7 +358,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ["uint256"],
                         [BigNumber.from(10000)]
                     );
-                    this.collectedUniV3Fees = [BigNumber.from(0), BigNumber.from(0)];
+                    this.expectedUniV3Changes = [BigNumber.from(0), BigNumber.from(0)];
                     return this.subject;
                 }
             );
@@ -448,11 +442,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
             let { item: pullTarget } = randomChoice(nonEmptyVaults);
             let pullTargetIndex = this.targets.indexOf(pullTarget);
-            let pullAmount = this.tokens.map((token, index) =>
-                BigNumber.from(tvls[pullTargetIndex][1][index])
+            let random = randomInt(1, 4);
+            console.log("Random is " + random);
+            let pullAmount = this.tokens.map((token, index) => {
+                if (pullTarget.address == this.uniV3Vault.address) {
+                    return BigNumber.from(tvls[pullTargetIndex][1][index])
+                    .mul(random)
+                    .div(3)
+                } else {
+                    return BigNumber.from(tvls[pullTargetIndex][1][index])
                     .mul(randomInt(1, 4))
                     .div(3)
-            );
+                }
+            });
             let pushTarget = this.erc20Vault;
             if (pullTarget == this.erc20Vault) {
                 let pushCandidates = this.targets.filter(
@@ -477,7 +479,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 pushTarget = randomChoice(pushCandidates).item;
             } else if (pullTarget == this.uniV3Vault) {
                 if (tvls[pullTargetIndex][1][0].eq(pullAmount[0]) && tvls[pullTargetIndex][1][1].eq(pullAmount[1])) {
-                    pullAmount = pullAmount.map(amount => amount.mul(2))
+                    pullAmount = pullAmount.map(amount => amount.mul(6).div(5))
                 }
             }
             return { from: pullTarget, to: pushTarget, amount: pullAmount };
@@ -495,7 +497,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             ) {
                 let zeroForOne = randomChoice([true, false]).item;
                 let liquidity = await this.uniV3Pool.liquidity();
-                let tickLower = (await this.uniV3Pool.slot0()).tick;
+                const {tick:tickLower, sqrtPriceX96:oldPrice} = (await this.uniV3Pool.slot0());
                 let priceBetweenTicks = (
                     await this.tickMath.getSqrtRatioAtTick(tickLower)
                 )
@@ -519,7 +521,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     recieveFromSwapAmount,
                     zeroForOne
                 );
-                let positionInfo = await this.positionManager.positions(this.uniV3Nft)
                 this.uniV3Fees[0] = this.uniV3Fees[0].add(swapFees[0]);
                 this.uniV3Fees[1] = this.uniV3Fees[1].add(swapFees[1]);
                 let amountIn = await uniSwapTokensGivenOutput(
@@ -529,13 +530,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     zeroForOne,
                     recieveFromSwapAmount
                 );
-                let newPositionInfo = await this.positionManager.positions(this.uniV3Nft)
                 
-                this.collectedUniV3Fees[0] = this.collectedUniV3Fees[0].add(newPositionInfo.tokensOwed0.sub(positionInfo.tokensOwed0));
-                this.collectedUniV3Fees[1] = this.collectedUniV3Fees[1].add(newPositionInfo.tokensOwed1.sub(positionInfo.tokensOwed1));
-                recieveFromSwapAmount = amountIn.mul(this.uniV3PoolFee + this.uniV3PoolFeeDenominator)
-                                                .div(this.uniV3PoolFeeDenominator);
-                
+                let newPrice = (await this.uniV3Pool.slot0()).sqrtPriceX96;
+                if (newPrice.gt(oldPrice)) {
+                    console.log("Price went up");
+                } else {
+                    console.log("Price went down");
+                }
             }
         }
 
@@ -756,18 +757,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             liquidity: BigNumber,
             depositPrice: BigNumber,
             withdrawPrice: BigNumber,
-            tickUpper: number,
-            tickLower: number
         ) {
-            depositPrice = await priceInTickRange.call(this, depositPrice, tickUpper, tickLower);
-            withdrawPrice = await priceInTickRange.call(this, withdrawPrice, tickUpper, tickLower);
-            let depositX = await liquidityToX.call(this, depositPrice, tickUpper, tickLower, liquidity);
-            let depositY = await liquidityToY.call(this, depositPrice, tickUpper, tickLower, liquidity);
-            let withdrawX = await liquidityToX.call(this, withdrawPrice, tickUpper, tickLower, liquidity);
-            console.log("price were: " + depositPrice.toString() + ", price became: " + withdrawPrice.toString())
-            let withdrawY = await liquidityToY.call(this, withdrawPrice, tickUpper, tickLower, liquidity);
-            console.log("for L=" + liquidity.toString() + ", assets were: [" + depositX.toString() + ", " + depositY.toString() + "], they became: ["+ depositX.toString() + ", " + depositY.toString() + "]");
-            return [withdrawX.sub(depositX), withdrawY.sub(depositY)];
+            depositPrice = await priceInTickRange.call(this, depositPrice, this.tickUpper, this.tickLower);
+            withdrawPrice = await priceInTickRange.call(this, withdrawPrice, this.tickUpper, this.tickLower);
+
+            if (!depositPrice.eq(withdrawPrice)) {
+                let depositX = await liquidityToX.call(this, depositPrice, this.tickUpper, this.tickLower, liquidity);
+                let depositY = await liquidityToY.call(this, depositPrice, this.tickUpper, this.tickLower, liquidity);
+                let withdrawX = await liquidityToX.call(this, withdrawPrice, this.tickUpper, this.tickLower, liquidity);
+                console.log("price were: " + depositPrice.toString() + ", price became: " + withdrawPrice.toString())
+                let withdrawY = await liquidityToY.call(this, withdrawPrice, this.tickUpper, this.tickLower, liquidity);
+                console.log("for L=" + liquidity.toString() + ", assets were: [" + depositX.toString() + ", " + depositY.toString() + "], they became: ["+ withdrawX.toString() + ", " + withdrawY.toString() + "]");
+                return [withdrawX.sub(depositX), withdrawY.sub(depositY)];
+            } 
+            return [BigNumber.from(0), BigNumber.from(0)];
         }
 
         function getRatioFromPriceX96(priceX96: BigNumber): BigNumber {
@@ -821,7 +824,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
         async function doPullAction(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext,
-            action: PullAction
+            action: PullAction,
+            last: boolean
         ) {
             let options: any = [];
             if (action.to.address == this.aaveVault.address) {
@@ -874,6 +878,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 this.uniV3Nft = await this.uniV3Vault.uniV3Nft();
                 this.uniV3VaultIsEmpty = false;    
             }
+            if (!this.uniV3Nft.eq(0)) {
+                await this.uniV3Vault.connect(this.deployer).collectEarnings();
+            }
             let fromLiquidityStateAfter = await getLiquidityState.call(
                 this,
                 action.from.address
@@ -882,10 +889,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 await printVaults.call(this);
                 console.log("liquidity left:" + fromLiquidityStateAfter[0].toString());
                 await printLiquidityStats.call(this);
-                if (fromLiquidityStateAfter[0].eq(0)) {
-                    this.uniV3VaultIsEmpty = true;
-                    await this.uniV3Vault.connect(this.deployer).collectEarnings();
-                }
                 await printVaults.call(this);
             }
             let toLiquidityStateAfter = await getLiquidityState.call(this, action.to.address);
@@ -895,17 +898,21 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 timestamp: currentTimestamp,
                 liquidityStateBefore: fromLiquidityStateBefore,
                 liquidityStateAfter: fromLiquidityStateAfter,
-                tickUpper: this.tickUpper,
-                tickLower: this.tickLower 
             });
             this.vaultChanges[action.to.address].push({
                 amount: action.amount,
                 timestamp: currentTimestamp,
                 liquidityStateBefore: toLiquidityStateBefore,
                 liquidityStateAfter: toLiquidityStateAfter,
-                tickUpper: this.tickUpper,
-                tickLower: this.tickLower
             });
+            if ((action.from.address == this.uniV3Vault.address)) {
+                if (fromLiquidityStateAfter[0].eq(0) || last) {
+                    this.uniV3VaultIsEmpty = true;
+                    let changes = await countUniV3Changes.call(this);
+                    console.log("expected changes: " + this.expectedUniV3Changes[0].add(this.uniV3Fees[0]).toString() + ", " + this.expectedUniV3Changes[1].add(this.uniV3Fees[1]).toString());
+                    await printVaults.call(this);
+                }
+            }
         }
         async function pullToUniV3Vault(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext,
@@ -990,8 +997,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let tokenChanges = BigNumber.from(0);
                     for (let i = 1; i < stateChanges.length; i++) {
                         tokenChanges = tokenChanges
-                            .add(stateChanges[i].balanceBefore[tokenIndex])
-                            .sub(stateChanges[i - 1].balanceAfter[tokenIndex]);
+                            .add(stateChanges[i].liquidityStateBefore[tokenIndex])
+                            .sub(stateChanges[i - 1].liquidityStateAfter[tokenIndex]);
                     }
                     fees.push(tokenChanges);
                 }
@@ -1007,10 +1014,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         ) {
             let liquidityStates: any[] = [];
             let stateChanges = this.vaultChanges[this.uniV3Vault.address];
-            let changes: BigNumber[] = [BigNumber.from(0), BigNumber.from(0)];
+            console.log("State Changes:" );
+            let changes = [BigNumber.from(0), BigNumber.from(0)];
             for (let i = 0; i < stateChanges.length; i++) {
+                console.log("number " + i);
                 let liquidityBefore = stateChanges[i].liquidityStateBefore[0]
                 let liquidityAfter = stateChanges[i].liquidityStateAfter[0]
+                console.log("liquidity before " + liquidityBefore.toString());
+                console.log("liquidity after " + liquidityAfter.toString());
+                console.log("price " + stateChanges[i].liquidityStateAfter[1].toString());
                 if (!liquidityBefore.eq(liquidityAfter)) {
                     let currentChanges = [BigNumber.from(0), BigNumber.from(0)];
                     let currentPrice = stateChanges[i].liquidityStateAfter[1];
@@ -1021,10 +1033,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         while (liquidityWithdrawn.gt(0) && (liquidityStates.length != 0)) {
                             let lastLiquidityDeposit = liquidityStates.pop();
                             let liquidityToChange = liquidityWithdrawn.gt(lastLiquidityDeposit.liquidity) ? lastLiquidityDeposit.liquidity : liquidityWithdrawn;
-                            let liquidityChanges = await countLiquidityChanges.call(this, liquidityToChange, lastLiquidityDeposit.price, currentPrice, stateChanges[i].tickUpper, stateChanges[i].tickLower);
+                            if (!lastLiquidityDeposit.price.eq(currentPrice)) {
+                                let liquidityChanges = await countLiquidityChanges.call(this, liquidityToChange, lastLiquidityDeposit.price, currentPrice);
+                                currentChanges[0] = currentChanges[0].add(liquidityChanges[0]);
+                                currentChanges[1] = currentChanges[1].add(liquidityChanges[1]);
+                            }
+                            if (lastLiquidityDeposit.liquidity.gt(liquidityWithdrawn)) {
+                                liquidityStates.push({liquidity: lastLiquidityDeposit.liquidity.sub(liquidityWithdrawn), price: lastLiquidityDeposit.price })
+                            }
                             liquidityWithdrawn = liquidityWithdrawn.sub(liquidityToChange);
-                            currentChanges[0] = currentChanges[0].add(liquidityChanges[0]);
-                            currentChanges[1] = currentChanges[1].add(liquidityChanges[1]);
                         }
                     }
                     // console.log("Changes should be zero, theyre " + currentChanges[0].toString() + ", " + currentChanges[1].toString());
@@ -1032,6 +1049,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     changes[1] = changes[1].add(currentChanges[1]);
                 }
             }
+            this.expectedUniV3Changes[0] = this.expectedUniV3Changes[0].add(changes[0]);
+            this.expectedUniV3Changes[1] = this.expectedUniV3Changes[1].add(changes[1]);
+            this.vaultChanges[this.uniV3Vault.address] = [];
             return changes;
         }
 
@@ -1099,20 +1119,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         })
         describe("properties", () => {
             it.only("zero fees", async () => {
-                let targets = [this.erc20Vault, this.uniV3Vault];
+                let targets = [this.erc20Vault, this.aaveVault, this.uniV3Vault, this.yearnVault];
                 await this.setZeroFeesFixture({targets:targets});
                 
                 //DEPOSIT
                 let depositAmount = [
                     BigNumber.from(10).pow(6).mul(10),
-                    BigNumber.from(10).pow(18).mul(10),
+                    BigNumber.from(10).pow(15).mul(3),
                 ];
                 await this.subject
                     .connect(this.deployer)
                     .deposit(depositAmount, 0, []);
 
                 //RANDOM ACTIONS
-                for (let i = 0; i < 100; i++) {
+                for (let i = 0; i < 300; i++) {
                     await printVaults.call(this);
                     if (randomInt(2) == 0) {
                         await doRandomEnvironmentChange.call(this);
@@ -1122,7 +1142,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             continue;
                         }
                         await printPullAction.call(this, randomAction);
-                        await doPullAction.call(this, randomAction);
+                        await doPullAction.call(this, randomAction, false);
                     }
                 }
 
@@ -1133,7 +1153,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         this.targets[i]
                     );
                     await printPullAction.call(this, pullAction);
-                    await doPullAction.call(this, pullAction);
+                    await doPullAction.call(this, pullAction, true);
                 }
                 await this.uniV3Vault.connect(this.deployer).collectEarnings();
 
@@ -1193,8 +1213,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     );
                 }
                 
-                let expectedUniV3Changes = await countUniV3Changes.call(this);
-
+                
                 //EXPECT DEBIT EQUALS CREDIT
                 for (
                     let tokenIndex = 0;
@@ -1210,9 +1229,147 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
 
                     const {min: feesMinEstimation, max: feesMaxEstimation} = getMinMaxEstimates(expectedFees, 1, 100);
-                    let uniV3ChangeMinEstimation = expectedUniV3Changes[tokenIndex].sub(depositAmount[tokenIndex].div(1000))
+                    let uniV3ChangeMinEstimation = this.expectedUniV3Changes[tokenIndex].sub(depositAmount[tokenIndex].div(1000))
+                    uniV3ChangeMinEstimation = getMinMaxEstimates(uniV3ChangeMinEstimation, 1, 5).min;
+                    let uniV3ChangeMaxEstimation = this.expectedUniV3Changes[tokenIndex].add(depositAmount[tokenIndex].div(1000))
+                    uniV3ChangeMaxEstimation = getMinMaxEstimates(uniV3ChangeMaxEstimation, 1, 5).max;
+                    console.log(feesMinEstimation.add(uniV3ChangeMinEstimation).toString())
+                    console.log(actualChanges.toString())
+                    console.log(this.expectedUniV3Changes[tokenIndex].toString())
+                    console.log(feesMaxEstimation.add(uniV3ChangeMaxEstimation).toString())
+
+                    expect(actualChanges).to.be.gt(
+                        feesMinEstimation.add(uniV3ChangeMinEstimation)
+                    );
+                    expect(actualChanges).to.be.lt(
+                        feesMaxEstimation.add(uniV3ChangeMaxEstimation)
+                    );
+                }
+            });
+            it("testing bad case", async () => {
+
+                let targets = [this.erc20Vault, this.uniV3Vault];
+                await this.setZeroFeesFixture({targets:targets});
+                
+                //DEPOSIT
+                let depositAmount = [
+                    BigNumber.from(10).pow(6).mul(10),
+                    BigNumber.from(10).pow(15).mul(3),
+                ];
+                await this.subject
+                    .connect(this.deployer)
+                    .deposit(depositAmount, 0, []);
+
+                //RANDOM ACTIONS
+                for (let i = 0; i < 6; i++) {
+                    await printVaults.call(this);
+                    if (i % 2 == 1) {
+                        await doRandomEnvironmentChange.call(this);
+                    } else {
+                        let randomAction = await randomPullAction.call(this);
+                        while (randomAction == undefined) {
+                            randomAction = await randomPullAction.call(this);
+                        }
+                        if (i == 0) {
+                            randomAction.from = this.erc20Vault;
+                            randomAction.to = this.uniV3Vault;
+                            randomAction.amount = []
+                        } else if (i == 2) {
+                            
+                        } else if (i == 4) {
+                            
+                        }
+                        await printPullAction.call(this, randomAction);
+                        await doPullAction.call(this, randomAction, false);
+                    }
+                }
+
+                //PULL EVERYTHING TO ZERO
+                for (let i = 1; i < this.targets.length; i++) {
+                    let pullAction = await fullPullAction.call(
+                        this,
+                        this.targets[i]
+                    );
+                    await printPullAction.call(this, pullAction);
+                    await doPullAction.call(this, pullAction, true);
+                }
+                await this.uniV3Vault.connect(this.deployer).collectEarnings();
+
+                await printVaults.call(this);
+
+                
+                await this.uniV3Vault.connect(this.deployer).reclaimTokens(this.tokensAddresses);
+
+                //WITHDRAW
+                let lpAmount = await this.subject.balanceOf(
+                    this.deployer.address
+                );
+                let actualWithdraw = await this.subject
+                    .connect(this.deployer)
+                    .callStatic.withdraw(
+                        this.deployer.address,
+                        lpAmount,
+                        [0, 0],
+                        [
+                            randomBytes(4),
+                            this.optionsAave,
+                            this.optionsUniV3,
+                            this.optionsYearn,
+                        ]
+                    );
+                await this.subject
+                    .connect(this.deployer)
+                    .withdraw(
+                        this.deployer.address,
+                        lpAmount.mul(2),
+                        [0, 0],
+                        [
+                            randomBytes(4),
+                            this.optionsAave,
+                            this.optionsUniV3,
+                            this.optionsYearn,
+                        ]
+                    );
+                console.log(
+                    "Withdrawn: " +
+                        actualWithdraw[0].toString() +
+                        " " +
+                        actualWithdraw[1].toString()
+                );
+
+                //COUNT FEES FROM EVERY VAULT
+                let targetFees = [];
+                for (let target of this.targets) {
+                    let profit = await countFees.call(this, target.address);
+                    targetFees.push(profit);
+                    console.log(
+                        this.mapVaultsToNames[target.address] +
+                            " changes are " +
+                            profit[0].toString() +
+                            ", " +
+                            profit[1].toString()
+                    );
+                }
+                
+                
+                //EXPECT DEBIT EQUALS CREDIT
+                for (
+                    let tokenIndex = 0;
+                    tokenIndex < this.tokens.length;
+                    tokenIndex++
+                ) {
+                    let actualChanges = actualWithdraw[tokenIndex].sub(depositAmount[tokenIndex]);
+                    let expectedFees = BigNumber.from(0);
+                    for (let fees of targetFees) {
+                        expectedFees = expectedFees.add(
+                            fees[tokenIndex]
+                        );
+                    }
+
+                    const {min: feesMinEstimation, max: feesMaxEstimation} = getMinMaxEstimates(expectedFees, 1, 100);
+                    let uniV3ChangeMinEstimation = this.expectedUniV3Changes[tokenIndex].sub(depositAmount[tokenIndex].div(1000))
                     uniV3ChangeMinEstimation = getMinMaxEstimates(uniV3ChangeMinEstimation, 1, 10).min;
-                    let uniV3ChangeMaxEstimation = expectedUniV3Changes[tokenIndex].add(depositAmount[tokenIndex].div(1000))
+                    let uniV3ChangeMaxEstimation = this.expectedUniV3Changes[tokenIndex].add(depositAmount[tokenIndex].div(1000))
                     uniV3ChangeMaxEstimation = getMinMaxEstimates(uniV3ChangeMaxEstimation, 1, 10).max;
                     console.log(feesMinEstimation.add(uniV3ChangeMinEstimation).toString())
                     console.log(actualChanges.toString())
@@ -1702,169 +1859,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.uniV3Nft = await this.uniV3Vault.uniV3Nft();
                     let tvlResults = await printVaults.call(this);
                     await printLiquidityStats.call(this);
-                });
-
-                await printVaults.call(this);
-
-                let tvls = await this.subject.tvl();
-                console.log(
-                    "MIN TVLS: " +
-                        tvls[0][0].toString() +
-                        " " +
-                        tvls[0][1].toString()
-                );
-                console.log(
-                    "MAX TVLS: " +
-                        tvls[1][0].toString() +
-                        " " +
-                        tvls[1][1].toString()
-                );
-
-                let lpAmount = await this.subject.balanceOf(
-                    this.deployer.address
-                );
-                let actualWithdraw = await this.subject
-                    .connect(this.deployer)
-                    .callStatic.withdraw(
-                        this.deployer.address,
-                        lpAmount.mul(2),
-                        [0, 0],
-                        [
-                            randomBytes(4),
-                            this.optionsAave,
-                            this.optionsUniV3,
-                            this.optionsYearn,
-                        ]
-                    );
-                await this.subject
-                    .connect(this.deployer)
-                    .withdraw(
-                        this.deployer.address,
-                        lpAmount.mul(2),
-                        [0, 0],
-                        [
-                            randomBytes(4),
-                            this.optionsAave,
-                            this.optionsUniV3,
-                            this.optionsYearn,
-                        ]
-                    );
-                //unnecessarycheck
-                console.log(
-                    "Withdrawn: " +
-                        actualWithdraw[0].toString() +
-                        " " +
-                        actualWithdraw[1].toString()
-                );
-                await printVaults.call(this);
-                console.log(
-                    "Balance is " +
-                        ((await this.subject.balanceOf(this.deployer.address)) +
-                            " MLP")
-                );
-            });
-
-            it("testing univ3", async () => {
-
-                await this.setZeroFeesFixture({targets :[this.erc20Vault, this.uniV3Vault]});
-                let depositAmount = [
-                    BigNumber.from(10).pow(6).mul(3000).mul(200),
-                    BigNumber.from(10).pow(18).mul(200),
-                ];
-                await this.subject
-                    .connect(this.deployer)
-                    .deposit(depositAmount, 0, []);
-
-                await printVaults.call(this);
-
-                await pullToUniV3Vault.call(this, this.erc20Vault, {
-                    fee: this.uniV3PoolFee,
-                    tickLower: -887220,
-                    tickUpper: 887220,
-                    token0Amount: BigNumber.from(10).pow(6).mul(3000).mul(100),
-                    token1Amount: BigNumber.from(10).pow(18).mul(100),
-                });
-                let slot0 = await this.uniV3Pool.slot0();
-                console.log(
-                    "price is " +
-                        getRatioFromPriceX96(slot0.sqrtPriceX96).toString()
-                );
-
-                let tvlResults = await printVaults.call(this);
-                console.log("several big swaps");
-                let fees = [BigNumber.from(0), BigNumber.from(0)];
-                let lastliq = BigNumber.from(0);
-                for (let i = 0; i < 4; i++) {
-                    let curliq = await this.uniV3Pool.liquidity();
-                    if (!curliq.eq(lastliq)) {
-                        console.log("liquidity changed:");
-                        console.log(lastliq.sub(curliq).toString());
-                    }
-                    lastliq = curliq;
-                    console.log("current tick:");
-                    console.log((await this.uniV3Pool.slot0()).tick);
-                    console.log("current price:");
-                    console.log((await this.uniV3Pool.slot0()).sqrtPriceX96.toString());
-                    let swapAmount = BigNumber.from(10).pow(10).mul(50);
-                    // let swapFees = await getFeesFromSwap.call(
-                    //     this,
-                    //     recieveAmount,
-                    //     true
-                    // );
-                    // fees[0] = fees[0].add(swapFees[0]);
-                    // fees[1] = fees[1].add(swapFees[1]);
-                    let amountOut = await uniSwapTokensGivenInput(
-                        this.swapRouter,
-                        this.tokens,
-                        this.uniV3PoolFee,
-                        false,
-                        swapAmount
-                    );
-                    console.log("stats are:");
-                    await printLiquidityStats.call(this);
-                }
-                console.log("current tick:");
-                console.log((await this.uniV3Pool.slot0()).tick);
-                console.log("current price:");
-                console.log((await this.uniV3Pool.slot0()).sqrtPriceX96);
-
-                
-
-                await withSigner(this.subject.address, async (signer) => {
-                    await this.erc20Vault.pull(this.uniV3Vault.address, this.tokensAddresses, [BigNumber.from(10).pow(6).mul(3000).mul(100), BigNumber.from(10).pow(18).mul(100)], this.optionsUniV3)
-                    console.log("stats are:");
-                    await printLiquidityStats.call(this);
-                    let tvlPreFees = await printVaults.call(this);
-
-                    console.log("collect fees");
-                    await this.uniV3Vault.connect(signer).collectEarnings();
-
-                    let tvlPostFees = await printVaults.call(this);
-
-                    console.log("fees earned");
-                    let feesEarned = [
-                        tvlPostFees[0][0][0].sub(tvlPreFees[0][0][0]),
-                        tvlPostFees[0][0][1].sub(tvlPreFees[0][0][1]),
-                    ];
-                    console.log(
-                        feesEarned[0].toString() +
-                            " " +
-                            feesEarned[1].toString()
-                    );
-                    console.log(fees.toString());
-
-                    console.log("stats are:");
-                    await printLiquidityStats.call(this);
-
-                    console.log("return to zero");
-                    await this.uniV3Vault
-                        .connect(signer)
-                        .pull(
-                            this.erc20Vault.address,
-                            this.tokensAddresses,
-                            tvlResults[1][1],
-                            []
-                        );
                 });
 
                 await printVaults.call(this);
