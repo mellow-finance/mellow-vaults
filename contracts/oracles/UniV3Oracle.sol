@@ -70,7 +70,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             if (safetyIndicesSet & (1 << i) > 0) {
                 uint16 bfAvg = _obsForSafety(i);
                 if (observationCardinality <= bfAvg) {
-                    continue;
+                    break;
                 }
                 uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
                     uint256(observationCardinality);
@@ -78,8 +78,13 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                     uint256(observationCardinality);
                 int256 tickAverage;
                 {
-                    (uint32 timestamp0, int56 tickCumulative0, , ) = IUniswapV3Pool(pool).observations(obs0);
+                    (uint32 timestamp0, int56 tickCumulative0, , bool initialized0) = IUniswapV3Pool(pool).observations(
+                        obs0
+                    );
                     (uint32 timestamp1, int56 tickCumulative1, , ) = IUniswapV3Pool(pool).observations(obs1);
+                    if (!initialized0) {
+                        break;
+                    }
                     require(timestamp0 < timestamp1, ExceptionsLibrary.INVALID_VALUE);
                     uint256 timespan = timestamp1 - timestamp0;
                     tickAverage = (int256(tickCumulative1) - int256(tickCumulative0)) / int256(timespan);
