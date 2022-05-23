@@ -19,5 +19,4 @@ interface IUniswapV3PoolDerivedState {
         external
         view
         returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s);
-
 }
