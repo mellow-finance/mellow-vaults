@@ -285,7 +285,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             params?.observationsParams?.blockTimestamp ?? 0,
             params?.observationsParams?.tickCumulative ?? 0,
             params?.observationsParams?.secondsPerLiquidityCumulativeX128 ?? 0,
-            params?.observationsParams?.initialized ?? false,
+            params?.observationsParams?.initialized ?? true,
             params?.observationsParams?.blockTimestampLast ?? 0,
             params?.observationsParams?.tickCumulativeLast ?? 0
         );

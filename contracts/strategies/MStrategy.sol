@@ -200,7 +200,13 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             (params.tickMin <= params.tickMax) &&
                 (params.erc20MoneyRatioD <= DENOMINATOR) &&
-                (params.minErc20MoneyRatioDeviationD <= DENOMINATOR),
+                (params.minErc20MoneyRatioDeviationD <= DENOMINATOR) &&
+                (params.tickMin >= TickMath.MIN_TICK) &&
+                (params.tickMax <= TickMath.MAX_TICK) &&
+                (params.tickNeighborhood >= 0) &&
+                (params.tickNeighborhood <= TickMath.MAX_TICK) &&
+                (params.tickIncrease >= 0) &&
+                (params.tickIncrease <= TickMath.MAX_TICK),
             ExceptionsLibrary.INVARIANT
         );
 
@@ -254,7 +260,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint16 observationIndexLast = observationIndex >= oracleObservationDelta
             ? observationIndex - oracleObservationDelta
             : observationIndex + (observationCardinality - oracleObservationDelta);
-        (uint32 blockTimestampLast, int56 tickCumulativeLast, , ) = pool_.observations(observationIndexLast);
+        (uint32 blockTimestampLast, int56 tickCumulativeLast, , bool initializedLast) = pool_.observations(
+            observationIndexLast
+        );
+        require(initializedLast, ExceptionsLibrary.INVALID_VALUE);
 
         uint32 timespan = blockTimestamp - blockTimestampLast;
         averageTick = int24((int256(tickCumulative) - int256(tickCumulativeLast)) / int256(uint256(timespan)));
@@ -331,11 +340,17 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                     ratioParams.tickMin =
                         (tick < ratioParams.tickMin ? tick : ratioParams.tickMin) -
                         ratioParams.tickIncrease;
+                    if (ratioParams.tickMin < TickMath.MIN_TICK) {
+                        ratioParams.tickMin = TickMath.MIN_TICK;
+                    }
                 }
                 if (ratioParams.tickMax - ratioParams.tickNeighborhood < tick) {
                     ratioParams.tickMax =
                         (tick > ratioParams.tickMax ? tick : ratioParams.tickMax) +
                         ratioParams.tickIncrease;
+                    if (ratioParams.tickMax > TickMath.MAX_TICK) {
+                        ratioParams.tickMax = TickMath.MAX_TICK;
+                    }
                 }
 
                 require(
