@@ -220,6 +220,21 @@ export function ValidatorBehaviour<S extends Contract>(
                     });
                 });
             });
+            describe("when trying to commit when stagedValidatorParamsTimestamp is 0", async () => {
+                it(`reverts with ${Exceptions.INVALID_STATE}`, async () => {
+                    await withSigner(this.admin.address, async (signer) => {
+                        await sleep(
+                            await this.protocolGovernance.governanceDelay()
+                        );
+                        await this.subject
+                            .connect(signer)
+                            .commitValidatorParams();
+                        await expect(
+                            this.subject.connect(signer).commitValidatorParams()
+                        ).to.be.revertedWith(Exceptions.INVALID_STATE);
+                    });
+                });
+            });
         });
 
         describe("access control", () => {
