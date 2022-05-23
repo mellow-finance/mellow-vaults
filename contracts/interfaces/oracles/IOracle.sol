@@ -13,7 +13,7 @@ interface IOracle {
     /// 5 - safe - this is typically a chailink oracle
     /// @param token0 Reference to token0
     /// @param token1 Reference to token1
-    /// @param safetyIndicesSet Bitmask of safety indices that are allowed for the return prices
+    /// @param safetyIndicesSet Bitmask of safety indices that are allowed for the return prices. For set of safety indexes = { 1 }, safetyIndicesSet = 0x2
     /// @return pricesX96 Prices that satisfy safetyIndex and tokens
     /// @return safetyIndices Safety indices for those prices
     function price(

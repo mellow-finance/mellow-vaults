@@ -7,6 +7,7 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/oracles/IUniV3Oracle.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/OracleLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
@@ -17,10 +18,13 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
 
     /// @inheritdoc IUniV3Oracle
     uint16 public constant LOW_OBS = 10; // >= 2.5 min
+    uint32 public constant LOW_OBS_SECONDS_AGO = 150; // 2.5 min
     /// @inheritdoc IUniV3Oracle
     uint16 public constant MID_OBS = 30; // >= 7.5 min
+    uint32 public constant MID_OBS_SECONDS_AGO = 450; // 7.5 min
     /// @inheritdoc IUniV3Oracle
     uint16 public constant HIGH_OBS = 100; // >= 30 min
+    uint32 public constant HIGH_OBS_SECONDS_AGO = 6000; // 30 min
 
     /// @inheritdoc IUniV3Oracle
     IUniswapV3Factory public immutable factory;
@@ -72,24 +76,9 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                 if (observationCardinality <= bfAvg) {
                     break;
                 }
-                uint256 obs1 = (uint256(observationIndex) + uint256(observationCardinality) - 1) %
-                    uint256(observationCardinality);
-                uint256 obs0 = (uint256(observationIndex) + uint256(observationCardinality) - bfAvg) %
-                    uint256(observationCardinality);
-                int256 tickAverage;
-                {
-                    (uint32 timestamp0, int56 tickCumulative0, , bool initialized0) = IUniswapV3Pool(pool).observations(
-                        obs0
-                    );
-                    (uint32 timestamp1, int56 tickCumulative1, , ) = IUniswapV3Pool(pool).observations(obs1);
-                    if (!initialized0) {
-                        break;
-                    }
-                    require(timestamp0 < timestamp1, ExceptionsLibrary.INVALID_VALUE);
-                    uint256 timespan = timestamp1 - timestamp0;
-                    tickAverage = (int256(tickCumulative1) - int256(tickCumulative0)) / int256(timespan);
-                }
-                sqrtPricesX96[len] = TickMath.getSqrtRatioAtTick(int24(tickAverage));
+                uint32 observationTimeDelta = _obsTimeForSafety(i);
+                (int24 tickAverage, ) = OracleLibrary.consult(address(pool), observationTimeDelta);
+                sqrtPricesX96[len] = TickMath.getSqrtRatioAtTick(tickAverage);
                 safetyIndices[len] = i;
                 len += 1;
             }
@@ -140,6 +129,17 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         }
     }
 
+    function _obsTimeForSafety(uint256 safety) internal pure returns (uint32) {
+        if (safety == 2) {
+            return LOW_OBS_SECONDS_AGO;
+        } else if (safety == 3) {
+            return MID_OBS_SECONDS_AGO;
+        } else {
+            require(safety == 4, ExceptionsLibrary.INVALID_VALUE);
+            return HIGH_OBS_SECONDS_AGO;
+        }
+    }
+
     function _addUniV3Pools(IUniswapV3Pool[] memory pools) internal {
         IUniswapV3Pool[] memory replaced = new IUniswapV3Pool[](pools.length);
         IUniswapV3Pool[] memory added = new IUniswapV3Pool[](pools.length);
@@ -155,7 +155,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
                 replaced[j] = currentPool;
                 j += 1;
             } else {
-                added[k] = currentPool;
+                added[k] = pool;
                 k += 1;
             }
             poolsIndex[token0][token1] = pool;
