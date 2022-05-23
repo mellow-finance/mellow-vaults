@@ -94,6 +94,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         for (uint256 i = 0; i < tvlsLength; ++i) {
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
         }
+        _lastTvlUpdateTimestamp = block.timestamp;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

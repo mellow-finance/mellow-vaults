@@ -6,6 +6,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./Validator.sol";
 
+// @notice Validator allowing setPreSignature call with any params for cowswap
 contract CowswapValidator is ContractMeta, Validator {
     bytes4 public constant PRE_SIGNATURE_SELECTOR = 0xec6cb13f;
 
@@ -13,7 +14,7 @@ contract CowswapValidator is ContractMeta, Validator {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    // @inhericdoc IValidator
+    // @inheritdoc IValidator
     function validate(
         address,
         address,
