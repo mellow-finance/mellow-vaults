@@ -282,7 +282,7 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
                     this.weth.address,
                     this.usdc.address,
                     16,
-                    0
+                    1
                 );
             });
         });
