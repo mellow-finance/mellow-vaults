@@ -1438,7 +1438,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
         });
     });
 
-    describe.only("#getAverageTick", () => {
+    describe("#getAverageTick", () => {
         it("returns average UniswapV3Pool price tick", async () => {
             let params: DeployMockParams = {
                 slot0Params: {

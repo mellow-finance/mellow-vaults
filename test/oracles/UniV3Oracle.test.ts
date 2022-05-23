@@ -159,16 +159,11 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
             await poolUsdcWeth.slot0();
         var correctPricesX96: BigNumber[] = [];
         var correctSafetyIndexes: BigNumber[] = [];
-        const avgs: number[] = [
-            await this.subject.LOW_OBS(),
-            await this.subject.MID_OBS(),
-            await this.subject.HIGH_OBS(),
-        ];
 
         const timeDeltas: number[] = [
-            await this.subject.LOW_OBS_SECONDS_AGO(),
-            await this.subject.MID_OBS_SECONDS_AGO(),
-            await this.subject.HIGH_OBS_SECONDS_AGO(),
+            await this.subject.LOW_OBS_DELTA(),
+            await this.subject.MID_OBS_DELTA(),
+            await this.subject.HIGH_OBS_DELTA(),
         ];
 
         if (((safetyIndexes >> 1) & 1) > 0) {
@@ -180,10 +175,7 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
             if (((safetyIndexes >> i) & 1) == 0) {
                 continue;
             }
-            const bfAvg = avgs[i - 2];
-            if (observationCardinality < bfAvg) {
-                continue;
-            }
+
             const timeDelta = timeDeltas[i - 2];
             const { tickCumulatives } = await poolUsdcWeth.observe([
                 timeDelta,

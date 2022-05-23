@@ -17,14 +17,11 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @inheritdoc IUniV3Oracle
-    uint16 public constant LOW_OBS = 10; // >= 2.5 min
-    uint32 public constant LOW_OBS_SECONDS_AGO = 150; // 2.5 min
+    uint32 public constant LOW_OBS_DELTA = 150; // 2.5 min
     /// @inheritdoc IUniV3Oracle
-    uint16 public constant MID_OBS = 30; // >= 7.5 min
-    uint32 public constant MID_OBS_SECONDS_AGO = 450; // 7.5 min
+    uint32 public constant MID_OBS_DELTA = 450; // 7.5 min
     /// @inheritdoc IUniV3Oracle
-    uint16 public constant HIGH_OBS = 100; // >= 30 min
-    uint32 public constant HIGH_OBS_SECONDS_AGO = 6000; // 30 min
+    uint32 public constant HIGH_OBS_DELTA = 6000; // 30 min
 
     /// @inheritdoc IUniV3Oracle
     IUniswapV3Factory public immutable factory;
@@ -62,9 +59,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         pricesX96 = new uint256[](4);
         safetyIndices = new uint256[](4);
         uint256 len = 0;
-        (uint256 spotSqrtPriceX96, , uint16 observationIndex, uint16 observationCardinality, , , ) = IUniswapV3Pool(
-            pool
-        ).slot0();
+        (uint256 spotSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
         if (safetyIndicesSet & 0x2 > 0) {
             sqrtPricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
@@ -72,10 +67,6 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         }
         for (uint256 i = 2; i < 5; i++) {
             if (safetyIndicesSet & (1 << i) > 0) {
-                uint16 bfAvg = _obsForSafety(i);
-                if (observationCardinality <= bfAvg) {
-                    break;
-                }
                 uint32 observationTimeDelta = _obsTimeForSafety(i);
                 (int24 tickAverage, ) = OracleLibrary.consult(address(pool), observationTimeDelta);
                 sqrtPricesX96[len] = TickMath.getSqrtRatioAtTick(tickAverage);
@@ -118,25 +109,14 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         return bytes32("1.0.0");
     }
 
-    function _obsForSafety(uint256 safety) internal pure returns (uint16) {
-        if (safety == 2) {
-            return LOW_OBS;
-        } else if (safety == 3) {
-            return MID_OBS;
-        } else {
-            require(safety == 4, ExceptionsLibrary.INVALID_VALUE);
-            return HIGH_OBS;
-        }
-    }
-
     function _obsTimeForSafety(uint256 safety) internal pure returns (uint32) {
         if (safety == 2) {
-            return LOW_OBS_SECONDS_AGO;
+            return LOW_OBS_DELTA;
         } else if (safety == 3) {
-            return MID_OBS_SECONDS_AGO;
+            return MID_OBS_DELTA;
         } else {
             require(safety == 4, ExceptionsLibrary.INVALID_VALUE);
-            return HIGH_OBS_SECONDS_AGO;
+            return HIGH_OBS_DELTA;
         }
     }
 

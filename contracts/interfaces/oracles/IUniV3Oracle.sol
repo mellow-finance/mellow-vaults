@@ -9,14 +9,14 @@ interface IUniV3Oracle is IOracle {
     /// @notice Reference to UniV3 factory
     function factory() external view returns (IUniswapV3Factory);
 
-    /// @notice The number of UniV3 observations for oracle safety index 2 twap
-    function LOW_OBS() external view returns (uint16);
+    /// @notice The number of seconds for time delta between observations for oracle safety index 2 twap
+    function LOW_OBS_DELTA() external view returns (uint32);
 
-    /// @notice The number of UniV3 observations for oracle safety index 3 twap
-    function MID_OBS() external view returns (uint16);
+    /// @notice The number of seconds for time delta between observations for oracle safety index 3 twap
+    function MID_OBS_DELTA() external view returns (uint32);
 
-    /// @notice The number of UniV3 observations for oracle safety index 4 twap
-    function HIGH_OBS() external view returns (uint16);
+    /// @notice The number of seconds for time delta between observations for oracle safety index 4 twap
+    function HIGH_OBS_DELTA() external view returns (uint32);
 
     /// @notice Available UniV3 pools for tokens
     /// @param token0 First ERC20 token
