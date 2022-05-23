@@ -38,6 +38,7 @@ jobs:
           path: |
             ~/.solcx
             ~/.vvm
+            ~/cache
           key: compiler-cache
 
       - name: Install yarn dependencies
