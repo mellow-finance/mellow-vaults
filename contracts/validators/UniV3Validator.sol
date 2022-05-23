@@ -78,9 +78,10 @@ contract UniV3Validator is ContractMeta, Validator {
         uint24 fee;
         uint256 feeMask = (1 << 24) - 1;
         require(recipient == address(vault), ExceptionsLibrary.INVALID_TARGET);
+        // the sample UniV3 path structure is (DAI address,DAI-USDC fee, USDC, USDC-WETH fee, WETH)
+        // addresses are 20 bytes, fees are 3 bytes
+        require(((path.length + 3) % 23 == 0) && (path.length >= 43), ExceptionsLibrary.INVALID_LENGTH);
         while (path.length - i > 20) {
-            // the sample UniV3 path structure is (DAI address,DAI-USDC fee, USDC, USDC-WETH fee, WETH)
-            // addresses are 20 bytes, fees are 3 bytes
             assembly {
                 let o := add(add(path, 0x20), i)
                 let d := mload(o)
