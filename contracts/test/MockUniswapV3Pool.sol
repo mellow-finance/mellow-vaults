@@ -195,9 +195,21 @@ contract MockUniswapV3Pool is IUniswapV3Pool {
         initialized = observationsParams.initialized;
     }
 
-    function observe(uint32[] calldata secondsAgos)
+    int56 observeCumulativeTick_;
+
+    function setObserveTick(int56 tick) external {
+        observeCumulativeTick_ = tick;
+    }
+
+    function observe(uint32[] calldata)
         external
         view
         returns (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s)
-    {}
+    {
+        tickCumulatives = new int56[](2);
+        tickCumulatives[0] = observeCumulativeTick_;
+        tickCumulatives[1] = observeCumulativeTick_ * 2;
+        secondsPerLiquidityCumulativeX128s = new uint160[](2);
+        secondsPerLiquidityCumulativeX128s[1] = 1;
+    }
 }
