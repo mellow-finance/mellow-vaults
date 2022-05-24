@@ -21,7 +21,7 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     /// @inheritdoc IUniV3Oracle
     uint32 public constant MID_OBS_DELTA = 450; // 7.5 min
     /// @inheritdoc IUniV3Oracle
-    uint32 public constant HIGH_OBS_DELTA = 6000; // 30 min
+    uint32 public constant HIGH_OBS_DELTA = 1800; // 30 min
 
     /// @inheritdoc IUniV3Oracle
     IUniswapV3Factory public immutable factory;
@@ -59,8 +59,8 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         pricesX96 = new uint256[](4);
         safetyIndices = new uint256[](4);
         uint256 len = 0;
-        (uint256 spotSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
         if (safetyIndicesSet & 0x2 > 0) {
+            (uint256 spotSqrtPriceX96, , , , , , ) = IUniswapV3Pool(pool).slot0();
             sqrtPricesX96[len] = spotSqrtPriceX96;
             safetyIndices[len] = 1;
             len += 1;
@@ -68,7 +68,10 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
         for (uint256 i = 2; i < 5; i++) {
             if (safetyIndicesSet & (1 << i) > 0) {
                 uint32 observationTimeDelta = _obsTimeForSafety(i);
-                (int24 tickAverage, ) = OracleLibrary.consult(address(pool), observationTimeDelta);
+                (int24 tickAverage, , bool withFail) = OracleLibrary.consult(address(pool), observationTimeDelta);
+                if (withFail) {
+                    break;
+                }
                 sqrtPricesX96[len] = TickMath.getSqrtRatioAtTick(tickAverage);
                 safetyIndices[len] = i;
                 len += 1;

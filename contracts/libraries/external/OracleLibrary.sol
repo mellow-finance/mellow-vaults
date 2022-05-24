@@ -13,10 +13,15 @@ library OracleLibrary {
     /// @param secondsAgo Number of seconds in the past from which to calculate the time-weighted means
     /// @return arithmeticMeanTick The arithmetic mean tick from (block.timestamp - secondsAgo) to block.timestamp
     /// @return harmonicMeanLiquidity The harmonic mean liquidity from (block.timestamp - secondsAgo) to block.timestamp
+    /// @return withFail Flag that true if function observe of IUniswapV3Pool reverts with some error
     function consult(address pool, uint32 secondsAgo)
         internal
         view
-        returns (int24 arithmeticMeanTick, uint128 harmonicMeanLiquidity)
+        returns (
+            int24 arithmeticMeanTick,
+            uint128 harmonicMeanLiquidity,
+            bool withFail
+        )
     {
         require(secondsAgo != 0, "BP");
 
@@ -24,19 +29,24 @@ library OracleLibrary {
         secondsAgos[0] = secondsAgo;
         secondsAgos[1] = 0;
 
-        (int56[] memory tickCumulatives, uint160[] memory secondsPerLiquidityCumulativeX128s) = IUniswapV3Pool(pool)
-            .observe(secondsAgos);
+        try IUniswapV3Pool(pool).observe(secondsAgos) returns (
+            int56[] memory tickCumulatives,
+            uint160[] memory secondsPerLiquidityCumulativeX128s
+        ) {
+            int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
+            uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[1] -
+                secondsPerLiquidityCumulativeX128s[0];
 
-        int56 tickCumulativesDelta = tickCumulatives[1] - tickCumulatives[0];
-        uint160 secondsPerLiquidityCumulativesDelta = secondsPerLiquidityCumulativeX128s[1] -
-            secondsPerLiquidityCumulativeX128s[0];
+            arithmeticMeanTick = int24(tickCumulativesDelta / int56(uint56(secondsAgo)));
+            // Always round to negative infinity
+            if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(uint56(secondsAgo)) != 0))
+                arithmeticMeanTick--;
 
-        arithmeticMeanTick = int24(tickCumulativesDelta / int56(uint56(secondsAgo)));
-        // Always round to negative infinity
-        if (tickCumulativesDelta < 0 && (tickCumulativesDelta % int56(uint56(secondsAgo)) != 0)) arithmeticMeanTick--;
-
-        // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity doesn't overflow uint128
-        uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
-        harmonicMeanLiquidity = uint128(secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
+            // We are multiplying here instead of shifting to ensure that harmonicMeanLiquidity doesn't overflow uint128
+            uint192 secondsAgoX160 = uint192(secondsAgo) * type(uint160).max;
+            harmonicMeanLiquidity = uint128(secondsAgoX160 / (uint192(secondsPerLiquidityCumulativesDelta) << 32));
+        } catch {
+            return (0, 0, true);
+        }
     }
 }

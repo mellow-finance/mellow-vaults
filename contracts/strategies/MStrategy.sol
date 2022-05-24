@@ -254,7 +254,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick, int24 tickDeviation) {
         uint32 oracleObservationDelta = oracleParams.oracleObservationDelta;
         (, int24 tick, , , , , ) = pool_.slot0();
-        (averageTick, ) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        bool withFail = false;
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        require(!withFail, ExceptionsLibrary.INVALID_VALUE);
         tickDeviation = tick - averageTick;
     }
 
