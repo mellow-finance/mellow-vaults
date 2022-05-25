@@ -911,6 +911,11 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     tickIncrease: 180,
                 };
 
+                await mockUniswapV3Pool.setObserveTick(
+                    (Number(ratioParams.tickMax) + 500) *
+                        Number(oracleParams.oracleObservationDelta)
+                );
+
                 await highRatioMStrategy
                     .connect(this.mStrategyAdmin)
                     .setRatioParams(ratioParams);
@@ -1032,6 +1037,11 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     tickNeighborhood: 60,
                     tickIncrease: 180,
                 };
+
+                await mockUniswapV3Pool.setObserveTick(
+                    (Number(ratioParams.tickMax) + 500) *
+                        Number(oracleParams.oracleObservationDelta)
+                );
 
                 await lowRatioMStrategy
                     .connect(this.mStrategyAdmin)
@@ -1209,7 +1219,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickCumulativeLast: 198240,
                         },
                     };
-                    let { mStrategy } = await deployMockContracts(params);
+                    let { mStrategy, mockUniswapV3Pool } =
+                        await deployMockContracts(params);
                     const address = await mStrategy.callStatic.createStrategy(
                         this.params.tokens,
                         this.params.erc20Vault,
@@ -1253,6 +1264,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .connect(this.mStrategyAdmin)
                         .setOracleParams(oracleParams);
 
+                    await mockUniswapV3Pool.setObserveTick(
+                        (Number(ratioParams.tickMax) + 500) *
+                            Number(oracleParams.oracleObservationDelta)
+                    );
                     let res = await subject.callStatic.getAverageTick();
 
                     await expect(
@@ -1283,7 +1298,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickCumulativeLast: 198240,
                         },
                     };
-                    let { mStrategy } = await deployMockContracts(params);
+                    let { mStrategy, mockUniswapV3Pool } =
+                        await deployMockContracts(params);
                     const address = await mStrategy.callStatic.createStrategy(
                         this.params.tokens,
                         this.params.erc20Vault,
@@ -1319,6 +1335,11 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickNeighborhood: 10,
                         tickIncrease: 180,
                     };
+
+                    await mockUniswapV3Pool.setObserveTick(
+                        (Number(ratioParams.tickMin) - 500) *
+                            Number(oracleParams.oracleObservationDelta)
+                    );
 
                     await subject
                         .connect(this.mStrategyAdmin)
@@ -1357,7 +1378,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                             tickCumulativeLast: 198240,
                         },
                     };
-                    let { mStrategy } = await deployMockContracts(params);
+                    let { mStrategy, mockUniswapV3Pool } =
+                        await deployMockContracts(params);
                     const address = await mStrategy.callStatic.createStrategy(
                         this.params.tokens,
                         this.params.erc20Vault,
@@ -1393,6 +1415,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickNeighborhood: 10 ** 4,
                         tickIncrease: 180,
                     };
+
+                    await mockUniswapV3Pool.setObserveTick(
+                        197000 * Number(oracleParams.oracleObservationDelta)
+                    );
 
                     await subject
                         .connect(this.mStrategyAdmin)
@@ -1430,7 +1456,9 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     tickCumulativeLast: 198240,
                 },
             };
-            let { mStrategy } = await deployMockContracts(params);
+            let { mStrategy, mockUniswapV3Pool } = await deployMockContracts(
+                params
+            );
             const address = await mStrategy.callStatic.createStrategy(
                 this.params.tokens,
                 this.params.erc20Vault,
@@ -1461,6 +1489,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 tickNeighborhood: 60,
                 tickIncrease: 180,
             };
+            await mockUniswapV3Pool.setObserveTick(
+                Number(ratioParams.tickMax) *
+                    Number(oracleParams.oracleObservationDelta)
+            );
 
             await subject
                 .connect(this.mStrategyAdmin)
@@ -1470,11 +1502,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 .setOracleParams(oracleParams);
 
             let res = await subject.callStatic.getAverageTick();
-            let expectedAverageTick =
-                (Number(params?.observationsParams?.tickCumulative) -
-                    Number(params?.observationsParams?.tickCumulativeLast)) /
-                (Number(params?.observationsParams?.blockTimestamp) -
-                    Number(params?.observationsParams?.blockTimestampLast));
+            let expectedAverageTick = Number(ratioParams.tickMax);
 
             let expectedTickDeviation =
                 Number(params?.slot0Params?.tick) - expectedAverageTick;
@@ -1483,67 +1511,6 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             expect(res.deviation).to.be.eq(expectedTickDeviation);
 
             await expect(subject.getAverageTick()).to.not.be.reverted;
-        });
-
-        describe("edge cases", () => {
-            describe("when observationCardinality <= oracleObservationDelta", () => {
-                it(`reverts with ${Exceptions.LIMIT_UNDERFLOW}`, async () => {
-                    let params: DeployMockParams = {
-                        slot0Params: {
-                            tick: 198240,
-                            observationIndex: 10,
-                            observationCardinality: 100,
-                        },
-                    };
-                    let { mStrategy } = await deployMockContracts(params);
-                    const address = await mStrategy.callStatic.createStrategy(
-                        this.params.tokens,
-                        this.params.erc20Vault,
-                        this.params.moneyVault,
-                        this.params.fee,
-                        this.params.admin
-                    );
-                    await mStrategy.createStrategy(
-                        this.params.tokens,
-                        this.params.erc20Vault,
-                        this.params.moneyVault,
-                        this.params.fee,
-                        this.params.admin
-                    );
-                    let subject = await ethers.getContractAt(
-                        "MStrategy",
-                        address
-                    );
-
-                    const oracleParams: OracleParamsStruct = {
-                        oracleObservationDelta: 101,
-                        maxTickDeviation: 50,
-                        maxSlippageD: Math.round(0.1 * 10 ** 9),
-                    };
-                    const ratioParams: RatioParamsStruct = {
-                        tickMin: 198240 - 5000,
-                        tickMax: 198240 + 5000,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
-                            0.01 * 10 ** 9
-                        ),
-                        minTickRebalanceThreshold: 180,
-                        tickNeighborhood: 60,
-                        tickIncrease: 180,
-                    };
-
-                    await subject
-                        .connect(this.mStrategyAdmin)
-                        .setRatioParams(ratioParams);
-                    await subject
-                        .connect(this.mStrategyAdmin)
-                        .setOracleParams(oracleParams);
-
-                    await expect(
-                        subject.connect(this.mStrategyAdmin).rebalance()
-                    ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
-                });
-            });
         });
     });
 

@@ -13,6 +13,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/OracleLibrary.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/ContractMeta.sol";
 
@@ -37,7 +38,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     // MUTABLE PARAMS
 
     struct OracleParams {
-        uint16 oracleObservationDelta;
+        uint32 oracleObservationDelta;
         uint24 maxTickDeviation;
         uint256 maxSlippageD;
     }
@@ -251,22 +252,11 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick, int24 tickDeviation) {
-        uint16 oracleObservationDelta = oracleParams.oracleObservationDelta;
-
-        (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = pool_.slot0();
-        require(observationCardinality > oracleObservationDelta, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        (uint32 blockTimestamp, int56 tickCumulative, , ) = pool_.observations(observationIndex);
-
-        uint16 observationIndexLast = observationIndex >= oracleObservationDelta
-            ? observationIndex - oracleObservationDelta
-            : observationIndex + (observationCardinality - oracleObservationDelta);
-        (uint32 blockTimestampLast, int56 tickCumulativeLast, , bool initializedLast) = pool_.observations(
-            observationIndexLast
-        );
-        require(initializedLast, ExceptionsLibrary.INVALID_VALUE);
-
-        uint32 timespan = blockTimestamp - blockTimestampLast;
-        averageTick = int24((int256(tickCumulative) - int256(tickCumulativeLast)) / int256(uint256(timespan)));
+        uint32 oracleObservationDelta = oracleParams.oracleObservationDelta;
+        (, int24 tick, , , , , ) = pool_.slot0();
+        bool withFail = false;
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        require(!withFail, ExceptionsLibrary.INVALID_VALUE);
         tickDeviation = tick - averageTick;
     }
 
