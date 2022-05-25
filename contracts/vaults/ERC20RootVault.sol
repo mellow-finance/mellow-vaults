@@ -130,7 +130,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
 
         if (delayedStrategyParams.depositCallbackAddress != address(0)) {
-            ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback();
+            try ILpCallback(delayedStrategyParams.depositCallbackAddress).depositCallback() {} catch Error(
+                string memory reason
+            ) {
+                emit DepositCallbackLog(reason);
+            } catch {
+                emit DepositCallbackLog("callback failed without reason");
+            }
         }
 
         emit Deposit(msg.sender, _vaultTokens, actualTokenAmounts, lpAmount);
@@ -460,6 +466,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     /// @param actualTokenAmounts Token amounts withdrawn
     /// @param lpTokenBurned LP tokens burned from the liquidity provider
     event Withdraw(address indexed from, address[] tokens, uint256[] actualTokenAmounts, uint256 lpTokenBurned);
+
+    /// @notice Emitted when callback in deposit failed
+    /// @param reason Error reason
+    event DepositCallbackLog(string reason);
 
     /// @notice Emitted when callback in withdraw failed
     /// @param reason Error reason
