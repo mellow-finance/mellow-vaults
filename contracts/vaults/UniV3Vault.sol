@@ -226,21 +226,27 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         Options memory opts = _parseOptions(options);
         Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
         Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-        (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
-            INonfungiblePositionManager.IncreaseLiquidityParams({
-                tokenId: uniV3Nft,
-                amount0Desired: amounts.a0,
-                amount1Desired: amounts.a1,
-                amount0Min: minAmounts.a0,
-                amount1Min: minAmounts.a1,
-                deadline: opts.deadline
-            })
-        );
+        try
+            _positionManager.increaseLiquidity(
+                INonfungiblePositionManager.IncreaseLiquidityParams({
+                    tokenId: uniV3Nft,
+                    amount0Desired: amounts.a0,
+                    amount1Desired: amounts.a1,
+                    amount0Min: minAmounts.a0,
+                    amount1Min: minAmounts.a1,
+                    deadline: opts.deadline
+                })
+            )
+        returns (uint128, uint256 amount0, uint256 amount1) {
+            actualTokenAmounts[0] = amount0;
+            actualTokenAmounts[1] = amount1;
+        } catch {
+            actualTokenAmounts[0] = 0;
+            actualTokenAmounts[1] = 0;
+        }
         for (uint256 i = 0; i < tokens.length; ++i) {
             IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
         }
-        actualTokenAmounts[0] = amount0;
-        actualTokenAmounts[1] = amount1;
     }
 
     function _pull(
