@@ -212,7 +212,7 @@ async function setUnitPrices(
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
-    const { admin, weth, wbtc, usdc } =
+    const { admin, weth, wbtc, usdc, wsteth } =
         await hre.getNamedAccounts();
     const txWETH =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
@@ -220,6 +220,14 @@ async function setUnitPrices(
             WETH_PRICE
         );
     txDatas.push(txWETH.data);
+    if (wsteth) {
+        const txWSTETH =
+            await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
+                wsteth,
+                WETH_PRICE
+            );
+        txDatas.push(txWSTETH.data);
+    }
     const txWBTC =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
             wbtc,

@@ -96,7 +96,7 @@ const setupStrategy = async (
 
     const oracleParams = {
         oracleObservationDelta: 15,
-        maxTickDeviation: 50,
+        maxTickDeviation: 100,
         maxSlippageD: BigNumber.from(10).pow(8),
     };
     const ratioParams = {
