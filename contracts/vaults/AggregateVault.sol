@@ -52,10 +52,16 @@ contract AggregateVault is IAggregateVault, Vault {
         for (uint256 i = 0; i < _subvaultNfts.length; ++i) {
             IIntegrationVault vault = IIntegrationVault(registry.vaultForNft(_subvaultNfts[i]));
             (uint256[] memory sMinTokenAmounts, uint256[] memory sMaxTokenAmounts) = vault.tvl();
-            for (uint256 j = 0; j < _vaultTokens.length; ++j) {
-                minTokenAmounts[j] += sMinTokenAmounts[j];
-                maxTokenAmounts[j] += sMaxTokenAmounts[j];
+            address[] memory subvaultTokens = vault.vaultTokens();
+            uint256 index = 0;
+            for (uint256 j = 0; j < _vaultTokens.length && index < subvaultTokens.length; ++j) {
+                if (subvaultTokens[index] == _vaultTokens[j]) {
+                    minTokenAmounts[j] += sMinTokenAmounts[index];
+                    maxTokenAmounts[j] += sMaxTokenAmounts[index];
+                    ++index;
+                }
             }
+            require(index == subvaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
         }
     }
 
@@ -86,10 +92,24 @@ contract AggregateVault is IAggregateVault, Vault {
                 ExceptionsLibrary.INVALID_INTERFACE
             );
             address[] memory vaultTokens = IIntegrationVault(vault).vaultTokens();
-            require(vaultTokens_.length == vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
-            for (uint256 tokenId = 0; tokenId < vaultTokens.length; ++tokenId) {
-                require(vaultTokens_[tokenId] == vaultTokens[tokenId], ExceptionsLibrary.INVALID_TOKEN);
+            if (i == 0) {
+                // The zero-vault must have the same tokens as AggregateVault
+                require(vaultTokens_.length == vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
+            } else {
+                // All other vaults must have a subset of AggregateVault tokens
+                require(vaultTokens.length > 0, ExceptionsLibrary.EMPTY_LIST);
             }
+            uint256 subvaultTokenId = 0;
+            for (
+                uint256 tokenId = 0;
+                tokenId < vaultTokens_.length && subvaultTokenId < vaultTokens.length;
+                ++tokenId
+            ) {
+                if (vaultTokens[subvaultTokenId] == vaultTokens_[tokenId]) {
+                    subvaultTokenId++;
+                }
+            }
+            require(subvaultTokenId == vaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
             vaultRegistry.approve(strategy_, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
             _subvaultNftsIndex[subvaultNft] = i + 1;
