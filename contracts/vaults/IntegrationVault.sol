@@ -131,8 +131,10 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVaultRegistry registry = params.registry;
         address owner = registry.ownerOf(nft_);
         address to = _root(registry, nft_, owner).subvaultAt(0);
-        require(to != address(this), ExceptionsLibrary.INVARIANT);
         actualTokenAmounts = new uint256[](tokens.length);
+        if (to == address(this)) {
+            return actualTokenAmounts;
+        }
         for (uint256 i = 0; i < tokens.length; ++i) {
             if (
                 _isReclaimForbidden(tokens[i]) || governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER)
