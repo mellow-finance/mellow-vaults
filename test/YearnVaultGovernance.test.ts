@@ -332,7 +332,6 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
                     });
                 });
             });
-
         });
 
         vaultGovernanceBehavior.call(this, {
