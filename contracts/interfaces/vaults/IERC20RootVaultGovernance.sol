@@ -14,7 +14,6 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @param performanceFee Performance fee for Strategist denominated in 10 ** 9
     /// @param depositCallbackAddress Address of callback function after deposit
     /// @param withdrawCallbackAddress Address of callback function after withdraw
-    /// @param rebalanceDeadline Deadline of rebalance at callback function
     struct DelayedStrategyParams {
         address strategyTreasury;
         address strategyPerformanceTreasury;
@@ -27,6 +26,7 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
 
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param managementFeeChargeDelay The minimal interval between management fee charges
+    /// @param oracle Oracle for getting token prices
     struct DelayedProtocolParams {
         uint256 managementFeeChargeDelay;
         IOracle oracle;
