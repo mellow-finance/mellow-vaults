@@ -333,17 +333,6 @@ contract<YearnVaultGovernance, DeployOptions, CustomContext>(
                 });
             });
 
-            describe("when yTokens already commited", () => {
-                it("reverts", async () => {
-                    await this.subject.connect(this.admin).commitYTokens();
-                    const otherAddress = randomAddress();
-                    await expect(
-                        this.subject
-                            .connect(this.admin)
-                            .setYTokenForToken(this.weth.address, otherAddress)
-                    ).to.be.revertedWith(Exceptions.FORBIDDEN);
-                });
-            });
         });
 
         vaultGovernanceBehavior.call(this, {
