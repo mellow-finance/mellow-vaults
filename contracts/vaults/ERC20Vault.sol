@@ -43,6 +43,11 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         actualTokenAmounts = new uint256[](tokens.length);
     }
 
+    // -------------------  INTERNAL, VIEW  -----------------------
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+        return false;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory)

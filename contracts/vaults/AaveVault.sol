@@ -87,6 +87,16 @@ contract AaveVault is IAaveVault, IntegrationVault {
         return data.aTokenAddress;
     }
 
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+        uint256 len = _aTokens.length;
+        for (uint256 i = 0; i < len; ++i) {
+            if (_aTokens[i] == token) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _updateTvls() private {

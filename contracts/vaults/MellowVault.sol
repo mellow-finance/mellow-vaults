@@ -46,6 +46,11 @@ contract MellowVault is IMellowVault, IntegrationVault {
         vault = vault_;
     }
 
+    // -------------------  INTERNAL, VIEW  -----------------------
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+        return false;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

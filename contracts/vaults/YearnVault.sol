@@ -72,6 +72,17 @@ contract YearnVault is IYearnVault, IntegrationVault {
         }
     }
 
+    // -------------------  INTERNAL, VIEW  -----------------------
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+        uint256 len = _yTokens.length;
+        for (uint256 i = 0; i < len; ++i) {
+            if (_yTokens[i] == token) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _push(uint256[] memory tokenAmounts, bytes memory)
@@ -80,6 +91,7 @@ contract YearnVault is IYearnVault, IntegrationVault {
         returns (uint256[] memory actualTokenAmounts)
     {
         address[] memory tokens = _vaultTokens;
+        actualTokenAmounts = tokenAmounts;
         for (uint256 i = 0; i < _yTokens.length; ++i) {
             if (tokenAmounts[i] == 0) {
                 continue;
@@ -88,10 +100,11 @@ contract YearnVault is IYearnVault, IntegrationVault {
             address token = tokens[i];
             IYearnProtocolVault yToken = IYearnProtocolVault(_yTokens[i]);
             IERC20(token).safeIncreaseAllowance(address(yToken), tokenAmounts[i]);
-            yToken.deposit(tokenAmounts[i], address(this));
+            try yToken.deposit(tokenAmounts[i], address(this)) returns (uint256) {} catch (bytes memory) {
+                actualTokenAmounts[i] = 0;
+            }
             IERC20(token).safeApprove(address(yToken), 0);
         }
-        actualTokenAmounts = tokenAmounts;
     }
 
     function _pull(
