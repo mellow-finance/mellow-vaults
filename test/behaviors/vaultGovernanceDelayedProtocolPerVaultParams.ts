@@ -275,14 +275,11 @@ export function delayedProtocolPerVaultParamsBehavior<P, S extends Contract, F>(
             });
             describe("when called with zero params", () => {
                 it("succeeds with zero params", async () => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stageDelayedProtocolPerVaultParams(nft, noneParams);
-                    const actualParams =
-                        await this.subject.stagedDelayedProtocolPerVaultParams(
-                            nft
-                        );
-                    expect(noneParams).to.be.equivalent(actualParams);
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolPerVaultParams(nft, noneParams)
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
             describe("when protocol fee is greater than MAX_PROTOCOL_FEE", () => {
