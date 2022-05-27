@@ -22,6 +22,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        require(delayedProtocolParams_.oracle != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
         MAX_PROTOCOL_FEE = (5 * CommonLibrary.DENOMINATOR) / 100;
         MAX_MANAGEMENT_FEE = (10 * CommonLibrary.DENOMINATOR) / 100;
@@ -178,6 +179,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
 
     /// @inheritdoc IERC20RootVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        require(params.oracle != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
