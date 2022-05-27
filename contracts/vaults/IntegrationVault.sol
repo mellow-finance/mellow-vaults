@@ -137,7 +137,8 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         }
         for (uint256 i = 0; i < tokens.length; ++i) {
             if (
-                _isReclaimForbidden(tokens[i]) || governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER)
+                _isReclaimForbidden(tokens[i]) ||
+                governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER)
             ) {
                 continue;
             }
