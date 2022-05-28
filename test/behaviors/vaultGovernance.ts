@@ -63,7 +63,7 @@ export function vaultGovernanceBehavior<
         defaultCreateVault,
         rootVaultGovernance,
         acceptNullifyStrategyParams,
-        acceptNullifyProtocolPerVaultParams
+        acceptNullifyProtocolPerVaultParams,
     }: {
         delayedStrategyParams?: Arbitrary<DSP>;
         strategyParams?: Arbitrary<SP>;
@@ -491,7 +491,11 @@ export function vaultGovernanceBehavior<
         delayedProtocolParamsBehavior.call(this as any, delayedProtocolParams);
     }
     if (delayedStrategyParams) {
-        delayedStrategyParamsBehavior.call(this as any, delayedStrategyParams, acceptNullifyStrategyParams);
+        delayedStrategyParamsBehavior.call(
+            this as any,
+            delayedStrategyParams,
+            acceptNullifyStrategyParams
+        );
     }
     if (delayedProtocolPerVaultParams) {
         delayedProtocolPerVaultParamsBehavior.call(

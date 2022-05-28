@@ -280,11 +280,13 @@ export function delayedProtocolPerVaultParamsBehavior<P, S extends Contract, F>(
                         await expect(
                             this.subject
                                 .connect(this.admin)
-                                .stageDelayedProtocolPerVaultParams(nft, noneParams)
+                                .stageDelayedProtocolPerVaultParams(
+                                    nft,
+                                    noneParams
+                                )
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
-                }
-                else {
+                } else {
                     it("succeeds with zero params", async () => {
                         await this.subject
                             .connect(this.admin)

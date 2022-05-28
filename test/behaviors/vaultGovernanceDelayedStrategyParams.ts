@@ -405,11 +405,13 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                         await expect(
                             this.subject
                                 .connect(this.admin)
-                                .stageDelayedStrategyParams(this.nft, noneParams)
+                                .stageDelayedStrategyParams(
+                                    this.nft,
+                                    noneParams
+                                )
                         ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     });
-                }
-                else {
+                } else {
                     it("succeeds with zero params", async () => {
                         await this.subject
                             .connect(this.admin)

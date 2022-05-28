@@ -218,10 +218,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
 
-
-        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(
-                uniV3Nft
-            );
+        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
         uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -243,7 +240,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             Options memory opts = _parseOptions(options);
             Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
             Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-           (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
+            (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
                 INonfungiblePositionManager.IncreaseLiquidityParams({
                     tokenId: uniV3Nft,
                     amount0Desired: amounts.a0,
@@ -260,7 +257,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             for (uint256 i = 0; i < tokens.length; ++i) {
                 IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
             }
-
         }
     }
 
