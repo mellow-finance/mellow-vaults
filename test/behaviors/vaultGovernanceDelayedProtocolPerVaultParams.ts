@@ -290,10 +290,13 @@ export function delayedProtocolPerVaultParamsBehavior<P, S extends Contract, F>(
                     it("succeeds with zero params", async () => {
                         await this.subject
                             .connect(this.admin)
-                            .stageDelayedStrategyParams(this.nft, noneParams);
+                            .stageDelayedProtocolPerVaultParams(
+                                nft,
+                                noneParams
+                            );
                         const actualParams =
-                            await this.subject.stagedDelayedStrategyParams(
-                                this.nft
+                            await this.subject.stagedDelayedProtocolPerVaultParams(
+                                nft
                             );
                         expect(noneParams).to.be.equivalent(actualParams);
                     });
