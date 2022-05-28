@@ -233,13 +233,6 @@ export function integrationVaultBehavior<S extends Contract>(
                         ).to.be.revertedWith(Exceptions.INIT);
                     });
                 });
-                describe("when passed never allowed token", () => {
-                    it(`reverts with ${Exceptions.INVALID_TOKEN}`, async () => {
-                        await expect(
-                            this.subject.reclaimTokens([randomAddress()])
-                        ).to.be.revertedWith(Exceptions.INVALID_TOKEN);
-                    });
-                });
             });
 
             describe("access control:", () => {
