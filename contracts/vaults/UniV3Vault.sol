@@ -218,16 +218,32 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         actualTokenAmounts = new uint256[](2);
         if (uniV3Nft == 0) return actualTokenAmounts;
 
-        address[] memory tokens = _vaultTokens;
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
-        }
 
-        Options memory opts = _parseOptions(options);
-        Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
-        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-        try
-            _positionManager.increaseLiquidity(
+        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(
+                uniV3Nft
+            );
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
+        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+
+        uint128 liquidity = LiquidityAmounts.getLiquidityForAmounts(
+            sqrtPriceX96,
+            sqrtPriceAX96,
+            sqrtPriceBX96,
+            tokenAmounts[0],
+            tokenAmounts[1]
+        );
+
+        if (liquidity != 0) {
+            address[] memory tokens = _vaultTokens;
+            for (uint256 i = 0; i < tokens.length; ++i) {
+                IERC20(tokens[i]).safeIncreaseAllowance(address(_positionManager), tokenAmounts[i]);
+            }
+
+            Options memory opts = _parseOptions(options);
+            Pair memory amounts = Pair({a0: tokenAmounts[0], a1: tokenAmounts[1]});
+            Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
+           (, uint256 amount0, uint256 amount1) = _positionManager.increaseLiquidity(
                 INonfungiblePositionManager.IncreaseLiquidityParams({
                     tokenId: uniV3Nft,
                     amount0Desired: amounts.a0,
@@ -236,16 +252,15 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                     amount1Min: minAmounts.a1,
                     deadline: opts.deadline
                 })
-            )
-        returns (uint128, uint256 amount0, uint256 amount1) {
+            );
+
             actualTokenAmounts[0] = amount0;
             actualTokenAmounts[1] = amount1;
-        } catch {
-            actualTokenAmounts[0] = 0;
-            actualTokenAmounts[1] = 0;
-        }
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
+
+            for (uint256 i = 0; i < tokens.length; ++i) {
+                IERC20(tokens[i]).safeApprove(address(_positionManager), 0);
+            }
+
         }
     }
 
