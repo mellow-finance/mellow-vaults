@@ -34,9 +34,8 @@ contract AggregateVault is IAggregateVault, Vault {
 
     /// @inheritdoc IVaultRoot
     function subvaultAt(uint256 index) external view returns (address) {
-        IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         uint256 subvaultNft = _subvaultNfts[index];
-        return registry.vaultForNft(subvaultNft);
+        return _vaultGovernance.internalParams().registry.vaultForNft(subvaultNft);
     }
 
     /// @inheritdoc IVault
@@ -47,21 +46,25 @@ contract AggregateVault is IAggregateVault, Vault {
         returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts)
     {
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
-        minTokenAmounts = new uint256[](_vaultTokens.length);
-        maxTokenAmounts = new uint256[](_vaultTokens.length);
+        address[] memory vaultTokens = _vaultTokens;
+        minTokenAmounts = new uint256[](vaultTokens.length);
+        maxTokenAmounts = new uint256[](vaultTokens.length);
         for (uint256 i = 0; i < _subvaultNfts.length; ++i) {
             IIntegrationVault vault = IIntegrationVault(registry.vaultForNft(_subvaultNfts[i]));
             (uint256[] memory sMinTokenAmounts, uint256[] memory sMaxTokenAmounts) = vault.tvl();
             address[] memory subvaultTokens = vault.vaultTokens();
-            uint256 index = 0;
-            for (uint256 j = 0; j < _vaultTokens.length && index < subvaultTokens.length; ++j) {
-                if (subvaultTokens[index] == _vaultTokens[j]) {
-                    minTokenAmounts[j] += sMinTokenAmounts[index];
-                    maxTokenAmounts[j] += sMaxTokenAmounts[index];
-                    ++index;
+            uint256 subvaultTokenId = 0;
+            for (
+                uint256 tokenId = 0;
+                tokenId < vaultTokens.length && subvaultTokenId < subvaultTokens.length;
+                ++tokenId
+            ) {
+                if (subvaultTokens[subvaultTokenId] == vaultTokens[tokenId]) {
+                    minTokenAmounts[tokenId] += sMinTokenAmounts[subvaultTokenId];
+                    maxTokenAmounts[tokenId] += sMaxTokenAmounts[subvaultTokenId];
+                    ++subvaultTokenId;
                 }
             }
-            require(index == subvaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
         }
     }
 
@@ -79,37 +82,12 @@ contract AggregateVault is IAggregateVault, Vault {
         uint256[] memory subvaultNfts_
     ) internal virtual {
         IVaultRegistry vaultRegistry = IVaultGovernance(msg.sender).internalParams().registry;
-        require(subvaultNfts_.length > 0, ExceptionsLibrary.EMPTY_LIST);
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
+            // Significant amount of checks has been done in ERC20RootVaultGovernance in the createVault function
             uint256 subvaultNft = subvaultNfts_[i];
-            require(subvaultNft > 0, ExceptionsLibrary.VALUE_ZERO);
             require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.FORBIDDEN);
             require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE);
             address vault = vaultRegistry.vaultForNft(subvaultNft);
-            require(vault != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-            require(
-                IIntegrationVault(vault).supportsInterface(type(IIntegrationVault).interfaceId),
-                ExceptionsLibrary.INVALID_INTERFACE
-            );
-            address[] memory vaultTokens = IIntegrationVault(vault).vaultTokens();
-            if (i == 0) {
-                // The zero-vault must have the same tokens as AggregateVault
-                require(vaultTokens_.length == vaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
-            } else {
-                // All other vaults must have a subset of AggregateVault tokens
-                require(vaultTokens.length > 0, ExceptionsLibrary.EMPTY_LIST);
-            }
-            uint256 subvaultTokenId = 0;
-            for (
-                uint256 tokenId = 0;
-                tokenId < vaultTokens_.length && subvaultTokenId < vaultTokens.length;
-                ++tokenId
-            ) {
-                if (vaultTokens[subvaultTokenId] == vaultTokens_[tokenId]) {
-                    subvaultTokenId++;
-                }
-            }
-            require(subvaultTokenId == vaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
             vaultRegistry.approve(strategy_, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
             _subvaultNftsIndex[subvaultNft] = i + 1;
@@ -148,7 +126,6 @@ contract AggregateVault is IAggregateVault, Vault {
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
         actualTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;
-        uint256[] memory pulledAmounts = new uint256[](tokenAmounts.length);
         uint256[] memory existentials = _pullExistentials;
         uint256[] memory leftToPull = new uint256[](tokenAmounts.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -157,7 +134,7 @@ contract AggregateVault is IAggregateVault, Vault {
         for (uint256 i = 0; i < _subvaultNfts.length; i++) {
             uint256 subvaultNft = _subvaultNfts[i];
             IIntegrationVault subvault = IIntegrationVault(vaultRegistry.vaultForNft(subvaultNft));
-            pulledAmounts = subvault.pull(address(this), tokens, leftToPull, vaultsOptions[i]);
+            uint256[] memory pulledAmounts = subvault.pull(address(this), tokens, leftToPull, vaultsOptions[i]);
             bool shouldStop = true;
             for (uint256 j = 0; j < tokens.length; j++) {
                 if (leftToPull[j] > pulledAmounts[j] + existentials[j]) {
@@ -166,7 +143,6 @@ contract AggregateVault is IAggregateVault, Vault {
                 } else {
                     leftToPull[j] = 0;
                 }
-                actualTokenAmounts[j] += pulledAmounts[j];
             }
             if (shouldStop) {
                 break;
