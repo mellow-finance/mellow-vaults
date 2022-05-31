@@ -1829,7 +1829,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.tokens,
-                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 []
                             )
                     ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
@@ -1946,7 +1946,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.tokens,
-                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 []
                             )
                     ).to.emit(this.yearnVault, "Pull");
@@ -2073,7 +2073,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.tokens,
-                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 []
                             )
                     )
