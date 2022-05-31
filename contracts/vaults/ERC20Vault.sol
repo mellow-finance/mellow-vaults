@@ -61,7 +61,7 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
         actualTokenAmounts = new uint256[](tokenAmounts.length);
-        pushTokenAmounts = new uint256[](tokenAmounts.length);
+        uint256[] memory pushTokenAmounts = new uint256[](tokenAmounts.length);
         address[] memory tokens = _vaultTokens;
         IVaultRegistry registry = _vaultGovernance.internalParams().registry;
         address owner = registry.ownerOf(_nft);
