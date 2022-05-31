@@ -51,8 +51,9 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             {
                 uint128 tokensOwed0;
                 uint128 tokensOwed1;
-                (, , , , , tickLower, tickUpper, liquidity, , , tokensOwed0, tokensOwed1) = _positionManager
-                    .positions(uniV3Nft);
+                (, , , , , tickLower, tickUpper, liquidity, , , tokensOwed0, tokensOwed1) = _positionManager.positions(
+                    uniV3Nft
+                );
                 minTokenAmounts[0] = tokensOwed0;
                 maxTokenAmounts[0] = tokensOwed0;
                 minTokenAmounts[1] = tokensOwed1;
@@ -143,7 +144,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, uint24 fee, , , , , , , ) = _positionManager.positions(tokenId);
         // new position should have vault tokens
-        require(token0 == _vaultTokens[0] && token1 == _vaultTokens[1] && fee == pool.fee(), ExceptionsLibrary.INVALID_TOKEN);
+        require(
+            token0 == _vaultTokens[0] && token1 == _vaultTokens[1] && fee == pool.fee(),
+            ExceptionsLibrary.INVALID_TOKEN
+        );
 
         if (uniV3Nft != 0) {
             (, , , , , , , uint128 liquidity, , , uint128 tokensOwed0, uint128 tokensOwed1) = _positionManager
