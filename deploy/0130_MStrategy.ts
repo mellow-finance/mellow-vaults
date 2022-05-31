@@ -103,10 +103,10 @@ const setupStrategy = async (
         tickMin: 189324,
         tickMax: 207242,
         erc20MoneyRatioD: BigNumber.from(10).pow(8),
-        minErc20MoneyRatioDeviationD: BigNumber.from(10).pow(7),
         minTickRebalanceThreshold: BigNumber.from(1200),
-        tickIncrease: 10,
         tickNeighborhood: 50,
+        tickIncrease: 10,
+        minErc20MoneyRatioDeviationD: BigNumber.from(10).pow(7),
     };
     const txs = [];
     txs.push(
