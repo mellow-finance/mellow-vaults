@@ -75,7 +75,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
         (vaddr, nft) = _createVault(owner_);
         vault = IUniV3Vault(vaddr);
         vault.initialize(nft, vaultTokens_, fee_);
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(fee_);, owner_, vaddr, nft);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(fee_), owner_, vaddr, nft);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
