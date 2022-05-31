@@ -242,7 +242,7 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                 });
             });
             describe("when called with zero params", () => {
-                it("succeeds with zero params", async () => {
+                it("reverts with zero params", async () => {
                     await expect(
                         this.subject
                             .connect(this.admin)
