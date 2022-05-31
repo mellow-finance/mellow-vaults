@@ -105,6 +105,7 @@ const setupStrategy = async (
         erc20MoneyRatioD: BigNumber.from(10).pow(8),
         minTickRebalanceThreshold: BigNumber.from(1200),
         tickNeighborhood: 50,
+        tickIncrease: 10,
         minErc20MoneyRatioDeviation0D: BigNumber.from(10).pow(9),
         minErc20MoneyRatioDeviation1D: BigNumber.from(10).pow(9),
     };
