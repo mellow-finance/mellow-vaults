@@ -240,8 +240,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         uint256 tvlsLength = tvl_.length;
         bool isLpAmountUpdated = false;
+        uint256[] memory pullExistentials = _pullExistentials;
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            if (tvl_[i] < _pullExistentials[i]) {
+            if (tvl_[i] < pullExistentials[i]) {
                 continue;
             }
 
@@ -340,8 +341,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         {
             bool needSkip = true;
-            for (uint256 i = 0; i < _pullExistentials.length; ++i) {
-                if (baseTvls[i] >= _pullExistentials[i]) {
+            uint256[] memory pullExistentials = _pullExistentials;
+            for (uint256 i = 0; i < pullExistentials.length; ++i) {
+                if (baseTvls[i] >= pullExistentials[i]) {
                     needSkip = false;
                     break;
                 }

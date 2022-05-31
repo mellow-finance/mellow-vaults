@@ -24,9 +24,9 @@ contract MockMStrategy is MStrategy {
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
         address[] memory tokens_,
-        uint256 minDeviation,
+        uint256[] memory minDeviations,
         bytes memory vaultOptions
     ) external returns (int256[] memory) {
-        return _rebalancePools(erc20Vault_, moneyVault_, tokens_, minDeviation, vaultOptions);
+        return _rebalancePools(erc20Vault_, moneyVault_, tokens_, minDeviations, vaultOptions);
     }
 }

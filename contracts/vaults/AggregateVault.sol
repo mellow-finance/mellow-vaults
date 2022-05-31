@@ -83,7 +83,7 @@ contract AggregateVault is IAggregateVault, Vault {
     ) internal virtual {
         IVaultRegistry vaultRegistry = IVaultGovernance(msg.sender).internalParams().registry;
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
-            // Significant amount of checks has been done in ERC20RootVaultGovernance in the createVault function
+            // Significant amount of checks has been done in ERC20RootVaultGovernance in the createVault function to reduce contract size
             uint256 subvaultNft = subvaultNfts_[i];
             require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.FORBIDDEN);
             require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE);
