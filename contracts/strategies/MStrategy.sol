@@ -293,7 +293,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 hasSignificantDeltas = true;
             }
         }
-        // TODO: replace with an array
+
         if (!hasSignificantDeltas) {
             return new int256[](2);
         } else if ((tokenAmounts[0] <= 0) && (tokenAmounts[1] <= 0)) {
