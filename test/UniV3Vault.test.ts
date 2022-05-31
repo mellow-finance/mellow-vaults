@@ -292,28 +292,29 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
     describe("#tokenAmountsToLiquidity", () => {
         it("returns zero in case of zero amounts", async () => {
             await this.preparePush();
-            let res = await this.subject.tokenAmountsToLiquidity(
-                [0, 0]
-            );
+            let res = await this.subject.tokenAmountsToLiquidity([0, 0]);
             expect(res).to.be.eq(BigNumber.from(0));
         });
 
         it("returns more than zero in case of non-zero amounts", async () => {
             await this.preparePush();
-            let res = await this.subject.tokenAmountsToLiquidity(
-                [BigNumber.from(10).pow(6), BigNumber.from(10).pow(15)]
-            );
+            let res = await this.subject.tokenAmountsToLiquidity([
+                BigNumber.from(10).pow(6),
+                BigNumber.from(10).pow(15),
+            ]);
             expect(res).to.be.gt(BigNumber.from(0));
         });
 
         it("returns proportionally correct", async () => {
             await this.preparePush();
-            let res_small = await this.subject.tokenAmountsToLiquidity(
-                [BigNumber.from(10).pow(6), BigNumber.from(10).pow(15)]
-            );
-            let res_large = await this.subject.tokenAmountsToLiquidity(
-                [BigNumber.from(10).pow(6).mul(7), BigNumber.from(10).pow(15).mul(7)]
-            );
+            let res_small = await this.subject.tokenAmountsToLiquidity([
+                BigNumber.from(10).pow(6),
+                BigNumber.from(10).pow(15),
+            ]);
+            let res_large = await this.subject.tokenAmountsToLiquidity([
+                BigNumber.from(10).pow(6).mul(7),
+                BigNumber.from(10).pow(15).mul(7),
+            ]);
             expect(res_large).to.be.gt(res_small.mul(7));
         });
 
@@ -324,7 +325,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 poolAddress
             );
             let tick = BigNumber.from((await pool.slot0()).tick);
-            let lowerBound = (tick.add(119)).div(60).mul(60);
+            let lowerBound = tick.add(119).div(60).mul(60);
 
             const result = await mintUniV3Position_USDC_WETH({
                 fee: 3000,
@@ -337,12 +338,16 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             await this.positionManager.functions[
                 "safeTransferFrom(address,address,uint256)"
             ](this.deployer.address, this.subject.address, result.tokenId);
-            let zeroToken0CaseLiquidity = await this.subject.tokenAmountsToLiquidity(
-                [0, BigNumber.from(10).pow(15)]
-            );
-            let zeroToken1CaseLiquidity = await this.subject.tokenAmountsToLiquidity(
-                [BigNumber.from(10).pow(6), 0]
-            );
+            let zeroToken0CaseLiquidity =
+                await this.subject.tokenAmountsToLiquidity([
+                    0,
+                    BigNumber.from(10).pow(15),
+                ]);
+            let zeroToken1CaseLiquidity =
+                await this.subject.tokenAmountsToLiquidity([
+                    BigNumber.from(10).pow(6),
+                    0,
+                ]);
 
             expect(zeroToken0CaseLiquidity).to.be.eq(BigNumber.from(0));
             expect(zeroToken1CaseLiquidity).to.be.gt(BigNumber.from(0));
@@ -355,7 +360,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 poolAddress
             );
             let tick = BigNumber.from((await pool.slot0()).tick);
-            let lowerBound = (tick.add(119)).div(60).mul(60).sub(1200);
+            let lowerBound = tick.add(119).div(60).mul(60).sub(1200);
 
             const result = await mintUniV3Position_USDC_WETH({
                 fee: 3000,
@@ -368,17 +373,20 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             await this.positionManager.functions[
                 "safeTransferFrom(address,address,uint256)"
             ](this.deployer.address, this.subject.address, result.tokenId);
-            let zeroToken0CaseLiquidity = await this.subject.tokenAmountsToLiquidity(
-                [0, BigNumber.from(10).pow(15)]
-            );
-            let zeroToken1CaseLiquidity = await this.subject.tokenAmountsToLiquidity(
-                [BigNumber.from(10).pow(6), 0]
-            );
+            let zeroToken0CaseLiquidity =
+                await this.subject.tokenAmountsToLiquidity([
+                    0,
+                    BigNumber.from(10).pow(15),
+                ]);
+            let zeroToken1CaseLiquidity =
+                await this.subject.tokenAmountsToLiquidity([
+                    BigNumber.from(10).pow(6),
+                    0,
+                ]);
 
             expect(zeroToken1CaseLiquidity).to.be.eq(BigNumber.from(0));
             expect(zeroToken0CaseLiquidity).to.be.gt(BigNumber.from(0));
         });
-
     });
 
     describe("#onERC721Received", () => {
