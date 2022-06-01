@@ -214,7 +214,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        (uint256[] memory prices, ) = oracle.price(_vaultTokens[0], _vaultTokens[1], 0x30);
+        (uint256[] memory prices, ) = oracle.price(_vaultTokens[0], _vaultTokens[1], 0x2A);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];
@@ -327,20 +327,19 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 tokenAmounts[1]
             );
             liquidityToPull = liquidity < liquidityToPull ? liquidity : liquidityToPull;
-            if (liquidityToPull == 0) {
-                return Pair({a0: 0, a1: 0});
-            }
         }
-        Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
-        _positionManager.decreaseLiquidity(
-            INonfungiblePositionManager.DecreaseLiquidityParams({
-                tokenId: uniV3Nft,
-                liquidity: liquidityToPull,
-                amount0Min: minAmounts.a0,
-                amount1Min: minAmounts.a1,
-                deadline: opts.deadline
-            })
-        );
+        if (liquidityToPull != 0) {
+            Pair memory minAmounts = Pair({a0: opts.amount0Min, a1: opts.amount1Min});
+            _positionManager.decreaseLiquidity(
+                INonfungiblePositionManager.DecreaseLiquidityParams({
+                    tokenId: uniV3Nft,
+                    liquidity: liquidityToPull,
+                    amount0Min: minAmounts.a0,
+                    amount1Min: minAmounts.a1,
+                    deadline: opts.deadline
+                })
+            );
+        }
         (uint256 amount0Collected, uint256 amount1Collected) = _positionManager.collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: uniV3Nft,
