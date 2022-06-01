@@ -20,10 +20,7 @@ import {
 import { integrationVaultBehavior } from "./behaviors/integrationVault";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-import {
-    INTEGRATION_VAULT_INTERFACE_ID,
-    UNIV3_VAULT_INTERFACE_ID,
-} from "./library/Constants";
+import { UNIV3_VAULT_INTERFACE_ID } from "./library/Constants";
 import Exceptions from "./library/Exceptions";
 
 type CustomContext = {
@@ -719,7 +716,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     await expect(
                         this.subject
                             .connect(s)
-                            .supportsInterface(INTEGRATION_VAULT_INTERFACE_ID)
+                            .supportsInterface(UNIV3_VAULT_INTERFACE_ID)
                     ).to.not.be.reverted;
                 });
             });
@@ -912,7 +909,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         });
 
         describe("when decrease liquidity called earlier", () => {
-            describe("pulls no more than requested", () => {
+            describe("pulls equal to liquidity decreased", () => {
                 it("works", async () => {
                     const result = await mintUniV3Position_USDC_WETH({
                         fee: 3000,
@@ -925,9 +922,9 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))"
                     ]([
                         result.tokenId,
-                        result.liquidity,
-                        100,
-                        100,
+                        1,
+                        0,
+                        0,
                         (await beforeBlockTimestamp()) + 600,
                     ]);
                     await this.positionManager.functions[
@@ -970,73 +967,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         .sub(prevUsdcBalance)
                         .toNumber();
                     expect(pulledWeth).to.be.greaterThan(0);
-                    expect(pulledWeth).to.be.lessThanOrEqual(10);
                     expect(pulledUsdc).to.be.greaterThan(0);
-                    expect(pulledUsdc).to.be.lessThanOrEqual(10);
-                });
-            });
-
-            describe("pull something from previous decrease", () => {
-                it("works", async () => {
-                    const result = await mintUniV3Position_USDC_WETH({
-                        fee: 3000,
-                        tickLower: -887220,
-                        tickUpper: 887220,
-                        usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                        wethAmount: BigNumber.from(10).pow(18),
-                    });
-                    await this.positionManager.functions[
-                        "decreaseLiquidity((uint256,uint128,uint256,uint256,uint256))"
-                    ]([
-                        result.tokenId,
-                        result.liquidity,
-                        100,
-                        100,
-                        (await beforeBlockTimestamp()) + 600,
-                    ]);
-                    await this.positionManager.functions[
-                        "safeTransferFrom(address,address,uint256)"
-                    ](
-                        this.deployer.address,
-                        this.subject.address,
-                        result.tokenId
-                    );
-                    await this.subject.push(
-                        [this.usdc.address, this.weth.address],
-                        [
-                            BigNumber.from(10).pow(6).mul(3000),
-                            BigNumber.from(10).pow(18),
-                        ],
-                        []
-                    );
-                    const prevWethBalance = await this.weth.balanceOf(
-                        this.erc20Vault.address
-                    );
-                    const prevUsdcBalance = await this.usdc.balanceOf(
-                        this.erc20Vault.address
-                    );
-                    await this.subject.pull(
-                        this.erc20Vault.address,
-                        [this.usdc.address, this.weth.address],
-                        [BigNumber.from(10), BigNumber.from(10)],
-                        []
-                    );
-                    const wethBalance = await this.weth.balanceOf(
-                        this.erc20Vault.address
-                    );
-                    const usdcBalance = await this.usdc.balanceOf(
-                        this.erc20Vault.address
-                    );
-                    const pulledWeth = wethBalance
-                        .sub(prevWethBalance)
-                        .toNumber();
-                    const pulledUsdc = usdcBalance
-                        .sub(prevUsdcBalance)
-                        .toNumber();
-                    expect(pulledWeth).to.be.greaterThan(0);
-                    expect(pulledWeth).to.be.lessThanOrEqual(10);
-                    expect(pulledUsdc).to.be.greaterThan(0);
-                    expect(pulledUsdc).to.be.lessThanOrEqual(10);
                 });
             });
         });
