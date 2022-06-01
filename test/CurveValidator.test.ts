@@ -157,7 +157,13 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                                                     "uint256",
                                                 ],
                                                 [
-                                                    generateSingleParams(uint256).mod(BigNumber.from(2).pow(127)),
+                                                    generateSingleParams(
+                                                        uint256
+                                                    ).mod(
+                                                        BigNumber.from(2).pow(
+                                                            127
+                                                        )
+                                                    ),
                                                     0,
                                                     generateSingleParams(
                                                         uint256
