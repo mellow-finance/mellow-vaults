@@ -73,7 +73,7 @@ const setupStrategy = async (
         mStrategyAdmin,
     } = await getNamedAccounts();
     const mStrategyName = `MStrategy${kind}`;
-    const { address: mStrategyAddress } = await deployments.get(deploymentName);
+    const { address: mStrategyAddress } = await deployments.get(mStrategyName);
     const mStrategy = await hre.ethers.getContractAt(
         "MStrategy",
         mStrategyAddress
@@ -145,7 +145,7 @@ const setupStrategy = async (
     log("Transferring ownership to mStrategyAdmin");
 
     const ADMIN_ROLE =
-        "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
+        "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin")
     const ADMIN_DELEGATE_ROLE =
         "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
     const OPERATOR_ROLE =
@@ -267,8 +267,6 @@ export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
         const { weth, usdc, wbtc } = await getNamedAccounts();
         await deployMStrategy(hre, kind);
 
-        const tokens = [weth, usdc].map((t) => t.toLowerCase()).sort();
-        // const startNft = 1;
         for (let [tokens, deploymentName] of [
             [[weth, usdc], `MStrategy${kind}_WETH_USDC`],
             [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`]
