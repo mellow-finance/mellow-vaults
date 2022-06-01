@@ -17,6 +17,7 @@ import Exceptions from "./library/Exceptions";
 import { randomBytes, randomInt } from "crypto";
 import { uint256, uint8 } from "./library/property";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
+import { BigNumber } from "ethers";
 
 type CustomContext = {};
 
@@ -156,7 +157,7 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                                                     "uint256",
                                                 ],
                                                 [
-                                                    generateSingleParams(uint8),
+                                                    generateSingleParams(uint256).mod(BigNumber.from(2).pow(127)),
                                                     0,
                                                     generateSingleParams(
                                                         uint256
