@@ -105,14 +105,25 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             ExceptionsLibrary.FORBIDDEN
         );
         uint256 supply = totalSupply;
-        uint256 preLpAmount = _getLpAmount(maxTvl, tokenAmounts, supply);
+        uint256 preLpAmount;
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            normalizedAmounts[i] = _getNormalizedAmount(maxTvl[i], tokenAmounts[i], preLpAmount, supply);
-            IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
+        {
+            bool isSignificantTvl;
+            (preLpAmount, isSignificantTvl) = _getLpAmount(maxTvl, tokenAmounts, supply);
+            for (uint256 i = 0; i < tokens.length; ++i) {
+                normalizedAmounts[i] = _getNormalizedAmount(
+                    maxTvl[i],
+                    tokenAmounts[i],
+                    preLpAmount,
+                    supply,
+                    isSignificantTvl,
+                    _pullExistentials[i]
+                );
+                IERC20(tokens[i]).safeTransferFrom(msg.sender, address(this), normalizedAmounts[i]);
+            }
         }
         actualTokenAmounts = _push(normalizedAmounts, vaultOptions);
-        uint256 lpAmount = _getLpAmount(maxTvl, actualTokenAmounts, supply);
+        (uint256 lpAmount, ) = _getLpAmount(maxTvl, actualTokenAmounts, supply);
         require(lpAmount >= minLpTokens, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(lpAmount != 0, ExceptionsLibrary.VALUE_ZERO);
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
@@ -217,7 +228,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory tvl_,
         uint256[] memory amounts,
         uint256 supply
-    ) internal view returns (uint256 lpAmount) {
+    ) internal view returns (uint256 lpAmount, bool isSignificantTvl) {
         if (supply == 0) {
             // On init lpToken = max(tokenAmounts)
             for (uint256 i = 0; i < tvl_.length; ++i) {
@@ -225,13 +236,13 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                     lpAmount = amounts[i];
                 }
             }
-
-            return lpAmount;
+            return (lpAmount, false);
         }
         uint256 tvlsLength = tvl_.length;
         bool isLpAmountUpdated = false;
+        uint256[] memory pullExistentials = _pullExistentials;
         for (uint256 i = 0; i < tvlsLength; ++i) {
-            if (tvl_[i] < _pullExistentials[i]) {
+            if (tvl_[i] < pullExistentials[i]) {
                 continue;
             }
 
@@ -242,17 +253,33 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
                 lpAmount = tokenLpAmount;
             }
         }
+        isSignificantTvl = isLpAmountUpdated;
+        // in case of almost zero tvl for all tokens -> do the same with supply == 0
+        if (!isSignificantTvl) {
+            for (uint256 i = 0; i < tvl_.length; ++i) {
+                if (amounts[i] > lpAmount) {
+                    lpAmount = amounts[i];
+                }
+            }
+        }
     }
 
     function _getNormalizedAmount(
         uint256 tvl_,
         uint256 amount,
         uint256 lpAmount,
-        uint256 supply
+        uint256 supply,
+        bool isSignificantTvl,
+        uint256 existentialsAmount
     ) internal pure returns (uint256) {
-        if (supply == 0) {
+        if (supply == 0 || !isSignificantTvl) {
             // skip normalization on init
             return amount;
+        }
+
+        if (tvl_ < existentialsAmount) {
+            // use zero-normalization when all tvls are dust-like
+            return 0;
         }
 
         // normalize amount
@@ -311,6 +338,19 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         // don't charge on initial deposit as well as on the last withdraw
         if (baseSupply == 0) {
             return;
+        }
+        {
+            bool needSkip = true;
+            uint256[] memory pullExistentials = _pullExistentials;
+            for (uint256 i = 0; i < pullExistentials.length; ++i) {
+                if (baseTvls[i] >= pullExistentials[i]) {
+                    needSkip = false;
+                    break;
+                }
+            }
+            if (needSkip) {
+                return;
+            }
         }
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
         uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;

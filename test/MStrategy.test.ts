@@ -144,7 +144,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
                     erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                    minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                     minTickRebalanceThreshold: 180,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
@@ -620,7 +621,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             tickMin: 198240 - 5000,
             tickMax: 198240 + 5000,
             erc20MoneyRatioD: BigNumber.from(Math.round(0.1 * 10 ** 9)),
-            minErc20MoneyRatioDeviationD: BigNumber.from(
+            minErc20MoneyRatioDeviation0D: BigNumber.from(
+                Math.round(0.01 * 10 ** 9)
+            ),
+            minErc20MoneyRatioDeviation1D: BigNumber.from(
                 Math.round(0.01 * 10 ** 9)
             ),
             minTickRebalanceThreshold: 180,
@@ -682,7 +686,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             describe("when minErc20MoneyRatioDeviationD is more than DENOMINATOR", () => {
                 it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                     let params = ratioParams;
-                    params.minErc20MoneyRatioDeviationD = BigNumber.from(10)
+                    params.minErc20MoneyRatioDeviation0D = BigNumber.from(10)
+                        .pow(9)
+                        .mul(2);
+                    params.minErc20MoneyRatioDeviation1D = BigNumber.from(10)
                         .pow(9)
                         .mul(2);
                     await expect(
@@ -905,7 +912,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
                     erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                    minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
@@ -1032,7 +1040,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
                     erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                    minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
@@ -1180,7 +1189,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
                             0.01 * 10 ** 9
                         ),
                         minTickRebalanceThreshold: 180,
@@ -1249,7 +1261,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickMin: 197000 - 50,
                         tickMax: 197000 + 50,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
                             0.01 * 10 ** 9
                         ),
                         minTickRebalanceThreshold: 180,
@@ -1328,7 +1343,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickMin: 197350 - 50,
                         tickMax: 197350 + 50,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
                             0.01 * 10 ** 9
                         ),
                         minTickRebalanceThreshold: 180,
@@ -1408,7 +1426,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickMin: 197000 - 5000,
                         tickMax: 197000 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
                             0.01 * 10 ** 9
                         ),
                         minTickRebalanceThreshold: 10,
@@ -1484,7 +1505,8 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 tickMin: 198240 - 5000,
                 tickMax: 198240 + 5000,
                 erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
+                minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
+                minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 minTickRebalanceThreshold: 180,
                 tickNeighborhood: 60,
                 tickIncrease: 180,
@@ -1807,7 +1829,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.tokens,
-                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 []
                             )
                     ).to.be.revertedWith(Exceptions.LIMIT_OVERFLOW);
@@ -1899,7 +1921,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
                             0.01 * 10 ** 9
                         ),
                         minTickRebalanceThreshold: 180,
@@ -1921,7 +1946,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.tokens,
-                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 []
                             )
                     ).to.emit(this.yearnVault, "Pull");
@@ -2023,7 +2048,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
                             0.01 * 10 ** 9
                         ),
                         minTickRebalanceThreshold: 180,
@@ -2045,7 +2073,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                                 this.params.erc20Vault,
                                 this.params.moneyVault,
                                 this.params.tokens,
-                                BigNumber.from(0),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 []
                             )
                     )
