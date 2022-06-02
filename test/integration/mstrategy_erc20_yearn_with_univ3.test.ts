@@ -308,12 +308,15 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         tickMin: 198240 - 15000,
                         tickMax: 198240 + 15000,
                         erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
-                        minErc20MoneyRatioDeviationD: Math.round(
-                            0.01 * 10 ** 9
-                        ),
                         minTickRebalanceThreshold: 0,
                         tickNeighborhood: 60,
                         tickIncrease: 180,
+                        minErc20MoneyRatioDeviation0D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
+                        minErc20MoneyRatioDeviation1D: Math.round(
+                            0.01 * 10 ** 9
+                        ),
                     };
                     let txs = [];
                     txs.push(
@@ -695,12 +698,15 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             tickMin: 198240 - 5000,
                             tickMax: 198240 + 5000,
                             erc20MoneyRatioD: Math.round(j * 0.01 * 10 ** 9),
-                            minErc20MoneyRatioDeviationD: Math.round(
-                                0.01 * 10 ** 9
-                            ),
                             minTickRebalanceThreshold: 0,
                             tickNeighborhood: 0,
                             tickIncrease: 100,
+                            minErc20MoneyRatioDeviation0D: Math.round(
+                                0.01 * 10 ** 9
+                            ),
+                            minErc20MoneyRatioDeviation1D: Math.round(
+                                0.01 * 10 ** 9
+                            ),
                         };
 
                         await this.subject
@@ -1006,10 +1012,11 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
                     erc20MoneyRatioD: 0,
-                    minErc20MoneyRatioDeviationD: Math.round(0.01 * 10 ** 9),
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
+                    minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 };
 
                 await this.subject

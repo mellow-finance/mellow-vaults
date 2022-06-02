@@ -49,6 +49,8 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
 
     /// @inheritdoc IUniV3VaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        require(address(params.positionManager) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(params.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
@@ -73,7 +75,7 @@ contract UniV3VaultGovernance is ContractMeta, IUniV3VaultGovernance, VaultGover
         (vaddr, nft) = _createVault(owner_);
         vault = IUniV3Vault(vaddr);
         vault.initialize(nft, vaultTokens_, fee_);
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, "", owner_, vaddr, nft);
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens_, abi.encode(fee_), owner_, vaddr, nft);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

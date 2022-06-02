@@ -6,10 +6,12 @@ import "./IBaseValidator.sol";
 
 interface IValidator is IBaseValidator, IERC165 {
     // @notice Validate if call can be made to external contract.
+    // @dev Reverts if validation failed. Returns nothing if validation is ok
     // @param sender Sender of the externalCall method
     // @param addr Address of the called contract
     // @param value Ether value for the call
-    // @param data Call data
+    // @param selector Selector of the called method
+    // @param data Call data after selector
     function validate(
         address sender,
         address addr,

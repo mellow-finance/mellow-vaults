@@ -59,6 +59,7 @@ contract YearnVaultGovernance is ContractMeta, IYearnVaultGovernance, VaultGover
 
     /// @inheritdoc IYearnVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        require(address(params.yearnVaultRegistry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }

@@ -10,7 +10,7 @@ contract AllowAllValidator is ContractMeta, Validator {
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    // @inhericdoc IValidator
+    // @inheritdoc IValidator
     function validate(
         address,
         address,

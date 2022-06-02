@@ -22,10 +22,15 @@ interface IUniV3Vault is IERC721Receiver, IIntegrationVault {
     /// @notice NFT of UniV3 position manager
     function uniV3Nft() external view returns (uint256);
 
-    /// @notice Returns tokenAmounts corresponding to liquidity
+    /// @notice Returns tokenAmounts corresponding to liquidity, based on the current Uniswap position
     /// @param liquidity Liquidity that will be converted to token amounts
     /// @return tokenAmounts Token amounts for the specified liquidity
     function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts);
+
+    /// @notice Returns liquidity corresponding to token amounts, based on the current Uniswap position
+    /// @param tokenAmounts Token amounts that will be converted to liquidity
+    /// @return liquidity Liquidity for the specified token amounts
+    function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) external view returns (uint128 liquidity);
 
     /// @notice Initialized a new contract.
     /// @dev Can only be initialized by vault governance

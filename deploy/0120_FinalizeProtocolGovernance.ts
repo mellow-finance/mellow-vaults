@@ -11,7 +11,7 @@ import {
     PRIVATE_VAULT,
     WBTC_PRICE,
     USDC_PRICE,
-    WETH_PRICE
+    WETH_PRICE, TRANSACTION_GAS_LIMITS
 } from "./0000_utils";
 import { ethers } from "ethers";
 import { deployments } from "hardhat";
@@ -88,6 +88,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             from: deployer,
             autoMine: true,
             log: true,
+            ...TRANSACTION_GAS_LIMITS
         },
         "multicall",
         txDatas
@@ -134,6 +135,9 @@ async function registerTokens(
     const { weth, wbtc, usdc, dai, wsteth } = await hre.getNamedAccounts();
     const tokens = [weth, wbtc, usdc, dai, wsteth].map((t) => t.toLowerCase()).sort();
     for (const token of tokens) {
+        if (!token) {
+            continue
+        }
         let tx =
             await protocolGovernance.populateTransaction.stagePermissionGrants(
                 token,
@@ -186,7 +190,10 @@ async function registerExternalProtocols(
     };
     for (const key in validators) {
         // @ts-ignore
-        const validator = await deployments.get(validators[key]);
+        const validator = await deployments.getOrNull(validators[key]);
+        if (!validator) {
+            continue;
+        }
         for (const address of data[key]) {
             const tx =
                 await protocolGovernance.populateTransaction.stageValidator(
@@ -205,7 +212,7 @@ async function setUnitPrices(
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
     );
-    const { admin, weth, wbtc, usdc } =
+    const { admin, weth, wbtc, usdc, wsteth } =
         await hre.getNamedAccounts();
     const txWETH =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
@@ -213,6 +220,14 @@ async function setUnitPrices(
             WETH_PRICE
         );
     txDatas.push(txWETH.data);
+    if (wsteth) {
+        const txWSTETH =
+            await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
+                wsteth,
+                WETH_PRICE
+            );
+        txDatas.push(txWSTETH.data);
+    }
     const txWBTC =
         await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
             wbtc,
