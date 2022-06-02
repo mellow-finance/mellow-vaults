@@ -29,6 +29,8 @@ import { randomBytes } from "ethers/lib/utils";
 import { TickMath } from "@uniswap/v3-sdk";
 import { sqrt } from "@uniswap/sdk-core";
 import JSBI from "jsbi";
+import { uintToBytes32 } from "../tasks/base";
+import { T } from "ramda";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -749,6 +751,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     oracleSafetyMask: 0x20,
                     orderDeadline: 86400 * 30,
                     oracle: oracleDeployParams.address,
+                    maxFee0: BigNumber.from(10).pow(9),
+                    maxFee1: BigNumber.from(10).pow(9)
                 });
 
                 await this.subject.connect(this.admin).updateRatioParams({
@@ -1251,6 +1255,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     orderDeadline: 86400 * 30,
                     oracleSafetyMask: 0x20,
                     oracle: this.mellowOracle.address,
+                    maxFee0: BigNumber.from(10).pow(9),
+                    maxFee1: BigNumber.from(10).pow(9)
                 };
             });
 
@@ -1588,6 +1594,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     orderDeadline: 86400 * 30,
                     oracleSafetyMask: 0x02,
                     oracle: this.mockOracle.address,
+                    maxFee0: BigNumber.from(10).pow(9),
+                    maxFee1: BigNumber.from(10).pow(9)
                 };
                 expect(
                     (
@@ -1608,6 +1616,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             orderDeadline: 86400 * 30,
                             oracleSafetyMask: 0x02,
                             oracle: ethers.constants.AddressZero,
+                            maxFee0: BigNumber.from(10).pow(9),
+                            maxFee1: BigNumber.from(10).pow(9)
                         };
                         await expect(
                             this.subject.targetPrice(
@@ -1883,6 +1893,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
 
         describe("#manualPull", () => {
+
             beforeEach(async () => {
                 await withSigner(this.erc20Vault.address, async (signer) => {
                     await this.wsteth
@@ -1892,18 +1903,48 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             ethers.constants.MaxUint256
                         );
                 });
-            });
 
-            it("pulls tokens from one vault to another", async () => {
+                await withSigner(this.erc20Vault.address, async (signer) => {
+                    await this.weth
+                        .connect(signer)
+                        .approve(
+                            this.uniV3UpperVault.address,
+                            ethers.constants.MaxUint256
+                        );
+                });
+            });
+            
+
+            it("pull from erc20 to univ3 in non-initialized case returns liquidity to erc20", async () => {
                 await this.grantPermissions();
+
+                let prevBalances = [
+                    [
+                        await this.wsteth.balanceOf(this.erc20Vault.address),
+                        await this.weth.balanceOf(this.erc20Vault.address),
+                    ],
+                    [
+                        await this.wsteth.balanceOf(
+                            this.uniV3UpperVault.address
+                        ),
+                        await this.weth.balanceOf(this.uniV3UpperVault.address),
+                    ],
+                ];
+
+                for (let i = 0; i < 2; ++i) {
+                    for (let j = 0; j < 2; ++j) {
+                        expect(prevBalances[i][j]).to.be.eq(BigNumber.from(10).pow(18).mul(500));
+                    }
+                }
+
                 await this.subject
                     .connect(this.admin)
                     .manualPull(
                         this.erc20Vault.address,
                         this.uniV3UpperVault.address,
                         [
-                            BigNumber.from(10).pow(18).mul(3000),
-                            BigNumber.from(10).pow(18).mul(3000),
+                            BigNumber.from(10).pow(18).mul(100),
+                            BigNumber.from(10).pow(18).mul(100),
                         ],
                         [ethers.constants.Zero, ethers.constants.Zero],
                         ethers.constants.MaxUint256
@@ -1920,17 +1961,64 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         await this.weth.balanceOf(this.uniV3UpperVault.address),
                     ],
                 ];
-                expect(
-                    endBalances ==
-                        [
-                            [
-                                BigNumber.from(10).pow(18).mul(6000),
-                                BigNumber.from(10).pow(18).mul(6000),
-                            ],
-                            [ethers.constants.Zero, ethers.constants.Zero],
-                        ]
-                );
+
+                for (let j = 0; j < 2; ++j) {
+                    expect(endBalances[0][j]).to.be.eq(BigNumber.from(10).pow(18).mul(1000));
+                }
+                for (let j = 0; j < 2; ++j) {
+                    expect(endBalances[1][j]).to.be.eq(BigNumber.from(0));
+                }
+
             });
+
+            it("makes pull", async () => {
+                await this.grantPermissions();
+                await this.preparePush({ vault: this.uniV3UpperVault });
+
+                //mock pull to pull all non-requested liquidity
+                await this.subject
+                    .connect(this.admin)
+                    .manualPull(
+                        this.erc20Vault.address,
+                        this.uniV3UpperVault.address,
+                        [
+                            BigNumber.from(10).pow(18).mul(1),
+                            BigNumber.from(10).pow(18).mul(1),
+                        ],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    );
+
+                let prevBalances =
+                [
+                    await this.wsteth.balanceOf(this.erc20Vault.address),
+                    await this.weth.balanceOf(this.erc20Vault.address),
+                ];
+
+                await this.subject
+                    .connect(this.admin)
+                    .manualPull(
+                        this.erc20Vault.address,
+                        this.uniV3UpperVault.address,
+                        [
+                            BigNumber.from(10).pow(18).mul(100),
+                            BigNumber.from(10).pow(18).mul(100),
+                        ],
+                        [ethers.constants.Zero, ethers.constants.Zero],
+                        ethers.constants.MaxUint256
+                    );
+
+                let endBalances = 
+                    [
+                        await this.wsteth.balanceOf(this.erc20Vault.address),
+                        await this.weth.balanceOf(this.erc20Vault.address),
+                    ];
+
+                for (let j = 0; j < 2; ++j) {
+                    expect(endBalances[j]).to.be.lt(prevBalances[j]);
+                }
+            });
+
             it("emits ManualPull event", async () => {
                 await this.grantPermissions();
                 await expect(
@@ -2637,7 +2725,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
                         await ethers.provider.send("hardhat_setStorageAt", [
                             this.subject.address,
-                            "0x6", // address of orderDeadline
+                            "0x5", // address of orderDeadline
                             "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                         ]);
                         await expect(
@@ -2679,6 +2767,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         describe("#signOrder", () => {
             beforeEach(async () => {
                 this.successfulInitialization = async () => {
+                    let kindSell = "0xf3b277728b3fee749481eb3e0b3b48980dbbab78658fc419025cb16eee346775";
+                    let balanceERC20 = "0x5a28e9363bb942b639270062aa6bb295f434bcdfc42c97267bf003f272060dc9";
+
                     await this.grantPermissions();
                     await this.subject.connect(this.admin).postPreOrder();
                     let preOrder = await this.subject.preOrder();
@@ -2691,10 +2782,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         validTo: preOrder.deadline,
                         appData: randomBytes(32),
                         feeAmount: BigNumber.from(500),
-                        kind: randomBytes(32),
+                        kind: kindSell,
                         partiallyFillable: false,
-                        sellTokenBalance: randomBytes(32),
-                        buyTokenBalance: randomBytes(32),
+                        sellTokenBalance: balanceERC20,
+                        buyTokenBalance: balanceERC20,
                     };
                 };
             });
