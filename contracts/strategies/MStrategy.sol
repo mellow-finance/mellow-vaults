@@ -135,7 +135,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @notice Perform a rebalance according to target ratios
-    function rebalance()
+    function rebalance(uint256[] memory minTokensAmount)
         external
         returns (
             int256[] memory poolAmounts,
@@ -149,12 +149,16 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault_ = moneyVault;
         address[] memory tokens_ = tokens;
         uint8 index;
+        SwapToTargetParams memory params;
+        params.tokens = tokens_;
+        params.pool = pool;
+        params.router = router;
+        params.erc20Vault = erc20Vault_;
+        params.moneyVault = moneyVault_;
+        tokenAmounts = new uint256[](2);
         (tokenAmounts[0], index, tokenAmounts[1]) = _rebalanceTokens(
-            pool,
-            router,
-            erc20Vault_,
-            moneyVault_,
-            tokens_,
+            params,
+            minTokensAmount,
             ratioParams.minTickRebalanceThreshold,
             vaultOptions
         );
@@ -329,11 +333,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     function _rebalanceTokens(
-        IUniswapV3Pool pool_,
-        ISwapRouter router_,
-        IIntegrationVault erc20Vault_,
-        IIntegrationVault moneyVault_,
-        address[] memory tokens_,
+        SwapToTargetParams memory params,
+        uint256[] memory minTokensAmount,
         int24 minTickRebalanceThreshold_,
         bytes memory vaultOptions
     )
@@ -344,18 +345,12 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             uint256
         )
     {
-        SwapToTargetParams memory params;
-        params.tokens = tokens_;
-        params.pool = pool_;
-        params.router = router_;
-        params.erc20Vault = erc20Vault_;
-        params.moneyVault = moneyVault_;
         uint256 token0;
         uint256 targetToken0;
         {
             uint256 targetTokenRatioD;
             {
-                int24 tick = _getAverageTickChecked(pool_);
+                int24 tick = _getAverageTickChecked(params.pool);
                 if (ratioParams.tickMin + ratioParams.tickNeighborhood > tick) {
                     ratioParams.tickMin =
                         (tick < ratioParams.tickMin ? tick : ratioParams.tickMin) -
@@ -382,10 +377,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 params.priceX96 = _priceX96FromTick(tick);
                 targetTokenRatioD = _targetTokenRatioD(tick, ratioParams.tickMin, ratioParams.tickMax);
             }
-            (params.erc20Tvl, ) = erc20Vault_.tvl();
+            (params.erc20Tvl, ) = params.erc20Vault.tvl();
             uint256 token1;
             {
-                (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
+                (uint256[] memory moneyTvl, ) = params.moneyVault.tvl();
                 token0 = params.erc20Tvl[0] + moneyTvl[0];
                 token1 = params.erc20Tvl[1] + moneyTvl[1];
             }
@@ -403,6 +398,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         if (params.amountIn != 0) {
             uint256 amountOut = _swapToTarget(params, vaultOptions);
+            require(amountOut >= minTokensAmount[params.tokenInIndex ^ 1], ExceptionsLibrary.LIMIT_UNDERFLOW);
             emit SwappedTokens(params);
             return (params.amountIn, params.tokenInIndex, amountOut);
         } else {

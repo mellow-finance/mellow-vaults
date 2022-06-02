@@ -232,7 +232,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     (
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .callStatic.rebalance()
+                            .callStatic.rebalance([
+                                BigNumber.from(0),
+                                BigNumber.from(0),
+                            ])
                     ).toString()
                 );
 
