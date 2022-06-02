@@ -95,6 +95,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
         oracle: mellowOracle.address,
+        maxFee0: BigNumber.from(10).pow(15),
+        maxFee1: BigNumber.from(10).pow(15)
     });
 
     await lStrategy.updateRatioParams({
