@@ -45,6 +45,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint32 orderDeadline;
         uint8 oracleSafety;
         IOracle oracle;
+        uint256 maxFee;
     }
 
     struct RatioParams {
@@ -68,6 +69,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256 amountIn;
         uint256 minAmountOut;
         uint256 deadline;
+        uint256 fee;
     }
 
     TradingParams public tradingParams;
@@ -313,7 +315,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
     /// @notice Post preorder for ERC20 vault rebalance.
     /// @return preOrder_ Posted preorder
-    function postPreOrder() external returns (PreOrder memory preOrder_) {
+    function postPreOrder(uint256 fee) external returns (PreOrder memory preOrder_) {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
@@ -325,6 +327,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             ratioParams.minErc20TokenRatioDeviationD
         );
         TradingParams memory tradingParams_ = tradingParams;
+        require(fee <= tradingParams_.maxFee);
 
         uint256 isNegativeInt = isNegative ? 1 : 0;
         uint256[2] memory tokenValuesToTransfer = [
@@ -340,7 +343,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 DENOMINATOR - tradingParams_.maxSlippageD,
                 DENOMINATOR
             ),
-            deadline: block.timestamp + tradingParams_.orderDeadline
+            deadline: block.timestamp + tradingParams_.orderDeadline,
+            fee: fee
         });
 
         preOrder = preOrder_;
@@ -366,9 +370,10 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 preOrder.amountIn,
                 preOrder.minAmountOut,
                 preOrder.deadline,
-                address(erc20Vault)
+                address(erc20Vault),
+                preOrder.fee
             );
-            erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, abi.encode(cowswap, order.sellAmount));
+            erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, abi.encode(cowswap, order.sellAmount + order.feeAmount));
             erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
             orderDeadline = order.validTo;
             delete preOrder;
@@ -549,13 +554,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 return (0, false);
             }
         }
-        if (targetLowerLiquidity > lowerLiquidity) {
-            isNegative = true;
-            delta = targetLowerLiquidity - lowerLiquidity;
-        } else {
-            isNegative = false;
-            delta = lowerLiquidity - targetLowerLiquidity;
-        }
+        isNegative = targetLowerLiquidity > lowerLiquidity;
+        delta = isNegative ? targetLowerLiquidity - lowerLiquidity : lowerLiquidity - targetLowerLiquidity;
     }
 
     /// @notice Covert token amounts and deadline to byte options

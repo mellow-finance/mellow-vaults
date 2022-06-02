@@ -24,7 +24,8 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
         uint256 amountIn,
         uint256 minAmountOut,
         uint256 deadline,
-        address erc20Vault
+        address erc20Vault,
+        uint256 fee
     ) external view {
         require(deadline >= block.timestamp, ExceptionsLibrary.TIMESTAMP);
         (bytes32 orderHashFromUid, , ) = GPv2Order.extractOrderUidParams(uuid);
@@ -37,5 +38,9 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
         require(order.buyAmount >= minAmountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(order.validTo <= deadline, ExceptionsLibrary.TIMESTAMP);
         require(order.receiver == erc20Vault, ExceptionsLibrary.FORBIDDEN);
+        require(order.kind == GPv2Order.KIND_SELL, ExceptionsLibrary.INVALID_VALUE);
+        require(!order.partiallyFillable, ExceptionsLibrary.INVALID_VALUE);
+        require(order.sellTokenBalance == GPv2Order.BALANCE_ERC20, ExceptionsLibrary.INVALID_VALUE);
+        require(order.buyTokenBalance == GPv2Order.BALANCE_ERC20, ExceptionsLibrary.INVALID_VALUE);
     }
 }
