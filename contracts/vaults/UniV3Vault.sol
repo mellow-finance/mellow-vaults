@@ -11,6 +11,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "../libraries/UniV3Helper.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -103,34 +104,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     /// @inheritdoc IUniV3Vault
     function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](2);
-        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
-
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
-            sqrtPriceX96,
-            sqrtPriceAX96,
-            sqrtPriceBX96,
-            liquidity
-        );
+        tokenAmounts = UniV3Helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft, _positionManager);
     }
 
     /// @inheritdoc IUniV3Vault
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) public view returns (uint128 liquidity) {
-        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-
-        liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            sqrtPriceX96,
-            sqrtPriceAX96,
-            sqrtPriceBX96,
-            tokenAmounts[0],
-            tokenAmounts[1]
-        );
+        liquidity = UniV3Helper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft, _positionManager);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
