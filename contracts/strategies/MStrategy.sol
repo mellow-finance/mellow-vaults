@@ -140,30 +140,37 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (
             int256[] memory poolAmounts,
             uint256[] memory tokenAmounts,
-            bytes memory vaultOptions
+            bytes memory vaultOptions,
+            bool zeroToOne
         )
     {
         _requireAdmin();
         IIntegrationVault erc20Vault_ = erc20Vault;
         IIntegrationVault moneyVault_ = moneyVault;
         address[] memory tokens_ = tokens;
-        IUniswapV3Pool pool_ = pool;
-        ISwapRouter router_ = router;
-        (uint256 amountIn, uint8 index) = _rebalanceTokens(
-            pool_,
-            router_,
+        uint8 index;
+        (tokenAmounts[0], index, tokenAmounts[1]) = _rebalanceTokens(
+            pool,
+            router,
             erc20Vault_,
             moneyVault_,
             tokens_,
             ratioParams.minTickRebalanceThreshold,
             vaultOptions
         );
-        uint256[] memory minDeviations = new uint256[](2);
-        minDeviations[0] = ratioParams.minErc20MoneyRatioDeviation0D;
-        minDeviations[1] = ratioParams.minErc20MoneyRatioDeviation1D;
-        poolAmounts = _rebalancePools(erc20Vault_, moneyVault_, tokens_, minDeviations, vaultOptions);
+
+        {
+            uint256[] memory minDeviations = new uint256[](2);
+            minDeviations[0] = ratioParams.minErc20MoneyRatioDeviation0D;
+            minDeviations[1] = ratioParams.minErc20MoneyRatioDeviation1D;
+            poolAmounts = _rebalancePools(erc20Vault_, moneyVault_, tokens_, minDeviations, vaultOptions);
+        }
         tokenAmounts = new uint256[](2);
-        tokenAmounts[index] = amountIn;
+        if (index == 1) {
+            uint256 tmp = tokenAmounts[0];
+            tokenAmounts[0] = tokenAmounts[1];
+            tokenAmounts[1] = tmp;
+        }
     }
 
     /// @notice Manually pull tokens from fromVault to toVault
@@ -329,11 +336,22 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_,
         int24 minTickRebalanceThreshold_,
         bytes memory vaultOptions
-    ) internal returns (uint256 amountIn, uint8 index) {
+    )
+        internal
+        returns (
+            uint256,
+            uint8,
+            uint256
+        )
+    {
+        SwapToTargetParams memory params;
+        params.tokens = tokens_;
+        params.pool = pool_;
+        params.router = router_;
+        params.erc20Vault = erc20Vault_;
+        params.moneyVault = moneyVault_;
         uint256 token0;
-        uint256 priceX96;
         uint256 targetToken0;
-        uint256[] memory erc20Tvl;
         {
             uint256 targetTokenRatioD;
             {
@@ -361,53 +379,34 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                     ExceptionsLibrary.LIMIT_UNDERFLOW
                 );
                 lastRebalanceTick = tick;
-                priceX96 = _priceX96FromTick(tick);
+                params.priceX96 = _priceX96FromTick(tick);
                 targetTokenRatioD = _targetTokenRatioD(tick, ratioParams.tickMin, ratioParams.tickMax);
             }
-            (erc20Tvl, ) = erc20Vault_.tvl();
+            (params.erc20Tvl, ) = erc20Vault_.tvl();
             uint256 token1;
             {
                 (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
-                token0 = erc20Tvl[0] + moneyTvl[0];
-                token1 = erc20Tvl[1] + moneyTvl[1];
+                token0 = params.erc20Tvl[0] + moneyTvl[0];
+                token1 = params.erc20Tvl[1] + moneyTvl[1];
             }
 
-            uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, priceX96);
+            uint256 token1InToken0 = FullMath.mulDiv(token1, CommonLibrary.Q96, params.priceX96);
             targetToken0 = FullMath.mulDiv(token1InToken0 + token0, targetTokenRatioD, DENOMINATOR);
         }
-        SwapToTargetParams memory params;
+
         if (targetToken0 < token0) {
-            amountIn = token0 - targetToken0;
-            index = 0;
-            params = SwapToTargetParams({
-                amountIn: amountIn,
-                tokens: tokens_,
-                tokenInIndex: index,
-                priceX96: priceX96,
-                erc20Tvl: erc20Tvl,
-                pool: pool_,
-                router: router_,
-                erc20Vault: erc20Vault_,
-                moneyVault: moneyVault_
-            });
+            params.amountIn = token0 - targetToken0;
+            params.tokenInIndex = 0;
         } else {
-            amountIn = FullMath.mulDiv(targetToken0 - token0, priceX96, CommonLibrary.Q96);
-            index = 1;
-            params = SwapToTargetParams({
-                amountIn: amountIn,
-                tokens: tokens_,
-                tokenInIndex: index,
-                priceX96: priceX96,
-                erc20Tvl: erc20Tvl,
-                pool: pool_,
-                router: router_,
-                erc20Vault: erc20Vault_,
-                moneyVault: moneyVault_
-            });
+            params.amountIn = FullMath.mulDiv(targetToken0 - token0, params.priceX96, CommonLibrary.Q96);
+            params.tokenInIndex = 1;
         }
-        if (amountIn != 0) {
-            _swapToTarget(params, vaultOptions);
+        if (params.amountIn != 0) {
+            uint256 amountOut = _swapToTarget(params, vaultOptions);
             emit SwappedTokens(params);
+            return (params.amountIn, params.tokenInIndex, amountOut);
+        } else {
+            return (params.amountIn, params.tokenInIndex, 0);
         }
     }
 
@@ -423,7 +422,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault;
     }
 
-    function _swapToTarget(SwapToTargetParams memory params, bytes memory vaultOptions) internal {
+    function _swapToTarget(SwapToTargetParams memory params, bytes memory vaultOptions)
+        internal
+        returns (uint256 amountOut)
+    {
         ISwapRouter.ExactInputSingleParams memory swapParams;
         uint8 tokenInIndex = params.tokenInIndex;
         uint256 amountIn = params.amountIn;
@@ -431,14 +433,11 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         {
             uint256 priceX96 = params.priceX96;
             uint256[] memory erc20Tvl = params.erc20Tvl;
-            IUniswapV3Pool pool_ = params.pool;
-            IIntegrationVault erc20Vault_ = params.erc20Vault;
-            IIntegrationVault moneyVault_ = params.moneyVault;
 
             if (amountIn > erc20Tvl[tokenInIndex]) {
                 uint256[] memory tokenAmounts = new uint256[](2);
                 tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
-                moneyVault_.pull(address(erc20Vault_), params.tokens, tokenAmounts, vaultOptions);
+                params.moneyVault.pull(address(params.erc20Vault), params.tokens, tokenAmounts, vaultOptions);
                 uint256 balance = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
                 if (balance < amountIn) {
                     amountIn = balance;
@@ -454,7 +453,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             swapParams = ISwapRouter.ExactInputSingleParams({
                 tokenIn: params.tokens[tokenInIndex],
                 tokenOut: params.tokens[1 - tokenInIndex],
-                fee: pool_.fee(),
+                fee: params.pool.fee(),
                 recipient: address(erc20Vault),
                 deadline: block.timestamp + 1,
                 amountIn: amountIn,
@@ -464,8 +463,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         bytes memory data = abi.encode(swapParams);
         erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), amountIn)); // approve
-        erc20Vault.externalCall(address(router_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
+        bytes memory routerResult = erc20Vault.externalCall(address(router_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
         erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), 0)); // reset allowance
+        (amountOut) = abi.decode(routerResult, (uint256));
     }
 
     /// @notice Emitted when pool rebalance is initiated.

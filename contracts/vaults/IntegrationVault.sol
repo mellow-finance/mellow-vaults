@@ -185,7 +185,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         address to,
         bytes4 selector,
         bytes calldata data
-    ) external payable nonReentrant {
+    ) external payable nonReentrant returns (bytes memory result) {
         require(_nft != 0, ExceptionsLibrary.INIT);
         require(_isApprovedOrOwner(msg.sender), ExceptionsLibrary.FORBIDDEN);
         IProtocolGovernance protocolGovernance = _vaultGovernance.internalParams().protocolGovernance;
@@ -200,6 +200,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
                 revert(add(32, returndata), returndata_size)
             }
         }
+        result = returndata;
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
