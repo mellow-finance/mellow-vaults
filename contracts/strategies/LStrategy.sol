@@ -373,7 +373,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 address(erc20Vault),
                 preOrder.fee
             );
-            erc20Vault.externalCall(address(order.sellToken), APPROVE_SELECTOR, abi.encode(cowswap, order.sellAmount + order.feeAmount));
+            erc20Vault.externalCall(
+                address(order.sellToken),
+                APPROVE_SELECTOR,
+                abi.encode(cowswap, order.sellAmount + order.feeAmount)
+            );
             erc20Vault.externalCall(cowswap, SET_PRESIGNATURE_SELECTOR, abi.encode(uuid, signed));
             orderDeadline = order.validTo;
             delete preOrder;
