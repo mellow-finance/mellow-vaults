@@ -835,7 +835,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .div(2),
             });
         });
-        
+
         describe("ERC20 is initially empty", () => {
             describe("UniV3rebalance when ERC20 is empty and no UniV3ERC20rebalance happens", () => {
                 it("not reverts and keeps balances in general case", async () => {
@@ -847,21 +847,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         await this.uniV3LowerVault.liquidityToTokenAmounts(
                             await this.subject.DENOMINATOR()
                         );
-                    
-                    let tvlsOld = [await this.uniV3LowerVault.tvl(), await this.uniV3UpperVault.tvl()];
+
+                    let tvlsOld = [
+                        await this.uniV3LowerVault.tvl(),
+                        await this.uniV3UpperVault.tvl(),
+                    ];
 
                     await expect(
                         this.subject
                             .connect(this.admin)
                             .rebalanceUniV3Vaults(
-                                [
-                                    ethers.constants.Zero,
-                                    ethers.constants.Zero,
-                                ],
-                                [
-                                    ethers.constants.Zero,
-                                    ethers.constants.Zero,
-                                ],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
                                 ethers.constants.MaxUint256
                             )
                     ).not.to.be.reverted;
@@ -870,16 +867,21 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         withdrawAmounts[0] < depositAmounts[0] ||
                         withdrawAmounts[1] < depositAmounts[1]
                     ) {
-                        let tvlsNew = [await this.uniV3LowerVault.tvl(), await this.uniV3UpperVault.tvl()];
+                        let tvlsNew = [
+                            await this.uniV3LowerVault.tvl(),
+                            await this.uniV3UpperVault.tvl(),
+                        ];
                         for (let i = 0; i < 2; ++i) {
                             for (let j = 0; j < 2; ++j) {
                                 for (let k = 0; k < 2; ++k) {
                                     expect(tvlsOld[i][j][k]).to.be.gt(0);
-                                    expect(tvlsOld[i][j][k]).to.be.eq(tvlsNew[i][j][k]);
+                                    expect(tvlsOld[i][j][k]).to.be.eq(
+                                        tvlsNew[i][j][k]
+                                    );
                                 }
                             }
                         }
-                    } 
+                    }
                 });
             });
 
@@ -1006,7 +1008,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
             });
         });
-        
 
         describe("ERC20 has inititally a lot of liquidity", () => {
             beforeEach(async () => {
