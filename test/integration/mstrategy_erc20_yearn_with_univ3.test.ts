@@ -666,7 +666,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             return liquidity;
         };
 
-        describe.only("Multiple price swappings and rebalances in mstrategy", () => {
+        describe("Multiple price swappings and rebalances in mstrategy", () => {
             it("change liquidity only on fees", async () => {
                 await setNonZeroFeesFixture();
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
