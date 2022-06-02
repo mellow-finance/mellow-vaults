@@ -242,6 +242,10 @@ async function setUnitPrices(
     txDatas.push(txUSDC.data);
     const txWETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(weth);
     txDatas.push(txWETHc.data);
+    if (wsteth) {
+        const txWSTETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(wsteth);
+        txDatas.push(txWSTETHc.data);
+    }
     const txWBTCc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(wbtc);
     txDatas.push(txWBTCc.data);
     const txUSDCc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(usdc);
