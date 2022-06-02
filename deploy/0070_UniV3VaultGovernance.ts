@@ -26,6 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [],
         log: true,
         autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
     });
     await deploy("UniV3VaultGovernance", {
         from: deployer,
