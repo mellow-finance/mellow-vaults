@@ -19,7 +19,8 @@ import { REGISTER_VAULT, CREATE_VAULT } from "../library/PermissionIdsLibrary";
 
 export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
     this: VaultGovernanceContext<S, F>,
-    paramsArb: Arbitrary<P>
+    paramsArb: Arbitrary<P>,
+    nullifyAccept?: boolean
 ) {
     let someParams: P;
     let noneParams: P;
@@ -399,16 +400,29 @@ export function delayedStrategyParamsBehavior<P, S extends Contract, F>(
                 });
             });
             describe("when called with zero params", () => {
-                it("succeeds with zero params", async () => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stageDelayedStrategyParams(this.nft, noneParams);
-                    const actualParams =
-                        await this.subject.stagedDelayedStrategyParams(
-                            this.nft
-                        );
-                    expect(noneParams).to.be.equivalent(actualParams);
-                });
+                if (!nullifyAccept) {
+                    it("reverts with zero params", async () => {
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .stageDelayedStrategyParams(
+                                    this.nft,
+                                    noneParams
+                                )
+                        ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    });
+                } else {
+                    it("succeeds with zero params", async () => {
+                        await this.subject
+                            .connect(this.admin)
+                            .stageDelayedStrategyParams(this.nft, noneParams);
+                        const actualParams =
+                            await this.subject.stagedDelayedStrategyParams(
+                                this.nft
+                            );
+                        expect(noneParams).to.be.equivalent(actualParams);
+                    });
+                }
             });
         });
     });

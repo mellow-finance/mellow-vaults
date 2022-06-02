@@ -45,6 +45,7 @@ contract BaseValidator is IBaseValidator {
 
     /// @notice Commits staged params
     function commitValidatorParams() external {
+        require(_stagedValidatorParamsTimestamp != 0, ExceptionsLibrary.INVALID_STATE);
         IProtocolGovernance governance = _validatorParams.protocolGovernance;
         require(governance.isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
         require(block.timestamp >= _stagedValidatorParamsTimestamp, ExceptionsLibrary.TIMESTAMP);

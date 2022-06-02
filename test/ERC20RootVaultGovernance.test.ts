@@ -167,6 +167,8 @@ contract<ERC20RootVaultGovernance, DeployOptions, CustomContext>(
             delayedProtocolPerVaultParams,
             operatorParams,
             rootVaultGovernance: true,
+            acceptNullifyProtocolPerVaultParams: true,
+            acceptNullifyStrategyParams: true,
             ...this,
         });
 

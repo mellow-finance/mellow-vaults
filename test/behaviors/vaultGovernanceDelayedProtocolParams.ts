@@ -242,13 +242,12 @@ export function delayedProtocolParamsBehavior<P, S extends Contract, F>(
                 });
             });
             describe("when called with zero params", () => {
-                it("succeeds with zero params", async () => {
-                    await this.subject
-                        .connect(this.admin)
-                        .stageDelayedProtocolParams(noneParams);
-                    const actualParams =
-                        await this.subject.stagedDelayedProtocolParams();
-                    expect(noneParams).to.be.equivalent(actualParams);
+                it("reverts with zero params", async () => {
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(noneParams)
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                 });
             });
         });

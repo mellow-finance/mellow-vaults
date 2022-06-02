@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IIntegrationVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
@@ -22,6 +23,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
+        require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
         MAX_PROTOCOL_FEE = (5 * CommonLibrary.DENOMINATOR) / 100;
         MAX_MANAGEMENT_FEE = (10 * CommonLibrary.DENOMINATOR) / 100;
@@ -178,6 +180,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
 
     /// @inheritdoc IERC20RootVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        require(address(params.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
@@ -203,7 +206,33 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
         IVaultRegistry registry = _internalParams.registry;
         (vaddr, nft) = _createVault(owner_);
         vault = IERC20RootVault(vaddr);
+        require(subvaultNfts_.length > 0, ExceptionsLibrary.EMPTY_LIST);
         for (uint256 i = 0; i < subvaultNfts_.length; i++) {
+            uint256 subvaultNft = subvaultNfts_[i];
+            require(subvaultNft > 0, ExceptionsLibrary.VALUE_ZERO);
+            address subvault = registry.vaultForNft(subvaultNft);
+            require(subvault != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+            require(
+                IIntegrationVault(subvault).supportsInterface(type(IIntegrationVault).interfaceId),
+                ExceptionsLibrary.INVALID_INTERFACE
+            );
+            address[] memory subvaultTokens = IIntegrationVault(subvault).vaultTokens();
+            if (i == 0) {
+                // The zero-vault must have the same tokens as ERC20RootVault
+                require(vaultTokens_.length == subvaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
+            }
+            uint256 subvaultTokenId = 0;
+            for (
+                uint256 tokenId = 0;
+                tokenId < vaultTokens_.length && subvaultTokenId < subvaultTokens.length;
+                ++tokenId
+            ) {
+                if (subvaultTokens[subvaultTokenId] == vaultTokens_[tokenId]) {
+                    subvaultTokenId++;
+                }
+            }
+            require(subvaultTokenId == subvaultTokens.length, ExceptionsLibrary.INVALID_TOKEN);
+
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }

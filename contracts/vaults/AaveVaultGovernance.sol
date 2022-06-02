@@ -50,6 +50,8 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
 
     /// @inheritdoc IAaveVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+        require(address(params.lendingPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(params.estimatedAaveAPY != 0, ExceptionsLibrary.VALUE_ZERO);
         require(params.estimatedAaveAPY <= MAX_ESTIMATED_AAVE_APY, ExceptionsLibrary.LIMIT_OVERFLOW);
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);

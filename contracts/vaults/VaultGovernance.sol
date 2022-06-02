@@ -38,6 +38,7 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
     constructor(InternalParams memory internalParams_) {
         require(address(internalParams_.protocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(internalParams_.registry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(internalParams_.singleton) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _internalParams = internalParams_;
     }
 
@@ -82,6 +83,9 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
     /// @inheritdoc IVaultGovernance
     function stageInternalParams(InternalParams memory newParams) external {
         _requireProtocolAdmin();
+        require(address(newParams.protocolGovernance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(newParams.registry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(newParams.singleton) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stagedInternalParams = newParams;
         _internalParamsTimestamp = block.timestamp + _internalParams.protocolGovernance.governanceDelay();
         emit StagedInternalParams(tx.origin, msg.sender, newParams, _internalParamsTimestamp);
@@ -148,8 +152,9 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
     /// @notice Commit Delayed Strategy Params
     function _commitDelayedStrategyParams(uint256 nft) internal {
         _requireAtLeastStrategy(nft);
-        require(_delayedStrategyParamsTimestamp[nft] != 0, ExceptionsLibrary.NULL);
-        require(block.timestamp >= _delayedStrategyParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP);
+        uint256 thisDelayedStrategyParamsTimestamp = _delayedStrategyParamsTimestamp[nft];
+        require(thisDelayedStrategyParamsTimestamp != 0, ExceptionsLibrary.NULL);
+        require(block.timestamp >= thisDelayedStrategyParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _delayedStrategyParams[nft] = _stagedDelayedStrategyParams[nft];
         delete _stagedDelayedStrategyParams[nft];
         delete _delayedStrategyParamsTimestamp[nft];
@@ -171,8 +176,9 @@ abstract contract VaultGovernance is IVaultGovernance, ERC165 {
     /// @notice Commit Delayed Protocol Per Vault Params
     function _commitDelayedProtocolPerVaultParams(uint256 nft) internal {
         _requireProtocolAdmin();
-        require(_delayedProtocolPerVaultParamsTimestamp[nft] != 0, ExceptionsLibrary.NULL);
-        require(block.timestamp >= _delayedProtocolPerVaultParamsTimestamp[nft], ExceptionsLibrary.TIMESTAMP);
+        uint256 thisDelayedProtocolPerVaultParamsTimestamp = _delayedProtocolPerVaultParamsTimestamp[nft];
+        require(thisDelayedProtocolPerVaultParamsTimestamp != 0, ExceptionsLibrary.NULL);
+        require(block.timestamp >= thisDelayedProtocolPerVaultParamsTimestamp, ExceptionsLibrary.TIMESTAMP);
         _delayedProtocolPerVaultParams[nft] = _stagedDelayedProtocolPerVaultParams[nft];
         delete _stagedDelayedProtocolPerVaultParams[nft];
         delete _delayedProtocolPerVaultParamsTimestamp[nft];

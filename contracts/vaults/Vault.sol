@@ -81,15 +81,6 @@ abstract contract Vault is IVault, ERC165 {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IVault).interfaceId);
     }
 
-    // ------------------- INTERNAL, VIEW ---------------------------
-
-    /// @notice Index of token among vault tokens
-    /// @param token Address of the token to find out
-    /// @return Index of vault token that is equal to token, -1 if given token is not a vault token
-    function getVaultTokenIndex(address token) internal returns (int256) {
-        return _vaultTokensIndex[token] - 1;
-    }
-
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _initialize(address[] memory vaultTokens_, uint256 nft_) internal virtual {

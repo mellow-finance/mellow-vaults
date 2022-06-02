@@ -94,8 +94,8 @@ contract UniV2Validator is ContractMeta, Validator {
         for (uint256 i = 0; i < path.length - 1; i++) {
             address token0 = path[i];
             address token1 = path[i + 1];
-            address pool = factory.getPair(token0, token1);
             require(token0 != token1, ExceptionsLibrary.INVALID_TOKEN);
+            address pool = factory.getPair(token0, token1);
             require(
                 protocolGovernance.hasPermission(pool, PermissionIdsLibrary.ERC20_APPROVE),
                 ExceptionsLibrary.FORBIDDEN

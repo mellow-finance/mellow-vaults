@@ -211,7 +211,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 let uniV3LowerVaultNft = startNft;
                 let uniV3UpperVaultNft = startNft + 1;
                 let erc20VaultNft = startNft + 2;
-
+                let uniV3Helper = (await ethers.getContract("UniV3Helper"))
+                    .address;
                 await setupVault(
                     hre,
                     uniV3LowerVaultNft,
@@ -221,6 +222,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             tokens,
                             this.deployer.address,
                             uniV3PoolFee,
+                            uniV3Helper,
                         ],
                     }
                 );
@@ -233,6 +235,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             tokens,
                             this.deployer.address,
                             uniV3PoolFee,
+                            uniV3Helper,
                         ],
                     }
                 );
@@ -716,7 +719,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await this.subject.connect(this.admin).updateTradingParams({
                     maxSlippageD: BigNumber.from(10).pow(7),
                     oracleSafety: 5,
-                    minRebalanceWaitTime: 86400,
                     orderDeadline: 86400 * 30,
                     oracle: oracleDeployParams.address,
                 });
@@ -1135,7 +1137,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             beforeEach(async () => {
                 this.baseParams = {
                     maxSlippageD: BigNumber.from(10).pow(6),
-                    minRebalanceWaitTime: 86400,
                     orderDeadline: 86400 * 30,
                     oracleSafety: 5,
                     oracle: this.mellowOracle.address,
@@ -1180,17 +1181,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
                         params.oracleSafety = 228;
-                        await expect(
-                            this.subject
-                                .connect(this.admin)
-                                .updateTradingParams(params)
-                        ).to.be.revertedWith(Exceptions.INVARIANT);
-                    });
-                });
-                describe("when minRebalanceWaitTime is more than 30 days", () => {
-                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
-                        let params = this.baseParams;
-                        params.minRebalanceWaitTime = 86400 * 31;
                         await expect(
                             this.subject
                                 .connect(this.admin)
@@ -1495,7 +1485,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             it("returns target price for specific trading params", async () => {
                 let params = {
                     maxSlippageD: BigNumber.from(10).pow(6),
-                    minRebalanceWaitTime: 86400,
                     orderDeadline: 86400 * 30,
                     oracleSafety: 1,
                     oracle: this.mockOracle.address,
@@ -1515,7 +1504,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     it("reverts", async () => {
                         let params = {
                             maxSlippageD: BigNumber.from(10).pow(6),
-                            minRebalanceWaitTime: 86400,
                             orderDeadline: 86400 * 30,
                             oracleSafety: 1,
                             oracle: ethers.constants.AddressZero,
