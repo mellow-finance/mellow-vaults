@@ -809,7 +809,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             let tickLeftLower =
                 currentTick
                     .div(this.semiPositionRange)
-                    .mul(this.semiPositionRange) - this.semiPositionRange;
+                    .mul(this.semiPositionRange)
+                    .toNumber() - this.semiPositionRange;
             let tickLeftUpper = tickLeftLower + 2 * this.semiPositionRange;
 
             let tickRightLower = tickLeftLower + this.semiPositionRange;
@@ -1018,7 +1019,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await this.submitToERC20Vault();
                 let liquidityERC20Vault = await this.erc20Vault.tvl();
                 for (let i = 0; i < 2; ++i) {
-                    expect(liquidityERC20Vault[0][i].gt(0));
+                    expect(liquidityERC20Vault[0][i]).to.be.gt(0);
                 }
             });
             describe("ERC20UniV3Rebalance with empty UniV3", () => {
@@ -1265,14 +1266,20 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .connect(this.admin)
                     .updateTradingParams(this.baseParams);
                 const expectedParams = [
-                    BigNumber.from(10).pow(6),
-                    BigNumber.from(86400),
+                    10 ** 6,
                     86400 * 30,
-                    5,
+                    BigNumber.from(32),
                     this.mellowOracle.address,
+                    BigNumber.from(10).pow(9),
+                    BigNumber.from(10).pow(9),
                 ];
-                const returnedParams = await this.subject.tradingParams();
-                expect(expectedParams == returnedParams);
+                let params = await this.subject.tradingParams();
+                expect(params.maxSlippageD).to.be.eq(BigNumber.from(10).pow(6));
+                expect(params.orderDeadline).to.be.eq(86400 * 30);
+                expect(params.oracleSafetyMask).to.be.eq(BigNumber.from(32));
+                expect(params.oracle).to.be.eq(this.mellowOracle.address);
+                expect(params.maxFee0).to.be.eq(BigNumber.from(10).pow(9));
+                expect(params.maxFee1).to.be.eq(BigNumber.from(10).pow(9));
             });
             it("emits TradingParamsUpdated event", async () => {
                 await expect(
@@ -1483,14 +1490,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await this.subject
                     .connect(this.admin)
                     .updateOtherParams(this.baseParams);
-                const expectedParams = [
-                    100,
-                    BigNumber.from(10).pow(6),
-                    BigNumber.from(10).pow(6),
-                    BigNumber.from(86400 * 30),
-                ];
                 const returnedParams = await this.subject.otherParams();
-                expect(expectedParams == returnedParams);
+                expect(returnedParams.intervalWidthInTicks).eq(100);
+                expect(returnedParams.minToken0ForOpening).eq(
+                    BigNumber.from(10).pow(6)
+                );
+                expect(returnedParams.minToken1ForOpening).eq(
+                    BigNumber.from(10).pow(6)
+                );
+                expect(returnedParams.rebalanceDeadline).eq(
+                    BigNumber.from(86400 * 30)
+                );
             });
             it("emits OtherParamsUpdated event", async () => {
                 await expect(
@@ -1789,13 +1799,14 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     await this.uniV3LowerVault.callStatic.collectEarnings();
                 let upperVaultFees =
                     await this.uniV3UpperVault.callStatic.collectEarnings();
-                for (let i = 0; i < 2; ++i) {
-                    lowerVaultFees[i].add(upperVaultFees[i]);
-                }
                 let sumFees = await this.subject
                     .connect(this.admin)
                     .callStatic.collectUniFees();
-                expect(sumFees == lowerVaultFees);
+                for (let i = 0; i < 2; ++i) {
+                    expect(sumFees[i]).to.be.eq(
+                        lowerVaultFees[i].add(upperVaultFees[i])
+                    );
+                }
                 await expect(this.subject.connect(this.admin).collectUniFees())
                     .to.not.be.reverted;
             });
@@ -1846,10 +1857,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         let sumFees = await this.subject
                             .connect(this.admin)
                             .callStatic.collectUniFees();
-                        expect(
-                            sumFees ==
-                                [ethers.constants.Zero, ethers.constants.Zero]
-                        );
+                        expect(sumFees[0]).to.be.eq(ethers.constants.Zero);
+                        expect(sumFees[1]).to.be.eq(ethers.constants.Zero);
                         await expect(
                             this.subject.connect(this.admin).collectUniFees()
                         ).to.not.be.reverted;
@@ -2154,40 +2163,33 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await this.grantPermissions();
             });
             it("rebalances when delta is positive", async () => {
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await this.grantPermissionsUniV3Vaults();
-                let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
-                await expect(
-                    this.subject
-                        .connect(this.admin)
-                        .rebalanceUniV3Vaults(
-                            [ethers.constants.Zero, ethers.constants.Zero],
-                            [ethers.constants.Zero, ethers.constants.Zero],
-                            ethers.constants.MaxUint256
-                        )
-                ).to.not.be.reverted;
-                let [newLowerVaultTvl, newUpperVaultTvl] =
-                    await this.calculateTvl();
-                expect(
-                    newLowerVaultTvl.lt(lowerVaultTvl) &&
-                        newUpperVaultTvl.gt(upperVaultTvl)
-                );
-            });
-            it("rebalances when delta is negative", async () => {
+                this.semiPositionRange = 600;
+                this.smallInt = 60;
+
+                const currentTick = await this.getUniV3Tick();
+                let tickLeftUpper =
+                    currentTick
+                        .div(this.smallInt)
+                        .mul(this.smallInt)
+                        .toNumber() + this.smallInt;
+                let tickLeftLower = tickLeftUpper - 2 * this.semiPositionRange;
+
+                let tickRightLower = tickLeftLower + this.semiPositionRange;
+                let tickRightUpper = tickLeftUpper + this.semiPositionRange;
+
+                await this.updateMockOracle(currentTick);
+
                 await this.preparePush({
                     vault: this.uniV3LowerVault,
-                    tickLower: -1000,
-                    tickUpper: 1000,
+                    tickLower: tickLeftLower,
+                    tickUpper: tickLeftUpper,
                 });
                 await this.preparePush({
                     vault: this.uniV3UpperVault,
-                    tickLower: -1000,
-                    tickUpper: 1000,
+                    tickLower: tickRightLower,
+                    tickUpper: tickRightUpper,
                 });
-                await this.mockOracle.updatePrice(
-                    BigNumber.from(1).shl(96).mul(110).div(100)
-                );
+
                 await this.grantPermissionsUniV3Vaults();
                 let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
                 await expect(
@@ -2201,10 +2203,53 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 ).to.not.be.reverted;
                 let [newLowerVaultTvl, newUpperVaultTvl] =
                     await this.calculateTvl();
-                expect(
-                    newLowerVaultTvl.gt(lowerVaultTvl) &&
-                        newUpperVaultTvl.lt(upperVaultTvl)
-                );
+                expect(newLowerVaultTvl).to.be.lt(lowerVaultTvl);
+                expect(newUpperVaultTvl).to.be.gt(upperVaultTvl);
+            });
+            it("rebalances when delta is negative", async () => {
+                this.semiPositionRange = 600;
+                this.smallInt = 60;
+
+                const currentTick = await this.getUniV3Tick();
+                let tickRightLower =
+                    currentTick
+                        .div(this.smallInt)
+                        .mul(this.smallInt)
+                        .toNumber() - this.smallInt;
+                let tickRightUpper =
+                    tickRightLower + 2 * this.semiPositionRange;
+
+                let tickLeftLower = tickRightLower - this.semiPositionRange;
+                let tickLeftUpper = tickRightUpper - this.semiPositionRange;
+
+                await this.updateMockOracle(currentTick);
+
+                await this.preparePush({
+                    vault: this.uniV3LowerVault,
+                    tickLower: tickLeftLower,
+                    tickUpper: tickLeftUpper,
+                });
+                await this.preparePush({
+                    vault: this.uniV3UpperVault,
+                    tickLower: tickRightLower,
+                    tickUpper: tickRightUpper,
+                });
+
+                await this.grantPermissionsUniV3Vaults();
+                let [lowerVaultTvl, upperVaultTvl] = await this.calculateTvl();
+                await expect(
+                    this.subject
+                        .connect(this.admin)
+                        .rebalanceUniV3Vaults(
+                            [ethers.constants.Zero, ethers.constants.Zero],
+                            [ethers.constants.Zero, ethers.constants.Zero],
+                            ethers.constants.MaxUint256
+                        )
+                ).to.not.be.reverted;
+                let [newLowerVaultTvl, newUpperVaultTvl] =
+                    await this.calculateTvl();
+                expect(newLowerVaultTvl).to.be.gt(lowerVaultTvl);
+                expect(newUpperVaultTvl).to.be.lt(upperVaultTvl);
             });
             it("rebalances when crossing the interval left to right", async () => {
                 await this.preparePush({
@@ -2226,10 +2271,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 ).to.not.be.reverted;
                 let [newLowerVaultTvl, newUpperVaultTvl] =
                     await this.calculateTvl();
-                expect(
-                    newLowerVaultTvl.lt(lowerVaultTvl) &&
-                        newUpperVaultTvl.gt(upperVaultTvl)
-                );
+                expect(newLowerVaultTvl).to.be.lt(lowerVaultTvl);
+                expect(newUpperVaultTvl).to.be.gt(upperVaultTvl);
             });
             it("swap vaults when crossing the interval left to right with no liquidity", async () => {
                 await this.preparePush({
@@ -2427,6 +2470,19 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
 
         describe("#rebalanceERC20UniV3Vaults", () => {
+            beforeEach(async () => {
+                this.calculateTvl = async () => {
+                    const erc20Tvl = (await this.erc20Vault.tvl())[0];
+                    const uniV3LowerTvl = (await this.uniV3LowerVault.tvl())[0];
+                    const uniV3UpperTvl = (await this.uniV3UpperVault.tvl())[0];
+                    return [
+                        erc20Tvl[0].add(erc20Tvl[1]),
+                        uniV3LowerTvl[0]
+                            .add(uniV3LowerTvl[1])
+                            .add(uniV3UpperTvl[0].add(uniV3UpperTvl[1])),
+                    ];
+                };
+            });
             it("emits RebalancedErc20UniV3 event", async () => {
                 await this.grantPermissions();
                 await this.preparePush({ vault: this.uniV3LowerVault });
@@ -2500,10 +2556,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 let [newErc20OverallTvl, newUniV3OverallTvl] =
                     await this.calculateTvl();
 
-                expect(
-                    newErc20OverallTvl.lt(erc20OverallTvl) &&
-                        newUniV3OverallTvl.gt(uniV3OverallTvl)
-                );
+                expect(newErc20OverallTvl).to.be.lt(erc20OverallTvl);
+                expect(newUniV3OverallTvl).to.be.gt(uniV3OverallTvl);
             });
             it("rebalances vaults when capital delta is negative", async () => {
                 await this.grantPermissions();
@@ -2568,10 +2622,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 let [newErc20OverallTvl, newUniV3OverallTvl] =
                     await this.calculateTvl();
 
-                expect(
-                    newErc20OverallTvl.gt(erc20OverallTvl) &&
-                        newUniV3OverallTvl.lt(uniV3OverallTvl)
-                );
+                expect(newErc20OverallTvl).to.be.gt(erc20OverallTvl);
+                expect(newUniV3OverallTvl).to.be.lt(uniV3OverallTvl);
             });
 
             describe("edge cases:", () => {
