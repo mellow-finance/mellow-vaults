@@ -45,7 +45,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint32 orderDeadline;
         uint8 oracleSafety;
         IOracle oracle;
-        uint256 maxFee;
+        uint256[2] maxFee;
     }
 
     struct RatioParams {
@@ -327,17 +327,17 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             ratioParams.minErc20TokenRatioDeviationD
         );
         TradingParams memory tradingParams_ = tradingParams;
-        require(fee <= tradingParams_.maxFee);
 
         uint256 isNegativeInt = isNegative ? 1 : 0;
+        require(fee <= tradingParams_.maxFee[isNegativeInt]);
         uint256[2] memory tokenValuesToTransfer = [
             FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96),
             tokenDelta
         ];
         preOrder_ = PreOrder({
-            tokenIn: tokens[0 ^ isNegativeInt],
+            tokenIn: tokens[isNegativeInt],
             tokenOut: tokens[1 ^ isNegativeInt],
-            amountIn: tokenValuesToTransfer[0 ^ isNegativeInt],
+            amountIn: tokenValuesToTransfer[isNegativeInt],
             minAmountOut: FullMath.mulDiv(
                 tokenValuesToTransfer[1 ^ isNegativeInt],
                 DENOMINATOR - tradingParams_.maxSlippageD,
