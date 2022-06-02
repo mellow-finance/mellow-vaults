@@ -34,7 +34,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
     IUniV3Vault public lowerVault;
     IUniV3Vault public upperVault;
-    uint256 public lastUniV3RebalanceTimestamp;
     uint256 public orderDeadline;
     uint256[] internal _pullExistentials;
 
@@ -43,7 +42,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     struct TradingParams {
         uint32 maxSlippageD;
         uint32 orderDeadline;
-        uint8 oracleSafety;
+        uint256 oracleSafetyMask;
         IOracle oracle;
         uint256[2] maxFee;
     }
@@ -105,17 +104,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @notice Target price based on mutable params
-    function targetPrice(address[] memory tokens_, TradingParams memory tradingParams_)
-        public
-        view
-        returns (uint256 priceX96)
-    {
-        require(tokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        (uint256[] memory prices, ) = tradingParams_.oracle.price(
-            tokens_[0],
-            tokens_[1],
-            1 << tradingParams_.oracleSafety
-        );
+    function targetPrice(
+        address token0,
+        address token1,
+        TradingParams memory tradingParams_
+    ) public view returns (uint256 priceX96) {
+        (uint256[] memory prices, ) = tradingParams_.oracle.price(token0, token1, tradingParams_.oracleSafetyMask);
         require(prices.length > 0, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < prices.length; i++) {
             priceX96 += prices[i];
@@ -163,7 +157,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         totalPulledAmounts = new uint256[](2);
 
         {
-            uint256 priceX96 = targetPrice(tokens, tradingParams);
+            uint256 priceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
             uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
             uint256 capitalDelta;
@@ -176,7 +170,18 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             if (capitalDelta == 0) {
                 return (pulledAmounts, false);
             }
-            require((sumUniV3Capital > 0), ExceptionsLibrary.VALUE_ZERO);
+
+            if (sumUniV3Capital == 0) {
+                bytes memory options = _makeUniswapVaultOptions(new uint256[](2), deadline);
+
+                erc20Vault.pull(address(lowerVault), tokens, _pullExistentials, options);
+
+                erc20Vault.pull(address(upperVault), tokens, _pullExistentials, options);
+
+                erc20VaultCapital = _getCapital(priceX96, erc20Vault);
+                sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
+            }
+
             uint256 percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, sumUniV3Capital);
             (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
             (, , upperVaultLiquidity) = _getVaultStats(upperVault);
@@ -240,7 +245,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256 deadline
     ) external returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
         _requireAtLeastOperator();
-        uint256 targetPriceX96 = targetPrice(tokens, tradingParams);
+        uint256 targetPriceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
         int24 targetTick = _tickFromPriceX96(targetPriceX96);
         (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
         // // we crossed the interval right to left
@@ -319,7 +324,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
-        uint256 priceX96 = targetPrice(tokens, tradingParams);
+        uint256 priceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
         (uint256 tokenDelta, bool isNegative) = _liquidityDelta(
             FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96),
             tvl[1],
@@ -438,9 +443,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
         require(
-            (newTradingParams.maxSlippageD <= DENOMINATOR) &&
-                (newTradingParams.oracleSafety <= 5) &&
-                (newTradingParams.orderDeadline <= 86400 * 30),
+            (newTradingParams.maxSlippageD <= DENOMINATOR) && (newTradingParams.orderDeadline <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         require(address(newTradingParams.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -505,8 +508,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param vault Vault for liquidity calculation
     /// @return Capital = x * p + y
     function _getCapital(uint256 priceX96, IVault vault) internal view returns (uint256) {
-        (uint256[] memory tvl, ) = vault.tvl();
-        return FullMath.mulDiv(tvl[0], priceX96, CommonLibrary.Q96) + tvl[1];
+        (uint256[] memory minTvl, uint256[] memory maxTvl) = vault.tvl();
+        return FullMath.mulDiv((minTvl[0] + maxTvl[0]) / 2, priceX96, CommonLibrary.Q96) + (minTvl[1] + maxTvl[1]) / 2;
     }
 
     /// @notice Target tick based on mutable params
@@ -536,7 +539,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param upperLiquidity Upper vault liquidity
     /// @param targetLiquidityRatioD Target liquidity ratio (multiplied by DENOMINATOR)
     /// @param minDeviation Minimum allowed deviation between current and target liquidities (if the real is less, zero liquidity delta returned)
-    /// @return delta Liquidity required to reach targetLiquidityRatioD
+    /// @return delta Liquidity required to be sold from LowerVault (if isNegative is true) of to be bought to LowerVault (if isNegative is false) to reach targetLiquidityRatioD
     /// @return isNegative If `true` then delta needs to be bought to reach targetLiquidityRatioD, o/w needs to be sold
     function _liquidityDelta(
         uint256 lowerLiquidity,
@@ -650,7 +653,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 _makeUniswapVaultOptions(minWithdrawTokens, deadline)
             );
             // The pull is on best effort so we don't worry on overflow
-            require((depositTokenAmounts[0] != 0 || depositTokenAmounts[1] != 0), ExceptionsLibrary.VALUE_ZERO);
             pushedAmounts = erc20Vault.pull(
                 address(toVault),
                 tokens,

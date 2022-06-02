@@ -92,7 +92,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await lStrategy.updateTradingParams({
         maxSlippageD: BigNumber.from(10).pow(7),
-        oracleSafety: 5,
+        oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
         oracle: mellowOracle.address,
     });
