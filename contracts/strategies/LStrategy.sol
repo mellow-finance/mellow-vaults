@@ -15,7 +15,6 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
-import "hardhat/console.sol";
 
 contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
@@ -103,17 +102,12 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     // -------------------  EXTERNAL, VIEW  -------------------
 
     /// @notice Target price based on mutable params
-    function targetPrice(address token0, address token1, TradingParams memory tradingParams_)
-        public
-        view
-        returns (uint256 priceX96)
-    {
-        require(tokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
-        (uint256[] memory prices, ) = tradingParams_.oracle.price(
-            token0,
-            token1,
-            tradingParams_.oracleSafetyMask
-        );
+    function targetPrice(
+        address token0,
+        address token1,
+        TradingParams memory tradingParams_
+    ) public view returns (uint256 priceX96) {
+        (uint256[] memory prices, ) = tradingParams_.oracle.price(token0, token1, tradingParams_.oracleSafetyMask);
         require(prices.length > 0, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < prices.length; i++) {
             priceX96 += prices[i];
@@ -176,21 +170,16 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             }
 
             if (sumUniV3Capital == 0) {
-                erc20Vault.pull(
-                    address(lowerVault),
-                    tokens,
-                    _pullExistentials,
-                    _makeUniswapVaultOptions(new uint256[](2), deadline)
-                );
+                bytes memory options = _makeUniswapVaultOptions(new uint256[](2), deadline);
 
-                erc20Vault.pull(
-                    address(upperVault),
-                    tokens,
-                    _pullExistentials,
-                    _makeUniswapVaultOptions(new uint256[](2), deadline)
-                );
+                erc20Vault.pull(address(lowerVault), tokens, _pullExistentials, options);
+
+                erc20Vault.pull(address(upperVault), tokens, _pullExistentials, options);
+
+                erc20VaultCapital = _getCapital(priceX96, erc20Vault);
+                sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
             }
-            
+
             uint256 percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, sumUniV3Capital);
             (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
             (, , upperVaultLiquidity) = _getVaultStats(upperVault);
@@ -445,8 +434,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
         require(
-            (newTradingParams.maxSlippageD <= DENOMINATOR) &&
-                (newTradingParams.orderDeadline <= 86400 * 30),
+            (newTradingParams.maxSlippageD <= DENOMINATOR) && (newTradingParams.orderDeadline <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         require(address(newTradingParams.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
