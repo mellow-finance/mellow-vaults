@@ -6,13 +6,13 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 
-library UniV3Helper {
+contract UniV3Helper {
     function liquidityToTokenAmounts(
         uint128 liquidity,
         IUniswapV3Pool pool,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager
-    ) internal view returns (uint256[] memory tokenAmounts) {
+    ) external view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
 
@@ -32,7 +32,7 @@ library UniV3Helper {
         IUniswapV3Pool pool,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager
-    ) internal view returns (uint128 liquidity) {
+    ) external view returns (uint128 liquidity) {
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);

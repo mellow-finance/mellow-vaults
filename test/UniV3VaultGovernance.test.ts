@@ -94,10 +94,14 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                         await this.protocolGovernance
                             .connect(this.admin)
                             .commitPermissionGrants(this.subject.address);
+                        this.uniV3Helper = (
+                            await ethers.getContract("UniV3Helper")
+                        ).address;
                         await this.subject.createVault(
                             this.tokens.slice(0, 2).map((x: any) => x.address),
                             this.ownerSigner.address,
-                            3000
+                            3000,
+                            this.uniV3Helper
                         );
                         this.nft = (
                             await this.vaultRegistry.vaultsCount()
@@ -218,7 +222,8 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
                                     .map((x) => x.toLowerCase())
                                     .sort(),
                                 this.ownerSigner.address,
-                                2345
+                                2345,
+                                this.uniV3Helper
                             )
                         ).to.be.revertedWith(Exceptions.NOT_FOUND);
                     });
@@ -235,7 +240,7 @@ contract<UniV3VaultGovernance, DeploymentOptions, CustomContext>(
             ) => {
                 await this.subject
                     .connect(deployer)
-                    .createVault(tokenAddresses, owner, 3000);
+                    .createVault(tokenAddresses, owner, 3000, this.uniV3Helper);
             },
             ...this,
         });

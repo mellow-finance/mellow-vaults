@@ -77,11 +77,15 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 let uniV3VaultNft = startNft;
                 let erc20VaultNft = startNft + 1;
 
+                const uniV3Helper = (await ethers.getContract("UniV3Helper"))
+                    .address;
+
                 await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
                     createVaultArgs: [
                         tokens,
                         this.deployer.address,
                         uniV3PoolFee,
+                        uniV3Helper,
                     ],
                 });
                 await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
@@ -572,6 +576,10 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.subject.address,
                 "0x4", // address of _nft
             ]);
+            this.uniV3Helper = (
+                await ethers.getContract("UniV3Helper")
+            ).address;
+
             await ethers.provider.send("hardhat_setStorageAt", [
                 this.subject.address,
                 "0x4", // address of _nft
@@ -589,7 +597,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             .initialize(
                                 this.nft,
                                 [this.usdc.address, this.weth.address],
-                                uniV3PoolFee
+                                uniV3PoolFee,
+                                this.uniV3Helper
                             )
                     ).to.emit(this.subject, "Initialized");
                 }
@@ -605,7 +614,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             .initialize(
                                 this.nft,
                                 [this.usdc.address, this.weth.address],
-                                uniV3PoolFee
+                                uniV3PoolFee,
+                                this.uniV3Helper
                             )
                     ).to.not.be.reverted;
                 }
@@ -624,7 +634,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         this.subject.initialize(
                             this.nft,
                             [this.usdc.address, this.weth.address],
-                            uniV3PoolFee
+                            uniV3PoolFee,
+                            this.uniV3Helper
                         )
                     ).to.be.revertedWith(Exceptions.INIT);
                 });
@@ -635,7 +646,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         this.subject.initialize(
                             this.nft,
                             [this.weth.address, this.usdc.address],
-                            uniV3PoolFee
+                            uniV3PoolFee,
+                            this.uniV3Helper
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -646,7 +658,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         this.subject.initialize(
                             this.nft,
                             [this.weth.address, this.weth.address],
-                            uniV3PoolFee
+                            uniV3PoolFee,
+                            this.uniV3Helper
                         )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
@@ -661,7 +674,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                 this.usdc.address,
                                 this.weth.address,
                             ],
-                            uniV3PoolFee
+                            uniV3PoolFee,
+                            this.uniV3Helper
                         )
                     ).to.be.revertedWith(Exceptions.INVALID_VALUE);
                 });
@@ -672,7 +686,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         this.subject.initialize(
                             0,
                             [this.usdc.address, this.weth.address],
-                            uniV3PoolFee
+                            uniV3PoolFee,
+                            this.uniV3Helper
                         )
                     ).to.be.revertedWith(Exceptions.VALUE_ZERO);
                 });
@@ -693,7 +708,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                                     .initialize(
                                         this.nft,
                                         [this.usdc.address, this.weth.address],
-                                        uniV3PoolFee
+                                        uniV3PoolFee,
+                                        this.uniV3Helper
                                     )
                             ).to.be.revertedWith(Exceptions.FORBIDDEN);
                         }
