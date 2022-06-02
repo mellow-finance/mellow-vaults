@@ -81,7 +81,13 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
             // if we pull as a strategy, make sure everything is pushed
             IIntegrationVault(to).push(tokens, pushTokenAmounts, options);
             // any accidental prior balances + push leftovers
-            IIntegrationVault(to).reclaimTokens(tokens);
+            uint256[] memory reclaimed = IIntegrationVault(to).reclaimTokens(tokens);
+            for (uint256 i = 0; i < tokenAmounts.length; i++) {
+                // equals to exactly how much is pushed
+                actualTokenAmounts[i] = actualTokenAmounts[i] >= reclaimed[i]
+                    ? actualTokenAmounts[i] - reclaimed[i]
+                    : 0;
+            }
         }
     }
 }
