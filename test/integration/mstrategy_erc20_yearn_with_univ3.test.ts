@@ -135,7 +135,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             createVaultArgs: [tokens, this.deployer.address],
                         }
                     );
-
+                    let uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
                     await setupVault(
                         hre,
                         univ3VaultNft,
@@ -145,6 +145,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 tokens,
                                 this.deployer.address,
                                 UNIV3_FEE,
+                                uniV3Helper
                             ],
                         }
                     );
