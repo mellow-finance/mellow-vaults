@@ -12,7 +12,7 @@ library UniV3Helper {
         IUniswapV3Pool pool,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager
-    ) external view returns (uint256[] memory tokenAmounts) {
+    ) internal view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = new uint256[](2);
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
 
@@ -32,7 +32,7 @@ library UniV3Helper {
         IUniswapV3Pool pool,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager
-    ) public view returns (uint128 liquidity) {
+    ) internal view returns (uint128 liquidity) {
         (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = positionManager.positions(uniV3Nft);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
