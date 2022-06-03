@@ -138,7 +138,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param minTokensAmount Lower bounds for amountOut of tokens, that we want to get after swap via SwapRouter
     /// @param vaultOptions Parameters of money vault for operations with it
     /// @return poolAmounts The amount of each token that was pulled from erc20Vault to the money vault if positive, otherwise vice versa
-    /// @return tokenAmounts The amount of each token passed to SwapRouter if positive, otherwise the negative amount of tokens we received from SwapRouter
+    /// @return tokenAmounts The amount of each token passed to and from SwapRouter dependings on zeroToOne
     /// @return zeroToOne Flag, that true if we swapped amount of zero token to first token, otherwise false
     function rebalance(uint256[] memory minTokensAmount, bytes memory vaultOptions)
         external
