@@ -246,18 +246,21 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     /// @param deadline Timestamp after which the transaction reverts
     /// @return pulledAmounts Amounts pulled from one vault
     /// @return pushedAmounts Amounts pushed to the other vault
+    /// @return depositLiquidity Amount of liquidity deposited to vault
+    /// @return withdrawLiquidity Amount of liquidity withdrawn from vault
+    /// @return lowerToUpper true if liquidity is moved from lower vault to upper
     function rebalanceUniV3Vaults(
         uint256[] memory minWithdrawTokens,
         uint256[] memory minDepositTokens,
-        uint256 deadline,
-        bool lowerToUpper
+        uint256 deadline
     )
         external
         returns (
             uint256[] memory pulledAmounts,
             uint256[] memory pushedAmounts,
             uint128 depositLiquidity,
-            uint128 withdrawLiquidity
+            uint128 withdrawLiquidity,
+            bool lowerToUpper
         )
     {
         _requireAtLeastOperator();
@@ -272,42 +275,41 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             }
             // // we crossed the interval right to left
             if (isNegativeLiquidityRatio) {
-                require(!lowerToUpper, ExceptionsLibrary.INVALID_VALUE);
                 (, , uint128 liquidity) = _getVaultStats(upperVault);
                 if (liquidity > 0) {
                     // pull all liquidity to other vault and swap intervals
-                    return
-                        _rebalanceUniV3Liquidity(
-                            upperVault,
-                            lowerVault,
-                            type(uint128).max,
-                            minWithdrawTokens,
-                            minDepositTokens,
-                            deadline
-                        );
-                } else {
-                    _swapVaults(false, deadline);
-                    return (new uint256[](2), new uint256[](2), 0, 0);
-                }
-            }
-        }
-        // we crossed the interval left to right
-        if (targetUniV3LiquidityRatioD > DENOMINATOR) {
-            require(lowerToUpper, ExceptionsLibrary.INVALID_VALUE);
-            (, , uint128 liquidity) = _getVaultStats(lowerVault);
-            if (liquidity > 0) {
-                return
-                    _rebalanceUniV3Liquidity(
-                        lowerVault,
+                    (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity) = _rebalanceUniV3Liquidity(
                         upperVault,
+                        lowerVault,
                         type(uint128).max,
                         minWithdrawTokens,
                         minDepositTokens,
                         deadline
                     );
+                    return (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity, lowerToUpper);
+                } else {
+                    _swapVaults(false, deadline);
+                    return (new uint256[](2), new uint256[](2), 0, 0, false);
+                }
+            }
+        }
+        // we crossed the interval left to right
+        if (targetUniV3LiquidityRatioD > DENOMINATOR) {
+            lowerToUpper = true;
+            (, , uint128 liquidity) = _getVaultStats(lowerVault);
+            if (liquidity > 0) {
+                (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity) = _rebalanceUniV3Liquidity(
+                    lowerVault,
+                    upperVault,
+                    type(uint128).max,
+                    minWithdrawTokens,
+                    minDepositTokens,
+                    deadline
+                );
+                return (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity, lowerToUpper);
             } else {
                 _swapVaults(true, deadline);
-                return (new uint256[](2), new uint256[](2), 0, 0);
+                return (new uint256[](2), new uint256[](2), 0, 0, true);
             }
         }
         uint256 liquidityDelta;
@@ -325,24 +327,22 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 ratioParams.minUniV3LiquidityRatioDeviationD
             );
             if (isNegativeLiquidityDelta) {
-                require(!lowerToUpper, ExceptionsLibrary.INVALID_VALUE);
                 fromVault = upperVault;
                 toVault = lowerVault;
             } else {
-                require(lowerToUpper, ExceptionsLibrary.INVALID_VALUE);
+                lowerToUpper = true;
                 fromVault = lowerVault;
                 toVault = upperVault;
             }
         }
-        return
-            _rebalanceUniV3Liquidity(
-                fromVault,
-                toVault,
-                uint128(liquidityDelta),
-                minWithdrawTokens,
-                minDepositTokens,
-                deadline
-            );
+        (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity) = _rebalanceUniV3Liquidity(
+            fromVault,
+            toVault,
+            uint128(liquidityDelta),
+            minWithdrawTokens,
+            minDepositTokens,
+            deadline
+        );
     }
 
     /// @notice Post preorder for ERC20 vault rebalance.
