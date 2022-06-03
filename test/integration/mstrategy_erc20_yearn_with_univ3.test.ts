@@ -1133,7 +1133,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
             });
         });
 
-        describe.only("Rebalance distributes tokens in a given ratio", () => {
+        describe("Rebalance distributes tokens in a given ratio", () => {
             it("for set minTokensAmount", async () => {
                 await setZeroFeesFixture();
                 await this.vaultRegistry
