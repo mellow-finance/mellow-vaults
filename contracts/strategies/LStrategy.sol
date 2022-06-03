@@ -559,8 +559,13 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 return (0, false);
             }
         }
-        isNegative = targetLowerLiquidity > lowerLiquidity;
-        delta = isNegative ? targetLowerLiquidity - lowerLiquidity : lowerLiquidity - targetLowerLiquidity;
+        if (targetLowerLiquidity > lowerLiquidity) {
+            isNegative = true;
+            delta = targetLowerLiquidity - lowerLiquidity;
+        } else {
+            isNegative = false;
+            delta = lowerLiquidity - targetLowerLiquidity;
+        }
     }
 
     /// @notice Covert token amounts and deadline to byte options
