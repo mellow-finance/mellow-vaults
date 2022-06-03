@@ -68,9 +68,9 @@ contract MockCowswap {
     /// @dev Return the EIP-712 signing hash for the specified order.
     ///
     /// @param order The order to compute the EIP-712 signing hash for.
-    /// @param domainSeparator The EIP-712 domain separator to use.
+    /// @param domainSeparatorInternal The EIP-712 domain separator to use.
     /// @return orderDigest The 32 byte EIP-712 struct hash.
-    function hash(Data memory order, bytes32 domainSeparator) public returns (bytes32 orderDigest) {
+    function hash(Data memory order, bytes32 domainSeparatorInternal) public pure returns (bytes32 orderDigest) {
         bytes32 structHash;
 
         // NOTE: Compute the EIP-712 order struct hash in place. As suggested
@@ -95,7 +95,7 @@ contract MockCowswap {
         assembly {
             let freeMemoryPointer := mload(0x40)
             mstore(freeMemoryPointer, "\x19\x01")
-            mstore(add(freeMemoryPointer, 2), domainSeparator)
+            mstore(add(freeMemoryPointer, 2), domainSeparatorInternal)
             mstore(add(freeMemoryPointer, 34), structHash)
             orderDigest := keccak256(freeMemoryPointer, 66)
         }
