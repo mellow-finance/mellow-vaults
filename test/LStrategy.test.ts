@@ -213,7 +213,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 let uniV3LowerVaultNft = startNft;
                 let uniV3UpperVaultNft = startNft + 1;
                 let erc20VaultNft = startNft + 2;
-
+                let uniV3Helper = (await ethers.getContract("UniV3Helper"))
+                    .address;
                 await setupVault(
                     hre,
                     uniV3LowerVaultNft,
@@ -223,6 +224,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             tokens,
                             this.deployer.address,
                             uniV3PoolFee,
+                            uniV3Helper,
                         ],
                     }
                 );
@@ -235,6 +237,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             tokens,
                             this.deployer.address,
                             uniV3PoolFee,
+                            uniV3Helper,
                         ],
                     }
                 );

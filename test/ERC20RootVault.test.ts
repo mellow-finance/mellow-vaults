@@ -91,6 +91,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let uniV3VaultNft = startNft;
                     let erc20VaultNft = startNft + 1;
 
+                    let uniV3Helper = (await ethers.getContract("UniV3Helper"))
+                        .address;
                     await setupVault(
                         hre,
                         uniV3VaultNft,
@@ -100,6 +102,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 tokens,
                                 this.deployer.address,
                                 uniV3PoolFee,
+                                uniV3Helper,
                             ],
                         }
                     );

@@ -59,7 +59,7 @@ const setupStrategy = async (
     erc20Vault: string,
     moneyVault: string,
     tokens: string[],
-    deploymentName: string,
+    deploymentName: string
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get } = deployments;
@@ -98,7 +98,7 @@ const setupStrategy = async (
     const oracleParams = {
         oracleObservationDelta: 15 * 60,
         maxTickDeviation: 100,
-        maxSlippageD: BigNumber.from(10).pow(7).mul(2),
+        maxSlippageD: BigNumber.from(10).pow(9).div(100),
     };
     const ratioParams = {
         tickMin: 189324,
@@ -218,13 +218,12 @@ const buildMStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
     tokens: any,
-    deploymentName: any,
+    deploymentName: any
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury } =
-        await getNamedAccounts();
-    tokens = tokens.map((t: string) => t.toLowerCase()).sort()
+    const { deployer, mStrategyTreasury } = await getNamedAccounts();
+    tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
     let yearnVaultNft = startNft;
@@ -248,7 +247,14 @@ const buildMStrategy = async (
         "vaultForNft",
         yearnVaultNft
     );
-    await setupStrategy(hre, kind, erc20Vault, moneyVault, tokens, deploymentName);
+    await setupStrategy(
+        hre,
+        kind,
+        erc20Vault,
+        moneyVault,
+        tokens,
+        deploymentName
+    );
 
     const strategy = await get(deploymentName);
 
@@ -259,7 +265,7 @@ const buildMStrategy = async (
         strategy.address,
         mStrategyTreasury
     );
-}
+};
 
 export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
     (kind) => async (hre: HardhatRuntimeEnvironment) => {
@@ -269,7 +275,7 @@ export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
 
         for (let [tokens, deploymentName] of [
             [[weth, usdc], `MStrategy${kind}_WETH_USDC`],
-            [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`]
+            [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`],
         ]) {
             await buildMStrategy(hre, kind, tokens, deploymentName);
         }

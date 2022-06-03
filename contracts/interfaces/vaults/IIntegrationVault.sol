@@ -71,5 +71,10 @@ interface IIntegrationVault is IVault, IERC1271 {
     /// @param to Address of the reward pool
     /// @param selector Selector of the call
     /// @param data Abi encoded parameters to `to::selector`
-    function externalCall(address to, bytes4 selector, bytes memory data) external payable;
+    /// @return result Result of execution of the call
+    function externalCall(
+        address to,
+        bytes4 selector,
+        bytes memory data
+    ) external payable returns (bytes memory result);
 }

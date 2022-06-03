@@ -11,6 +11,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
+import "../utils/UniV3Helper.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -26,6 +27,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     /// @inheritdoc IUniV3Vault
     uint256 public uniV3Nft;
     INonfungiblePositionManager private _positionManager;
+    UniV3Helper private _uniV3Helper;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
@@ -103,34 +105,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     /// @inheritdoc IUniV3Vault
     function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = new uint256[](2);
-        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
-
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
-            sqrtPriceX96,
-            sqrtPriceAX96,
-            sqrtPriceBX96,
-            liquidity
-        );
+        tokenAmounts = _uniV3Helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft, _positionManager);
     }
 
     /// @inheritdoc IUniV3Vault
     function tokenAmountsToLiquidity(uint256[] memory tokenAmounts) public view returns (uint128 liquidity) {
-        (, , , , , int24 tickLower, int24 tickUpper, , , , , ) = _positionManager.positions(uniV3Nft);
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-        uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-
-        liquidity = LiquidityAmounts.getLiquidityForAmounts(
-            sqrtPriceX96,
-            sqrtPriceAX96,
-            sqrtPriceBX96,
-            tokenAmounts[0],
-            tokenAmounts[1]
-        );
+        liquidity = _uniV3Helper.tokenAmountsToLiquidity(tokenAmounts, pool, uniV3Nft, _positionManager);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -138,7 +118,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     function initialize(
         uint256 nft_,
         address[] memory vaultTokens_,
-        uint24 fee_
+        uint24 fee_,
+        address uniV3Hepler_
     ) external {
         require(vaultTokens_.length == 2, ExceptionsLibrary.INVALID_VALUE);
         _initialize(vaultTokens_, nft_);
@@ -146,6 +127,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         pool = IUniswapV3Pool(
             IUniswapV3Factory(_positionManager.factory()).getPool(_vaultTokens[0], _vaultTokens[1], fee_)
         );
+        _uniV3Helper = UniV3Helper(uniV3Hepler_);
         require(address(pool) != address(0), ExceptionsLibrary.NOT_FOUND);
     }
 
