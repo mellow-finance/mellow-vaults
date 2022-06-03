@@ -41,9 +41,9 @@ contract LStrategyHelper is ILStrategyHelper {
         require(order.validTo <= deadline, ExceptionsLibrary.TIMESTAMP);
         require(order.receiver == erc20Vault, ExceptionsLibrary.FORBIDDEN);
         require(order.kind == GPv2Order.KIND_SELL, ExceptionsLibrary.INVALID_VALUE);
-        require(!order.partiallyFillable, ExceptionsLibrary.INVALID_VALUE);
         require(order.sellTokenBalance == GPv2Order.BALANCE_ERC20, ExceptionsLibrary.INVALID_VALUE);
         require(order.buyTokenBalance == GPv2Order.BALANCE_ERC20, ExceptionsLibrary.INVALID_VALUE);
+        require(order.feeAmount <= fee, ExceptionsLibrary.INVALID_VALUE);
     }
 
     function tickFromPriceX96(uint256 priceX96) external pure returns (int24) {
