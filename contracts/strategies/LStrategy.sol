@@ -245,34 +245,43 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256 deadline
     ) external returns (uint256[] memory pulledAmounts, uint256[] memory pushedAmounts) {
         _requireAtLeastOperator();
-        uint256 targetPriceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
+        uint256 targetPriceX96 = targetPrice(tokens, tradingParams);
         int24 targetTick = _tickFromPriceX96(targetPriceX96);
         (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
-        // // we crossed the interval
-        if (isNegativeLiquidityRatio || targetUniV3LiquidityRatioD > DENOMINATOR) {
-            IUniV3Vault fromVault;
-            IUniV3Vault toVault;
-            if (isNegativeLiquidityRatio) {
-                fromVault = upperVault;
-                toVault = lowerVault;
-            } else {
-                fromVault = lowerVault;
-                toVault = upperVault;
-            }
-            (, , uint128 liquidity) = _getVaultStats(fromVault);
+        // // we crossed the interval right to left
+        if (isNegativeLiquidityRatio) {
+            (, , uint128 liquidity) = _getVaultStats(upperVault);
             if (liquidity > 0) {
                 // pull all liquidity to other vault and swap intervals
                 return
                     _rebalanceUniV3Liquidity(
-                        fromVault,
-                        toVault,
+                        upperVault,
+                        lowerVault,
                         type(uint128).max,
                         minWithdrawTokens,
                         minDepositTokens,
                         deadline
                     );
             } else {
-                _swapVaults(!isNegativeLiquidityRatio, deadline);
+                _swapVaults(false, deadline);
+                return (new uint256[](2), new uint256[](2));
+            }
+        }
+        // we crossed the interval left to right
+        if (targetUniV3LiquidityRatioD > DENOMINATOR) {
+            (, , uint128 liquidity) = _getVaultStats(lowerVault);
+            if (liquidity > 0) {
+                return
+                    _rebalanceUniV3Liquidity(
+                        lowerVault,
+                        upperVault,
+                        type(uint128).max,
+                        minWithdrawTokens,
+                        minDepositTokens,
+                        deadline
+                    );
+            } else {
+                _swapVaults(true, deadline);
                 return (new uint256[](2), new uint256[](2));
             }
         }
