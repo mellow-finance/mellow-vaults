@@ -18,9 +18,9 @@ contract MockOracle is IOracle {
     }
 
     function price(
-        address token0,
-        address token1,
-        uint256 safetyIndicesSet
+        address,
+        address,
+        uint256
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
         pricesX96 = new uint256[](2);
         safetyIndices = new uint256[](2);
