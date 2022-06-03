@@ -13,7 +13,7 @@ contract MockERC1271 is ERC165, IERC1271 {
         signer = newSigner;
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public pure override returns (bool) {
         return (interfaceId == type(IERC165).interfaceId) || (interfaceId == type(IERC1271).interfaceId);
     }
 

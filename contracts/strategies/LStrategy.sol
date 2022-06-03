@@ -249,9 +249,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         int24 targetTick = _tickFromPriceX96(targetPriceX96);
         (uint256 targetUniV3LiquidityRatioD, bool isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
         // // we crossed the interval
+        IUniV3Vault fromVault;
+        IUniV3Vault toVault;
         if (isNegativeLiquidityRatio || targetUniV3LiquidityRatioD > DENOMINATOR) {
-            IUniV3Vault fromVault;
-            IUniV3Vault toVault;
             if (isNegativeLiquidityRatio) {
                 fromVault = upperVault;
                 toVault = lowerVault;
@@ -277,8 +277,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             }
         }
         uint256 liquidityDelta;
-        IUniV3Vault fromVault;
-        IUniV3Vault toVault;
 
         {
             bool isNegativeLiquidityDelta;
