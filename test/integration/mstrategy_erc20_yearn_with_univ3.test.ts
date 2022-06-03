@@ -723,7 +723,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         await pushPriceDown(currentVault);
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)]);
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            );
                         pricesHistory[i - 1].push(await getSqrtPriceX96());
 
                         const erc20Tvls = (await this.erc20Vault.tvl())
@@ -773,7 +776,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     await pushPriceUp(deltaValue);
                     await this.subject
                         .connect(this.mStrategyAdmin)
-                        .rebalance([BigNumber.from(0), BigNumber.from(0)]);
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], []);
                     pricesHistory[i - 1].push(await getSqrtPriceX96());
                 }
 
@@ -927,7 +930,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         await pushPriceDown(currentVault);
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)]);
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            );
                         pricesHistory[i - 1].push(await getSqrtPriceX96());
                     }
 
@@ -943,7 +949,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     await pushPriceUp(deltaValue);
                     await this.subject
                         .connect(this.mStrategyAdmin)
-                        .rebalance([BigNumber.from(0), BigNumber.from(0)]);
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], []);
                     pricesHistory[i - 1].push(await getSqrtPriceX96());
                 }
 
@@ -1062,7 +1068,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     try {
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)]);
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            );
                         const { newToken0, newToken1 } =
                             checker.rebalance(tick);
 

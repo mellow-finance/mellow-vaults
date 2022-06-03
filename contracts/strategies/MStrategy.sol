@@ -135,46 +135,51 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @notice Perform a rebalance according to target ratios
-    function rebalance(uint256[] memory minTokensAmount)
+    /// @param minTokensAmount Lower bounds for amountOut of tokens, that we want to get after swap via SwapRouter
+    /// @param vaultOptions Parameters of money vault for operations with it
+    /// @return poolAmounts The amount of each token that was pulled from erc20Vault to the money vault if positive, otherwise vice versa
+    /// @return tokenAmounts The amount of each token passed to SwapRouter if positive, otherwise the negative amount of tokens we received from SwapRouter
+    /// @return zeroToOne Flag, that true if we swapped amount of zero token to first token, otherwise false
+    function rebalance(uint256[] memory minTokensAmount, bytes memory vaultOptions)
         external
         returns (
             int256[] memory poolAmounts,
             uint256[] memory tokenAmounts,
-            bytes memory vaultOptions,
             bool zeroToOne
         )
     {
         _requireAdmin();
-        IIntegrationVault erc20Vault_ = erc20Vault;
-        IIntegrationVault moneyVault_ = moneyVault;
-        address[] memory tokens_ = tokens;
-        uint8 index;
         SwapToTargetParams memory params;
-        params.tokens = tokens_;
+        params.tokens = tokens;
         params.pool = pool;
         params.router = router;
-        params.erc20Vault = erc20Vault_;
-        params.moneyVault = moneyVault_;
+        params.erc20Vault = erc20Vault;
+        params.moneyVault = moneyVault;
         tokenAmounts = new uint256[](2);
-        (tokenAmounts[0], index, tokenAmounts[1]) = _rebalanceTokens(
-            params,
-            minTokensAmount,
-            ratioParams.minTickRebalanceThreshold,
-            vaultOptions
-        );
-
         {
-            uint256[] memory minDeviations = new uint256[](2);
-            minDeviations[0] = ratioParams.minErc20MoneyRatioDeviation0D;
-            minDeviations[1] = ratioParams.minErc20MoneyRatioDeviation1D;
-            poolAmounts = _rebalancePools(erc20Vault_, moneyVault_, tokens_, minDeviations, vaultOptions);
+            uint256 amountIn;
+            uint8 index;
+            uint256 amountOut;
+            (amountIn, index, amountOut) = _rebalanceTokens(
+                params,
+                minTokensAmount,
+                ratioParams.minTickRebalanceThreshold,
+                vaultOptions
+            );
+            if (index == 0) {
+                zeroToOne = true;
+                tokenAmounts[0] = amountIn;
+                tokenAmounts[1] = amountOut;
+            } else {
+                zeroToOne = false;
+                tokenAmounts[0] = amountOut;
+                tokenAmounts[1] = amountIn;
+            }
         }
-        tokenAmounts = new uint256[](2);
-        if (index == 1) {
-            uint256 tmp = tokenAmounts[0];
-            tokenAmounts[0] = tokenAmounts[1];
-            tokenAmounts[1] = tmp;
-        }
+        uint256[] memory minDeviations = new uint256[](2);
+        minDeviations[0] = ratioParams.minErc20MoneyRatioDeviation0D;
+        minDeviations[1] = ratioParams.minErc20MoneyRatioDeviation1D;
+        poolAmounts = _rebalancePools(params.erc20Vault, params.moneyVault, params.tokens, minDeviations, vaultOptions);
     }
 
     /// @notice Manually pull tokens from fromVault to toVault
@@ -340,9 +345,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     )
         internal
         returns (
-            uint256,
-            uint8,
-            uint256
+            uint256, // amountIn     - amount of token, that we pushed into SwapRouter
+            uint8, // index        - index of token, that we pushed into SwapRouter
+            uint256 // amountOut    - amount of token, that we recieved from SwapRouter
         )
     {
         uint256 token0;
@@ -461,7 +466,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), amountIn)); // approve
         bytes memory routerResult = erc20Vault.externalCall(address(router_), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
         erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router_), 0)); // reset allowance
-        (amountOut) = abi.decode(routerResult, (uint256));
+        amountOut = abi.decode(routerResult, (uint256));
     }
 
     /// @notice Emitted when pool rebalance is initiated.
