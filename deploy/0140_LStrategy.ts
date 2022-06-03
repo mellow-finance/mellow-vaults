@@ -2,37 +2,43 @@ import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
-import {ALL_NETWORKS, combineVaults, MAIN_NETWORKS, setupVault} from "./0000_utils";
-import {lstat} from "fs";
-import {BigNumber} from "ethers";
+import {
+    ALL_NETWORKS,
+    combineVaults,
+    MAIN_NETWORKS,
+    setupVault,
+} from "./0000_utils";
+import { BigNumber } from "ethers";
+import { map } from "ramda";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
-    const { deploy, get, read } = deployments;
-    const { deployer, uniswapV3PositionManager, cowswap, weth, wsteth, mStrategyTreasury } = await getNamedAccounts();
+    const { deploy, get, read, log, execute } = deployments;
+    const {
+        deployer,
+        uniswapV3PositionManager,
+        cowswap,
+        weth,
+        wsteth,
+        mStrategyTreasury,
+        mStrategyAdmin,
+    } = await getNamedAccounts();
     const tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
-    const startNft = (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
+    const startNft =
+        (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
     let uniV3LowerVaultNft = startNft;
     let uniV3UpperVaultNft = startNft + 1;
     let erc20VaultNft = startNft + 2;
 
-    await setupVault(
-        hre,
-        uniV3LowerVaultNft,
-        "UniV3VaultGovernance",
-        {
-            createVaultArgs: [tokens, deployer, 500,],
-        }
-    );
-    await setupVault(
-        hre,
-        uniV3UpperVaultNft,
-        "UniV3VaultGovernance",
-        {
-            createVaultArgs: [tokens, deployer, 500,],
-        }
-    );
+    const uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
+
+    await setupVault(hre, uniV3LowerVaultNft, "UniV3VaultGovernance", {
+        createVaultArgs: [tokens, deployer, 500, uniV3Helper],
+    });
+    await setupVault(hre, uniV3UpperVaultNft, "UniV3VaultGovernance", {
+        createVaultArgs: [tokens, deployer, 500, uniV3Helper],
+    });
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
         createVaultArgs: [tokens, deployer],
     });
@@ -56,11 +62,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
         from: deployer,
         contract: "LStrategyOrderHelper",
-        args: [
-            cowswap,
-        ],
+        args: [cowswap],
         log: true,
-        autoMine: true
+        autoMine: true,
     });
 
     let strategyDeployParams = await deploy("LStrategy", {
@@ -93,7 +97,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await lStrategy.updateTradingParams({
         maxSlippageD: BigNumber.from(10).pow(7),
         oracleSafety: 5,
-        minRebalanceWaitTime: 86400,
         orderDeadline: 86400 * 30,
         oracle: mellowOracle.address,
     });
@@ -101,14 +104,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await lStrategy.updateRatioParams({
         erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
         erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
-        minErc20UniV3CapitalRatioDeviationD:
-            BigNumber.from(10).pow(8),
-        minErc20TokenRatioDeviationD: BigNumber.from(10)
-            .pow(8)
-            .div(2),
-        minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
-            .pow(8)
-            .div(2),
+        minErc20UniV3CapitalRatioDeviationD: BigNumber.from(10).pow(8),
+        minErc20TokenRatioDeviationD: BigNumber.from(10).pow(8).div(2),
+        minUniV3LiquidityRatioDeviationD: BigNumber.from(10).pow(8).div(2),
     });
 
     await lStrategy.updateOtherParams({
@@ -117,6 +115,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         minToken1ForOpening: BigNumber.from(10).pow(6),
         rebalanceDeadline: BigNumber.from(86400 * 30),
     });
+    log("Transferring ownership to lStrategyAdmin");
+
+    const ADMIN_ROLE =
+        "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin)
+    const ADMIN_DELEGATE_ROLE =
+        "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
+    const OPERATOR_ROLE =
+        "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
+
+    await lStrategy.grantRole(ADMIN_ROLE, mStrategyAdmin);
+    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, mStrategyAdmin);
+    await lStrategy.grantRole(ADMIN_DELEGATE_ROLE, deployer);
+    await lStrategy.grantRole(OPERATOR_ROLE, mStrategyAdmin);
+    await lStrategy.revokeRole(OPERATOR_ROLE, deployer);
+    await lStrategy.revokeRole(ADMIN_DELEGATE_ROLE, deployer);
+    await lStrategy.revokeRole(ADMIN_ROLE, deployer);
 };
 
 export default func;

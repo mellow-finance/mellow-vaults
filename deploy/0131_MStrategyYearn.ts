@@ -1,9 +1,9 @@
-import { buildMStrategy } from "./0130_MStrategy";
+import { buildMStrategies } from "./0130_MStrategy";
 
-const func = buildMStrategy("Yearn");
+const func = buildMStrategies("Yearn");
 
 export default func;
-func.tags = ["MStrategy", "hardhat", "localhost", "mainnet"];
+func.tags = ["MStrategy", "hardhat", "localhost", "mainnet", "arbitrum"];
 func.dependencies = [
     "VaultRegistry",
     "ERC20VaultGovernance",

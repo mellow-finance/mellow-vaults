@@ -13,6 +13,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/OracleLibrary.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/ContractMeta.sol";
 
@@ -37,7 +38,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     // MUTABLE PARAMS
 
     struct OracleParams {
-        uint16 oracleObservationDelta;
+        uint32 oracleObservationDelta;
         uint24 maxTickDeviation;
         uint256 maxSlippageD;
     }
@@ -49,7 +50,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 minTickRebalanceThreshold;
         int24 tickNeighborhood;
         int24 tickIncrease;
-        uint256 minErc20MoneyRatioDeviationD;
+        uint256 minErc20MoneyRatioDeviation0D;
+        uint256 minErc20MoneyRatioDeviation1D;
     }
 
     OracleParams public oracleParams;
@@ -99,6 +101,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(tokens_.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         address[] memory erc20Tokens = erc20Vault_.vaultTokens();
         address[] memory moneyTokens = moneyVault_.vaultTokens();
+        require(erc20Tokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
+        require(moneyTokens.length == 2, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < 2; i++) {
             require(erc20Tokens[i] == tokens_[i], ExceptionsLibrary.INVARIANT);
             require(moneyTokens[i] == tokens_[i], ExceptionsLibrary.INVARIANT);
@@ -134,7 +138,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function rebalance()
         external
         returns (
-            uint256[] memory poolAmounts,
+            int256[] memory poolAmounts,
             uint256[] memory tokenAmounts,
             bytes memory vaultOptions
         )
@@ -154,18 +158,11 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             ratioParams.minTickRebalanceThreshold,
             vaultOptions
         );
-        int256[] memory poolAmountsI = _rebalancePools(
-            erc20Vault_,
-            moneyVault_,
-            tokens_,
-            ratioParams.minErc20MoneyRatioDeviationD,
-            vaultOptions
-        );
-        poolAmounts = new uint256[](2);
+        uint256[] memory minDeviations = new uint256[](2);
+        minDeviations[0] = ratioParams.minErc20MoneyRatioDeviation0D;
+        minDeviations[1] = ratioParams.minErc20MoneyRatioDeviation1D;
+        poolAmounts = _rebalancePools(erc20Vault_, moneyVault_, tokens_, minDeviations, vaultOptions);
         tokenAmounts = new uint256[](2);
-        for (uint256 i = 0; i < 2; i++) {
-            poolAmounts[i] = poolAmountsI[i] > 0 ? uint256(poolAmountsI[i]) : uint256(-poolAmountsI[i]);
-        }
         tokenAmounts[index] = amountIn;
     }
 
@@ -187,6 +184,8 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param params Params to set
     function setOracleParams(OracleParams memory params) external {
         _requireAdmin();
+        require((params.maxSlippageD <= DENOMINATOR), ExceptionsLibrary.INVARIANT);
+
         oracleParams = params;
         emit SetOracleParams(tx.origin, msg.sender, params);
     }
@@ -195,6 +194,20 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param params Params to set
     function setRatioParams(RatioParams memory params) external {
         _requireAdmin();
+        require(
+            (params.tickMin <= params.tickMax) &&
+                (params.erc20MoneyRatioD <= DENOMINATOR) &&
+                (params.minErc20MoneyRatioDeviation0D <= DENOMINATOR) &&
+                (params.minErc20MoneyRatioDeviation1D <= DENOMINATOR) &&
+                (params.tickMin >= TickMath.MIN_TICK) &&
+                (params.tickMax <= TickMath.MAX_TICK) &&
+                (params.tickNeighborhood >= 0) &&
+                (params.tickNeighborhood <= TickMath.MAX_TICK) &&
+                (params.tickIncrease >= 0) &&
+                (params.tickIncrease <= TickMath.MAX_TICK),
+            ExceptionsLibrary.INVARIANT
+        );
+
         ratioParams = params;
         emit SetRatioParams(tx.origin, msg.sender, params);
     }
@@ -220,10 +233,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 tickMax
     ) internal pure returns (uint256) {
         if (tick <= tickMin) {
-            return 0;
+            return DENOMINATOR;
         }
         if (tick >= tickMax) {
-            return DENOMINATOR;
+            return 0;
         }
         return (uint256(uint24(tickMax - tick)) * DENOMINATOR) / uint256(uint24(tickMax - tickMin));
     }
@@ -236,19 +249,14 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     function _getAverageTick(IUniswapV3Pool pool_) internal view returns (int24 averageTick, int24 tickDeviation) {
-        uint16 oracleObservationDelta = oracleParams.oracleObservationDelta;
-
-        (, int24 tick, uint16 observationIndex, uint16 observationCardinality, , , ) = pool_.slot0();
-        require(observationCardinality > oracleObservationDelta, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        (uint32 blockTimestamp, int56 tickCumulative, , ) = pool_.observations(observationIndex);
-
-        uint16 observationIndexLast = observationIndex >= oracleObservationDelta
-            ? observationIndex - oracleObservationDelta
-            : observationIndex + (observationCardinality - oracleObservationDelta);
-        (uint32 blockTimestampLast, int56 tickCumulativeLast, , ) = pool_.observations(observationIndexLast);
-
-        uint32 timespan = blockTimestamp - blockTimestampLast;
-        averageTick = int24((int256(tickCumulative) - int256(tickCumulativeLast)) / int256(uint256(timespan)));
+        uint32 oracleObservationDelta = oracleParams.oracleObservationDelta;
+        (, int24 tick, , , , , ) = pool_.slot0();
+        bool withFail = false;
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        // Fails when we dont have observations, so return spot tick as this was the last trade price
+        if (withFail) {
+            averageTick = tick;
+        }
         tickDeviation = tick - averageTick;
     }
 
@@ -258,28 +266,41 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault erc20Vault_,
         IIntegrationVault moneyVault_,
         address[] memory tokens_,
-        uint256 minDeviation,
+        uint256[] memory minDeviations,
         bytes memory vaultOptions
     ) internal returns (int256[] memory tokenAmounts) {
         uint256 erc20MoneyRatioD = ratioParams.erc20MoneyRatioD;
         (uint256[] memory erc20Tvl, ) = erc20Vault_.tvl();
         (uint256[] memory moneyTvl, ) = moneyVault_.tvl();
         tokenAmounts = new int256[](2);
-        uint256[] memory absoluteTokenAmounts = new uint256[](2);
         uint256 max = type(uint256).max / 2;
+        bool hasSignificantDeltas = false;
         for (uint256 i = 0; i < 2; i++) {
             uint256 targetErc20Token = FullMath.mulDiv(erc20Tvl[i] + moneyTvl[i], erc20MoneyRatioD, DENOMINATOR);
-            require(targetErc20Token < max && erc20Tvl[i] < max, ExceptionsLibrary.LIMIT_OVERFLOW);
-            tokenAmounts[i] = int256(targetErc20Token) - int256(erc20Tvl[i]);
-            absoluteTokenAmounts[i] = tokenAmounts[i] >= 0 ? uint256(tokenAmounts[i]) : uint256(-tokenAmounts[i]);
+            uint256 absoluteTokenAmount = 0;
+            if (targetErc20Token > erc20Tvl[i]) {
+                absoluteTokenAmount = targetErc20Token - erc20Tvl[i];
+            } else {
+                absoluteTokenAmount = erc20Tvl[i] - targetErc20Token;
+            }
+            require(absoluteTokenAmount < max, ExceptionsLibrary.LIMIT_OVERFLOW);
+            if (targetErc20Token > erc20Tvl[i]) {
+                tokenAmounts[i] = int256(absoluteTokenAmount);
+            } else {
+                tokenAmounts[i] = -int256(absoluteTokenAmount);
+            }
+            if (absoluteTokenAmount >= minDeviations[i]) {
+                hasSignificantDeltas = true;
+            }
         }
-        if ((absoluteTokenAmounts[0] < minDeviation) && (absoluteTokenAmounts[1] < minDeviation)) {
-            return tokenAmounts;
+
+        if (!hasSignificantDeltas) {
+            return new int256[](2);
         } else if ((tokenAmounts[0] <= 0) && (tokenAmounts[1] <= 0)) {
             uint256[] memory amounts = new uint256[](2);
             amounts[0] = uint256(-tokenAmounts[0]);
             amounts[1] = uint256(-tokenAmounts[1]);
-            erc20Vault_.pull(address(moneyVault_), tokens_, amounts, "");
+            erc20Vault_.pull(address(moneyVault_), tokens_, amounts, vaultOptions);
         } else if ((tokenAmounts[0] >= 0) && (tokenAmounts[1] >= 0)) {
             uint256[] memory amounts = new uint256[](2);
             amounts[0] = uint256(tokenAmounts[0]);
@@ -291,10 +312,9 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 if (tokenAmounts[i] > 0) {
                     amounts[i] = uint256(tokenAmounts[i]);
                     moneyVault_.pull(address(erc20Vault_), tokens_, amounts, vaultOptions);
-                } else {
-                    // cannot == 0 here
+                } else if (tokenAmounts[i] < 0) {
                     amounts[i] = uint256(-tokenAmounts[i]);
-                    erc20Vault_.pull(address(moneyVault_), tokens_, amounts, "");
+                    erc20Vault_.pull(address(moneyVault_), tokens_, amounts, vaultOptions);
                 }
             }
         }
@@ -322,11 +342,17 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                     ratioParams.tickMin =
                         (tick < ratioParams.tickMin ? tick : ratioParams.tickMin) -
                         ratioParams.tickIncrease;
+                    if (ratioParams.tickMin < TickMath.MIN_TICK) {
+                        ratioParams.tickMin = TickMath.MIN_TICK;
+                    }
                 }
                 if (ratioParams.tickMax - ratioParams.tickNeighborhood < tick) {
                     ratioParams.tickMax =
                         (tick > ratioParams.tickMax ? tick : ratioParams.tickMax) +
                         ratioParams.tickIncrease;
+                    if (ratioParams.tickMax > TickMath.MAX_TICK) {
+                        ratioParams.tickMax = TickMath.MAX_TICK;
+                    }
                 }
 
                 require(
@@ -351,9 +377,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         SwapToTargetParams memory params;
         if (targetToken0 < token0) {
+            amountIn = token0 - targetToken0;
             index = 0;
             params = SwapToTargetParams({
-                amountIn: token0 - targetToken0,
+                amountIn: amountIn,
                 tokens: tokens_,
                 tokenInIndex: index,
                 priceX96: priceX96,
@@ -412,7 +439,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 uint256[] memory tokenAmounts = new uint256[](2);
                 tokenAmounts[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
                 moneyVault_.pull(address(erc20Vault_), params.tokens, tokenAmounts, vaultOptions);
-                amountIn = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
+                uint256 balance = IERC20(tokens[tokenInIndex]).balanceOf(address(erc20Vault));
+                if (balance < amountIn) {
+                    amountIn = balance;
+                }
             }
             uint256 amountOutMinimum;
             if (tokenInIndex == 1) {

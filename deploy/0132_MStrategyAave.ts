@@ -1,6 +1,6 @@
-import { buildMStrategy } from "./0130_MStrategy";
+import { buildMStrategies } from "./0130_MStrategy";
 
-const func = buildMStrategy("Aave");
+const func = buildMStrategies("Aave");
 
 export default func;
 func.tags = ["MStrategy", "polygon"];

@@ -91,6 +91,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     let uniV3VaultNft = startNft;
                     let erc20VaultNft = startNft + 1;
 
+                    let uniV3Helper = (await ethers.getContract("UniV3Helper"))
+                        .address;
                     await setupVault(
                         hre,
                         uniV3VaultNft,
@@ -100,6 +102,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 tokens,
                                 this.deployer.address,
                                 uniV3PoolFee,
+                                uniV3Helper,
                             ],
                         }
                     );
@@ -354,52 +357,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             });
 
             describe("edge cases:", () => {
-                describe("when subvaultNfts length is 0", () => {
-                    it(`reverts with ${Exceptions.EMPTY_LIST}`, async () => {
-                        await withSigner(
-                            this.erc20VaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(
-                                            this.nft,
-                                            [
-                                                this.usdc.address,
-                                                this.weth.address,
-                                            ],
-                                            randomAddress(),
-                                            []
-                                        )
-                                ).to.be.revertedWith(Exceptions.EMPTY_LIST);
-                            }
-                        );
-                    });
-                });
-
-                describe("when one of subVault indexes is 0", () => {
-                    it(`reverts with ${Exceptions.VALUE_ZERO}`, async () => {
-                        await withSigner(
-                            this.erc20VaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(
-                                            this.nft,
-                                            [
-                                                this.usdc.address,
-                                                this.weth.address,
-                                            ],
-                                            randomAddress(),
-                                            [0, randomInt(100)]
-                                        )
-                                ).to.be.revertedWith(Exceptions.VALUE_ZERO);
-                            }
-                        );
-                    });
-                });
-
                 describe("when root vault is not owner of subvault nft", () => {
                     it(`reverts with ${Exceptions.FORBIDDEN}`, async () => {
                         const startVaultNft = await ethers.provider.send(
@@ -485,32 +442,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                             [startNft]
                                         )
                                 ).to.be.revertedWith(Exceptions.DUPLICATE);
-                            }
-                        );
-                    });
-                });
-
-                describe("when subvaultNFT does not support interface", () => {
-                    it(`reverts with ${Exceptions.INVALID_INTERFACE}`, async () => {
-                        const startNft = await this.vaultRegistry.vaultsCount();
-                        await withSigner(
-                            this.erc20RootVaultGovernance.address,
-                            async (signer) => {
-                                await expect(
-                                    this.subject
-                                        .connect(signer)
-                                        .initialize(
-                                            this.nft,
-                                            [
-                                                this.usdc.address,
-                                                this.weth.address,
-                                            ],
-                                            randomAddress(),
-                                            [startNft]
-                                        )
-                                ).to.be.revertedWith(
-                                    Exceptions.INVALID_INTERFACE
-                                );
                             }
                         );
                     });

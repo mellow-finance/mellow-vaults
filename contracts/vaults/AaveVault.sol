@@ -87,6 +87,16 @@ contract AaveVault is IAaveVault, IntegrationVault {
         return data.aTokenAddress;
     }
 
+    function _isReclaimForbidden(address token) internal view override returns (bool) {
+        uint256 len = _aTokens.length;
+        for (uint256 i = 0; i < len; ++i) {
+            if (_aTokens[i] == token) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _updateTvls() private {
@@ -94,6 +104,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
         for (uint256 i = 0; i < tvlsLength; ++i) {
             _tvls[i] = IERC20(_aTokens[i]).balanceOf(address(this));
         }
+        _lastTvlUpdateTimestamp = block.timestamp;
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

@@ -131,16 +131,19 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         IVaultRegistry registry = params.registry;
         address owner = registry.ownerOf(nft_);
         address to = _root(registry, nft_, owner).subvaultAt(0);
-        require(to != address(this), ExceptionsLibrary.INVARIANT);
         actualTokenAmounts = new uint256[](tokens.length);
+        if (to == address(this)) {
+            return actualTokenAmounts;
+        }
         for (uint256 i = 0; i < tokens.length; ++i) {
-            require(
-                governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER),
-                ExceptionsLibrary.INVALID_TOKEN
-            );
+            if (
+                _isReclaimForbidden(tokens[i]) ||
+                !governance.hasPermission(tokens[i], PermissionIdsLibrary.ERC20_TRANSFER)
+            ) {
+                continue;
+            }
             IERC20 token = IERC20(tokens[i]);
             actualTokenAmounts[i] = token.balanceOf(address(this));
-            if (actualTokenAmounts[i] <= _pullExistentials[i]) continue;
 
             token.safeTransfer(to, actualTokenAmounts[i]);
         }
@@ -230,6 +233,14 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         }
         return registry.getApproved(nft_) == sender || registry.ownerOf(nft_) == sender;
     }
+
+    /// @notice check if token is forbidden to transfer under reclaim
+    /// @dev it is done in order to prevent reclaiming internal protocol tokens
+    ///      for example to prevent YEarn tokens to reclaimed
+    ///      if our vault is managing tokens, depositing it in YEarn
+    /// @param token The address of token to check
+    /// @return if token is forbidden
+    function _isReclaimForbidden(address token) internal view virtual returns (bool);
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
