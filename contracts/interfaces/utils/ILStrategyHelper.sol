@@ -2,7 +2,7 @@ pragma solidity 0.8.9;
 
 import "../../libraries/external/GPv2Order.sol";
 
-interface ILStrategyOrderHelper {
+interface ILStrategyHelper {
     function checkOrder(
         GPv2Order.Data memory order,
         bytes calldata uuid,
@@ -14,4 +14,6 @@ interface ILStrategyOrderHelper {
         address erc20Vault,
         uint256 fee
     ) external;
+
+    function tickFromPriceX96(uint256 priceX96) external pure returns (int24);
 }

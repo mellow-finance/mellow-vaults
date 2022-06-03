@@ -2,11 +2,13 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/external/cowswap/ICowswapSettlement.sol";
-import "../interfaces/utils/ILStrategyOrderHelper.sol";
+import "../interfaces/utils/ILStrategyHelper.sol";
 import "../libraries/external/GPv2Order.sol";
+import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
+import "../libraries/external/TickMath.sol";
 
-contract LStrategyOrderHelper is ILStrategyOrderHelper {
+contract LStrategyHelper is ILStrategyHelper {
     // IMMUTABLES
     address public immutable cowswap;
 
@@ -42,5 +44,10 @@ contract LStrategyOrderHelper is ILStrategyOrderHelper {
         require(!order.partiallyFillable, ExceptionsLibrary.INVALID_VALUE);
         require(order.sellTokenBalance == GPv2Order.BALANCE_ERC20, ExceptionsLibrary.INVALID_VALUE);
         require(order.buyTokenBalance == GPv2Order.BALANCE_ERC20, ExceptionsLibrary.INVALID_VALUE);
+    }
+
+    function tickFromPriceX96(uint256 priceX96) external pure returns (int24) {
+        uint256 sqrtPriceX96 = CommonLibrary.sqrtX96(priceX96);
+        return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
     }
 }

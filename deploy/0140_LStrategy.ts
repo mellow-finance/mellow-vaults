@@ -59,9 +59,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         uniV3UpperVaultNft
     );
 
-    let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+    let strategyOrderHelper = await deploy("LStrategyHelper", {
         from: deployer,
-        contract: "LStrategyOrderHelper",
+        contract: "LStrategyHelper",
         args: [cowswap],
         log: true,
         autoMine: true,

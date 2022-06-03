@@ -6,7 +6,7 @@ import { contract } from "./library/setup";
 import {
     ERC20Vault,
     LStrategy,
-    LStrategyOrderHelper,
+    LStrategyHelper,
     MockCowswap,
     MockOracle,
     UniV3Vault,
@@ -38,7 +38,7 @@ type CustomContext = {
     erc20Vault: ERC20Vault;
     cowswap: MockCowswap;
     mockOracle: MockOracle;
-    orderHelper: LStrategyOrderHelper;
+    orderHelper: LStrategyHelper;
 };
 
 type DeployOptions = {};
@@ -289,9 +289,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     uniV3UpperVault
                 );
 
-                let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+                let strategyHelper = await deploy("LStrategyHelper", {
                     from: this.deployer.address,
-                    contract: "LStrategyOrderHelper",
+                    contract: "LStrategyHelper",
                     args: [cowswapDeployParams.address],
                     log: true,
                     autoMine: true,
@@ -306,7 +306,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.erc20Vault.address,
                         this.uniV3LowerVault.address,
                         this.uniV3UpperVault.address,
-                        strategyOrderHelper.address,
+                        strategyHelper.address,
                         this.admin.address,
                     ],
                     log: true,
@@ -314,8 +314,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 this.orderHelper = await ethers.getContractAt(
-                    "LStrategyOrderHelper",
-                    strategyOrderHelper.address
+                    "LStrategyHelper",
+                    strategyHelper.address
                 );
 
                 await combineVaults(

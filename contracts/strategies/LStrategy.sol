@@ -8,7 +8,7 @@ import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
 import "../interfaces/oracles/IOracle.sol";
 import "../interfaces/utils/ILpCallback.sol";
-import "../interfaces/utils/ILStrategyOrderHelper.sol";
+import "../interfaces/utils/ILStrategyHelper.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -26,7 +26,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     address[] public tokens;
     IERC20Vault public immutable erc20Vault;
     INonfungiblePositionManager public immutable positionManager;
-    ILStrategyOrderHelper public immutable orderHelper;
+    ILStrategyHelper public immutable orderHelper;
     uint24 public immutable poolFee;
     address public immutable cowswap;
 
@@ -87,7 +87,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         IERC20Vault erc20vault_,
         IUniV3Vault vault1_,
         IUniV3Vault vault2_,
-        ILStrategyOrderHelper orderHelper_,
+        ILStrategyHelper orderHelper_,
         address admin_
     ) DefaultAccessControl(admin_) {
         positionManager = positionManager_;
@@ -503,9 +503,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Target tick based on mutable params
-    function _tickFromPriceX96(uint256 priceX96) internal pure returns (int24) {
-        uint256 sqrtPriceX96 = CommonLibrary.sqrtX96(priceX96);
-        return TickMath.getTickAtSqrtRatio(uint160(sqrtPriceX96));
+    function _tickFromPriceX96(uint256 priceX96) internal view returns (int24) {
+        return orderHelper.tickFromPriceX96(priceX96);
     }
 
     /// @notice The vault to get stats from
