@@ -130,6 +130,24 @@ const setupStrategy = async (
         `Ratio Params:`,
         map((x) => x.toString(), ratioParams)
     );
+
+    log("Transferring ownership to mStrategyAdmin");
+
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            adminRole,
+            mStrategyAdmin
+        ])
+    );
+
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
+            adminRole,
+            deployer
+        ])
+    );
+
     await execute(
         deploymentName,
         {
@@ -140,77 +158,6 @@ const setupStrategy = async (
         },
         "multicall",
         txs
-    );
-
-    log("Transferring ownership to mStrategyAdmin");
-
-    const ADMIN_ROLE =
-        "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin")
-    const ADMIN_DELEGATE_ROLE =
-        "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
-    const OPERATOR_ROLE =
-        "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
-    let permissionTxs = [];
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_ROLE,
-            mStrategyAdmin,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_DELEGATE_ROLE,
-            mStrategyAdmin,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_DELEGATE_ROLE,
-            deployer,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            OPERATOR_ROLE,
-            mStrategyAdmin,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            OPERATOR_ROLE,
-            deployer,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            ADMIN_DELEGATE_ROLE,
-            deployer,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            ADMIN_ROLE,
-            deployer,
-        ])
-    );
-
-    await execute(
-        deploymentName,
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
-            ...TRANSACTION_GAS_LIMITS,
-        },
-        "multicall",
-        permissionTxs
     );
 };
 

@@ -59,9 +59,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         uniV3UpperVaultNft
     );
 
-    let strategyOrderHelper = await deploy("LStrategyOrderHelper", {
+    let strategyOrderHelper = await deploy("LStrategyHelper", {
         from: deployer,
-        contract: "LStrategyOrderHelper",
+        contract: "LStrategyHelper",
         args: [cowswap],
         log: true,
         autoMine: true,
@@ -96,9 +96,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await lStrategy.updateTradingParams({
         maxSlippageD: BigNumber.from(10).pow(7),
-        oracleSafety: 5,
+        oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
         oracle: mellowOracle.address,
+        maxFee0: BigNumber.from(10).pow(15),
+        maxFee1: BigNumber.from(10).pow(15)
     });
 
     await lStrategy.updateRatioParams({
