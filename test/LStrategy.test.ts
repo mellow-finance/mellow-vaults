@@ -687,6 +687,16 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     oracleDeployParams.address
                 );
 
+                this.getVaultStats = async (vault: UniV3Vault) => {
+                    const nft = vault.uniV3Nft();
+                    const result = await this.positionManager.positions(nft);
+                    return {
+                        tickLower: result[5],
+                        tickUpper: result[6],
+                        liquidity: result[7],
+                    };
+                };
+
                 this.getVaultsLiquidityRatio = async () => {
                     let lowerVault = await ethers.getContractAt(
                         "UniV3Vault",
@@ -1025,6 +1035,351 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(liquidityERC20Vault[0][i]).to.be.gt(0);
                 }
             });
+            describe("liquidity calculation", () => {
+                beforeEach(async () => {
+                    this.baseParams = {
+                        erc20UniV3CapitalRatioD: BigNumber.from(10).pow(8),
+                        erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5),
+                        minErc20UniV3CapitalRatioDeviationD:
+                            BigNumber.from(10).pow(7),
+                        minErc20TokenRatioDeviationD: BigNumber.from(10).pow(7),
+                        minUniV3LiquidityRatioDeviationD:
+                            BigNumber.from(10).pow(7),
+                    };
+                    await this.subject
+                        .connect(this.admin)
+                        .updateRatioParams(this.baseParams);
+                    for (let i = 0; i < 10; ++i) {
+                        await this.subject
+                            .connect(this.admin)
+                            .rebalanceUniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            );
+                        await this.subject
+                            .connect(this.admin)
+                            .rebalanceERC20UniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            );
+                        await this.trySwapERC20();
+                    }
+                });
+                describe("erc20 rebalance", () => {
+                    describe("when pulling from erc 20 to uni v3", () => {
+                        it("works", async () => {
+                            let ratioParams = {
+                                erc20UniV3CapitalRatioD:
+                                    this.baseParams.erc20UniV3CapitalRatioD.div(
+                                        2
+                                    ),
+                                erc20TokenRatioD:
+                                    this.baseParams.erc20TokenRatioD,
+                                minErc20UniV3CapitalRatioDeviationD:
+                                    this.baseParams
+                                        .minErc20UniV3CapitalRatioDeviationD,
+                                minErc20TokenRatioDeviationD:
+                                    this.baseParams
+                                        .minErc20TokenRatioDeviationD,
+                                minUniV3LiquidityRatioDeviationD:
+                                    this.baseParams
+                                        .minUniV3LiquidityRatioDeviationD,
+                            };
+                            await this.subject
+                                .connect(this.admin)
+                                .updateRatioParams(ratioParams);
+                            const {
+                                totalPulledAmounts,
+                                isNegativeCapitalDelta,
+                                percentageIncreaseD,
+                            } = await this.subject
+                                .connect(this.admin)
+                                .callStatic.rebalanceERC20UniV3Vaults(
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    ethers.constants.MaxUint256
+                                );
+                            const DENOMINATOR =
+                                await this.subject.DENOMINATOR();
+                            expect(isNegativeCapitalDelta).to.be.false;
+                            const lowerVault = await ethers.getContractAt(
+                                "UniV3Vault",
+                                await this.subject.lowerVault()
+                            );
+                            const upperVault = await ethers.getContractAt(
+                                "UniV3Vault",
+                                await this.subject.upperVault()
+                            );
+                            const lowerVaultStats = await this.getVaultStats(
+                                lowerVault
+                            );
+                            const upperVaultStats = await this.getVaultStats(
+                                upperVault
+                            );
+                            const lowerVaultDelta = percentageIncreaseD
+                                .mul(lowerVaultStats.liquidity)
+                                .div(DENOMINATOR);
+                            const upperVaultDelta = percentageIncreaseD
+                                .mul(upperVaultStats.liquidity)
+                                .div(DENOMINATOR);
+                            let lowerTokenAmounts =
+                                await lowerVault.liquidityToTokenAmounts(
+                                    lowerVaultDelta
+                                );
+                            let upperTokenAmounts =
+                                await upperVault.liquidityToTokenAmounts(
+                                    upperVaultDelta
+                                );
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        [
+                                            lowerTokenAmounts[0].sub(10),
+                                            lowerTokenAmounts[1].sub(10),
+                                        ],
+                                        [
+                                            upperTokenAmounts[0].sub(10),
+                                            upperTokenAmounts[1].sub(10),
+                                        ],
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).not.to.be.reverted;
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        [
+                                            lowerTokenAmounts[0].add(1),
+                                            lowerTokenAmounts[1].add(1),
+                                        ],
+                                        upperTokenAmounts,
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).to.be.reverted;
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        lowerTokenAmounts,
+                                        [
+                                            upperTokenAmounts[0].add(1),
+                                            upperTokenAmounts[1].add(1),
+                                        ],
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).to.be.reverted;
+                        });
+                    });
+                    describe("when pulling from uni v3 to erc20", () => {
+                        it("works", async () => {
+                            let ratioParams = {
+                                erc20UniV3CapitalRatioD:
+                                    this.baseParams.erc20UniV3CapitalRatioD.mul(
+                                        2
+                                    ),
+                                erc20TokenRatioD:
+                                    this.baseParams.erc20TokenRatioD,
+                                minErc20UniV3CapitalRatioDeviationD:
+                                    this.baseParams
+                                        .minErc20UniV3CapitalRatioDeviationD,
+                                minErc20TokenRatioDeviationD:
+                                    this.baseParams
+                                        .minErc20TokenRatioDeviationD,
+                                minUniV3LiquidityRatioDeviationD:
+                                    this.baseParams
+                                        .minUniV3LiquidityRatioDeviationD,
+                            };
+                            await this.subject
+                                .connect(this.admin)
+                                .updateRatioParams(ratioParams);
+                            const {
+                                totalPulledAmounts,
+                                isNegativeCapitalDelta,
+                                percentageIncreaseD,
+                            } = await this.subject
+                                .connect(this.admin)
+                                .callStatic.rebalanceERC20UniV3Vaults(
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    [
+                                        ethers.constants.Zero,
+                                        ethers.constants.Zero,
+                                    ],
+                                    ethers.constants.MaxUint256
+                                );
+                            const DENOMINATOR =
+                                await this.subject.DENOMINATOR();
+                            expect(isNegativeCapitalDelta).to.be.true;
+                            const lowerVault = await ethers.getContractAt(
+                                "UniV3Vault",
+                                await this.subject.lowerVault()
+                            );
+                            const upperVault = await ethers.getContractAt(
+                                "UniV3Vault",
+                                await this.subject.upperVault()
+                            );
+                            const lowerVaultStats = await this.getVaultStats(
+                                lowerVault
+                            );
+                            const upperVaultStats = await this.getVaultStats(
+                                upperVault
+                            );
+                            const lowerVaultDelta = percentageIncreaseD
+                                .mul(lowerVaultStats.liquidity)
+                                .div(DENOMINATOR);
+                            const upperVaultDelta = percentageIncreaseD
+                                .mul(upperVaultStats.liquidity)
+                                .div(DENOMINATOR);
+                            let lowerTokenAmounts =
+                                await lowerVault.liquidityToTokenAmounts(
+                                    lowerVaultDelta
+                                );
+                            let upperTokenAmounts =
+                                await upperVault.liquidityToTokenAmounts(
+                                    upperVaultDelta
+                                );
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        [
+                                            lowerTokenAmounts[0].sub(10),
+                                            lowerTokenAmounts[1].sub(10),
+                                        ],
+                                        [
+                                            upperTokenAmounts[0].sub(10),
+                                            upperTokenAmounts[1].sub(10),
+                                        ],
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).not.to.be.reverted;
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        [
+                                            lowerTokenAmounts[0].add(1),
+                                            lowerTokenAmounts[1].add(1),
+                                        ],
+                                        upperTokenAmounts,
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).to.be.reverted;
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        lowerTokenAmounts,
+                                        [
+                                            upperTokenAmounts[0].add(1),
+                                            upperTokenAmounts[1].add(1),
+                                        ],
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).to.be.reverted;
+                        });
+                    });
+                });
+                describe("univ3 rebalance", () => {
+                    it("works", async () => {
+                        await this.swapTokens(
+                            this.deployer.address,
+                            this.deployer.address,
+                            this.weth,
+                            this.wsteth,
+                            BigNumber.from(10).pow(18).mul(10)
+                        );
+                        const currentTick = await this.getUniV3Tick();
+                        await this.updateMockOracle(currentTick);
+                        const {
+                            pulledAmounts,
+                            pushedAmounts,
+                            depositLiquidity,
+                            withdrawLiquidity,
+                            lowerToUpper,
+                        } = await this.subject
+                            .connect(this.admin)
+                            .callStatic.rebalanceUniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            );
+                        let fromVault = await ethers.getContractAt(
+                            "UniV3Vault",
+                            await this.subject.lowerVault()
+                        );
+                        let toVault = await ethers.getContractAt(
+                            "UniV3Vault",
+                            await this.subject.upperVault()
+                        );
+                        expect(
+                            withdrawLiquidity.lt(BigNumber.from(2).pow(100))
+                        );
+                        if (!lowerToUpper) {
+                            [toVault, fromVault] = [fromVault, toVault];
+                        }
+                        const withdrawTokens =
+                            await fromVault.liquidityToTokenAmounts(
+                                withdrawLiquidity
+                            );
+                        const depositTokens =
+                            await toVault.liquidityToTokenAmounts(
+                                depositLiquidity
+                            );
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .callStatic.rebalanceUniV3Vaults(
+                                    [
+                                        withdrawTokens[0].sub(10),
+                                        withdrawTokens[1].sub(10),
+                                    ],
+                                    [
+                                        depositTokens[0].sub(10),
+                                        depositTokens[1].sub(10),
+                                    ],
+                                    ethers.constants.MaxUint256
+                                )
+                        ).not.to.be.reverted;
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .callStatic.rebalanceUniV3Vaults(
+                                    [
+                                        withdrawTokens[0].add(1),
+                                        withdrawTokens[1].add(1),
+                                    ],
+                                    [depositTokens[0], depositTokens[1]],
+                                    ethers.constants.MaxUint256
+                                )
+                        ).to.be.reverted;
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .callStatic.rebalanceUniV3Vaults(
+                                    [withdrawTokens[0], withdrawTokens[1]],
+                                    [
+                                        depositTokens[0].add(1),
+                                        depositTokens[1].add(1),
+                                    ],
+                                    ethers.constants.MaxUint256
+                                )
+                        ).to.be.reverted;
+                    });
+                });
+            });
+
             describe("ERC20UniV3Rebalance with empty UniV3", () => {
                 it("works correctly", async () => {
                     await expect(
@@ -2293,6 +2648,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         [ethers.constants.Zero, ethers.constants.Zero],
                         ethers.constants.MaxUint256
                     );
+                const pulledAmounts = result[0];
+                const pushedAmounts = result[1];
                 await this.subject
                     .connect(this.admin)
                     .rebalanceUniV3Vaults(
@@ -2301,9 +2658,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ethers.constants.MaxUint256
                     );
                 for (let i = 0; i < 2; ++i) {
-                    for (let j = 0; j < 2; ++j) {
-                        expect(result[i][j]).equal(ethers.constants.Zero);
-                    }
+                    expect(pulledAmounts[i]).to.be.equal(ethers.constants.Zero);
+                    expect(pushedAmounts[i]).to.be.equal(ethers.constants.Zero);
                 }
             });
             it("rebalances when crossing the interval right to left", async () => {
@@ -2345,6 +2701,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         [ethers.constants.Zero, ethers.constants.Zero],
                         ethers.constants.MaxUint256
                     );
+                const pulledAmounts = result[0];
+                const pushedAmounts = result[1];
                 await expect(
                     this.subject
                         .connect(this.admin)
@@ -2355,9 +2713,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         )
                 ).to.not.be.reverted;
                 for (let i = 0; i < 2; ++i) {
-                    for (let j = 0; j < 2; ++j) {
-                        expect(result[i][j]).equal(ethers.constants.Zero);
-                    }
+                    expect(pulledAmounts[i]).to.be.equal(ethers.constants.Zero);
+                    expect(pushedAmounts[i]).to.be.equal(ethers.constants.Zero);
                 }
             });
 
@@ -2751,7 +3108,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             BigNumber.from(10).pow(18).mul(500)
                         );
                 });
-                await this.subject.connect(this.admin).postPreOrder();
+                await this.subject.connect(this.admin).postPreOrder(0);
                 await expect((await this.subject.preOrder()).tokenIn).eq(
                     this.weth.address
                 );
@@ -2760,7 +3117,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 );
             });
             it("initializing preOrder when liquidityDelta is not negative", async () => {
-                await this.subject.connect(this.admin).postPreOrder();
+                await this.subject.connect(this.admin).postPreOrder(0);
                 await expect((await this.subject.preOrder()).tokenIn).eq(
                     this.wsteth.address
                 );
@@ -2770,7 +3127,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
             it("emits PreOrderPosted event", async () => {
                 await expect(
-                    this.subject.connect(this.admin).postPreOrder()
+                    this.subject.connect(this.admin).postPreOrder(0)
                 ).to.emit(this.subject, "PreOrderPosted");
             });
 
@@ -2783,7 +3140,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                         ]);
                         await expect(
-                            this.subject.connect(this.admin).postPreOrder()
+                            this.subject.connect(this.admin).postPreOrder(0)
                         ).to.be.revertedWith(Exceptions.TIMESTAMP);
                     });
                 });
@@ -2792,7 +3149,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             describe("access control:", () => {
                 it("allowed: admin", async () => {
                     await expect(
-                        this.subject.connect(this.admin).postPreOrder()
+                        this.subject.connect(this.admin).postPreOrder(0)
                     ).to.not.be.reverted;
                 });
                 it("allowed: operator", async () => {
@@ -2804,14 +3161,14 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 signer.address
                             );
                         await expect(
-                            this.subject.connect(signer).postPreOrder()
+                            this.subject.connect(signer).postPreOrder(0)
                         ).to.not.be.reverted;
                     });
                 });
                 it("not allowed: any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
                         await expect(
-                            this.subject.connect(signer).postPreOrder()
+                            this.subject.connect(signer).postPreOrder(0)
                         ).to.be.reverted;
                     });
                 });
@@ -2827,7 +3184,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         "0x5a28e9363bb942b639270062aa6bb295f434bcdfc42c97267bf003f272060dc9";
 
                     await this.grantPermissions();
-                    await this.subject.connect(this.admin).postPreOrder();
+                    await this.subject.connect(this.admin).postPreOrder(0);
                     let preOrder = await this.subject.preOrder();
                     this.baseOrderStruct = {
                         sellToken: preOrder.tokenIn,
