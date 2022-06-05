@@ -13,8 +13,8 @@ import { deployments } from "hardhat";
 import { BigNumber, BigNumberish, ethers } from "ethers";
 
 export const TRANSACTION_GAS_LIMITS = {
-    maxFeePerGas: BigNumber.from(300000000000),
-    maxPriorityFeePerGas: BigNumber.from(80000000000),
+    maxFeePerGas: ethers.BigNumber.from(90000000000),
+    maxPriorityFeePerGas: ethers.BigNumber.from(40000000000),
 }
 
 export const ALLOWED_APPROVE_LIST = {
@@ -52,10 +52,16 @@ export const ALLOWED_APPROVE_LIST = {
             "0x0e44cEb592AcFC5D3F09D996302eB4C499ff8c10", // USDC-ETH 0.3%
             "0xfe343675878100b344802A6763fd373fDeed07A4", // WBTC-ETH 0.3%
             "0x45dDa9cb7c25131DF268515131f647d726f50608", // USDC-ETH 0.05%
-            "0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6", // WBTC-USDC 0.3%
+            "0x847b64f9d3A95e977D157866447a5C0A5dFa0Ee5", // WBTC-USDC 0.3%
         ],
         uniV2: [
             "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506", // SwapRouter
+
+            "0x34965ba0ac2451A34a0471F04CCa3F990b8dea27", // USDC-WETH
+            "0xE62Ec2e799305E0D367b0Cc3ee2CdA135bF89816", // WBTC-WETH
+        ],
+        curve: [
+            "0x92215849c439E1f8612b6646060B4E3E5ef822cC" // ATRICRYPTO3 (DAI-USDC-USDT-WBTC-WETH)
         ],
         erc20: [
             "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", // WETH
@@ -351,7 +357,7 @@ export class PermissionIdsLibrary {
     static REGISTER_VAULT: number = 0;
     static CREATE_VAULT: number = 1;
     static ERC20_TRANSFER: number = 2;
-    static ERC20_VAULT_TOKEN = 3;
+    static ERC20_VAULT_TOKEN: number = 3;
     static ERC20_APPROVE: number = 4;
     static ERC20_APPROVE_RESTRICTED: number = 5;
     static ERC20_TRUSTED_STRATEGY: number = 6;
