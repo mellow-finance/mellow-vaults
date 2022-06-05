@@ -71,6 +71,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         uint256 deadline;
     }
 
+    struct LiquidityParams {
+        uint256 targetUniV3LiquidityRatioD;
+        bool isNegativeLiquidityRatio;
+    }
+
     TradingParams public tradingParams;
     RatioParams public ratioParams;
     OtherParams public otherParams;
@@ -264,20 +269,20 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         )
     {
         _requireAtLeastOperator();
-        uint256 targetUniV3LiquidityRatioD;
+        LiquidityParams memory liquidityParams;
 
         {
-            bool isNegativeLiquidityRatio;
-            {
-                uint256 targetPriceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
-                int24 targetTick = _tickFromPriceX96(targetPriceX96);
-                (targetUniV3LiquidityRatioD, isNegativeLiquidityRatio) = targetUniV3LiquidityRatio(targetTick);
-            }
-            // // we crossed the interval right to left
-            if (isNegativeLiquidityRatio) {
+            uint256 targetPriceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
+            int24 targetTick = _tickFromPriceX96(targetPriceX96);
+            (
+                liquidityParams.targetUniV3LiquidityRatioD,
+                liquidityParams.isNegativeLiquidityRatio
+            ) = targetUniV3LiquidityRatio(targetTick);
+            // we crossed the interval right to left
+            if (liquidityParams.isNegativeLiquidityRatio) {
                 (, , uint128 liquidity) = _getVaultStats(upperVault);
                 if (liquidity > 0) {
-                    // pull all liquidity to other vault and swap intervals
+                    // pull all liquidity to other vault
                     (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity) = _rebalanceUniV3Liquidity(
                         upperVault,
                         lowerVault,
@@ -292,24 +297,24 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                     return (new uint256[](2), new uint256[](2), 0, 0, false);
                 }
             }
-        }
-        // we crossed the interval left to right
-        if (targetUniV3LiquidityRatioD > DENOMINATOR) {
-            lowerToUpper = true;
-            (, , uint128 liquidity) = _getVaultStats(lowerVault);
-            if (liquidity > 0) {
-                (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity) = _rebalanceUniV3Liquidity(
-                    lowerVault,
-                    upperVault,
-                    type(uint128).max,
-                    minWithdrawTokens,
-                    minDepositTokens,
-                    deadline
-                );
-                return (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity, lowerToUpper);
-            } else {
-                _swapVaults(true, deadline);
-                return (new uint256[](2), new uint256[](2), 0, 0, true);
+            // we crossed the interval left to right
+            if (liquidityParams.targetUniV3LiquidityRatioD > DENOMINATOR) {
+                lowerToUpper = true;
+                (, , uint128 liquidity) = _getVaultStats(lowerVault);
+                if (liquidity > 0) {
+                    (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity) = _rebalanceUniV3Liquidity(
+                        lowerVault,
+                        upperVault,
+                        type(uint128).max,
+                        minWithdrawTokens,
+                        minDepositTokens,
+                        deadline
+                    );
+                    return (pulledAmounts, pushedAmounts, depositLiquidity, withdrawLiquidity, lowerToUpper);
+                } else {
+                    _swapVaults(true, deadline);
+                    return (new uint256[](2), new uint256[](2), 0, 0, true);
+                }
             }
         }
         uint256 liquidityDelta;
@@ -323,7 +328,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             (liquidityDelta, isNegativeLiquidityDelta) = _liquidityDelta(
                 lowerLiquidity,
                 upperLiquidity,
-                DENOMINATOR - targetUniV3LiquidityRatioD,
+                DENOMINATOR - liquidityParams.targetUniV3LiquidityRatioD,
                 ratioParams.minUniV3LiquidityRatioDeviationD
             );
             if (isNegativeLiquidityDelta) {
@@ -346,8 +351,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     }
 
     /// @notice Post preorder for ERC20 vault rebalance.
+    /// @param minAmountOut minimum amount out of tokens to swap
     /// @return preOrder_ Posted preorder
-    function postPreOrder() external returns (PreOrder memory preOrder_) {
+    function postPreOrder(uint256 minAmountOut) external returns (PreOrder memory preOrder_) {
         _requireAtLeastOperator();
         require(block.timestamp > orderDeadline, ExceptionsLibrary.TIMESTAMP);
         (uint256[] memory tvl, ) = erc20Vault.tvl();
@@ -365,15 +371,17 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
             FullMath.mulDiv(tokenDelta, CommonLibrary.Q96, priceX96),
             tokenDelta
         ];
+        uint256 amountOut = FullMath.mulDiv(
+            tokenValuesToTransfer[1 ^ isNegativeInt],
+            DENOMINATOR - tradingParams_.maxSlippageD,
+            DENOMINATOR
+        );
+        amountOut = amountOut > minAmountOut ? amountOut : minAmountOut;
         preOrder_ = PreOrder({
             tokenIn: tokens[isNegativeInt],
             tokenOut: tokens[1 ^ isNegativeInt],
             amountIn: tokenValuesToTransfer[isNegativeInt],
-            minAmountOut: FullMath.mulDiv(
-                tokenValuesToTransfer[1 ^ isNegativeInt],
-                DENOMINATOR - tradingParams_.maxSlippageD,
-                DENOMINATOR
-            ),
+            minAmountOut: amountOut,
             deadline: block.timestamp + tradingParams_.orderDeadline
         });
 
@@ -646,7 +654,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         if (desiredLiquidity == 0) {
             return (new uint256[](2), new uint256[](2), 0, 0);
         }
-        uint128 liquidity = desiredLiquidity;
+        liquidity = desiredLiquidity;
 
         // Cut for available liquidity in the vault
         {
