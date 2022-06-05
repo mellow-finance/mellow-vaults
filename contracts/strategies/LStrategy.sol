@@ -180,7 +180,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 ratioParams.minErc20UniV3CapitalRatioDeviationD
             );
             if (capitalDelta == 0) {
-                return (totalPulledAmounts, false, 0);
+                return (new uint256[](2), false, 0);
             }
 
             if (sumUniV3Capital == 0) {
