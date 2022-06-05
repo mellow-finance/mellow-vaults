@@ -991,7 +991,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 await expect(
                     highRatioMStrategy
                         .connect(this.mStrategyAdmin)
-                        .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
 
@@ -1124,7 +1124,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 await expect(
                     lowRatioMStrategy
                         .connect(this.mStrategyAdmin)
-                        .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
         });
@@ -1134,7 +1134,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
 
@@ -1143,7 +1143,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         this.subject
                             .connect(s)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
@@ -1218,7 +1221,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
             });
@@ -1298,7 +1304,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMax).to.be.equal(
@@ -1383,7 +1392,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMin).to.be.equal(
@@ -1465,12 +1477,18 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     await expect(
                         subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.not.be.reverted;
                     await expect(
                         subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance([BigNumber.from(0), BigNumber.from(0)])
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                 });
             });

@@ -87,7 +87,6 @@ contract AggregateVault is IAggregateVault, Vault {
             uint256 subvaultNft = subvaultNfts_[i];
             require(vaultRegistry.ownerOf(subvaultNft) == address(this), ExceptionsLibrary.FORBIDDEN);
             require(_subvaultNftsIndex[subvaultNft] == 0, ExceptionsLibrary.DUPLICATE);
-            address vault = vaultRegistry.vaultForNft(subvaultNft);
             vaultRegistry.approve(strategy_, subvaultNft);
             vaultRegistry.lockNft(subvaultNft);
             _subvaultNftsIndex[subvaultNft] = i + 1;
