@@ -59,7 +59,7 @@ const setupStrategy = async (
     erc20Vault: string,
     moneyVault: string,
     tokens: string[],
-    deploymentName: string,
+    deploymentName: string
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, log, execute, read, get } = deployments;
@@ -98,7 +98,7 @@ const setupStrategy = async (
     const oracleParams = {
         oracleObservationDelta: 15 * 60,
         maxTickDeviation: 100,
-        maxSlippageD: BigNumber.from(10).pow(7).mul(2),
+        maxSlippageD: BigNumber.from(10).pow(9).div(100),
     };
     const ratioParams = {
         tickMin: 189324,
@@ -130,6 +130,24 @@ const setupStrategy = async (
         `Ratio Params:`,
         map((x) => x.toString(), ratioParams)
     );
+
+    log("Transferring ownership to mStrategyAdmin");
+
+    const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
+            adminRole,
+            mStrategyAdmin
+        ])
+    );
+
+    txs.push(
+        mStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
+            adminRole,
+            deployer
+        ])
+    );
+
     await execute(
         deploymentName,
         {
@@ -141,90 +159,18 @@ const setupStrategy = async (
         "multicall",
         txs
     );
-
-    log("Transferring ownership to mStrategyAdmin");
-
-    const ADMIN_ROLE =
-        "0xf23ec0bb4210edd5cba85afd05127efcd2fc6a781bfed49188da1081670b22d8"; // keccak256("admin")
-    const ADMIN_DELEGATE_ROLE =
-        "0xc171260023d22a25a00a2789664c9334017843b831138c8ef03cc8897e5873d7"; // keccak256("admin_delegate")
-    const OPERATOR_ROLE =
-        "0x46a52cf33029de9f84853745a87af28464c80bf0346df1b32e205fc73319f622"; // keccak256("operator")
-    let permissionTxs = [];
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_ROLE,
-            mStrategyAdmin,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_DELEGATE_ROLE,
-            mStrategyAdmin,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            ADMIN_DELEGATE_ROLE,
-            deployer,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("grantRole", [
-            OPERATOR_ROLE,
-            mStrategyAdmin,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            OPERATOR_ROLE,
-            deployer,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            ADMIN_DELEGATE_ROLE,
-            deployer,
-        ])
-    );
-
-    permissionTxs.push(
-        mStrategyWethUsdc.interface.encodeFunctionData("revokeRole", [
-            ADMIN_ROLE,
-            deployer,
-        ])
-    );
-
-    await execute(
-        deploymentName,
-        {
-            from: deployer,
-            log: true,
-            autoMine: true,
-            ...TRANSACTION_GAS_LIMITS,
-        },
-        "multicall",
-        permissionTxs
-    );
 };
 
 const buildMStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
     tokens: any,
-    deploymentName: any,
+    deploymentName: any
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read, get } = deployments;
-    const { deployer, mStrategyTreasury } =
-        await getNamedAccounts();
-    tokens = tokens.map((t: string) => t.toLowerCase()).sort()
+    const { deployer, mStrategyTreasury } = await getNamedAccounts();
+    tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
     let yearnVaultNft = startNft;
@@ -248,7 +194,14 @@ const buildMStrategy = async (
         "vaultForNft",
         yearnVaultNft
     );
-    await setupStrategy(hre, kind, erc20Vault, moneyVault, tokens, deploymentName);
+    await setupStrategy(
+        hre,
+        kind,
+        erc20Vault,
+        moneyVault,
+        tokens,
+        deploymentName
+    );
 
     const strategy = await get(deploymentName);
 
@@ -259,7 +212,7 @@ const buildMStrategy = async (
         strategy.address,
         mStrategyTreasury
     );
-}
+};
 
 export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
     (kind) => async (hre: HardhatRuntimeEnvironment) => {
@@ -269,7 +222,7 @@ export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
 
         for (let [tokens, deploymentName] of [
             [[weth, usdc], `MStrategy${kind}_WETH_USDC`],
-            [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`]
+            [[weth, wbtc], `MStrategy${kind}_WETH_WBTC`],
         ]) {
             await buildMStrategy(hre, kind, tokens, deploymentName);
         }

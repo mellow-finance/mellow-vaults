@@ -191,7 +191,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
-    function _isReclaimForbidden(address token) internal view override returns (bool) {
+    function _isReclaimForbidden(address) internal pure override returns (bool) {
         return false;
     }
 

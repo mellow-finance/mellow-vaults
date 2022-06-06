@@ -11,7 +11,8 @@ import {
     PRIVATE_VAULT,
     WBTC_PRICE,
     USDC_PRICE,
-    WETH_PRICE, TRANSACTION_GAS_LIMITS
+    WETH_PRICE,
+    TRANSACTION_GAS_LIMITS
 } from "./0000_utils";
 import { ethers } from "ethers";
 import { deployments } from "hardhat";
@@ -151,6 +152,7 @@ async function registerTokens(
             token,
             erc20Validator.address
         );
+        txDatas.push(tx.data);
     }
 }
 
@@ -242,6 +244,10 @@ async function setUnitPrices(
     txDatas.push(txUSDC.data);
     const txWETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(weth);
     txDatas.push(txWETHc.data);
+    if (wsteth) {
+        const txWSTETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(wsteth);
+        txDatas.push(txWSTETHc.data);
+    }
     const txWBTCc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(wbtc);
     txDatas.push(txWBTCc.data);
     const txUSDCc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(usdc);

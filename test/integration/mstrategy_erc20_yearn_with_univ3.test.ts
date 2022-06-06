@@ -29,6 +29,7 @@ import { randomBytes } from "crypto";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { TickMath } from "@uniswap/v3-sdk";
+import Exceptions from "../library/Exceptions";
 
 const UNIV3_FEE = 3000; // corresponds to 0.05% fee in UniV3 pool
 
@@ -135,7 +136,8 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             createVaultArgs: [tokens, this.deployer.address],
                         }
                     );
-                    let uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
+                    let uniV3Helper = (await ethers.getContract("UniV3Helper"))
+                        .address;
                     await setupVault(
                         hre,
                         univ3VaultNft,
@@ -145,7 +147,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 tokens,
                                 this.deployer.address,
                                 UNIV3_FEE,
-                                uniV3Helper
+                                uniV3Helper,
                             ],
                         }
                     );
@@ -722,7 +724,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         await pushPriceDown(currentVault);
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance();
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            );
                         pricesHistory[i - 1].push(await getSqrtPriceX96());
 
                         const erc20Tvls = (await this.erc20Vault.tvl())
@@ -770,7 +775,9 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     }
 
                     await pushPriceUp(deltaValue);
-                    await this.subject.connect(this.mStrategyAdmin).rebalance();
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], []);
                     pricesHistory[i - 1].push(await getSqrtPriceX96());
                 }
 
@@ -924,7 +931,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         await pushPriceDown(currentVault);
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance();
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            );
                         pricesHistory[i - 1].push(await getSqrtPriceX96());
                     }
 
@@ -938,7 +948,9 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     }
 
                     await pushPriceUp(deltaValue);
-                    await this.subject.connect(this.mStrategyAdmin).rebalance();
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], []);
                     pricesHistory[i - 1].push(await getSqrtPriceX96());
                 }
 
@@ -1057,7 +1069,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     try {
                         await this.subject
                             .connect(this.mStrategyAdmin)
-                            .rebalance();
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            );
                         const { newToken0, newToken1 } =
                             checker.rebalance(tick);
 
@@ -1114,6 +1129,118 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         );
                     }
                 }
+                return true;
+            });
+        });
+
+        describe("Rebalance distributes tokens in a given ratio", () => {
+            it("for set minTokensAmount", async () => {
+                await setZeroFeesFixture();
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.erc20Vault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.yearnVault.nft()
+                    );
+                await this.vaultRegistry
+                    .connect(this.admin)
+                    .adminApprove(
+                        this.subject.address,
+                        await this.uniV3Vault.nft()
+                    );
+
+                const usdcAmount = BigNumber.from(10).pow(6).mul(3000);
+                const wethAmount = BigNumber.from(10).pow(18);
+                await mint("USDC", this.deployer.address, usdcAmount);
+                await mint("WETH", this.deployer.address, wethAmount);
+
+                await this.erc20RootVault.deposit(
+                    [usdcAmount, wethAmount],
+                    BigNumber.from(0),
+                    []
+                );
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .manualPull(
+                        this.erc20Vault.address,
+                        this.yearnVault.address,
+                        [usdcAmount, wethAmount],
+                        []
+                    );
+
+                const oracleParams: OracleParamsStruct = {
+                    oracleObservationDelta: 15,
+                    maxTickDeviation: 2 ** 23,
+                    maxSlippageD: Math.round(10 ** 9),
+                };
+
+                const ratioParams: RatioParamsStruct = {
+                    tickMin: 198240 - 5000,
+                    tickMax: 198240 + 5000,
+                    erc20MoneyRatioD: 0,
+                    minTickRebalanceThreshold: 0,
+                    tickNeighborhood: 60,
+                    tickIncrease: 180,
+                    minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
+                    minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
+                };
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setOracleParams(oracleParams);
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .setRatioParams(ratioParams);
+
+                const { tokenAmounts, zeroToOne } = await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .callStatic.rebalance(
+                        [BigNumber.from(0), BigNumber.from(0)],
+                        []
+                    );
+
+                var minTokensAmount = [BigNumber.from(0), BigNumber.from(0)];
+                if (zeroToOne) {
+                    minTokensAmount[0] = ethers.constants.MaxUint256;
+                    minTokensAmount[1] = tokenAmounts[1];
+                } else {
+                    minTokensAmount[1] = ethers.constants.MaxUint256;
+                    minTokensAmount[0] = tokenAmounts[0];
+                }
+
+                // must be processes without any exceptions
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .callStatic.rebalance(
+                            minTokensAmount, // minTokensAmount
+                            []
+                        )
+                ).not.to.be.reverted;
+
+                // increase amountOut on 1, to get limit underflow error
+                if (zeroToOne) {
+                    minTokensAmount[1] = minTokensAmount[1].add(1);
+                } else {
+                    minTokensAmount[0] = minTokensAmount[0].add(1);
+                }
+
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .callStatic.rebalance(
+                            minTokensAmount, // minTokensAmount
+                            []
+                        )
+                ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
+
                 return true;
             });
         });

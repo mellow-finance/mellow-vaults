@@ -34,7 +34,7 @@ import Exceptions from "./library/Exceptions";
 import { assert } from "console";
 import { randomInt } from "crypto";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
-import { min } from "ramda";
+import { binary, min } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -989,7 +989,9 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     .commitValidator(this.weth.address);
 
                 await expect(
-                    highRatioMStrategy.connect(this.mStrategyAdmin).rebalance()
+                    highRatioMStrategy
+                        .connect(this.mStrategyAdmin)
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
 
@@ -1120,7 +1122,9 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     .commitValidator(this.weth.address);
 
                 await expect(
-                    lowRatioMStrategy.connect(this.mStrategyAdmin).rebalance()
+                    lowRatioMStrategy
+                        .connect(this.mStrategyAdmin)
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
         });
@@ -1128,14 +1132,21 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
         describe("access control", () => {
             it("allowed: MStrategy admin", async () => {
                 await expect(
-                    this.subject.connect(this.mStrategyAdmin).rebalance()
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalance([BigNumber.from(0), BigNumber.from(0)], [])
                 ).to.not.be.reverted;
             });
 
             it("denied: any other address", async () => {
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
-                        this.subject.connect(s).rebalance()
+                        this.subject
+                            .connect(s)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.be.revertedWith(Exceptions.FORBIDDEN);
                 });
             });
@@ -1208,7 +1219,12 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .setOracleParams(oracleParams);
 
                     await expect(
-                        subject.connect(this.mStrategyAdmin).rebalance()
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.be.revertedWith(Exceptions.INVARIANT);
                 });
             });
@@ -1286,7 +1302,12 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     let res = await subject.callStatic.getAverageTick();
 
                     await expect(
-                        subject.connect(this.mStrategyAdmin).rebalance()
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMax).to.be.equal(
@@ -1369,7 +1390,12 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     let res = await subject.callStatic.getAverageTick();
 
                     await expect(
-                        subject.connect(this.mStrategyAdmin).rebalance()
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.not.be.reverted;
                     let actualRatioParams = await subject.ratioParams();
                     expect(actualRatioParams.tickMin).to.be.equal(
@@ -1449,10 +1475,20 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         .setOracleParams(oracleParams);
 
                     await expect(
-                        subject.connect(this.mStrategyAdmin).rebalance()
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.not.be.reverted;
                     await expect(
-                        subject.connect(this.mStrategyAdmin).rebalance()
+                        subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
                     ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
                 });
             });
