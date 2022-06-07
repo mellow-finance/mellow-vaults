@@ -222,7 +222,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
                 // The zero-vault must have the same tokens as ERC20RootVault
                 require(vaultTokens_.length == subvaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
                 require(
-                    IIntegrationVault(subvault).supportsInterface(type(IERC20Vault).interfaceId),
+                    IERC165(subvault).supportsInterface(type(IERC20Vault).interfaceId),
                     ExceptionsLibrary.INVALID_INTERFACE
                 );
             }
