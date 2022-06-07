@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/vaults/IERC20RootVaultGovernance.sol";
+import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
@@ -220,6 +221,10 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
             if (i == 0) {
                 // The zero-vault must have the same tokens as ERC20RootVault
                 require(vaultTokens_.length == subvaultTokens.length, ExceptionsLibrary.INVALID_LENGTH);
+                require(
+                    IIntegrationVault(subvault).supportsInterface(type(IERC20Vault).interfaceId),
+                    ExceptionsLibrary.INVALID_INTERFACE
+                );
             }
             uint256 subvaultTokenId = 0;
             for (
