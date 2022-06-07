@@ -505,7 +505,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 this.uniV3Fees[0] = this.uniV3Fees[0].add(swapFees[0]);
                 this.uniV3Fees[1] = this.uniV3Fees[1].add(swapFees[1]);
-                let amountIn = await uniSwapTokensGivenOutput(
+                await uniSwapTokensGivenOutput(
                     this.swapRouter,
                     this.tokens,
                     this.uniV3PoolFee,
