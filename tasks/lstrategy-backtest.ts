@@ -7,7 +7,9 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
 import { BigNumberish, Contract, PopulatedTransaction } from "ethers";
 import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
+import { TickMath } from "@uniswap/v3-sdk";
 import {
+    any,
     equals,
     filter,
     fromPairs,
@@ -18,6 +20,11 @@ import {
 } from "ramda";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { randomBytes } from "crypto";
+import * as fs from "fs";
+import * as path from "path";
+import { float } from "fast-check";
+import JSBI from "jsbi";
+import { start } from "repl";
 
 
 type Context = {
@@ -38,10 +45,15 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         "The name of the file with historical data",
         undefined,
         types.string,
+    ).addParam(
+        "width",
+        "The width of the interval of positions",
+        undefined,
+        types.int,
     ).setAction(
-        async ({ filename }, hre: HardhatRuntimeEnvironment) => {
+        async ({ filename, width}, hre: HardhatRuntimeEnvironment) => {
             const context = await setup(hre);
-            await process(filename, hre, context);
+            await process(filename, width, hre, context);
         }
     );
 
@@ -343,6 +355,71 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         deployer: deployerSigned,
         mockOracle: mockOracle,
     } as Context;
+};
+
+const preparePush = async ({
+    hre,
+    context,
+    vault,
+    tickLower = -887220,
+    tickUpper = 887220,
+    wethAmount = BigNumber.from(10).pow(9),
+    wstethAmount = BigNumber.from(10).pow(9),
+}: {
+    hre: HardhatRuntimeEnvironment;
+    context: Context
+    vault: any;
+    tickLower?: number;
+    tickUpper?: number;
+    wethAmount?: BigNumber;
+    wstethAmount?: BigNumber;
+}) => {
+    const { ethers} = hre;
+    const mintParams = {
+        token0: context.wsteth.address,
+        token1: context.weth.address,
+        fee: 500,
+        tickLower: tickLower,
+        tickUpper: tickUpper,
+        amount0Desired: wstethAmount,
+        amount1Desired: wethAmount,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: context.deployer.address,
+        deadline: ethers.constants.MaxUint256,
+    };
+    const result = await context.positionManager.callStatic.mint(
+        mintParams
+    );
+    await context.positionManager.mint(mintParams);
+    await context.positionManager.functions[
+        "safeTransferFrom(address,address,uint256)"
+    ](context.deployer.address, vault, result.tokenId);
+};
+
+const getTvl = async (
+        hre: HardhatRuntimeEnvironment,
+        address: string
+) => {
+    const { ethers } = hre;
+    let vault = await ethers.getContractAt("IVault", address);
+    let tvls = await vault.tvl();
+    return tvls;
+}
+
+const getUniV3Tick = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+    const { ethers } = hre;
+    let lowerVault = await ethers.getContractAt(
+        "IUniV3Vault",
+        await context.LStrategy.lowerVault()
+    );
+    let pool = await ethers.getContractAt(
+        "IUniswapV3Pool",
+        await lowerVault.pool()
+    );
+
+    const currentState = await pool.slot0();
+    return BigNumber.from(currentState.tick);
 };
 
 const addSigner = async (
@@ -757,6 +834,26 @@ const randomAddress = (hre: HardhatRuntimeEnvironment) => {
     return wallet.address;
 };
 
+const parseFile = (filename: string) : string[] =>  {
+    const csvFilePath = path.resolve(__dirname, filename);
+    const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
+    const fileLen = 26542;
+    const blockNumberLen = 8;
+    const pricePrecision = 29;
+    let prices = new Array();
+
+    let index = 0;
+    for (let i = 0; i < fileLen; ++i) {
+        //let blockNumber = fileContent.slice(index, index + blockNumberLen);
+        let price = fileContent.slice(index + blockNumberLen + 1, index + blockNumberLen + pricePrecision + 1);
+        prices.push(price);
+        index += blockNumberLen + pricePrecision + 2;
+    }
+
+    return prices;
+
+};
+
 
 export const withSigner = async (
     hre: HardhatRuntimeEnvironment,
@@ -775,13 +872,204 @@ const removeSigner = async (network: Network, address: string) => {
     });
 };
 
-const process = async (filename: string, hre: HardhatRuntimeEnvironment, context: Context) => {
-    const { ethers, network } = hre;
-    const result = await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
-        [ethers.constants.Zero, ethers.constants.Zero],
-        [ethers.constants.Zero, ethers.constants.Zero],
-        ethers.constants.MaxUint256,
+const changePrice = async (currentTick: BigNumber, context: Context) => {
+    let sqrtPriceX96 = BigNumber.from(
+        TickMath.getSqrtRatioAtTick(
+            currentTick.toNumber()
+        ).toString()
     );
-    const lowerVault = await context.LStrategy.lowerVault();
-    console.log(lowerVault);
+    let priceX96 = sqrtPriceX96
+        .mul(sqrtPriceX96)
+        .div(BigNumber.from(2).pow(96));
+    context.mockOracle.updatePrice(priceX96);
+}
+
+const swapTokens = async (
+    hre: HardhatRuntimeEnvironment,
+    context: Context,
+    senderAddress: string,
+    recipientAddress: string,
+    tokenIn: Contract,
+    tokenOut: Contract,
+    amountIn: BigNumber
+) => {
+    const { ethers } = hre;
+    await withSigner(hre, senderAddress, async (senderSigner) => {
+        await tokenIn
+            .connect(senderSigner)
+            .approve(
+                context.swapRouter.address,
+                ethers.constants.MaxUint256
+            );
+        let params = {
+            tokenIn: tokenIn.address,
+            tokenOut: tokenOut.address,
+            fee: 500,
+            recipient: recipientAddress,
+            deadline: ethers.constants.MaxUint256,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0,
+        };
+        await context.swapRouter
+            .connect(senderSigner)
+            .exactInputSingle(params);
+    });
+};
+
+const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Context) => {
+    const { ethers } = hre;
+    const mintParams = {
+        token0: context.wsteth.address,
+        token1: context.weth.address,
+        fee: 500,
+        tickLower: -10000,
+        tickUpper: 10000,
+        amount0Desired: BigNumber.from(10).pow(20).mul(5),
+        amount1Desired: BigNumber.from(10).pow(20).mul(5),
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: context.deployer.address,
+        deadline: ethers.constants.MaxUint256,
+    };
+    //mint a position in pull to provide liquidity for future swaps
+    await context.positionManager.mint(mintParams);
+}
+
+const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Context, width: number) => {
+
+    let tick = await getUniV3Tick(hre, context);
+    await changePrice(tick, context);
+
+    let semiPositionRange = width / 2;
+
+    let tickLeftLower =
+        tick
+            .div(semiPositionRange)
+            .mul(semiPositionRange).toNumber() - semiPositionRange;
+    let tickLeftUpper = tickLeftLower + 2 * semiPositionRange;
+
+    let tickRightLower = tickLeftLower + semiPositionRange;
+    let tickRightUpper = tickLeftUpper + semiPositionRange;
+
+    let lowerVault = await context.LStrategy.lowerVault();
+    let upperVault = await context.LStrategy.upperVault();
+    await preparePush({hre, context, vault: lowerVault, tickLower: tickLeftLower, tickUpper: tickLeftUpper});
+    await preparePush({hre, context, vault: upperVault, tickLower: tickRightLower, tickUpper: tickRightUpper});
+
+    let erc20 =  await context.LStrategy.erc20Vault();
+    for (let token of [context.weth, context.wsteth]) {
+        await token.transfer(
+        erc20,
+        BigNumber.from(10).pow(18).mul(500)
+        );
+    }
+
+}
+
+const stringToSqrtPriceX96 = (x: string) => {
+    let sPrice = Math.sqrt(parseFloat(x));
+    let resPrice = BigNumber.from(Math.round(sPrice * (2**30))).mul(BigNumber.from(2).pow(66));
+    return resPrice;
+}
+
+const getTick = (x: BigNumber) => {
+    return BigNumber.from(TickMath.getTickAtSqrtRatio(JSBI.BigInt(x)));
+}
+
+const getPool = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+    const { ethers } = hre;
+    let lowerVault = await ethers.getContractAt(
+        "IUniV3Vault",
+        await context.LStrategy.lowerVault()
+    );
+    let pool = await ethers.getContractAt(
+        "IUniswapV3Pool",
+        await lowerVault.pool()
+    );
+    return pool;
+}
+
+const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
+
+    let pool = await getPool(hre, context);
+    let startTry = BigNumber.from(10).pow(17).mul(60);
+
+    let needIncrease = 0; //mock initialization
+    
+    while (true) {
+
+        let currentPoolState = await pool.slot0();
+        let currentPoolTick = BigNumber.from(currentPoolState.tick);
+
+        if (currentPoolTick.eq(tick)) {
+            break;
+        }
+        
+        if (currentPoolTick.lt(tick)) {
+            if (needIncrease == 0) {
+                needIncrease = 1;
+                startTry = startTry.div(2);
+            }
+            await swapTokens(
+                hre, 
+                context,
+                context.deployer.address,
+                context.deployer.address,
+                context.weth,
+                context.wsteth,
+                startTry
+            );   
+            
+        }
+        else {
+            if (needIncrease == 1) {
+                needIncrease = 0;
+                startTry = startTry.div(2);
+            }
+            await swapTokens(
+                hre, 
+                context,
+                context.deployer.address,
+                context.deployer.address,
+                context.wsteth,
+                context.weth,
+                startTry
+            );  
+        }
+    }
+}
+
+const fullPriceUpdate = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
+    await makeDesiredPoolPrice(hre, context, tick);
+    await changePrice(tick, context);
+}
+
+const process = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
+
+    await mintMockPosition(hre, context);
+
+    const strategy = context.LStrategy;
+
+    const { ethers } = hre;
+    
+    let prices = parseFile(filename);
+    await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[0])));
+    await buildInitialPositions(hre, context, width);
+    await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
+        [
+            ethers.constants.Zero,
+            ethers.constants.Zero,
+        ],
+        [
+            ethers.constants.Zero,
+            ethers.constants.Zero,
+        ],
+        ethers.constants.MaxUint256
+    );
+
+    console.log(await getTvl(hre, strategy.lowerVault()));
+    console.log(await getTvl(hre, strategy.upperVault()));
+    console.log(await getTvl(hre, strategy.erc20Vault()));
+
 };
