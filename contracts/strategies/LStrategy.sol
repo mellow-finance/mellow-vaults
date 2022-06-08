@@ -184,7 +184,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
             uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 capitalDelta;
-            
+
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
                 sumUniV3Capital,
