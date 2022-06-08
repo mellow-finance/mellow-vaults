@@ -458,11 +458,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 pushTarget = randomChoice(pushCandidates).item;
             } else if (pullTarget == this.uniV3Vault) {
                 if (
-                    tvls[pullTargetIndex][1][0].eq(pullAmount[0]) &&
-                    tvls[pullTargetIndex][1][1].eq(pullAmount[1])
+                    tvls[pullTargetIndex][1][0].lte(pullAmount[0]) &&
+                    tvls[pullTargetIndex][1][1].lte(pullAmount[1])
                 ) {
+                    console.log("MULTIPLICATING");
                     pullAmount = pullAmount.map((amount) =>
-                        amount.mul(6).div(5)
+                        amount.mul(2)
                     );
                 }
             }
@@ -663,29 +664,11 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         newPrice,
                         currentLiquidity
                     );
-                    // if (!amount.lt(amountToNextTick)) {
-                    //     let tickSqrt = (await this.tickMath.getSqrtRatioAtTick(currentTick))
-                    //     assert(tickSqrt.div(BigNumber.from(2).pow(96)).eq(newPrice.div(BigNumber.from(2).pow(96))), "prices differ: " + tickSqrt.div(BigNumber.from(2).pow(96)).toString() + " != " + newPrice.div(BigNumber.from(2).pow(96).toString()));
-                    // }
                 }
-                // console.log("old price: " + currentPrice.toString());
-                // console.log("new price: " + newPrice.toString());
-                // console.log(
-                //     "price in first token: " + currentSwapAmount.toString()
-                // );
-                // console.log(
-                //     "price in other token: " +
-                //         currentSwapAmountInOtherCoin.toString()
-                // );
-                // console.log("current amount: " + currentSwapAmount.toString());
                 if (
                     this.tickUpper > currentTick &&
                     currentTick >= this.tickLower
                 ) {
-                    // console.log("+FEES");
-                    // console.log("liquidities:");
-                    // console.log(myLiquidity.toString());
-                    // console.log(currentLiquidity.toString());
                     fees = fees.add(
                         currentSwapAmountInOtherCoin
                             .mul(myLiquidity)
@@ -1304,6 +1287,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     feesMaxEstimation.add(uniV3ChangeMaxEstimation)
                 );
             }
+            return tokensAmount;
         }
 
         before(async () => {
@@ -1402,6 +1386,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await printPullAction.call(this, randomAction);
                         await doPullAction.call(this, randomAction, false);
                     }
+                    if (i > 70 && (await this.positionManager.positions(this.uniV3Nft)).liquidity.gt(0)) {
+                        break;
+                    }
                 }
 
                 if (!this.uniV3Nft.eq(0)) {
@@ -1415,7 +1402,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 console.log("BEFORE PULLING: \n");
                 
                 await printVaults.call(this);
-                
+
+                let lpAmount = await this.subject.balanceOf(
+                    this.deployer.address
+                );
+                let earlyWithdrawAmounts = await this.subject
+                    .connect(this.deployer)
+                    .callStatic.withdraw(
+                        this.deployer.address,
+                        lpAmount,
+                        [0, 0],
+                        [
+                            randomBytes(4),
+                            this.optionsAave,
+                            this.optionsUniV3,
+                            this.optionsYearn,
+                        ]
+                    );
+
                 //PULL EVERYTHING TO ZERO
                 for (let i = 1; i < this.targets.length; i++) {
                     console.log("pulling " + i.toString());
@@ -1428,7 +1432,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 }
 
                 //WITHDRAW
-                await checkInvariant.call(this, true);
+                let lateWithdrawAmounts = await checkInvariant.call(this, true);
+
+                for (let i = 0; i < 2; i++) {
+                    console.log("early withdraw is " + earlyWithdrawAmounts[i].toString());
+                    console.log("late withdraw is " + lateWithdrawAmounts[i].toString());
+                    let divergence = lateWithdrawAmounts[i].sub(earlyWithdrawAmounts[i]).abs().mul(100000000).div(lateWithdrawAmounts[i]);
+                    console.log(divergence.toString());
+                    // expect(divergence.lt(BigNumber.from(100000000).div(200))).to.be.true;
+                }
 
                 let tvls = await printVaults.call(this);
 
