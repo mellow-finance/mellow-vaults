@@ -16,8 +16,6 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
     IProtocolGovernance private _protocolGovernance;
     IProtocolGovernance private _stagedProtocolGovernance;
 
-    bytes4 public INTERFACE = type(IVaultRegistry).interfaceId;
-
     address[] private _vaults;
     mapping(address => uint256) private _nftIndex;
     mapping(uint256 => address) private _vaultIndex;
