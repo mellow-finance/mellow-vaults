@@ -170,18 +170,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
         {
             uint256 priceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
-            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
-            uint256 capitalDelta;
-            (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
-                erc20VaultCapital,
-                sumUniV3Capital,
-                ratioParams.erc20UniV3CapitalRatioD,
-                ratioParams.minErc20UniV3CapitalRatioDeviationD
-            );
-            if (capitalDelta == 0) {
-                return (new uint256[](2), false, 0);
-            }
 
             if (sumUniV3Capital == 0) {
                 bytes memory options = _makeUniswapVaultOptions(new uint256[](2), deadline);
@@ -190,8 +179,20 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
                 erc20Vault.pull(address(upperVault), tokens, _pullExistentials, options);
 
-                erc20VaultCapital = _getCapital(priceX96, erc20Vault);
                 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
+            }
+
+            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
+            uint256 capitalDelta;
+            
+            (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
+                erc20VaultCapital,
+                sumUniV3Capital,
+                ratioParams.erc20UniV3CapitalRatioD,
+                ratioParams.minErc20UniV3CapitalRatioDeviationD
+            );
+            if (capitalDelta == 0) {
+                return (new uint256[](2), false, 0);
             }
 
             percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, sumUniV3Capital);
