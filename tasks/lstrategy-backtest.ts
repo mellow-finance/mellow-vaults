@@ -37,6 +37,7 @@ type Context = {
     admin: SignerWithAddress;
     deployer: SignerWithAddress;
     mockOracle: Contract;
+    erc20RootVault: Contract;
 };
 
 task("lstrategy-backtest", "run backtest on univ3 vault")
@@ -201,6 +202,8 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         erc20VaultNft + 1
     );
 
+    const erc20RootVaultContract = await ethers.getContractAt("ERC20RootVault", erc20RootVault);
+
     await
         protocolGovernance
             .connect(adminSigned)
@@ -334,6 +337,18 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
             maxFee1: BigNumber.from(10).pow(9),
         });
 
+    await lstrategy.connect(adminSigned).updateRatioParams({
+        erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
+        erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
+        minErc20UniV3CapitalRatioDeviationD:
+            BigNumber.from(10).pow(8),
+        minErc20TokenRatioDeviationD: BigNumber.from(10)
+            .pow(8)
+            .div(2),
+        minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
+            .pow(8)
+            .div(2),
+    });
 
     await lstrategy
         .connect(adminSigned)
@@ -354,6 +369,7 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         admin: adminSigned,
         deployer: deployerSigned,
         mockOracle: mockOracle,
+        erc20RootVault: erc20RootVaultContract,
     } as Context;
 };
 
@@ -934,7 +950,7 @@ const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Contex
     };
     //mint a position in pull to provide liquidity for future swaps
     await context.positionManager.mint(mintParams);
-}
+};
 
 const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Context, width: number) => {
 
@@ -964,18 +980,17 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
         BigNumber.from(10).pow(18).mul(500)
         );
     }
-
-}
+};
 
 const stringToSqrtPriceX96 = (x: string) => {
     let sPrice = Math.sqrt(parseFloat(x));
     let resPrice = BigNumber.from(Math.round(sPrice * (2**30))).mul(BigNumber.from(2).pow(66));
     return resPrice;
-}
+};
 
 const getTick = (x: BigNumber) => {
     return BigNumber.from(TickMath.getTickAtSqrtRatio(JSBI.BigInt(x)));
-}
+};
 
 const getPool = async (hre: HardhatRuntimeEnvironment, context: Context) => {
     const { ethers } = hre;
@@ -988,7 +1003,7 @@ const getPool = async (hre: HardhatRuntimeEnvironment, context: Context) => {
         await lowerVault.pool()
     );
     return pool;
-}
+};
 
 const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
 
@@ -1038,12 +1053,33 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
             );  
         }
     }
-}
+};
 
 const fullPriceUpdate = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
     await makeDesiredPoolPrice(hre, context, tick);
     await changePrice(tick, context);
-}
+};
+
+const grantPermissions = async (hre: HardhatRuntimeEnvironment, context: Context, vault: string) => {
+    const { ethers } = hre;
+    const vaultRegistry = await ethers.getContract("VaultRegistry");
+    let tokenId = await ethers.provider.send(
+        "eth_getStorageAt",
+        [
+            vault,
+            "0x4", // address of _nft
+        ]
+    );
+    await withSigner(
+        hre,
+        context.erc20RootVault.address,
+        async (erc20RootVaultSigner) => {
+            await vaultRegistry
+                .connect(erc20RootVaultSigner)
+                .approve(context.LStrategy.address, tokenId);
+        }
+    );
+};
 
 const process = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
 
@@ -1056,6 +1092,12 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     let prices = parseFile(filename);
     await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[0])));
     await buildInitialPositions(hre, context, width);
+    const lowerVault = await context.LStrategy.lowerVault();
+    const upperVault = await context.LStrategy.upperVault();
+    const erc20vault = await context.LStrategy.erc20Vault();
+    await grantPermissions(hre, context, lowerVault);
+    await grantPermissions(hre, context, upperVault);
+    await grantPermissions(hre, context, erc20vault);
     await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
         [
             ethers.constants.Zero,
