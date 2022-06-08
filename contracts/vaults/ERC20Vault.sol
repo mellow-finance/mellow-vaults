@@ -90,4 +90,9 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
             }
         }
     }
+
+    /// @inheritdoc IntegrationVault
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
+    }
 }
