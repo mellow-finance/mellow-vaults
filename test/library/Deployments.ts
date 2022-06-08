@@ -34,6 +34,7 @@ import {
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { TickMathTest, TickMathTest__factory } from "../types";
 
 export async function deployTraders(options: {
     protocolGovernance: ProtocolGovernance;
@@ -439,6 +440,14 @@ export const deployLpIssuerGovernance = async (options: {
         ERC20VaultFactory: ERC20VaultFactory,
     };
 };
+export async function deployMathTickTest(): Promise<TickMathTest> {
+    const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
+        "TickMathTest"
+    );
+    const mathTickTest: TickMathTest = await MathTickTest.deploy();
+    await mathTickTest.deployed();
+    return mathTickTest;
+}
 
 export async function deploySubVaultSystem(options: {
     tokensCount: number;
