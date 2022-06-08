@@ -121,79 +121,109 @@ async function countSwapAmount(hre: HardhatRuntimeEnvironment, ticks: number, tv
         "IUniswapV3Pool",
         uniV3PoolAddress
     );
-        
-    
-    let zeroForOne = true;
-
     let currentTick = (await uniV3Pool.slot0()).tick;
-    let currentPrice = (await uniV3Pool.slot0()).sqrtPriceX96;
+    console.log("tick is " + currentTick);
+
+    let tickSpacing = await uniV3Pool.tickSpacing();
+    
     let currentLiquidity = await uniV3Pool.liquidity();
-    let totalSwapAmount = BigNumber.from(0);
-    for (let tickIndex = 0; tickIndex < ticks; tickIndex++) {
-        console.log("currentTick is " + currentTick.toString());
-        let currentSwapAmount;
-        if (zeroForOne) {
-            currentSwapAmount = await liquidityToX(
-                currentPrice,
-                currentTick + 1,
-                currentTick,
-                currentLiquidity,
-                tickMath
-            );
-        } else {
-            currentSwapAmount = await liquidityToY(
-                currentPrice,
-                currentTick + 1,
-                currentTick,
-                currentLiquidity,
-                tickMath
-            );
-        }
-        let currentSwapAmountInOtherCoin: BigNumber,
-            newPrice: BigNumber;
-        if (zeroForOne) {
-            newPrice = sqrtPriceAfterXChange(
-                currentPrice,
-                currentSwapAmount,
-                currentLiquidity
-            );
-            currentSwapAmountInOtherCoin = yAmountUsedInSwap(
-                currentPrice,
-                newPrice,
-                currentLiquidity
-            );
-        } else {
-            newPrice = sqrtPriceAfterYChange(
-                currentPrice,
-                currentSwapAmount,
-                currentLiquidity
-            );
-            currentSwapAmountInOtherCoin = xAmountUsedInSwap(
-                currentPrice,
-                newPrice,
-                currentLiquidity
-            );
-        }
-        totalSwapAmount = totalSwapAmount.add(currentSwapAmount);
-        if (zeroForOne) {
-            currentPrice = await tickMath.getSqrtRatioAtTick(
-                currentTick + 1
-            );
-            currentTick += 1;
-            let tickInfo = await uniV3Pool.ticks(currentTick);
+    console.log("STARTED AT " + currentLiquidity.toString());
+    for (let tick = currentTick; tick < currentTick + 100; tick++) {
+        if (tick % tickSpacing == 0) {
+            let tickInfo = await uniV3Pool.ticks(tick);
+            console.log("liqNet at tick " + tick + ": " + tickInfo.liquidityNet.toString());
             currentLiquidity = currentLiquidity.add(
                 tickInfo.liquidityNet
             );
-        } else {
-            currentPrice = await tickMath.getSqrtRatioAtTick(
-                currentTick
-            );
-            currentTick -= 1;
-            let tickInfo = await uniV3Pool.ticks(currentTick);
+            console.log(currentLiquidity.toString());
+        }
+    }
+    console.log("TURN AROUND");
+
+    currentLiquidity = await uniV3Pool.liquidity();
+    for (let tick = currentTick; tick > currentTick - 300; tick--) {
+        if (tick % tickSpacing == 0) {
+            let tickInfo = await uniV3Pool.ticks(tick);
+            console.log("liqNet at tick " + tick + ": " + tickInfo.liquidityNet.toString());
             currentLiquidity = currentLiquidity.sub(
                 tickInfo.liquidityNet
             );
+            console.log(currentLiquidity.toString());
         }
     }
-    console.log(totalSwapAmount.toString());
+
+    
+    let zeroForOne = true;
+
+    // let currentTick = (await uniV3Pool.slot0()).tick;
+    // let currentPrice = (await uniV3Pool.slot0()).sqrtPriceX96;
+    // let currentLiquidity = await uniV3Pool.liquidity();
+    // let totalSwapAmount = BigNumber.from(0);
+    // for (let tickIndex = 0; tickIndex < ticks; tickIndex++) {
+    //     console.log("currentTick is " + currentTick.toString());
+    //     let currentSwapAmount;
+    //     if (zeroForOne) {
+    //         currentSwapAmount = await liquidityToX(
+    //             currentPrice,
+    //             currentTick + 1,
+    //             currentTick,
+    //             currentLiquidity,
+    //             tickMath
+    //         );
+    //     } else {
+    //         currentSwapAmount = await liquidityToY(
+    //             currentPrice,
+    //             currentTick + 1,
+    //             currentTick,
+    //             currentLiquidity,
+    //             tickMath
+    //         );
+    //     }
+    //     let currentSwapAmountInOtherCoin: BigNumber,
+    //         newPrice: BigNumber;
+    //     if (zeroForOne) {
+    //         newPrice = sqrtPriceAfterXChange(
+    //             currentPrice,
+    //             currentSwapAmount,
+    //             currentLiquidity
+    //         );
+    //         currentSwapAmountInOtherCoin = yAmountUsedInSwap(
+    //             currentPrice,
+    //             newPrice,
+    //             currentLiquidity
+    //         );
+    //     } else {
+    //         newPrice = sqrtPriceAfterYChange(
+    //             currentPrice,
+    //             currentSwapAmount,
+    //             currentLiquidity
+    //         );
+    //         currentSwapAmountInOtherCoin = xAmountUsedInSwap(
+    //             currentPrice,
+    //             newPrice,
+    //             currentLiquidity
+    //         );
+    //     }
+    //     totalSwapAmount = totalSwapAmount.add(currentSwapAmount);
+    //     if (zeroForOne) {
+    //         currentPrice = await tickMath.getSqrtRatioAtTick(
+    //             currentTick + 1
+    //         );
+    //         currentTick += 1;
+    //         let tickInfo = await uniV3Pool.ticks(currentTick);
+    //         currentLiquidity = currentLiquidity.add(
+    //             tickInfo.liquidityNet
+    //         );
+    //     } else {
+    //         currentPrice = await tickMath.getSqrtRatioAtTick(
+    //             currentTick
+    //         );
+    //         currentTick -= 1;
+    //         let tickInfo = await uniV3Pool.ticks(currentTick);
+    //         currentLiquidity = currentLiquidity.sub(
+    //             tickInfo.liquidityNet
+    //         );
+    //     }
+    // }
+    // console.log(totalSwapAmount.toString());
 }
