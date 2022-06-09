@@ -25,6 +25,8 @@ import * as path from "path";
 import { float } from "fast-check";
 import JSBI from "jsbi";
 import { start } from "repl";
+import { expect } from "chai";
+import { sqrt } from "@uniswap/sdk-core";
 
 
 type Context = {
@@ -341,14 +343,15 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
         erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
         minErc20UniV3CapitalRatioDeviationD:
-            BigNumber.from(10).pow(8),
+            BigNumber.from(10).pow(5),
         minErc20TokenRatioDeviationD: BigNumber.from(10)
             .pow(8)
             .div(2),
         minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
-            .pow(8)
-            .div(2),
+            .pow(7)
+            .div(5),
     });
+
 
     await lstrategy
         .connect(adminSigned)
@@ -980,10 +983,17 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
         BigNumber.from(10).pow(18).mul(500)
         );
     }
+
 };
 
 const stringToSqrtPriceX96 = (x: string) => {
     let sPrice = Math.sqrt(parseFloat(x));
+    let resPrice = BigNumber.from(Math.round(sPrice * (2**30))).mul(BigNumber.from(2).pow(66));
+    return resPrice;
+};
+
+const stringToPriceX96 = (x: string) => {
+    let sPrice = parseFloat(x);
     let resPrice = BigNumber.from(Math.round(sPrice * (2**30))).mul(BigNumber.from(2).pow(66));
     return resPrice;
 };
@@ -1055,11 +1065,6 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
     }
 };
 
-const fullPriceUpdate = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
-    await makeDesiredPoolPrice(hre, context, tick);
-    await changePrice(tick, context);
-};
-
 const grantPermissions = async (hre: HardhatRuntimeEnvironment, context: Context, vault: string) => {
     const { ethers } = hre;
     const vaultRegistry = await ethers.getContract("VaultRegistry");
@@ -1081,15 +1086,191 @@ const grantPermissions = async (hre: HardhatRuntimeEnvironment, context: Context
     );
 };
 
+const fullPriceUpdate = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
+    await makeDesiredPoolPrice(hre, context, tick);
+    await changePrice(tick, context);
+};
+
+const assureEquality = (x: BigNumber, y: BigNumber) => {
+
+    let delta = x.sub(y).abs();
+    if (x.lt(y)) {
+        x = y;
+    }
+
+    return (delta.mul(1000).lt(x));
+};
+
+const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber, address: string)  => {
+
+    let tvls = await getTvl(hre, address);
+    let minTvl = tvls[0];
+    let maxTvl = tvls[1];
+
+    return (minTvl[0].add(maxTvl[0])).div(2).mul(priceX96).div(BigNumber.from(2).pow(96)).add((minTvl[1].add(maxTvl[1])).div(2));
+};
+
+const initialRebalance = async(hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber) => {
+    const { ethers } = hre;
+
+    while (true) {
+        await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
+            [
+                ethers.constants.Zero,
+                ethers.constants.Zero,
+            ],
+            [
+                ethers.constants.Zero,
+                ethers.constants.Zero,
+            ],
+            ethers.constants.MaxUint256
+        );
+
+        let capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
+        let capitalLower = await getCapital(hre, context, priceX96, await context.LStrategy.lowerVault());
+        let capitalUpper = await getCapital(hre, context, priceX96, await context.LStrategy.upperVault());
+
+        if (assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))) {
+            break;
+        }
+
+        await makeSwap(hre, context);
+
+    }
+    
+  //  expect(assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))).to.be.true;
+
+};
+
+const getVaultsLiquidityRatio = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+    const { ethers } = hre;
+    let lowerVault = await ethers.getContractAt(
+        "UniV3Vault",
+        await context.LStrategy.lowerVault()
+    );
+    let upperVault = await ethers.getContractAt(
+        "UniV3Vault",
+        await context.LStrategy.upperVault()
+    );
+    const [, , , , , , , lowerVaultLiquidity, , , ,] =
+        await context.positionManager.positions(
+            await lowerVault.uniV3Nft()
+        );
+    const [, , , , , , , upperVaultLiquidity, , , ,] =
+        await context.positionManager.positions(
+            await upperVault.uniV3Nft()
+        );
+    const total = lowerVaultLiquidity.add(upperVaultLiquidity);
+    const DENOMINATOR = await context.LStrategy.DENOMINATOR();
+    return DENOMINATOR.sub(
+        lowerVaultLiquidity.mul(DENOMINATOR).div(total)
+    );
+};
+
+const getExpectedRatio = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+    const tokens = [context.wsteth.address, context.weth.address];
+    const targetPriceX96 = await context.LStrategy.targetPrice(
+        tokens[0],
+        tokens[1],
+        await context.LStrategy.tradingParams()
+    );
+    const sqrtTargetPriceX96 = BigNumber.from(
+        sqrt(JSBI.BigInt(targetPriceX96)).toString()
+    );
+    const targetTick = TickMath.getTickAtSqrtRatio(
+        JSBI.BigInt(
+            sqrtTargetPriceX96
+                .mul(BigNumber.from(2).pow(48))
+                .toString()
+        )
+    );
+    console.log(targetTick);
+    return await context.LStrategy.targetUniV3LiquidityRatio(
+        targetTick
+    );
+};
+
+const checkUniV3Balance = async(hre: HardhatRuntimeEnvironment, context: Context) => {
+
+    let [neededRatio, _] = await getExpectedRatio(hre, context);
+    let currentRatio = await getVaultsLiquidityRatio(hre, context);
+    return(neededRatio.sub(currentRatio).abs().lt(BigNumber.from(10).pow(7).mul(5)));
+
+};
+
+const makeSwap = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+
+    const { ethers } = hre;
+
+    let erc20Vault = await context.LStrategy.erc20Vault();
+    let vault = await ethers.getContractAt(
+        "IVault",
+        erc20Vault
+    );
+
+    let erc20Tvl = await vault.tvl();
+    let tokens = [context.wsteth, context.weth];
+    let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
+
+    if (delta.lt(BigNumber.from(-1))) {
+        await swapTokens(
+            hre,
+            context,
+            erc20Vault,
+            erc20Vault,
+            tokens[1],
+            tokens[0],
+            delta.div(2).mul(-1)
+        );
+    }
+
+    if (delta.gt(BigNumber.from(1))) {
+        await swapTokens(
+            hre,
+            context,
+            erc20Vault,
+            erc20Vault,
+            tokens[0],
+            tokens[1],
+            delta.div(2)
+        );
+    }
+};
+
+const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context) => {
+
+    const { ethers } = hre;
+
+    while (!(await checkUniV3Balance(hre, context))) {
+        await context.LStrategy.connect(context.admin).rebalanceUniV3Vaults([
+            ethers.constants.Zero,
+            ethers.constants.Zero,
+        ],
+        [
+            ethers.constants.Zero,
+            ethers.constants.Zero,
+        ],
+        ethers.constants.MaxUint256);
+        await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults([
+            ethers.constants.Zero,
+            ethers.constants.Zero,
+        ],
+        [
+            ethers.constants.Zero,
+            ethers.constants.Zero,
+        ],
+        ethers.constants.MaxUint256);
+        await makeSwap(hre, context);
+    }
+
+};
+
 const process = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
 
     await mintMockPosition(hre, context);
-
-    const strategy = context.LStrategy;
-
-    const { ethers } = hre;
     
     let prices = parseFile(filename);
+
     await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[0])));
     await buildInitialPositions(hre, context, width);
     const lowerVault = await context.LStrategy.lowerVault();
@@ -1098,20 +1279,10 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     await grantPermissions(hre, context, lowerVault);
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
-    await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
-        [
-            ethers.constants.Zero,
-            ethers.constants.Zero,
-        ],
-        [
-            ethers.constants.Zero,
-            ethers.constants.Zero,
-        ],
-        ethers.constants.MaxUint256
-    );
+    await initialRebalance(hre, context, stringToPriceX96(prices[0]));
 
-    console.log(await getTvl(hre, strategy.lowerVault()));
-    console.log(await getTvl(hre, strategy.upperVault()));
-    console.log(await getTvl(hre, strategy.erc20Vault()));
-
+    for (let i = 1; i < prices.length; ++i) {
+        await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
+        await makeRebalances(hre, context);
+    }
 };
