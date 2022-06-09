@@ -54,7 +54,7 @@ jobs:
         run: yarn size
 
       - name: Run coverage
-        run: yarn coverage
+        run: yarn coverage:fast
 
       - name: Count LOC
         run: find contracts -name "*.sol" | xargs wc -l
