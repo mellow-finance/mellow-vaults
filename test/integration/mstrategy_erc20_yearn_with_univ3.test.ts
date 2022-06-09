@@ -372,7 +372,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 await this.uniV3Vault.nft()
                             );
                     });
-                    
+
                     return this.subject;
                 }
             );
