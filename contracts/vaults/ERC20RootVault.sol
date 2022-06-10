@@ -90,7 +90,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         if (totalSupply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
-                require(tokenAmounts[i] >= _pullExistentials[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+                require(tokenAmounts[i] >= 10 * _pullExistentials[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
             }
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
