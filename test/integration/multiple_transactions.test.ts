@@ -12,7 +12,6 @@ import {
     withSigner,
 } from "../library/Helpers";
 import { contract, TestContext } from "../library/setup";
-import { pit, RUNS, uint256 } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { YearnVault } from "../types/YearnVault";
 import { ERC20Vault } from "../types/ERC20Vault";
@@ -39,7 +38,6 @@ import {
     UniV3Vault,
     Vault,
 } from "../types";
-import { Address } from "hardhat-deploy/dist/types";
 import { randomBytes, randomInt } from "crypto";
 import { BigNumberish } from "ethers";
 import { deployMathTickTest } from "../library/Deployments";
@@ -343,13 +341,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             ethers.constants.MaxUint256,
                         ]
                     );
-                    this.swapsInfos = [];
 
                     return this.subject;
                 }
             );
         });
 
+        // return tvls of every vault
         async function getVaults(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext
         ) {
@@ -425,7 +423,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             if (target == this.aaveVault) {
                 await sleep(randomInt(10000));
             } else if (target == this.uniV3Vault && !this.uniV3Nft.eq(0)) {
-                let zeroForOne = randomChoice([true]).item;
+                let zeroForOne = randomChoice([true, false]).item;
                 let liquidity = await this.uniV3Pool.liquidity();
                 const { tick: tickLower, sqrtPriceX96: oldPrice } =
                     await this.uniV3Pool.slot0();
@@ -454,24 +452,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 this.uniV3Fees[0] = this.uniV3Fees[0].add(swapFees[0]);
                 this.uniV3Fees[1] = this.uniV3Fees[1].add(swapFees[1]);
-                let tradedAmount = await uniSwapTokensGivenOutput(
+                await uniSwapTokensGivenOutput(
                     this.swapRouter,
                     this.tokens,
                     this.uniV3PoolFee,
                     zeroForOne,
                     recieveFromSwapAmount
                 );
-                let tradedTokens;
-                if (zeroForOne) {
-                    tradedTokens = [BigNumber.from(0), tradedAmount];
-                } else {
-                    tradedTokens = [tradedAmount, BigNumber.from(0)];
-                }
-                let timestamp = (await ethers.provider.getBlock("latest"))
-                    .timestamp;
-                this.swapsInfos.push([tradedTokens, timestamp]);
-
-                let newPrice = (await this.uniV3Pool.slot0()).sqrtPriceX96;
             }
         }
 
@@ -1281,10 +1268,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
                 }
 
-                await this.uniV3Vault
-                    .connect(this.deployer)
-                    .reclaimTokens(this.tokensAddresses);
-
                 // pull everything to zeroVault
                 for (let i = 1; i < this.targets.length; i++) {
                     let pullAction = await fullPullAction.call(
@@ -1292,14 +1275,16 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         this.targets[i]
                     );
                     await doPullAction.call(this, pullAction);
+                    await this.targets[i]
+                        .connect(this.deployer)
+                        .reclaimTokens(this.tokensAddresses);
                 }
 
                 // withdraw and check final invariant
                 await checkInvariant.call(this, true);
 
-                let tvls = await getVaults.call(this);
-
                 // make sure nothing left
+                let tvls = await getVaults.call(this);
                 for (let tvl of tvls) {
                     for (
                         let tokenIndex = 0;
@@ -1310,8 +1295,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         expect(tvl[1][tokenIndex].lt(10)).to.be.true;
                     }
                 }
-
-                return true;
             });
         });
     }

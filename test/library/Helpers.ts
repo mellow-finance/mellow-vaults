@@ -512,7 +512,7 @@ export async function uniSwapTokensGivenInput(
     let tokenIndex = zeroForOne ? 1 : 0;
     let swapParams = {
         tokenIn: tokens[tokenIndex].address,
-        tokenOut: tokens[1 - tokenIndex].address,
+        tokenOut: tokens[1 ^ tokenIndex].address,
         fee: fee,
         recipient: provider,
         deadline: ethers.constants.MaxUint256,
@@ -547,7 +547,7 @@ export async function uniSwapTokensGivenOutput(
     let tokenIndex = zeroForOne ? 1 : 0;
     let swapParams = {
         tokenIn: tokens[tokenIndex].address,
-        tokenOut: tokens[1 - tokenIndex].address,
+        tokenOut: tokens[1 ^ tokenIndex].address,
         fee: fee,
         recipient: provider,
         deadline: ethers.constants.MaxUint256,
@@ -566,7 +566,7 @@ export async function uniSwapTokensGivenOutput(
             .connect(signer)
             .callStatic.exactOutputSingle(swapParams);
         await router.connect(signer).exactOutputSingle(swapParams);
-        //burn?
+        await tokens[tokenIndex].connect(signer).approve(router.address, 0);
     });
     return amountIn;
 }
