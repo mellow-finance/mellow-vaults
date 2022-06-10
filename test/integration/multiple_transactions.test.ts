@@ -1389,7 +1389,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await doPullAction.call(this, randomAction, false);
                     }
                     if (i > 50 && !this.uniV3Nft.eq(0) && (await this.positionManager.positions(this.uniV3Nft)).liquidity.gt(0)) {
+                        if (!this.uniV3Nft.eq(0)) {
+                            await this.uniV3Vault.connect(this.deployer).collectEarnings();
+                        }
+                        
+                        await this.uniV3Vault
+                            .connect(this.deployer)
+                            .reclaimTokens(this.tokensAddresses);
                         let tvls = await printVaults.call(this);
+                        console.log("spot tick: " + (await this.uniV3Pool.slot0()).tick);
                         if (tvls[2][0][0].mul(110).div(100).lt(tvls[2][1][0]) || tvls[2][0][1].mul(110).div(100).lt(tvls[2][1][1])) {
                             console.log("SHOULD BE GOOD");
                             let sum = [BigNumber.from(0), BigNumber.from(0)];
@@ -1402,7 +1410,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             }
                             console.log("SUM IS");
                             console.log(sum.toString());
-                            await sleep(4000);
+                            await sleep(500);
+                            console.log("spot tick: " + (await this.uniV3Pool.slot0()).tick);
+                            let sqrtprice = (await this.uniV3Pool.slot0()).sqrtPriceX96;
+                            console.log("spot price: " + sqrtprice.mul(sqrtprice).div(BigNumber.from(2).pow(192)).toString());
                             await printVaults.call(this);
 
                             break;
