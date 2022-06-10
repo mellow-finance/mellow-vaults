@@ -12,6 +12,7 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../utils/DefaultAccessControl.sol";
 import "../utils/ContractMeta.sol";
+import "hardhat/console.sol";
 
 contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -69,6 +70,8 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
             if (safetyIndicesSet & (1 << i) > 0) {
                 uint32 observationTimeDelta = _obsTimeForSafety(i);
                 (int24 tickAverage, , bool withFail) = OracleLibrary.consult(address(pool), observationTimeDelta);
+                console.log(observationTimeDelta);
+                console.logInt(tickAverage);
                 if (withFail) {
                     break;
                 }
