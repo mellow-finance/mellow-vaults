@@ -632,7 +632,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                 this.getExpectedRatio = async () => {
                     const tokens = [this.wsteth.address, this.weth.address];
-                    const targetPriceX96 = await this.subject.targetPrice(
+                    const targetPriceX96 = await this.subject.getTargetPriceX96(
                         tokens[0],
                         tokens[1],
                         await this.subject.tradingParams()
@@ -734,7 +734,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     vault: UniV3Vault | ERC20Vault
                 ) => {
                     await this.updateMockOracle(await this.getUniV3Tick());
-                    const targetPriceX96 = await this.subject.targetPrice(
+                    const targetPriceX96 = await this.subject.getTargetPriceX96(
                         this.wsteth.address,
                         this.weth.address,
                         await this.subject.tradingParams()
@@ -1978,7 +1978,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 expect(
                     (
-                        await this.subject.targetPrice(
+                        await this.subject.getTargetPriceX96(
                             this.wsteth.address,
                             this.weth.address,
                             params
@@ -1999,7 +1999,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             maxFee1: BigNumber.from(10).pow(9),
                         };
                         await expect(
-                            this.subject.targetPrice(
+                            this.subject.getTargetPriceX96(
                                 this.wsteth.address,
                                 this.weth.address,
                                 params

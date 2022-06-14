@@ -573,7 +573,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
         };
 
         const getBestPrice = async () => {
-            const { pricesX96 } = await this.mellowOracle.price(
+            const { pricesX96 } = await this.mellowOracle.priceX96(
                 this.usdc.address,
                 this.weth.address,
                 0x28

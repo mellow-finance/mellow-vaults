@@ -45,7 +45,7 @@ contract<UniV2Oracle, DeployOptions, CustomContext>(
 
         describe("#price", () => {
             it("retruns prices for [uscd, weth] pair", async () => {
-                const pricesResult = await this.subject.price(
+                const pricesResult = await this.subject.priceX96(
                     this.usdc.address,
                     this.weth.address,
                     BigNumber.from(1 << (await this.subject.safetyIndex()))
@@ -59,7 +59,7 @@ contract<UniV2Oracle, DeployOptions, CustomContext>(
             });
 
             it("retruns prices for [weth, usdc] pair", async () => {
-                const pricesResult = await this.subject.price(
+                const pricesResult = await this.subject.priceX96(
                     this.weth.address,
                     this.usdc.address,
                     BigNumber.from(1 << (await this.subject.safetyIndex()))
@@ -75,7 +75,7 @@ contract<UniV2Oracle, DeployOptions, CustomContext>(
             describe("edges cases:", () => {
                 describe("when one of tokens is zero", () => {
                     it("does not return prices", async () => {
-                        let pricesResult = await this.subject.price(
+                        let pricesResult = await this.subject.priceX96(
                             ethers.constants.AddressZero,
                             ethers.constants.AddressZero,
                             BigNumber.from(
@@ -91,7 +91,7 @@ contract<UniV2Oracle, DeployOptions, CustomContext>(
                     it("does not return prices", async () => {
                         const badMask =
                             63 ^ (1 << (await this.subject.safetyIndex()));
-                        let pricesResult = await this.subject.price(
+                        let pricesResult = await this.subject.priceX96(
                             this.usdc.address,
                             this.weth.address,
                             badMask

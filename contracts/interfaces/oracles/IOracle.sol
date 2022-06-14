@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 interface IOracle {
-    /// @notice Oracle price for tokens.
+    /// @notice Oracle price for tokens as a Q64.96 value.
     /// @dev The price is token1 / token0 i.e. how many weis of token1 required for 1 wei of token0.
     /// The safety indexes are:
     ///
@@ -16,7 +16,7 @@ interface IOracle {
     /// @param safetyIndicesSet Bitmask of safety indices that are allowed for the return prices. For set of safety indexes = { 1 }, safetyIndicesSet = 0x2
     /// @return pricesX96 Prices that satisfy safetyIndex and tokens
     /// @return safetyIndices Safety indices for those prices
-    function price(
+    function priceX96(
         address token0,
         address token1,
         uint256 safetyIndicesSet
