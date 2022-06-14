@@ -478,8 +478,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function updateTradingParams(TradingParams calldata newTradingParams) external {
         _requireAdmin();
         require(
-            (newTradingParams.maxSlippageD <= DENOMINATOR) && (newTradingParams.orderDeadline <= 86400 * 30)
-            && (newTradingParams.oracleSafetyMask > 3),
+            (newTradingParams.maxSlippageD <= DENOMINATOR) &&
+                (newTradingParams.orderDeadline <= 86400 * 30) &&
+                (newTradingParams.oracleSafetyMask > 3),
             ExceptionsLibrary.INVARIANT
         );
         require(address(newTradingParams.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
