@@ -855,7 +855,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
 
         describe("ERC20 is initially empty", () => {
-            
             describe("UniV3rebalance when ERC20 is empty and no UniV3ERC20rebalance happens", () => {
                 it("not reverts and keeps balances in general case", async () => {
                     let depositAmounts =
@@ -903,7 +902,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
-            
 
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
@@ -974,7 +972,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
-            
+
             describe("batches of rebalances after small price changes", () => {
                 it("rebalance converges to target ratio", async () => {
                     let tokenFirst = this.weth;
@@ -1042,9 +1040,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
-            
         });
-        
+
         describe("ERC20 has inititally a lot of liquidity", () => {
             beforeEach(async () => {
                 await this.submitToERC20Vault();
@@ -2538,6 +2535,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 await this.grantPermissions();
             });
+
             it("rebalances when delta is positive", async () => {
                 this.semiPositionRange = 600;
                 this.smallInt = 60;
@@ -2680,10 +2678,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(pushedAmounts[i]).to.be.equal(ethers.constants.Zero);
                 }
             });
+
             it("rebalances when crossing the interval right to left", async () => {
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await this.mockOracle.updatePrice(BigNumber.from(1).shl(95));
+                await this.preparePush({
+                    vault: this.uniV3LowerVault,
+                    tickLower: 500000,
+                    tickUpper: 700000,
+                });
+                await this.preparePush({
+                    vault: this.uniV3UpperVault,
+                    tickLower: 600000,
+                    tickUpper: 800000,
+                });
                 await this.grantPermissionsUniV3Vaults();
                 const result = await this.subject
                     .connect(this.admin)
@@ -2706,6 +2712,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(tvl[i]).lt(BigNumber.from(10)); // check, that all liquidity passed to other vault
                 }
             });
+
             it("swap vaults when crossing the interval right to left with no liquidity", async () => {
                 await this.preparePush({ vault: this.uniV3LowerVault });
                 await this.preparePush({ vault: this.uniV3UpperVault });
@@ -3688,5 +3695,4 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
-    
 });
