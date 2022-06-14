@@ -5,42 +5,18 @@ import { abi as IWETH } from "../test/helpers/wethABI.json";
 import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
 import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
-import { BigNumberish, Contract, PopulatedTransaction } from "ethers";
-import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
+import { BigNumberish } from "ethers";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { TickMath } from "@uniswap/v3-sdk";
 import {
-    any,
     equals,
-    filter,
-    fromPairs,
-    keys,
-    KeyValuePair,
-    map,
-    pipe,
 } from "ramda";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
-import { randomBytes } from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import { float } from "fast-check";
-import JSBI from "jsbi";
-import { start } from "repl";
-import { expect } from "chai";
-import { sqrt } from "@uniswap/sdk-core";
+import { Context, preparePush, getUniV3Tick, swapTokens, getTvl, makeSwap, getTick, stringToPriceX96, stringToSqrtPriceX96, getPool, getStrategyStats, checkUniV3Balance, swapOnCowswap } from "./helpers/lstrategy";
+import { addSigner, withSigner } from "./helpers/sign";
+import { mint, sleep, toObject } from "./helpers/utils";
 
-
-type Context = {
-    protocolGovernance: Contract;
-    swapRouter: Contract;
-    positionManager: Contract;
-    LStrategy: Contract;
-    weth: Contract;
-    wsteth: Contract;
-    admin: SignerWithAddress;
-    deployer: SignerWithAddress;
-    mockOracle: Contract;
-    erc20RootVault: Contract;
-};
 
 task("lstrategy-backtest", "run backtest on univ3 vault")
     .addParam(
@@ -376,87 +352,6 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
     } as Context;
 };
 
-const preparePush = async ({
-    hre,
-    context,
-    vault,
-    tickLower = -887220,
-    tickUpper = 887220,
-    wethAmount = BigNumber.from(10).pow(9),
-    wstethAmount = BigNumber.from(10).pow(9),
-}: {
-    hre: HardhatRuntimeEnvironment;
-    context: Context
-    vault: any;
-    tickLower?: number;
-    tickUpper?: number;
-    wethAmount?: BigNumber;
-    wstethAmount?: BigNumber;
-}) => {
-    const { ethers} = hre;
-    const mintParams = {
-        token0: context.wsteth.address,
-        token1: context.weth.address,
-        fee: 500,
-        tickLower: tickLower,
-        tickUpper: tickUpper,
-        amount0Desired: wstethAmount,
-        amount1Desired: wethAmount,
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: context.deployer.address,
-        deadline: ethers.constants.MaxUint256,
-    };
-    const result = await context.positionManager.callStatic.mint(
-        mintParams
-    );
-    await context.positionManager.mint(mintParams);
-    await context.positionManager.functions[
-        "safeTransferFrom(address,address,uint256)"
-    ](context.deployer.address, vault, result.tokenId);
-};
-
-const getTvl = async (
-        hre: HardhatRuntimeEnvironment,
-        address: string
-) => {
-    const { ethers } = hre;
-    let vault = await ethers.getContractAt("IVault", address);
-    let tvls = await vault.tvl();
-    return tvls;
-}
-
-const getUniV3Tick = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-    const { ethers } = hre;
-    let lowerVault = await ethers.getContractAt(
-        "IUniV3Vault",
-        await context.LStrategy.lowerVault()
-    );
-    let pool = await ethers.getContractAt(
-        "IUniswapV3Pool",
-        await lowerVault.pool()
-    );
-
-    const currentState = await pool.slot0();
-    return BigNumber.from(currentState.tick);
-};
-
-const addSigner = async (
-    hre: HardhatRuntimeEnvironment,
-    address: string
-): Promise<SignerWithAddress> => {
-    const { ethers, network } = hre;
-    await network.provider.request({
-        method: "hardhat_impersonateAccount",
-        params: [address],
-    });
-    await network.provider.send("hardhat_setBalance", [
-        address,
-        "0x1000000000000000000",
-    ]);
-    return await ethers.getSigner(address);
-};
-
 class PermissionIdsLibrary {
     static REGISTER_VAULT: number = 0;
     static CREATE_VAULT: number = 1;
@@ -467,13 +362,6 @@ class PermissionIdsLibrary {
     static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
-
-const sleep = async (network: Network, seconds: BigNumberish) => {
-    await network.provider.send("evm_increaseTime", [
-        BigNumber.from(seconds).toNumber(),
-    ]);
-    await network.provider.send("evm_mine");
-};
 
 const setupVault = async (
     hre: HardhatRuntimeEnvironment,
@@ -624,14 +512,6 @@ const setupVault = async (
     }
 };
 
-const toObject = (obj: any) =>
-    pipe(
-        keys,
-        filter((x: string) => isNaN(parseInt(x))),
-        map((x) => [x, obj[x]] as KeyValuePair<string, any>),
-        fromPairs
-    )(obj);
-
 const combineVaults = async (
     hre: HardhatRuntimeEnvironment,
     expectedNft: number,
@@ -733,126 +613,6 @@ const combineVaults = async (
     );
 };
 
-type MintableToken = "USDC" | "WETH" | "WBTC";
-
-const mint = async (
-    hre: HardhatRuntimeEnvironment,
-    token: MintableToken | string,
-    to: string,
-    amount: BigNumberish
-) => {
-    const { ethers, getNamedAccounts } = hre;
-    const { wbtc, weth, usdc } = await getNamedAccounts();
-    switch (token.toLowerCase()) {
-        case wbtc.toLowerCase():
-            token = "WBTC";
-            break;
-        case weth.toLowerCase():
-            token = "WETH";
-            break;
-        case usdc.toLowerCase():
-            token = "USDC";
-            break;
-
-        default:
-            break;
-    }
-    switch (token) {
-        case "USDC":
-            // masterMinter()
-            let minter = await ethers.provider.call({
-                to: usdc,
-                data: `0x35d99f35`,
-            });
-            minter = `0x${minter.substring(2 + 12 * 2)}`;
-            await withSigner(hre, minter, async (s) => {
-                // function configureMinter(address minter, uint256 minterAllowedAmount)
-                let tx: PopulatedTransaction = {
-                    to: usdc,
-                    from: minter,
-                    data: `0x4e44d956${ethers.utils
-                        .hexZeroPad(s.address, 32)
-                        .substring(2)}${ethers.utils
-                        .hexZeroPad(BigNumber.from(amount).toHexString(), 32)
-                        .substring(2)}`,
-                    gasLimit: BigNumber.from(10 ** 6),
-                };
-
-                let resp = await s.sendTransaction(tx);
-                await resp.wait();
-
-                // function mint(address,uint256)
-                tx = {
-                    to: usdc,
-                    from: minter,
-                    data: `0x40c10f19${ethers.utils
-                        .hexZeroPad(to, 32)
-                        .substring(2)}${ethers.utils
-                        .hexZeroPad(BigNumber.from(amount).toHexString(), 32)
-                        .substring(2)}`,
-                    gasLimit: BigNumber.from(10 ** 6),
-                };
-
-                resp = await s.sendTransaction(tx);
-                await resp.wait();
-            });
-            break;
-
-        case "WETH":
-            const addr = randomAddress(hre);
-            await withSigner(hre, addr, async (s) => {
-                // deposit()
-                const tx: PopulatedTransaction = {
-                    to: weth,
-                    from: addr,
-                    data: `0xd0e30db0`,
-                    gasLimit: BigNumber.from(10 ** 6),
-                    value: BigNumber.from(amount),
-                };
-                const resp = await s.sendTransaction(tx);
-                await resp.wait();
-                const c = await ethers.getContractAt("ERC20Token", weth);
-                await c.connect(s).transfer(to, amount);
-            });
-            break;
-        case "WBTC":
-            // owner()
-            let owner = await ethers.provider.call({
-                to: wbtc,
-                data: `0x8da5cb5b`,
-            });
-            owner = `0x${owner.substring(2 + 12 * 2)}`;
-            await withSigner(hre, owner, async (s) => {
-                // function mint(address,uint256)
-                const tx = {
-                    to: wbtc,
-                    from: owner,
-                    data: `0x40c10f19${ethers.utils
-                        .hexZeroPad(to, 32)
-                        .substring(2)}${ethers.utils
-                        .hexZeroPad(BigNumber.from(amount).toHexString(), 32)
-                        .substring(2)}`,
-                    gasLimit: BigNumber.from(10 ** 6),
-                };
-
-                const resp = await s.sendTransaction(tx);
-                await resp.wait();
-            });
-            break;
-
-        default:
-            throw `Unknown token: ${token}`;
-    }
-};
-
-const randomAddress = (hre: HardhatRuntimeEnvironment) => {
-    const { ethers } = hre;
-    const id = randomBytes(32).toString("hex");
-    const privateKey = "0x" + id;
-    const wallet = new ethers.Wallet(privateKey);
-    return wallet.address;
-};
-
 const parseFile = (filename: string) : string[] =>  {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
@@ -873,24 +633,6 @@ const parseFile = (filename: string) : string[] =>  {
 
 };
 
-
-export const withSigner = async (
-    hre: HardhatRuntimeEnvironment,
-    address: string,
-    f: (signer: SignerWithAddress) => Promise<void>
-) => {
-    const signer = await addSigner(hre, address);
-    await f(signer);
-    await removeSigner(hre.network, address);
-};
-
-const removeSigner = async (network: Network, address: string) => {
-    await network.provider.request({
-        method: "hardhat_stopImpersonatingAccount",
-        params: [address],
-    });
-};
-
 const changePrice = async (currentTick: BigNumber, context: Context) => {
     let sqrtPriceX96 = BigNumber.from(
         TickMath.getSqrtRatioAtTick(
@@ -902,39 +644,6 @@ const changePrice = async (currentTick: BigNumber, context: Context) => {
         .div(BigNumber.from(2).pow(96));
     context.mockOracle.updatePrice(priceX96);
 }
-
-const swapTokens = async (
-    hre: HardhatRuntimeEnvironment,
-    context: Context,
-    senderAddress: string,
-    recipientAddress: string,
-    tokenIn: Contract,
-    tokenOut: Contract,
-    amountIn: BigNumber
-) => {
-    const { ethers } = hre;
-    await withSigner(hre, senderAddress, async (senderSigner) => {
-        await tokenIn
-            .connect(senderSigner)
-            .approve(
-                context.swapRouter.address,
-                ethers.constants.MaxUint256
-            );
-        let params = {
-            tokenIn: tokenIn.address,
-            tokenOut: tokenOut.address,
-            fee: 500,
-            recipient: recipientAddress,
-            deadline: ethers.constants.MaxUint256,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0,
-        };
-        await context.swapRouter
-            .connect(senderSigner)
-            .exactInputSingle(params);
-    });
-};
 
 const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Context) => {
     const { ethers } = hre;
@@ -976,7 +685,7 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
     await preparePush({hre, context, vault: lowerVault, tickLower: tickLeftLower, tickUpper: tickLeftUpper});
     await preparePush({hre, context, vault: upperVault, tickLower: tickRightLower, tickUpper: tickRightUpper});
 
-    let erc20 =  await context.LStrategy.erc20Vault();
+    let erc20 = await context.LStrategy.erc20Vault();
     for (let token of [context.weth, context.wsteth]) {
         await token.transfer(
         erc20,
@@ -984,35 +693,6 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
         );
     }
 
-};
-
-const stringToSqrtPriceX96 = (x: string) => {
-    let sPrice = Math.sqrt(parseFloat(x));
-    let resPrice = BigNumber.from(Math.round(sPrice * (2**30))).mul(BigNumber.from(2).pow(66));
-    return resPrice;
-};
-
-const stringToPriceX96 = (x: string) => {
-    let sPrice = parseFloat(x);
-    let resPrice = BigNumber.from(Math.round(sPrice * (2**30))).mul(BigNumber.from(2).pow(66));
-    return resPrice;
-};
-
-const getTick = (x: BigNumber) => {
-    return BigNumber.from(TickMath.getTickAtSqrtRatio(JSBI.BigInt(x)));
-};
-
-const getPool = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-    const { ethers } = hre;
-    let lowerVault = await ethers.getContractAt(
-        "IUniV3Vault",
-        await context.LStrategy.lowerVault()
-    );
-    let pool = await ethers.getContractAt(
-        "IUniswapV3Pool",
-        await lowerVault.pool()
-    );
-    return pool;
 };
 
 const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
@@ -1142,101 +822,6 @@ const initialRebalance = async(hre: HardhatRuntimeEnvironment, context: Context,
 
 };
 
-const getVaultsLiquidityRatio = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-    const { ethers } = hre;
-    let lowerVault = await ethers.getContractAt(
-        "UniV3Vault",
-        await context.LStrategy.lowerVault()
-    );
-    let upperVault = await ethers.getContractAt(
-        "UniV3Vault",
-        await context.LStrategy.upperVault()
-    );
-    const [, , , , , , , lowerVaultLiquidity, , , ,] =
-        await context.positionManager.positions(
-            await lowerVault.uniV3Nft()
-        );
-    const [, , , , , , , upperVaultLiquidity, , , ,] =
-        await context.positionManager.positions(
-            await upperVault.uniV3Nft()
-        );
-    const total = lowerVaultLiquidity.add(upperVaultLiquidity);
-    const DENOMINATOR = await context.LStrategy.DENOMINATOR();
-    return DENOMINATOR.sub(
-        lowerVaultLiquidity.mul(DENOMINATOR).div(total)
-    );
-};
-
-const getExpectedRatio = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-    const tokens = [context.wsteth.address, context.weth.address];
-    const targetPriceX96 = await context.LStrategy.targetPrice(
-        tokens[0],
-        tokens[1],
-        await context.LStrategy.tradingParams()
-    );
-    const sqrtTargetPriceX96 = BigNumber.from(
-        sqrt(JSBI.BigInt(targetPriceX96)).toString()
-    );
-    const targetTick = TickMath.getTickAtSqrtRatio(
-        JSBI.BigInt(
-            sqrtTargetPriceX96
-                .mul(BigNumber.from(2).pow(48))
-                .toString()
-        )
-    );
-    console.log(targetTick);
-    return await context.LStrategy.targetUniV3LiquidityRatio(
-        targetTick
-    );
-};
-
-const checkUniV3Balance = async(hre: HardhatRuntimeEnvironment, context: Context) => {
-
-    let [neededRatio, _] = await getExpectedRatio(hre, context);
-    let currentRatio = await getVaultsLiquidityRatio(hre, context);
-    return(neededRatio.sub(currentRatio).abs().lt(BigNumber.from(10).pow(7).mul(5)));
-
-};
-
-const makeSwap = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-
-    const { ethers } = hre;
-
-    let erc20Vault = await context.LStrategy.erc20Vault();
-    let vault = await ethers.getContractAt(
-        "IVault",
-        erc20Vault
-    );
-
-    let erc20Tvl = await vault.tvl();
-    let tokens = [context.wsteth, context.weth];
-    let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
-
-    if (delta.lt(BigNumber.from(-1))) {
-        await swapTokens(
-            hre,
-            context,
-            erc20Vault,
-            erc20Vault,
-            tokens[1],
-            tokens[0],
-            delta.div(2).mul(-1)
-        );
-    }
-
-    if (delta.gt(BigNumber.from(1))) {
-        await swapTokens(
-            hre,
-            context,
-            erc20Vault,
-            erc20Vault,
-            tokens[0],
-            tokens[1],
-            delta.div(2)
-        );
-    }
-};
-
 const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context) => {
 
     const { ethers } = hre;
@@ -1262,7 +847,21 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context) =
         ethers.constants.MaxUint256);
         await makeSwap(hre, context);
     }
+};
 
+const reportStats = async (hre: HardhatRuntimeEnvironment, context: Context, fname: string) => {
+    const stats = await getStrategyStats(hre, context);
+    const content = (
+        stats.erc20token0.toString() + " " +
+        stats.erc20token1.toString() + " " +
+        stats.lowerVaultLiquidity.toString() + " " +
+        stats.lowerVaultTokenOwed0.toString() + " " +
+        stats.lowerVaultTokenOwed1.toString() + " " +
+        stats.upperVaultLiquidity.toString() + " " +
+        stats.upperVaultTokenOwed0.toString() + " " +
+        stats.upperVaultTokenOwed1.toString() + "\n"
+    );
+    fs.writeFile(fname, content, { flag: "a+"}, err => {});
 };
 
 const process = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
@@ -1279,10 +878,22 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     await grantPermissions(hre, context, lowerVault);
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
+
+    console.log("erc20Vault: ", erc20vault);
+
     await initialRebalance(hre, context, stringToPriceX96(prices[0]));
 
-    for (let i = 1; i < prices.length; ++i) {
+    const tmp = await context.LStrategy.erc20Vault();
+
+    await swapOnCowswap(hre, context);
+
+    /* let prev = Date.now();
+    for (let i = 1; i < 100; ++i) {
+        reportStats(hre, context, "output.csv");
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
         await makeRebalances(hre, context);
-    }
+        let current = Date.now();
+        console.log(current - prev);
+        prev = current;
+    } */
 };
