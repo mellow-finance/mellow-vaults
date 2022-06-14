@@ -114,7 +114,11 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         address token1,
         TradingParams memory tradingParams_
     ) public view returns (uint256 priceX96) {
-        (uint256[] memory pricesX96, ) = tradingParams_.oracle.priceX96(token0, token1, tradingParams_.oracleSafetyMask);
+        (uint256[] memory pricesX96, ) = tradingParams_.oracle.priceX96(
+            token0,
+            token1,
+            tradingParams_.oracleSafetyMask
+        );
         require(pricesX96.length > 0, ExceptionsLibrary.INVALID_LENGTH);
         for (uint256 i = 0; i < pricesX96.length; i++) {
             priceX96 += pricesX96[i];
