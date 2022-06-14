@@ -90,7 +90,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             ExceptionsLibrary.FORBIDDEN
         );
         address[] memory tokens = _vaultTokens;
-        if (totalSupply == 0) {
+        uint256 supply = totalSupply;
+        if (supply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
                 require(tokenAmounts[i] > FIRST_DEPOSIT_LIMIT, ExceptionsLibrary.LIMIT_UNDERFLOW);
             }
@@ -104,7 +105,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
-        uint256 supply = totalSupply;
         uint256 preLpAmount;
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         {
@@ -129,7 +129,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(lpAmount + totalSupply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
 
         _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
         _mint(msg.sender, lpAmount);
