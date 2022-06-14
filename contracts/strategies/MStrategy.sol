@@ -200,7 +200,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param params Params to set
     function setOracleParams(OracleParams memory params) external {
         _requireAdmin();
-        require((params.maxSlippageD <= DENOMINATOR), ExceptionsLibrary.INVARIANT);
+        require((params.maxSlippageD > 0) && (params.maxSlippageD <= DENOMINATOR), ExceptionsLibrary.INVARIANT);
 
         oracleParams = params;
         emit SetOracleParams(tx.origin, msg.sender, params);
