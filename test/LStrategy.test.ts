@@ -1659,6 +1659,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ).to.be.revertedWith(Exceptions.INVARIANT);
                     });
                 });
+                describe("Safety mask is less than 3", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.oracleSafetyMask = 2;
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateTradingParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
                 describe("when orderDeadline is more than 30 days", () => {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
