@@ -170,9 +170,21 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
 
         {
             uint256 priceX96 = targetPrice(tokens[0], tokens[1], tradingParams);
-            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
+
+            if (sumUniV3Capital == 0) {
+                bytes memory options = _makeUniswapVaultOptions(new uint256[](2), deadline);
+
+                erc20Vault.pull(address(lowerVault), tokens, _pullExistentials, options);
+
+                erc20Vault.pull(address(upperVault), tokens, _pullExistentials, options);
+
+                sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
+            }
+
+            uint256 erc20VaultCapital = _getCapital(priceX96, erc20Vault);
             uint256 capitalDelta;
+
             (capitalDelta, isNegativeCapitalDelta) = _liquidityDelta(
                 erc20VaultCapital,
                 sumUniV3Capital,
