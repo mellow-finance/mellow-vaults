@@ -48,10 +48,11 @@ contract UniV3Helper {
         );
     }
 
-    function _getFeeGrowthOutside(
-        IUniswapV3Pool pool,
-        int24 tick
-    ) internal view returns (uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128) {
+    function _getFeeGrowthOutside(IUniswapV3Pool pool, int24 tick)
+        internal
+        view
+        returns (uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128)
+    {
         (, , feeGrowthOutside0X128, feeGrowthOutside1X128, , , , ) = pool.ticks(tick);
     }
 
