@@ -208,6 +208,8 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         return timestampBefore;
     };
 
+    
+
     describe("#tvl", () => {
         beforeEach(async () => {
             await withSigner(this.subject.address, async (signer) => {
@@ -922,8 +924,10 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             });
         });
     });
+    
 
     describe("#pull", () => {
+        
         describe("pulls nothing pulled when zero tokens pulled", () => {
             it("expected to be zero", async () => {
                 await this.preparePush();
@@ -944,6 +948,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 expect(value.toNumber()).to.be.equal(0);
             });
         });
+        
         describe("works correctly when current price is lower than tickPrice", () => {
             it("works", async () => {
                 const result = await mintUniV3Position_USDC_WETH({
@@ -1066,6 +1071,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 });
             });
         });
+        
     });
 
     integrationVaultBehavior.call(this, {});

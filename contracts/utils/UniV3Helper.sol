@@ -5,6 +5,7 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
+import "../libraries/external/Position.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 
 contract UniV3Helper {
@@ -48,7 +49,55 @@ contract UniV3Helper {
         );
     }
 
+    function _recalcPosition(
+        IUniswapV3Pool pool,
+        int24 tick,
+        int24 tickCurrent,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
+    ) internal view returns (uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128) {
+        (,,feeGrowthOutside0X128,feeGrowthOutside1X128,,,,) = pool.ticks(tick);
+    }
+
+    function _getFeeGrowthInside(
+        IUniswapV3Pool pool,
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickCurrent,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
+    ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
+        (uint256 lowerFeeGrowthOutside0X128,uint256 lowerFeeGrowthOutside1X128) = _recalcPosition(pool, tickLower, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+        (uint256 upperFeeGrowthOutside0X128,uint256 upperFeeGrowthOutside1X128) = _recalcPosition(pool, tickUpper, tickCurrent, feeGrowthGlobal0X128, feeGrowthGlobal1X128);
+
+        // calculate fee growth below
+        uint256 feeGrowthBelow0X128;
+        uint256 feeGrowthBelow1X128;
+        if (tickCurrent >= tickLower) {
+            feeGrowthBelow0X128 = lowerFeeGrowthOutside0X128;
+            feeGrowthBelow1X128 = lowerFeeGrowthOutside1X128;
+        } else {
+            feeGrowthBelow0X128 = feeGrowthGlobal0X128 - lowerFeeGrowthOutside0X128;
+            feeGrowthBelow1X128 = feeGrowthGlobal1X128 - lowerFeeGrowthOutside1X128;
+        }
+
+        // calculate fee growth above
+        uint256 feeGrowthAbove0X128;
+        uint256 feeGrowthAbove1X128;
+        if (tickCurrent < tickUpper) {
+            feeGrowthAbove0X128 = upperFeeGrowthOutside0X128;
+            feeGrowthAbove1X128 = upperFeeGrowthOutside1X128;
+        } else {
+            feeGrowthAbove0X128 = feeGrowthGlobal0X128 - upperFeeGrowthOutside0X128;
+            feeGrowthAbove1X128 = feeGrowthGlobal1X128 - upperFeeGrowthOutside1X128;
+        }
+
+        feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
+        feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+    }
+
     function calculatePositionInfo(
+        address owner,
         INonfungiblePositionManager positionManager,
         IUniswapV3Pool pool,
         uint256 uniV3Nft
@@ -63,11 +112,8 @@ contract UniV3Helper {
             uint128 tokensOwed1
         )
     {
-        uint128 prevTokensOwed0;
-        uint128 prevTokensOwed1;
-        uint256 prevFeeGrowthInside0LastX128;
-        uint256 prevFeeGrowthInside1LastX128;
-
+        uint256 feeGrowthInside0LastX128;
+        uint256 feeGrowthInside1LastX128;
         (
             ,
             ,
@@ -76,34 +122,43 @@ contract UniV3Helper {
             ,
             tickLower,
             tickUpper,
-            liquidity,
-            prevFeeGrowthInside0LastX128,
-            prevFeeGrowthInside1LastX128,
-            prevTokensOwed0,
-            prevTokensOwed1
+            ,
+            ,
+            ,
+            ,
         ) = positionManager.positions(uniV3Nft);
 
-        uint256 curFeeGrowthInside0LastX128 = pool.feeGrowthGlobal0X128();
-        uint256 curFeeGrowthInside1LastX128 = pool.feeGrowthGlobal1X128();
+        (liquidity,
+        feeGrowthInside0LastX128,
+        feeGrowthInside1LastX128,
+        tokensOwed0,
+        tokensOwed1) = pool.positions(keccak256(abi.encodePacked(owner, tickLower, tickUpper)));
 
-        tokensOwed0 =
-            prevTokensOwed0 +
-            uint128(
-                FullMath.mulDiv(
-                    curFeeGrowthInside0LastX128 - prevFeeGrowthInside0LastX128,
-                    liquidity,
-                    CommonLibrary.Q128
-                )
-            );
+        if (liquidity == 0) {
+            return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
+        }
 
-        tokensOwed1 =
-            prevTokensOwed1 +
-            uint128(
-                FullMath.mulDiv(
-                    curFeeGrowthInside1LastX128 - prevFeeGrowthInside1LastX128,
-                    liquidity,
-                    CommonLibrary.Q128
-                )
-            );
+        uint256 _feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
+        uint256 _feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
+        (, int24 tick, , , , , ) = pool.slot0();
+
+        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) =
+            _getFeeGrowthInside(pool, tickLower, tickUpper, tick, _feeGrowthGlobal0X128, _feeGrowthGlobal1X128);
+
+        tokensOwed0 += uint128(
+            FullMath.mulDiv(
+                feeGrowthInside0X128 - feeGrowthInside0LastX128,
+                liquidity,
+                CommonLibrary.Q128
+            )
+        );
+
+        tokensOwed1 += uint128(
+            FullMath.mulDiv(
+                feeGrowthInside1X128 - feeGrowthInside1LastX128,
+                liquidity,
+                CommonLibrary.Q128
+            )
+        );
     }
 }

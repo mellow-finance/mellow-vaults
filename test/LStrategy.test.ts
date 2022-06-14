@@ -855,6 +855,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
 
         describe("ERC20 is initially empty", () => {
+            
             describe("UniV3rebalance when ERC20 is empty and no UniV3ERC20rebalance happens", () => {
                 it("not reverts and keeps balances in general case", async () => {
                     let depositAmounts =
@@ -902,9 +903,25 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
+            
 
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
+                    const mintParams = {
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
+                        fee: 500,
+                        tickLower: -2000,
+                        tickUpper: 2000,
+                        amount0Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount1Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    };
+                    //mint a position in pull to provide liquidity for future swaps
+                    await this.positionManager.mint(mintParams);
                     for (let i = 0; i < 30; ++i) {
                         //balance tokens in ERC20
                         await this.balanceERC20();
@@ -957,7 +974,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
-
+            
             describe("batches of rebalances after small price changes", () => {
                 it("rebalance converges to target ratio", async () => {
                     let tokenFirst = this.weth;
@@ -1025,8 +1042,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     }
                 });
             });
+            
         });
-
+        
         describe("ERC20 has inititally a lot of liquidity", () => {
             beforeEach(async () => {
                 await this.submitToERC20Vault();
@@ -3670,4 +3688,5 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
+    
 });

@@ -36,6 +36,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         if (uniV3Nft == 0) {
             return (new uint256[](2), new uint256[](2));
         }
+
         minTokenAmounts = new uint256[](2);
         maxTokenAmounts = new uint256[](2);
         int24 tickLower;
@@ -48,7 +49,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 uint128 tokensOwed0;
                 uint128 tokensOwed1;
 
+                address owner = address(_positionManager);
+
                 (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1) = _uniV3Helper.calculatePositionInfo(
+                    owner,
                     _positionManager,
                     pool,
                     uniV3Nft
