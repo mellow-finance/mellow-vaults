@@ -46,10 +46,10 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     struct RatioParams {
         int24 tickMin;
         int24 tickMax;
-        uint256 erc20MoneyRatioD;
         int24 minTickRebalanceThreshold;
         int24 tickNeighborhood;
         int24 tickIncrease;
+        uint256 erc20MoneyRatioD;
         uint256 minErc20MoneyRatioDeviation0D;
         uint256 minErc20MoneyRatioDeviation1D;
     }
