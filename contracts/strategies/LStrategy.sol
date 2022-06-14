@@ -195,17 +195,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 return (new uint256[](2), false, 0);
             }
 
-            if (sumUniV3Capital == 0) {
-                bytes memory options = _makeUniswapVaultOptions(new uint256[](2), deadline);
-
-                erc20Vault.pull(address(lowerVault), tokens, _pullExistentials, options);
-
-                erc20Vault.pull(address(upperVault), tokens, _pullExistentials, options);
-
-                erc20VaultCapital = _getCapital(priceX96, erc20Vault);
-                sumUniV3Capital = _getCapital(priceX96, lowerVault) + _getCapital(priceX96, upperVault);
-            }
-
             percentageIncreaseD = FullMath.mulDiv(DENOMINATOR, capitalDelta, sumUniV3Capital);
             (, , lowerVaultLiquidity) = _getVaultStats(lowerVault);
             (, , upperVaultLiquidity) = _getVaultStats(upperVault);
