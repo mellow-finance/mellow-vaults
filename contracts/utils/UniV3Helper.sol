@@ -5,7 +5,6 @@ import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
-import "../libraries/external/Position.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 
 contract UniV3Helper {
@@ -49,12 +48,9 @@ contract UniV3Helper {
         );
     }
 
-    function _recalcPosition(
+    function _getFeeGrowthOutside(
         IUniswapV3Pool pool,
-        int24 tick,
-        int24 tickCurrent,
-        uint256 feeGrowthGlobal0X128,
-        uint256 feeGrowthGlobal1X128
+        int24 tick
     ) internal view returns (uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128) {
         (, , feeGrowthOutside0X128, feeGrowthOutside1X128, , , , ) = pool.ticks(tick);
     }
@@ -67,19 +63,13 @@ contract UniV3Helper {
         uint256 feeGrowthGlobal0X128,
         uint256 feeGrowthGlobal1X128
     ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
-        (uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128) = _recalcPosition(
+        (uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128) = _getFeeGrowthOutside(
             pool,
-            tickLower,
-            tickCurrent,
-            feeGrowthGlobal0X128,
-            feeGrowthGlobal1X128
+            tickLower
         );
-        (uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128) = _recalcPosition(
+        (uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128) = _getFeeGrowthOutside(
             pool,
-            tickUpper,
-            tickCurrent,
-            feeGrowthGlobal0X128,
-            feeGrowthGlobal1X128
+            tickUpper
         );
 
         // calculate fee growth below
