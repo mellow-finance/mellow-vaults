@@ -17,7 +17,7 @@ contract MockOracle is IOracle {
         safetyIndex = newSafetyIndex;
     }
 
-    function price(
+    function priceX96(
         address,
         address,
         uint256
