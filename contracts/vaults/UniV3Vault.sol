@@ -200,7 +200,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
         maxPriceX96 = prices[0];
-        for (uint32 i = 0; i < prices.length; ++i) {
+        for (uint32 i = 1; i < prices.length; ++i) {
             if (prices[i] < minPriceX96) {
                 minPriceX96 = prices[i];
             } else if (prices[i] > maxPriceX96) {
