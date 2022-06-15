@@ -756,15 +756,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     let capitalLower = await this.getCapital(tick, this.uniV3LowerVault.address);
                     let capitalUpper = await this.getCapital(tick, this.uniV3UpperVault.address);
 
-                    let x = capitalErc20.mul(100 - ratio);
-                    let y = (capitalLower.add(capitalUpper)).mul(ratio);
+                    let capitalFirst = capitalErc20.mul(100 - ratio);
+                    let capitalSecond = (capitalLower.add(capitalUpper)).mul(ratio);
 
-                    let delta = x.sub(y).abs();
-                    if (x.lt(y)) {
-                        x = y;
+                    let delta = capitalFirst.sub(capitalSecond).abs();
+                    let maxBetweenCapitals = capitalFirst;
+
+                    if (capitalFirst.lt(capitalSecond)) {
+                        maxBetweenCapitals = capitalSecond;
                     }
                 
-                    return (delta.mul(100).lt(x));
+                    return (delta.mul(100).lt(maxBetweenCapitals));
                 };
 
                 this.allCapital = async() => {
@@ -789,12 +791,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 
                         let currentPoolState = await pool.slot0();
                         let currentPoolTick = BigNumber.from(currentPoolState.tick);
-/*
-                        console.log("T");
-                        console.log(tick);
-                        console.log("Q");
-                        console.log(currentPoolTick);
-              */  
                         if (currentPoolTick.eq(tick)) {
                             break;
                         }
@@ -1034,7 +1030,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                         expect(await this.assureEquality(5 + changePercentage)).to.be.true;
 
-                        let totalNormalCapital = await this.allCapital();
                         await this.changeParams(BigNumber.from(10).pow(7).mul(5));
 
                         await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
@@ -1049,6 +1044,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             ethers.constants.MaxUint256
                         );
                         
+                        let totalNormalCapital = await this.allCapital();
                         expect(await this.assureEquality(5)).to.be.true;
 
                         let tick = await this.getUniV3Tick();
@@ -1068,6 +1064,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             ethers.constants.MaxUint256
                         );
 
+                        expect(await this.assureEquality(5 + changePercentage)).to.be.true;
+                        await this.changeParams(BigNumber.from(10).pow(7).mul(5));
+
                         await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
                             [
                                 ethers.constants.Zero,
@@ -1079,17 +1078,15 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             ],
                             ethers.constants.MaxUint256
                         );
-
-                        expect(await this.assureEquality(5 + changePercentage)).to.be.true;
+                        expect(await this.assureEquality(5)).to.be.true;
                         await this.makeDesiredPoolPrice(tick);
 
                         expect(tick).to.be.eq(await this.getUniV3Tick())
-                        expect(await this.assureEquality(5)).to.be.true;
 
                         let totalBadCapital = await this.allCapital();
                         console.log(totalNormalCapital);
                         console.log(totalBadCapital);
-
+                        expect(totalNormalCapital.mul(997)).to.be.lt(totalBadCapital.mul(1000));
                     })
                 }   
             }
@@ -1894,6 +1891,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
                         params.maxSlippageD = BigNumber.from(10).pow(9).mul(2);
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateTradingParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
+                describe("Safety mask is less than 3", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.oracleSafetyMask = 2;
                         await expect(
                             this.subject
                                 .connect(this.admin)
