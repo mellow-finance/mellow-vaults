@@ -277,7 +277,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     this.subject.address,
                     this.weth,
                     this.usdc,
-                    BigNumber.from(10).pow(18).mul(100)
+                    BigNumber.from(10).pow(18)
                 );
                 {
                     const { amount0, amount1 } =
@@ -301,7 +301,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     this.subject.address,
                     this.usdc,
                     this.weth,
-                    BigNumber.from(10).pow(18).mul(100)
+                    BigNumber.from(10).pow(6).mul(1000)
                 );
                 {
                     const { amount0, amount1 } =
