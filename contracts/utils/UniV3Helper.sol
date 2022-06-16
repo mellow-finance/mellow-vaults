@@ -117,11 +117,20 @@ contract UniV3Helper {
     {
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
-        (, , , , , tickLower, tickUpper, liquidity, , , tokensOwed0, tokensOwed1) = positionManager.positions(uniV3Nft);
-
-        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool.positions(
-            keccak256(abi.encodePacked(owner, tickLower, tickUpper))
-        );
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            tickLower,
+            tickUpper,
+            liquidity,
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128,
+            tokensOwed0,
+            tokensOwed1
+        ) = positionManager.positions(uniV3Nft);
 
         if (liquidity == 0) {
             return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
