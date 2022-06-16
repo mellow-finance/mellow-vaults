@@ -163,8 +163,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     vault,
                     tickLower = -887220,
                     tickUpper = 887220,
-                    wethAmount = BigNumber.from(10).pow(18).mul(1),
-                    wstethAmount = BigNumber.from(10).pow(18).mul(1),
+                    wethAmount = BigNumber.from(10).pow(18).mul(100),
+                    wstethAmount = BigNumber.from(10).pow(18).mul(100),
                 }: {
                     vault: any;
                     tickLower?: number;
@@ -725,7 +725,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     for (let token of [this.weth, this.wsteth]) {
                         await token.transfer(
                             this.erc20Vault.address,
-                            BigNumber.from(10).pow(18).mul(1)
+                            BigNumber.from(10).pow(18).mul(500)
                         );
                     }
                 };
@@ -766,7 +766,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         maxBetweenCapitals = capitalSecond;
                     }
                 
-                    return (delta.mul(100).lt(maxBetweenCapitals));
+                    return (delta.mul(60).lt(maxBetweenCapitals));
                 };
 
                 this.allCapital = async() => {
@@ -783,11 +783,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         "IUniswapV3Pool",
                         await this.uniV3LowerVault.pool()
                     );
-                    let startTry = BigNumber.from(10).pow(17).mul(60);
+                    let startTry = BigNumber.from(10).pow(17).mul(120);
                 
                     let needIncrease = 0; //mock initialization
                     
                     while (true) {
+                        
                 
                         let currentPoolState = await pool.slot0();
                         let currentPoolTick = BigNumber.from(currentPoolState.tick);
@@ -823,6 +824,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             );     
                         }
                     }
+
+                    await this.updateMockOracle(tick);
                 };
 
                 await this.uniV3VaultGovernance
@@ -893,7 +896,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.grantPermissions();
             await this.mintFunds(BigNumber.from(10).pow(18));
 
-            this.semiPositionRange = 60;
+            this.semiPositionRange = 1000;
 
             const currentTick = await this.getUniV3Tick();
             let tickLeftLower =
@@ -954,13 +957,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 return (minTvl[0].add(maxTvl[0])).div(2).mul(priceX96).div(BigNumber.from(2).pow(96)).add((minTvl[1].add(maxTvl[1])).div(2));
             };
 
-        });
-        describe("Integration test of potential capital losses", () => {
-
-            beforeEach (async () => {
-
-                await this.submitToERC20Vault();
-                for (let i = 0; i < 2; ++i) {
+            this.ercRebalance = async(ratio: number) => {
+                while (true) {
+                    if (await this.assureEquality(ratio)) {
+                        break;
+                    }
                     await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
                         [
                             ethers.constants.Zero,
@@ -972,7 +973,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ],
                         ethers.constants.MaxUint256
                     );
+                    await this.balanceERC20();
                 }
+                console.log("DONE");
+                
+            }
+
+        });
+        describe("Integration test of potential capital losses", () => {
+            
+
+            beforeEach (async () => {
 
                 const mintParams = {
                     token0: this.wsteth.address,
@@ -989,6 +1000,11 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 //mint a position in pull to provide liquidity for future swaps
                 await this.positionManager.mint(mintParams);
+                await this.makeDesiredPoolPrice(BigNumber.from(2000));
+
+                await this.submitToERC20Vault();
+                await this.ercRebalance(5);
+
             })
 
             this.changeParams = async(newRatio : BigNumber) => {
@@ -1006,8 +1022,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .updateRatioParams(this.baseParams);
             }
             
-            for (let changePercentage = 1; changePercentage <= 32; changePercentage *= 2) {
-            for (let changePrice = -200; changePrice <= 200; changePrice += 80) {
+            for (let changePercentage = 1; changePercentage <= 8; changePercentage *= 2) {
+            for (let changePrice = -1000; changePrice <= 1000; changePrice += 400) {
 
             
                     it("Change price equals " + String(changePrice) + " and changePercentage equals " + String(changePercentage), async () => {
@@ -1016,82 +1032,48 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         expect(await this.assureEquality(5)).to.be.true;
 
                         await this.changeParams(BigNumber.from(10).pow(7).mul(5 + changePercentage));
-                        await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            ethers.constants.MaxUint256
-                        );
-
+                        
+                        await this.ercRebalance(5 + changePercentage);
                         expect(await this.assureEquality(5 + changePercentage)).to.be.true;
 
                         await this.changeParams(BigNumber.from(10).pow(7).mul(5));
 
-                        await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            ethers.constants.MaxUint256
-                        );
-                        
+                        await this.ercRebalance(5);
                         let totalNormalCapital = await this.allCapital();
                         expect(await this.assureEquality(5)).to.be.true;
+
+                        await this.changeParams(BigNumber.from(10).pow(7).mul(5 + changePercentage));
+                        
+                        await this.ercRebalance(5 + changePercentage);
+                        expect(await this.assureEquality(5 + changePercentage)).to.be.true;
 
                         let tick = await this.getUniV3Tick();
                         await this.makeDesiredPoolPrice(tick.add(changePrice));
 
                         expect(tick.add(changePrice)).to.be.eq(await this.getUniV3Tick());
-                        await this.changeParams(BigNumber.from(10).pow(7).mul(5 + changePercentage));
-                        await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            ethers.constants.MaxUint256
-                        );
 
-                        expect(await this.assureEquality(5 + changePercentage)).to.be.true;
+                        console.log(await this.getUniV3Tick());
+
                         await this.changeParams(BigNumber.from(10).pow(7).mul(5));
 
-                        await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            [
-                                ethers.constants.Zero,
-                                ethers.constants.Zero,
-                            ],
-                            ethers.constants.MaxUint256
-                        );
+                        
+                        await this.ercRebalance(5);
                         expect(await this.assureEquality(5)).to.be.true;
                         await this.makeDesiredPoolPrice(tick);
 
                         expect(tick).to.be.eq(await this.getUniV3Tick())
 
                         let totalBadCapital = await this.allCapital();
+
                         console.log(totalNormalCapital);
                         console.log(totalBadCapital);
+
                         expect(totalNormalCapital.mul(997)).to.be.lt(totalBadCapital.mul(1000));
                     })
                 }   
             }
-        })
-/*
+        });
+        /*
         describe("ERC20 is initially empty", () => {
             describe("UniV3rebalance when ERC20 is empty and no UniV3ERC20rebalance happens", () => {
                 it("not reverts and keeps balances in general case", async () => {
@@ -1828,8 +1810,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
         */
+        
     });
-/*
+    /*
     describe("unit tests", () => {
         beforeEach(async () => {
             for (let address of [
@@ -3921,4 +3904,5 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         });
     });
     */
+    
 });
