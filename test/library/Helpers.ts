@@ -490,7 +490,7 @@ export async function mintUniV3Position_USDC_WETH(options: {
     };
 
     const result = await positionManagerContract.callStatic.mint(mintParams);
-    await positionManagerContract.mint(mintParams);
+    const kek = await positionManagerContract.mint(mintParams);
     return result;
 }
 
