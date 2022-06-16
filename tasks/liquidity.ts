@@ -18,7 +18,10 @@ task("swap-amount", "Calculates swap amount needed to shift price in the pool")
             console.error("Position tick should be multiple of 10 (tickSpacing)");
         } else {
             let poolTick = poolTickString != undefined ? +poolTickString : undefined;
-            await countSwapAmount(hre, ticks, width, +positionTickString, poolTick, BigNumber.from(liquidity));
+            let { deltaXPriceDown, deltaYPriceUp, tickPriceDown, tickPriceUp } = await countSwapAmount(hre, ticks, width, +positionTickString, poolTick, BigNumber.from(liquidity));
+            if (verify) {
+                
+            }
         }
     });
 
