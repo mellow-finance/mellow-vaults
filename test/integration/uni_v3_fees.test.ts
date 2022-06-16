@@ -285,7 +285,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     const positionInfo =
                         await this.uniV3Helper.calculatePositionInfo(
                             positionManager,
-                            positionManager,
                             await this.subject.pool(),
                             await this.subject.uniV3Nft()
                         );
@@ -308,7 +307,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         await this.calculateTokensOwed();
                     const positionInfo =
                         await this.uniV3Helper.calculatePositionInfo(
-                            positionManager,
                             positionManager,
                             await this.subject.pool(),
                             await this.subject.uniV3Nft()

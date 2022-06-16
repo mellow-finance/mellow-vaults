@@ -49,10 +49,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 uint128 tokensOwed0;
                 uint128 tokensOwed1;
 
-                address owner = address(_positionManager);
-
                 (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1) = _uniV3Helper.calculatePositionInfo(
-                    owner,
                     _positionManager,
                     pool,
                     uniV3Nft
@@ -64,15 +61,13 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 maxTokenAmounts[1] = tokensOwed1;
             }
             {
-                uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
-                uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
                 uint256 amountMin0;
                 uint256 amountMax0;
                 uint256 amountMin1;
                 uint256 amountMax1;
-                uint256 minPriceX96;
-                uint256 maxPriceX96;
-                (minPriceX96, maxPriceX96) = _getMinMaxPrice(params.oracle);
+                uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+                uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+                (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle);
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(

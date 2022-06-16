@@ -48,14 +48,6 @@ contract UniV3Helper {
         );
     }
 
-    function _getFeeGrowthOutside(IUniswapV3Pool pool, int24 tick)
-        internal
-        view
-        returns (uint256 feeGrowthOutside0X128, uint256 feeGrowthOutside1X128)
-    {
-        (, , feeGrowthOutside0X128, feeGrowthOutside1X128, , , , ) = pool.ticks(tick);
-    }
-
     function _getFeeGrowthInside(
         IUniswapV3Pool pool,
         int24 tickLower,
@@ -64,14 +56,8 @@ contract UniV3Helper {
         uint256 feeGrowthGlobal0X128,
         uint256 feeGrowthGlobal1X128
     ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
-        (uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128) = _getFeeGrowthOutside(
-            pool,
-            tickLower
-        );
-        (uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128) = _getFeeGrowthOutside(
-            pool,
-            tickUpper
-        );
+        (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
+        (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
 
         // calculate fee growth below
         uint256 feeGrowthBelow0X128;
@@ -100,7 +86,6 @@ contract UniV3Helper {
     }
 
     function calculatePositionInfo(
-        address owner,
         INonfungiblePositionManager positionManager,
         IUniswapV3Pool pool,
         uint256 uniV3Nft
@@ -136,8 +121,8 @@ contract UniV3Helper {
             return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
         }
 
-        uint256 _feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
-        uint256 _feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
+        uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
+        uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
         (, int24 tick, , , , , ) = pool.slot0();
 
         (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = _getFeeGrowthInside(
@@ -145,8 +130,8 @@ contract UniV3Helper {
             tickLower,
             tickUpper,
             tick,
-            _feeGrowthGlobal0X128,
-            _feeGrowthGlobal1X128
+            feeGrowthGlobal0X128,
+            feeGrowthGlobal1X128
         );
 
         tokensOwed0 += uint128(
