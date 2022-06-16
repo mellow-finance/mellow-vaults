@@ -1123,7 +1123,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     getMinMaxEstimates(expectedFees, 1, 100);
                 let uniV3ChangeMinEstimation = this.expectedUniV3Changes[
                     tokenIndex
-                ].sub(this.depositAmount[tokenIndex].div(1000));
+                ].sub(this.depositAmount[tokenIndex].div(10000));
                 uniV3ChangeMinEstimation = getMinMaxEstimates(
                     uniV3ChangeMinEstimation,
                     1,
@@ -1131,7 +1131,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 ).min;
                 let uniV3ChangeMaxEstimation = this.expectedUniV3Changes[
                     tokenIndex
-                ].add(this.depositAmount[tokenIndex].div(1000));
+                ].add(this.depositAmount[tokenIndex].div(10000));
                 uniV3ChangeMaxEstimation = getMinMaxEstimates(
                     uniV3ChangeMaxEstimation,
                     1,
@@ -1239,7 +1239,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe("makes a lot of random pulls and swaps, then checks that withdrawn amount is correct", () => {
+        describe("makes a lot of random pulls and swaps, then checks if withdrawn amount is correct", () => {
             it(`passes`, async () => {
                 let targets = [
                     this.erc20Vault,
