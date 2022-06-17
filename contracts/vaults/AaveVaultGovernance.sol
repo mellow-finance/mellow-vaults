@@ -9,7 +9,7 @@ import "./VaultGovernance.sol";
 
 /// @notice Governance that manages all Aave Vaults params and can deploy a new Aave Vault.
 contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGovernance {
-    uint256 public immutable MAX_ESTIMATED_AAVE_APY;
+    uint256 public constant MAX_ESTIMATED_AAVE_APY = 100 * 10**7; // 100%
 
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
@@ -17,7 +17,6 @@ contract AaveVaultGovernance is ContractMeta, IAaveVaultGovernance, VaultGoverna
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
-        MAX_ESTIMATED_AAVE_APY = CommonLibrary.DENOMINATOR;
         require(address(delayedProtocolParams_.lendingPool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.estimatedAaveAPY != 0, ExceptionsLibrary.VALUE_ZERO);
         require(delayedProtocolParams_.estimatedAaveAPY <= MAX_ESTIMATED_AAVE_APY, ExceptionsLibrary.LIMIT_OVERFLOW);
