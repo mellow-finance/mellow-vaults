@@ -29,7 +29,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     ILStrategyHelper public immutable orderHelper;
     uint24 public immutable poolFee;
     address public immutable cowswap;
-    uint16 public immutable intervalWidthInTicks;
 
     // INTERNAL STATE
 
@@ -58,6 +57,7 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     }
 
     struct OtherParams {
+        uint16 intervalWidthInTicks;
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
         uint256 rebalanceDeadline;
@@ -93,21 +93,8 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         IUniV3Vault vault1_,
         IUniV3Vault vault2_,
         ILStrategyHelper orderHelper_,
-        address admin_,
-        uint16 intervalWidthInTicks_
+        address admin_
     ) DefaultAccessControl(admin_) {
-        require(
-            (address(positionManager_) != address(0)) &&
-                (address(orderHelper_) != address(0)) &&
-                (address(vault1_) != address(0)) &&
-                (address(vault2_) != address(0)) &&
-                (address(erc20vault_) != address(0)) &&
-                (cowswap_ != address(0)),
-            ExceptionsLibrary.ADDRESS_ZERO
-        );
-
-        require(intervalWidthInTicks_ > 0, ExceptionsLibrary.VALUE_ZERO);
-
         positionManager = positionManager_;
         erc20Vault = erc20vault_;
         lowerVault = vault1_;
@@ -117,7 +104,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         _pullExistentials = vault1_.pullExistentials();
         cowswap = cowswap_;
         orderHelper = orderHelper_;
-        intervalWidthInTicks = intervalWidthInTicks_;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -766,10 +752,10 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         int24 newTickUpper;
         if (positiveTickGrowth) {
             newTickLower = (toTickLower + toTickUpper) / 2;
-            newTickUpper = newTickLower + int24(uint24(intervalWidthInTicks));
+            newTickUpper = newTickLower + int24(uint24(otherParams.intervalWidthInTicks));
         } else {
             newTickUpper = (toTickLower + toTickUpper) / 2;
-            newTickLower = newTickUpper - int24(uint24(intervalWidthInTicks));
+            newTickLower = newTickUpper - int24(uint24(otherParams.intervalWidthInTicks));
         }
 
         uint256 newNft = _mintNewNft(newTickLower, newTickUpper, deadline);

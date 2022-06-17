@@ -308,7 +308,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.uniV3UpperVault.address,
                         strategyHelper.address,
                         this.admin.address,
-                        120,
                     ],
                     log: true,
                     autoMine: true,
@@ -783,6 +782,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
+                    intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(10).pow(6),
@@ -1863,6 +1863,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         describe("#updateOtherParams", () => {
             beforeEach(async () => {
                 this.baseParams = {
+                    intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(86400 * 30),
@@ -1874,6 +1875,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .connect(this.admin)
                     .updateOtherParams(this.baseParams);
                 const returnedParams = await this.subject.otherParams();
+                expect(returnedParams.intervalWidthInTicks).eq(100);
                 expect(returnedParams.minToken0ForOpening).eq(
                     BigNumber.from(10).pow(6)
                 );

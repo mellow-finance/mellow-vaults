@@ -78,7 +78,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             uniV3UpperVault,
             strategyOrderHelper.address,
             deployer,
-            120,
         ],
         log: true,
         autoMine: true,
@@ -113,6 +112,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     await lStrategy.updateOtherParams({
+        intervalWidthInTicks: 100,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
         rebalanceDeadline: BigNumber.from(86400 * 30),
