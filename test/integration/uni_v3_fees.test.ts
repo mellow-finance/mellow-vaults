@@ -235,9 +235,9 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         await mint(
             "USDC",
             this.subject.address,
-            BigNumber.from(10).pow(6).mul(1000)
+            BigNumber.from(10).pow(6).mul(100_000)
         );
-        await mint("WETH", this.subject.address, BigNumber.from(10).pow(18));
+        await mint("WETH", this.subject.address, BigNumber.from(10).pow(18).mul(500));
 
         const currentTick = await this.getUniV3Tick();
         let tickLower = currentTick.div(60).mul(60).toNumber() - 60;
@@ -271,7 +271,79 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 BigNumber.from(10).pow(18).mul(1000)
             );
             const positionManager = await this.subject.positionManager();
-            for (let i = 0; i < 10; ++i) {
+            for (let i = 0; i < 2; ++i) {
+                await this.swapTokens(
+                    this.subject.address,
+                    this.subject.address,
+                    this.weth,
+                    this.usdc,
+                    BigNumber.from(10).pow(18)
+                );
+                {
+                    const { amount0, amount1 } =
+                        await this.calculateTokensOwed();
+                    const positionInfo =
+                        await this.uniV3Helper.calculatePositionInfo(
+                            positionManager,
+                            await this.subject.pool(),
+                            await this.subject.uniV3Nft()
+                        );
+                    expect(
+                        amount0.sub(positionInfo.tokensOwed0).toNumber()
+                    ).to.be.eq(0);
+                    expect(
+                        amount1.sub(positionInfo.tokensOwed1).toNumber()
+                    ).to.be.eq(0);
+                }
+                await this.swapTokens(
+                    this.subject.address,
+                    this.subject.address,
+                    this.usdc,
+                    this.weth,
+                    BigNumber.from(10).pow(6).mul(1000)
+                );
+                {
+                    const { amount0, amount1 } =
+                        await this.calculateTokensOwed();
+                    const positionInfo =
+                        await this.uniV3Helper.calculatePositionInfo(
+                            positionManager,
+                            await this.subject.pool(),
+                            await this.subject.uniV3Nft()
+                        );
+                    expect(
+                        amount0.sub(positionInfo.tokensOwed0).toNumber()
+                    ).to.be.eq(0);
+                    expect(
+                        amount1.sub(positionInfo.tokensOwed1).toNumber()
+                    ).to.be.eq(0);
+                }
+                await this.usdc.transfer(this.subject.address, BigNumber.from(10).pow(6).mul(1000));
+                await this.weth.transfer(this.subject.address, BigNumber.from(10).pow(18));
+                await this.subject.push(
+                    [this.usdc.address, this.weth.address],
+                    [BigNumber.from(10).pow(6).mul(1000), BigNumber.from(10).pow(18)],
+                    encodeToBytes(
+                        ["uint256", "uint256", "uint256"],
+                        [
+                            ethers.constants.Zero,
+                            ethers.constants.Zero,
+                            ethers.constants.MaxUint256,
+                        ]
+                    )
+                );
+            }
+            const currentTick = await this.getUniV3Tick();
+            let tickLower = currentTick.div(60).mul(60).toNumber() - 60;
+            let tickUpper = tickLower + 120;
+            await mintUniV3Position_USDC_WETH({
+                fee: 3000,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                wethAmount: BigNumber.from(10).pow(18),
+            });
+            for (let i = 0; i < 2; ++i) {
                 await this.swapTokens(
                     this.subject.address,
                     this.subject.address,
