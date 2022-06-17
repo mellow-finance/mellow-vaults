@@ -75,7 +75,9 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                                 encodeToBytes(
                                     ["int128", "int128", "uint256", "uint256"],
                                     [
-                                        generateSingleParams(uint8),
+                                        generateSingleParams(uint256).mod(
+                                            BigNumber.from(2).pow(127)
+                                        ),
                                         0,
                                         generateSingleParams(uint256),
                                         generateSingleParams(uint256),
@@ -204,7 +206,11 @@ contract<CurveValidator, DeployOptions, CustomContext>(
                                                 "uint256",
                                             ],
                                             [
-                                                generateSingleParams(uint8),
+                                                generateSingleParams(
+                                                    uint256
+                                                ).mod(
+                                                    BigNumber.from(2).pow(127)
+                                                ),
                                                 0,
                                                 generateSingleParams(uint256),
                                                 generateSingleParams(uint256),
