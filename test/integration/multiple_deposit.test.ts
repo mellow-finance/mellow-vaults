@@ -37,7 +37,7 @@ type CustomContext = {
 type DeployOptions = {};
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
-    "Integration__erc20_yearn",
+    "Integration__erc20_yearn_multiple_deposits",
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
@@ -112,8 +112,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethDeployerSupply = BigNumber.from(10).pow(10).mul(5);
-                    this.usdcDeployerSupply = BigNumber.from(10).pow(10).mul(5);
+                    this.wethDeployerSupply = BigNumber.from(10).pow(14);
+                    this.usdcDeployerSupply = BigNumber.from(10).pow(14);
 
                     await mint(
                         "USDC",
@@ -200,10 +200,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 { numRuns: RUNS.mid, endOnFailure: true },
                 integer({ min: 1, max: 10 }),
                 integer({ min: 1, max: 10 }),
-                integer({ min: 10 ** 6, max: 10 ** 9 }).map((x) =>
+                integer({ min: 10 ** 12, max: 10 ** 14 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
-                integer({ min: 10 ** 7, max: 10 ** 10 }).map((x) =>
+                integer({ min: 10 ** 12, max: 10 ** 14 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
                 async (
