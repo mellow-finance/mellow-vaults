@@ -3,6 +3,8 @@ pragma solidity 0.8.9;
 
 interface IOracle {
     /// @notice Oracle price for tokens as a Q64.96 value.
+    /// @notice Returns pricing information based on the indexes of non-zero bits in safetyIndicesSet.
+    /// @notice It is possible that not all indices will have their respective prices returned.
     /// @dev The price is token1 / token0 i.e. how many weis of token1 required for 1 wei of token0.
     /// The safety indexes are:
     ///

@@ -32,7 +32,7 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         IOracle oracle;
     }
 
-    /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
+    /// @notice Params that could be changed by Strategy or Protocol Governance.
     /// @param tokenLimitPerAddress Max LP token limit per address
     /// @param tokenLimit Max LP token for the vault
     struct StrategyParams {

@@ -905,6 +905,21 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
+                    const mintParams = {
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
+                        fee: 500,
+                        tickLower: -2000,
+                        tickUpper: 2000,
+                        amount0Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount1Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    };
+                    //mint a position in pull to provide liquidity for future swaps
+                    await this.positionManager.mint(mintParams);
                     for (let i = 0; i < 30; ++i) {
                         //balance tokens in ERC20
                         await this.balanceERC20();
@@ -2531,6 +2546,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 await this.grantPermissions();
             });
+
             it("rebalances when delta is positive", async () => {
                 this.semiPositionRange = 600;
                 this.smallInt = 60;
@@ -2673,10 +2689,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(pushedAmounts[i]).to.be.equal(ethers.constants.Zero);
                 }
             });
+
             it("rebalances when crossing the interval right to left", async () => {
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await this.mockOracle.updatePrice(BigNumber.from(1).shl(95));
+                await this.preparePush({
+                    vault: this.uniV3LowerVault,
+                    tickLower: 500000,
+                    tickUpper: 700000,
+                });
+                await this.preparePush({
+                    vault: this.uniV3UpperVault,
+                    tickLower: 600000,
+                    tickUpper: 800000,
+                });
                 await this.grantPermissionsUniV3Vaults();
                 const result = await this.subject
                     .connect(this.admin)
@@ -2699,6 +2723,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(tvl[i]).lt(BigNumber.from(10)); // check, that all liquidity passed to other vault
                 }
             });
+
             it("swap vaults when crossing the interval right to left with no liquidity", async () => {
                 await this.preparePush({ vault: this.uniV3LowerVault });
                 await this.preparePush({ vault: this.uniV3UpperVault });

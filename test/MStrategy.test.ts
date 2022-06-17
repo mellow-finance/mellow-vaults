@@ -82,15 +82,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     "vaultForNft",
                     yearnVaultNft
                 );
-                const erc20RootVault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    erc20VaultNft + 1
-                );
-                this.erc20RootVault = await ethers.getContractAt(
-                    "ERC20RootVault",
-                    erc20RootVault
-                );
+
                 this.erc20Vault = await ethers.getContractAt(
                     "ERC20Vault",
                     erc20Vault
@@ -173,6 +165,16 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     [erc20VaultNft, yearnVaultNft],
                     this.subject.address,
                     this.deployer.address
+                );
+
+                const erc20RootVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft + 1
+                );
+                this.erc20RootVault = await ethers.getContractAt(
+                    "ERC20RootVault",
+                    erc20RootVault
                 );
 
                 /*
@@ -938,12 +940,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     this.params.moneyVault
                 );
 
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(highRatioMStrategy.address, nftERC20Vault);
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(highRatioMStrategy.address, nftMoneyVault);
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(highRatioMStrategy.address, nftERC20Vault);
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(highRatioMStrategy.address, nftMoneyVault);
+                });
 
                 await this.usdc
                     .connect(this.deployer)
@@ -1068,12 +1072,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     this.params.moneyVault
                 );
 
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(lowRatioMStrategy.address, nftERC20Vault);
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(lowRatioMStrategy.address, nftMoneyVault);
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(lowRatioMStrategy.address, nftERC20Vault);
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(lowRatioMStrategy.address, nftMoneyVault);
+                });
 
                 await this.weth
                     .connect(this.deployer)
@@ -1771,12 +1777,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.moneyVault
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, erc20VaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, moneyVaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, erc20VaultNft);
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, moneyVaultNft);
+                    });
 
                     let params: SwapToTargetParamsStruct = {
                         amountIn: BigNumber.from(10 ** 8),
@@ -1934,19 +1942,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.moneyVault
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.erc20Vault, moneyVaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, moneyVaultNft);
-
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.moneyVault, erc20VaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, erc20VaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, erc20VaultNft);
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, moneyVaultNft);
+                    });
 
                     const oracleParams: OracleParamsStruct = {
                         oracleObservationDelta: 101,
@@ -2061,19 +2064,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.moneyVault
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.erc20Vault, moneyVaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, moneyVaultNft);
-
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.moneyVault, erc20VaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, erc20VaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, erc20VaultNft);
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, moneyVaultNft);
+                    });
 
                     const oracleParams: OracleParamsStruct = {
                         oracleObservationDelta: 101,
