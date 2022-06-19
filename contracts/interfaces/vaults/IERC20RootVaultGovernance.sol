@@ -28,7 +28,6 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param managementFeeChargeDelay The minimal interval between management fee charges
     /// @param oracle Oracle for getting token prices
-    /// @param helper Helper for ERC20RootVault
     struct DelayedProtocolParams {
         uint256 managementFeeChargeDelay;
         IOracle oracle;
