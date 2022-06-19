@@ -40,8 +40,13 @@ contract UniV3Oracle is ContractMeta, IUniV3Oracle, DefaultAccessControl {
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
+    /// @dev Logic of this function is next:
+    /// If there is no initialized pool for the passed tokens, empty arrays will be returned.
+    /// Depending on safetyIndicesSet if the 1st bit in safetyIndicesSet is non-zero, then the response will contain the spot price.
+    /// If there is a non-zero 2nd bit in the safetyIndicesSet and the corresponding position in the pool was created no later than LOW_OBS_DELTA seconds ago,
+    /// then the average price for the last LOW_OBS_DELTA seconds will be returned. The same logic exists for the 3rd and MID_OBS_DELTA, and 4th index and HIGH_OBS_DELTA.
     /// @inheritdoc IOracle
-    function price(
+    function priceX96(
         address token0,
         address token1,
         uint256 safetyIndicesSet

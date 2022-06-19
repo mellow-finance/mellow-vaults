@@ -119,12 +119,6 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
     }
 
-    /// @inheritdoc IVaultRegistry
-    function adminApprove(address newAddress, uint256 nft) external {
-        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _approve(newAddress, nft);
-    }
-
     function lockNft(uint256 nft) external {
         require(ownerOf(nft) == msg.sender, ExceptionsLibrary.FORBIDDEN);
         _locks[nft] = true;

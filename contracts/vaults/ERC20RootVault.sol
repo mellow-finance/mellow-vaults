@@ -19,8 +19,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @inheritdoc IERC20RootVault
-    uint256 public constant FIRST_DEPOSIT_LIMIT = 10000;
-    /// @inheritdoc IERC20RootVault
     uint64 public lastFeeCharge;
     /// @inheritdoc IERC20RootVault
     uint64 public totalWithdrawnAmountsTimestamp;
@@ -90,9 +88,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             ExceptionsLibrary.FORBIDDEN
         );
         address[] memory tokens = _vaultTokens;
-        if (totalSupply == 0) {
+        uint256 supply = totalSupply;
+        if (supply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
-                require(tokenAmounts[i] > FIRST_DEPOSIT_LIMIT, ExceptionsLibrary.LIMIT_UNDERFLOW);
+                require(tokenAmounts[i] >= 10 * _pullExistentials[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
             }
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
@@ -104,7 +103,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             !delayedStrategyParams.privateVault || _depositorsAllowlist.contains(msg.sender),
             ExceptionsLibrary.FORBIDDEN
         );
-        uint256 supply = totalSupply;
         uint256 preLpAmount;
         uint256[] memory normalizedAmounts = new uint256[](tokenAmounts.length);
         {
@@ -129,7 +127,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         IERC20RootVaultGovernance.StrategyParams memory params = IERC20RootVaultGovernance(address(_vaultGovernance))
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
-        require(lpAmount + totalSupply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
+        require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
 
         _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
         _mint(msg.sender, lpAmount);
@@ -213,7 +211,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     ) internal view returns (uint256 tvl0) {
         tvl0 = tvls[0];
         for (uint256 i = 1; i < tvls.length; i++) {
-            (uint256[] memory pricesX96, ) = oracle.price(tokens[0], tokens[i], 0x30);
+            (uint256[] memory pricesX96, ) = oracle.priceX96(tokens[0], tokens[i], 0x30);
             require(pricesX96.length > 0, ExceptionsLibrary.VALUE_ZERO);
             uint256 priceX96 = 0;
             for (uint256 j = 0; j < pricesX96.length; j++) {
@@ -446,9 +444,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (hwmsD18 > 0) {
             toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
+            _mint(treasury, toMint);
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        _mint(treasury, toMint);
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
 

@@ -18,9 +18,6 @@ interface IERC20RootVault is IAggregateVault, IERC20 {
         uint256[] memory subvaultNfts_
     ) external;
 
-    /// @notice The number of limit for first deposit
-    function FIRST_DEPOSIT_LIMIT() external view returns (uint256);
-
     /// @notice The timestamp of last charging of fees
     function lastFeeCharge() external view returns (uint64);
 

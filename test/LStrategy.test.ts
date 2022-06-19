@@ -308,6 +308,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.uniV3UpperVault.address,
                         strategyHelper.address,
                         this.admin.address,
+                        120,
                     ],
                     log: true,
                     autoMine: true,
@@ -632,7 +633,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
                 this.getExpectedRatio = async () => {
                     const tokens = [this.wsteth.address, this.weth.address];
-                    const targetPriceX96 = await this.subject.targetPrice(
+                    const targetPriceX96 = await this.subject.getTargetPriceX96(
                         tokens[0],
                         tokens[1],
                         await this.subject.tradingParams()
@@ -734,7 +735,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     vault: UniV3Vault | ERC20Vault
                 ) => {
                     await this.updateMockOracle(await this.getUniV3Tick());
-                    const targetPriceX96 = await this.subject.targetPrice(
+                    const targetPriceX96 = await this.subject.getTargetPriceX96(
                         this.wsteth.address,
                         this.weth.address,
                         await this.subject.tradingParams()
@@ -782,7 +783,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
-                    intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(10).pow(6),
@@ -905,6 +905,21 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
+                    const mintParams = {
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
+                        fee: 500,
+                        tickLower: -2000,
+                        tickUpper: 2000,
+                        amount0Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount1Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    };
+                    //mint a position in pull to provide liquidity for future swaps
+                    await this.positionManager.mint(mintParams);
                     for (let i = 0; i < 30; ++i) {
                         //balance tokens in ERC20
                         await this.balanceERC20();
@@ -1659,6 +1674,17 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ).to.be.revertedWith(Exceptions.INVARIANT);
                     });
                 });
+                describe("Safety mask is less than 3", () => {
+                    it(`reverts with ${Exceptions.INVARIANT}`, async () => {
+                        let params = this.baseParams;
+                        params.oracleSafetyMask = 2;
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .updateTradingParams(params)
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    });
+                });
                 describe("when orderDeadline is more than 30 days", () => {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
@@ -1837,7 +1863,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         describe("#updateOtherParams", () => {
             beforeEach(async () => {
                 this.baseParams = {
-                    intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(86400 * 30),
@@ -1849,7 +1874,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .connect(this.admin)
                     .updateOtherParams(this.baseParams);
                 const returnedParams = await this.subject.otherParams();
-                expect(returnedParams.intervalWidthInTicks).eq(100);
                 expect(returnedParams.minToken0ForOpening).eq(
                     BigNumber.from(10).pow(6)
                 );
@@ -1967,7 +1991,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 expect(
                     (
-                        await this.subject.targetPrice(
+                        await this.subject.getTargetPriceX96(
                             this.wsteth.address,
                             this.weth.address,
                             params
@@ -1988,7 +2012,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                             maxFee1: BigNumber.from(10).pow(9),
                         };
                         await expect(
-                            this.subject.targetPrice(
+                            this.subject.getTargetPriceX96(
                                 this.wsteth.address,
                                 this.weth.address,
                                 params
@@ -2520,6 +2544,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 await this.grantPermissions();
             });
+
             it("rebalances when delta is positive", async () => {
                 this.semiPositionRange = 600;
                 this.smallInt = 60;
@@ -2662,10 +2687,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(pushedAmounts[i]).to.be.equal(ethers.constants.Zero);
                 }
             });
+
             it("rebalances when crossing the interval right to left", async () => {
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await this.mockOracle.updatePrice(BigNumber.from(1).shl(95));
+                await this.preparePush({
+                    vault: this.uniV3LowerVault,
+                    tickLower: 500000,
+                    tickUpper: 700000,
+                });
+                await this.preparePush({
+                    vault: this.uniV3UpperVault,
+                    tickLower: 600000,
+                    tickUpper: 800000,
+                });
                 await this.grantPermissionsUniV3Vaults();
                 const result = await this.subject
                     .connect(this.admin)
@@ -2688,6 +2721,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(tvl[i]).lt(BigNumber.from(10)); // check, that all liquidity passed to other vault
                 }
             });
+
             it("swap vaults when crossing the interval right to left with no liquidity", async () => {
                 await this.preparePush({ vault: this.uniV3LowerVault });
                 await this.preparePush({ vault: this.uniV3UpperVault });
