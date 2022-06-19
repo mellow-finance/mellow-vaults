@@ -444,9 +444,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (hwmsD18 > 0) {
             toMint = FullMath.mulDiv(baseSupply, lpPriceD18 - hwmsD18, hwmsD18);
             toMint = FullMath.mulDiv(toMint, performanceFee, CommonLibrary.DENOMINATOR);
+            _mint(treasury, toMint);
         }
         lpPriceHighWaterMarkD18 = lpPriceD18;
-        _mint(treasury, toMint);
         emit PerformanceFeesCharged(treasury, performanceFee, toMint);
     }
 
