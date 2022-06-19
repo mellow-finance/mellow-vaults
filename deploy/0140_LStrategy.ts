@@ -96,10 +96,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const mellowOracle = await get("MellowOracle");
 
     await lStrategy.updateTradingParams({
+        oracle: mellowOracle.address,
         maxSlippageD: BigNumber.from(10).pow(7),
         oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
-        oracle: mellowOracle.address,
         maxFee0: BigNumber.from(10).pow(15),
         maxFee1: BigNumber.from(10).pow(15)
     });
