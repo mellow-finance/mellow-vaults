@@ -761,10 +761,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .commitDelayedProtocolParams();
 
                 await this.subject.connect(this.admin).updateTradingParams({
+                    oracle: oracleDeployParams.address,
                     maxSlippageD: BigNumber.from(10).pow(7),
                     oracleSafetyMask: 0x20,
                     orderDeadline: 86400 * 30,
-                    oracle: oracleDeployParams.address,
                     maxFee0: BigNumber.from(10).pow(9),
                     maxFee1: BigNumber.from(10).pow(9),
                 });
@@ -1625,10 +1625,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         describe("#updateTradingParams", () => {
             beforeEach(async () => {
                 this.baseParams = {
+                    oracle: this.mellowOracle.address,
                     maxSlippageD: BigNumber.from(10).pow(6),
                     orderDeadline: 86400 * 30,
                     oracleSafetyMask: 0x20,
-                    oracle: this.mellowOracle.address,
                     maxFee0: BigNumber.from(10).pow(9),
                     maxFee1: BigNumber.from(10).pow(9),
                 };
@@ -1639,10 +1639,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .connect(this.admin)
                     .updateTradingParams(this.baseParams);
                 const expectedParams = [
+                    this.mellowOracle.address,
                     10 ** 6,
                     86400 * 30,
                     BigNumber.from(32),
-                    this.mellowOracle.address,
                     BigNumber.from(10).pow(9),
                     BigNumber.from(10).pow(9),
                 ];

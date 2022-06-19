@@ -41,10 +41,10 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     // MUTABLE PARAMS
 
     struct TradingParams {
+        IOracle oracle;
         uint32 maxSlippageD;
         uint32 orderDeadline;
         uint256 oracleSafetyMask;
-        IOracle oracle;
         uint256 maxFee0;
         uint256 maxFee1;
     }
