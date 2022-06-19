@@ -153,6 +153,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         erc20RootVault
                     );
 
+                    this.helper = await ethers.getContract(
+                        "ERC20RootVaultHelper"
+                    );
+
                     this.pullExistentials =
                         await this.subject.pullExistentials();
 
@@ -383,7 +387,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                                 this.weth.address,
                                             ],
                                             randomAddress(),
-                                            [startVaultNft - 1]
+                                            [startVaultNft - 1],
+                                            this.helper.address
                                         )
                                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
                             }
@@ -410,7 +415,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                                 this.weth.address,
                                             ],
                                             randomAddress(),
-                                            [startNft]
+                                            [startNft],
+                                            this.helper.address
                                         )
                                 ).to.be.revertedWith(Exceptions.DUPLICATE);
                             }
@@ -442,7 +448,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                                 this.weth.address,
                                             ],
                                             randomAddress(),
-                                            [startNft]
+                                            [startNft],
+                                            this.helper.address
                                         )
                                 ).to.be.revertedWith(Exceptions.DUPLICATE);
                             }

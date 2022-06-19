@@ -8,6 +8,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
+import "../interfaces/utils/IERC20RootVaultHelper.sol";
 
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
@@ -18,13 +19,19 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     /// @inheritdoc IERC20RootVaultGovernance
     uint256 public constant MAX_PERFORMANCE_FEE = 50 * 10**7; // 50%
 
+    IERC20RootVaultHelper public immutable helper;
+
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
     /// @param delayedProtocolParams_ Initial Protocol Params
-    constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
-        VaultGovernance(internalParams_)
-    {
+    constructor(
+        InternalParams memory internalParams_,
+        DelayedProtocolParams memory delayedProtocolParams_,
+        IERC20RootVaultHelper helper_
+    ) VaultGovernance(internalParams_) {
         require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(helper_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        helper = helper_;
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
@@ -238,7 +245,7 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
             // RootVault is not yet initialized so we cannot use safeTransferFrom here
             registry.transferFrom(msg.sender, vaddr, subvaultNfts_[i]);
         }
-        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_);
+        vault.initialize(nft, vaultTokens_, strategy_, subvaultNfts_, helper);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
