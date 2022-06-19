@@ -174,12 +174,18 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (lpTokenAmount > balance) {
             lpTokenAmount = balance;
         }
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
         }
         actualTokenAmounts = _pull(address(this), tokenAmounts, vaultsOptions);
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+        for (uint256 i = 0; i < tokens.length; ++i) {
             require(actualTokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+        }
+        bool sufficientAmountRest = false;
+        for (uint256 i = 0; i < tokens.length; ++i) {
+            if (FullMath.mulDiv(balance, minTvl[i], supply) >= _pullExistentials[i] + actualTokenAmounts[i]) {
+                sufficientAmountRest = true;
+            }
         }
         for (uint256 i = 0; i < tokens.length; ++i) {
             if (actualTokenAmounts[i] == 0) {
@@ -190,12 +196,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
-        bool sufficientAmountRest = false;
-        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
-            if (FullMath.mulDiv(balance, minTvl[i], supply) >= _pullExistentials[i] + actualTokenAmounts[i]) {
-                sufficientAmountRest = true;
-            }
-        }
         if (sufficientAmountRest) {
             _burn(msg.sender, lpTokenAmount);
         } else {
