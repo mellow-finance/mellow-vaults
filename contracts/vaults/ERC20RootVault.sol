@@ -133,6 +133,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
         _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
+        // lock tokens on first deposit
         if (supply == 0) {
             _mint(address(0), lpAmount);
         } else {
@@ -181,6 +182,8 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         for (uint256 i = 0; i < tokens.length; ++i) {
             require(actualTokenAmounts[i] >= minTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
         }
+        // we are draining balance
+        // if no sufficient amount rest
         bool sufficientAmountRest = false;
         for (uint256 i = 0; i < tokens.length; ++i) {
             if (FullMath.mulDiv(balance, minTvl[i], supply) >= _pullExistentials[i] + actualTokenAmounts[i]) {
