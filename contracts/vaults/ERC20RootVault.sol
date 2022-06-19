@@ -92,6 +92,10 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (supply == 0) {
             for (uint256 i = 0; i < tokens.length; ++i) {
                 require(tokenAmounts[i] >= 10 * _pullExistentials[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+                require(
+                    tokenAmounts[i] <= _pullExistentials[i] * _pullExistentials[i],
+                    ExceptionsLibrary.LIMIT_OVERFLOW
+                );
             }
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
@@ -128,9 +132,12 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
-
         _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
-        _mint(msg.sender, lpAmount);
+        if (supply == 0) {
+            _mint(address(0), lpAmount);
+        } else {
+            _mint(msg.sender, lpAmount);
+        }
 
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             if (normalizedAmounts[i] > actualTokenAmounts[i]) {
@@ -163,8 +170,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
-        if (lpTokenAmount > balanceOf[msg.sender]) {
-            lpTokenAmount = balanceOf[msg.sender];
+        uint256 balance = balanceOf[msg.sender];
+        if (lpTokenAmount > balance) {
+            lpTokenAmount = balance;
         }
         for (uint256 i = 0; i < _vaultTokens.length; ++i) {
             tokenAmounts[i] = FullMath.mulDiv(lpTokenAmount, minTvl[i], supply);
@@ -182,7 +190,17 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         _updateWithdrawnAmounts(actualTokenAmounts);
         _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
-        _burn(msg.sender, lpTokenAmount);
+        bool sufficientAmountRest = false;
+        for (uint256 i = 0; i < _vaultTokens.length; ++i) {
+            if (FullMath.mulDiv(balance, minTvl[i], supply) >= _pullExistentials[i] + actualTokenAmounts[i]) {
+                sufficientAmountRest = true;
+            }
+        }
+        if (sufficientAmountRest) {
+            _burn(msg.sender, lpTokenAmount);
+        } else {
+            _burn(msg.sender, balance);
+        }
 
         uint256 thisNft = _nft;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
