@@ -30,6 +30,46 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let uniV3LowerVaultNft = startNft;
     let uniV3UpperVaultNft = startNft + 1;
     let erc20VaultNft = startNft + 2;
+    const intervalWidthInTicks = 120;
+
+    const positionManager = await ethers.getContractAt(
+        "INonfungiblePositionManager",
+        uniswapV3PositionManager
+    );
+
+    const preparePush = async (
+        vault: string,
+        tickLower: number,
+        tickUpper: number) => {
+/*
+        await weth.approve(
+            uniswapV3PositionManager,
+            ethers.constants.MaxUint256
+        );
+        await this.wsteth.approve(
+            uniswapV3PositionManager,
+            ethers.constants.MaxUint256
+        );
+*/
+        const amount = BigNumber.from(10).pow(12);
+        const mintParams = {
+            token0: wsteth,
+            token1: weth,
+            fee: 500,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount0Desired: amount,
+            amount1Desired: amount,
+            amount0Min: 0,
+            amount1Min: 0,
+            recipient: deployer,
+            deadline: ethers.constants.MaxUint256,
+        };
+        const result = await positionManager.mint(mintParams);
+        await positionManager.functions[
+            "safeTransferFrom(address,address,uint256)"
+        ](deployer, vault, result.tokenId);
+    };
 
     const uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
 
@@ -59,6 +99,28 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         uniV3UpperVaultNft
     );
 
+    const getUniV3Tick = async () => {
+
+        console.log(uniV3LowerVault);
+
+        let vault = await ethers.getContractAt(
+            "IVault",
+            uniV3LowerVault
+        );
+
+        console.log(vault);
+
+        let pool = await ethers.getContractAt(
+            "IUniswapV3Pool",
+            await vault.pool()
+        );
+        console.log(pool);
+        
+        const currentState = await pool.slot0();
+        console.log(currentState);
+        return BigNumber.from(currentState.tick);
+    };
+
     let strategyOrderHelper = await deploy("LStrategyHelper", {
         from: deployer,
         contract: "LStrategyHelper",
@@ -78,7 +140,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             uniV3UpperVault,
             strategyOrderHelper.address,
             deployer,
-            120,
+            intervalWidthInTicks,
         ],
         log: true,
         autoMine: true,
@@ -91,6 +153,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         strategyDeployParams.address,
         mStrategyTreasury
     );
+
+    const semiPositionRange = 60;
+
+    const currentTick = await getUniV3Tick();
+    let tickLeftLower =
+        currentTick
+            .div(semiPositionRange)
+            .mul(semiPositionRange)
+            .toNumber() - semiPositionRange;
+    let tickLeftUpper = tickLeftLower + 2 * semiPositionRange;
+
+    let tickRightLower = tickLeftLower + semiPositionRange;
+    let tickRightUpper = tickLeftUpper + semiPositionRange;
+
+    preparePush(uniV3LowerVault.address, tickLeftLower, tickLeftUpper);
+    preparePush(uniV3UpperVault.address, tickRightLower, tickRightUpper);
 
     const lStrategy = await ethers.getContract("LStrategy");
     const mellowOracle = await get("MellowOracle");
