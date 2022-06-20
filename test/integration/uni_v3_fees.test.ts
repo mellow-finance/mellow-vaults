@@ -237,7 +237,11 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             this.subject.address,
             BigNumber.from(10).pow(6).mul(100_000)
         );
-        await mint("WETH", this.subject.address, BigNumber.from(10).pow(18).mul(500));
+        await mint(
+            "WETH",
+            this.subject.address,
+            BigNumber.from(10).pow(18).mul(500)
+        );
 
         const currentTick = await this.getUniV3Tick();
         let tickLower = currentTick.div(60).mul(60).toNumber() - 60;
@@ -325,11 +329,20 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                         amount1.sub(positionInfo.tokensOwed1).toNumber()
                     ).to.be.eq(0);
                 }
-                await this.usdc.transfer(this.subject.address, BigNumber.from(10).pow(6).mul(1000));
-                await this.weth.transfer(this.subject.address, BigNumber.from(10).pow(18));
+                await this.usdc.transfer(
+                    this.subject.address,
+                    BigNumber.from(10).pow(6).mul(1000)
+                );
+                await this.weth.transfer(
+                    this.subject.address,
+                    BigNumber.from(10).pow(18)
+                );
                 await this.subject.push(
                     [this.usdc.address, this.weth.address],
-                    [BigNumber.from(10).pow(6).mul(1000), BigNumber.from(10).pow(18)],
+                    [
+                        BigNumber.from(10).pow(6).mul(1000),
+                        BigNumber.from(10).pow(18),
+                    ],
                     encodeToBytes(
                         ["uint256", "uint256", "uint256"],
                         [
@@ -340,9 +353,10 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     )
                 );
             }
-            const currentTick = await this.getUniV3Tick();
-            let tickLower = currentTick.div(60).mul(60).toNumber() - 60;
-            let tickUpper = tickLower + 120;
+            const nft = this.subject.uniV3Nft();
+            const position = await this.positionManager.positions(nft);
+            let tickLower = position.tickLower;
+            let tickUpper = position.tickUpper;
             await mintUniV3Position_USDC_WETH({
                 fee: 3000,
                 tickLower: tickLower,
