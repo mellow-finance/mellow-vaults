@@ -140,7 +140,11 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         bytes memory
     ) external returns (bytes4) {
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
-        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
+        if (uniV3Nft != 0) {
+            require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
+        } else {
+            require(_isStrategy(operator) || _isAdmin(operator), ExceptionsLibrary.FORBIDDEN);
+        }
         (, , address token0, address token1, uint24 fee, , , , , , , ) = _positionManager.positions(tokenId);
         // new position should have vault tokens
         require(
@@ -190,6 +194,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
 
     function _isStrategy(address addr) internal view returns (bool) {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    function _isAdmin(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.ownerOf(_nft) == addr;
     }
 
     function _isReclaimForbidden(address) internal pure override returns (bool) {

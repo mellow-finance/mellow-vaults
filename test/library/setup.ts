@@ -3,6 +3,18 @@ import { Assertion } from "chai";
 import { deployments, ethers, getNamedAccounts } from "hardhat";
 import { Context, Suite } from "mocha";
 import { equals, sortBy } from "ramda";
+import { abi as ICurvePool } from "../helpers/curvePoolABI.json";
+import { abi as IWETH } from "../helpers/wethABI.json";
+import { abi as IWSTETH } from "../helpers/wstethABI.json";
+import { BigNumber } from "@ethersproject/bignumber";
+import {
+    encodeToBytes,
+    mint,
+    mintUniV3Position_USDC_WETH,
+    mintUniV3Position_WBTC_WETH,
+    randomAddress,
+    withSigner,
+} from "../library/Helpers";
 import { addSigner, toObject } from "./Helpers";
 import {
     AaveVaultGovernance,
@@ -76,6 +88,43 @@ export function contract<T, F, E>(
 }
 
 export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
+    const { deployer, weth, wsteth } = await getNamedAccounts();
+
+    //////////////////////////////////////////////////////////////////////// MINT SMALL AMOUNTS ON THE DEPLOYER ADDRESS
+    const smallAmount = BigNumber.from(10).pow(13);
+
+    await mint("WETH", deployer, smallAmount);
+
+    const wethContract = await ethers.getContractAt(IWETH, weth);
+    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+
+    const curvePool = await ethers.getContractAt(
+        ICurvePool,
+        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+    );
+    this.curvePool = curvePool;
+
+    const steth = await ethers.getContractAt(
+        "ERC20Token",
+        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    );
+
+    await wethContract.approve(curvePool.address, ethers.constants.MaxUint256);
+    await steth.approve(wstethContract.address, ethers.constants.MaxUint256);
+
+    await wethContract.withdraw(smallAmount.div(2));
+    const options = { value: smallAmount.div(2) };
+    await curvePool.exchange(
+        0,
+        1,
+        smallAmount.div(2),
+        ethers.constants.Zero,
+        options
+    );
+    await wstethContract.wrap(smallAmount.div(2).mul(99).div(100));
+
+    ////////////////////////////////////////////////////////////////////////
+
     await deployments.fixture();
     this.vaultRegistry = await ethers.getContract("VaultRegistry");
     this.protocolGovernance = await ethers.getContract("ProtocolGovernance");
@@ -117,7 +166,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         const signer = await addSigner(address);
         this[name] = signer;
     }
-    const { usdc, weth, wbtc, dai, wsteth } = namedAccounts;
+    const { usdc, wbtc, dai } = namedAccounts;
     this.usdc = await ethers.getContractAt("ERC20Token", usdc);
     this.weth = await ethers.getContractAt("ERC20Token", weth);
     this.wbtc = await ethers.getContractAt("ERC20Token", wbtc);
