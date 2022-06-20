@@ -51,11 +51,13 @@ contract UniV3Helper {
     function _getFeeGrowthInside(
         IUniswapV3Pool pool,
         int24 tickLower,
-        int24 tickUpper,
-        int24 tickCurrent,
-        uint256 feeGrowthGlobal0X128,
-        uint256 feeGrowthGlobal1X128
+        int24 tickUpper
     ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
+
+        uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
+        uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
+        (, int24 tickCurrent, , , , , ) = pool.slot0();
+
         (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
         (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
 
@@ -96,12 +98,14 @@ contract UniV3Helper {
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,
-            uint128 tokensOwed0,
-            uint128 tokensOwed1
+            uint256[] memory minTokenAmounts,
+            uint256[] memory maxTokenAmounts
         )
     {
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
+        uint256 tokensOwed0;
+        uint256 tokensOwed1;
         (
             ,
             ,
@@ -117,21 +121,21 @@ contract UniV3Helper {
             tokensOwed1
         ) = positionManager.positions(uniV3Nft);
 
-        if (liquidity == 0) {
-            return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
-        }
+        minTokenAmounts = new uint256[](2);
+        maxTokenAmounts = new uint256[](2);
 
-        uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
-        uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
-        (, int24 tick, , , , , ) = pool.slot0();
+        if (liquidity == 0) {
+            minTokenAmounts[0] = tokensOwed0;
+            maxTokenAmounts[0] = tokensOwed0;
+            minTokenAmounts[1] = tokensOwed1;
+            maxTokenAmounts[1] = tokensOwed1;
+            return (tickLower, tickUpper, liquidity, minTokenAmounts, maxTokenAmounts);
+        }
 
         (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = _getFeeGrowthInside(
             pool,
             tickLower,
-            tickUpper,
-            tick,
-            feeGrowthGlobal0X128,
-            feeGrowthGlobal1X128
+            tickUpper
         );
 
         tokensOwed0 += uint128(
@@ -141,5 +145,10 @@ contract UniV3Helper {
         tokensOwed1 += uint128(
             FullMath.mulDiv(feeGrowthInside1X128 - feeGrowthInside1LastX128, liquidity, CommonLibrary.Q128)
         );
+        
+        minTokenAmounts[0] = tokensOwed0;
+        maxTokenAmounts[0] = tokensOwed0;
+        minTokenAmounts[1] = tokensOwed1;
+        maxTokenAmounts[1] = tokensOwed1;
     }
 }

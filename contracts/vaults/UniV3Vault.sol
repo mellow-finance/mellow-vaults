@@ -37,8 +37,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             return (new uint256[](2), new uint256[](2));
         }
 
-        minTokenAmounts = new uint256[](2);
-        maxTokenAmounts = new uint256[](2);
         int24 tickLower;
         int24 tickUpper;
         uint128 liquidity;
@@ -46,19 +44,12 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
                 .delayedProtocolParams();
             {
-                uint128 tokensOwed0;
-                uint128 tokensOwed1;
 
-                (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1) = _uniV3Helper.calculatePositionInfo(
+                (tickLower, tickUpper, liquidity, minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculatePositionInfo(
                     _positionManager,
                     pool,
                     uniV3Nft
                 );
-
-                minTokenAmounts[0] = tokensOwed0;
-                maxTokenAmounts[0] = tokensOwed0;
-                minTokenAmounts[1] = tokensOwed1;
-                maxTokenAmounts[1] = tokensOwed1;
             }
             {
                 uint256 amountMin0;
