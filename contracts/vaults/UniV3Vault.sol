@@ -44,12 +44,8 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
             IUniV3VaultGovernance.DelayedProtocolParams memory params = IUniV3VaultGovernance(address(_vaultGovernance))
                 .delayedProtocolParams();
             {
-
-                (tickLower, tickUpper, liquidity, minTokenAmounts, maxTokenAmounts) = _uniV3Helper.calculatePositionInfo(
-                    _positionManager,
-                    pool,
-                    uniV3Nft
-                );
+                (tickLower, tickUpper, liquidity, minTokenAmounts, maxTokenAmounts) = _uniV3Helper
+                    .calculatePositionInfo(_positionManager, pool, uniV3Nft);
             }
             {
                 uint256 amountMin0;
