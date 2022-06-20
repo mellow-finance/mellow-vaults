@@ -256,6 +256,13 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 ]
             )
         );
+        const result = await mintUniV3Position_USDC_WETH({
+            fee: 3000,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+            wethAmount: BigNumber.from(10).pow(18),
+        });
     });
 
     describe("integratoin test", () => {
