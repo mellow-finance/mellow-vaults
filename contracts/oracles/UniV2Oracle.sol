@@ -21,7 +21,7 @@ contract UniV2Oracle is ContractMeta, IUniV2Oracle, ERC165 {
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
     /// @inheritdoc IOracle
-    function price(
+    function priceX96(
         address token0,
         address token1,
         uint256 safetyIndicesSet

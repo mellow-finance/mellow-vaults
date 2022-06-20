@@ -28,7 +28,7 @@ contract MellowOracle is ContractMeta, IMellowOracle, ERC165 {
 
     // -------------------------  EXTERNAL, VIEW  ------------------------------
 
-    function price(
+    function priceX96(
         address token0,
         address token1,
         uint256 safetyIndicesSet
@@ -39,7 +39,7 @@ contract MellowOracle is ContractMeta, IMellowOracle, ERC165 {
         uint256 len;
         for (uint256 i = 0; i < oracles.length; i++) {
             IOracle oracle = oracles[i];
-            (uint256[] memory oPrices, uint256[] memory oSafetyIndixes) = oracle.price(
+            (uint256[] memory oPrices, uint256[] memory oSafetyIndixes) = oracle.priceX96(
                 token0,
                 token1,
                 safetyIndicesSet

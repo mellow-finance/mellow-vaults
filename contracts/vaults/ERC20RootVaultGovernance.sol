@@ -12,11 +12,11 @@ import "./VaultGovernance.sol";
 /// @notice Governance that manages all Lp Issuers params and can deploy a new LpIssuer Vault.
 contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, VaultGovernance {
     /// @inheritdoc IERC20RootVaultGovernance
-    uint256 public immutable MAX_PROTOCOL_FEE;
+    uint256 public constant MAX_PROTOCOL_FEE = 5 * 10**7; // 5%
     /// @inheritdoc IERC20RootVaultGovernance
-    uint256 public immutable MAX_MANAGEMENT_FEE;
+    uint256 public constant MAX_MANAGEMENT_FEE = 10 * 10**7; // 10%
     /// @inheritdoc IERC20RootVaultGovernance
-    uint256 public immutable MAX_PERFORMANCE_FEE;
+    uint256 public constant MAX_PERFORMANCE_FEE = 50 * 10**7; // 50%
 
     /// @notice Creates a new contract.
     /// @param internalParams_ Initial Internal Params
@@ -26,9 +26,6 @@ contract ERC20RootVaultGovernance is ContractMeta, IERC20RootVaultGovernance, Va
     {
         require(address(delayedProtocolParams_.oracle) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
-        MAX_PROTOCOL_FEE = (5 * CommonLibrary.DENOMINATOR) / 100;
-        MAX_MANAGEMENT_FEE = (10 * CommonLibrary.DENOMINATOR) / 100;
-        MAX_PERFORMANCE_FEE = (50 * CommonLibrary.DENOMINATOR) / 100;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------

@@ -34,6 +34,7 @@ import {
 import { BigNumber } from "@ethersproject/bignumber";
 import { Address } from "hardhat-deploy/dist/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
+import { TickMathTest, TickMathTest__factory } from "../types";
 
 export async function deployTraders(options: {
     protocolGovernance: ProtocolGovernance;
@@ -390,6 +391,15 @@ export async function deployCommonLibraryTest(): Promise<Contract> {
     const commonTest: Contract = await CommonTest.deploy();
     await commonTest.deployed();
     return commonTest;
+}
+
+export async function deployMathTickTest(): Promise<TickMathTest> {
+    const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
+        "TickMathTest"
+    );
+    const mathTickTest: TickMathTest = await MathTickTest.deploy();
+    await mathTickTest.deployed();
+    return mathTickTest;
 }
 
 export const deployLpIssuerGovernance = async (options: {
