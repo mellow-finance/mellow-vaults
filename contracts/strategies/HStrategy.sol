@@ -38,16 +38,22 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     IUniswapV3Pool public pool;
     uint256 public uniV3Nft;
 
+    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
+    bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
+    ISwapRouter public router;
+
     uint256 public lastRebalanceTick;
 
     OtherParams public otherParams;
     StrategyParams public strategyParams;
 
-    constructor(INonfungiblePositionManager positionManager_) {
+    constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) {
         require(address(positionManager_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(router_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         positionManager = positionManager_;
         DefaultAccessControlLateInit.init(address(this));
-        lastRebalanceTick = 0; // by default
+        lastRebalanceTick = 0;
+        router = router_;
     }
 
     function initialize(
@@ -129,8 +135,56 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     // TODO
     function _burnRebalance() internal {}
 
-    // TODO
-    function _biRebalance() internal {}
+    /// @dev swaps one token to another to get needed ratio of tokens
+    /// @param targetToken0 wx * capital in token0
+    /// @param targetToken1 wy * capital in token1
+    /// @param minTokenAmounts slippage protection for swap
+    function _rebalanceTokens(
+        uint256 targetToken0,
+        uint256 targetToken1,
+        uint256[] memory minTokenAmounts
+    ) internal {
+        (uint256[] memory moneyVaultTvls, ) = moneyVault.tvl();
+        (uint256 sqrtX96Price, , , , , , ) = pool.slot0();
+        uint256 priceX96 = FullMath.mulDiv(sqrtX96Price, sqrtX96Price, CommonLibrary.Q96);
+        int256 deltaAmount = int256(FullMath.mulDiv(targetToken1, priceX96, CommonLibrary.Q96) * moneyVaultTvls[0]) -
+            int256(targetToken0 * moneyVaultTvls[1]);
+
+        ISwapRouter.ExactInputSingleParams memory swapParams;
+        uint256 tokenInIndex = 0;
+        uint256 amountIn = 0;
+
+        if (deltaAmount > 0) {
+            amountIn = FullMath.mulDiv(uint256(deltaAmount), CommonLibrary.Q96, priceX96);
+            tokenInIndex = 0;
+        } else {
+            amountIn = uint256(-deltaAmount);
+            tokenInIndex = 1;
+        }
+
+        if (amountIn == 0) {
+            return;
+        }
+
+        swapParams = ISwapRouter.ExactInputSingleParams({
+            tokenIn: tokens[tokenInIndex],
+            tokenOut: tokens[tokenInIndex ^ 1],
+            fee: pool.fee(),
+            recipient: address(erc20Vault),
+            deadline: block.timestamp + 1,
+            amountIn: amountIn,
+            amountOutMinimum: 0,
+            sqrtPriceLimitX96: 0
+        });
+
+        bytes memory data = abi.encode(swapParams);
+        erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), amountIn)); // approve
+        bytes memory routerResult = erc20Vault.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data); //swap
+        erc20Vault.externalCall(tokens[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), 0)); // reset allowance
+
+        uint256 amountOut = abi.decode(routerResult, (uint256));
+        require(minTokenAmounts[tokenInIndex ^ 1] <= amountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
+    }
 
     // TODO
     function _mintRebalance() internal view {
