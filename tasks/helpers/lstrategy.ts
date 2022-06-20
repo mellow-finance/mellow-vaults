@@ -150,12 +150,10 @@ const swapWethToWsteth = async (
     amountIn: BigNumber,
     minAmountOut: BigNumber,
 ) => {
-    console.log("Swapping weth to wsteth");
-    const { deployer: deployer, LStrategy: strategy, wsteth: wsteth } = context;
+    const erc20 = await context.LStrategy.erc20Vault();
+    const { deployer, wsteth, weth } = context;
     const { ethers } = hre;
-    console.log("Strategy: ", strategy.address);
-    const erc20address = await strategy.erc20Vault();
-    console.log(erc20address);
+    let erc20address = await context.LStrategy.erc20Vault();
     const erc20Vault = await ethers.getContractAt(
         "ERC20Vault",
         erc20address,
@@ -164,11 +162,19 @@ const swapWethToWsteth = async (
     const currentTick = (await pool.slot0()).tick;
     const price = BigNumber.from(TickMath.getSqrtRatioAtTick(currentTick).toString());
     const denominator = BigNumber.from(2).pow(96);
-    const balance = await wsteth.balanceOf(deployer);
-    const expectedOut = price.mul(amountIn).div(denominator);
-    console.log("amountIn: ", amountIn.toString());
-    // console.log("amountIn: ", amountIn.toString());
-    // console.log("Expected out: ", expectedOut.toString());
+    const balance = await wsteth.balanceOf(deployer.address);
+    let expectedOut = amountIn.mul(denominator).div(price);
+    if (expectedOut.gt(balance)) {
+        console.log("Insufficient balance of weth");
+        expectedOut = balance;
+    }
+    if (expectedOut.lt(minAmountOut)) {
+        return;
+    }
+    await withSigner(hre, erc20, async (signer) => {
+        await weth.connect(signer).transfer(deployer.address, amountIn);
+    });
+    await wsteth.connect(deployer).transfer(erc20, expectedOut);
 };
 
 const swapWstethToWeth = async (
@@ -177,28 +183,31 @@ const swapWstethToWeth = async (
     amountIn: BigNumber,
     minAmountOut: BigNumber
 ) => {
-    console.log("Swapping wsteth to weth");
     const erc20 = await context.LStrategy.erc20Vault();
-    console.log("erc20: ", erc20);
-    const { deployer, wsteth } = context;
+    const { deployer, wsteth, weth } = context;
     const { ethers } = hre;
-    console.log("Kek");
     let erc20address = await context.LStrategy.erc20Vault();
-    console.log("Erc20 address");
-    console.log(erc20address);
     const erc20Vault = await ethers.getContractAt(
         "ERC20Vault",
         erc20address,
     );
     const pool = await getPool(hre, context);
     const currentTick = (await pool.slot0()).tick;
-    console.log("currentTick: ", currentTick.toString());
     const price = BigNumber.from(TickMath.getSqrtRatioAtTick(currentTick).toString());
     const denominator = BigNumber.from(2).pow(96);
-    const balance = await wsteth.balanceOf(deployer);
-    const expectedOut = price.mul(denominator).div(amountIn);
-    console.log("amountIn: ", amountIn.toString());
-    // console.log("Expected out: ", expectedOut.toString());
+    const balance = await weth.balanceOf(deployer.address);
+    let expectedOut = amountIn.mul(price).div(denominator);
+    if (expectedOut.gt(balance)) {
+        console.log("Insufficient balance of weth");
+        expectedOut = balance;
+    }
+    if (expectedOut.lt(minAmountOut)) {
+        return;
+    }
+    await withSigner(hre, erc20, async (signer) => {
+        await wsteth.connect(signer).transfer(deployer.address, amountIn);
+    });
+    await weth.connect(deployer).transfer(erc20, expectedOut);
 };
 
 export const swapTokens = async (

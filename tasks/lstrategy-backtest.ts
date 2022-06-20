@@ -885,15 +885,12 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
 
     const tmp = await context.LStrategy.erc20Vault();
 
-    await swapOnCowswap(hre, context);
-
-    /* let prev = Date.now();
+    let prev = Date.now();
     for (let i = 1; i < 100; ++i) {
         reportStats(hre, context, "output.csv");
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
         await makeRebalances(hre, context);
         let current = Date.now();
-        console.log(current - prev);
-        prev = current;
-    } */
+    }
+    console.log("Duration: ", Date.now() - prev);
 };
