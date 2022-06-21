@@ -289,10 +289,10 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             await this.subject.uniV3Nft()
                         );
                     expect(
-                        amount0.sub(positionInfo.minTokenAmounts[0]).toNumber()
+                        amount0.sub(positionInfo.tokensOwed0).toNumber()
                     ).to.be.eq(0);
                     expect(
-                        amount1.sub(positionInfo.minTokenAmounts[1]).toNumber()
+                        amount1.sub(positionInfo.tokensOwed1).toNumber()
                     ).to.be.eq(0);
                 }
                 await this.swapTokens(
@@ -312,10 +312,10 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                             await this.subject.uniV3Nft()
                         );
                     expect(
-                        amount0.sub(positionInfo.minTokenAmounts[0]).toNumber()
+                        amount0.sub(positionInfo.tokensOwed0).toNumber()
                     ).to.be.eq(0);
                     expect(
-                        amount1.sub(positionInfo.minTokenAmounts[1]).toNumber()
+                        amount1.sub(positionInfo.tokensOwed1).toNumber()
                     ).to.be.eq(0);
                 }
             }
