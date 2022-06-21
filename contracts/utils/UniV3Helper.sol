@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
+import "../interfaces/oracles/IOracle.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -51,12 +52,11 @@ contract UniV3Helper {
     function _getFeeGrowthInside(
         IUniswapV3Pool pool,
         int24 tickLower,
-        int24 tickUpper
+        int24 tickUpper,
+        int24 tickCurrent,
+        uint256 feeGrowthGlobal0X128,
+        uint256 feeGrowthGlobal1X128
     ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
-        uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
-        uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
-        (, int24 tickCurrent, , , , , ) = pool.slot0();
-
         (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
         (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
 
@@ -97,14 +97,12 @@ contract UniV3Helper {
             int24 tickLower,
             int24 tickUpper,
             uint128 liquidity,
-            uint256[] memory minTokenAmounts,
-            uint256[] memory maxTokenAmounts
+            uint128 tokensOwed0,
+            uint128 tokensOwed1
         )
     {
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
-        uint128 tokensOwed0;
-        uint128 tokensOwed1;
         (
             ,
             ,
@@ -120,18 +118,22 @@ contract UniV3Helper {
             tokensOwed1
         ) = positionManager.positions(uniV3Nft);
 
-        minTokenAmounts = new uint256[](2);
-        maxTokenAmounts = new uint256[](2);
-
         if (liquidity == 0) {
-            minTokenAmounts[0] = tokensOwed0;
-            maxTokenAmounts[0] = tokensOwed0;
-            minTokenAmounts[1] = tokensOwed1;
-            maxTokenAmounts[1] = tokensOwed1;
-            return (tickLower, tickUpper, liquidity, minTokenAmounts, maxTokenAmounts);
+            return (tickLower, tickUpper, liquidity, tokensOwed0, tokensOwed1);
         }
 
-        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = _getFeeGrowthInside(pool, tickLower, tickUpper);
+        uint256 feeGrowthGlobal0X128 = pool.feeGrowthGlobal0X128();
+        uint256 feeGrowthGlobal1X128 = pool.feeGrowthGlobal1X128();
+        (, int24 tick, , , , , ) = pool.slot0();
+
+        (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) = _getFeeGrowthInside(
+            pool,
+            tickLower,
+            tickUpper,
+            tick,
+            feeGrowthGlobal0X128,
+            feeGrowthGlobal1X128
+        );
 
         tokensOwed0 += uint128(
             FullMath.mulDiv(feeGrowthInside0X128 - feeGrowthInside0LastX128, liquidity, CommonLibrary.Q128)
@@ -140,10 +142,19 @@ contract UniV3Helper {
         tokensOwed1 += uint128(
             FullMath.mulDiv(feeGrowthInside1X128 - feeGrowthInside1LastX128, liquidity, CommonLibrary.Q128)
         );
+    }
 
-        minTokenAmounts[0] = tokensOwed0;
-        maxTokenAmounts[0] = tokensOwed0;
-        minTokenAmounts[1] = tokensOwed1;
-        maxTokenAmounts[1] = tokensOwed1;
+    function getMinMaxPrice(IOracle oracle, address token0, address token1) external view returns (uint256 minPriceX96, uint256 maxPriceX96) {
+        (uint256[] memory prices, ) = oracle.priceX96(token0, token1, 0x2A);
+        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+        minPriceX96 = prices[0];
+        maxPriceX96 = prices[0];
+        for (uint32 i = 1; i < prices.length; ++i) {
+            if (prices[i] < minPriceX96) {
+                minPriceX96 = prices[i];
+            } else if (prices[i] > maxPriceX96) {
+                maxPriceX96 = prices[i];
+            }
+        }
     }
 }
