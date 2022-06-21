@@ -150,31 +150,15 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         bytes memory options
     ) external returns (uint256[] memory amountsOut) {
         _requireAdmin();
-        _burnRebalance(deadline);
-        InternalRatioParams memory params = _mintRebalance(deadline); // calculates correct proportion for all of that
-        amountsOut = _biRebalance(deadline, params, minTokenAmounts, options); // rebalance remainings tokens to the correct proportion
+        _burnRebalance();
+        InternalRatioParams memory params = _mintRebalance(deadline, options);
+        amountsOut = _biRebalance(params, minTokenAmounts, deadline, options);
     }
 
-    function _biRebalance(
-        uint256 deadline,
-        InternalRatioParams memory internalRatioParams,
-        uint256[] memory minTokenAmounts,
-        bytes memory options
-    ) internal returns (uint256[] memory amountsOut) {
-        (, int24 currentTick, , , , , ) = pool.slot0();
-        int24 lowerTick = currentTick;
-        int24 upperTick = currentTick;
-        {
-            uint256 uniV3Nft = uniV3Vault.nft();
-            if (uniV3Nft != 0) {
-                (, , , , , lowerTick, upperTick, , , , , ) = positionManager.positions(uniV3Nft);
-            }
-        }
-
-        amountsOut = _rebalanceTokens(internalRatioParams, minTokenAmounts, deadline, options);
-    }
-
-    function _mintRebalance(uint256 deadline) internal returns (InternalRatioParams memory internalRatioParams) {
+    function _mintRebalance(uint256 deadline, bytes memory options)
+        internal
+        returns (InternalRatioParams memory internalRatioParams)
+    {
         if (uniV3Vault.nft() != 0) {
             return
                 InternalRatioParams({
@@ -195,22 +179,16 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
                 tick,
                 tick - strategyParams_.widthCoefficient * widthTicks,
                 tick + strategyParams_.widthCoefficient * widthTicks,
-                deadline
+                deadline,
+                options
             );
             lastMintRebalanceTick = tick;
-
-            // TODO:
-            // address[] memory tokens_ = tokens;
-            // for (uint256 i = 0; i < 2; i++) {
-            //     if (tokensRemain[i] == 0) continue;
-            //     IERC20(tokens_[i]).transfer(address(erc20Vault), tokensRemain[i]);
-            // }
         }
     }
 
     /// @dev if the current tick differs from lastMintRebalanceTick by more than burnDeltaTicks,
     /// then function transfers all tokens from UniV3Vault to ERC20Vault and burns the position by uniV3Nft
-    function _burnRebalance(uint256 deadline) internal {
+    function _burnRebalance() internal {
         uint256 uniV3Nft = uniV3Vault.nft();
         if (uniV3Nft == 0) {
             return;
@@ -225,11 +203,16 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
 
         if (delta > strategyParams_.burnDeltaTicks) {
-            _burnUniV3Position(deadline, uniV3Nft);
+            uniV3Vault.collectEarnings();
+            (, , , , , , , uint256 liquidity, , , , ) = positionManager.positions(uniV3Nft);
+            require(liquidity == 0, ExceptionsLibrary.INVARIANT);
+            positionManager.burn(uniV3Nft);
+
+            emit BurnUniV3Position(tx.origin, uniV3Nft);
         }
     }
 
-    function _rebalanceTokens(
+    function _biRebalance(
         InternalRatioParams memory internalRatioParams,
         uint256[] memory minTokenAmounts,
         uint256 deadline,
@@ -294,6 +277,8 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             sqrtPriceLimitX96: 0
         });
 
+
+        // swap ~one token to another
         bytes memory routerResult;
         {
             bytes memory data = abi.encode(swapParams);
@@ -318,33 +303,46 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         emit RebalanceTokens(tx.origin, swapParams);
     }
 
-    function _burnUniV3Position(uint256 deadline, uint256 uniV3Nft) internal {
-        uint128 liquidity;
-        (, , , , , , , liquidity, , , , ) = positionManager.positions(uniV3Nft);
-
-        if (liquidity > 0) {
-            uint256[] memory tokenAmounts = uniV3Vault.liquidityToTokenAmounts(liquidity);
-            uniV3Vault.pull(
-                address(erc20Vault),
-                tokens,
-                tokenAmounts,
-                _makeUniswapVaultOptions(tokenAmounts, deadline)
-            );
+    function _calculateTokensForUniV3(
+        uint160 lowerTickRatio,
+        uint160 upperTickRatio,
+        uint160 currentTickRatio,
+        InternalRatioParams memory internalRatioParams
+    ) internal returns (uint256 requiredToken0Amount, uint256 requiredToken1Amount) {
+        if (moneyVault.supportsInterface(type(IAaveVault).interfaceId)) {
+            IAaveVault(address(moneyVault)).updateTvls();
         }
-        uniV3Vault.collectEarnings();
-        (, , , , , , , liquidity, , , , ) = positionManager.positions(uniV3Nft);
-        require(liquidity == 0, ExceptionsLibrary.INVARIANT);
-        positionManager.burn(uniV3Nft);
+        (uint256[] memory moneyVaultTvl, ) = moneyVault.tvl();
+        (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
+        uint256 totalToken0Amount = moneyVaultTvl[0] + erc20VaultTvl[0];
+        uint256 totalToken1Amount = moneyVaultTvl[0] + erc20VaultTvl[0];
+        uint128 totalLiquidity = LiquidityAmounts.getLiquidityForAmounts(
+            currentTickRatio,
+            lowerTickRatio,
+            upperTickRatio,
+            totalToken0Amount,
+            totalToken1Amount
+        );
+        uint128 liquidityForUniswapPosition = uint128(
+            FullMath.mulDiv(totalLiquidity, internalRatioParams.uniswapPoolRatio, DENOMINATOR)
+        );
 
-        emit BurnUniV3Position(tx.origin, uniV3Nft);
+        (requiredToken0Amount, requiredToken1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+            currentTickRatio,
+            lowerTickRatio,
+            upperTickRatio,
+            liquidityForUniswapPosition
+        );
     }
 
     function _mintUniV3Position(
         int24 tick,
         int24 lowerTick,
         int24 upperTick,
-        uint256 deadline
+        uint256 deadline,
+        bytes memory options
     ) internal returns (InternalRatioParams memory internalRatioParams) {
+        uint256[] memory tokensForMint = new uint256[](2);
         {
             uint160 lowerTickRatio = TickMath.getSqrtRatioAtTick(lowerTick);
             uint160 upperTickRatio = TickMath.getSqrtRatioAtTick(upperTick);
@@ -358,54 +356,64 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
                 uniswapPoolRatio: DENOMINATOR - targetToken0 - targetToken1
             });
 
-            {
-                // optional operation for Aave vault only to get more accurate tvl
-                if (moneyVault.supportsInterface(type(IAaveVault).interfaceId)) {
-                    IAaveVault(address(moneyVault)).updateTvls();
-                }
-                (uint256[] memory moneyVaultTvl, ) = moneyVault.tvl();
-                (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
-                uint256 totalToken0Amount = moneyVaultTvl[0] + erc20VaultTvl[0];
-                uint256 totalToken1Amount = moneyVaultTvl[0] + erc20VaultTvl[0];
-                uint128 totalLiquidity = LiquidityAmounts.getLiquidityForAmounts(
-                    currentTickRatio,
-                    lowerTickRatio,
-                    upperTickRatio,
-                    totalToken0Amount,
-                    totalToken1Amount
-                );
-                uint128 liquidityForUniswapPosition = uint128(
-                    FullMath.mulDiv(totalLiquidity, internalRatioParams.uniswapPoolRatio, DENOMINATOR)
-                );
+            (uint256 token0Amount, uint256 token1Amount) = _calculateTokensForUniV3(
+                lowerTickRatio,
+                upperTickRatio,
+                currentTickRatio,
+                internalRatioParams
+            );
+            tokensForMint[0] = token0Amount;
+            tokensForMint[1] = token1Amount;
+        }
 
-                // TODO: calculate liquidity in correct way
-                (uint256 requiredToken0Amount, uint256 requiredToken1Amount) = LiquidityAmounts.getAmountsForLiquidity(
-                    currentTickRatio,
-                    lowerTickRatio,
-                    upperTickRatio,
-                    liquidityForUniswapPosition
-                );
+
+        // pull tokens from moneyVault to erc20Vault if needed
+        {
+            bool needPullFromMoneyVault = false;
+            uint256[] memory pullAmounts = new uint256[](2);
+            (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
+            for (uint256 i = 0; i < 2; i++) {
+                if (tokensForMint[i] > erc20VaultTvl[i]) {
+                    pullAmounts[i] = tokensForMint[i] - erc20VaultTvl[i];
+                    needPullFromMoneyVault = true;
+                }
+            }
+            if (needPullFromMoneyVault) {
+                moneyVault.pull(address(erc20Vault), tokens, pullAmounts, options);
+                (erc20VaultTvl, ) = erc20Vault.tvl();
+                for (uint256 i = 0; i < 2; i++) {
+                    if (erc20VaultTvl[i] < tokensForMint[i]) {
+                        tokensForMint[i] = erc20VaultTvl[i];
+                    }
+                }
             }
         }
 
-        uint256 token0Amount = IERC20(tokens[0]).balanceOf(address(this));
-        uint256 token1Amount = IERC20(tokens[1]).balanceOf(address(this));
+        require(tokensForMint[0] >= otherParams.minToken0ForOpening, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(tokensForMint[1] >= otherParams.minToken1ForOpening, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
-        require(token0Amount >= otherParams.minToken0ForOpening, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        require(token1Amount >= otherParams.minToken1ForOpening, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
-        IERC20(tokens[0]).safeApprove(address(positionManager), token0Amount);
-        IERC20(tokens[1]).safeApprove(address(positionManager), token1Amount);
+        // transfer tokens from erc20Vault to strategy address of needed amount for mint of position
+        for (uint256 i = 0; i < 2; i++) {
+            if (tokensForMint[i] > 0) {
+                erc20Vault.externalCall(tokens[i], APPROVE_SELECTOR, abi.encode(address(this), tokensForMint[i]));
+                IERC20(tokens[i]).safeTransferFrom(address(erc20Vault), address(this), tokensForMint[i]);
+                erc20Vault.externalCall(tokens[i], APPROVE_SELECTOR, abi.encode(address(this), 0));
+            }
+        }
 
-        (uint256 newNft, , , ) = positionManager.mint(
+        IERC20(tokens[0]).safeApprove(address(positionManager), tokensForMint[0]);
+        IERC20(tokens[1]).safeApprove(address(positionManager), tokensForMint[1]);
+
+        (uint256 newNft, , uint256 usedToken0Amount, uint256 usedToken1Amount) = positionManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: tokens[0],
                 token1: tokens[1],
                 fee: pool.fee(),
                 tickLower: lowerTick,
                 tickUpper: upperTick,
-                amount0Desired: token0Amount,
-                amount1Desired: token1Amount,
+                amount0Desired: tokensForMint[0],
+                amount1Desired: tokensForMint[1],
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: address(this),
@@ -416,6 +424,18 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         positionManager.safeTransferFrom(address(this), address(uniV3Vault), newNft);
         IERC20(tokens[0]).safeApprove(address(positionManager), 0);
         IERC20(tokens[1]).safeApprove(address(positionManager), 0);
+
+        // transfer redundant tokens to erc20Vault back
+        {
+            uint256 token0ForTransfer = tokensForMint[0] - usedToken0Amount;
+            uint256 token1ForTransfer = tokensForMint[1] - usedToken1Amount;
+            if (token0ForTransfer > 0) {
+                IERC20(tokens[0]).safeTransfer(address(erc20Vault), token0ForTransfer);
+            }
+            if (token1ForTransfer > 0) {
+                IERC20(tokens[1]).safeTransfer(address(erc20Vault), token1ForTransfer);
+            }
+        }
 
         emit MintUniV3Position(tx.origin, newNft, lowerTick, upperTick);
     }
