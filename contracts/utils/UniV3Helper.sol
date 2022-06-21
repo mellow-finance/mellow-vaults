@@ -144,7 +144,11 @@ contract UniV3Helper {
         );
     }
 
-    function getMinMaxPrice(IOracle oracle, address token0, address token1) external view returns (uint256 minPriceX96, uint256 maxPriceX96) {
+    function getMinMaxPrice(
+        IOracle oracle,
+        address token0,
+        address token1
+    ) external view returns (uint256 minPriceX96, uint256 maxPriceX96) {
         (uint256[] memory prices, ) = oracle.priceX96(token0, token1, 0x2A);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];

@@ -67,7 +67,11 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 uint256 amountMax1;
                 uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
                 uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-                (uint256 minPriceX96, uint256 maxPriceX96) = _uniV3Helper.getMinMaxPrice(params.oracle, _vaultTokens[0], _vaultTokens[1]);
+                (uint256 minPriceX96, uint256 maxPriceX96) = _uniV3Helper.getMinMaxPrice(
+                    params.oracle,
+                    _vaultTokens[0],
+                    _vaultTokens[1]
+                );
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
