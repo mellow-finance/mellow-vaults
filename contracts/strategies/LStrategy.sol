@@ -66,13 +66,13 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     struct PreOrder {
         address tokenIn;
         address tokenOut;
+        uint64 deadline;
         uint256 amountIn;
         uint256 minAmountOut;
-        uint256 deadline;
     }
 
     struct LiquidityParams {
-        uint256 targetUniV3LiquidityRatioD;
+        uint128 targetUniV3LiquidityRatioD;
         bool isNegativeLiquidityRatio;
     }
 
@@ -144,17 +144,17 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
     function targetUniV3LiquidityRatio(int24 targetTick_)
         public
         view
-        returns (uint256 liquidityRatioD, bool isNegative)
+        returns (uint128 liquidityRatioD, bool isNegative)
     {
         (int24 tickLower, int24 tickUpper, ) = _getVaultStats(lowerVault);
         int24 midTick = (tickUpper + tickLower) / 2;
         isNegative = midTick > targetTick_;
         if (isNegative) {
-            liquidityRatioD = uint256(uint24(midTick - targetTick_));
+            liquidityRatioD = uint128(uint24(midTick - targetTick_));
         } else {
-            liquidityRatioD = uint256(uint24(targetTick_ - midTick));
+            liquidityRatioD = uint128(uint24(targetTick_ - midTick));
         }
-        liquidityRatioD = (liquidityRatioD * DENOMINATOR) / uint256(uint24(tickUpper - tickLower) / 2);
+        liquidityRatioD = uint128(liquidityRatioD * DENOMINATOR) / uint128(uint24(tickUpper - tickLower) / 2);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -399,9 +399,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
         preOrder_ = PreOrder({
             tokenIn: tokens[isNegativeInt],
             tokenOut: tokens[1 ^ isNegativeInt],
+            deadline: uint64(block.timestamp + tradingParams_.orderDeadline),
             amountIn: tokenValuesToTransfer[isNegativeInt],
-            minAmountOut: amountOut,
-            deadline: block.timestamp + tradingParams_.orderDeadline
+            minAmountOut: amountOut
         });
 
         preOrder = preOrder_;
@@ -425,9 +425,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 uuid,
                 preOrder.tokenIn,
                 preOrder.tokenOut,
+                preOrder.deadline,
                 preOrder.amountIn,
                 preOrder.minAmountOut,
-                preOrder.deadline,
                 address(erc20Vault),
                 (sellToken == tokens[0] ? tradingParams.maxFee0 : tradingParams.maxFee1)
             );
