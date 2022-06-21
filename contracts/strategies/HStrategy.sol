@@ -277,7 +277,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             sqrtPriceLimitX96: 0
         });
 
-
         // swap ~one token to another
         bytes memory routerResult;
         {
@@ -366,7 +365,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             tokensForMint[1] = token1Amount;
         }
 
-
         // pull tokens from moneyVault to erc20Vault if needed
         {
             bool needPullFromMoneyVault = false;
@@ -391,7 +389,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
 
         require(tokensForMint[0] >= otherParams.minToken0ForOpening, ExceptionsLibrary.LIMIT_UNDERFLOW);
         require(tokensForMint[1] >= otherParams.minToken1ForOpening, ExceptionsLibrary.LIMIT_UNDERFLOW);
-
 
         // transfer tokens from erc20Vault to strategy address of needed amount for mint of position
         for (uint256 i = 0; i < 2; i++) {
