@@ -790,10 +790,19 @@ const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, pric
     return (minTvl[0].add(maxTvl[0])).div(2).mul(priceX96).div(BigNumber.from(2).pow(96)).add((minTvl[1].add(maxTvl[1])).div(2));
 };
 
-const initialRebalance = async(hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber) => {
+const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber) => {
     const { ethers } = hre;
 
     while (true) {
+
+        let capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
+        let capitalLower = await getCapital(hre, context, priceX96, await context.LStrategy.lowerVault());
+        let capitalUpper = await getCapital(hre, context, priceX96, await context.LStrategy.upperVault());
+
+        if (assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))) {
+            break;
+        }
+
         await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
             [
                 ethers.constants.Zero,
@@ -806,14 +815,6 @@ const initialRebalance = async(hre: HardhatRuntimeEnvironment, context: Context,
             ethers.constants.MaxUint256
         );
 
-        let capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
-        let capitalLower = await getCapital(hre, context, priceX96, await context.LStrategy.lowerVault());
-        let capitalUpper = await getCapital(hre, context, priceX96, await context.LStrategy.upperVault());
-
-        if (assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))) {
-            break;
-        }
-
         await makeSwap(hre, context);
 
     }
@@ -822,11 +823,14 @@ const initialRebalance = async(hre: HardhatRuntimeEnvironment, context: Context,
 
 };
 
-const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context) => {
+const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, priceX96 : BigNumber) => {
 
     const { ethers } = hre;
 
+    let wasRebalance = false;
+
     while (!(await checkUniV3Balance(hre, context))) {
+        wasRebalance = true;
         await context.LStrategy.connect(context.admin).rebalanceUniV3Vaults([
             ethers.constants.Zero,
             ethers.constants.Zero,
@@ -847,6 +851,9 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context) =
         ethers.constants.MaxUint256);
         await makeSwap(hre, context);
     }
+
+    if (wasRebalance) await ERC20UniRebalance(hre, context, priceX96);
+
 };
 
 const reportStats = async (hre: HardhatRuntimeEnvironment, context: Context, fname: string) => {
@@ -881,15 +888,16 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
 
     console.log("erc20Vault: ", erc20vault);
 
-    await initialRebalance(hre, context, stringToPriceX96(prices[0]));
+    await ERC20UniRebalance(hre, context, stringToPriceX96(prices[0]));
 
     const tmp = await context.LStrategy.erc20Vault();
 
     let prev = Date.now();
     for (let i = 1; i < 100; ++i) {
+        console.log(i);
         reportStats(hre, context, "output.csv");
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
-        await makeRebalances(hre, context);
+        await makeRebalances(hre, context, stringToPriceX96(prices[i]));
         let current = Date.now();
     }
     console.log("Duration: ", Date.now() - prev);
