@@ -8,7 +8,6 @@ import {
     randomAddress,
     randomChoice,
     sleep,
-    uniSwapTokensGivenInput,
     uniSwapTokensGivenOutput,
     withSigner,
 } from "../library/Helpers";
@@ -16,9 +15,6 @@ import { contract, TestContext } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { YearnVault } from "../types/YearnVault";
 import { ERC20Vault } from "../types/ERC20Vault";
-import { abi as ICurvePool } from "../helpers/curvePoolABI.json";
-import { abi as IWETH } from "../helpers/wethABI.json";
-import { abi as IWSTETH } from "../helpers/wstethABI.json";
 import {
     setupVault,
     combineVaults,
@@ -82,7 +78,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const { read } = deployments;
 
                     // tokens used in vaults
-                    this.tokens = [this.wsteth, this.weth];
+                    this.tokens = [this.usdc, this.weth];
                     for (let i = 1; i < this.tokens.length; i++) {
                         assert(
                             compareAddresses(
@@ -101,8 +97,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             await read("VaultRegistry", "vaultsCount")
                         ).toNumber() + 1;
                     this.erc20VaultNft = startNft;
-                    this.uniV3VaultNft = startNft + 1;
-                    this.erc20RootVaultNft = startNft + 2;
+                    this.aaveVaultNft = startNft + 1;
+                    this.uniV3VaultNft = startNft + 2;
+                    this.yearnVaultNft = startNft + 3;
+                    this.erc20RootVaultNft = startNft + 4;
                     await setupVault(
                         hre,
                         this.erc20VaultNft,
@@ -114,8 +112,19 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             ],
                         }
                     );
+                    await setupVault(
+                        hre,
+                        this.aaveVaultNft,
+                        "AaveVaultGovernance",
+                        {
+                            createVaultArgs: [
+                                this.tokensAddresses,
+                                this.deployer.address,
+                            ],
+                        }
+                    );
                     const uniV3Helper = await ethers.getContract("UniV3Helper");
-                    this.uniV3PoolFee = 500;
+                    this.uniV3PoolFee = 3000;
                     this.uniV3PoolFeeDenominator = 1000000;
                     await setupVault(
                         hre,
@@ -130,12 +139,25 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             ],
                         }
                     );
+                    await setupVault(
+                        hre,
+                        this.yearnVaultNft,
+                        "YearnVaultGovernance",
+                        {
+                            createVaultArgs: [
+                                this.tokensAddresses,
+                                this.deployer.address,
+                            ],
+                        }
+                    );
                     await combineVaults(
                         hre,
-                        this.erc20RootVaultNft,
+                        this.yearnVaultNft + 1,
                         [
                             this.erc20VaultNft,
+                            this.aaveVaultNft,
                             this.uniV3VaultNft,
+                            this.yearnVaultNft,
                         ],
                         this.deployer.address,
                         this.deployer.address
@@ -145,15 +167,25 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "vaultForNft",
                         this.erc20VaultNft
                     );
+                    const aaveVaultAddress = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        this.aaveVaultNft
+                    );
                     const uniV3VaultAddress = await read(
                         "VaultRegistry",
                         "vaultForNft",
                         this.uniV3VaultNft
                     );
+                    const yearnVaultAddress = await read(
+                        "VaultRegistry",
+                        "vaultForNft",
+                        this.yearnVaultNft
+                    );
                     const erc20RootVaultAddress = await read(
                         "VaultRegistry",
                         "vaultForNft",
-                        this.erc20RootVaultNft
+                        this.yearnVaultNft + 1
                     );
                     this.subject = await ethers.getContractAt(
                         "ERC20RootVault",
@@ -163,10 +195,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "ERC20Vault",
                         erc20VaultAddress
                     )) as ERC20Vault;
+                    this.aaveVault = (await ethers.getContractAt(
+                        "AaveVault",
+                        aaveVaultAddress
+                    )) as AaveVault;
                     this.uniV3Vault = (await ethers.getContractAt(
                         "UniV3Vault",
                         uniV3VaultAddress
                     )) as UniV3Vault;
+                    this.yearnVault = (await ethers.getContractAt(
+                        "YearnVault",
+                        yearnVaultAddress
+                    )) as YearnVault;
                     this.pullExistentials =
                         await this.subject.pullExistentials();
 
@@ -202,11 +242,64 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         uniswapV3Factory,
                         uniswapV3Router,
                     } = await getNamedAccounts();
+                    this.aaveLendingPool = (await ethers.getContractAt(
+                        "ILendingPool",
+                        aaveLendingPool
+                    )) as ILendingPool;
+                    this.aTokensAddresses = await Promise.all(
+                        this.tokens.map(async (token) => {
+                            return (
+                                await this.aaveLendingPool.getReserveData(
+                                    token.address
+                                )
+                            ).aTokenAddress;
+                        })
+                    );
+                    this.aTokens = await Promise.all(
+                        this.aTokensAddresses.map(
+                            async (aTokenAddress: string) => {
+                                return await ethers.getContractAt(
+                                    "ERC20Token",
+                                    aTokenAddress
+                                );
+                            }
+                        )
+                    );
+                    this.optionsAave = encodeToBytes(
+                        ["uint256"],
+                        [ethers.constants.Zero]
+                    );
+
+                    // yearnVault related
+                    this.yTokensAddresses = await Promise.all(
+                        this.tokens.map(async (token) => {
+                            return await this.yearnVaultGovernance.yTokenForToken(
+                                token.address
+                            );
+                        })
+                    );
+                    this.yTokens = await Promise.all(
+                        this.yTokensAddresses.map(
+                            async (yTokenAddress: string) => {
+                                return await ethers.getContractAt(
+                                    "ERC20Token",
+                                    yTokenAddress
+                                );
+                            }
+                        )
+                    );
+                    this.optionsYearn = encodeToBytes(
+                        ["uint256"],
+                        [BigNumber.from(10000)]
+                    );
 
                     //DELETE
                     this.mapVaultsToNames = {};
                     this.mapVaultsToNames[this.erc20Vault.address] =
                         "zeroVault";
+                    this.mapVaultsToNames[this.aaveVault.address] = "aaveVault";
+                    this.mapVaultsToNames[this.yearnVault.address] =
+                        "yearnVault";
                     this.mapVaultsToNames[this.uniV3Vault.address] =
                         "uniV3Vault";
 
@@ -1030,7 +1123,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     getMinMaxEstimates(expectedFees, 1, 100);
                 let uniV3ChangeMinEstimation = this.expectedUniV3Changes[
                     tokenIndex
-                ].sub(this.depositAmount[tokenIndex].div(1000));
+                ].sub(this.depositAmount[tokenIndex].div(10000));
                 uniV3ChangeMinEstimation = getMinMaxEstimates(
                     uniV3ChangeMinEstimation,
                     1,
@@ -1038,7 +1131,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 ).min;
                 let uniV3ChangeMaxEstimation = this.expectedUniV3Changes[
                     tokenIndex
-                ].add(this.depositAmount[tokenIndex].div(1000));
+                ].add(this.depositAmount[tokenIndex].div(10000));
                 uniV3ChangeMaxEstimation = getMinMaxEstimates(
                     uniV3ChangeMaxEstimation,
                     1,
@@ -1146,7 +1239,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        describe("makes a lot of random pulls and swaps, then checks that withdrawn amount is correct", () => {
+        describe("makes a lot of random pulls and swaps, then checks if withdrawn amount is correct", () => {
             it(`passes`, async () => {
                 let targets = [
                     this.erc20Vault,
@@ -1156,12 +1249,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 ];
                 await this.setZeroFeesFixture({ targets: targets });
 
-
-
                 // deposit
                 this.depositAmount = [
-                    BigNumber.from(1000),
-                    BigNumber.from(1000)
+                    BigNumber.from(10).pow(6).mul(1000),
+                    BigNumber.from(10).pow(15).mul(300),
                 ];
                 await this.subject
                     .connect(this.deployer)
@@ -1204,151 +1295,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         expect(tvl[1][tokenIndex].lt(10)).to.be.true;
                     }
                 }
-            });
-        });
-
-        describe("checks eth-wsteth pool", () => {
-            it.only(`passes`, async () => {
-                let targets = [
-                    this.erc20Vault,
-                    this.uniV3Vault,
-                ];
-                await this.setZeroFeesFixture({ targets: targets });
-
-                const curvePool = await ethers.getContractAt(
-                    ICurvePool,
-                    "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
-                );
-                const weth = await ethers.getContractAt(
-                    IWETH,
-                    this.weth.address
-                );
-                const steth = await ethers.getContractAt(
-                    "ERC20Token",
-                    "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
-                );
-                const wsteth = await ethers.getContractAt(
-                    IWSTETH,
-                    this.wsteth.address
-                );
-
-                await this.weth.approve(
-                    curvePool.address,
-                    ethers.constants.MaxUint256
-                );
-                await steth.approve(
-                    this.wsteth.address,
-                    ethers.constants.MaxUint256
-                );
-                await weth.withdraw(BigNumber.from(10).pow(18).mul(20));
-                const options = { value: BigNumber.from(10).pow(18).mul(20) };
-                await curvePool.exchange(
-                    0,
-                    1,
-                    BigNumber.from(10).pow(18).mul(20),
-                    ethers.constants.Zero,
-                    options
-                );
-                await wsteth.wrap(BigNumber.from(10).pow(18).mul(19));
-
-
-                let swapParams = {
-                    tokenIn: this.weth.address,
-                    tokenOut: this.wsteth.address,
-                    fee: 500,
-                    recipient: this.deployer.address,
-                    deadline: ethers.constants.MaxUint256,
-                    amountIn: BigNumber.from(10).pow(16),
-                    amountOutMinimum: 0,
-                    sqrtPriceLimitX96: 0,
-                };
-            
-                await withSigner(this.deployer.address, async (signer) => {
-                    await this.weth
-                        .connect(signer)
-                        .approve(this.swapRouter.address, swapParams.amountIn);
-                    await this.swapRouter.connect(signer).exactInputSingle(swapParams);
-                    await this.weth
-                        .connect(signer)
-                        .approve(this.swapRouter.address, 0);
-                });    
-
-                console.log((await this.wsteth.balanceOf(this.deployer.address)).toString());
-                console.log((await this.weth.balanceOf(this.deployer.address)).toString());
-
-                console.log("tick is " + (await this.uniV3Pool.slot0()).tick);
-                console.log("liquidity is " + (await this.uniV3Pool.liquidity()).toString());
-
-                const mintParamsLower = {
-                    token0: this.tokens[0].address,
-                    token1: this.tokens[1].address,
-                    fee: 500,
-                    tickLower: 70,
-                    tickUpper: 90,
-                    amount0Desired: BigNumber.from("8959816990332032"),
-                    amount1Desired: BigNumber.from("51197999994330847"),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: this.deployer.address,
-                    deadline: ethers.constants.MaxUint256,
-                };
-
-                const mintParamsUpper = {
-                    token0: this.tokens[0].address,
-                    token1: this.tokens[1].address,
-                    fee: 500,
-                    tickLower: 80,
-                    tickUpper: 100,
-                    amount0Desired: BigNumber.from("90571062170434120"),
-                    amount1Desired: BigNumber.from("49202532539884939"),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: this.deployer.address,
-                    deadline: ethers.constants.MaxUint256,
-                };
-    
-                for (let token of this.tokens) {
-                    await token
-                        .approve(
-                            this.positionManager.address,
-                            ethers.constants.MaxUint256
-                        );
-                }
-                for (let token of this.tokens) {
-                    await token
-                        .approve(
-                            this.swapRouter.address,
-                            ethers.constants.MaxUint256
-                        );
-                }
-
-
-                console.log((await this.uniV3Pool.slot0()).tick);
-
-                // const resultUpper = await this.positionManager
-                //     .callStatic.mint(mintParamsUpper);
-                // await this.positionManager.mint(mintParamsUpper);
-                // let upperStats = await this.positionManager.positions(resultUpper.tokenId);
-                // console.log(upperStats.liquidity.toString());
-
-    
-                // const resultLower = await this.positionManager
-                //     .callStatic.mint(mintParamsLower);
-                // await this.positionManager.mint(mintParamsLower);
-                // let lowerStats = await this.positionManager.positions(resultLower.tokenId);
-                // console.log(lowerStats.liquidity.toString());
-                // console.log(lowerStats.liquidity.add(upperStats.liquidity).toString());
-
-                console.log("tick is " + (await this.uniV3Pool.slot0()).tick);
-                console.log("liquidity is " + (await this.uniV3Pool.liquidity()).toString());
-
-                
-                let out = await uniSwapTokensGivenInput(this.swapRouter, this.tokens, 500, true, BigNumber.from("86522780689273497"), this.deployer.address); 
-                // let out = await uniSwapTokensGivenInput(this.swapRouter, this.tokens, 500, false, BigNumber.from("93735355894898463"), this.deployer.address); 
-                // await uniSwapTokensGivenInput(this.swapRouter, this.tokens, 500, false, BigNumber.from("142962709387031864"), this.deployer.address); 
-                console.log("post-swap tick is " + (await this.uniV3Pool.slot0()).tick);
-                console.log("liquidity is " + (await this.uniV3Pool.liquidity()).toString());
-                console.log(out.toString()); 
             });
         });
     }

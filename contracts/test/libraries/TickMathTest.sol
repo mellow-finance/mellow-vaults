@@ -11,4 +11,8 @@ contract TickMathTest {
     function getTickAtSqrtRatio(uint160 sqrtPriceX96) external pure returns (int24 tick) {
         return TickMath.getTickAtSqrtRatio(sqrtPriceX96);
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main

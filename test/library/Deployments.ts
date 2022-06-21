@@ -393,6 +393,15 @@ export async function deployCommonLibraryTest(): Promise<Contract> {
     return commonTest;
 }
 
+export async function deployMathTickTest(): Promise<TickMathTest> {
+    const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
+        "TickMathTest"
+    );
+    const mathTickTest: TickMathTest = await MathTickTest.deploy();
+    await mathTickTest.deployed();
+    return mathTickTest;
+}
+
 export const deployLpIssuerGovernance = async (options: {
     constructorArgs?: LpIssuerGovernance_constructor;
     adminSigner?: Signer;

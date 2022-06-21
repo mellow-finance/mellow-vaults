@@ -91,11 +91,11 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         );
         require(_nftIndex[vault] == 0, ExceptionsLibrary.DUPLICATE);
         nft = _topNft;
-        _safeMint(owner, nft);
         _vaultIndex[nft] = vault;
         _nftIndex[vault] = nft;
         _vaults.push(vault);
         _topNft += 1;
+        _safeMint(owner, nft);
         emit VaultRegistered(tx.origin, msg.sender, nft, vault, owner);
     }
 
@@ -117,12 +117,6 @@ contract VaultRegistry is ContractMeta, IVaultRegistry, ERC721 {
         delete _stagedProtocolGovernanceTimestamp;
         delete _stagedProtocolGovernance;
         emit CommitedProtocolGovernance(tx.origin, msg.sender, _protocolGovernance);
-    }
-
-    /// @inheritdoc IVaultRegistry
-    function adminApprove(address newAddress, uint256 nft) external {
-        require(_isProtocolAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
-        _approve(newAddress, nft);
     }
 
     function lockNft(uint256 nft) external {

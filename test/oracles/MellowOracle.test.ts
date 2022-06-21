@@ -198,7 +198,7 @@ contract<MellowOracle, DeployOptions, CustomContext>(
                 describe(params.name, () => {
                     it("returns prices", async () => {
                         await deployMellowOracle(params.opts);
-                        const pricesResult = await this.subject.price(
+                        const pricesResult = await this.subject.priceX96(
                             this.usdc.address,
                             this.weth.address,
                             BigNumber.from(params.mask)
@@ -217,7 +217,7 @@ contract<MellowOracle, DeployOptions, CustomContext>(
                     it("does not return prices", async () => {
                         await deployMellowOracle(DEFAULT_DEPLOY_PARAMS);
 
-                        const pricesResult = await this.subject.price(
+                        const pricesResult = await this.subject.priceX96(
                             ethers.constants.AddressZero,
                             this.weth.address,
                             BigNumber.from(31)

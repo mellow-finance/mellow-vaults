@@ -22,8 +22,8 @@ import {
     UniV3VaultGovernance,
     VaultRegistry,
     ERC20Token as ERC20,
-    ISwapRouter,
     ERC20Token,
+    ISwapRouter,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -57,6 +57,11 @@ export const randomAddress = () => {
     const privateKey = "0x" + id;
     const wallet = new ethers.Wallet(privateKey);
     return wallet.address;
+};
+
+export const randomChoice = (choices: Array<any>) => {
+    var index = Math.floor(Math.random() * choices.length);
+    return { item: choices[index], index: index };
 };
 
 export const toObject = (obj: any) =>
@@ -142,86 +147,6 @@ const removeSigner = async (address: string) => {
         params: [address],
     });
 };
-
-export const randomChoice = (choices: Array<any>) => {
-    var index = Math.floor(Math.random() * choices.length);
-    return { item: choices[index], index: index };
-};
-
-export async function uniSwapTokensGivenInput(
-    router: ISwapRouter,
-    tokens: ERC20Token[],
-    fee: number,
-    zeroForOne: boolean,
-    amount: BigNumberish,
-    provider: string
-) {
-    
-    let tokenIndex = zeroForOne ? 1 : 0;
-    let swapParams = {
-        tokenIn: tokens[tokenIndex].address,
-        tokenOut: tokens[1 ^ tokenIndex].address,
-        fee: fee,
-        recipient: provider,
-        deadline: ethers.constants.MaxUint256,
-        amountIn: amount,
-        amountOutMinimum: 0,
-        sqrtPriceLimitX96: 0,
-    };
-    try {
-        await mint(tokens[tokenIndex].address, provider, amount);
-    } catch (e) {}
-
-    let amountOut: BigNumber = BigNumber.from(0);
-    await withSigner(provider, async (signer) => {
-        await tokens[tokenIndex]
-            .connect(signer)
-            .approve(router.address, amount);
-        amountOut = await router
-            .connect(signer)
-            .callStatic.exactInputSingle(swapParams);
-        await router.connect(signer).exactInputSingle(swapParams);
-    });
-    return amountOut;
-}
-
-export async function uniSwapTokensGivenOutput(
-    router: ISwapRouter,
-    tokens: ERC20Token[],
-    fee: number,
-    zeroForOne: boolean,
-    amount: BigNumberish
-) {
-    const MAXIMUM_TO_SPEND = BigNumber.from(10).pow(21);
-    let provider = randomAddress();
-    let tokenIndex = zeroForOne ? 1 : 0;
-    let swapParams = {
-        tokenIn: tokens[tokenIndex].address,
-        tokenOut: tokens[1 ^ tokenIndex].address,
-        fee: fee,
-        recipient: provider,
-        deadline: ethers.constants.MaxUint256,
-        amountOut: amount,
-        amountInMaximum: MAXIMUM_TO_SPEND,
-        sqrtPriceLimitX96: 0,
-    };
-
-    try {
-        await mint(tokens[tokenIndex].address, provider, MAXIMUM_TO_SPEND);
-    } catch (e) {}
-    let amountIn = BigNumber.from(0);
-    await withSigner(provider, async (signer) => {
-        await tokens[tokenIndex]
-            .connect(signer)
-            .approve(router.address, MAXIMUM_TO_SPEND);
-        amountIn = await router
-            .connect(signer)
-            .callStatic.exactOutputSingle(swapParams);
-        await router.connect(signer).exactOutputSingle(swapParams);
-        await tokens[tokenIndex].connect(signer).approve(router.address, 0);
-    });
-    return amountIn;
-}
 
 export const setTokenWhitelist = async (
     protocolGovernance: ProtocolGovernance,
@@ -572,8 +497,78 @@ export async function mintUniV3Position_USDC_WETH(options: {
     };
 
     const result = await positionManagerContract.callStatic.mint(mintParams);
-    await positionManagerContract.mint(mintParams);
+    const kek = await positionManagerContract.mint(mintParams);
     return result;
+}
+
+export async function uniSwapTokensGivenInput(
+    router: ISwapRouter,
+    tokens: ERC20Token[],
+    fee: number,
+    zeroForOne: boolean,
+    amount: BigNumberish
+) {
+    let provider = randomAddress();
+    let tokenIndex = zeroForOne ? 1 : 0;
+    let swapParams = {
+        tokenIn: tokens[tokenIndex].address,
+        tokenOut: tokens[1 ^ tokenIndex].address,
+        fee: fee,
+        recipient: provider,
+        deadline: ethers.constants.MaxUint256,
+        amountIn: amount,
+        amountOutMinimum: 0,
+        sqrtPriceLimitX96: 0,
+    };
+
+    await mint(tokens[tokenIndex].address, provider, amount);
+    let amountOut: BigNumber = BigNumber.from(0);
+    await withSigner(provider, async (signer) => {
+        await tokens[tokenIndex]
+            .connect(signer)
+            .approve(router.address, amount);
+        amountOut = await router
+            .connect(signer)
+            .callStatic.exactInputSingle(swapParams);
+        await router.connect(signer).exactInputSingle(swapParams);
+    });
+    return amountOut;
+}
+
+export async function uniSwapTokensGivenOutput(
+    router: ISwapRouter,
+    tokens: ERC20Token[],
+    fee: number,
+    zeroForOne: boolean,
+    amount: BigNumberish
+) {
+    const MAXIMUM_TO_SPEND = BigNumber.from(10).pow(21);
+    let provider = randomAddress();
+    let tokenIndex = zeroForOne ? 1 : 0;
+    let swapParams = {
+        tokenIn: tokens[tokenIndex].address,
+        tokenOut: tokens[1 ^ tokenIndex].address,
+        fee: fee,
+        recipient: provider,
+        deadline: ethers.constants.MaxUint256,
+        amountOut: amount,
+        amountInMaximum: MAXIMUM_TO_SPEND,
+        sqrtPriceLimitX96: 0,
+    };
+
+    await mint(tokens[tokenIndex].address, provider, MAXIMUM_TO_SPEND);
+    let amountIn = BigNumber.from(0);
+    await withSigner(provider, async (signer) => {
+        await tokens[tokenIndex]
+            .connect(signer)
+            .approve(router.address, MAXIMUM_TO_SPEND);
+        amountIn = await router
+            .connect(signer)
+            .callStatic.exactOutputSingle(swapParams);
+        await router.connect(signer).exactOutputSingle(swapParams);
+        await tokens[tokenIndex].connect(signer).approve(router.address, 0);
+    });
+    return amountIn;
 }
 
 export async function mintUniV3Position_WBTC_WETH(options: {

@@ -44,7 +44,7 @@ contract ChainlinkOracle is ContractMeta, IChainlinkOracle, DefaultAccessControl
     }
 
     /// @inheritdoc IOracle
-    function price(
+    function priceX96(
         address token0,
         address token1,
         uint256 safetyIndicesSet

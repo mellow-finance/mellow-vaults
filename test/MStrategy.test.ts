@@ -82,15 +82,7 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     "vaultForNft",
                     yearnVaultNft
                 );
-                const erc20RootVault = await read(
-                    "VaultRegistry",
-                    "vaultForNft",
-                    erc20VaultNft + 1
-                );
-                this.erc20RootVault = await ethers.getContractAt(
-                    "ERC20RootVault",
-                    erc20RootVault
-                );
+
                 this.erc20Vault = await ethers.getContractAt(
                     "ERC20Vault",
                     erc20Vault
@@ -143,10 +135,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 const ratioParams: RatioParamsStruct = {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
-                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     minTickRebalanceThreshold: 180,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
+                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
                     minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 };
@@ -173,6 +165,16 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     [erc20VaultNft, yearnVaultNft],
                     this.subject.address,
                     this.deployer.address
+                );
+
+                const erc20RootVault = await read(
+                    "VaultRegistry",
+                    "vaultForNft",
+                    erc20VaultNft + 1
+                );
+                this.erc20RootVault = await ethers.getContractAt(
+                    "ERC20RootVault",
+                    erc20RootVault
                 );
 
                 /*
@@ -620,10 +622,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
         const ratioParams: RatioParamsStruct = {
             tickMin: 198240 - 5000,
             tickMax: 198240 + 5000,
-            erc20MoneyRatioD: BigNumber.from(Math.round(0.1 * 10 ** 9)),
             minTickRebalanceThreshold: 180,
             tickNeighborhood: 60,
             tickIncrease: 180,
+            erc20MoneyRatioD: BigNumber.from(Math.round(0.1 * 10 ** 9)),
             minErc20MoneyRatioDeviation0D: BigNumber.from(
                 Math.round(0.01 * 10 ** 9)
             ),
@@ -911,10 +913,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 let ratioParams: RatioParamsStruct = {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
-                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
+                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
                     minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 };
@@ -938,12 +940,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     this.params.moneyVault
                 );
 
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(highRatioMStrategy.address, nftERC20Vault);
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(highRatioMStrategy.address, nftMoneyVault);
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(highRatioMStrategy.address, nftERC20Vault);
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(highRatioMStrategy.address, nftMoneyVault);
+                });
 
                 await this.usdc
                     .connect(this.deployer)
@@ -1041,10 +1045,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 let ratioParams: RatioParamsStruct = {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
-                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
+                    erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                     minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
                     minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 };
@@ -1068,12 +1072,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     this.params.moneyVault
                 );
 
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(lowRatioMStrategy.address, nftERC20Vault);
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(lowRatioMStrategy.address, nftMoneyVault);
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(lowRatioMStrategy.address, nftERC20Vault);
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(lowRatioMStrategy.address, nftMoneyVault);
+                });
 
                 await this.weth
                     .connect(this.deployer)
@@ -1199,10 +1205,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     const ratioParams: RatioParamsStruct = {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 180,
                         tickNeighborhood: 60,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),
@@ -1276,10 +1282,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     let ratioParams: RatioParamsStruct = {
                         tickMin: 197000 - 50,
                         tickMax: 197000 + 50,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 180,
                         tickNeighborhood: 10,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),
@@ -1363,10 +1369,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     let ratioParams: RatioParamsStruct = {
                         tickMin: 197350 - 50,
                         tickMax: 197350 + 50,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 180,
                         tickNeighborhood: 10,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),
@@ -1451,10 +1457,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     let ratioParams: RatioParamsStruct = {
                         tickMin: 197000 - 5000,
                         tickMax: 197000 + 5000,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 10,
                         tickNeighborhood: 10 ** 4,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),
@@ -1540,10 +1546,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
             const ratioParams: RatioParamsStruct = {
                 tickMin: 198240 - 5000,
                 tickMax: 198240 + 5000,
-                erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                 minTickRebalanceThreshold: 180,
                 tickNeighborhood: 60,
                 tickIncrease: 180,
+                erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                 minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
                 minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
             };
@@ -1771,12 +1777,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.moneyVault
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, erc20VaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, moneyVaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, erc20VaultNft);
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, moneyVaultNft);
+                    });
 
                     let params: SwapToTargetParamsStruct = {
                         amountIn: BigNumber.from(10 ** 8),
@@ -1934,19 +1942,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.moneyVault
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.erc20Vault, moneyVaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, moneyVaultNft);
-
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.moneyVault, erc20VaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, erc20VaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, erc20VaultNft);
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, moneyVaultNft);
+                    });
 
                     const oracleParams: OracleParamsStruct = {
                         oracleObservationDelta: 101,
@@ -1956,10 +1959,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     const ratioParams: RatioParamsStruct = {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 180,
                         tickNeighborhood: 60,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),
@@ -2061,19 +2064,14 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                         this.params.moneyVault
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.erc20Vault, moneyVaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, moneyVaultNft);
-
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(this.params.moneyVault, erc20VaultNft);
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(subject.address, erc20VaultNft);
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, erc20VaultNft);
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(subject.address, moneyVaultNft);
+                    });
 
                     const oracleParams: OracleParamsStruct = {
                         oracleObservationDelta: 101,
@@ -2083,10 +2081,10 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                     const ratioParams: RatioParamsStruct = {
                         tickMin: 198240 - 5000,
                         tickMax: 198240 + 5000,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 180,
                         tickNeighborhood: 60,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),

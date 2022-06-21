@@ -6,6 +6,7 @@ import {
     mintUniV3Position_USDC_WETH,
     randomAddress,
     sleep,
+    withSigner,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
 import {
@@ -310,10 +311,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                     const ratioParams: RatioParamsStruct = {
                         tickMin: 198240 - 15000,
                         tickMax: 198240 + 15000,
-                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minTickRebalanceThreshold: 0,
                         tickNeighborhood: 60,
                         tickIncrease: 180,
+                        erc20MoneyRatioD: Math.round(0.1 * 10 ** 9),
                         minErc20MoneyRatioDeviation0D: Math.round(
                             0.01 * 10 ** 9
                         ),
@@ -351,24 +352,27 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         ethers.constants.MaxUint256
                     );
 
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(
-                            this.subject.address,
-                            await this.erc20Vault.nft()
-                        );
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(
-                            this.subject.address,
-                            await this.yearnVault.nft()
-                        );
-                    await this.vaultRegistry
-                        .connect(this.admin)
-                        .adminApprove(
-                            this.subject.address,
-                            await this.uniV3Vault.nft()
-                        );
+                    await withSigner(this.erc20RootVault.address, async (s) => {
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(
+                                this.subject.address,
+                                await this.erc20Vault.nft()
+                            );
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(
+                                this.subject.address,
+                                await this.yearnVault.nft()
+                            );
+                        await this.vaultRegistry
+                            .connect(s)
+                            .approve(
+                                this.subject.address,
+                                await this.uniV3Vault.nft()
+                            );
+                    });
+
                     return this.subject;
                 }
             );
@@ -573,7 +577,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
         };
 
         const getBestPrice = async () => {
-            const { pricesX96 } = await this.mellowOracle.price(
+            const { pricesX96 } = await this.mellowOracle.priceX96(
                 this.usdc.address,
                 this.weth.address,
                 0x28
@@ -700,10 +704,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         const ratioParams: RatioParamsStruct = {
                             tickMin: 198240 - 5000,
                             tickMax: 198240 + 5000,
-                            erc20MoneyRatioD: Math.round(j * 0.01 * 10 ** 9),
                             minTickRebalanceThreshold: 0,
                             tickNeighborhood: 0,
                             tickIncrease: 100,
+                            erc20MoneyRatioD: Math.round(j * 0.01 * 10 ** 9),
                             minErc20MoneyRatioDeviation0D: Math.round(
                                 0.01 * 10 ** 9
                             ),
@@ -846,24 +850,26 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 }
                 currentBalance = currentBalance.mul(BigNumber.from(-1));
                 usdcAmountChanges.push(currentBalance);
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.erc20Vault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.yearnVault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.uniV3Vault.nft()
-                    );
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.erc20Vault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.yearnVault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.uniV3Vault.nft()
+                        );
+                });
                 for (var i = 1; i <= 3; i++) {
                     pricesHistory.push([]);
                     var deltaValue = BigNumber.from(0);
@@ -976,25 +982,26 @@ contract<MStrategy, DeployOptions, CustomContext>(
         describe("Rebalance distributes tokens in a given ratio", () => {
             it("for every different tickLower, tickUpper and tick given", async () => {
                 await setZeroFeesFixture();
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.erc20Vault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.yearnVault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.uniV3Vault.nft()
-                    );
-
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.erc20Vault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.yearnVault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.uniV3Vault.nft()
+                        );
+                });
                 const usdcAmount = BigNumber.from(10).pow(6).mul(3000);
                 const wethAmount = BigNumber.from(10).pow(18);
                 await mint("USDC", this.deployer.address, usdcAmount);
@@ -1024,10 +1031,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 const ratioParams: RatioParamsStruct = {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
-                    erc20MoneyRatioD: 0,
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
+                    erc20MoneyRatioD: 0,
                     minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
                     minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 };
@@ -1136,25 +1143,26 @@ contract<MStrategy, DeployOptions, CustomContext>(
         describe("Rebalance distributes tokens in a given ratio", () => {
             it("for set minTokensAmount", async () => {
                 await setZeroFeesFixture();
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.erc20Vault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.yearnVault.nft()
-                    );
-                await this.vaultRegistry
-                    .connect(this.admin)
-                    .adminApprove(
-                        this.subject.address,
-                        await this.uniV3Vault.nft()
-                    );
-
+                await withSigner(this.erc20RootVault.address, async (s) => {
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.erc20Vault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.yearnVault.nft()
+                        );
+                    await this.vaultRegistry
+                        .connect(s)
+                        .approve(
+                            this.subject.address,
+                            await this.uniV3Vault.nft()
+                        );
+                });
                 const usdcAmount = BigNumber.from(10).pow(6).mul(3000);
                 const wethAmount = BigNumber.from(10).pow(18);
                 await mint("USDC", this.deployer.address, usdcAmount);
@@ -1184,10 +1192,10 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 const ratioParams: RatioParamsStruct = {
                     tickMin: 198240 - 5000,
                     tickMax: 198240 + 5000,
-                    erc20MoneyRatioD: 0,
                     minTickRebalanceThreshold: 0,
                     tickNeighborhood: 60,
                     tickIncrease: 180,
+                    erc20MoneyRatioD: 0,
                     minErc20MoneyRatioDeviation0D: Math.round(0.01 * 10 ** 9),
                     minErc20MoneyRatioDeviation1D: Math.round(0.01 * 10 ** 9),
                 };
