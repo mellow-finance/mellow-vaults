@@ -319,7 +319,7 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         erc20UniV3CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 0.05 * DENOMINATOR
         erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5), // 0.5 * DENOMINATOR
         minErc20UniV3CapitalRatioDeviationD:
-            BigNumber.from(10).pow(5),
+            BigNumber.from(10).pow(7),
         minErc20TokenRatioDeviationD: BigNumber.from(10)
             .pow(8)
             .div(2),
@@ -778,7 +778,7 @@ const assureEquality = (x: BigNumber, y: BigNumber) => {
         x = y;
     }
 
-    return (delta.mul(1000).lt(x));
+    return (delta.mul(100).lt(x));
 };
 
 const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber, address: string)  => {
