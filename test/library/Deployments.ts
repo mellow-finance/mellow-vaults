@@ -449,14 +449,6 @@ export const deployLpIssuerGovernance = async (options: {
         ERC20VaultFactory: ERC20VaultFactory,
     };
 };
-export async function deployMathTickTest(): Promise<TickMathTest> {
-    const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
-        "TickMathTest"
-    );
-    const mathTickTest: TickMathTest = await MathTickTest.deploy();
-    await mathTickTest.deployed();
-    return mathTickTest;
-}
 
 export async function deploySubVaultSystem(options: {
     tokensCount: number;

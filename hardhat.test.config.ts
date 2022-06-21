@@ -10,7 +10,6 @@ import "./plugins/contracts";
 import defaultConfig from "./hardhat.config";
 import { lensPath, set } from "ramda";
 import { MultiSolcUserConfig, SolcUserConfig } from "hardhat/types";
-import "./tasks/liquidity";
 
 const config: HardhatUserConfig = {
     ...defaultConfig,
