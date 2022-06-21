@@ -2,7 +2,6 @@ import hre, { ethers } from "hardhat";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import "hardhat-deploy";
-import {withSigner } from "../test/library/Helpers";
 import {
     ALL_NETWORKS,
     combineVaults,
