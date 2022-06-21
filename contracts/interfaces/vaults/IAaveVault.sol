@@ -5,6 +5,9 @@ import "../external/aave/ILendingPool.sol";
 import "./IIntegrationVault.sol";
 
 interface IAaveVault is IIntegrationVault {
+    /// @notice Update all tvls to current aToken balances.
+    function updateTvls() external;
+
     /// @notice Reference to Aave protocol lending pool.
     function lendingPool() external view returns (ILendingPool);
 
