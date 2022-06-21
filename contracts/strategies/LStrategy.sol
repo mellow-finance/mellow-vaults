@@ -425,9 +425,9 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                 uuid,
                 preOrder.tokenIn,
                 preOrder.tokenOut,
-                preOrder.deadline,
                 preOrder.amountIn,
                 preOrder.minAmountOut,
+                preOrder.deadline,
                 address(erc20Vault),
                 (sellToken == tokens[0] ? tradingParams.maxFee0 : tradingParams.maxFee1)
             );
