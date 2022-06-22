@@ -22,6 +22,7 @@ contract MockOracle is IOracle {
         address,
         uint256
     ) external view returns (uint256[] memory pricesX96, uint256[] memory safetyIndices) {
+       // console.log("RETURN KEKICH");
         pricesX96 = new uint256[](2);
         safetyIndices = new uint256[](2);
         for (uint256 i = 0; i < 2; ++i) {
