@@ -23,6 +23,7 @@ import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifa
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { UNIV3_VAULT_INTERFACE_ID } from "../library/Constants";
 import Exceptions from "../library/Exceptions";
+import { TickMath } from "@uniswap/v3-sdk";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -224,7 +225,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     const currentState = await pool.slot0();
                     return BigNumber.from(currentState.tick);
                 };
-
                 return this.subject;
             }
         );
@@ -242,10 +242,20 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
             this.subject.address,
             BigNumber.from(10).pow(18).mul(500)
         );
+        await mint(
+            "WETH",
+            this.deployer.address,
+            BigNumber.from(10).pow(18).mul(4000),
+        );
+        await mint(
+            "USDC",
+            this.deployer.address,
+            BigNumber.from(10).pow(6).mul(400_000),
+        );
 
         const currentTick = await this.getUniV3Tick();
-        let tickLower = currentTick.div(60).mul(60).toNumber() - 60;
-        let tickUpper = tickLower + 120;
+        let tickLower = currentTick.div(120).mul(120).toNumber() - 120;
+        let tickUpper = tickLower + 240;
 
         await this.preparePush(tickLower, tickUpper);
         await this.subject.push(
@@ -260,13 +270,6 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 ]
             )
         );
-        const result = await mintUniV3Position_USDC_WETH({
-            fee: 3000,
-            tickLower: tickLower,
-            tickUpper: tickUpper,
-            usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-            wethAmount: BigNumber.from(10).pow(18),
-        });
     });
 
     describe("integratoin test", () => {
@@ -282,78 +285,54 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 BigNumber.from(10).pow(18).mul(1000)
             );
             const positionManager = await this.subject.positionManager();
-            for (let i = 0; i < 2; ++i) {
-                await this.swapTokens(
-                    this.subject.address,
-                    this.subject.address,
-                    this.weth,
-                    this.usdc,
-                    BigNumber.from(10).pow(18)
-                );
-                {
-                    const { amount0, amount1 } =
-                        await this.calculateTokensOwed();
-                    const positionInfo =
-                        await this.uniV3Helper.calculatePositionInfo(
-                            positionManager,
-                            await this.subject.pool(),
-                            await this.subject.uniV3Nft()
-                        );
-                    expect(
-                        amount0.sub(positionInfo.tokensOwed0).toNumber()
-                    ).to.be.eq(0);
-                    expect(
-                        amount1.sub(positionInfo.tokensOwed1).toNumber()
-                    ).to.be.eq(0);
-                }
-                await this.swapTokens(
-                    this.subject.address,
-                    this.subject.address,
-                    this.usdc,
-                    this.weth,
-                    BigNumber.from(10).pow(6).mul(1000)
-                );
-                {
-                    const { amount0, amount1 } =
-                        await this.calculateTokensOwed();
-                    const positionInfo =
-                        await this.uniV3Helper.calculatePositionInfo(
-                            positionManager,
-                            await this.subject.pool(),
-                            await this.subject.uniV3Nft()
-                        );
-                    expect(
-                        amount0.sub(positionInfo.tokensOwed0).toNumber()
-                    ).to.be.eq(0);
-                    expect(
-                        amount1.sub(positionInfo.tokensOwed1).toNumber()
-                    ).to.be.eq(0);
-                }
-                await this.usdc.transfer(
-                    this.subject.address,
-                    BigNumber.from(10).pow(6).mul(1000)
-                );
-                await this.weth.transfer(
-                    this.subject.address,
-                    BigNumber.from(10).pow(18)
-                );
-                await this.subject.push(
-                    [this.usdc.address, this.weth.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(1000),
-                        BigNumber.from(10).pow(18),
-                    ],
-                    encodeToBytes(
-                        ["uint256", "uint256", "uint256"],
-                        [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                            ethers.constants.MaxUint256,
-                        ]
-                    )
-                );
+            {
+                const { amount0, amount1 } =
+                    await this.calculateTokensOwed();
+                const positionInfo =
+                    await this.uniV3Helper.calculatePositionInfo(
+                        positionManager,
+                        await this.subject.pool(),
+                        await this.subject.uniV3Nft()
+                    );
+                expect(
+                    amount0.sub(positionInfo.tokensOwed0).toNumber()
+                ).to.be.eq(0);
+                expect(
+                    amount1.sub(positionInfo.tokensOwed1).toNumber()
+                ).to.be.eq(0);
             }
-            const nft = this.subject.uniV3Nft();
+            await this.swapTokens(
+                this.subject.address,
+                this.subject.address,
+                this.weth,
+                this.usdc,
+                BigNumber.from(10).pow(17)
+            );
+            await this.swapTokens(
+                this.subject.address,
+                this.subject.address,
+                this.usdc,
+                this.weth,
+                BigNumber.from(10).pow(6).mul(100)
+            );
+            let currentTick = await this.getUniV3Tick();
+            {
+                const { amount0, amount1 } =
+                    await this.calculateTokensOwed();
+                const positionInfo =
+                    await this.uniV3Helper.calculatePositionInfo(
+                        positionManager,
+                        await this.subject.pool(),
+                        await this.subject.uniV3Nft()
+                    );
+                expect(
+                    amount0.sub(positionInfo.tokensOwed0).toNumber()
+                ).to.be.eq(0);
+                expect(
+                    amount1.sub(positionInfo.tokensOwed1).toNumber()
+                ).to.be.eq(0);
+            }
+            const nft = await this.subject.uniV3Nft();
             const position = await this.positionManager.positions(nft);
             let tickLower = position.tickLower;
             let tickUpper = position.tickUpper;
@@ -364,53 +343,44 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 usdcAmount: BigNumber.from(10).pow(6).mul(3000),
                 wethAmount: BigNumber.from(10).pow(18),
             });
-            for (let i = 0; i < 2; ++i) {
-                await this.swapTokens(
-                    this.subject.address,
-                    this.subject.address,
-                    this.weth,
-                    this.usdc,
-                    BigNumber.from(10).pow(18)
-                );
-                {
-                    const { amount0, amount1 } =
-                        await this.calculateTokensOwed();
-                    const positionInfo =
-                        await this.uniV3Helper.calculatePositionInfo(
-                            positionManager,
-                            await this.subject.pool(),
-                            await this.subject.uniV3Nft()
-                        );
-                    expect(
-                        amount0.sub(positionInfo.tokensOwed0).toNumber()
-                    ).to.be.eq(0);
-                    expect(
-                        amount1.sub(positionInfo.tokensOwed1).toNumber()
-                    ).to.be.eq(0);
-                }
-                await this.swapTokens(
-                    this.subject.address,
-                    this.subject.address,
-                    this.usdc,
-                    this.weth,
-                    BigNumber.from(10).pow(6).mul(1000)
-                );
-                {
-                    const { amount0, amount1 } =
-                        await this.calculateTokensOwed();
-                    const positionInfo =
-                        await this.uniV3Helper.calculatePositionInfo(
-                            positionManager,
-                            await this.subject.pool(),
-                            await this.subject.uniV3Nft()
-                        );
-                    expect(
-                        amount0.sub(positionInfo.tokensOwed0).toNumber()
-                    ).to.be.eq(0);
-                    expect(
-                        amount1.sub(positionInfo.tokensOwed1).toNumber()
-                    ).to.be.eq(0);
-                }
+            {
+                const { amount0, amount1 } =
+                    await this.calculateTokensOwed();
+                const positionInfo =
+                    await this.uniV3Helper.calculatePositionInfo(
+                        positionManager,
+                        await this.subject.pool(),
+                        await this.subject.uniV3Nft()
+                    );
+                expect(
+                    amount0.sub(positionInfo.tokensOwed0).toNumber()
+                ).to.be.eq(0);
+                expect(
+                    amount1.sub(positionInfo.tokensOwed1).toNumber()
+                ).to.be.eq(0);
+            }
+            await this.swapTokens(
+                this.subject.address,
+                this.subject.address,
+                this.usdc,
+                this.weth,
+                BigNumber.from(10).pow(6).mul(9000)
+            );
+            {
+                const { amount0, amount1 } =
+                    await this.calculateTokensOwed();
+                const positionInfo =
+                    await this.uniV3Helper.calculatePositionInfo(
+                        positionManager,
+                        await this.subject.pool(),
+                        await this.subject.uniV3Nft()
+                    );
+                expect(
+                    amount0.sub(positionInfo.tokensOwed0).toNumber()
+                ).to.be.eq(0);
+                expect(
+                    amount1.sub(positionInfo.tokensOwed1).toNumber()
+                ).to.be.eq(0);
             }
         });
     });
