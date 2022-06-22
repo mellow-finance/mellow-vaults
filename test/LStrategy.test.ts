@@ -26,7 +26,7 @@ import {
 import Exceptions from "./library/Exceptions";
 import { ERC20 } from "./library/Types";
 import { randomBytes } from "ethers/lib/utils";
-import { FullMath, TickMath } from "@uniswap/v3-sdk";
+import { TickMath } from "@uniswap/v3-sdk";
 import { sqrt } from "@uniswap/sdk-core";
 import JSBI from "jsbi";
 import { uintToBytes32 } from "../tasks/base";
@@ -308,6 +308,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         this.uniV3UpperVault.address,
                         strategyHelper.address,
                         this.admin.address,
+                        120,
                     ],
                     log: true,
                     autoMine: true,
@@ -748,86 +749,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         .add(minTvl[1].add(maxTvl[1]).div(2));
                 };
 
-                this.assureEquality = async (ratio : number) => {
-
-                    const tick = await this.getUniV3Tick();
-                        
-                    let capitalErc20 = await this.getCapital(tick, this.erc20Vault.address);
-                    let capitalLower = await this.getCapital(tick, this.uniV3LowerVault.address);
-                    let capitalUpper = await this.getCapital(tick, this.uniV3UpperVault.address);
-
-                    let capitalFirst = capitalErc20.mul(100 - ratio);
-                    let capitalSecond = (capitalLower.add(capitalUpper)).mul(ratio);
-
-                    let delta = capitalFirst.sub(capitalSecond).abs();
-                    let maxBetweenCapitals = capitalFirst;
-
-                    if (capitalFirst.lt(capitalSecond)) {
-                        maxBetweenCapitals = capitalSecond;
-                    }
-                
-                    return (delta.mul(60).lt(maxBetweenCapitals));
-                };
-
-                this.allCapital = async() => {
-                    let tick = await this.getUniV3Tick();
-                    let capitalErc20 = await this.getCapital(tick, this.erc20Vault.address);
-                    let capitalLower = await this.getCapital(tick, this.uniV3LowerVault.address);
-                    let capitalUpper = await this.getCapital(tick, this.uniV3UpperVault.address);
-                    return capitalErc20.add(capitalLower).add(capitalUpper);
-                }
-
-                this.makeDesiredPoolPrice = async (tick: BigNumber) => {
-
-                    let pool = await ethers.getContractAt(
-                        "IUniswapV3Pool",
-                        await this.uniV3LowerVault.pool()
-                    );
-                    let startTry = BigNumber.from(10).pow(17).mul(120);
-                
-                    let needIncrease = 0; //mock initialization
-                    
-                    while (true) {
-                        
-                
-                        let currentPoolState = await pool.slot0();
-                        let currentPoolTick = BigNumber.from(currentPoolState.tick);
-                        if (currentPoolTick.eq(tick)) {
-                            break;
-                        }
-                        
-                        if (currentPoolTick.lt(tick)) {
-                            if (needIncrease == 0) {
-                                needIncrease = 1;
-                                startTry = startTry.div(2);
-                            }
-                            await this.swapTokens(
-                                this.deployer.address,
-                                this.deployer.address,
-                                this.weth,
-                                this.wsteth,
-                                startTry
-                            );   
-                            
-                        }
-                        else {
-                            if (needIncrease == 1) {
-                                needIncrease = 0;
-                                startTry = startTry.div(2);
-                            }
-                            await this.swapTokens(
-                                this.deployer.address,
-                                this.deployer.address,
-                                this.wsteth,
-                                this.weth,
-                                startTry
-                            );     
-                        }
-                    }
-
-                    await this.updateMockOracle(tick);
-                };
-
                 await this.uniV3VaultGovernance
                     .connect(this.admin)
                     .stageDelayedProtocolParams({
@@ -840,10 +761,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .commitDelayedProtocolParams();
 
                 await this.subject.connect(this.admin).updateTradingParams({
+                    oracle: oracleDeployParams.address,
                     maxSlippageD: BigNumber.from(10).pow(7),
                     oracleSafetyMask: 0x20,
                     orderDeadline: 86400 * 30,
-                    oracle: oracleDeployParams.address,
                     maxFee0: BigNumber.from(10).pow(9),
                     maxFee1: BigNumber.from(10).pow(9),
                 });
@@ -862,7 +783,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
 
                 await this.subject.connect(this.admin).updateOtherParams({
-                    intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(10).pow(6),
@@ -896,7 +816,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.grantPermissions();
             await this.mintFunds(BigNumber.from(10).pow(18));
 
-            this.semiPositionRange = 1000;
+            this.semiPositionRange = 60;
 
             const currentTick = await this.getUniV3Tick();
             let tickLeftLower =
@@ -932,148 +852,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .pow(7)
                     .div(2),
             });
-
-            this.getTvl = async (
-                address: string
-            ) => {
-                let vault = await ethers.getContractAt("IVault", address);
-
-                let tvls = await vault.tvl();
-                return tvls;
-            };
-
-            this.getCapital = async (tick: BigNumber, address: string)  => {
-                
-
-                let priceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(tick.toNumber()).toString());
-                let priceX96 = priceSqrtX96.mul(priceSqrtX96).div(BigNumber.from(2).pow(96));
-
-
-                let tvls = await this.getTvl(address);
-                let minTvl = tvls[0];
-                let maxTvl = tvls[1];
-            
-                return (minTvl[0].add(maxTvl[0])).div(2).mul(priceX96).div(BigNumber.from(2).pow(96)).add((minTvl[1].add(maxTvl[1])).div(2));
-            };
-
-            this.ercRebalance = async(ratio: number) => {
-                while (true) {
-                    if (await this.assureEquality(ratio)) {
-                        break;
-                    }
-                    await this.subject.connect(this.admin).rebalanceERC20UniV3Vaults(
-                        [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        ethers.constants.MaxUint256
-                    );
-                    await this.balanceERC20();
-                }
-                console.log("DONE");
-                
-            }
-
         });
-        describe("Integration test of potential capital losses", () => {
-            
 
-            beforeEach (async () => {
-
-                const mintParams = {
-                    token0: this.wsteth.address,
-                    token1: this.weth.address,
-                    fee: 500,
-                    tickLower: -10000,
-                    tickUpper: 10000,
-                    amount0Desired: BigNumber.from(10).pow(20).mul(5),
-                    amount1Desired: BigNumber.from(10).pow(20).mul(5),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    recipient: this.deployer.address,
-                    deadline: ethers.constants.MaxUint256,
-                };
-                //mint a position in pull to provide liquidity for future swaps
-                await this.positionManager.mint(mintParams);
-                await this.makeDesiredPoolPrice(BigNumber.from(2000));
-
-                await this.submitToERC20Vault();
-                await this.ercRebalance(5);
-
-            })
-
-            this.changeParams = async(newRatio : BigNumber) => {
-                this.baseParams = {
-                    erc20UniV3CapitalRatioD: newRatio,
-                    erc20TokenRatioD: BigNumber.from(10).pow(8).mul(5),
-                    minErc20UniV3CapitalRatioDeviationD:
-                        BigNumber.from(10).pow(5),
-                    minErc20TokenRatioDeviationD: BigNumber.from(10).pow(7),
-                    minUniV3LiquidityRatioDeviationD:
-                        BigNumber.from(10).pow(7),
-                };
-                await this.subject
-                    .connect(this.admin)
-                    .updateRatioParams(this.baseParams);
-            }
-            
-            for (let changePercentage = 1; changePercentage <= 8; changePercentage *= 2) {
-            for (let changePrice = -1000; changePrice <= 1000; changePrice += 400) {
-
-            
-                    it("Change price equals " + String(changePrice) + " and changePercentage equals " + String(changePercentage), async () => {
-                        
-
-                        expect(await this.assureEquality(5)).to.be.true;
-
-                        await this.changeParams(BigNumber.from(10).pow(7).mul(5 + changePercentage));
-                        
-                        await this.ercRebalance(5 + changePercentage);
-                        expect(await this.assureEquality(5 + changePercentage)).to.be.true;
-
-                        await this.changeParams(BigNumber.from(10).pow(7).mul(5));
-
-                        await this.ercRebalance(5);
-                        let totalNormalCapital = await this.allCapital();
-                        expect(await this.assureEquality(5)).to.be.true;
-
-                        await this.changeParams(BigNumber.from(10).pow(7).mul(5 + changePercentage));
-                        
-                        await this.ercRebalance(5 + changePercentage);
-                        expect(await this.assureEquality(5 + changePercentage)).to.be.true;
-
-                        let tick = await this.getUniV3Tick();
-                        await this.makeDesiredPoolPrice(tick.add(changePrice));
-
-                        expect(tick.add(changePrice)).to.be.eq(await this.getUniV3Tick());
-
-                        console.log(await this.getUniV3Tick());
-
-                        await this.changeParams(BigNumber.from(10).pow(7).mul(5));
-
-                        
-                        await this.ercRebalance(5);
-                        expect(await this.assureEquality(5)).to.be.true;
-                        await this.makeDesiredPoolPrice(tick);
-
-                        expect(tick).to.be.eq(await this.getUniV3Tick())
-
-                        let totalBadCapital = await this.allCapital();
-
-                        console.log(totalNormalCapital);
-                        console.log(totalBadCapital);
-
-                        expect(totalNormalCapital.mul(997)).to.be.lt(totalBadCapital.mul(1000));
-                    })
-                }   
-            }
-        });
-        /*
         describe("ERC20 is initially empty", () => {
             describe("UniV3rebalance when ERC20 is empty and no UniV3ERC20rebalance happens", () => {
                 it("not reverts and keeps balances in general case", async () => {
@@ -1125,6 +905,21 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
 
             describe("cycle rebalanceerc20-swap-rebalanceuniv3 happens a lot of times", () => {
                 it("everything goes ok", async () => {
+                    const mintParams = {
+                        token0: this.wsteth.address,
+                        token1: this.weth.address,
+                        fee: 500,
+                        tickLower: -2000,
+                        tickUpper: 2000,
+                        amount0Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount1Desired: BigNumber.from(10).pow(20).mul(5),
+                        amount0Min: 0,
+                        amount1Min: 0,
+                        recipient: this.deployer.address,
+                        deadline: ethers.constants.MaxUint256,
+                    };
+                    //mint a position in pull to provide liquidity for future swaps
+                    await this.positionManager.mint(mintParams);
                     for (let i = 0; i < 30; ++i) {
                         //balance tokens in ERC20
                         await this.balanceERC20();
@@ -1809,10 +1604,8 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 });
             });
         });
-        */
-        
     });
-    /*
+
     describe("unit tests", () => {
         beforeEach(async () => {
             for (let address of [
@@ -1832,10 +1625,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         describe("#updateTradingParams", () => {
             beforeEach(async () => {
                 this.baseParams = {
+                    oracle: this.mellowOracle.address,
                     maxSlippageD: BigNumber.from(10).pow(6),
                     orderDeadline: 86400 * 30,
                     oracleSafetyMask: 0x20,
-                    oracle: this.mellowOracle.address,
                     maxFee0: BigNumber.from(10).pow(9),
                     maxFee1: BigNumber.from(10).pow(9),
                 };
@@ -1846,10 +1639,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .connect(this.admin)
                     .updateTradingParams(this.baseParams);
                 const expectedParams = [
+                    this.mellowOracle.address,
                     10 ** 6,
                     86400 * 30,
                     BigNumber.from(32),
-                    this.mellowOracle.address,
                     BigNumber.from(10).pow(9),
                     BigNumber.from(10).pow(9),
                 ];
@@ -2070,7 +1863,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
         describe("#updateOtherParams", () => {
             beforeEach(async () => {
                 this.baseParams = {
-                    intervalWidthInTicks: 100,
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     rebalanceDeadline: BigNumber.from(86400 * 30),
@@ -2082,7 +1874,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     .connect(this.admin)
                     .updateOtherParams(this.baseParams);
                 const returnedParams = await this.subject.otherParams();
-                expect(returnedParams.intervalWidthInTicks).eq(100);
                 expect(returnedParams.minToken0ForOpening).eq(
                     BigNumber.from(10).pow(6)
                 );
@@ -2753,6 +2544,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 };
                 await this.grantPermissions();
             });
+
             it("rebalances when delta is positive", async () => {
                 this.semiPositionRange = 600;
                 this.smallInt = 60;
@@ -2895,10 +2687,18 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(pushedAmounts[i]).to.be.equal(ethers.constants.Zero);
                 }
             });
+
             it("rebalances when crossing the interval right to left", async () => {
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await this.mockOracle.updatePrice(BigNumber.from(1).shl(95));
+                await this.preparePush({
+                    vault: this.uniV3LowerVault,
+                    tickLower: 500000,
+                    tickUpper: 700000,
+                });
+                await this.preparePush({
+                    vault: this.uniV3UpperVault,
+                    tickLower: 600000,
+                    tickUpper: 800000,
+                });
                 await this.grantPermissionsUniV3Vaults();
                 const result = await this.subject
                     .connect(this.admin)
@@ -2921,6 +2721,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(tvl[i]).lt(BigNumber.from(10)); // check, that all liquidity passed to other vault
                 }
             });
+
             it("swap vaults when crossing the interval right to left with no liquidity", async () => {
                 await this.preparePush({ vault: this.uniV3LowerVault });
                 await this.preparePush({ vault: this.uniV3UpperVault });
@@ -3903,6 +3704,4 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             });
         });
     });
-    */
-    
 });
