@@ -159,31 +159,52 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         internal
         returns (InternalRatioParams memory internalRatioParams)
     {
+        internalRatioParams = InternalRatioParams({
+            token0MoneyRatio: DENOMINATOR >> 1,
+            token1MoneyRatio: DENOMINATOR >> 1,
+            uniswapPoolRatio: 0
+        });
+
         if (uniV3Vault.nft() != 0) {
-            return
-                InternalRatioParams({
-                    token0MoneyRatio: DENOMINATOR >> 1,
-                    token1MoneyRatio: DENOMINATOR >> 1,
-                    uniswapPoolRatio: 0
-                });
+            return internalRatioParams;
         }
 
         StrategyParams memory strategyParams_ = strategyParams;
+
         (, int24 tick, , , , , ) = pool.slot0();
         int24 widthTicks = strategyParams_.widthTicks;
-        int24 leftTick = tick - ((tick > 0 ? tick : -tick) % widthTicks);
-        int24 rightTick = leftTick + widthTicks;
 
-        if (tick - leftTick <= strategyParams_.mintDeltaTicks || rightTick - tick <= strategyParams_.mintDeltaTicks) {
-            internalRatioParams = _mintUniV3Position(
-                tick,
-                tick - strategyParams_.widthCoefficient * widthTicks,
-                tick + strategyParams_.widthCoefficient * widthTicks,
-                deadline,
-                options
-            );
-            lastMintRebalanceTick = tick;
+        int24 nearestLeftTick = (tick / widthTicks) * widthTicks;
+        int24 nearestRightTick = nearestLeftTick;
+
+        if (nearestLeftTick < tick) {
+            nearestRightTick += widthTicks;
+        } else if (nearestLeftTick > tick) {
+            nearestLeftTick -= widthTicks;
         }
+
+        int24 distToLeft = tick - nearestLeftTick;
+        int24 distToRight = nearestRightTick - tick;
+        int24 newMintTick = nearestLeftTick;
+
+        if (distToLeft > strategyParams_.mintDeltaTicks && distToRight > strategyParams_.mintDeltaTicks) {
+            return internalRatioParams;
+        }
+
+        if (distToLeft <= distToRight) {
+            newMintTick = nearestLeftTick;
+        } else {
+            newMintTick = nearestRightTick;
+        }
+
+        internalRatioParams = _mintUniV3Position(
+            newMintTick,
+            newMintTick - strategyParams_.widthCoefficient * widthTicks,
+            newMintTick + strategyParams_.widthCoefficient * widthTicks,
+            deadline,
+            options
+        );
+        lastMintRebalanceTick = newMintTick;
     }
 
     /// @dev if the current tick differs from lastMintRebalanceTick by more than burnDeltaTicks,
@@ -226,15 +247,15 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
 
         bool isPositive;
         uint256 delta;
-        uint256[] memory erc20VaultTvls;
         {
-            (uint256[] memory moneyVaultTvls, ) = moneyVault.tvl();
-            (erc20VaultTvls, ) = erc20Vault.tvl();
-            uint256 token0Amount = moneyVaultTvls[0] + erc20VaultTvls[0];
-            uint256 token1Amount = moneyVaultTvls[1] + erc20VaultTvls[1];
-            uint256 token1Term = FullMath.mulDiv(internalRatioParams.token1MoneyRatio, priceX96, CommonLibrary.Q96) *
-                token0Amount;
-            uint256 token0Term = internalRatioParams.token0MoneyRatio * token1Amount;
+            uint256 token0Amount = _getTokenAmountInVaults(0);
+            uint256 token1Amount = _getTokenAmountInVaults(1);
+            uint256 token1Term = FullMath.mulDiv(
+                FullMath.mulDiv(internalRatioParams.token1MoneyRatio, priceX96, CommonLibrary.Q96),
+                token0Amount,
+                DENOMINATOR
+            );
+            uint256 token0Term = FullMath.mulDiv(internalRatioParams.token0MoneyRatio, token1Amount, DENOMINATOR);
             if (token1Term >= token0Term) {
                 isPositive = true;
                 delta = token1Term - token0Term;
@@ -260,6 +281,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             tokenInIndex = 1;
         }
 
+        (uint256[] memory erc20VaultTvls, ) = erc20Vault.tvl();
         if (erc20VaultTvls[tokenInIndex] < amountIn) {
             uint256[] memory tokensToPull = new uint256[](2);
             tokensToPull[tokenInIndex] = amountIn - erc20VaultTvls[tokenInIndex];
@@ -302,6 +324,12 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         emit RebalanceTokens(tx.origin, swapParams);
     }
 
+    function _getTokenAmountInVaults(uint256 tokenIndex) internal view returns (uint256 amount) {
+        (uint256[] memory moneyVaultTvl, ) = moneyVault.tvl();
+        (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
+        amount = moneyVaultTvl[tokenIndex] + erc20VaultTvl[tokenIndex];
+    }
+
     function _calculateTokensForUniV3(
         uint160 lowerTickRatio,
         uint160 upperTickRatio,
@@ -311,10 +339,8 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         if (moneyVault.supportsInterface(type(IAaveVault).interfaceId)) {
             IAaveVault(address(moneyVault)).updateTvls();
         }
-        (uint256[] memory moneyVaultTvl, ) = moneyVault.tvl();
-        (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
-        uint256 totalToken0Amount = moneyVaultTvl[0] + erc20VaultTvl[0];
-        uint256 totalToken1Amount = moneyVaultTvl[0] + erc20VaultTvl[0];
+        uint256 totalToken0Amount = _getTokenAmountInVaults(0);
+        uint256 totalToken1Amount = _getTokenAmountInVaults(1);
         uint128 totalLiquidity = LiquidityAmounts.getLiquidityForAmounts(
             currentTickRatio,
             lowerTickRatio,
