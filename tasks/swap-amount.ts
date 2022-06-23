@@ -1,7 +1,7 @@
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber } from "@ethersproject/bignumber";
-import { BigNumberish, PopulatedTransaction } from "ethers";
+import { BigNumberish, Contract, PopulatedTransaction } from "ethers";
 import { ERC20Token, ISwapRouter, TickMathTest, TickMathTest__factory } from "../test/types";
 import { abi as ICurvePool } from "../test/helpers/curvePoolABI.json";
 import { abi as IWETH } from "../test/helpers/wethABI.json";
@@ -9,7 +9,7 @@ import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouterABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-import { randomBytes } from "crypto";
+import { randomBytes, verify } from "crypto";
 import { expect } from "chai";
 
 
@@ -18,9 +18,9 @@ task("swap-amount", "Calculates swap amount needed to shift price in the pool")
     .addParam("width", "Width of positions opened by LStrategy in ticks", undefined, types.int)
     .addParam("positiontick", "Tick representing lower bound of upper position", undefined, types.string)
     .addParam("pooltick", "Tick representing price in the pool. If not given, ", undefined, types.string)
-    .addParam("liquidity", "Total pool liquidity", undefined, types.string)
-    .addParam("verify", "Check if calculated amount is correct by simulalting swap in this state", false, types.boolean, true)
-    .setAction(async ({ shift, width, positiontick:positionTickString, pooltick:poolTickString, liquidity:liqudityString, verify }, hre) => {
+    .addParam("tvl", "Total value locked in ETH", undefined, types.string)
+    .addParam("verify", "Simulate postions and swaps on-chain", true, types.boolean, true)
+    .setAction(async ({ shift, width, positiontick:positionTickString, pooltick:poolTickString, tvl:tvlString, verify }, hre) => {
         if (width % 10 != 0) {
             console.error("Width should be multiple of 10 (tickSpacing)");
         } else if (+positionTickString % 10 != 0) {
@@ -28,19 +28,16 @@ task("swap-amount", "Calculates swap amount needed to shift price in the pool")
             console.error("Position tick should be multiple of 10 (tickSpacing)");
         } else if ((+positionTickString > +poolTickString) || (+positionTickString + width / 2 < +poolTickString)) {
             console.error("Pool tick should be in bounds [positionTick; positionTick + width / 2]");
+        } else if (verify && (+tvlString > 10)) {
+            console.error("Verify doesnt work with tvl > 10, turn it off or just scale results linearly");
         } else {
-            let context = await getContext(hre, verify);
-            let { deltaXPriceDown, deltaYPriceUp } = await countSwapAmount(hre, shift, width, +positionTickString, +poolTickString, BigNumber.from(liqudityString), context);
-            if (verify) {
-                await simulateSwap(+poolTickString, shift, [deltaXPriceDown, deltaYPriceUp], hre, context);
-            }
+            let context = await getContext(hre);
+            let deltas = await countSwapAmount(hre, shift, width, +positionTickString, +poolTickString, BigNumber.from(tvlString), context);
+            await simulateSwap(+poolTickString, shift, deltas, hre, context);
         }
     });
 
-async function getContext(hre: HardhatRuntimeEnvironment, verify:boolean) {
-    if (!verify) {
-        return undefined;
-    }
+async function getContext(hre: HardhatRuntimeEnvironment) {
     const { getNamedAccounts, ethers } = hre;
     const { deployer, weth:wethAddress, wsteth:wstethAddress, uniswapV3Factory: uniswapV3FactoryAddress, uniswapV3Router, uniswapV3PositionManager } = await getNamedAccounts();
     
@@ -72,7 +69,7 @@ async function getContext(hre: HardhatRuntimeEnvironment, verify:boolean) {
         ethers.constants.MaxUint256
     );
 
-    let wethMintAmount = BigNumber.from(10).pow(18).mul(800);
+    let wethMintAmount = BigNumber.from(10).pow(18).mul(4000);
     await withSigner(randomAddress(hre), async (s) => {
         const tx: PopulatedTransaction = {
             to: weth.address,
@@ -97,6 +94,9 @@ async function getContext(hre: HardhatRuntimeEnvironment, verify:boolean) {
     );
     await wsteth.wrap(wethMintAmount.mul(9).div(20));
 
+    let uniV3PoolFee = 500;
+    let uniV3PoolFeeDenominator = 1000000;
+
     let uniswapV3Factory = await ethers.getContractAt(
         "IUniswapV3Factory",
         uniswapV3FactoryAddress
@@ -104,7 +104,7 @@ async function getContext(hre: HardhatRuntimeEnvironment, verify:boolean) {
     let poolAddress = await uniswapV3Factory.getPool(
         wsteth.address,
         weth.address,
-        500
+        uniV3PoolFee
     );
     let uniV3Pool = await ethers.getContractAt(
         "IUniswapV3Pool",
@@ -131,7 +131,9 @@ async function getContext(hre: HardhatRuntimeEnvironment, verify:boolean) {
         uniV3Pool,
         tokens,
         deployer,
-        swapRouter
+        swapRouter,
+        uniV3PoolFee,
+        uniV3PoolFeeDenominator
     }
 }
 async function liquidityToY(
@@ -173,15 +175,46 @@ async function liquidityToX(
     return liquidity.mul(smth).div(tickUpperPriceX96.mul(sqrtPriceX96));
 }
 
-// splits liquidity between upper and lower positions, following LStrategy's logic
-function splitByLiquidityRatio(targetTick: number, upperPositionTickLower:number, upperPositionTickUpper:number, liqudity:BigNumber) 
-{
-    let upperPositionMidTick = (upperPositionTickLower + upperPositionTickUpper) / 2;
-    let liquidityRatio = Math.abs(targetTick - upperPositionMidTick);
-    liquidityRatio = liquidityRatio / ((upperPositionTickUpper - upperPositionTickLower) / 2);
-    let denom = 100000;
-    return { lowerLiquidity: liqudity.mul(Math.round(denom * liquidityRatio)).div(denom), upperLiquidity: liqudity.mul(Math.round(denom * (1 - liquidityRatio))).div(denom) }
+async function xToLiquidity(
+    currentTick: number,
+    tickLower: number,
+    tickUpper: number,
+    xAmount: BigNumber,
+    tickMath: TickMathTest
+) {
+    let sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(currentTick);
+    let tickUpperPriceX96 = await tickMath.getSqrtRatioAtTick(
+        tickUpper
+    );
 
+    return xAmount.mul(tickUpperPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96))).div(tickUpperPriceX96.sub(sqrtPriceX96))
+}
+
+
+// splits liquidity between upper and lower positions, following LStrategy's logic
+function splitByRatio(targetTick: number, tickLower:number, tickUpper:number, value:BigNumber) 
+{
+    let upperPositionMidTick = (tickLower + tickUpper) / 2;
+    let liquidityRatio = Math.abs(targetTick - upperPositionMidTick);
+    liquidityRatio = liquidityRatio / ((tickUpper - tickLower) / 2);
+    let denom = 100000;
+    return { lowerPart: value.mul(Math.round(denom * liquidityRatio)).div(denom), upperPart: value.mul(Math.round(denom * (1 - liquidityRatio))).div(denom) }
+}
+
+// splits capital represented in eth to tokens, according to yRatio and current pool price
+async function splitTvlByRatio(tvl: BigNumber, yRatio: number, poolTick: number, tickMath: TickMathTest){
+    let sqrtPriceX96 = (await tickMath.getSqrtRatioAtTick(poolTick));
+    let priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
+    let yRatioN = Math.round(yRatio * 10000);
+    let yRatioD = 10000;
+    let xAmountN = tvl.sub(tvl.mul(yRatioN).div(yRatioD)).mul(yRatioD);
+    let xAmountD = priceX96.mul(yRatioD).div(BigNumber.from(2).pow(96)).add(yRatioN).sub(priceX96.mul(yRatioN).div(BigNumber.from(2).pow(96)));
+    let xAmount = xAmountN.div(xAmountD);
+    let yAmount = tvl.sub(xAmount.mul(priceX96).div(BigNumber.from(2).pow(96)));
+
+    // now yAmount = yRatio * (xAmount + yAmount)
+    // and total cost of xAmount and yAmount equals to tvl cost
+    return { xAmount, yAmount }
 }
  
 // counts changes in given position's token amounts when price changes 
@@ -199,47 +232,67 @@ async function tokenAmountsToShiftPosition(currentTick: number, newTick: number,
     return {deltaX, deltaY};
 }
 
-async function countSwapAmount(hre: HardhatRuntimeEnvironment, tickShift: number, positionWidth: number, upperPositionTickLower: number, poolTick: number, totalLiquidity: BigNumber, context: any | undefined) {
+async function countXRatio(priceTick: number, tickLower: number, tickUpper: number, tickMath: TickMathTest) {
+    let sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(priceTick); 
+    let sqrtPriceX96L = await tickMath.getSqrtRatioAtTick(tickLower); 
+    let sqrtPriceX96U = await tickMath.getSqrtRatioAtTick(tickUpper); 
+    let c1 = sqrtPriceX96.mul(sqrtPriceX96U).div(BigNumber.from(2).pow(96));
+    let c2 = sqrtPriceX96.sub(sqrtPriceX96L);
+    let c3 = sqrtPriceX96U.sub(sqrtPriceX96);
+    let c = c1.mul(c2).div(c3).mul(10000).div(BigNumber.from(2).pow(96));
+    return 1/(1 + c.toNumber() / 10000);
+}
+
+async function countSwapAmount(hre: HardhatRuntimeEnvironment, tickShift: number, positionWidth: number, upperPositionTickLower: number, poolTick: number, tvl: BigNumber, context: any | undefined) {
     const { ethers } = hre;
+    const { uniV3PoolFeeDenominator, uniV3PoolFee, uniV3Pool} = context;
     const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
         "TickMathTest"
     );
     const tickMath: TickMathTest = await MathTickTest.deploy();
     await tickMath.deployed();
+
+    tvl = tvl.mul(BigNumber.from(10).pow(18));
     
     // calculate tick bounds of our positions
     let lowerPositionTickLower = upperPositionTickLower - positionWidth / 2;
     let lowerPositionTickUpper = lowerPositionTickLower + positionWidth;
     let upperPositionTickUpper = upperPositionTickLower + positionWidth;
 
-    // calculate token amounts from liquidity
-    console.log("if pool tick is " + poolTick + ", there is");
-    let {lowerLiquidity, upperLiquidity} = splitByLiquidityRatio(poolTick, upperPositionTickLower, upperPositionTickUpper, totalLiquidity);
-    let lowerToX = await liquidityToX(poolTick, lowerPositionTickUpper, lowerPositionTickLower, lowerLiquidity, tickMath);
-    let upperToX = await liquidityToX(poolTick, upperPositionTickUpper, upperPositionTickLower, upperLiquidity, tickMath);
-    let lowerToY = await liquidityToY(poolTick, lowerPositionTickUpper, lowerPositionTickLower, lowerLiquidity, tickMath);
-    let upperToY = await liquidityToY(poolTick, upperPositionTickUpper, upperPositionTickLower, upperLiquidity, tickMath);
-    console.log(lowerToX.toString() + " of 0 and " + lowerToY.toString() + " of 1 in lower vault");
-    console.log(upperToX.toString() + " of 0 and " + upperToY.toString() + " of 1 in upper vault");
-    console.log(lowerToX.add(upperToX).toString() + " of 0 and " + lowerToY.add(upperToY).toString() + " of 1 total\n");
+    // calculate wsteth ratio in positions
+    let xRatioUpper = await countXRatio(poolTick, upperPositionTickLower, upperPositionTickUpper, tickMath);
+    let xRatioLower = await countXRatio(poolTick, lowerPositionTickLower, lowerPositionTickUpper, tickMath);
     
+    // calculate token amounts from tvl
+    console.log("if pool tick is " + poolTick + ", there is");
+    let {lowerPart:lowerPositionTVL, upperPart:upperPositionTVL} = splitByRatio(poolTick, upperPositionTickLower, upperPositionTickUpper, tvl);
+    console.log("proportion of tvls" + lowerPositionTVL.toString());
+    console.log("proportion of tvls" + upperPositionTVL.toString());
+    let { xAmount:xAmountLower, yAmount:yAmountLower } = await splitTvlByRatio(lowerPositionTVL, 1 - xRatioLower, poolTick, tickMath);
+    let { xAmount:xAmountUpper, yAmount:yAmountUpper } = await splitTvlByRatio(upperPositionTVL, 1 - xRatioUpper, poolTick, tickMath);
+    console.log(xAmountLower.toString() + " of 0 and " + yAmountLower.toString() + " of 1 in lower vault");
+    console.log(xAmountUpper.toString() + " of 0 and " + yAmountUpper.toString() + " of 1 in upper vault");
+    console.log(xAmountLower.add(xAmountUpper).toString() + " of 0 and " + yAmountLower.add(yAmountUpper).toString() + " of 1 total\n");
+    
+    // calculate liquidity from positions
+    let lowerLiquidity = await xToLiquidity(poolTick, lowerPositionTickLower, lowerPositionTickUpper, xAmountLower, tickMath);
+    let upperLiquidity = await xToLiquidity(poolTick, upperPositionTickLower, upperPositionTickUpper, xAmountUpper, tickMath);
+    console.log("lower liq should be " + lowerLiquidity.toString());
+    console.log("upper liq should be " + upperLiquidity.toString());
+
     // mid liquidity is a liquidity of utility position, used in integration part
     let midLiquidity = BigNumber.from("143542847431368536505");
-    let uniV3PoolFeeDenominator = 1000000;
     let priceDownTick = poolTick - tickShift;
     let priceUpTick = poolTick + tickShift;
-    if (context != undefined) {
-        context.lowerPositionTickLower = lowerPositionTickLower;
-        context.lowerPositionTickUpper = lowerPositionTickUpper;
-        context.upperPositionTickLower = upperPositionTickLower;
-        context.upperPositionTickUpper = upperPositionTickUpper;
-        context.lowerToX = lowerToX;
-        context.lowerToY = lowerToY;
-        context.upperToX = upperToX;
-        context.upperToY = upperToY;
-        context.midLiquidity = midLiquidity;
-        context.uniV3PoolFeeDenominator = uniV3PoolFeeDenominator;
-    }
+    context.lowerPositionTickLower = lowerPositionTickLower;
+    context.lowerPositionTickUpper = lowerPositionTickUpper;
+    context.upperPositionTickLower = upperPositionTickLower;
+    context.upperPositionTickUpper = upperPositionTickUpper;
+    context.xAmountLower = xAmountLower;
+    context.yAmountLower = yAmountLower;
+    context.xAmountUpper = xAmountUpper;
+    context.yAmountUpper = yAmountUpper;
+    context.midLiquidity = midLiquidity;
 
     // tokens needed to swap in each position if price goes down
     let { deltaX:priceDownDeltaXLower, deltaY:priceDownDeltaYLower } = await tokenAmountsToShiftPosition(poolTick, priceDownTick, lowerPositionTickLower, lowerPositionTickUpper, lowerLiquidity, tickMath);
@@ -260,16 +313,20 @@ async function countSwapAmount(hre: HardhatRuntimeEnvironment, tickShift: number
     let priceUpDeltaYAllPositions = priceUpDeltaY.add(priceUpDeltaYMid);
 
     // multiply by fee
+    priceDownDeltaX = priceDownDeltaX.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator);
+    priceDownDeltaY = priceDownDeltaY.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator);
+    priceUpDeltaX = priceUpDeltaX.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator);
+    priceUpDeltaY = priceUpDeltaY.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator);
     priceDownDeltaXAllPositions = priceDownDeltaXAllPositions.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator);
     priceUpDeltaYAllPositions = priceUpDeltaYAllPositions.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator);
 
 
     console.log("To lower price for " + tickShift + " ticks, you need to swap at least");
-    console.log(priceDownDeltaX.toString() + " of 0 for " + priceDownDeltaY.abs().toString() + " of 1");
+    console.log(priceDownDeltaX.div(BigNumber.from(10).pow(15)).toString() + " of 0 for " + priceDownDeltaY.abs().toString() + " of 1");
     console.log("To higher price for " + tickShift + " ticks, you need to swap at least");
-    console.log(priceUpDeltaY.toString() + " of 1 for " + priceUpDeltaX.abs().toString() + " of 0\n");
+    console.log(priceUpDeltaY.div(BigNumber.from(10).pow(15)).toString() + " of 1 for " + priceUpDeltaX.abs().toString() + " of 0\n");
 
-    return { deltaXPriceDown: priceDownDeltaXAllPositions, deltaYPriceUp: priceUpDeltaYAllPositions };
+    return [priceDownDeltaXAllPositions, priceUpDeltaYAllPositions];
 }
 
 const withSigner = async (
@@ -351,7 +408,7 @@ async function mintPosition(tokens: ERC20Token[], amounts: BigNumber[], ticks: n
     const mintParams = {
         token0: tokens[0].address,
         token1: tokens[1].address,
-        fee: 500,
+        fee: context.uniV3PoolFee,
         tickLower: ticks[0],
         tickUpper: ticks[1],
         amount0Desired: amounts[0],
@@ -417,25 +474,28 @@ export async function uniSwapTokensGivenOutput(
 
 async function simulateSwap(targetTick: number, tickShift: number,  swapAmounts: BigNumber[], hre: HardhatRuntimeEnvironment, context: any) {
     let { ethers } = hre;
-    let { uniV3Pool, swapRouter, tokens, positionManager, deployer, tickMath, lowerPositionTickLower, lowerPositionTickUpper, upperPositionTickLower, upperPositionTickUpper, lowerToX, lowerToY, upperToX, upperToY, midLiquidity, uniV3PoolFeeDenominator} = context;
+    let { uniV3Pool, swapRouter, tokens, positionManager, deployer, tickMath, lowerPositionTickLower, lowerPositionTickUpper, upperPositionTickLower, upperPositionTickUpper, xAmountLower, yAmountLower, xAmountUpper, yAmountUpper, midLiquidity, uniV3PoolFeeDenominator, uniV3PoolFee} = context;
     
     console.log("Checking results:");
+    let poolTick = (await uniV3Pool.slot0()).tick;
+    console.log("··setting up pool");
+    console.log("····pool's tick is " + poolTick);
     
     // on block number 13268999, our univ3 pool has one active position: from -100 to 100 
     // we create two more positions to lengthen it
     console.log("··mint utility positions");
     let amountLower = await liquidityToY(-100, -100, -887220, midLiquidity, tickMath);
-    await mintPosition(tokens, [BigNumber.from(0), amountLower], [-887220, -100], deployer, hre, context);
+    let lowerToken = await mintPosition(tokens, [BigNumber.from(0), amountLower], [-887220, -100], deployer, hre, context);
     let amountUpper = await liquidityToX(100, 887220, 100, midLiquidity, tickMath);
-    await mintPosition(tokens, [amountUpper, BigNumber.from(0)], [100, 887220], deployer, hre, context);
+    let upperToken = await mintPosition(tokens, [amountUpper, BigNumber.from(0)], [100, 887220], deployer, hre, context);
 
     // set pool's tick to target
-    let poolTick = (await uniV3Pool.slot0()).tick;
+    poolTick = (await uniV3Pool.slot0()).tick;
     console.log("··setting up pool");
     console.log("····pool's tick is " + poolTick);
     console.log("····shift price to exact start of " + poolTick);
     let yAmount = await liquidityToY(poolTick, poolTick + 1, poolTick, midLiquidity, tickMath, (await uniV3Pool.slot0()).sqrtPriceX96);
-    await uniSwapTokensGivenOutput(swapRouter, tokens, 500, false, yAmount.sub("1000000000000"), hre, deployer); 
+    await uniSwapTokensGivenOutput(swapRouter, tokens, uniV3PoolFee, false, yAmount.sub("1000000000000"), hre, deployer); 
     console.log("····shift tick from " + poolTick + " to " + targetTick);
     let tokenAmounts = await tokenAmountsToShiftPosition(poolTick, targetTick, -887220, 887220, BigNumber.from("143542847431368536505"), tickMath);
     let swapZeroForOne = targetTick > poolTick;
@@ -446,15 +506,15 @@ async function simulateSwap(targetTick: number, tickShift: number,  swapAmounts:
                 ethers.constants.MaxUint256
             );
     }
-    await uniSwapTokensGivenOutput(swapRouter, tokens, 500, swapZeroForOne, swapZeroForOne ? tokenAmounts.deltaX : tokenAmounts.deltaY, hre, deployer); 
+    await uniSwapTokensGivenOutput(swapRouter, tokens, uniV3PoolFee, swapZeroForOne, swapZeroForOne ? tokenAmounts.deltaX : tokenAmounts.deltaY, hre, deployer); 
 
 
     // minting LStrategy's univ3 positions
     console.log("··minting lower and upper positions");
-    const resultLower = await mintPosition(tokens, [lowerToX, lowerToY], [lowerPositionTickLower, lowerPositionTickUpper], deployer, hre, context);
+    const resultLower = await mintPosition(tokens, [xAmountLower, yAmountLower], [lowerPositionTickLower, lowerPositionTickUpper], deployer, hre, context);
     let lowerStats = await positionManager.positions(resultLower.tokenId);
     console.log("····lower position's liquidity is " + lowerStats.liquidity.toString());
-    const resultUpper = await mintPosition(tokens, [upperToX, upperToY], [upperPositionTickLower, upperPositionTickUpper], deployer, hre, context);
+    const resultUpper = await mintPosition(tokens, [xAmountUpper, yAmountUpper], [upperPositionTickLower, upperPositionTickUpper], deployer, hre, context);
     let upperStats = await positionManager.positions(resultUpper.tokenId);
     console.log("····upper position's liquidity is " + upperStats.liquidity.toString());
     console.log("··pool is set up");
@@ -462,18 +522,18 @@ async function simulateSwap(targetTick: number, tickShift: number,  swapAmounts:
     
     // check if first swap is correct
     console.log("··swapping " + swapAmounts[0].toString() + " of 0");
-    let out = await uniSwapTokensGivenInput(swapRouter, tokens, 500, false, swapAmounts[0], hre, deployer);  
+    let out = await uniSwapTokensGivenInput(swapRouter, tokens, uniV3PoolFee, false, swapAmounts[0], hre, deployer);  
     console.log("····post-swap tick is " + (await uniV3Pool.slot0()).tick);
-    expect(Math.abs((await uniV3Pool.slot0()).tick - targetTick)).to.be.eq(tickShift);
+    expect(Math.abs(targetTick - (await uniV3Pool.slot0()).tick - tickShift)).to.be.lte(1);
 
     // return tick to target
     console.log("··unswap");
-    await uniSwapTokensGivenInput(swapRouter, tokens, 500, true, out.mul(uniV3PoolFeeDenominator + 500).div(uniV3PoolFeeDenominator), hre, deployer);  
+    await uniSwapTokensGivenInput(swapRouter, tokens, uniV3PoolFee, true, out.mul(uniV3PoolFeeDenominator + uniV3PoolFee).div(uniV3PoolFeeDenominator), hre, deployer);  
     console.log("····tick is " + (await uniV3Pool.slot0()).tick);
     
     // check if second swap is correct
     console.log("··swapping " + swapAmounts[1].toString() + " of 1");
-    out = await uniSwapTokensGivenInput(swapRouter, tokens, 500, true, swapAmounts[1], hre, deployer);  
+    out = await uniSwapTokensGivenInput(swapRouter, tokens, uniV3PoolFee, true, swapAmounts[1], hre, deployer);  
     console.log("····post-swap tick is " + (await uniV3Pool.slot0()).tick);
-    expect(Math.abs((await uniV3Pool.slot0()).tick - targetTick)).to.be.eq(tickShift);
+    expect(Math.abs((await uniV3Pool.slot0()).tick - targetTick - tickShift)).to.be.lte(1);
 }
