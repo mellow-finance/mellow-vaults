@@ -193,7 +193,11 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
     }
 
-    function _getRatios(uint256 uniV3Nft, int24 averageTick) internal view returns (uint256 token0RatioD, uint256 token1RatioD) {
+    function _getRatios(uint256 uniV3Nft, int24 averageTick)
+        internal
+        view
+        returns (uint256 token0RatioD, uint256 token1RatioD)
+    {
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = positionManager.positions(uniV3Nft);
         uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(lowerTick);
         uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(upperTick);
@@ -339,18 +343,85 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         (int24 averageTick, uint256 priceX96) = _getAverageTickAndPrice(pool);
         (uint256 token0RatioD, uint256 token1RatioD) = _getRatios(uniV3Nft, averageTick);
         uint256 uniV3RatioD = DENOMINATOR - token0RatioD - token1RatioD;
-        
+
         uint256 moneyTvlInToken0 = _getTvlInToken0(address(moneyVault), priceX96);
         uint256 erc20TvlInToken0 = _getTvlInToken0(address(erc20Vault), priceX96);
         uint256 uniV3TvlInToken0 = _getTvlInToken0(address(uniV3Vault), priceX96);
-        uint256 expectedCapitalOnUniV3 = FullMath.mulDiv(uniV3RatioD,  moneyTvlInToken0 + erc20TvlInToken0 + uniV3TvlInToken0, DENOMINATOR);
+        uint256 expectedCapitalOnUniV3 = FullMath.mulDiv(
+            uniV3RatioD,
+            moneyTvlInToken0 + erc20TvlInToken0 + uniV3TvlInToken0,
+            DENOMINATOR
+        );
 
         if (expectedCapitalOnUniV3 > uniV3TvlInToken0) {
             uint256 delta = expectedCapitalOnUniV3 - uniV3TvlInToken0;
-            
+
+            (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(
+                uniV3Nft
+            );
+            uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
+            uint160 currentTickRatio = TickMath.getSqrtRatioAtTick(averageTick);
+            uint160 lowerTickRatio = TickMath.getSqrtRatioAtTick(lowerTick);
+            uint160 upperTickRatio = TickMath.getSqrtRatioAtTick(upperTick);
+
+            (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+                currentTickRatio,
+                lowerTickRatio,
+                upperTickRatio,
+                liquidityAmountForPull
+            );
+
+            uint256[] memory tokenAmounts = new uint256[](2);
+            tokenAmounts[0] = token0Amount;
+            tokenAmounts[1] = token1Amount;
+            {
+                (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+                uint256[] memory amountsForPull = new uint256[](2);
+                bool pullNeeded = false;
+                for (uint256 i = 0; i < 2; i++) {
+                    if (erc20Tvl[i] < tokenAmounts[i]) {
+                        amountsForPull[i] = tokenAmounts[i] - erc20Tvl[i];
+                        pullNeeded = true;
+                    }
+                }
+                if (pullNeeded) {
+                    moneyVault.pull(address(erc20Vault), tokens, amountsForPull, options);
+                }
+            }
+            erc20Vault.pull(
+                address(erc20Vault),
+                tokens,
+                tokenAmounts,
+                _makeUniswapVaultOptions(tokenAmounts, deadline)
+            );
         } else {
             uint256 delta = uniV3TvlInToken0 - expectedCapitalOnUniV3;
-                
+            // delta / uniV3TvlInToken0 - part of total liquidity that univ3vault has
+
+            (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(
+                uniV3Nft
+            );
+            uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
+            uint160 currentTickRatio = TickMath.getSqrtRatioAtTick(averageTick);
+            uint160 lowerTickRatio = TickMath.getSqrtRatioAtTick(lowerTick);
+            uint160 upperTickRatio = TickMath.getSqrtRatioAtTick(upperTick);
+
+            (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+                currentTickRatio,
+                lowerTickRatio,
+                upperTickRatio,
+                liquidityAmountForPull
+            );
+
+            uint256[] memory tokenAmounts = new uint256[](2);
+            tokenAmounts[0] = token0Amount;
+            tokenAmounts[1] = token1Amount;
+            uniV3Vault.pull(
+                address(erc20Vault),
+                tokens,
+                tokenAmounts,
+                _makeUniswapVaultOptions(tokenAmounts, deadline)
+            );
         }
     }
 
