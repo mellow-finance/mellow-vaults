@@ -149,10 +149,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         fromVault.pull(address(toVault), tokens, tokenAmounts, vaultOptions);
     }
 
-    // burn                     burnAmount
-    // bi                       swapAmount
-    // mint                     ---
-    // rebalanceVaults          minIncrease, minDecrease liquidity amounts
     function rebalance(
         uint256[] memory burnTokenAmounts,
         uint256[] memory swapTokenAmounts,
@@ -164,13 +160,13 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         _requireAdmin();
         _burnRebalance(burnTokenAmounts);
         _biRebalance(swapTokenAmounts, deadline, options);
-        _mintRebalance(deadline); // mint position by minimal token amounts
-        _rebalanceUniV3Vault(increaseTokenAmounts, decreaseTokenAmounts, deadline, options); // decrease of increase liquidity on uniV3Pool
+        _mintRebalance(deadline);
+        _rebalanceUniV3Vault(increaseTokenAmounts, decreaseTokenAmounts, deadline, options);
     }
 
     /// @dev if the current tick differs from lastMintRebalanceTick by more than burnDeltaTicks,
     /// then function transfers all tokens from UniV3Vault to ERC20Vault and burns the position by uniV3Nft
-    function _burnRebalance(uint256[] memory burnTokenAmount) internal {
+    function _burnRebalance(uint256[] memory burnTokenAmounts) internal {
         uint256 uniV3Nft = uniV3Vault.nft();
         if (uniV3Nft == 0) {
             return;
@@ -187,7 +183,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         if (delta > strategyParams_.burnDeltaTicks) {
             uint256[] memory collectedTokens = uniV3Vault.collectEarnings();
             for (uint256 i = 0; i < 2; i++) {
-                require(collectedTokens[i] >= burnTokenAmount[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+                require(collectedTokens[i] >= burnTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
             }
             (, , , , , , , uint256 liquidity, , , , ) = positionManager.positions(uniV3Nft);
             require(liquidity == 0, ExceptionsLibrary.INVARIANT);
@@ -196,7 +192,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             emit BurnUniV3Position(tx.origin, uniV3Nft);
         }
     }
-
 
     function _getRatios(uint256 uniV3Nft, int24 averageTick) internal view returns (uint256 token0RatioD, uint256 token1RatioD) {
         (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = positionManager.positions(uniV3Nft);
