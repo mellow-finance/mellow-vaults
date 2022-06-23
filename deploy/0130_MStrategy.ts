@@ -103,10 +103,10 @@ const setupStrategy = async (
     const ratioParams = {
         tickMin: 189324,
         tickMax: 207242,
-        erc20MoneyRatioD: BigNumber.from(10).pow(8),
         minTickRebalanceThreshold: BigNumber.from(1200),
         tickNeighborhood: 50,
         tickIncrease: 10,
+        erc20MoneyRatioD: BigNumber.from(10).pow(8),
         minErc20MoneyRatioDeviation0D: BigNumber.from(10).pow(9),
         minErc20MoneyRatioDeviation1D: BigNumber.from(10).pow(9),
     };

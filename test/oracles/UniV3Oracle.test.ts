@@ -56,7 +56,7 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
         it("returns prices", async () => {
             for (var setBitsCount = 0; setBitsCount < 5; setBitsCount++) {
                 const mask = BigNumber.from((1 << (setBitsCount + 1)) - 2);
-                const pricesResult = await this.subject.price(
+                const pricesResult = await this.subject.priceX96(
                     this.usdc.address,
                     this.weth.address,
                     mask
@@ -79,13 +79,13 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
                 const DENOMINATOR_POWER = 96;
                 const EPS_POWER = 32;
 
-                const pricesResult = await this.subject.price(
+                const pricesResult = await this.subject.priceX96(
                     this.usdc.address,
                     this.weth.address,
                     mask
                 );
 
-                const pricesResultSwapped = await this.subject.price(
+                const pricesResultSwapped = await this.subject.priceX96(
                     this.weth.address,
                     this.usdc.address,
                     mask
@@ -118,7 +118,7 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
         describe("edge cases:", () => {
             describe("when index of one of pools is zero", () => {
                 it("does not return prices", async () => {
-                    const pricesResult = await this.subject.price(
+                    const pricesResult = await this.subject.priceX96(
                         this.usdc.address,
                         ADDRESS_ZERO,
                         BigNumber.from(30)
@@ -234,7 +234,7 @@ contract<UniV3Oracle, DeployOptions, CustomContext>("UniV3Oracle", function () {
         var [correctPricesX96, correctSafetyIndexes] =
             await calculateCorrectValuesForMask(poolUsdcWeth, safetyIndicesSet);
 
-        const pricesResult = await this.subject.price(
+        const pricesResult = await this.subject.priceX96(
             token0,
             token1,
             safetyIndicesSet
