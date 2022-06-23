@@ -197,6 +197,16 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
     }
 
+
+    function _getRatios(uint256 uniV3Nft, int24 averageTick) internal view returns (uint256 token0RatioD, uint256 token1RatioD) {
+        (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = positionManager.positions(uniV3Nft);
+        uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(lowerTick);
+        uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(upperTick);
+        uint160 sqrtCurrentRatio = TickMath.getSqrtRatioAtTick(averageTick);
+        token0RatioD = FullMath.mulDiv(sqrtCurrentRatio, token0RatioD, sqrtUpperPriceX96);
+        token1RatioD = FullMath.mulDiv(sqrtLowerPriceX96, token0RatioD, sqrtCurrentRatio);
+    }
+
     function _biRebalance(
         uint256[] memory swapTokenAmounts,
         uint256 deadline,
@@ -209,12 +219,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             {
                 uint256 uniV3Nft = uniV3Vault.nft();
                 if (uniV3Nft != 0) {
-                    (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = positionManager.positions(uniV3Nft);
-                    uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(lowerTick);
-                    uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(upperTick);
-                    uint160 sqrtCurrentRatio = TickMath.getSqrtRatioAtTick(averageTick);
-                    token0RatioD = FullMath.mulDiv(sqrtCurrentRatio, token0RatioD, sqrtUpperPriceX96);
-                    token1RatioD = FullMath.mulDiv(sqrtLowerPriceX96, token0RatioD, sqrtCurrentRatio);
+                    (token0RatioD, token1RatioD) = _getRatios(uniV3Nft, averageTick);
                 }
             }
             uint256 amountIn = 0;
@@ -320,6 +325,11 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         lastMintRebalanceTick = newMintTick;
     }
 
+    function _getTvlInToken0(address vaultAddress, uint256 priceX96) internal returns (uint256 amount) {
+        (uint256[] memory tvl, ) = IIntegrationVault(vaultAddress).tvl();
+        return tvl[0] + FullMath.mulDiv(tvl[1], CommonLibrary.Q96, priceX96);
+    }
+
     function _rebalanceUniV3Vault(
         uint256[] memory increaseTokenAmounts,
         uint256[] memory decreaseTokenAmounts,
@@ -331,9 +341,22 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             return;
         }
 
-        // we know, that on erc20Vault and on Aave vault tokens have correct proportion
-        // also between these two vault protortion also good
-        // we dont know what is the correct proportion on this vault
+        (int24 averageTick, uint256 priceX96) = _getAverageTickAndPrice(pool);
+        (uint256 token0RatioD, uint256 token1RatioD) = _getRatios(uniV3Nft, averageTick);
+        uint256 uniV3RatioD = DENOMINATOR - token0RatioD - token1RatioD;
+        
+        uint256 moneyTvlInToken0 = _getTvlInToken0(address(moneyVault), priceX96);
+        uint256 erc20TvlInToken0 = _getTvlInToken0(address(erc20Vault), priceX96);
+        uint256 uniV3TvlInToken0 = _getTvlInToken0(address(uniV3Vault), priceX96);
+        uint256 expectedCapitalOnUniV3 = FullMath.mulDiv(uniV3RatioD,  moneyTvlInToken0 + erc20TvlInToken0 + uniV3TvlInToken0, DENOMINATOR);
+
+        if (expectedCapitalOnUniV3 > uniV3TvlInToken0) {
+            uint256 delta = expectedCapitalOnUniV3 - uniV3TvlInToken0;
+            
+        } else {
+            uint256 delta = uniV3TvlInToken0 - expectedCapitalOnUniV3;
+                
+        }
     }
 
     function _getAverageTickAndPrice(IUniswapV3Pool pool_) internal view returns (int24 averageTick, uint256 priceX96) {
