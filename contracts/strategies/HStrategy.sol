@@ -36,12 +36,8 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         uint32 oracleObservationDelta;
         uint32 slippage;
         uint32 erc20MoneyRatioD;
-    }
-
-    struct InternalRatioParams {
-        uint256 token0MoneyRatio;
-        uint256 token1MoneyRatio;
-        uint256 uniswapPoolRatio;
+        uint256 minToken0AmountForMint;
+        uint256 minToken1AmountForMint;
     }
 
     IERC20Vault public erc20Vault;
@@ -159,9 +155,24 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     ) external {
         _requireAdmin();
         _burnRebalance(burnTokenAmounts);
-        _biRebalance(swapTokenAmounts, deadline, options);
         _mintRebalance(deadline);
-        _rebalanceUniV3Vault(increaseTokenAmounts, decreaseTokenAmounts, deadline, options);
+        // _smartRebalance();
+        // 1. пушим излишние токены на erc20Vault
+        // 2. делаем своп согласно количеству токенов, которое необходимо получить по итогу
+        // 3. пушим токены на univ3 && moneyvault
+    }
+
+    function _getAverageTickAndPrice(IUniswapV3Pool pool_) internal view returns (int24 averageTick, uint256 priceX96) {
+        uint32 oracleObservationDelta = strategyParams.oracleObservationDelta;
+        (, int24 tick, , , , , ) = pool_.slot0();
+        bool withFail = false;
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        // Fails when we dont have observations, so return spot tick as this was the last trade price
+        if (withFail) {
+            averageTick = tick;
+        }
+        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(averageTick);
+        priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
     }
 
     /// @dev if the current tick differs from lastMintRebalanceTick by more than burnDeltaTicks,
@@ -190,97 +201,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             positionManager.burn(uniV3Nft);
 
             emit BurnUniV3Position(tx.origin, uniV3Nft);
-        }
-    }
-
-    function _getRatios(uint256 uniV3Nft, int24 averageTick)
-        internal
-        view
-        returns (uint256 token0RatioD, uint256 token1RatioD)
-    {
-        (, , , , , int24 lowerTick, int24 upperTick, , , , , ) = positionManager.positions(uniV3Nft);
-        uint160 sqrtLowerPriceX96 = TickMath.getSqrtRatioAtTick(lowerTick);
-        uint160 sqrtUpperPriceX96 = TickMath.getSqrtRatioAtTick(upperTick);
-        uint160 sqrtCurrentRatio = TickMath.getSqrtRatioAtTick(averageTick);
-        token0RatioD = FullMath.mulDiv(sqrtCurrentRatio, token0RatioD, sqrtUpperPriceX96);
-        token1RatioD = FullMath.mulDiv(sqrtLowerPriceX96, token0RatioD, sqrtCurrentRatio);
-    }
-
-    function _biRebalance(
-        uint256[] memory swapTokenAmounts,
-        uint256 deadline,
-        bytes memory options
-    ) internal returns (uint256[] memory amountsOut) {
-        {
-            (int24 averageTick, uint256 priceX96) = _getAverageTickAndPrice(pool);
-            uint256 token0RatioD = DENOMINATOR >> 1;
-            uint256 token1RatioD = DENOMINATOR >> 1;
-            {
-                uint256 uniV3Nft = uniV3Vault.nft();
-                if (uniV3Nft != 0) {
-                    (token0RatioD, token1RatioD) = _getRatios(uniV3Nft, averageTick);
-                }
-            }
-            uint256 amountIn = 0;
-            uint256 tokenInIndex = 0;
-            (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-            {
-                if (moneyVault.supportsInterface(type(IAaveVault).interfaceId)) {
-                    IAaveVault(address(moneyVault)).updateTvls();
-                }
-                (uint256[] memory moneyTvl, ) = moneyVault.tvl();
-                uint256 token0Term = FullMath.mulDiv(
-                    FullMath.mulDiv(token1RatioD, priceX96, CommonLibrary.Q96),
-                    erc20Tvl[0] + moneyTvl[0],
-                    DENOMINATOR
-                );
-
-                uint256 token1Term = FullMath.mulDiv(token0RatioD, erc20Tvl[1] + moneyTvl[1], DENOMINATOR);
-                if (token0Term >= token1Term) {
-                    amountIn = FullMath.mulDiv(token0Term - token1Term, CommonLibrary.Q96, priceX96);
-                    tokenInIndex = 0;
-                } else {
-                    amountIn = token1Term - token0Term;
-                    tokenInIndex = 1;
-                }
-            }
-            // if there are not enough tokens on erc20Vault, then we pull them from moneyVault
-            if (erc20Tvl[tokenInIndex] < amountIn) {
-                uint256[] memory tokenForPull = new uint256[](2);
-                tokenForPull[tokenInIndex] = amountIn - erc20Tvl[tokenInIndex];
-                moneyVault.pull(address(erc20Vault), tokens, tokenForPull, options);
-                (erc20Tvl, ) = erc20Vault.tvl();
-                amountIn = erc20Tvl[tokenInIndex];
-            }
-
-            amountsOut = _swapTokensOnERC20Vault(amountIn, tokenInIndex, swapTokenAmounts, deadline);
-        }
-
-        // TODO: rewrite it in a better way
-        // rebalance erc20/moneyvault by given ratio
-        {
-            (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-            (uint256[] memory moneyTvl, ) = moneyVault.tvl();
-            for (uint256 i = 0; i < 2; i++) {
-                uint256 erc20Amount = erc20Tvl[i];
-                uint256 moneyAmount = moneyTvl[i];
-                uint256 ratioValue = FullMath.mulDiv(
-                    strategyParams.erc20MoneyRatioD,
-                    erc20Amount + moneyAmount,
-                    DENOMINATOR
-                );
-                if (ratioValue > erc20Amount) {
-                    uint256 delta = ratioValue - erc20Amount;
-                    uint256[] memory pullAmounts = new uint256[](2);
-                    pullAmounts[i] = delta;
-                    moneyVault.pull(address(erc20Vault), tokens, pullAmounts, options);
-                } else {
-                    uint256 delta = erc20Amount - ratioValue;
-                    uint256[] memory pullAmounts = new uint256[](2);
-                    pullAmounts[i] = delta;
-                    erc20Vault.pull(address(moneyVault), tokens, pullAmounts, options);
-                }
-            }
         }
     }
 
@@ -322,158 +242,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             deadline
         );
         lastMintRebalanceTick = newMintTick;
-    }
-
-    function _getTvlInToken0(address vaultAddress, uint256 priceX96) internal view returns (uint256 amount) {
-        (uint256[] memory tvl, ) = IIntegrationVault(vaultAddress).tvl();
-        return tvl[0] + FullMath.mulDiv(tvl[1], CommonLibrary.Q96, priceX96);
-    }
-
-    function _rebalanceUniV3Vault(
-        uint256[] memory increaseTokenAmounts,
-        uint256[] memory decreaseTokenAmounts,
-        uint256 deadline,
-        bytes memory options
-    ) internal {
-        uint256 uniV3Nft = uniV3Vault.nft();
-        if (uniV3Nft == 0) {
-            return;
-        }
-
-        (int24 averageTick, uint256 priceX96) = _getAverageTickAndPrice(pool);
-
-        uint256 uniV3TvlInToken0 = _getTvlInToken0(address(uniV3Vault), priceX96);
-        uint256 expectedCapitalOnUniV3;
-        {
-            (uint256 token0RatioD, uint256 token1RatioD) = _getRatios(uniV3Nft, averageTick);
-            uint256 uniV3RatioD = DENOMINATOR - token0RatioD - token1RatioD;
-            expectedCapitalOnUniV3 = FullMath.mulDiv(
-                uniV3RatioD,
-                _getTvlInToken0(address(moneyVault), priceX96) +
-                    _getTvlInToken0(address(erc20Vault), priceX96) +
-                    uniV3TvlInToken0,
-                DENOMINATOR
-            );
-        }
-        if (expectedCapitalOnUniV3 > uniV3TvlInToken0) {
-            _decreaseLiquidity(
-                decreaseTokenAmounts,
-                expectedCapitalOnUniV3,
-                uniV3TvlInToken0,
-                uniV3Nft,
-                averageTick,
-                options,
-                deadline
-            );
-        } else {
-            _increaseLiquidity(
-                increaseTokenAmounts,
-                uniV3TvlInToken0,
-                expectedCapitalOnUniV3,
-                uniV3Nft,
-                deadline,
-                averageTick
-            );
-        }
-    }
-
-    function _decreaseLiquidity(
-        uint256[] memory decreaseTokenAmounts,
-        uint256 expectedCapitalOnUniV3,
-        uint256 uniV3TvlInToken0,
-        uint256 nft,
-        int24 averageTick,
-        bytes memory options,
-        uint256 deadline
-    ) internal {
-        uint256 delta = expectedCapitalOnUniV3 - uniV3TvlInToken0;
-        uint256[] memory tokenAmounts = new uint256[](2);
-
-        {
-            (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(nft);
-            uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
-            uint160 currentTickRatio = TickMath.getSqrtRatioAtTick(averageTick);
-            uint160 lowerTickRatio = TickMath.getSqrtRatioAtTick(lowerTick);
-            uint160 upperTickRatio = TickMath.getSqrtRatioAtTick(upperTick);
-            (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
-                currentTickRatio,
-                lowerTickRatio,
-                upperTickRatio,
-                liquidityAmountForPull
-            );
-        }
-        {
-            (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-            uint256[] memory amountsForPull = new uint256[](2);
-            for (uint256 i = 0; i < 2; i++) {
-                if (erc20Tvl[i] < tokenAmounts[i]) {
-                    amountsForPull[i] = tokenAmounts[i] - erc20Tvl[i];
-                }
-            }
-            moneyVault.pull(address(erc20Vault), tokens, amountsForPull, options);
-        }
-        {
-            uint256[] memory pulledAmount = erc20Vault.pull(
-                address(erc20Vault),
-                tokens,
-                tokenAmounts,
-                _makeUniswapVaultOptions(tokenAmounts, deadline)
-            );
-            for (uint256 i = 0; i < 2; i++) {
-                require(pulledAmount[i] >= decreaseTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-            }
-        }
-    }
-
-    function _increaseLiquidity(
-        uint256[] memory increaseTokenAmounts,
-        uint256 uniV3TvlInToken0,
-        uint256 expectedCapitalOnUniV3,
-        uint256 nft,
-        uint256 deadline,
-        int24 averageTick
-    ) internal {
-        uint256 delta = uniV3TvlInToken0 - expectedCapitalOnUniV3;
-        (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(nft);
-        uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
-        uint256[] memory tokenAmounts = new uint256[](2);
-        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
-            TickMath.getSqrtRatioAtTick(averageTick),
-            TickMath.getSqrtRatioAtTick(lowerTick),
-            TickMath.getSqrtRatioAtTick(upperTick),
-            liquidityAmountForPull
-        );
-        {
-            uint256[] memory pulledAmount = uniV3Vault.pull(
-                address(erc20Vault),
-                tokens,
-                tokenAmounts,
-                _makeUniswapVaultOptions(tokenAmounts, deadline)
-            );
-
-            for (uint256 i = 0; i < 2; i++) {
-                require(pulledAmount[i] >= increaseTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-            }
-        }
-    }
-
-    function _getAverageTickAndPrice(IUniswapV3Pool pool_) internal view returns (int24 averageTick, uint256 priceX96) {
-        uint32 oracleObservationDelta = strategyParams.oracleObservationDelta;
-        (, int24 tick, , , , , ) = pool_.slot0();
-        bool withFail = false;
-        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
-        // Fails when we dont have observations, so return spot tick as this was the last trade price
-        if (withFail) {
-            averageTick = tick;
-        }
-        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(averageTick);
-        priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
-    }
-
-    function _getTokenAmountInVaults(uint256 tokenIndex) internal view returns (uint256 amount) {
-        (uint256[] memory moneyVaultTvl, ) = moneyVault.tvl();
-        (uint256[] memory erc20VaultTvl, ) = erc20Vault.tvl();
-        amount = moneyVaultTvl[tokenIndex] + erc20VaultTvl[tokenIndex];
     }
 
     function _swapTokensOnERC20Vault(
