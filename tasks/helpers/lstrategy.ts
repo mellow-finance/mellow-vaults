@@ -354,6 +354,7 @@ export const getStrategyStats = async (hre: HardhatRuntimeEnvironment, context: 
     );
 
     const [erc20Tvl, ] = await vault.tvl();
+    const [lowerTvlLeft, upperTvlRight] = await lowerVault.tvl();
     return {
         erc20token0: erc20Tvl[0],
         erc20token1: erc20Tvl[1],

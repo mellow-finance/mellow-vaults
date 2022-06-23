@@ -859,13 +859,13 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
 const reportStats = async (hre: HardhatRuntimeEnvironment, context: Context, fname: string) => {
     const stats = await getStrategyStats(hre, context);
     const content = (
-        stats.erc20token0.toString() + " " +
-        stats.erc20token1.toString() + " " +
-        stats.lowerVaultLiquidity.toString() + " " +
-        stats.lowerVaultTokenOwed0.toString() + " " +
-        stats.lowerVaultTokenOwed1.toString() + " " +
-        stats.upperVaultLiquidity.toString() + " " +
-        stats.upperVaultTokenOwed0.toString() + " " +
+        stats.erc20token0.toString() + "," +
+        stats.erc20token1.toString() + "," +
+        stats.lowerVaultLiquidity.toString() + "," +
+        stats.lowerVaultTokenOwed0.toString() + "," +
+        stats.lowerVaultTokenOwed1.toString() + "," +
+        stats.upperVaultLiquidity.toString() + "," +
+        stats.upperVaultTokenOwed0.toString() + "," +
         stats.upperVaultTokenOwed1.toString() + "\n"
     );
     fs.writeFile(fname, content, { flag: "a+"}, err => {});
@@ -894,11 +894,9 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
 
     let prev = Date.now();
     for (let i = 1; i < 100; ++i) {
-        console.log(i);
         reportStats(hre, context, "output.csv");
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
         await makeRebalances(hre, context, stringToPriceX96(prices[i]));
-        let current = Date.now();
     }
     console.log("Duration: ", Date.now() - prev);
 };
