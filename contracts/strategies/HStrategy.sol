@@ -324,7 +324,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         lastMintRebalanceTick = newMintTick;
     }
 
-    function _getTvlInToken0(address vaultAddress, uint256 priceX96) internal returns (uint256 amount) {
+    function _getTvlInToken0(address vaultAddress, uint256 priceX96) internal view returns (uint256 amount) {
         (uint256[] memory tvl, ) = IIntegrationVault(vaultAddress).tvl();
         return tvl[0] + FullMath.mulDiv(tvl[1], CommonLibrary.Q96, priceX96);
     }
@@ -341,87 +341,119 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
 
         (int24 averageTick, uint256 priceX96) = _getAverageTickAndPrice(pool);
-        (uint256 token0RatioD, uint256 token1RatioD) = _getRatios(uniV3Nft, averageTick);
-        uint256 uniV3RatioD = DENOMINATOR - token0RatioD - token1RatioD;
 
-        uint256 moneyTvlInToken0 = _getTvlInToken0(address(moneyVault), priceX96);
-        uint256 erc20TvlInToken0 = _getTvlInToken0(address(erc20Vault), priceX96);
         uint256 uniV3TvlInToken0 = _getTvlInToken0(address(uniV3Vault), priceX96);
-        uint256 expectedCapitalOnUniV3 = FullMath.mulDiv(
-            uniV3RatioD,
-            moneyTvlInToken0 + erc20TvlInToken0 + uniV3TvlInToken0,
-            DENOMINATOR
-        );
-
+        uint256 expectedCapitalOnUniV3;
+        {
+            (uint256 token0RatioD, uint256 token1RatioD) = _getRatios(uniV3Nft, averageTick);
+            uint256 uniV3RatioD = DENOMINATOR - token0RatioD - token1RatioD;
+            expectedCapitalOnUniV3 = FullMath.mulDiv(
+                uniV3RatioD,
+                _getTvlInToken0(address(moneyVault), priceX96) +
+                    _getTvlInToken0(address(erc20Vault), priceX96) +
+                    uniV3TvlInToken0,
+                DENOMINATOR
+            );
+        }
         if (expectedCapitalOnUniV3 > uniV3TvlInToken0) {
-            uint256 delta = expectedCapitalOnUniV3 - uniV3TvlInToken0;
-
-            (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(
-                uniV3Nft
-            );
-            uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
-            uint160 currentTickRatio = TickMath.getSqrtRatioAtTick(averageTick);
-            uint160 lowerTickRatio = TickMath.getSqrtRatioAtTick(lowerTick);
-            uint160 upperTickRatio = TickMath.getSqrtRatioAtTick(upperTick);
-
-            (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
-                currentTickRatio,
-                lowerTickRatio,
-                upperTickRatio,
-                liquidityAmountForPull
-            );
-
-            uint256[] memory tokenAmounts = new uint256[](2);
-            tokenAmounts[0] = token0Amount;
-            tokenAmounts[1] = token1Amount;
-            {
-                (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-                uint256[] memory amountsForPull = new uint256[](2);
-                bool pullNeeded = false;
-                for (uint256 i = 0; i < 2; i++) {
-                    if (erc20Tvl[i] < tokenAmounts[i]) {
-                        amountsForPull[i] = tokenAmounts[i] - erc20Tvl[i];
-                        pullNeeded = true;
-                    }
-                }
-                if (pullNeeded) {
-                    moneyVault.pull(address(erc20Vault), tokens, amountsForPull, options);
-                }
-            }
-            erc20Vault.pull(
-                address(erc20Vault),
-                tokens,
-                tokenAmounts,
-                _makeUniswapVaultOptions(tokenAmounts, deadline)
+            _decreaseLiquidity(
+                decreaseTokenAmounts,
+                expectedCapitalOnUniV3,
+                uniV3TvlInToken0,
+                uniV3Nft,
+                averageTick,
+                options,
+                deadline
             );
         } else {
-            uint256 delta = uniV3TvlInToken0 - expectedCapitalOnUniV3;
-            // delta / uniV3TvlInToken0 - part of total liquidity that univ3vault has
-
-            (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(
-                uniV3Nft
+            _increaseLiquidity(
+                increaseTokenAmounts,
+                uniV3TvlInToken0,
+                expectedCapitalOnUniV3,
+                uniV3Nft,
+                deadline,
+                averageTick
             );
+        }
+    }
+
+    function _decreaseLiquidity(
+        uint256[] memory decreaseTokenAmounts,
+        uint256 expectedCapitalOnUniV3,
+        uint256 uniV3TvlInToken0,
+        uint256 nft,
+        int24 averageTick,
+        bytes memory options,
+        uint256 deadline
+    ) internal {
+        uint256 delta = expectedCapitalOnUniV3 - uniV3TvlInToken0;
+        uint256[] memory tokenAmounts = new uint256[](2);
+
+        {
+            (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(nft);
             uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
             uint160 currentTickRatio = TickMath.getSqrtRatioAtTick(averageTick);
             uint160 lowerTickRatio = TickMath.getSqrtRatioAtTick(lowerTick);
             uint160 upperTickRatio = TickMath.getSqrtRatioAtTick(upperTick);
-
-            (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+            (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
                 currentTickRatio,
                 lowerTickRatio,
                 upperTickRatio,
                 liquidityAmountForPull
             );
-
-            uint256[] memory tokenAmounts = new uint256[](2);
-            tokenAmounts[0] = token0Amount;
-            tokenAmounts[1] = token1Amount;
-            uniV3Vault.pull(
+        }
+        {
+            (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+            uint256[] memory amountsForPull = new uint256[](2);
+            for (uint256 i = 0; i < 2; i++) {
+                if (erc20Tvl[i] < tokenAmounts[i]) {
+                    amountsForPull[i] = tokenAmounts[i] - erc20Tvl[i];
+                }
+            }
+            moneyVault.pull(address(erc20Vault), tokens, amountsForPull, options);
+        }
+        {
+            uint256[] memory pulledAmount = erc20Vault.pull(
                 address(erc20Vault),
                 tokens,
                 tokenAmounts,
                 _makeUniswapVaultOptions(tokenAmounts, deadline)
             );
+            for (uint256 i = 0; i < 2; i++) {
+                require(pulledAmount[i] >= decreaseTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+            }
+        }
+    }
+
+    function _increaseLiquidity(
+        uint256[] memory increaseTokenAmounts,
+        uint256 uniV3TvlInToken0,
+        uint256 expectedCapitalOnUniV3,
+        uint256 nft,
+        uint256 deadline,
+        int24 averageTick
+    ) internal {
+        uint256 delta = uniV3TvlInToken0 - expectedCapitalOnUniV3;
+        (, , , , , int24 lowerTick, int24 upperTick, uint256 liquidity, , , , ) = positionManager.positions(nft);
+        uint128 liquidityAmountForPull = uint128(FullMath.mulDiv(delta, liquidity, uniV3TvlInToken0));
+        uint256[] memory tokenAmounts = new uint256[](2);
+        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
+            TickMath.getSqrtRatioAtTick(averageTick),
+            TickMath.getSqrtRatioAtTick(lowerTick),
+            TickMath.getSqrtRatioAtTick(upperTick),
+            liquidityAmountForPull
+        );
+        {
+            uint256[] memory pulledAmount = uniV3Vault.pull(
+                address(erc20Vault),
+                tokens,
+                tokenAmounts,
+                _makeUniswapVaultOptions(tokenAmounts, deadline)
+            );
+
+            for (uint256 i = 0; i < 2; i++) {
+                require(pulledAmount[i] >= increaseTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+            }
         }
     }
 
