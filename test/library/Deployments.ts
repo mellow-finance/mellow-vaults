@@ -878,7 +878,7 @@ export async function deploySystem(options: {
         LpIssuerGovernance,
         LpIssuerFactory,
     } = await deploySubVaultsXGatewayVaultSystem(options);
-    
+
     const lpIssuerDeployArgs = [
         tokens.map((token) => token.address),
         encodeToBytes(
