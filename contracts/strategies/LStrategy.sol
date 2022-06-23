@@ -15,7 +15,6 @@ import "../libraries/external/FullMath.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/GPv2Order.sol";
 import "../utils/DefaultAccessControl.sol";
-import "hardhat/console.sol";
 
 contract LStrategy is DefaultAccessControl, ILpCallback {
     using SafeERC20 for IERC20;
@@ -219,8 +218,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                     lowerTokenAmounts,
                     _makeUniswapVaultOptions(minLowerVaultTokens, deadline)
                 );
-                console.log(totalPulledAmounts[0]);
-                console.log(totalPulledAmounts[1]);
             }
             if (upperVaultLiquidity > 0) {
                 uint256[] memory pulledAmounts = erc20Vault.pull(
@@ -229,8 +226,6 @@ contract LStrategy is DefaultAccessControl, ILpCallback {
                     upperTokenAmounts,
                     _makeUniswapVaultOptions(minUpperVaultTokens, deadline)
                 );
-                console.log(pulledAmounts[0]);
-                console.log(pulledAmounts[1]);
                 for (uint256 i = 0; i < 2; i++) {
                     totalPulledAmounts[i] += pulledAmounts[i];
                 }

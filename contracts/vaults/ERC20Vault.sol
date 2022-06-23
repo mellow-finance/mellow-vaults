@@ -8,7 +8,6 @@ import "../interfaces/IProtocolGovernance.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that stores ERC20 tokens.
 contract ERC20Vault is IERC20Vault, IntegrationVault {
@@ -83,8 +82,6 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
             IIntegrationVault(to).push(tokens, pushTokenAmounts, options);
             // any accidental prior balances + push leftovers
             uint256[] memory reclaimed = IIntegrationVault(to).reclaimTokens(tokens);
-          //  console.log("R0", reclaimed[0]);
-          //  console.log("R1", reclaimed[1]);
             for (uint256 i = 0; i < tokenAmounts.length; i++) {
                 // equals to exactly how much is pushed
                 actualTokenAmounts[i] = actualTokenAmounts[i] >= reclaimed[i]

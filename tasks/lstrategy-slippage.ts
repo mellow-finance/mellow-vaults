@@ -7,7 +7,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
 import { BigNumberish, Contract, PopulatedTransaction } from "ethers";
 import { HardhatRuntimeEnvironment, Network } from "hardhat/types";
-import { TickMath } from "@uniswap/v3-sdk";
+import { FullMath, TickMath } from "@uniswap/v3-sdk";
 import {
     any,
     equals,
@@ -44,14 +44,26 @@ type Context = {
 
 task("lstrategy-slippage", "test slippages losses of LStrategy")
     .addParam(
+        "tickchange",
+        "Tick change done by the sandwicher",
+        undefined,
+        types.int,
+    )
+    .addParam(
+        "erc20ratio",
+        "Desired erc20ratio (5% if you want smth default)",
+        undefined,
+        types.int,
+    )
+    .addParam(
         "percentagechange",
         "Percentage flocking of capital during a rebalance",
         undefined,
         types.int,
     ).setAction(
-        async ({percentagechange}, hre: HardhatRuntimeEnvironment) => {
+        async ({tickchange, erc20ratio, percentagechange}, hre: HardhatRuntimeEnvironment) => {
             const context = await setup(hre);
-            await process(percentagechange, hre, context);
+            await process(tickchange, erc20ratio, percentagechange, hre, context);
         }
     );
 
@@ -983,12 +995,23 @@ const getPool = async (hre: HardhatRuntimeEnvironment, context: Context) => {
     return pool;
 };
 
+let wethProfit = BigNumber.from(0);
+let wstethProfit = BigNumber.from(0);
+
+let wethUsed = BigNumber.from(0);
+let wstethUsed = BigNumber.from(0);
+
 const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
+
+    const { ethers } = hre;
 
     let pool = await getPool(hre, context);
     let startTry = BigNumber.from(10).pow(17).mul(60);
 
     let needIncrease = 0; //mock initialization
+
+    let wethStart = await context.weth.balanceOf(context.deployer.address);
+    let wstethStart = await context.wsteth.balanceOf(context.deployer.address);
     
     while (true) {
 
@@ -998,12 +1021,14 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
         if (currentPoolTick.eq(tick)) {
             break;
         }
+
         
         if (currentPoolTick.lt(tick)) {
             if (needIncrease == 0) {
                 needIncrease = 1;
                 startTry = startTry.div(2);
             }
+            wethUsed = wethUsed.add(startTry);
             await swapTokens(
                 hre, 
                 context,
@@ -1020,6 +1045,7 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
                 needIncrease = 0;
                 startTry = startTry.div(2);
             }
+            wstethUsed = wstethUsed.add(startTry);
             await swapTokens(
                 hre, 
                 context,
@@ -1031,6 +1057,12 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
             );  
         }
     }
+
+    let wethEnd = await context.weth.balanceOf(context.deployer.address);
+    let wstethEnd = await context.wsteth.balanceOf(context.deployer.address);
+
+    wethProfit = wethProfit.add(wethEnd.sub(wethStart));
+    wstethProfit = wstethProfit.add(wstethEnd.sub(wstethStart));
 };
 
 const grantPermissions = async (hre: HardhatRuntimeEnvironment, context: Context, vault: string) => {
@@ -1063,6 +1095,11 @@ const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, pric
     return (minTvl[0].add(maxTvl[0])).div(2).mul(priceX96).div(BigNumber.from(2).pow(96)).add((minTvl[1].add(maxTvl[1])).div(2));
 };
 
+const getCapitalbyTokens = async (hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber, token0: BigNumber, token1: BigNumber)  => {
+
+    return token0.mul(priceX96).div(BigNumber.from(2).pow(96)).add(token1);
+};
+
 const assureEquality = async (hre: HardhatRuntimeEnvironment, context: Context, ratio: number) => {
 
     let priceX96 = await getPriceX96(hre, context);
@@ -1073,9 +1110,6 @@ const assureEquality = async (hre: HardhatRuntimeEnvironment, context: Context, 
 
     let capitalFirst = capitalErc20.mul(100 - ratio);   
     let capitalSecond = (capitalLower.add(capitalUpper)).mul(ratio);
-
-    console.log(capitalFirst);
-    console.log(capitalSecond);
 
     let delta = capitalFirst.sub(capitalSecond).abs();
     let maxBetweenCapitals = capitalFirst;
@@ -1092,7 +1126,75 @@ const setInitialPrice = async (hre: HardhatRuntimeEnvironment, context: Context,
     await changePrice(BigNumber.from(tick), hre, context);
 }
 
-const makeSwap = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+const swapWethToWsteth = async (
+    hre: HardhatRuntimeEnvironment,
+    context: Context,
+    amountIn: BigNumber,
+    minAmountOut: BigNumber,
+    tickPrice: number
+) => {
+    const erc20 = await context.LStrategy.erc20Vault();
+    const { deployer, wsteth, weth } = context;
+    const { ethers } = hre;
+    let erc20address = await context.LStrategy.erc20Vault();
+    const erc20Vault = await ethers.getContractAt(
+        "ERC20Vault",
+        erc20address,
+    );
+    const sqrtPricex96 = BigNumber.from(TickMath.getSqrtRatioAtTick(tickPrice).toString());
+    const priceX96 = sqrtPricex96.mul(sqrtPricex96).div(BigNumber.from(2).pow(96));
+
+    const denominator = BigNumber.from(2).pow(96);
+    const balance = await wsteth.balanceOf(deployer.address);
+    let expectedOut = amountIn.mul(denominator).div(priceX96);
+
+    if (expectedOut.gt(balance)) {
+        expectedOut = balance;
+    }
+    if (expectedOut.lt(minAmountOut)) {
+        return;
+    }
+    await withSigner(hre, erc20, async (signer) => {
+        await weth.connect(signer).transfer(deployer.address, amountIn);
+    });
+    await wsteth.connect(deployer).transfer(erc20, expectedOut);
+};
+
+const swapWstethToWeth = async (
+    hre: HardhatRuntimeEnvironment,
+    context: Context,
+    amountIn: BigNumber,
+    minAmountOut: BigNumber,
+    tickPrice: number
+) => {
+    const erc20 = await context.LStrategy.erc20Vault();
+    const { deployer, wsteth, weth } = context;
+    const { ethers } = hre;
+    let erc20address = await context.LStrategy.erc20Vault();
+    const erc20Vault = await ethers.getContractAt(
+        "ERC20Vault",
+        erc20address,
+    );
+
+    const sqrtPricex96 = BigNumber.from(TickMath.getSqrtRatioAtTick(tickPrice).toString());
+    const priceX96 = sqrtPricex96.mul(sqrtPricex96).div(BigNumber.from(2).pow(96));
+
+    const balance = await weth.balanceOf(deployer.address);
+    let expectedOut = amountIn.mul(priceX96).div(BigNumber.from(2).pow(96));
+
+    if (expectedOut.gt(balance)) {
+        expectedOut = balance;
+    }
+    if (expectedOut.lt(minAmountOut)) {
+        return;
+    }
+    await withSigner(hre, erc20, async (signer) => {
+        await wsteth.connect(signer).transfer(deployer.address, amountIn);
+    });
+    await weth.connect(deployer).transfer(erc20, expectedOut);
+};
+
+const makeSwap = async (hre: HardhatRuntimeEnvironment, context: Context, honestTick: number) => {
 
     const { ethers } = hre;
 
@@ -1103,35 +1205,22 @@ const makeSwap = async (hre: HardhatRuntimeEnvironment, context: Context) => {
     );
 
     let erc20Tvl = await vault.tvl();
-    let tokens = [context.wsteth, context.weth];
     let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
 
     if (delta.lt(BigNumber.from(-1))) {
-        await swapTokens(
-            hre,
-            context,
-            erc20Vault,
-            erc20Vault,
-            tokens[1],
-            tokens[0],
-            delta.div(2).mul(-1)
+        await swapWethToWsteth(
+            hre, context, delta.div(2).mul(-1), BigNumber.from(0), honestTick
         );
     }
 
     if (delta.gt(BigNumber.from(1))) {
-        await swapTokens(
-            hre,
-            context,
-            erc20Vault,
-            erc20Vault,
-            tokens[0],
-            tokens[1],
-            delta.div(2)
+        await swapWstethToWeth(
+            hre, context, delta.div(2), BigNumber.from(0), honestTick
         );
     }
 };
 
-const erc20Rebalance = async(hre: HardhatRuntimeEnvironment, context: Context, ratio: number) => {
+const erc20Rebalance = async(hre: HardhatRuntimeEnvironment, context: Context, ratio: number, honestTick: number) => {
 
     const { ethers } = hre;
 
@@ -1150,7 +1239,7 @@ const erc20Rebalance = async(hre: HardhatRuntimeEnvironment, context: Context, r
             ],
             ethers.constants.MaxUint256
         );
-        await makeSwap(hre, context);
+        await makeSwap(hre, context, honestTick);
     }
 
 };
@@ -1180,25 +1269,17 @@ const allCapital = async(hre: HardhatRuntimeEnvironment, context: Context) => {
     return (capitalErc20).add(capitalLower).add(capitalUpper);
 }
 
-const tvl = async(hre: HardhatRuntimeEnvironment, context: Context, vault: any) => {
-    const { ethers } = hre;
-    const vaultContract = await ethers.getContractAt(
-        "IVault",
-        vault
-    );
-    let tvl = await vaultContract.tvl();
-    return tvl[0];
-}
-
-const process = async (percentagechange: number, hre: HardhatRuntimeEnvironment, context: Context) => {
+const process = async (tickChange: number, erc20ratio: number, percentagechange: number, hre: HardhatRuntimeEnvironment, context: Context) => {
 
     const { ethers } = hre;
 
-    let percentageChange = 50;
+    let percentageChange = percentagechange;
 
-    const width = 30000;
-    const startPrice = 15000;
-    const finishPrice = 25000;
+    const width = tickChange * 2;
+    const startPrice = tickChange;
+    const finishPrice = tickChange + (tickChange - tickChange % 3) / 3;
+
+    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
 
     await mintMockPosition(hre, context); 
     await setInitialPrice(hre, context, startPrice);
@@ -1211,54 +1292,48 @@ const process = async (percentagechange: number, hre: HardhatRuntimeEnvironment,
     await grantPermissions(hre, context, lowerVault);
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
-
-   // await setInitialPrice(hre, context, 120);
     
-    await erc20Rebalance(hre, context, 5);
+    await erc20Rebalance(hre, context, erc20ratio, startPrice);
     await setInitialPrice(hre, context, startPrice);
 
-    expect(await assureEquality(hre, context, 5)).to.be.true;
+    expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
 
-    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(5 + percentageChange));
-    await erc20Rebalance(hre, context, 5 + percentageChange);
-    expect(await assureEquality(hre, context, 5 + percentageChange)).to.be.true;
+    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio + percentageChange));
+    await erc20Rebalance(hre, context, erc20ratio + percentageChange, startPrice);
+    expect(await assureEquality(hre, context, erc20ratio + percentageChange)).to.be.true;
 
-    console.log(await allCapital(hre, context));
-
-    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(5));
-    await erc20Rebalance(hre, context, 5);
-    expect(await assureEquality(hre, context, 5)).to.be.true;
+    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
+    await erc20Rebalance(hre, context, erc20ratio, startPrice);
+    expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
     let totalNormalCapital = await allCapital(hre, context);
 
-    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(5 + percentageChange));
-    await erc20Rebalance(hre, context, 5 + percentageChange);
-    expect(await assureEquality(hre, context, 5 + percentageChange)).to.be.true;
+    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio + percentageChange));
+    await erc20Rebalance(hre, context, erc20ratio + percentageChange, startPrice);
+    expect(await assureEquality(hre, context, erc20ratio + percentageChange)).to.be.true;
 
-    console.log(await allCapital(hre, context));
-    console.log(await tvl(hre, context, lowerVault));
-    console.log(await tvl(hre, context, upperVault));
-
-    let tick = await getUniV3Tick(hre, context);
     await setInitialPrice(hre, context, finishPrice);
     expect(finishPrice).to.be.eq(await getUniV3Tick(hre, context));
 
-    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(5));
-    console.log(await tvl(hre, context, lowerVault));
-    console.log(await tvl(hre, context, upperVault));
-    await erc20Rebalance(hre, context, 5);
-    console.log(await tvl(hre, context, lowerVault));
-    console.log(await tvl(hre, context, upperVault));
-    expect(await assureEquality(hre, context, 5)).to.be.true;
+    await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
+    await erc20Rebalance(hre, context, erc20ratio, startPrice);
+    expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
 
     await setInitialPrice(hre, context, startPrice);
     expect(startPrice).to.be.eq(await getUniV3Tick(hre, context))
-
-    console.log(await tvl(hre, context, lowerVault));
-    console.log(await tvl(hre, context, upperVault));
     let totalBadCapital = await allCapital(hre, context);
 
-    console.log(totalNormalCapital);
-    console.log(totalBadCapital);
+    let loss = totalNormalCapital.sub(totalBadCapital);
+
+    console.log("PROMILLE LOSS", (loss.mul(10000).div(totalNormalCapital)).toNumber());
+
+    const sqrtPricex96 = BigNumber.from(TickMath.getSqrtRatioAtTick(startPrice).toString());
+    const priceX96 = sqrtPricex96.mul(sqrtPricex96).div(BigNumber.from(2).pow(96));
+
+    let sandwicherProfit = await getCapitalbyTokens(hre, context, priceX96, wstethProfit, wethProfit);
+    let sandwicherDeals = await getCapitalbyTokens(hre, context, priceX96, wstethUsed, wethUsed);
+
+    console.log("PROMILLE SANDWICHER PROFIT", (sandwicherProfit.mul(10000).div(sandwicherDeals)).toNumber());
+    expect(sandwicherProfit).to.be.lt(loss);
 
    // expect(totalNormalCapital.mul(997)).to.be.lt(totalBadCapital.mul(1000));
 };

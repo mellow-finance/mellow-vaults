@@ -12,7 +12,6 @@ import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "./IntegrationVault.sol";
 import "../utils/UniV3Helper.sol";
-import "hardhat/console.sol";
 
 /// @notice Vault that interfaces UniswapV3 protocol in the integration layer.
 contract UniV3Vault is IUniV3Vault, IntegrationVault {
@@ -57,12 +56,10 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 (, , , , , tickLower, tickUpper, liquidity, , , tokensOwed0, tokensOwed1) = _positionManager.positions(
                     uniV3Nft
                 );
-                minTokenAmounts[0] = 0;
-                maxTokenAmounts[0] = 0;
-                minTokenAmounts[1] = 0;
-                maxTokenAmounts[1] = 0;
-                console.log("FEES1", tokensOwed1);
-              //  console.log("POS LIQUIDITY", liquidity);
+                minTokenAmounts[0] = tokensOwed0;
+                maxTokenAmounts[0] = tokensOwed0;
+                minTokenAmounts[1] = tokensOwed1;
+                maxTokenAmounts[1] = tokensOwed1;
             }
             sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
             sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
@@ -199,7 +196,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        //console.log("CALL KEKICH RIGHT HERE");
         (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], 0x2A);
         require(prices.length > 1, ExceptionsLibrary.INVARIANT);
         minPriceX96 = prices[0];
@@ -224,11 +220,6 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         if (uniV3Nft == 0) return actualTokenAmounts;
 
         uint128 liquidity = tokenAmountsToLiquidity(tokenAmounts);
-      //  uint256[] memory kek = liquidityToTokenAmounts(liquidity);
-
-        //console.log("WTF", kek[0]);
-
-      //  console.log("LIQUIDITY PUSHED", liquidity);
 
         if (liquidity == 0) return actualTokenAmounts;
         else {

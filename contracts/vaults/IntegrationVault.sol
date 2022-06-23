@@ -13,7 +13,6 @@ import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/PermissionIdsLibrary.sol";
 import "./VaultGovernance.sol";
 import "./Vault.sol";
-import "hardhat/console.sol";
 
 /// @notice Abstract contract that has logic common for every Vault.
 /// @dev Notes:
@@ -54,7 +53,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         bytes memory options
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
         (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) = tvl();
-       // console.log("PRE_TVL", minTokenAmounts[0]);
         uint256 nft_ = _nft;
         require(nft_ != 0, ExceptionsLibrary.INIT);
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
@@ -64,10 +62,7 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
-       // console.log("PUSH0", pActualTokenAmounts[0]);
-       // console.log("PUSH1", pActualTokenAmounts[1]);
         (minTokenAmounts, maxTokenAmounts) = tvl();
-       // console.log("POST_TVL", minTokenAmounts[0]);
         emit Push(pActualTokenAmounts);
     }
 
