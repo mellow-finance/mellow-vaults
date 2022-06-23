@@ -7,7 +7,7 @@ import {BigNumber} from "ethers";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy } = deployments;
-    const { deployer, approver} = await getNamedAccounts();
+    const { deployer } = await getNamedAccounts();
     await deploy("ProtocolGovernance", {
         from: deployer,
         args: [deployer],
