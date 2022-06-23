@@ -15,6 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, log, execute } = deployments;
     const {
+        approver,
         deployer,
         uniswapV3PositionManager,
         cowswap,
@@ -30,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     let uniV3LowerVaultNft = startNft;
     let uniV3UpperVaultNft = startNft + 1;
     let erc20VaultNft = startNft + 2;
-    const intervalWidthInTicks = 120;
+    const intervalWidthInTicks = 100;
 
     const positionManager = await ethers.getContractAt(
         "INonfungiblePositionManager",
@@ -40,7 +41,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const preparePush = async (
         vault: string,
         tickLower: number,
-        tickUpper: number) => {
+        tickUpper: number,
+        nft: number) => {
+
+        const lStrategy = await ethers.getContract("LStrategy");
+        const vaultRegistry = await ethers.getContract("VaultRegistry");
+
+        vaultRegistry.approve(approver, nft);
+
+        let signer = await ethers.getSigner(approver);
 
         const wethContract = await ethers.getContractAt("ERC20Token", weth);
         const wstethContract = await ethers.getContractAt("ERC20Token", wsteth);
@@ -65,17 +74,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             amount1Desired: amount,
             amount0Min: 0,
             amount1Min: 0,
-            recipient: deployer,
+            recipient: approver,
             deadline: ethers.constants.MaxUint256,
         };
         const result = await positionManager.callStatic.mint(
             mintParams
         );
+
         await positionManager.mint(mintParams);
-        
-        await positionManager.functions[
+
+        await positionManager.connect(signer).functions[
             "safeTransferFrom(address,address,uint256)"
-        ](deployer, vault, result.tokenId);
+        ](approver, vault, result.tokenId);
         await wethContract.approve(
             uniswapV3PositionManager,
             0
@@ -84,6 +94,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             uniswapV3PositionManager,
             0
         );
+
+        vaultRegistry.approve(lStrategy.address, nft);
+
     };
 
     const uniV3Helper = (await ethers.getContract("UniV3Helper")).address;
@@ -157,21 +170,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const lStrategy = await ethers.getContract("LStrategy");
 
-    const semiPositionRange = intervalWidthInTicks / 2;
+    const semiPositionRange = Math.floor(intervalWidthInTicks / 2);
 
     const currentTick = await getUniV3Tick();
     let tickLeftLower =
-        currentTick
-            .div(semiPositionRange)
-            .mul(semiPositionRange)
+        currentTick.div(semiPositionRange).mul(semiPositionRange)
             .toNumber() - semiPositionRange;
-    let tickLeftUpper = tickLeftLower + 2 * semiPositionRange;
+    let tickLeftUpper = tickLeftLower + intervalWidthInTicks;
 
     let tickRightLower = tickLeftLower + semiPositionRange;
     let tickRightUpper = tickLeftUpper + semiPositionRange;
 
-    await preparePush(uniV3LowerVault, tickLeftLower, tickLeftUpper);
-    await preparePush(uniV3UpperVault, tickRightLower, tickRightUpper);
+    await preparePush(uniV3LowerVault, tickLeftLower, tickLeftUpper, uniV3LowerVaultNft);
+    await preparePush(uniV3UpperVault, tickRightLower, tickRightUpper, uniV3UpperVaultNft);
 
     await combineVaults(
         hre,

@@ -67,11 +67,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
                 uint256 amountMax1;
                 uint160 sqrtPriceAX96 = TickMath.getSqrtRatioAtTick(tickLower);
                 uint160 sqrtPriceBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
-                (uint256 minPriceX96, uint256 maxPriceX96) = _uniV3Helper.getMinMaxPrice(
-                    params.oracle,
-                    _vaultTokens[0],
-                    _vaultTokens[1]
-                );
+                (uint256 minPriceX96, uint256 maxPriceX96) = _getMinMaxPrice(params.oracle);
                 {
                     uint256 minSqrtPriceX96 = CommonLibrary.sqrtX96(minPriceX96);
                     (amountMin0, amountMin1) = LiquidityAmounts.getAmountsForLiquidity(
@@ -144,11 +140,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         bytes memory
     ) external returns (bytes4) {
         require(msg.sender == address(_positionManager), ExceptionsLibrary.FORBIDDEN);
-        if (uniV3Nft != 0) {
-            require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
-        } else {
-            require(_isStrategy(operator) || _isOwner(operator), ExceptionsLibrary.FORBIDDEN);
-        }
+        require(_isStrategy(operator), ExceptionsLibrary.FORBIDDEN);
         (, , address token0, address token1, uint24 fee, , , , , , , ) = _positionManager.positions(tokenId);
         // new position should have vault tokens
         require(
@@ -200,12 +192,22 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
-    function _isOwner(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.ownerOf(_nft) == addr;
-    }
-
     function _isReclaimForbidden(address) internal pure override returns (bool) {
         return false;
+    }
+
+    function _getMinMaxPrice(IOracle oracle) internal view returns (uint256 minPriceX96, uint256 maxPriceX96) {
+        (uint256[] memory prices, ) = oracle.priceX96(_vaultTokens[0], _vaultTokens[1], 0x2A);
+        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
+        minPriceX96 = prices[0];
+        maxPriceX96 = prices[0];
+        for (uint32 i = 1; i < prices.length; ++i) {
+            if (prices[i] < minPriceX96) {
+                minPriceX96 = prices[i];
+            } else if (prices[i] > maxPriceX96) {
+                maxPriceX96 = prices[i];
+            }
+        }
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------

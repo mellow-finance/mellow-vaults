@@ -3,7 +3,6 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
-import "../interfaces/oracles/IOracle.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -142,23 +141,5 @@ contract UniV3Helper {
         tokensOwed1 += uint128(
             FullMath.mulDiv(feeGrowthInside1X128 - feeGrowthInside1LastX128, liquidity, CommonLibrary.Q128)
         );
-    }
-
-    function getMinMaxPrice(
-        IOracle oracle,
-        address token0,
-        address token1
-    ) external view returns (uint256 minPriceX96, uint256 maxPriceX96) {
-        (uint256[] memory prices, ) = oracle.priceX96(token0, token1, 0x2A);
-        require(prices.length > 1, ExceptionsLibrary.INVARIANT);
-        minPriceX96 = prices[0];
-        maxPriceX96 = prices[0];
-        for (uint32 i = 1; i < prices.length; ++i) {
-            if (prices[i] < minPriceX96) {
-                minPriceX96 = prices[i];
-            } else if (prices[i] > maxPriceX96) {
-                maxPriceX96 = prices[i];
-            }
-        }
     }
 }
