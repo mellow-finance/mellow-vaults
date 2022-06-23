@@ -72,7 +72,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
         describe("#price", () => {
             describe("when pools index is zero", () => {
                 it("does not return prices", async () => {
-                    const pricesResult = await this.subject.price(
+                    const pricesResult = await this.subject.priceX96(
                         this.usdc.address,
                         this.weth.address,
                         BigNumber.from(31)
@@ -87,7 +87,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
 
             describe("when one of tokens is zero", () => {
                 it("does not return prices", async () => {
-                    const pricesResult = await this.subject.price(
+                    const pricesResult = await this.subject.priceX96(
                         ethers.constants.AddressZero,
                         this.usdc.address,
                         BigNumber.from(32)
@@ -108,7 +108,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                             [this.weth.address, this.usdc.address],
                             [this.weth.address, this.chainlinkUsdc]
                         );
-                    const pricesResult = await this.subject.price(
+                    const pricesResult = await this.subject.priceX96(
                         this.weth.address,
                         this.usdc.address,
                         BigNumber.from(32)
@@ -129,7 +129,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                             [this.weth.address, this.usdc.address],
                             [this.weth.address, this.chainlinkUsdc]
                         );
-                    const pricesResult = await this.subject.price(
+                    const pricesResult = await this.subject.priceX96(
                         this.usdc.address,
                         this.weth.address,
                         BigNumber.from(32)
@@ -149,7 +149,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                         [this.weth.address, this.usdc.address],
                         [this.chainlinkEth, this.chainlinkUsdc]
                     );
-                const pricesResult = await this.subject.price(
+                const pricesResult = await this.subject.priceX96(
                     this.weth.address,
                     this.usdc.address,
                     BigNumber.from(32)
@@ -215,7 +215,7 @@ contract<ChainlinkOracle, DeployOptions, CustomContext>(
                             [this.weth.address, this.usdc.address],
                             [this.chainlinkEth, this.chainlinkUsdc]
                         );
-                    const pricesResult = await this.subject.price(
+                    const pricesResult = await this.subject.priceX96(
                         this.weth.address,
                         this.usdc.address,
                         BigNumber.from(32)

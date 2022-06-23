@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../oracles/IOracle.sol";
 import "./IERC20RootVault.sol";
 import "./IVaultGovernance.sol";
+import "../utils/IERC20RootVaultHelper.sol";
 
 interface IERC20RootVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
@@ -32,7 +33,7 @@ interface IERC20RootVaultGovernance is IVaultGovernance {
         IOracle oracle;
     }
 
-    /// @notice Params that could be changed by Strategy or Protocol Governance with Protocol Governance delay.
+    /// @notice Params that could be changed by Strategy or Protocol Governance.
     /// @param tokenLimitPerAddress Max LP token limit per address
     /// @param tokenLimit Max LP token for the vault
     struct StrategyParams {

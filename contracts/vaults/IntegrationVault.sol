@@ -30,8 +30,7 @@ import "./Vault.sol";
 ///
 /// Both NFT owner and approved person can call externalCall method which claims liquidity mining rewards (if any)
 ///
-/// `reclaimTokens` for mistakenly transfered tokens (not included into vaultTokens) additionally can be withdrawn by
-/// the protocol admin
+/// `reclaimTokens` for claiming rewards given by an underlying protocol to erc20Vault in order to sell them there
 abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault {
     using SafeERC20 for IERC20;
 

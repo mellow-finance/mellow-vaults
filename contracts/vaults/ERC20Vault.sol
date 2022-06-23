@@ -67,14 +67,14 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
         address owner = registry.ownerOf(_nft);
 
         for (uint256 i = 0; i < tokenAmounts.length; ++i) {
-            IERC20 vaultToken = IERC20(_vaultTokens[i]);
+            IERC20 vaultToken = IERC20(tokens[i]);
             uint256 balance = vaultToken.balanceOf(address(this));
             uint256 amount = tokenAmounts[i] < balance ? tokenAmounts[i] : balance;
-            IERC20(_vaultTokens[i]).safeTransfer(to, amount);
+            IERC20(tokens[i]).safeTransfer(to, amount);
             actualTokenAmounts[i] = amount;
             if (owner != to) {
                 // this will equal to amounts pulled + any accidental prior balances on `to`;
-                pushTokenAmounts[i] = IERC20(_vaultTokens[i]).balanceOf(to);
+                pushTokenAmounts[i] = IERC20(tokens[i]).balanceOf(to);
             }
         }
         if (owner != to) {
@@ -89,5 +89,10 @@ contract ERC20Vault is IERC20Vault, IntegrationVault {
                     : 0;
             }
         }
+    }
+
+    /// @inheritdoc IntegrationVault
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IERC20Vault).interfaceId);
     }
 }
