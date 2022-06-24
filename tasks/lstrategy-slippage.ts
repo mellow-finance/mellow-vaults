@@ -896,7 +896,7 @@ const removeSigner = async (network: Network, address: string) => {
 
 const changePrice = async (currentTick: BigNumber, hre: HardhatRuntimeEnvironment, context: Context) => {
     let priceX96 = await getPriceX96(hre, context);
-    context.mockOracle.updatePrice(priceX96);
+    await context.mockOracle.updatePrice(priceX96);
 }
 
 const swapTokens = async (
@@ -1001,7 +1001,7 @@ let wstethProfit = BigNumber.from(0);
 let wethUsed = BigNumber.from(0);
 let wstethUsed = BigNumber.from(0);
 
-const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber) => {
+const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber, isMock: boolean) => {
 
     const { ethers } = hre;
 
@@ -1028,7 +1028,7 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
                 needIncrease = 1;
                 startTry = startTry.div(2);
             }
-            wethUsed = wethUsed.add(startTry);
+            if (!isMock)  wethUsed = wethUsed.add(startTry);
             await swapTokens(
                 hre, 
                 context,
@@ -1045,7 +1045,7 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
                 needIncrease = 0;
                 startTry = startTry.div(2);
             }
-            wstethUsed = wstethUsed.add(startTry);
+            if (!isMock) wstethUsed = wstethUsed.add(startTry);
             await swapTokens(
                 hre, 
                 context,
@@ -1061,8 +1061,10 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
     let wethEnd = await context.weth.balanceOf(context.deployer.address);
     let wstethEnd = await context.wsteth.balanceOf(context.deployer.address);
 
-    wethProfit = wethProfit.add(wethEnd.sub(wethStart));
-    wstethProfit = wstethProfit.add(wstethEnd.sub(wstethStart));
+    if (!isMock) {
+        wethProfit = wethProfit.add(wethEnd.sub(wethStart));
+        wstethProfit = wstethProfit.add(wstethEnd.sub(wstethStart));
+    }
 };
 
 const grantPermissions = async (hre: HardhatRuntimeEnvironment, context: Context, vault: string) => {
@@ -1121,8 +1123,8 @@ const assureEquality = async (hre: HardhatRuntimeEnvironment, context: Context, 
     return (delta.mul(100).lt(maxBetweenCapitals));
 };
 
-const setInitialPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: number) => {
-    await makeDesiredPoolPrice(hre, context, BigNumber.from(tick));
+const setInitialPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: number, isMock: boolean) => {
+    await makeDesiredPoolPrice(hre, context, BigNumber.from(tick), isMock);
     await changePrice(BigNumber.from(tick), hre, context);
 }
 
@@ -1282,7 +1284,7 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
 
     await mintMockPosition(hre, context); 
-    await setInitialPrice(hre, context, startPrice);
+    await setInitialPrice(hre, context, startPrice, true);
 
     await buildInitialPositions(hre, context, width);
 
@@ -1294,7 +1296,7 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     await grantPermissions(hre, context, erc20vault);
     
     await erc20Rebalance(hre, context, erc20ratio, startPrice);
-    await setInitialPrice(hre, context, startPrice);
+    await setInitialPrice(hre, context, startPrice, true);
 
     expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
 
@@ -1311,20 +1313,20 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     await erc20Rebalance(hre, context, erc20ratio + percentageChange, startPrice);
     expect(await assureEquality(hre, context, erc20ratio + percentageChange)).to.be.true;
 
-    await setInitialPrice(hre, context, finishPrice);
+    await setInitialPrice(hre, context, finishPrice, false);
     expect(finishPrice).to.be.eq(await getUniV3Tick(hre, context));
 
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
     await erc20Rebalance(hre, context, erc20ratio, startPrice);
     expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
 
-    await setInitialPrice(hre, context, startPrice);
+    await setInitialPrice(hre, context, startPrice, false);
     expect(startPrice).to.be.eq(await getUniV3Tick(hre, context))
     let totalBadCapital = await allCapital(hre, context);
 
     let loss = totalNormalCapital.sub(totalBadCapital);
 
-    console.log("PROMILLE LOSS", (loss.mul(10000).div(totalNormalCapital)).toNumber());
+    console.log("10^-6 LOSS", (loss.mul(1000000).div(totalNormalCapital)).toNumber());
 
     const sqrtPricex96 = BigNumber.from(TickMath.getSqrtRatioAtTick(startPrice).toString());
     const priceX96 = sqrtPricex96.mul(sqrtPricex96).div(BigNumber.from(2).pow(96));
@@ -1332,7 +1334,7 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     let sandwicherProfit = await getCapitalbyTokens(hre, context, priceX96, wstethProfit, wethProfit);
     let sandwicherDeals = await getCapitalbyTokens(hre, context, priceX96, wstethUsed, wethUsed);
 
-    console.log("PROMILLE SANDWICHER PROFIT", (sandwicherProfit.mul(10000).div(sandwicherDeals)).toNumber());
+    console.log("10^-6 SANDWICHER PROFIT", (sandwicherProfit.mul(1000000).div(sandwicherDeals)).toNumber());
     expect(sandwicherProfit).to.be.lt(loss);
 
    // expect(totalNormalCapital.mul(997)).to.be.lt(totalBadCapital.mul(1000));
