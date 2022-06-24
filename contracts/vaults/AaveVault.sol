@@ -61,7 +61,7 @@ contract AaveVault is IAaveVault, IntegrationVault {
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    /// @inheritdoc IAaveVault
+    /// @notice Update all tvls to current aToken balances.
     function updateTvls() external {
         _updateTvls();
     }
