@@ -105,7 +105,7 @@ contract UniV3Vault is IUniV3Vault, IntegrationVault {
     }
 
     /// @inheritdoc IUniV3Vault
-    function liquidityToTokenAmounts(uint128 liquidity) public view returns (uint256[] memory tokenAmounts) {
+    function liquidityToTokenAmounts(uint128 liquidity) external view returns (uint256[] memory tokenAmounts) {
         tokenAmounts = _uniV3Helper.liquidityToTokenAmounts(liquidity, pool, uniV3Nft, _positionManager);
     }
 

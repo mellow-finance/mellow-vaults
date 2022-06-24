@@ -52,7 +52,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256[] memory tokenAmounts,
         bytes memory options
     ) public nonReentrant returns (uint256[] memory actualTokenAmounts) {
-        (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) = tvl();
         uint256 nft_ = _nft;
         require(nft_ != 0, ExceptionsLibrary.INIT);
         IVaultRegistry vaultRegistry = _vaultGovernance.internalParams().registry;
@@ -62,7 +61,6 @@ abstract contract IntegrationVault is IIntegrationVault, ReentrancyGuard, Vault 
         uint256[] memory pTokenAmounts = _validateAndProjectTokens(tokens, tokenAmounts);
         uint256[] memory pActualTokenAmounts = _push(pTokenAmounts, options);
         actualTokenAmounts = CommonLibrary.projectTokenAmounts(tokens, _vaultTokens, pActualTokenAmounts);
-        (minTokenAmounts, maxTokenAmounts) = tvl();
         emit Push(pActualTokenAmounts);
     }
 
