@@ -5,17 +5,13 @@ import { abi as IWETH } from "../test/helpers/wethABI.json";
 import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
 import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
-import { BigNumberish } from "ethers";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { TickMath } from "@uniswap/v3-sdk";
-import {
-    equals,
-} from "ramda";
 import * as fs from "fs";
 import * as path from "path";
-import { Context, preparePush, getUniV3Tick, swapTokens, getTvl, makeSwap, getTick, stringToPriceX96, stringToSqrtPriceX96, getPool, getStrategyStats, checkUniV3Balance, swapOnCowswap } from "./helpers/lstrategy";
+import { Context, preparePush, getUniV3Tick, swapTokens, getTvl, makeSwap, stringToPriceX96, getStrategyStats, checkUniV3Balance, getUniV3Price, setupVault, combineVaults, stringToSqrtPriceX96, getTick, getPool, swapOnCowswap } from "./helpers/lstrategy";
 import { addSigner, withSigner } from "./helpers/sign";
-import { mint, sleep, toObject } from "./helpers/utils";
+import { mint, sleep } from "./helpers/utils";
+import { TickMath } from "@uniswap/v3-sdk";
 
 
 task("lstrategy-backtest", "run backtest on univ3 vault")
@@ -30,14 +26,15 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         undefined,
         types.int,
     ).setAction(
-        async ({ filename, width}, hre: HardhatRuntimeEnvironment) => {
-            const context = await setup(hre);
+        async ({ filename, width }, hre: HardhatRuntimeEnvironment) => {
+            const context = await setup(hre, width);
             await process(filename, width, hre, context);
         }
     );
 
 
-const setup = async (hre: HardhatRuntimeEnvironment) => {
+const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
+    console.log("In setup");
     const uniV3PoolFee = 500;
 
     const { deployments, ethers, getNamedAccounts, network } = hre;
@@ -153,10 +150,12 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
             uniV3UpperVault,
             strategyHelper.address,
             adminSigned.address,
+            width,
         ],
         log: true,
         autoMine: true,
     });
+    console.log("Lstrategy deployer");
 
     let wstethValidator = await deploy("ERC20Validator", {
         from: deployerSigned.address,
@@ -252,6 +251,7 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         deployerSigned.address,
         BigNumber.from(10).pow(18).mul(4000)
     );
+    console.log("Minted money");
     await wethContract.approve(
         curvePool.address,
         ethers.constants.MaxUint256
@@ -260,21 +260,27 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
         wstethContract.address,
         ethers.constants.MaxUint256
     );
-    await wethContract.withdraw(BigNumber.from(10).pow(18).mul(2000));
-    const options = { value: BigNumber.from(10).pow(18).mul(2000) };
+    await wethContract.withdraw(BigNumber.from(10).pow(18).mul(3000));
+    const options = { value: BigNumber.from(10).pow(18).mul(3000) };
+    console.log("Before exchange");
     await curvePool.exchange(
         0,
         1,
-        BigNumber.from(10).pow(18).mul(2000),
+        BigNumber.from(10).pow(18).mul(3000),
         ethers.constants.Zero,
         options
     );
-    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(1999));
+    console.log("After exchange");
+    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(2999));
 
     await wstethContract.transfer(
         lstrategy.address,
         BigNumber.from(10).pow(18).mul(3)
     );
+    await wethContract.transfer(
+        lstrategy.address,
+        BigNumber.from(10).pow(18).mul(3)
+    )
 
     let oracleDeployParams = await deploy("MockOracle", {
         from: deployerSigned.address,
@@ -362,261 +368,10 @@ class PermissionIdsLibrary {
     static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
-
-const setupVault = async (
-    hre: HardhatRuntimeEnvironment,
-    expectedNft: number,
-    contractName: string,
-    {
-        createVaultArgs,
-        delayedStrategyParams,
-        strategyParams,
-        delayedProtocolPerVaultParams,
-    }: {
-        createVaultArgs: any[];
-        delayedStrategyParams?: { [key: string]: any };
-        strategyParams?: { [key: string]: any };
-        delayedProtocolPerVaultParams?: { [key: string]: any };
-    }
-) => {
-    delayedStrategyParams ||= {};
-    const { deployments, ethers, getNamedAccounts } = hre;
-    const { log, execute, read } = deployments;
-    const { deployer, admin } = await getNamedAccounts();
-    const TRANSACTION_GAS_LIMITS = {
-        maxFeePerGas: ethers.BigNumber.from(90000000000),
-        maxPriorityFeePerGas: ethers.BigNumber.from(40000000000),
-    }
-    const currentNft = await read("VaultRegistry", "vaultsCount");
-    if (currentNft <= expectedNft) {
-        log(`Deploying ${contractName.replace("Governance", "")}...`);
-        await execute(
-            contractName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-                ...TRANSACTION_GAS_LIMITS
-            },
-            "createVault",
-            ...createVaultArgs
-        );
-        log(`Done, nft = ${expectedNft}`);
-    } else {
-        log(
-            `${contractName.replace(
-                "Governance",
-                ""
-            )} with nft = ${expectedNft} already deployed`
-        );
-    }
-    if (strategyParams) {
-        const currentParams = await read(
-            contractName,
-            "strategyParams",
-            expectedNft
-        );
-
-        if (!equals(strategyParams, toObject(currentParams))) {
-            log(`Setting Strategy params for ${contractName}`);
-            log(strategyParams);
-            await execute(
-                contractName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS
-                },
-                "setStrategyParams",
-                expectedNft,
-                strategyParams
-            );
-        }
-    }
-    let strategyTreasury;
-    try {
-        const data = await read(
-            contractName,
-            "delayedStrategyParams",
-            expectedNft
-        );
-        strategyTreasury = data.strategyTreasury;
-    } catch {
-        return;
-    }
-
-    if (strategyTreasury !== delayedStrategyParams.strategyTreasury) {
-        log(`Setting delayed strategy params for ${contractName}`);
-        log(delayedStrategyParams);
-        await execute(
-            contractName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-                ...TRANSACTION_GAS_LIMITS
-            },
-            "stageDelayedStrategyParams",
-            expectedNft,
-            delayedStrategyParams
-        );
-        await execute(
-            contractName,
-            {
-                from: deployer,
-                log: true,
-                autoMine: true,
-                ...TRANSACTION_GAS_LIMITS
-            },
-            "commitDelayedStrategyParams",
-            expectedNft
-        );
-    }
-    if (delayedProtocolPerVaultParams) {
-        const params = await read(
-            contractName,
-            "delayedProtocolPerVaultParams",
-            expectedNft
-        );
-        if (!equals(toObject(params), delayedProtocolPerVaultParams)) {
-            log(
-                `Setting delayed protocol per vault params for ${contractName}`
-            );
-            log(delayedProtocolPerVaultParams);
-
-            await execute(
-                contractName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS
-                },
-                "stageDelayedProtocolPerVaultParams",
-                expectedNft,
-                delayedProtocolPerVaultParams
-            );
-            await execute(
-                contractName,
-                {
-                    from: deployer,
-                    log: true,
-                    autoMine: true,
-                    ...TRANSACTION_GAS_LIMITS
-                },
-                "commitDelayedProtocolPerVaultParams",
-                expectedNft
-            );
-        }
-    }
-};
-
-const combineVaults = async (
-    hre: HardhatRuntimeEnvironment,
-    expectedNft: number,
-    nfts: number[],
-    strategyAddress: string,
-    strategyTreasuryAddress: string,
-    options?: {
-        limits?: BigNumberish[];
-        strategyPerformanceTreasuryAddress?: string;
-        tokenLimitPerAddress: BigNumberish;
-        tokenLimit: BigNumberish;
-        managementFee: BigNumberish;
-        performanceFee: BigNumberish;
-    }
-): Promise<void> => {
-    if (nfts.length === 0) {
-        throw `Trying to combine 0 vaults`;
-    }
-    const { deployments, ethers } = hre;
-    const { log } = deployments;
-    const { deployer, admin } = await hre.getNamedAccounts();
-
-    const TRANSACTION_GAS_LIMITS = {
-        maxFeePerGas: ethers.BigNumber.from(90000000000),
-        maxPriorityFeePerGas: ethers.BigNumber.from(40000000000),
-    }
-    const PRIVATE_VAULT = true;
-
-    const firstNft = nfts[0];
-    const firstAddress = await deployments.read(
-        "VaultRegistry",
-        "vaultForNft",
-        firstNft
-    );
-    const vault = await hre.ethers.getContractAt("IVault", firstAddress);
-    const tokens = await vault.vaultTokens();
-    const coder = hre.ethers.utils.defaultAbiCoder;
-
-    const {
-        limits = tokens.map((_: any) => ethers.constants.MaxUint256),
-        strategyPerformanceTreasuryAddress = strategyTreasuryAddress,
-        tokenLimitPerAddress = ethers.constants.MaxUint256,
-        tokenLimit = ethers.constants.MaxUint256,
-        managementFee = 2 * 10 ** 7,
-        performanceFee = 20 * 10 ** 7,
-    } = options || {};
-
-    await setupVault(hre, expectedNft, "ERC20RootVaultGovernance", {
-        createVaultArgs: [tokens, strategyAddress, nfts, deployer],
-        delayedStrategyParams: {
-            strategyTreasury: strategyTreasuryAddress,
-            strategyPerformanceTreasury: strategyPerformanceTreasuryAddress,
-            managementFee: BigNumber.from(managementFee),
-            performanceFee: BigNumber.from(performanceFee),
-            privateVault: PRIVATE_VAULT,
-            depositCallbackAddress: ethers.constants.AddressZero,
-            withdrawCallbackAddress: ethers.constants.AddressZero,
-        },
-        strategyParams: {
-            tokenLimitPerAddress: BigNumber.from(tokenLimitPerAddress),
-            tokenLimit: BigNumber.from(tokenLimit),
-        },
-    });
-    const rootVault = await deployments.read(
-        "VaultRegistry",
-        "vaultForNft",
-        expectedNft
-    );
-    if (PRIVATE_VAULT) {
-        const rootVaultContract = await hre.ethers.getContractAt(
-            "ERC20RootVault",
-            rootVault
-        );
-        const depositors = (await rootVaultContract.depositorsAllowlist()).map(
-            (x: any) => x.toString()
-        );
-        if (!depositors.includes(admin)) {
-            log("Adding admin to depositors");
-            const tx =
-                await rootVaultContract.populateTransaction.addDepositorsToAllowlist(
-                    [admin]
-                );
-            const [operator] = await hre.ethers.getSigners();
-            const txResp = await operator.sendTransaction(tx);
-            log(
-                `Sent transaction with hash \`${txResp.hash}\`. Waiting confirmation`
-            );
-            const receipt = await txResp.wait(1);
-            log("Transaction confirmed");
-        }
-    }
-    await deployments.execute(
-        "VaultRegistry",
-        { from: deployer, autoMine: true, ...TRANSACTION_GAS_LIMITS },
-        "transferFrom(address,address,uint256)",
-        deployer,
-        rootVault,
-        expectedNft
-    );
-};
-
 const parseFile = (filename: string) : string[] =>  {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
-    const fileLen = 26542;
+    const fileLen = 30048;
     const blockNumberLen = 8;
     const pricePrecision = 29;
     let prices = new Array();
@@ -644,6 +399,7 @@ const changePrice = async (currentTick: BigNumber, context: Context) => {
         .div(BigNumber.from(2).pow(96));
     context.mockOracle.updatePrice(priceX96);
 }
+
 
 const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Context) => {
     const { ethers } = hre;
@@ -689,7 +445,7 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
     for (let token of [context.weth, context.wsteth]) {
         await token.transfer(
         erc20,
-        BigNumber.from(10).pow(18).mul(500)
+        BigNumber.from(10).pow(18).mul(10)
         );
     }
 
@@ -778,7 +534,7 @@ const assureEquality = (x: BigNumber, y: BigNumber) => {
         x = y;
     }
 
-    return (delta.mul(100).lt(x));
+    return (delta.mul(40).lt(x.add(y).div(2)));
 };
 
 const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber, address: string)  => {
@@ -793,6 +549,7 @@ const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, pric
 const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber) => {
     const { ethers } = hre;
 
+    let i = 0;
     while (true) {
 
         let capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
@@ -816,7 +573,11 @@ const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context
         );
 
         await makeSwap(hre, context);
-
+        i += 1;
+        if (i >= 20) {
+            console.log("More than 20 iterations needed in ERC20Uni rebalance!!!");
+            break;
+        }
     }
     
   //  expect(assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))).to.be.true;
@@ -828,6 +589,8 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
     const { ethers } = hre;
 
     let wasRebalance = false;
+
+    let iter = 0;
 
     while (!(await checkUniV3Balance(hre, context))) {
         wasRebalance = true;
@@ -849,35 +612,42 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
             ethers.constants.Zero,
         ],
         ethers.constants.MaxUint256);
-        await makeSwap(hre, context);
+        await swapOnCowswap(hre, context);
+        iter += 1;
+        if (iter >= 20) {
+            console.log("More than 20 iterations needed!!!");
+            break;
+        }
     }
 
     if (wasRebalance) await ERC20UniRebalance(hre, context, priceX96);
 
 };
 
-const reportStats = async (hre: HardhatRuntimeEnvironment, context: Context, fname: string) => {
+const reportStats = async (hre: HardhatRuntimeEnvironment, context: Context, fname: string, keys: string[]) => {
     const stats = await getStrategyStats(hre, context);
-    const content = (
-        stats.erc20token0.toString() + "," +
-        stats.erc20token1.toString() + "," +
-        stats.lowerVaultLiquidity.toString() + "," +
-        stats.lowerVaultTokenOwed0.toString() + "," +
-        stats.lowerVaultTokenOwed1.toString() + "," +
-        stats.upperVaultLiquidity.toString() + "," +
-        stats.upperVaultTokenOwed0.toString() + "," +
-        stats.upperVaultTokenOwed1.toString() + "\n"
-    );
-    fs.writeFile(fname, content, { flag: "a+"}, err => {});
+    for (let i = 0; i < keys.length; ++i) {
+        fs.writeFileSync(fname, stats[keys[i] as keyof object], { flag: "a+"});
+        if (i + 1 == keys.length) {
+            fs.writeFileSync(fname, "\n", { flag: "a+"});
+        } else {
+            fs.writeFileSync(fname, ",", { flag: "a+"});
+        }
+    }
 };
 
 const process = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
+    console.log("Process started");
 
     await mintMockPosition(hre, context);
     
     let prices = parseFile(filename);
 
+    console.log("Before price update");
+
     await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[0])));
+    console.log("After price update");
+    console.log("Price is: ", (await getUniV3Price(hre, context)).toString());
     await buildInitialPositions(hre, context, width);
     const lowerVault = await context.LStrategy.lowerVault();
     const upperVault = await context.LStrategy.upperVault();
@@ -886,17 +656,40 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
 
-    console.log("erc20Vault: ", erc20vault);
-
     await ERC20UniRebalance(hre, context, stringToPriceX96(prices[0]));
 
-    const tmp = await context.LStrategy.erc20Vault();
+    const keys = [
+        "erc20token0", "erc20token1", "lowerToken0",
+        "lowerToken1", "lowerLeftTick", "lowerRightTick", 
+        "upperToken0", "upperToken1", "upperLeftTick",
+        "upperRightTick", "currentPrice", "currentTick",
+        "totalToken0", "totalToken1",
+    ];
+
+    for (let i = 0; i < keys.length; ++i) {
+        if (i == 0) {
+            fs.writeFileSync("output.csv", keys[i], { flag: "w" });            
+        } else {
+            fs.writeFileSync("output.csv", keys[i], { flag: "a+" });
+        }
+        if (i + 1 == keys.length) {
+            fs.writeFileSync("output.csv", "\n", { flag: "a+" });
+        } else {
+            fs.writeFileSync("output.csv", ",", { flag: "a+" });
+        }
+    }
 
     let prev = Date.now();
-    for (let i = 1; i < 100; ++i) {
-        reportStats(hre, context, "output.csv");
+    console.log("length: ", prices.length);
+    for (let i = 1; i < prices.length; ++i) {
+        if (i % 500 == 0) {
+            let now = Date.now();
+            console.log("Iteration: ", i);
+            console.log("Duration: ", now - prev);
+            prev = now;
+        }
+        await reportStats(hre, context, "output.csv", keys);
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
         await makeRebalances(hre, context, stringToPriceX96(prices[i]));
     }
-    console.log("Duration: ", Date.now() - prev);
 };
