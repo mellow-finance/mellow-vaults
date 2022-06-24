@@ -6,6 +6,7 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
+import "../libraries/external/OracleLibrary.sol";
 
 contract UniV3Helper {
     function liquidityToTokenAmounts(
@@ -141,5 +142,52 @@ contract UniV3Helper {
         tokensOwed1 += uint128(
             FullMath.mulDiv(feeGrowthInside1X128 - feeGrowthInside1LastX128, liquidity, CommonLibrary.Q128)
         );
+    }
+
+    struct UniswapPositionParameters {
+        uint256 nft;
+        uint128 liquidity;
+        int24 lowerTick;
+        int24 upperTick;
+        int24 averageTick;
+        int24 spotTick;
+        uint160 lowerPriceSqrtX96;
+        uint160 upperPriceSqrtX96;
+        uint160 averagePriceSqrtX96;
+        uint256 averagePriceX96;
+        uint160 spotPriceSqrtX96;
+    }
+
+    function getUniswapPositionParameters(
+        int24 averageTick,
+        uint160 sqrtSpotPriceX96,
+        uint256 uniV3Nft,
+        INonfungiblePositionManager positionManager
+    ) external view returns (UniswapPositionParameters memory params) {
+        params.averageTick = averageTick;
+        params.averagePriceSqrtX96 = TickMath.getSqrtRatioAtTick(averageTick);
+        params.spotPriceSqrtX96 = sqrtSpotPriceX96;
+        if (uniV3Nft == 0) return params;
+        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager.positions(uniV3Nft);
+        params.lowerTick = lowerTick;
+        params.upperTick = upperTick;
+        params.liquidity = liquidity;
+        params.lowerPriceSqrtX96 = TickMath.getSqrtRatioAtTick(lowerTick);
+        params.upperPriceSqrtX96 = TickMath.getSqrtRatioAtTick(upperTick);
+    }
+
+    function getAverageTickAndSpotPrice(IUniswapV3Pool pool_, uint32 oracleObservationDelta)
+        external
+        view
+        returns (int24 averageTick, uint160 sqrtSpotPriceX96)
+    {
+        (, int24 tick, , , , , ) = pool_.slot0();
+        sqrtSpotPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        bool withFail = false;
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        // Fails when we dont have observations, so return spot averageTick as this was the last trade price
+        if (withFail) {
+            averageTick = tick;
+        }
     }
 }

@@ -9,7 +9,6 @@ import "../interfaces/external/univ3/IUniswapV3Factory.sol";
 import "../interfaces/external/univ3/ISwapRouter.sol";
 import "../interfaces/vaults/IERC20Vault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
-import "../interfaces/vaults/IAaveVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/FullMath.sol";
@@ -18,6 +17,7 @@ import "../libraries/external/OracleLibrary.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/ContractMeta.sol";
+import "../utils/UniV3Helper.sol";
 
 contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -47,6 +47,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
 
     INonfungiblePositionManager public positionManager;
     IUniswapV3Pool public pool;
+    UniV3Helper private _uniV3Helper;
 
     bytes4 public constant APPROVE_SELECTOR = IERC20.approve.selector; // 0x095ea7b3; more consistent?
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
@@ -73,7 +74,8 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault_,
         IUniV3Vault uniV3Vault_,
         uint24 fee_,
-        address admin_
+        address admin_,
+        address uniV3Hepler_
     ) external {
         DefaultAccessControlLateInit.init(admin_); // call once is checked here
         address[] memory erc20Tokens = erc20Vault_.vaultTokens();
@@ -96,6 +98,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         IUniswapV3Factory factory = IUniswapV3Factory(positionManager_.factory());
         pool = IUniswapV3Pool(factory.getPool(tokens[0], tokens[1], fee_));
         require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        _uniV3Helper = UniV3Helper(uniV3Hepler_);
     }
 
     function createStrategy(
@@ -104,10 +107,11 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault_,
         IUniV3Vault uniV3Vault_,
         uint24 fee_,
-        address admin_
+        address admin_,
+        address uniV3Helper
     ) external returns (HStrategy strategy) {
         strategy = HStrategy(Clones.clone(address(this)));
-        strategy.initialize(positionManager, tokens_, erc20Vault_, moneyVault_, uniV3Vault_, fee_, admin_);
+        strategy.initialize(positionManager, tokens_, erc20Vault_, moneyVault_, uniV3Vault_, fee_, admin_, uniV3Helper);
     }
 
     function updateOtherParams(OtherParams calldata newOtherParams) external {
@@ -181,38 +185,24 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         _smartRebalance(restrictions, moneyVaultOptions);
     }
 
-    function _getAverageTickAndSpotPrice(IUniswapV3Pool pool_)
-        internal
-        view
-        returns (int24 averageTick, uint160 sqrtSpotPriceX96)
-    {
-        (, int24 tick, , , , , ) = pool_.slot0();
-        sqrtSpotPriceX96 = TickMath.getSqrtRatioAtTick(tick);
-        uint32 oracleObservationDelta = strategyParams.oracleObservationDelta;
-        bool withFail = false;
-        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
-        // Fails when we dont have observations, so return spot averageTick as this was the last trade price
-        if (withFail) {
-            averageTick = tick;
-        }
-    }
-
     /// @dev if the current averageTick differs from lastMintRebalanceTick by more than burnDeltaTicks,
     /// then function transfers all tokens from UniV3Vault to ERC20Vault and burns the position by uniV3Nft
     function _burnRebalance(RebalanceRestrictions memory restrictions) internal {
         uint256 uniV3Nft = uniV3Vault.nft();
         if (uniV3Nft == 0) {
+            // nothing to burn
             return;
         }
 
         StrategyParams memory strategyParams_ = strategyParams;
-        (int24 averageTick, ) = _getAverageTickAndSpotPrice(pool);
+        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSpotPrice(pool, strategyParams_.oracleObservationDelta);
 
         int24 delta = averageTick - lastMintRebalanceTick;
         if (delta < 0) {
             delta = -delta;
         }
 
+        // if average tick deviated from last rebalance tick more than burnDeltaTicks, then burn position
         if (delta > strategyParams_.burnDeltaTicks) {
             uint256[] memory collectedTokens = uniV3Vault.collectEarnings();
             _compareAmounts(restrictions.burnedAmounts, collectedTokens);
@@ -229,7 +219,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             return;
         }
         StrategyParams memory strategyParams_ = strategyParams;
-        (int24 averageTick, ) = _getAverageTickAndSpotPrice(pool);
+        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSpotPrice(pool, strategyParams_.oracleObservationDelta);
         int24 widthTicks = strategyParams_.widthTicks;
 
         int24 nearestLeftTick = (averageTick / widthTicks) * widthTicks;
@@ -258,38 +248,10 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         _mintUniV3Position(
             newMintTick - strategyParams_.widthCoefficient * widthTicks,
             newMintTick + strategyParams_.widthCoefficient * widthTicks,
-            restrictions.deadline
+            restrictions.deadline,
+            strategyParams_
         );
         lastMintRebalanceTick = newMintTick;
-    }
-
-    struct UniswapPositionParameters {
-        uint256 nft;
-        uint128 liquidity;
-        int24 lowerTick;
-        int24 upperTick;
-        int24 averageTick;
-        int24 spotTick;
-        uint160 lowerPriceSqrtX96;
-        uint160 upperPriceSqrtX96;
-        uint160 averagePriceSqrtX96;
-        uint256 averagePriceX96;
-        uint160 spotPriceSqrtX96;
-    }
-
-    function _getUniswapPositionParameters() internal view returns (UniswapPositionParameters memory params) {
-        (int24 averageTick, uint160 sqrtSpotPriceX96) = _getAverageTickAndSpotPrice(pool);
-        params.averageTick = averageTick;
-        uint256 uniV3Nft = uniV3Vault.nft();
-        if (uniV3Nft == 0) return params;
-        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager.positions(uniV3Nft);
-        params.lowerTick = lowerTick;
-        params.upperTick = upperTick;
-        params.liquidity = liquidity;
-        params.lowerPriceSqrtX96 = TickMath.getSqrtRatioAtTick(lowerTick);
-        params.upperPriceSqrtX96 = TickMath.getSqrtRatioAtTick(upperTick);
-        params.averagePriceSqrtX96 = TickMath.getSqrtRatioAtTick(averageTick);
-        params.spotPriceSqrtX96 = sqrtSpotPriceX96;
     }
 
     struct ExpectedRatios {
@@ -298,7 +260,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         uint32 uniV3RatioD;
     }
 
-    function _getExpectedRatios(UniswapPositionParameters memory uniswapParams)
+    function _getExpectedRatios(UniV3Helper.UniswapPositionParameters memory uniswapParams)
         internal
         pure
         returns (ExpectedRatios memory ratios)
@@ -319,11 +281,10 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     }
 
     function _getTvlInToken0(address vault, uint256 averagePriceX96) internal view returns (uint256 amount) {
-        (uint256[] memory minVaultTvl, uint256[] memory maxVaultTvl) = IIntegrationVault(vault).tvl();
-        amount =
-            (minVaultTvl[0] + minVaultTvl[0]) /
-            2 +
-            FullMath.mulDiv((minVaultTvl[1] + maxVaultTvl[1]) / 2, CommonLibrary.Q96, averagePriceX96);
+        (uint256[] memory minTvl, uint256[] memory maxTvl) = IIntegrationVault(vault).tvl();
+        uint256 averageToken0Tvl = (minTvl[0] + minTvl[0]) >> 1;
+        uint256 averageToken1Tvl = (minTvl[1] + maxTvl[1]) >> 1;
+        amount = FullMath.mulDiv(averageToken1Tvl, CommonLibrary.Q96, averagePriceX96) + averageToken0Tvl;
     }
 
     struct VaultsStatistics {
@@ -405,7 +366,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     }
 
     function _pullExtraTokensOnERC20Vault(
-        UniswapPositionParameters memory uniswapParams,
+        UniV3Helper.UniswapPositionParameters memory uniswapParams,
         VaultsStatistics memory missingTokenAmountsStat,
         RebalanceRestrictions memory restrictions,
         bytes memory moneyVaultOptions
@@ -529,7 +490,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
 
     function _swapToTarget(
         VaultsStatistics memory missingTokenAmountsStat,
-        UniswapPositionParameters memory uniswapParams,
+        UniV3Helper.UniswapPositionParameters memory uniswapParams,
         RebalanceRestrictions memory restrictions
     ) internal {
         uint256 amountIn = 0;
@@ -600,15 +561,21 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
     }
 
-    function _compareAmounts(uint256[] memory needed, uint256[] memory actual) internal pure {
-        for (uint256 i = 0; i < 2; i++) {
-            require(needed[i] <= actual[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-        }
-    }
-
     function _smartRebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions) internal {
         VaultsStatistics memory missingTokenAmountsStat = _initVaultStats();
-        UniswapPositionParameters memory uniswapParams = _getUniswapPositionParameters();
+        UniV3Helper.UniswapPositionParameters memory uniswapParams;
+        {
+            (int24 averageTick, uint160 sqrtSpotPriceX96) = _uniV3Helper.getAverageTickAndSpotPrice(
+                pool,
+                strategyParams.oracleObservationDelta
+            );
+            uniswapParams = _uniV3Helper.getUniswapPositionParameters(
+                averageTick,
+                sqrtSpotPriceX96,
+                uniV3Vault.nft(),
+                positionManager
+            );
+        }
         _pullExtraTokensOnERC20Vault(uniswapParams, missingTokenAmountsStat, restrictions, moneyVaultOptions);
         _swapToTarget(missingTokenAmountsStat, uniswapParams, restrictions);
         _pullMissingTokensFromERC20Vault(missingTokenAmountsStat, restrictions, moneyVaultOptions);
@@ -617,7 +584,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     function _swapTokensOnERC20Vault(
         uint256 amountIn,
         uint256 tokenInIndex,
-        uint256[] memory minTokensAmount,
+        uint256[] memory swappedAmounts,
         uint256 deadline
     ) internal returns (uint256[] memory amountsOut) {
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
@@ -640,7 +607,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
 
         uint256 amountOut = abi.decode(routerResult, (uint256));
-        require(minTokensAmount[tokenInIndex ^ 1] <= amountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        require(swappedAmounts[tokenInIndex ^ 1] <= amountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
 
         amountsOut = new uint256[](2);
         amountsOut[tokenInIndex ^ 1] = amountOut;
@@ -651,9 +618,9 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     function _mintUniV3Position(
         int24 lowerTick,
         int24 upperTick,
-        uint256 deadline
+        uint256 deadline,
+        StrategyParams memory params
     ) internal {
-        StrategyParams memory params = strategyParams;
         IERC20(tokens[0]).safeApprove(address(positionManager), params.minToken0AmountForMint);
         IERC20(tokens[1]).safeApprove(address(positionManager), params.minToken1AmountForMint);
         address[] memory tokens_ = tokens;
@@ -697,6 +664,13 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             }
         }
         emit MintUniV3Position(tx.origin, newNft, lowerTick, upperTick);
+    }
+
+    /// @notice reverts in for any elent holds needed[i] > actual[i]
+    function _compareAmounts(uint256[] memory needed, uint256[] memory actual) internal pure {
+        for (uint256 i = 0; i < 2; i++) {
+            require(needed[i] <= actual[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+        }
     }
 
     /// @notice Covert token amounts and deadline to byte options
