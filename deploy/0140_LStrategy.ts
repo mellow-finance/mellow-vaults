@@ -10,6 +10,9 @@ import {
 } from "./0000_utils";
 import { BigNumber } from "ethers";
 import { map } from "ramda";
+import { TickMath } from "@uniswap/v3-sdk";
+import { sqrt } from "@uniswap/sdk-core";
+import JSBI from "jsbi";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -129,18 +132,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const getUniV3Tick = async () => {
 
-        let vault = await ethers.getContractAt(
-            "IUniV3Vault",
-            uniV3LowerVault
+        const lStrategy = await ethers.getContract("LStrategy");
+        const mellowOracle = await ethers.getContract("MellowOracle");
+
+        const tradingParams = {
+            oracle: mellowOracle.address,
+            maxSlippageD: BigNumber.from(10).pow(7),
+            oracleSafetyMask: 0x2A,
+            orderDeadline: 86400 * 30,
+            maxFee0: BigNumber.from(10).pow(15),
+            maxFee1: BigNumber.from(10).pow(15)
+        };
+
+        const priceX96 = await lStrategy.getTargetPriceX96(
+            tokens[0],
+            tokens[1],
+            tradingParams
         );
 
-        let pool = await ethers.getContractAt(
-            "IUniswapV3Pool",
-            await vault.pool()
-        );
+        const sqrtPriceX48 = BigNumber.from(sqrt(JSBI.BigInt(priceX96)).toString());
+        const denominator = BigNumber.from(2).pow(48);
+        const tick = TickMath.getTickAtSqrtRatio(JSBI.BigInt(sqrtPriceX48.mul(denominator)));
         
-        const currentState = await pool.slot0();
-        return BigNumber.from(currentState.tick);
+        return BigNumber.from(tick);
     };
 
     let strategyOrderHelper = await deploy("LStrategyHelper", {
