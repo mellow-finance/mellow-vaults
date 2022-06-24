@@ -510,6 +510,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
 
         if (amountIn > 0) {
             _swapTokensOnERC20Vault(amountIn, tokenInIndex, restrictions.swappedAmounts, restrictions.deadline);
+            lastSwapRebalanceTick = uniswapParams.averageTick;
         }
     }
 
