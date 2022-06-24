@@ -319,8 +319,11 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     }
 
     function _getTvlInToken0(address vault, uint256 averagePriceX96) internal view returns (uint256 amount) {
-        (uint256[] memory vaultTvl, ) = IIntegrationVault(vault).tvl();
-        amount = vaultTvl[0] + FullMath.mulDiv(vaultTvl[0], CommonLibrary.Q96, averagePriceX96);
+        (uint256[] memory minVaultTvl, uint256[] memory maxVaultTvl) = IIntegrationVault(vault).tvl();
+        amount =
+            (minVaultTvl[0] + minVaultTvl[0]) /
+            2 +
+            FullMath.mulDiv((minVaultTvl[1] + maxVaultTvl[1]) / 2, CommonLibrary.Q96, averagePriceX96);
     }
 
     struct VaultsStatistics {
