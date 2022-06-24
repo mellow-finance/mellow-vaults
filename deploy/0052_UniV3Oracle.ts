@@ -6,7 +6,7 @@ import {ALL_NETWORKS, MAIN_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils"
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, read, execute } = deployments;
-    const { deployer, admin, uniswapV3Factory, usdc, weth, wbtc } =
+    const { deployer, admin, uniswapV3Factory, usdc, wsteth, weth, wbtc } =
         await getNamedAccounts();
     const factory = await hre.ethers.getContractAt(
         "IUniswapV3Factory",
@@ -19,6 +19,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         [usdc, wbtc],
     ]) {
         pools.push(await factory.getPool(tokens[0], tokens[1], 3000));
+    }
+
+    for (const tokens of [
+        [wsteth, weth],
+    ]) {
+        pools.push(await factory.getPool(tokens[0], tokens[1], 500));
     }
 
     await deploy("UniV3Oracle", {

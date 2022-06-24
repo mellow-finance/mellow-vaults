@@ -17,6 +17,7 @@ import {
     PermissionIdsLibrary,
     setupVault,
 } from "../deploy/0000_utils";
+import { ERC20 } from "./library/Types";
 import { integrationVaultBehavior } from "./behaviors/integrationVault";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -41,9 +42,46 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 await deployments.fixture();
                 const { read } = deployments;
 
-                const { uniswapV3PositionManager, curveRouter } =
-                    await getNamedAccounts();
+                const {
+                    uniswapV3PositionManager,
+                    curveRouter,
+                    uniswapV3Router,
+                } = await getNamedAccounts();
                 this.curveRouter = curveRouter;
+                this.swapRouter = await ethers.getContractAt(
+                    ISwapRouter,
+                    uniswapV3Router
+                );
+
+                this.swapTokens = async (
+                    senderAddress: string,
+                    recipientAddress: string,
+                    tokenIn: ERC20,
+                    tokenOut: ERC20,
+                    amountIn: BigNumber
+                ) => {
+                    await withSigner(senderAddress, async (senderSigner) => {
+                        await tokenIn
+                            .connect(senderSigner)
+                            .approve(
+                                this.swapRouter.address,
+                                ethers.constants.MaxUint256
+                            );
+                        let params = {
+                            tokenIn: tokenIn.address,
+                            tokenOut: tokenOut.address,
+                            fee: uniV3PoolFee,
+                            recipient: recipientAddress,
+                            deadline: ethers.constants.MaxUint256,
+                            amountIn: amountIn,
+                            amountOutMinimum: 0,
+                            sqrtPriceLimitX96: 0,
+                        };
+                        await this.swapRouter
+                            .connect(senderSigner)
+                            .exactInputSingle(params);
+                    });
+                };
 
                 this.positionManager = await ethers.getContractAt(
                     INonfungiblePositionManager,
@@ -77,15 +115,14 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 let uniV3VaultNft = startNft;
                 let erc20VaultNft = startNft + 1;
 
-                const uniV3Helper = (await ethers.getContract("UniV3Helper"))
-                    .address;
+                this.uniV3Helper = await ethers.getContract("UniV3Helper");
 
                 await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
                     createVaultArgs: [
                         tokens,
                         this.deployer.address,
                         uniV3PoolFee,
-                        uniV3Helper,
+                        this.uniV3Helper.address,
                     ],
                 });
                 await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
@@ -236,6 +273,48 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     expect(result[amountsId][tokenId]).gt(0);
                 }
             }
+        });
+
+        it("tvl changes with fees changing", async () => {
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(18).mul(3000)
+            );
+
+            await this.preparePush();
+            const resultPrev = await this.subject.tvl();
+
+            let poolAddress = await this.subject.pool();
+            const pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                poolAddress
+            );
+
+            const prevState = await pool.slot0();
+            const tokens = [this.weth, this.usdc];
+            await this.swapTokens(
+                this.deployer.address,
+                this.deployer.address,
+                tokens[0],
+                tokens[1],
+                BigNumber.from(10).pow(15)
+            );
+
+            const curState = await pool.slot0();
+
+            expect(prevState.tick == curState.tick).to.be.true;
+
+            const resultCur = await this.subject.tvl();
+
+            expect(resultCur[0][1].add(resultCur[0][0])).to.be.gt(
+                resultPrev[0][1].add(resultPrev[0][0])
+            );
         });
 
         describe("edge cases:", () => {
@@ -865,6 +944,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 expect(value.toNumber()).to.be.equal(0);
             });
         });
+
         describe("works correctly when current price is lower than tickPrice", () => {
             it("works", async () => {
                 const result = await mintUniV3Position_USDC_WETH({

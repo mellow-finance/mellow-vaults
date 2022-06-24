@@ -105,13 +105,17 @@ contract AggregateVault is IAggregateVault, Vault {
         IVaultRegistry registry = params.registry;
         IIntegrationVault destVault = IIntegrationVault(registry.vaultForNft(destNft));
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            IERC20(_vaultTokens[i]).safeIncreaseAllowance(address(destVault), tokenAmounts[i]);
+            if (tokenAmounts[i] > 0) {
+                IERC20(_vaultTokens[i]).safeIncreaseAllowance(address(destVault), tokenAmounts[i]);
+            }
         }
 
         actualTokenAmounts = destVault.transferAndPush(address(this), _vaultTokens, tokenAmounts, vaultOptions);
 
         for (uint256 i = 0; i < _vaultTokens.length; i++) {
-            IERC20(_vaultTokens[i]).safeApprove(address(destVault), 0);
+            if (tokenAmounts[i] > 0) {
+                IERC20(_vaultTokens[i]).safeApprove(address(destVault), 0);
+            }
         }
     }
 
