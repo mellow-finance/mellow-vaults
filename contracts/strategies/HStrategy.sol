@@ -145,56 +145,77 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         fromVault.pull(address(toVault), tokens, tokenAmounts, vaultOptions);
     }
 
-    function rebalance(
-        uint256[] memory burnTokenAmounts,
-        uint256[] memory swapTokenAmounts,
-        uint256[] memory increaseTokenAmounts,
-        uint256[] memory decreaseTokenAmounts,
-        bytes memory moneyVaultOptions,
-        uint256[] memory minSwapTokenAmounts,
-        uint256 deadline,
-        bytes memory options
-    ) external {
-        _requireAdmin();
-        _burnRebalance(burnTokenAmounts);
-        _mintRebalance(deadline);
-        _smartRebalance(deadline, moneyVaultOptions, minSwapTokenAmounts);
+    struct RebalanceRestrictions {
+        uint256[] pulledOnUniV3Vault;
+        uint256[] pulledFromUniV3Vault;
+        uint256[] pulledOnMoneyVault;
+        uint256[] pulledFromMoneyVault;
+        uint256[] swappedAmounts;
+        uint256[] burnedAmounts;
+        uint256 deadline;
     }
 
-    function _getAverageTickAndPrice(IUniswapV3Pool pool_) internal view returns (int24 averageTick, uint256 priceX96) {
-        uint32 oracleObservationDelta = strategyParams.oracleObservationDelta;
+    function rebalance(
+        uint256[] memory pulledOnMoneyVault,
+        uint256[] memory pulledFromMoneyVault,
+        uint256[] memory pulledOnUniV3Vault,
+        uint256[] memory pulledFromUniV3Vault,
+        uint256[] memory swappedAmounts,
+        uint256[] memory burnedAmounts,
+        uint256 deadline,
+        bytes memory moneyVaultOptions
+    ) external {
+        RebalanceRestrictions memory restrictions = RebalanceRestrictions({
+            pulledOnUniV3Vault: pulledOnUniV3Vault,
+            pulledFromUniV3Vault: pulledFromUniV3Vault,
+            pulledOnMoneyVault: pulledOnMoneyVault,
+            pulledFromMoneyVault: pulledFromMoneyVault,
+            swappedAmounts: swappedAmounts,
+            burnedAmounts: burnedAmounts,
+            deadline: deadline
+        });
+
+        _requireAdmin();
+        _burnRebalance(restrictions);
+        _mintRebalance(restrictions);
+        _smartRebalance(restrictions, moneyVaultOptions);
+    }
+
+    function _getAverageTickAndSpotPrice(IUniswapV3Pool pool_)
+        internal
+        view
+        returns (int24 averageTick, uint160 sqrtSpotPriceX96)
+    {
         (, int24 tick, , , , , ) = pool_.slot0();
+        sqrtSpotPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        uint32 oracleObservationDelta = strategyParams.oracleObservationDelta;
         bool withFail = false;
         (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
-        // Fails when we dont have observations, so return spot tick as this was the last trade price
+        // Fails when we dont have observations, so return spot averageTick as this was the last trade price
         if (withFail) {
             averageTick = tick;
         }
-        uint256 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(averageTick);
-        priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
     }
 
-    /// @dev if the current tick differs from lastMintRebalanceTick by more than burnDeltaTicks,
+    /// @dev if the current averageTick differs from lastMintRebalanceTick by more than burnDeltaTicks,
     /// then function transfers all tokens from UniV3Vault to ERC20Vault and burns the position by uniV3Nft
-    function _burnRebalance(uint256[] memory burnTokenAmounts) internal {
+    function _burnRebalance(RebalanceRestrictions memory restrictions) internal {
         uint256 uniV3Nft = uniV3Vault.nft();
         if (uniV3Nft == 0) {
             return;
         }
 
         StrategyParams memory strategyParams_ = strategyParams;
-        (int24 tick, ) = _getAverageTickAndPrice(pool);
+        (int24 averageTick, ) = _getAverageTickAndSpotPrice(pool);
 
-        int24 delta = tick - lastMintRebalanceTick;
+        int24 delta = averageTick - lastMintRebalanceTick;
         if (delta < 0) {
             delta = -delta;
         }
 
         if (delta > strategyParams_.burnDeltaTicks) {
             uint256[] memory collectedTokens = uniV3Vault.collectEarnings();
-            for (uint256 i = 0; i < 2; i++) {
-                require(collectedTokens[i] >= burnTokenAmounts[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-            }
+            _compareAmounts(restrictions.burnedAmounts, collectedTokens);
             (, , , , , , , uint256 liquidity, , , , ) = positionManager.positions(uniV3Nft);
             require(liquidity == 0, ExceptionsLibrary.INVARIANT);
             positionManager.burn(uniV3Nft);
@@ -203,25 +224,25 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
     }
 
-    function _mintRebalance(uint256 deadline) internal {
+    function _mintRebalance(RebalanceRestrictions memory restrictions) internal {
         if (uniV3Vault.nft() != 0) {
             return;
         }
         StrategyParams memory strategyParams_ = strategyParams;
-        (int24 tick, ) = _getAverageTickAndPrice(pool);
+        (int24 averageTick, ) = _getAverageTickAndSpotPrice(pool);
         int24 widthTicks = strategyParams_.widthTicks;
 
-        int24 nearestLeftTick = (tick / widthTicks) * widthTicks;
+        int24 nearestLeftTick = (averageTick / widthTicks) * widthTicks;
         int24 nearestRightTick = nearestLeftTick;
 
-        if (nearestLeftTick < tick) {
+        if (nearestLeftTick < averageTick) {
             nearestRightTick += widthTicks;
-        } else if (nearestLeftTick > tick) {
+        } else if (nearestLeftTick > averageTick) {
             nearestLeftTick -= widthTicks;
         }
 
-        int24 distToLeft = tick - nearestLeftTick;
-        int24 distToRight = nearestRightTick - tick;
+        int24 distToLeft = averageTick - nearestLeftTick;
+        int24 distToRight = nearestRightTick - averageTick;
         int24 newMintTick = nearestLeftTick;
 
         if (distToLeft > strategyParams_.mintDeltaTicks && distToRight > strategyParams_.mintDeltaTicks) {
@@ -237,7 +258,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         _mintUniV3Position(
             newMintTick - strategyParams_.widthCoefficient * widthTicks,
             newMintTick + strategyParams_.widthCoefficient * widthTicks,
-            deadline
+            restrictions.deadline
         );
         lastMintRebalanceTick = newMintTick;
     }
@@ -247,18 +268,18 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         uint128 liquidity;
         int24 lowerTick;
         int24 upperTick;
-        int24 tick;
+        int24 averageTick;
+        int24 spotTick;
         uint160 lowerPriceSqrtX96;
         uint160 upperPriceSqrtX96;
-        uint160 currentPriceSqrtX96;
+        uint160 averagePriceSqrtX96;
+        uint256 averagePriceX96;
+        uint160 spotPriceSqrtX96;
     }
 
-    function _getUniswapPositionParameters(int24 averageTick)
-        internal
-        view
-        returns (UniswapPositionParameters memory params)
-    {
-        params.tick = averageTick;
+    function _getUniswapPositionParameters() internal view returns (UniswapPositionParameters memory params) {
+        (int24 averageTick, uint160 sqrtSpotPriceX96) = _getAverageTickAndSpotPrice(pool);
+        params.averageTick = averageTick;
         uint256 uniV3Nft = uniV3Vault.nft();
         if (uniV3Nft == 0) return params;
         (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager.positions(uniV3Nft);
@@ -267,7 +288,8 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         params.liquidity = liquidity;
         params.lowerPriceSqrtX96 = TickMath.getSqrtRatioAtTick(lowerTick);
         params.upperPriceSqrtX96 = TickMath.getSqrtRatioAtTick(upperTick);
-        params.currentPriceSqrtX96 = TickMath.getSqrtRatioAtTick(averageTick);
+        params.averagePriceSqrtX96 = TickMath.getSqrtRatioAtTick(averageTick);
+        params.spotPriceSqrtX96 = sqrtSpotPriceX96;
     }
 
     struct ExpectedRatios {
@@ -287,10 +309,10 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         uint256 uniV3Nft = uniswapParams.nft;
         if (uniV3Nft != 0) {
             ratios.token0RatioD = uint32(
-                FullMath.mulDiv(uniswapParams.currentPriceSqrtX96, ratios.token0RatioD, uniswapParams.upperPriceSqrtX96)
+                FullMath.mulDiv(uniswapParams.averagePriceSqrtX96, ratios.token0RatioD, uniswapParams.upperPriceSqrtX96)
             );
             ratios.token1RatioD = uint32(
-                FullMath.mulDiv(uniswapParams.lowerPriceSqrtX96, ratios.token1RatioD, uniswapParams.currentPriceSqrtX96)
+                FullMath.mulDiv(uniswapParams.lowerPriceSqrtX96, ratios.token1RatioD, uniswapParams.averagePriceSqrtX96)
             );
             ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
         }
@@ -379,176 +401,168 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         pulledTokenAmounts = erc20Vault.pull(address(moneyVault), tokens, tokenAmounts, options);
     }
 
-    function _smartRebalance(
-        uint256 deadline,
-        bytes memory moneyVaultOptions,
-        uint256[] memory minSwapTokenAmounts
+    function _pullExtraTokensOnERC20Vault(
+        UniswapPositionParameters memory uniswapParams,
+        VaultsStatistics memory missingTokenAmountsStat,
+        RebalanceRestrictions memory restrictions,
+        bytes memory moneyVaultOptions
     ) internal {
-        (int24 averageTick, uint256 averagePriceX96) = _getAverageTickAndPrice(pool);
-        VaultsStatistics memory missingTokenAmountsStat = _initVaultStats();
+        ExpectedRatios memory expectedRatios = _getExpectedRatios(uniswapParams);
+        VaultTvlStats memory tvlStats = _getVaultTvlStats(uniswapParams.averagePriceX96);
+        ExpectedTokenAmounts memory expectedTokenAmounts;
+        expectedTokenAmounts.uniV3TokenAmountsInToken0 = FullMath.mulDiv(
+            tvlStats.totalTokensInToken0,
+            expectedRatios.uniV3RatioD,
+            DENOMINATOR
+        );
+        expectedTokenAmounts.erc20TokenAmountsInToken0 = FullMath.mulDiv(
+            tvlStats.totalTokensInToken0 - expectedTokenAmounts.uniV3TokenAmountsInToken0,
+            strategyParams.erc20MoneyRatioD,
+            DENOMINATOR
+        );
+        expectedTokenAmounts.moneyTokenAmountsInToken0 =
+            tvlStats.totalTokensInToken0 -
+            expectedTokenAmounts.uniV3TokenAmountsInToken0 -
+            expectedTokenAmounts.erc20TokenAmountsInToken0;
+
+        VaultsStatistics memory expectedTokenAmountsStat = _initVaultStats();
+
+        // possible it will be better to choose 1 to 1 ratio here
         {
-            UniswapPositionParameters memory uniswapParams = _getUniswapPositionParameters(averageTick);
-            ExpectedRatios memory expectedRatios = _getExpectedRatios(uniswapParams);
-            VaultTvlStats memory tvlStats = _getVaultTvlStats(averagePriceX96);
-            ExpectedTokenAmounts memory expectedTokenAmounts;
-            expectedTokenAmounts.uniV3TokenAmountsInToken0 = FullMath.mulDiv(
-                tvlStats.totalTokensInToken0,
-                expectedRatios.uniV3RatioD,
-                DENOMINATOR
+            expectedTokenAmountsStat.erc20Vault[0] = FullMath.mulDiv(
+                expectedRatios.token0RatioD,
+                expectedTokenAmounts.erc20TokenAmountsInToken0,
+                expectedRatios.token0RatioD + expectedRatios.token1RatioD
             );
-            expectedTokenAmounts.erc20TokenAmountsInToken0 = FullMath.mulDiv(
-                tvlStats.totalTokensInToken0 - expectedTokenAmounts.uniV3TokenAmountsInToken0,
-                strategyParams.erc20MoneyRatioD,
-                DENOMINATOR
+            expectedTokenAmountsStat.erc20Vault[1] = FullMath.mulDiv(
+                expectedTokenAmounts.erc20TokenAmountsInToken0 - expectedTokenAmountsStat.erc20Vault[0],
+                uniswapParams.averagePriceX96,
+                CommonLibrary.Q96
             );
-            expectedTokenAmounts.moneyTokenAmountsInToken0 =
-                tvlStats.totalTokensInToken0 -
-                expectedTokenAmounts.uniV3TokenAmountsInToken0 -
-                expectedTokenAmounts.erc20TokenAmountsInToken0;
+        }
 
-            VaultsStatistics memory expectedTokenAmountsStat = _initVaultStats();
+        // pull tokens from UniV3Vault
+        // possible only in uniV3Nft is not 0
+        if (tvlStats.uniV3TokensAmountInToken0 > expectedTokenAmounts.uniV3TokenAmountsInToken0) {
+            uint128 liquidityDelta = uint128(
+                FullMath.mulDiv(
+                    tvlStats.uniV3TokensAmountInToken0 - expectedTokenAmounts.uniV3TokenAmountsInToken0,
+                    uniswapParams.liquidity,
+                    tvlStats.uniV3TokensAmountInToken0
+                )
+            );
+            uint256[] memory tokenAmountsFromUniV3Vault = new uint256[](2);
+            (tokenAmountsFromUniV3Vault[0], tokenAmountsFromUniV3Vault[1]) = LiquidityAmounts.getAmountsForLiquidity(
+                uniswapParams.spotPriceSqrtX96,
+                uniswapParams.lowerPriceSqrtX96,
+                uniswapParams.upperPriceSqrtX96,
+                liquidityDelta
+            );
 
-            // possible it will be better to choose 1 to 1 ratio here
-            {
-                expectedTokenAmountsStat.erc20Vault[0] = FullMath.mulDiv(
-                    expectedRatios.token0RatioD,
-                    expectedTokenAmounts.erc20TokenAmountsInToken0,
-                    expectedRatios.token0RatioD + expectedRatios.token1RatioD
-                );
-                expectedTokenAmountsStat.erc20Vault[1] = FullMath.mulDiv(
-                    expectedTokenAmountsStat.erc20Vault[0],
-                    averagePriceX96,
-                    CommonLibrary.Q96
-                );
-            }
+            uint256[] memory pulledAmounts = _pullFromUniV3Vault(tokenAmountsFromUniV3Vault, restrictions.deadline);
+            _compareAmounts(restrictions.pulledFromUniV3Vault, pulledAmounts);
+        }
 
-            // pull tokens from UniV3Vault
-            // possible only in uniV3Nft is not 0
-            if (tvlStats.uniV3TokensAmountInToken0 > expectedTokenAmounts.uniV3TokenAmountsInToken0) {
-                uint128 liquidityDelta = uint128(
-                    FullMath.mulDiv(
-                        tvlStats.uniV3TokensAmountInToken0 - expectedTokenAmounts.uniV3TokenAmountsInToken0,
-                        uniswapParams.liquidity,
-                        expectedTokenAmounts.uniV3TokenAmountsInToken0
-                    )
-                );
-                uint256[] memory tokenAmountsFromUniV3Vault = new uint256[](2);
-                (tokenAmountsFromUniV3Vault[0], tokenAmountsFromUniV3Vault[1]) = LiquidityAmounts
-                    .getAmountsForLiquidity(
-                        uniswapParams.currentPriceSqrtX96,
-                        uniswapParams.lowerPriceSqrtX96,
-                        uniswapParams.upperPriceSqrtX96,
-                        liquidityDelta
-                    );
-
-                uint256[] memory pulledAmounts = _pullFromUniV3Vault(tokenAmountsFromUniV3Vault, deadline);
-
-                // TODO: compare with decreaseTokenAmounts
-            }
-
-            // pull tokens from moneyVault
-            {
-                (uint256[] memory moneyTvl, ) = moneyVault.tvl();
-                expectedTokenAmountsStat.moneyVault[0] = FullMath.mulDiv(
-                    expectedRatios.token0RatioD,
-                    expectedTokenAmounts.moneyTokenAmountsInToken0,
-                    expectedRatios.token0RatioD + expectedRatios.token1RatioD
-                );
-                expectedTokenAmountsStat.moneyVault[1] = FullMath.mulDiv(
-                    expectedTokenAmounts.moneyTokenAmountsInToken0 - expectedTokenAmountsStat.moneyVault[0],
-                    averagePriceX96,
-                    CommonLibrary.Q96
-                );
-                uint256[] memory tokenAmountsFromMoneyVault = new uint256[](2);
-                bool needPull = false;
-                for (uint256 i = 0; i < 2; i++) {
-                    if (moneyTvl[i] > expectedTokenAmountsStat.moneyVault[i]) {
-                        tokenAmountsFromMoneyVault[i] = moneyTvl[i] - expectedTokenAmountsStat.moneyVault[i];
-                        needPull = true;
-                    } else {
-                        missingTokenAmountsStat.moneyVault[i] = missingTokenAmountsStat.moneyVault[i] - moneyTvl[i];
-                    }
-                }
-                if (needPull) {
-                    uint256[] memory pulledAmounts = _pullFromMoneyVault(tokenAmountsFromMoneyVault, moneyVaultOptions);
-                    // TODO: compare with pulled from money vault
+        // pull tokens from moneyVault
+        {
+            (uint256[] memory moneyTvl, ) = moneyVault.tvl();
+            expectedTokenAmountsStat.moneyVault[0] = FullMath.mulDiv(
+                expectedRatios.token0RatioD,
+                expectedTokenAmounts.moneyTokenAmountsInToken0,
+                expectedRatios.token0RatioD + expectedRatios.token1RatioD
+            );
+            expectedTokenAmountsStat.moneyVault[1] = FullMath.mulDiv(
+                expectedTokenAmounts.moneyTokenAmountsInToken0 - expectedTokenAmountsStat.moneyVault[0],
+                uniswapParams.averagePriceX96,
+                CommonLibrary.Q96
+            );
+            uint256[] memory tokenAmountsFromMoneyVault = new uint256[](2);
+            bool needPull = false;
+            for (uint256 i = 0; i < 2; i++) {
+                if (moneyTvl[i] > expectedTokenAmountsStat.moneyVault[i]) {
+                    tokenAmountsFromMoneyVault[i] = moneyTvl[i] - expectedTokenAmountsStat.moneyVault[i];
+                    needPull = true;
+                } else {
+                    missingTokenAmountsStat.moneyVault[i] = missingTokenAmountsStat.moneyVault[i] - moneyTvl[i];
                 }
             }
-
-            // now we have sufficient amounts of tokens for the swap
-            // how we can make it?
-
-            // get tokens, that we need to pull on UniV3Vault
-            // get tokens, that we need to pull on MoneyVault
-
-            // get current state of erc20Vault
-
-            if (tvlStats.uniV3TokensAmountInToken0 < expectedTokenAmounts.uniV3TokenAmountsInToken0) {
-                uint128 liquidityDelta = uint128(
-                    FullMath.mulDiv(
-                        expectedTokenAmounts.uniV3TokenAmountsInToken0 - tvlStats.uniV3TokensAmountInToken0,
-                        uniswapParams.liquidity,
-                        tvlStats.uniV3TokensAmountInToken0
-                    )
-                );
-
-                (missingTokenAmountsStat.uniV3Vault[0], missingTokenAmountsStat.uniV3Vault[1]) = LiquidityAmounts
-                    .getAmountsForLiquidity(
-                        uniswapParams.currentPriceSqrtX96,
-                        uniswapParams.lowerPriceSqrtX96,
-                        uniswapParams.upperPriceSqrtX96,
-                        liquidityDelta
-                    );
+            if (needPull) {
+                uint256[] memory pulledAmounts = _pullFromMoneyVault(tokenAmountsFromMoneyVault, moneyVaultOptions);
+                _compareAmounts(restrictions.pulledFromMoneyVault, pulledAmounts);
             }
-            {
-                (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+        }
 
-                for (uint256 i = 0; i < 2; i++) {
-                    uint256 term = expectedTokenAmountsStat.erc20Vault[i] +
-                        missingTokenAmountsStat.uniV3Vault[i] +
-                        missingTokenAmountsStat.moneyVault[i];
-                    // tvl - expected - delta
-                    if (erc20Tvl[i] < term) {
-                        missingTokenAmountsStat.erc20Vault[i] = term - erc20Tvl[i];
-                    }
+        if (tvlStats.uniV3TokensAmountInToken0 < expectedTokenAmounts.uniV3TokenAmountsInToken0) {
+            uint128 liquidityDelta = uint128(
+                FullMath.mulDiv(
+                    expectedTokenAmounts.uniV3TokenAmountsInToken0 - tvlStats.uniV3TokensAmountInToken0,
+                    uniswapParams.liquidity,
+                    tvlStats.uniV3TokensAmountInToken0
+                )
+            );
+
+            (missingTokenAmountsStat.uniV3Vault[0], missingTokenAmountsStat.uniV3Vault[1]) = LiquidityAmounts
+                .getAmountsForLiquidity(
+                    uniswapParams.spotPriceSqrtX96,
+                    uniswapParams.lowerPriceSqrtX96,
+                    uniswapParams.upperPriceSqrtX96,
+                    liquidityDelta
+                );
+        }
+        {
+            (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+            for (uint256 i = 0; i < 2; i++) {
+                uint256 term = expectedTokenAmountsStat.erc20Vault[i] +
+                    missingTokenAmountsStat.uniV3Vault[i] +
+                    missingTokenAmountsStat.moneyVault[i];
+
+                if (erc20Tvl[i] < term) {
+                    missingTokenAmountsStat.erc20Vault[i] = term - erc20Tvl[i];
                 }
             }
         }
+    }
+
+    function _swapToTarget(
+        VaultsStatistics memory missingTokenAmountsStat,
+        UniswapPositionParameters memory uniswapParams,
+        RebalanceRestrictions memory restrictions
+    ) internal {
+        uint256 amountIn = 0;
+        uint32 tokenInIndex = 0;
         {
-            uint256 amountIn = 0;
-            uint32 tokenInIndex = 0;
-            {
-                uint256 totalMissingToken0 = missingTokenAmountsStat.erc20Vault[0] +
-                    missingTokenAmountsStat.uniV3Vault[0] +
-                    missingTokenAmountsStat.moneyVault[0];
-                uint256 totalMissingToken1 = missingTokenAmountsStat.erc20Vault[1] +
-                    missingTokenAmountsStat.uniV3Vault[1] +
-                    missingTokenAmountsStat.moneyVault[1];
+            uint256 totalMissingToken0 = missingTokenAmountsStat.erc20Vault[0];
+            uint256 totalMissingToken1 = missingTokenAmountsStat.erc20Vault[1];
 
-                uint256 totalMissingToken1InToken0 = FullMath.mulDiv(
-                    totalMissingToken1,
-                    CommonLibrary.Q96,
-                    averagePriceX96
-                );
+            uint256 totalMissingToken1InToken0 = FullMath.mulDiv(
+                totalMissingToken1,
+                CommonLibrary.Q96,
+                uniswapParams.averagePriceX96
+            );
 
-                if (totalMissingToken1InToken0 > totalMissingToken0) {
-                    amountIn = totalMissingToken1InToken0 - totalMissingToken0;
-                    tokenInIndex = 0;
-                }
-                if (totalMissingToken1InToken0 < totalMissingToken0) {
-                    amountIn = FullMath.mulDiv(
-                        totalMissingToken0 - totalMissingToken1InToken0,
-                        averagePriceX96,
-                        CommonLibrary.Q96
-                    );
-                    tokenInIndex = 1;
-                }
+            if (totalMissingToken1InToken0 > totalMissingToken0) {
+                require(totalMissingToken0 == 0, ExceptionsLibrary.INVARIANT);
+                amountIn = totalMissingToken1InToken0;
+                tokenInIndex = 0;
             }
-
-            _swapTokensOnERC20Vault(amountIn, tokenInIndex, minSwapTokenAmounts, deadline);
+            if (totalMissingToken1InToken0 < totalMissingToken0) {
+                require(totalMissingToken1InToken0 == 0, ExceptionsLibrary.INVARIANT);
+                amountIn = FullMath.mulDiv(totalMissingToken0, uniswapParams.averagePriceX96, CommonLibrary.Q96);
+                tokenInIndex = 1;
+            }
         }
 
-        // same code part 1
+        if (amountIn > 0) {
+            _swapTokensOnERC20Vault(amountIn, tokenInIndex, restrictions.swappedAmounts, restrictions.deadline);
+        }
+    }
+
+    function _pullMissingTokensFromERC20Vault(
+        VaultsStatistics memory missingTokenAmountsStat,
+        RebalanceRestrictions memory restrictions,
+        bytes memory moneyVaultOptions
+    ) internal {
         {
             bool needPull = false;
             for (uint256 i = 0; i < 2; i++) {
@@ -561,7 +575,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
                     missingTokenAmountsStat.moneyVault,
                     moneyVaultOptions
                 );
-                // TODO: compare with pulled on money vault
+                _compareAmounts(restrictions.pulledOnMoneyVault, pulledAmounts);
             }
         }
 
@@ -574,12 +588,27 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
                 }
             }
             if (needPull) {
-                uint256[] memory pulledAmounts = _pullOnUniV3Vault(missingTokenAmountsStat.uniV3Vault, deadline);
-                // TODO: compare with increased liquidity on univ3 pos
+                uint256[] memory pulledAmounts = _pullOnUniV3Vault(
+                    missingTokenAmountsStat.uniV3Vault,
+                    restrictions.deadline
+                );
+                _compareAmounts(restrictions.pulledOnUniV3Vault, pulledAmounts);
             }
         }
+    }
 
-        // call the event with the HUGE amount of parameters
+    function _compareAmounts(uint256[] memory needed, uint256[] memory actual) internal pure {
+        for (uint256 i = 0; i < 2; i++) {
+            require(needed[i] <= actual[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
+        }
+    }
+
+    function _smartRebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions) internal {
+        VaultsStatistics memory missingTokenAmountsStat = _initVaultStats();
+        UniswapPositionParameters memory uniswapParams = _getUniswapPositionParameters();
+        _pullExtraTokensOnERC20Vault(uniswapParams, missingTokenAmountsStat, restrictions, moneyVaultOptions);
+        _swapToTarget(missingTokenAmountsStat, uniswapParams, restrictions);
+        _pullMissingTokensFromERC20Vault(missingTokenAmountsStat, restrictions, moneyVaultOptions);
     }
 
     function _swapTokensOnERC20Vault(
