@@ -22,11 +22,6 @@ import "../utils/UniV3Helper.sol";
 contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
-    struct OtherParams {
-        uint256 minToken0ForOpening;
-        uint256 minToken1ForOpening;
-    }
-
     struct StrategyParams {
         int24 burnDeltaTicks;
         int24 mintDeltaTicks;
@@ -34,7 +29,6 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         int24 widthCoefficient;
         int24 widthTicks;
         uint32 oracleObservationDelta;
-        uint32 slippage;
         uint32 erc20MoneyRatioD;
         uint256 minToken0AmountForMint;
         uint256 minToken1AmountForMint;
@@ -53,10 +47,10 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     ISwapRouter public router;
 
+    int24 public lastSwapRebalanceTick;
     int24 public lastMintRebalanceTick;
     uint32 public constant DENOMINATOR = 10**9;
 
-    OtherParams public otherParams;
     StrategyParams public strategyParams;
 
     constructor(INonfungiblePositionManager positionManager_, ISwapRouter router_) {
@@ -114,25 +108,21 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         strategy.initialize(positionManager, tokens_, erc20Vault_, moneyVault_, uniV3Vault_, fee_, admin_, uniV3Helper);
     }
 
-    function updateOtherParams(OtherParams calldata newOtherParams) external {
-        _requireAdmin();
-        require(
-            (newOtherParams.minToken0ForOpening > 0 && newOtherParams.minToken1ForOpening > 0),
-            ExceptionsLibrary.INVARIANT
-        );
-        otherParams = newOtherParams;
-        emit UpdateOtherParams(tx.origin, msg.sender, newOtherParams);
-    }
-
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
         require(
-            (newStrategyParams.biDeltaTicks > 0 &&
-                newStrategyParams.burnDeltaTicks > 0 &&
+            (newStrategyParams.burnDeltaTicks > 0 &&
                 newStrategyParams.mintDeltaTicks > 0 &&
+                newStrategyParams.biDeltaTicks > 0 &&
                 newStrategyParams.widthCoefficient > 0 &&
                 newStrategyParams.widthTicks > 0 &&
-                newStrategyParams.oracleObservationDelta > 0),
+                newStrategyParams.oracleObservationDelta > 0 &&
+                newStrategyParams.erc20MoneyRatioD > 0 &&
+                newStrategyParams.erc20MoneyRatioD <= DENOMINATOR &&
+                newStrategyParams.minToken0AmountForMint > 0 &&
+                newStrategyParams.minToken1AmountForMint > 0 &&
+                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient &&
+                newStrategyParams.burnDeltaTicks + newStrategyParams.mintDeltaTicks < newStrategyParams.widthTicks),
             ExceptionsLibrary.INVARIANT
         );
         strategyParams = newStrategyParams;
@@ -495,6 +485,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     ) internal {
         uint256 amountIn = 0;
         uint32 tokenInIndex = 0;
+
         {
             uint256 totalMissingToken0 = missingTokenAmountsStat.erc20Vault[0];
             uint256 totalMissingToken1 = missingTokenAmountsStat.erc20Vault[1];
@@ -564,10 +555,11 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     function _smartRebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions) internal {
         VaultsStatistics memory missingTokenAmountsStat = _initVaultStats();
         UniV3Helper.UniswapPositionParameters memory uniswapParams;
+        StrategyParams memory strategyParams_ = strategyParams;
         {
             (int24 averageTick, uint160 sqrtSpotPriceX96) = _uniV3Helper.getAverageTickAndSpotPrice(
                 pool,
-                strategyParams.oracleObservationDelta
+                strategyParams_.oracleObservationDelta
             );
             uniswapParams = _uniV3Helper.getUniswapPositionParameters(
                 averageTick,
@@ -577,7 +569,16 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             );
         }
         _pullExtraTokensOnERC20Vault(uniswapParams, missingTokenAmountsStat, restrictions, moneyVaultOptions);
-        _swapToTarget(missingTokenAmountsStat, uniswapParams, restrictions);
+        {
+            // Mb we just don't need to check this biDeltaTicks?
+            int24 swapDeltaTicks = uniswapParams.averageTick - lastSwapRebalanceTick;
+            if (swapDeltaTicks < 0) {
+                swapDeltaTicks = -swapDeltaTicks;
+            }
+            if (swapDeltaTicks > strategyParams_.biDeltaTicks) {
+                _swapToTarget(missingTokenAmountsStat, uniswapParams, restrictions);
+            }
+        }
         _pullMissingTokensFromERC20Vault(missingTokenAmountsStat, restrictions, moneyVaultOptions);
     }
 
@@ -724,10 +725,4 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     /// @param sender Sender of the call (msg.sender)
     /// @param params Updated params
     event UpdateStrategyParams(address indexed origin, address indexed sender, StrategyParams params);
-
-    /// @notice Emitted when Other params are set.
-    /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender)
-    /// @param params Updated params
-    event UpdateOtherParams(address indexed origin, address indexed sender, OtherParams params);
 }
