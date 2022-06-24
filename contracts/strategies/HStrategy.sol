@@ -218,7 +218,10 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         }
 
         StrategyParams memory strategyParams_ = strategyParams;
-        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSpotPrice(pool, strategyParams_.oracleObservationDelta);
+        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            pool,
+            strategyParams_.oracleObservationDelta
+        );
 
         int24 delta = averageTick - lastMintRebalanceTick;
         if (delta < 0) {
@@ -242,7 +245,10 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
             return;
         }
         StrategyParams memory strategyParams_ = strategyParams;
-        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSpotPrice(pool, strategyParams_.oracleObservationDelta);
+        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            pool,
+            strategyParams_.oracleObservationDelta
+        );
         int24 widthTicks = strategyParams_.widthTicks;
 
         int24 nearestLeftTick = (averageTick / widthTicks) * widthTicks;
@@ -518,7 +524,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         UniV3Helper.UniswapPositionParameters memory uniswapParams;
         StrategyParams memory strategyParams_ = strategyParams;
         {
-            (int24 averageTick, uint160 sqrtSpotPriceX96) = _uniV3Helper.getAverageTickAndSpotPrice(
+            (int24 averageTick, uint160 sqrtSpotPriceX96) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
                 pool,
                 strategyParams_.oracleObservationDelta
             );
