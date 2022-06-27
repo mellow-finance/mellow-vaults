@@ -171,10 +171,10 @@ const swapWethToWsteth = async (
     const { deployer, wsteth, weth } = context;
     const pool = await getPool(hre, context);
     const sqrtPriceX96 = (await pool.slot0()).sqrtPriceX96;
-    const price = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
+    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
     const denominator = BigNumber.from(2).pow(96);
     const balance = await wsteth.balanceOf(deployer.address);
-    let expectedOut = amountIn.mul(denominator).div(price);
+    let expectedOut = amountIn.mul(denominator).div(priceX96);
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
     }
@@ -198,10 +198,10 @@ const swapWstethToWeth = async (
     const { deployer, wsteth, weth } = context;
     const pool = await getPool(hre, context);
     const sqrtPriceX96 = (await pool.slot0()).sqrtPriceX96;
-    const price = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
+    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
     const denominator = BigNumber.from(2).pow(96);
     const balance = await weth.balanceOf(deployer.address);
-    let expectedOut = amountIn.mul(price).div(denominator);
+    let expectedOut = amountIn.mul(priceX96).div(denominator);
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
     }
@@ -280,12 +280,12 @@ const getExpectedRatio = async (context: Context) => {
         tokens[1],
         await context.LStrategy.tradingParams()
     );
-    const sqrtTargetPriceX96 = BigNumber.from(
+    const sqrtTargetPriceX48 = BigNumber.from(
         sqrt(JSBI.BigInt(targetPriceX96)).toString()
     );
     const targetTick = TickMath.getTickAtSqrtRatio(
         JSBI.BigInt(
-            sqrtTargetPriceX96
+            sqrtTargetPriceX48
                 .mul(BigNumber.from(2).pow(48))
                 .toString()
         )
