@@ -28,7 +28,7 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
     ).setAction(
         async ({ filename, width }, hre: HardhatRuntimeEnvironment) => {
             const context = await setup(hre, width);
-            await process(filename, width, hre, context);
+            await execute(filename, width, hre, context);
         }
     );
 
@@ -574,8 +574,8 @@ const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context
 
         await makeSwap(hre, context);
         i += 1;
-        if (i >= 20) {
-            console.log("More than 20 iterations needed in ERC20Uni rebalance!!!");
+        if (i >= 10) {
+            console.log("More than 10 iterations needed in ERC20Uni rebalance!!!");
             break;
         }
     }
@@ -614,8 +614,8 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
         ethers.constants.MaxUint256);
         await swapOnCowswap(hre, context);
         iter += 1;
-        if (iter >= 20) {
-            console.log("More than 20 iterations needed!!!");
+        if (iter >= 10) {
+            console.log("More than 10 iterations needed!!!");
             break;
         }
     }
@@ -636,7 +636,7 @@ const reportStats = async (hre: HardhatRuntimeEnvironment, context: Context, fna
     }
 };
 
-const process = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
+const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvironment, context: Context) => {
     console.log("Process started");
 
     await mintMockPosition(hre, context);
@@ -679,6 +679,7 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
         }
     }
 
+    console.log(process.memoryUsage())
     let prev = Date.now();
     console.log("length: ", prices.length);
     for (let i = 1; i < prices.length; ++i) {
@@ -686,6 +687,7 @@ const process = async (filename: string, width: number, hre: HardhatRuntimeEnvir
             let now = Date.now();
             console.log("Iteration: ", i);
             console.log("Duration: ", now - prev);
+            console.log(process.memoryUsage());
             prev = now;
         }
         await reportStats(hre, context, "output.csv", keys);
