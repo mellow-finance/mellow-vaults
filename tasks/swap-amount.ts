@@ -356,6 +356,18 @@ async function countXRatio(
     return 1 / (1 + c.toNumber() / 10000);
 }
 
+function toWhole(value: BigNumber) {
+    let thousands = value.div(BigNumber.from(10).pow(15)).toString();
+    thousands =
+        thousands.substring(0, thousands.length - 3) +
+        "." +
+        thousands.substring(thousands.length - 3);
+    if (thousands.length == 4) {
+        thousands = "0" + thousands;
+    }
+    return thousands;
+}
+
 async function countSwapAmount(
     hre: HardhatRuntimeEnvironment,
     tickShift: number,
@@ -560,18 +572,18 @@ async function countSwapAmount(
         "To lower price for " + tickShift + " ticks, you need to swap at least"
     );
     console.log(
-        priceDownDeltaX.div(BigNumber.from(10).pow(15)).toString() +
+        toWhole(priceDownDeltaX) +
             " of 0 for " +
-            priceDownDeltaY.abs().toString() +
+            toWhole(priceDownDeltaY.abs()) +
             " of 1"
     );
     console.log(
         "To higher price for " + tickShift + " ticks, you need to swap at least"
     );
     console.log(
-        priceUpDeltaY.div(BigNumber.from(10).pow(15)).toString() +
+        toWhole(priceUpDeltaY) +
             " of 1 for " +
-            priceUpDeltaX.abs().toString() +
+            toWhole(priceUpDeltaX.abs()) +
             " of 0\n"
     );
 
