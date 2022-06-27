@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity 0.8.9;
 
+import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
@@ -19,7 +20,7 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/UniV3Helper.sol";
 
-contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
+contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
 
     // IMMUTABLES
@@ -211,7 +212,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     /// @dev if the current averageTick differs from lastMintRebalanceTick by more than burnDeltaTicks,
     /// then function transfers all tokens from UniV3Vault to ERC20Vault and burns the position by uniV3Nft
     function _burnRebalance(RebalanceRestrictions memory restrictions) internal {
-        uint256 uniV3Nft = uniV3Vault.nft();
+        uint256 uniV3Nft = uniV3Vault.uniV3Nft();
         if (uniV3Nft == 0) {
             // nothing to burn
             return;
@@ -241,7 +242,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
     }
 
     function _mintRebalance(RebalanceRestrictions memory restrictions) internal {
-        if (uniV3Vault.nft() != 0) {
+        if (uniV3Vault.uniV3Nft() != 0) {
             return;
         }
         StrategyParams memory strategyParams_ = strategyParams;
@@ -556,7 +557,7 @@ contract HStrategy is ContractMeta, DefaultAccessControlLateInit {
         uniswapParams = _uniV3Helper.getUniswapPositionParameters(
             averageTick,
             sqrtSpotPriceX96,
-            uniV3Vault.nft(),
+            uniV3Vault.uniV3Nft(),
             positionManager
         );
     }
