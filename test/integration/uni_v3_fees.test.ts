@@ -225,6 +225,26 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                     const currentState = await pool.slot0();
                     return BigNumber.from(currentState.tick);
                 };
+
+                this.checkCalculation = async () => {
+                    const { amount0, amount1 } =
+                        await this.calculateTokensOwed();
+                    const positionManager =
+                        await this.subject.positionManager();
+                    const positionInfo =
+                        await this.uniV3Helper.calculatePositionInfo(
+                            positionManager,
+                            await this.subject.pool(),
+                            await this.subject.uniV3Nft()
+                        );
+                    expect(
+                        amount0.sub(positionInfo.tokensOwed0).toNumber()
+                    ).to.be.eq(0);
+                    expect(
+                        amount1.sub(positionInfo.tokensOwed1).toNumber()
+                    ).to.be.eq(0);
+                };
+
                 return this.subject;
             }
         );
@@ -245,12 +265,12 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         await mint(
             "WETH",
             this.deployer.address,
-            BigNumber.from(10).pow(18).mul(4000),
+            BigNumber.from(10).pow(18).mul(4000)
         );
         await mint(
             "USDC",
             this.deployer.address,
-            BigNumber.from(10).pow(6).mul(400_000),
+            BigNumber.from(10).pow(6).mul(400_000)
         );
 
         const currentTick = await this.getUniV3Tick();
@@ -284,23 +304,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.subject.address,
                 BigNumber.from(10).pow(18).mul(1000)
             );
-            const positionManager = await this.subject.positionManager();
-            {
-                const { amount0, amount1 } =
-                    await this.calculateTokensOwed();
-                const positionInfo =
-                    await this.uniV3Helper.calculatePositionInfo(
-                        positionManager,
-                        await this.subject.pool(),
-                        await this.subject.uniV3Nft()
-                    );
-                expect(
-                    amount0.sub(positionInfo.tokensOwed0).toNumber()
-                ).to.be.eq(0);
-                expect(
-                    amount1.sub(positionInfo.tokensOwed1).toNumber()
-                ).to.be.eq(0);
-            }
+            await this.checkCalculation();
             await this.swapTokens(
                 this.subject.address,
                 this.subject.address,
@@ -315,23 +319,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.weth,
                 BigNumber.from(10).pow(6).mul(100)
             );
-            let currentTick = await this.getUniV3Tick();
-            {
-                const { amount0, amount1 } =
-                    await this.calculateTokensOwed();
-                const positionInfo =
-                    await this.uniV3Helper.calculatePositionInfo(
-                        positionManager,
-                        await this.subject.pool(),
-                        await this.subject.uniV3Nft()
-                    );
-                expect(
-                    amount0.sub(positionInfo.tokensOwed0).toNumber()
-                ).to.be.eq(0);
-                expect(
-                    amount1.sub(positionInfo.tokensOwed1).toNumber()
-                ).to.be.eq(0);
-            }
+            await this.checkCalculation();
             const nft = await this.subject.uniV3Nft();
             const position = await this.positionManager.positions(nft);
             let tickLower = position.tickLower;
@@ -343,22 +331,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 usdcAmount: BigNumber.from(10).pow(6).mul(3000),
                 wethAmount: BigNumber.from(10).pow(18),
             });
-            {
-                const { amount0, amount1 } =
-                    await this.calculateTokensOwed();
-                const positionInfo =
-                    await this.uniV3Helper.calculatePositionInfo(
-                        positionManager,
-                        await this.subject.pool(),
-                        await this.subject.uniV3Nft()
-                    );
-                expect(
-                    amount0.sub(positionInfo.tokensOwed0).toNumber()
-                ).to.be.eq(0);
-                expect(
-                    amount1.sub(positionInfo.tokensOwed1).toNumber()
-                ).to.be.eq(0);
-            }
+            await this.checkCalculation();
             await this.swapTokens(
                 this.subject.address,
                 this.subject.address,
@@ -366,22 +339,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
                 this.weth,
                 BigNumber.from(10).pow(6).mul(9000)
             );
-            {
-                const { amount0, amount1 } =
-                    await this.calculateTokensOwed();
-                const positionInfo =
-                    await this.uniV3Helper.calculatePositionInfo(
-                        positionManager,
-                        await this.subject.pool(),
-                        await this.subject.uniV3Nft()
-                    );
-                expect(
-                    amount0.sub(positionInfo.tokensOwed0).toNumber()
-                ).to.be.eq(0);
-                expect(
-                    amount1.sub(positionInfo.tokensOwed1).toNumber()
-                ).to.be.eq(0);
-            }
+            await this.checkCalculation();
         });
     });
 });
