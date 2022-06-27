@@ -97,10 +97,6 @@ const setupStrategy = async (
         deployer,
         uniV3Helper,
     ];
-    {
-        const v = await hre.ethers.getContractAt("UniV3Vault", uniV3Vault);
-        console.log(await v.uniV3Nft());
-    }
     const address = await hStrategy.callStatic.createStrategy(...params);
     await hStrategy.createStrategy(...params);
     await deployments.save(deploymentName, {

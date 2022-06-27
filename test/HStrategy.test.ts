@@ -165,8 +165,8 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     widthTicks: 100,
                     oracleObservationDelta: 150,
                     erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(95),
-                    minToken0AmountForMint: BigNumber.from(10).pow(3),
-                    minToken1AmountForMint: BigNumber.from(10).pow(9),
+                    minToken0AmountForMint: BigNumber.from(10).pow(6),
+                    minToken1AmountForMint: BigNumber.from(10).pow(6),
                 };
                 let txs: string[] = [];
                 txs.push(
@@ -232,7 +232,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         await this.deploymentFixture();
     });
 
-    describe.only("#constructor", () => {
+    describe("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
                 ethers.constants.AddressZero
@@ -240,7 +240,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#createStrategy", () => {
+    describe("#createStrategy", () => {
         it("creates a new strategy and initializes it", async () => {
             const address = await this.subject
                 .connect(this.mStrategyAdmin)
@@ -272,7 +272,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#constructor", () => {
+    describe("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
                 ethers.constants.AddressZero
@@ -280,7 +280,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#manualPull", () => {
+    describe("#manualPull", () => {
         it("pulls token amounts from fromVault to toVault", async () => {
             let amountWETH = randomInt(10 ** 4, 10 ** 6);
             let amountUSDC = randomInt(10 ** 4, 10 ** 6);
@@ -395,12 +395,18 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     pullExistentials[i].mul(10)
                 );
             }
+
+            await mint("USDC", this.subject.address, BigNumber.from(10).pow(10));
+            await mint("WETH", this.subject.address, BigNumber.from(10).pow(10));
+
+            // deposit to zero-vault
             await this.erc20RootVault.deposit(
                 [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
                 0,
                 []
             );
 
+            // normal deposit
             await this.erc20RootVault.deposit(
                 [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
                 0,
@@ -408,15 +414,6 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             );
 
             await this.subject
-                .connect(this.mStrategyAdmin)
-                .manualPull(
-                    this.erc20Vault.address,
-                    this.uniV3Vault.address,
-                    [BigNumber.from(10).pow(10), BigNumber.from(10).pow(10)],
-                    []
-                );
-            await expect(
-                this.subject
                     .connect(this.mStrategyAdmin)
                     .rebalance(
                         [0, 0],
@@ -428,7 +425,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         ethers.constants.MaxUint256,
                         []
                     )
-            ).to.be;
+            
         });
     });
 
