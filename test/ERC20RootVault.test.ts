@@ -153,13 +153,17 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         erc20RootVault
                     );
 
+                    this.helper = await ethers.getContract(
+                        "ERC20RootVaultHelper"
+                    );
+
                     this.pullExistentials =
                         await this.subject.pullExistentials();
 
                     for (let address of [
                         this.deployer.address,
                         this.uniV3Vault.address,
-                        this.erc20Vault.address,
+                        // this.erc20Vault.address,
                     ]) {
                         await mint(
                             "USDC",
@@ -383,7 +387,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                                 this.weth.address,
                                             ],
                                             randomAddress(),
-                                            [startVaultNft - 1]
+                                            [startVaultNft - 1],
+                                            this.helper.address
                                         )
                                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
                             }
@@ -410,7 +415,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                                 this.weth.address,
                                             ],
                                             randomAddress(),
-                                            [startNft]
+                                            [startNft],
+                                            this.helper.address
                                         )
                                 ).to.be.revertedWith(Exceptions.DUPLICATE);
                             }
@@ -442,7 +448,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                                 this.weth.address,
                                             ],
                                             randomAddress(),
-                                            [startNft]
+                                            [startNft],
+                                            this.helper.address
                                         )
                                 ).to.be.revertedWith(Exceptions.DUPLICATE);
                             }
@@ -598,6 +605,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     await preprocessSigner(signer, [amount, amount]);
                     await this.subject
                         .connect(signer)
+                        .deposit(MIN_FIRST_DEPOSIT, BigNumber.from(0), []);
+                    await this.subject
+                        .connect(signer)
                         .deposit(
                             [
                                 defaultDepositAmount.mul(32),
@@ -732,76 +742,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             };
 
             describe("edge cases:", () => {
-                describe("when lpPriceD18 <= hwmsD18", () => {
-                    it("do not charge performance fees", async () => {
-                        const treasureAddress = await setupPerformanceTreasure(
-                            3000,
-                            1
-                        );
-                        await this.erc20RootVaultGovernance
-                            .connect(this.admin)
-                            .stageDelayedProtocolParams({
-                                managementFeeChargeDelay: 0,
-                                oracle: this.mellowOracle.address,
-                            } as DelayedProtocolParamsStruct);
-
-                        await sleep(this.governanceDelay);
-                        await this.erc20RootVaultGovernance
-                            .connect(this.admin)
-                            .commitDelayedProtocolParams();
-
-                        var signer = await addSigner(randomAddress());
-                        const treasuryBalanceBefore = await getTreasureBalance(
-                            treasureAddress
-                        );
-                        const amount = BigNumber.from(10)
-                            .pow(21)
-                            .mul(3)
-                            .add(BigNumber.from(10001));
-                        const defaultDepositAmount = BigNumber.from(10).pow(14);
-                        await preprocessSigner(signer, [amount, amount]);
-                        await this.subject
-                            .connect(signer)
-                            .deposit(
-                                [
-                                    defaultDepositAmount.mul(32),
-                                    defaultDepositAmount.mul(32),
-                                ],
-                                DEFAULT_MIN_LP_TOKEN,
-                                []
-                            );
-
-                        await this.subject
-                            .connect(signer)
-                            .deposit(
-                                [
-                                    defaultDepositAmount.mul(32),
-                                    defaultDepositAmount.mul(32),
-                                ],
-                                DEFAULT_MIN_LP_TOKEN,
-                                []
-                            );
-
-                        await this.subject
-                            .connect(signer)
-                            .deposit(
-                                [
-                                    defaultDepositAmount.mul(30),
-                                    defaultDepositAmount.mul(30),
-                                ],
-                                DEFAULT_MIN_LP_TOKEN,
-                                []
-                            );
-
-                        const treasuryBalanceAfter = await getTreasureBalance(
-                            treasureAddress
-                        );
-                        expect(treasuryBalanceBefore).to.be.eq(
-                            treasuryBalanceAfter
-                        );
-                    });
-                });
-
                 describe("when performance fee is zero", () => {
                     it("do not charge performance fees", async () => {
                         const treasureAddress = await setupPerformanceTreasure(
@@ -831,6 +771,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         const defaultDepositAmount = BigNumber.from(10).pow(14);
                         await preprocessSigner(signer, [amount, amount]);
                         await setupZeroPerformanceFee();
+                        await this.subject
+                            .connect(signer)
+                            .deposit(MIN_FIRST_DEPOSIT, BigNumber.from(0), []);
                         await this.subject
                             .connect(signer)
                             .deposit(
@@ -901,6 +844,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             TreasuryAddress
                         );
 
+                        await this.subject
+                            .connect(signer)
+                            .deposit(
+                                MIN_FIRST_DEPOSIT,
+                                DEFAULT_MIN_LP_TOKEN,
+                                []
+                            );
                         await expect(
                             this.subject
                                 .connect(signer)
@@ -1098,7 +1048,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 this.subject
                                     .connect(signer)
                                     .deposit(
-                                        MIN_FIRST_DEPOSIT,
+                                        [BigNumber.from(0), BigNumber.from(0)],
                                         BigNumber.from(0),
                                         []
                                     )
@@ -1209,19 +1159,25 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             it("emits Withdraw event", async () => {
                 const params = await this.protocolGovernance.params();
                 await withSigner(randomAddress(), async (signer) => {
-                    await preprocessSigner(signer, MIN_FIRST_DEPOSIT);
+                    await preprocessSigner(signer, [
+                        MIN_FIRST_DEPOSIT[0].mul(2),
+                        MIN_FIRST_DEPOSIT[1].mul(2),
+                    ]);
                     await expect(
                         this.subject
                             .connect(signer)
                             .deposit(MIN_FIRST_DEPOSIT, BigNumber.from(0), [])
                     ).not.to.be.reverted;
+                    await this.subject
+                        .connect(signer)
+                        .deposit(MIN_FIRST_DEPOSIT, BigNumber.from(0), []);
                     await expect(
                         this.subject
                             .connect(signer)
                             .withdraw(
                                 randomAddress(),
-                                BigNumber.from(1),
-                                [DEFAULT_MIN_LP_TOKEN, DEFAULT_MIN_LP_TOKEN],
+                                await this.subject.balanceOf(signer.address),
+                                [BigNumber.from(0), BigNumber.from(0)],
                                 NON_EMPTY_DEFAULT_OPTIONS
                             )
                     ).to.emit(this.subject, "Withdraw");
@@ -1303,21 +1259,53 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 describe("when withdrawn is larger than protocol governance withdraw limit for vault token", () => {
                     it(`reverts with ${Exceptions.LIMIT_OVERFLOW}`, async () => {
                         await withSigner(randomAddress(), async (signer) => {
-                            await preprocessSigner(signer, MIN_FIRST_DEPOSIT);
-                            await expect(
-                                this.subject
-                                    .connect(signer)
-                                    .deposit(
-                                        MIN_FIRST_DEPOSIT,
-                                        BigNumber.from(0),
-                                        []
-                                    )
-                            ).not.to.be.reverted;
-                            const lp = MIN_FIRST_DEPOSIT[0].gt(
-                                MIN_FIRST_DEPOSIT[1]
-                            )
-                                ? MIN_FIRST_DEPOSIT[0]
-                                : MIN_FIRST_DEPOSIT[1];
+                            await preprocessSigner(signer, [
+                                MIN_FIRST_DEPOSIT[0].add(
+                                    BigNumber.from(10).pow(20)
+                                ),
+                                MIN_FIRST_DEPOSIT[1].add(
+                                    BigNumber.from(10).pow(20)
+                                ),
+                            ]);
+                            await this.subject
+                                .connect(signer)
+                                .deposit(
+                                    MIN_FIRST_DEPOSIT,
+                                    BigNumber.from(0),
+                                    []
+                                );
+                            await this.subject
+                                .connect(signer)
+                                .deposit(
+                                    [
+                                        BigNumber.from(10).pow(20),
+                                        BigNumber.from(10).pow(20),
+                                    ],
+                                    BigNumber.from(0),
+                                    []
+                                );
+                            const params =
+                                await this.protocolGovernance.params();
+                            const MIN_WITHDRAW_LIMIT =
+                                await this.protocolGovernance.MIN_WITHDRAW_LIMIT();
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .stageParams({
+                                    maxTokensPerVault: params.maxTokensPerVault,
+                                    governanceDelay: params.governanceDelay,
+                                    protocolTreasury: params.protocolTreasury,
+                                    forceAllowMask: params.forceAllowMask,
+                                    withdrawLimit: MIN_WITHDRAW_LIMIT,
+                                });
+                            await sleep(
+                                await this.protocolGovernance.governanceDelay()
+                            );
+                            await this.protocolGovernance
+                                .connect(this.admin)
+                                .commitParams();
+                            const lp = await this.subject.balanceOf(
+                                signer.address
+                            );
                             await expect(
                                 this.subject
                                     .connect(signer)
@@ -1421,7 +1409,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             describe("access control:", () => {
                 it("allowed: any address", async () => {
                     await withSigner(randomAddress(), async (signer) => {
-                        await preprocessSigner(signer, MIN_FIRST_DEPOSIT);
+                        await preprocessSigner(signer, [
+                            MIN_FIRST_DEPOSIT[0].mul(2),
+                            MIN_FIRST_DEPOSIT[1].mul(2),
+                        ]);
                         await expect(
                             this.subject
                                 .connect(signer)
@@ -1431,6 +1422,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                     []
                                 )
                         ).not.to.be.reverted;
+                        await this.subject
+                            .connect(signer)
+                            .deposit(MIN_FIRST_DEPOSIT, BigNumber.from(0), []);
 
                         await expect(
                             this.subject
@@ -1438,7 +1432,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                                 .withdraw(
                                     randomAddress(),
                                     BigNumber.from(1),
-                                    [BigNumber.from(1), BigNumber.from(1)],
+                                    [BigNumber.from(0), BigNumber.from(0)],
                                     NON_EMPTY_DEFAULT_OPTIONS
                                 )
                         ).to.emit(this.subject, "Withdraw");

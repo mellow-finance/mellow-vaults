@@ -272,7 +272,7 @@ contract<UniV3Vault, DeployOptions, CustomContext>("UniV3Vault", function () {
         );
     });
 
-    describe("integratoin test", () => {
+    describe("integration test", () => {
         it("works correctly", async () => {
             await mint(
                 "WETH",

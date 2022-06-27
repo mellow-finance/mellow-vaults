@@ -19,6 +19,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
     });
+    const { address: helperAddress } = await deploy(
+        "ERC20RootVaultHelper",
+        {
+            from: deployer,
+            args: [],
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS
+        }
+    );
     const { address: ERC20RootVaultGovernanceAddress } = await deploy(
         "ERC20RootVaultGovernance",
         {
@@ -29,7 +39,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                     registry: vaultRegistry.address,
                     singleton,
                 },
-                { managementFeeChargeDelay: 86400, oracle },
+                { managementFeeChargeDelay: 86400, oracle},
+                helperAddress
             ],
             log: true,
             autoMine: true,
