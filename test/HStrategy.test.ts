@@ -415,18 +415,20 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     [BigNumber.from(10).pow(10), BigNumber.from(10).pow(10)],
                     []
                 );
-            await expect(this.subject
-                .connect(this.mStrategyAdmin)
-                .rebalance(
-                    [0, 0],
-                    [0, 0],
-                    [0, 0],
-                    [0, 0],
-                    [0, 0],
-                    [0, 0],
-                    ethers.constants.MaxUint256,
-                    []
-                )).to.be;
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(
+                        [0, 0],
+                        [0, 0],
+                        [0, 0],
+                        [0, 0],
+                        [0, 0],
+                        [0, 0],
+                        ethers.constants.MaxUint256,
+                        []
+                    )
+            ).to.be;
         });
     });
 

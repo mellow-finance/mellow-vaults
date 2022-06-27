@@ -98,7 +98,7 @@ const setupStrategy = async (
         uniV3Helper,
     ];
     {
-        const v = await hre.ethers.getContractAt("UniV3Vault", uniV3Vault)
+        const v = await hre.ethers.getContractAt("UniV3Vault", uniV3Vault);
         console.log(await v.uniV3Nft());
     }
     const address = await hStrategy.callStatic.createStrategy(...params);
@@ -179,7 +179,7 @@ const buildHStrategy = async (
     tokens = tokens.map((t: string) => t.toLowerCase()).sort();
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
-    
+
     let erc20VaultNft = startNft;
     let yearnVaultNft = startNft + 1;
     let uniV3VaultNft = startNft + 2;
@@ -198,7 +198,7 @@ const buildHStrategy = async (
 
     await setupVault(hre, yearnVaultNft, moneyGovernance, {
         createVaultArgs: [tokens, deployer],
-    }); 
+    });
 
     await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
         createVaultArgs: [tokens, deployer, 3000, uniV3Helper],
