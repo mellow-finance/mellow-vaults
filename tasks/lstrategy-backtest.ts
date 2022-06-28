@@ -271,7 +271,8 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         options
     );
     console.log("After exchange");
-    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(2999));
+    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(2900));
+    console.log("After wrap");
 
     await wstethContract.transfer(
         lstrategy.address,
