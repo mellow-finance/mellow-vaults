@@ -38,11 +38,13 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     IUniswapV3Pool public pool;
     UniV3Helper private _uniV3Helper;
 
+    struct IntervalParams {
+        int24 lowerTick;
+        int24 upperTick;
+    }
+
     // MUTABLE PARAMS
     struct StrategyParams {
-        int24 burnDeltaTicks;
-        int24 mintDeltaTicks;
-        int24 biDeltaTicks;
         int24 widthCoefficient;
         int24 widthTicks;
         uint32 oracleObservationDelta;
@@ -52,6 +54,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     StrategyParams public strategyParams;
+    IntervalParams public intervalParams;
 
     // INTERNAL STRUCTURES
     struct RebalanceRestrictions {
@@ -153,22 +156,25 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
         require(
-            (newStrategyParams.burnDeltaTicks > 0 &&
-                newStrategyParams.mintDeltaTicks > 0 &&
-                newStrategyParams.biDeltaTicks > 0 &&
-                newStrategyParams.widthCoefficient > 0 &&
+            (newStrategyParams.widthCoefficient > 0 &&
                 newStrategyParams.widthTicks > 0 &&
                 newStrategyParams.oracleObservationDelta > 0 &&
                 newStrategyParams.erc20MoneyRatioD > 0 &&
                 newStrategyParams.erc20MoneyRatioD <= DENOMINATOR &&
                 newStrategyParams.minToken0AmountForMint > 0 &&
                 newStrategyParams.minToken1AmountForMint > 0 &&
-                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient &&
-                newStrategyParams.burnDeltaTicks + newStrategyParams.mintDeltaTicks < newStrategyParams.widthTicks),
+                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient),
             ExceptionsLibrary.INVARIANT
         );
         strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
+    }
+
+    function updateIntervalParams(IntervalParams calldata newIntervalParams) external {
+        _requireAdmin();
+        require((newIntervalParams.lowerTick < newIntervalParams.upperTick), ExceptionsLibrary.INVARIANT);
+        intervalParams = newIntervalParams;
+        emit UpdateIntervalParams(tx.origin, msg.sender, newIntervalParams);
     }
 
     function manualPull(
@@ -229,16 +235,13 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             delta = -delta;
         }
 
-        // if average tick deviated from last rebalance tick more than burnDeltaTicks, then burn position
-        if (delta > strategyParams_.burnDeltaTicks) {
-            uint256[] memory collectedTokens = uniV3Vault.collectEarnings();
-            _compareAmounts(restrictions.burnedAmounts, collectedTokens);
-            (, , , , , , , uint256 liquidity, , , , ) = positionManager.positions(uniV3Nft);
-            require(liquidity == 0, ExceptionsLibrary.INVARIANT);
-            positionManager.burn(uniV3Nft);
+        uint256[] memory collectedTokens = uniV3Vault.collectEarnings();
+        _compareAmounts(restrictions.burnedAmounts, collectedTokens);
+        (, , , , , , , uint256 liquidity, , , , ) = positionManager.positions(uniV3Nft);
+        require(liquidity == 0, ExceptionsLibrary.INVARIANT);
+        positionManager.burn(uniV3Nft);
 
-            emit BurnUniV3Position(tx.origin, uniV3Nft);
-        }
+        emit BurnUniV3Position(tx.origin, uniV3Nft);
     }
 
     function _mintRebalance(RebalanceRestrictions memory restrictions) internal {
@@ -264,10 +267,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 distToLeft = averageTick - nearestLeftTick;
         int24 distToRight = nearestRightTick - averageTick;
         int24 newMintTick = nearestLeftTick;
-
-        if (distToLeft > strategyParams_.mintDeltaTicks && distToRight > strategyParams_.mintDeltaTicks) {
-            return;
-        }
 
         if (distToLeft <= distToRight) {
             newMintTick = nearestLeftTick;
@@ -610,16 +609,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             moneyVaultOptions
         );
 
-        {
-            int24 swapDeltaTicks = uniswapParams.averageTick - lastSwapRebalanceTick;
-            if (swapDeltaTicks < 0) {
-                swapDeltaTicks = -swapDeltaTicks;
-            }
-            if (swapDeltaTicks > strategyParams_.biDeltaTicks) {
-                _swapToTarget(missingTokenAmountsStat, uniswapParams, restrictions);
-            }
-        }
-
+        _swapToTarget(missingTokenAmountsStat, uniswapParams, restrictions);
         _pullMissingTokensFromERC20Vault(missingTokenAmountsStat, restrictions, moneyVaultOptions);
     }
 
@@ -816,4 +806,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param sender Sender of the call (msg.sender)
     /// @param params Updated params
     event UpdateStrategyParams(address indexed origin, address indexed sender, StrategyParams params);
+
+    /// @notice Emitted when Interval params are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params Updated params
+    event UpdateIntervalParams(address indexed origin, address indexed sender, IntervalParams params);
 }
