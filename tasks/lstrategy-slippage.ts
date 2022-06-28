@@ -62,13 +62,51 @@ task("lstrategy-slippage", "test slippages losses of LStrategy")
         types.int,
     ).setAction(
         async ({tickchange, erc20ratio, percentagechange}, hre: HardhatRuntimeEnvironment) => {
-            const context = await setup(hre);
+            const context = await setup(hre, tickchange * 2);
             await process(tickchange, erc20ratio, percentagechange, hre, context);
         }
     );
 
+const initialMint = async (hre : HardhatRuntimeEnvironment) => {
 
-const setup = async (hre: HardhatRuntimeEnvironment) => {
+    const { getNamedAccounts, ethers } = hre;
+    const { deployer, weth, wsteth } = await getNamedAccounts();
+    const smallAmount = BigNumber.from(10).pow(13);
+
+    await mint(hre, "WETH", deployer, smallAmount);
+
+    const wethContract = await ethers.getContractAt(IWETH, weth);
+    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+
+    const curvePool = await ethers.getContractAt(
+        ICurvePool,
+        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+    );
+    const steth = await ethers.getContractAt(
+        "ERC20Token",
+        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    );
+
+    await wethContract.approve(curvePool.address, ethers.constants.MaxUint256);
+    await steth.approve(wstethContract.address, ethers.constants.MaxUint256);
+
+    await wethContract.withdraw(smallAmount.div(2));
+    const options = { value: smallAmount.div(2) };
+    await curvePool.exchange(
+        0,
+        1,
+        smallAmount.div(2),
+        ethers.constants.Zero,
+        options
+    );
+    await wstethContract.wrap(smallAmount.div(2).mul(99).div(100));
+}
+
+
+const setup = async (hre: HardhatRuntimeEnvironment, width : number) => {
+
+    await initialMint(hre);
+
     const uniV3PoolFee = 500;
 
     const { deployments, ethers, getNamedAccounts, network } = hre;
@@ -184,6 +222,7 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
             uniV3UpperVault,
             strategyHelper.address,
             adminSigned.address,
+            width
         ],
         log: true,
         autoMine: true,
@@ -363,7 +402,6 @@ const setup = async (hre: HardhatRuntimeEnvironment) => {
     await lstrategy
         .connect(adminSigned)
         .updateOtherParams({
-            intervalWidthInTicks: 100,
             minToken0ForOpening: BigNumber.from(10).pow(6),
             minToken1ForOpening: BigNumber.from(10).pow(6),
             rebalanceDeadline: BigNumber.from(10).pow(6),
@@ -443,6 +481,8 @@ const getUniV3Tick = async (hre: HardhatRuntimeEnvironment, context: Context) =>
         "IUniswapV3Pool",
         await lowerVault.pool()
     );
+
+    console.log(pool.address);
 
     const currentState = await pool.slot0();
     return BigNumber.from(currentState.tick);
@@ -944,7 +984,7 @@ const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Contex
         amount1Desired: BigNumber.from(10).pow(20).mul(5),
         amount0Min: 0,
         amount1Min: 0,
-        recipient: context.deployer.address,
+        recipient: randomAddress(hre),
         deadline: ethers.constants.MaxUint256,
     };
     //mint a position in pull to provide liquidity for future swaps
@@ -953,6 +993,7 @@ const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Contex
 
 const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Context, width: number) => {
 
+    const { ethers } = hre;
     let tick = await getUniV3Tick(hre, context);
     await changePrice(tick, hre, context);
 
@@ -970,9 +1011,16 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
     let lowerVault = await context.LStrategy.lowerVault();
     let upperVault = await context.LStrategy.upperVault();
     await preparePush({hre, context, vault: lowerVault, tickLower: tickLeftLower, tickUpper: tickLeftUpper});
+
+    let lowerVaultContract = await ethers.getContractAt(
+        "IUniV3Vault",
+        lowerVault
+    );
+
+    console.log(await lowerVaultContract.tvl());
     await preparePush({hre, context, vault: upperVault, tickLower: tickRightLower, tickUpper: tickRightUpper});
 
-    let erc20 =  await context.LStrategy.erc20Vault();
+    let erc20 = await context.LStrategy.erc20Vault();
     for (let token of [context.weth, context.wsteth]) {
         await token.transfer(
         erc20,
@@ -1006,7 +1054,10 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
     const { ethers } = hre;
 
     let pool = await getPool(hre, context);
-    let startTry = BigNumber.from(10).pow(17).mul(60);
+    let currentPoolState = await pool.slot0();
+    let currentPoolTick = BigNumber.from(currentPoolState.tick);
+
+    let startTry = BigNumber.from(10).pow(17).mul((tick.sub(currentPoolTick)).abs());
 
     let needIncrease = 0; //mock initialization
 
@@ -1017,6 +1068,8 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
 
         let currentPoolState = await pool.slot0();
         let currentPoolTick = BigNumber.from(currentPoolState.tick);
+
+        console.log(currentPoolTick);
 
         if (currentPoolTick.eq(tick)) {
             break;
@@ -1261,9 +1314,7 @@ const changeParams = async(hre: HardhatRuntimeEnvironment, context: Context, new
         .updateRatioParams(baseParams);
 }
 
-const allCapital = async(hre: HardhatRuntimeEnvironment, context: Context) => {
-
-    let priceX96 = await getPriceX96(hre, context);
+const allCapital = async(hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber) => {
 
     let capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
     let capitalLower = await getCapital(hre, context, priceX96, await context.LStrategy.lowerVault());
@@ -1271,9 +1322,45 @@ const allCapital = async(hre: HardhatRuntimeEnvironment, context: Context) => {
     return (capitalErc20).add(capitalLower).add(capitalUpper);
 }
 
+const calculateTokensOwed = async (hre: HardhatRuntimeEnvironment, context: Context) => {
+
+    const { getNamedAccounts, ethers } = hre;
+
+    const vault = await ethers.getContractAt(
+        "IUniV3Vault",
+        await context.LStrategy.lowerVault(),
+    );
+
+    const uniV3Nft = await vault.uniV3Nft();
+    let result: BigNumber[] = [];
+
+    await withSigner(hre, vault.address, async (signer) => {
+        const positionManager = await ethers.getContractAt(
+            INonfungiblePositionManager,
+            context.positionManager.address
+        );
+        result = await positionManager
+            .connect(signer)
+            .callStatic.collect({
+                tokenId: uniV3Nft,
+                recipient: context.deployer.address,
+                amount0Max: BigNumber.from(2).pow(100),
+                amount1Max: BigNumber.from(2).pow(100),
+            });
+    });
+    return result;
+};
+
 const process = async (tickChange: number, erc20ratio: number, percentagechange: number, hre: HardhatRuntimeEnvironment, context: Context) => {
 
-    const { ethers } = hre;
+    const { getNamedAccounts, ethers } = hre;
+    const { weth, wsteth } = await getNamedAccounts();
+
+    const pool = await getPool(hre, context);
+    const wethContract = await ethers.getContractAt(IWETH, weth);
+    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+   // console.log(await wethContract.balanceOf(pool.address));
+   // console.log(await wstethContract.balanceOf(pool.address));
 
     let percentageChange = percentagechange;
 
@@ -1283,10 +1370,13 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
 
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
 
-    await mintMockPosition(hre, context); 
+  //  await mintMockPosition(hre, context); 
     await setInitialPrice(hre, context, startPrice, true);
 
     await buildInitialPositions(hre, context, width);
+
+    console.log(await wethContract.balanceOf(pool.address));
+    console.log(await wstethContract.balanceOf(pool.address));
 
     const lowerVault = await context.LStrategy.lowerVault();
     const upperVault = await context.LStrategy.upperVault();
@@ -1294,9 +1384,10 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     await grantPermissions(hre, context, lowerVault);
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
+
+    console.log(await calculateTokensOwed(hre, context));
     
     await erc20Rebalance(hre, context, erc20ratio, startPrice);
-    await setInitialPrice(hre, context, startPrice, true);
 
     expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
 
@@ -1307,7 +1398,8 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
     await erc20Rebalance(hre, context, erc20ratio, startPrice);
     expect(await assureEquality(hre, context, erc20ratio)).to.be.true;
-    let totalNormalCapital = await allCapital(hre, context);
+    let globalPriceX96 = await getPriceX96(hre, context);
+    let totalNormalCapital = await allCapital(hre, context, globalPriceX96);
 
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio + percentageChange));
     await erc20Rebalance(hre, context, erc20ratio + percentageChange, startPrice);
@@ -1322,19 +1414,17 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
 
     await setInitialPrice(hre, context, startPrice, false);
     expect(startPrice).to.be.eq(await getUniV3Tick(hre, context))
-    let totalBadCapital = await allCapital(hre, context);
+    let totalBadCapital = await allCapital(hre, context, globalPriceX96);
 
     let loss = totalNormalCapital.sub(totalBadCapital);
 
     console.log("10^-6 LOSS", (loss.mul(1000000).div(totalNormalCapital)).toNumber());
 
-    const sqrtPricex96 = BigNumber.from(TickMath.getSqrtRatioAtTick(startPrice).toString());
-    const priceX96 = sqrtPricex96.mul(sqrtPricex96).div(BigNumber.from(2).pow(96));
-
-    let sandwicherProfit = await getCapitalbyTokens(hre, context, priceX96, wstethProfit, wethProfit);
-    let sandwicherDeals = await getCapitalbyTokens(hre, context, priceX96, wstethUsed, wethUsed);
+    let sandwicherProfit = await getCapitalbyTokens(hre, context, globalPriceX96, wstethProfit, wethProfit);
+    let sandwicherDeals = await getCapitalbyTokens(hre, context, globalPriceX96, wstethUsed, wethUsed);
 
     console.log("10^-6 SANDWICHER PROFIT", (sandwicherProfit.mul(1000000).div(sandwicherDeals)).toNumber());
+    console.log("ETH USED", sandwicherDeals.div(BigNumber.from(10).pow(18).mul(2)));
     expect(sandwicherProfit).to.be.lt(loss);
 
    // expect(totalNormalCapital.mul(997)).to.be.lt(totalBadCapital.mul(1000));
