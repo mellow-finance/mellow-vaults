@@ -6,7 +6,6 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
-import "hardhat/console.sol";
 
 contract UniV3Helper {
     function liquidityToTokenAmounts(
@@ -58,12 +57,7 @@ contract UniV3Helper {
         uint256 feeGrowthGlobal1X128
     ) internal view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128) {
         (, , uint256 lowerFeeGrowthOutside0X128, uint256 lowerFeeGrowthOutside1X128, , , , ) = pool.ticks(tickLower);
-        (uint128 kek, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
-
-        console.logInt(tickLower);
-        console.logInt(tickUpper);
-        console.logInt(tickCurrent);
-        console.log(kek);
+        (, , uint256 upperFeeGrowthOutside0X128, uint256 upperFeeGrowthOutside1X128, , , , ) = pool.ticks(tickUpper);
 
         // calculate fee growth below
         uint256 feeGrowthBelow0X128;
@@ -80,7 +74,6 @@ contract UniV3Helper {
         uint256 feeGrowthAbove0X128;
         uint256 feeGrowthAbove1X128;
         if (tickCurrent < tickUpper) {
-            console.log(upperFeeGrowthOutside0X128);
             feeGrowthAbove0X128 = upperFeeGrowthOutside0X128;
             feeGrowthAbove1X128 = upperFeeGrowthOutside1X128;
         } else {
@@ -88,12 +81,10 @@ contract UniV3Helper {
             feeGrowthAbove1X128 = feeGrowthGlobal1X128 - upperFeeGrowthOutside1X128;
         }
 
-        console.log(feeGrowthGlobal0X128);
-        console.log(feeGrowthBelow0X128);
-        console.log(feeGrowthAbove0X128);
-
-        feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
-        feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+        unchecked {
+            feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
+            feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
+        }
     }
 
     function calculatePositionInfo(

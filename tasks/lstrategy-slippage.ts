@@ -482,8 +482,6 @@ const getUniV3Tick = async (hre: HardhatRuntimeEnvironment, context: Context) =>
         await lowerVault.pool()
     );
 
-    console.log(pool.address);
-
     const currentState = await pool.slot0();
     return BigNumber.from(currentState.tick);
 };
@@ -1017,14 +1015,13 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
         lowerVault
     );
 
-    console.log(await lowerVaultContract.tvl());
     await preparePush({hre, context, vault: upperVault, tickLower: tickRightLower, tickUpper: tickRightUpper});
 
     let erc20 = await context.LStrategy.erc20Vault();
     for (let token of [context.weth, context.wsteth]) {
         await token.transfer(
         erc20,
-        BigNumber.from(10).pow(18).mul(50)
+        BigNumber.from(10).pow(18).mul(width/2)
         );
     }
 };
@@ -1068,8 +1065,6 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
 
         let currentPoolState = await pool.slot0();
         let currentPoolTick = BigNumber.from(currentPoolState.tick);
-
-        console.log(currentPoolTick);
 
         if (currentPoolTick.eq(tick)) {
             break;
@@ -1359,14 +1354,13 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
     const pool = await getPool(hre, context);
     const wethContract = await ethers.getContractAt(IWETH, weth);
     const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
-   // console.log(await wethContract.balanceOf(pool.address));
-   // console.log(await wstethContract.balanceOf(pool.address));
+    let tick = await getUniV3Tick(hre, context);
 
     let percentageChange = percentagechange;
 
     const width = tickChange * 2;
-    const startPrice = tickChange;
-    const finishPrice = tickChange + (tickChange - tickChange % 3) / 3;
+    const startPrice = tick.toNumber();
+    const finishPrice = tick.toNumber() + (tickChange - tickChange % 3) / 3;
 
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
 
@@ -1375,17 +1369,12 @@ const process = async (tickChange: number, erc20ratio: number, percentagechange:
 
     await buildInitialPositions(hre, context, width);
 
-    console.log(await wethContract.balanceOf(pool.address));
-    console.log(await wstethContract.balanceOf(pool.address));
-
     const lowerVault = await context.LStrategy.lowerVault();
     const upperVault = await context.LStrategy.upperVault();
     const erc20vault = await context.LStrategy.erc20Vault();
     await grantPermissions(hre, context, lowerVault);
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
-
-    console.log(await calculateTokensOwed(hre, context));
     
     await erc20Rebalance(hre, context, erc20ratio, startPrice);
 
