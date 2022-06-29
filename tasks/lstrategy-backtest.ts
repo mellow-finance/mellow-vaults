@@ -32,8 +32,45 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         }
     );
 
+const initialMint = async (hre : HardhatRuntimeEnvironment) => {
+
+    const { getNamedAccounts, ethers } = hre;
+    const { deployer, weth, wsteth } = await getNamedAccounts();
+    const smallAmount = BigNumber.from(10).pow(13);
+
+    await mint(hre, "WETH", deployer, smallAmount);
+
+    const wethContract = await ethers.getContractAt(IWETH, weth);
+    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+
+    const curvePool = await ethers.getContractAt(
+        ICurvePool,
+        "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+    );
+    const steth = await ethers.getContractAt(
+        "ERC20Token",
+        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    );
+
+    await wethContract.approve(curvePool.address, ethers.constants.MaxUint256);
+    await steth.approve(wstethContract.address, ethers.constants.MaxUint256);
+
+    await wethContract.withdraw(smallAmount.div(2));
+    const options = { value: smallAmount.div(2) };
+    await curvePool.exchange(
+        0,
+        1,
+        smallAmount.div(2),
+        ethers.constants.Zero,
+        options
+    );
+    await wstethContract.wrap(smallAmount.div(2).mul(99).div(100));
+}
 
 const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
+
+    await initialMint(hre);
+
     console.log("In setup");
     const uniV3PoolFee = 500;
 
