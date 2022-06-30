@@ -1,7 +1,7 @@
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber } from "@ethersproject/bignumber";
-import { BigNumberish, Contract, PopulatedTransaction } from "ethers";
+import { BigNumberish, PopulatedTransaction } from "ethers";
 import {
     ERC20Token,
     ISwapRouter,
@@ -14,7 +14,7 @@ import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouterABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
-import { randomBytes, verify } from "crypto";
+import { randomBytes } from "crypto";
 import { expect } from "chai";
 
 task("swap-amount", "Calculates swap amount needed to shift price in the pool")
@@ -384,12 +384,7 @@ async function countSwapAmount(
     context: any | undefined
 ) {
     const { ethers } = hre;
-    const { uniV3PoolFeeDenominator, uniV3PoolFee, uniV3Pool } = context;
-    const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
-        "TickMathTest"
-    );
-    const tickMath: TickMathTest = await MathTickTest.deploy();
-    await tickMath.deployed();
+    const { uniV3PoolFeeDenominator, uniV3PoolFee, uniV3Pool, tickMath } = context;
 
     tvl = tvl.mul(BigNumber.from(10).pow(18));
 
