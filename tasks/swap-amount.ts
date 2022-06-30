@@ -1,19 +1,13 @@
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber } from "@ethersproject/bignumber";
-import { BigNumberish, PopulatedTransaction } from "ethers";
-import {
-    ERC20Token,
-    ISwapRouter,
-    TickMathTest,
-    TickMathTest__factory,
-} from "../test/types";
+import { BigNumberish, Contract, ContractFactory, PopulatedTransaction } from "ethers";
 import { abi as ICurvePool } from "../test/helpers/curvePoolABI.json";
 import { abi as IWETH } from "../test/helpers/wethABI.json";
 import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signers";
 import { abi as INonfungiblePositionManagerABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
-import { abi as ISwapRouterABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
+import { abi as ContractABI } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import { randomBytes } from "crypto";
 import { expect } from "chai";
 
@@ -112,20 +106,20 @@ async function getContext(hre: HardhatRuntimeEnvironment) {
         ICurvePool,
         "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
     );
-    const weth: ERC20Token & any = await ethers.getContractAt(
+    const weth: Contract = await ethers.getContractAt(
         IWETH,
         wethAddress
     );
     const steth = await ethers.getContractAt(
-        "ERC20Token",
+        "Contract",
         "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
     );
-    const wsteth: ERC20Token & any = await ethers.getContractAt(
+    const wsteth: Contract = await ethers.getContractAt(
         IWSTETH,
         wstethAddress
     );
 
-    let tokens: ERC20Token[] = [wsteth, weth];
+    let tokens: Contract[] = [wsteth, weth];
 
     await weth.approve(curvePool.address, ethers.constants.MaxUint256);
     await steth.approve(wsteth.address, ethers.constants.MaxUint256);
@@ -172,8 +166,8 @@ async function getContext(hre: HardhatRuntimeEnvironment) {
         uniV3PoolFee
     );
     let uniV3Pool = await ethers.getContractAt("IUniswapV3Pool", poolAddress);
-    let swapRouter: ISwapRouter = await ethers.getContractAt(
-        ISwapRouterABI,
+    let swapRouter: Contract = await ethers.getContractAt(
+        ContractABI,
         uniswapV3Router
     );
     let positionManager = await ethers.getContractAt(
@@ -181,10 +175,10 @@ async function getContext(hre: HardhatRuntimeEnvironment) {
         uniswapV3PositionManager
     );
 
-    const MathTickTest: TickMathTest__factory = await ethers.getContractFactory(
-        "TickMathTest"
+    const MathTickTest: ContractFactory = await ethers.getContractFactory(
+        "Contract"
     );
-    const tickMath: TickMathTest = await MathTickTest.deploy();
+    const tickMath: Contract = await MathTickTest.deploy();
     await tickMath.deployed();
 
     return {
@@ -203,7 +197,7 @@ async function liquidityToY(
     tickLower: number,
     tickUpper: number,
     liquidity: BigNumber,
-    tickMath: TickMathTest,
+    tickMath: Contract,
     knownSqrtPriceX96?: BigNumber
 ) {
     let sqrtPriceX96;
@@ -223,7 +217,7 @@ async function liquidityToX(
     tickLower: number,
     tickUpper: number,
     liquidity: BigNumber,
-    tickMath: TickMathTest,
+    tickMath: Contract,
     knownSqrtPriceX96?: BigNumber
 ) {
     let sqrtPriceX96;
@@ -244,7 +238,7 @@ async function xToLiquidity(
     tickLower: number,
     tickUpper: number,
     xAmount: BigNumber,
-    tickMath: TickMathTest
+    tickMath: Contract
 ) {
     let sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(currentTick);
     let tickUpperPriceX96 = await tickMath.getSqrtRatioAtTick(tickUpper);
@@ -278,7 +272,7 @@ async function splitTvlByRatio(
     tvl: BigNumber,
     yRatio: number,
     poolTick: number,
-    tickMath: TickMathTest
+    tickMath: Contract
 ) {
     let sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(poolTick);
     let priceX96 = sqrtPriceX96
@@ -307,7 +301,7 @@ async function tokenAmountsToShiftPosition(
     tickLower: number,
     tickUpper: number,
     liqudity: BigNumber,
-    tickMath: TickMathTest
+    tickMath: Contract
 ) {
     newTick = Math.max(newTick, tickLower);
     newTick = Math.min(newTick, tickUpper);
@@ -350,7 +344,7 @@ async function countXRatio(
     priceTick: number,
     tickLower: number,
     tickUpper: number,
-    tickMath: TickMathTest
+    tickMath: Contract
 ) {
     let sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(priceTick);
     let sqrtPriceX96L = await tickMath.getSqrtRatioAtTick(tickLower);
@@ -381,10 +375,9 @@ async function countSwapAmount(
     upperPositionTickLower: number,
     poolTick: number,
     tvl: BigNumber,
-    context: any | undefined
+    context: any
 ) {
-    const { ethers } = hre;
-    const { uniV3PoolFeeDenominator, uniV3PoolFee, uniV3Pool, tickMath } = context;
+    const { uniV3PoolFeeDenominator, tickMath } = context;
 
     tvl = tvl.mul(BigNumber.from(10).pow(18));
 
@@ -633,8 +626,8 @@ const randomAddress = (hre: HardhatRuntimeEnvironment) => {
     return wallet.address;
 };
 async function uniSwapTokensGivenInput(
-    router: ISwapRouter,
-    tokens: ERC20Token[],
+    router: Contract,
+    tokens: Contract[],
     fee: number,
     zeroForOne: boolean,
     amount: BigNumberish,
@@ -673,7 +666,7 @@ async function uniSwapTokensGivenInput(
     return amountOut;
 }
 async function mintPosition(
-    tokens: ERC20Token[],
+    tokens: Contract[],
     amounts: BigNumber[],
     ticks: number[],
     recipient: string,
@@ -707,8 +700,8 @@ async function mintPosition(
 }
 
 export async function uniSwapTokensGivenOutput(
-    router: ISwapRouter,
-    tokens: ERC20Token[],
+    router: Contract,
+    tokens: Contract[],
     fee: number,
     zeroForOne: boolean,
     amount: BigNumberish,
