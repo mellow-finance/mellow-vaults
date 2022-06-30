@@ -386,7 +386,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#rebalance", () => {
+    describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             const pullExistentials =
                 await this.erc20RootVault.pullExistentials();
