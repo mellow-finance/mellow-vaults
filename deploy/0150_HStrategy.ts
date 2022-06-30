@@ -111,15 +111,15 @@ const setupStrategy = async (
     log("Setting Strategy params");
 
     const startegyParams = {
-        burnDeltaTicks: 50,
-        mintDeltaTicks: 49,
-        biDeltaTicks: 1,
-        widthCoefficient: 1,
-        widthTicks: 100,
+        widthCoefficient: 15,
+        widthTicks: 60,
         oracleObservationDelta: 150,
-        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(95),
-        minToken0AmountForMint: BigNumber.from(10).pow(9),
-        minToken1AmountForMint: BigNumber.from(10).pow(9),
+        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
+        minToken0ForOpening: BigNumber.from(10).pow(6),
+        minToken1ForOpening: BigNumber.from(10).pow(6),
+        globalLowerTick: 23400,
+        globalUpperTick: 29700,
+        simulateUniV3Interval: false, // simulating uniV2 Interval
     };
     const txs: string[] = [];
     txs.push(

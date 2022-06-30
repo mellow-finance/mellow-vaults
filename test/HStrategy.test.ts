@@ -158,16 +158,17 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                  */
 
                 const startegyParams = {
-                    burnDeltaTicks: 50,
-                    mintDeltaTicks: 49,
-                    biDeltaTicks: 100000,
-                    widthCoefficient: 1,
-                    widthTicks: 100,
+                    widthCoefficient: 15,
+                    widthTicks: 60,
                     oracleObservationDelta: 150,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(95),
-                    minToken0AmountForMint: BigNumber.from(10).pow(6),
-                    minToken1AmountForMint: BigNumber.from(10).pow(6),
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: 23400,
+                    globalUpperTick: 29700,
+                    simulateUniV3Interval: false, // simulating uniV2 Interval
                 };
+
                 let txs: string[] = [];
                 txs.push(
                     this.subject.interface.encodeFunctionData(
@@ -396,8 +397,16 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
             }
 
-            await mint("USDC", this.subject.address, BigNumber.from(10).pow(10));
-            await mint("WETH", this.subject.address, BigNumber.from(10).pow(10));
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
 
             // deposit to zero-vault
             await this.erc20RootVault.deposit(
@@ -413,19 +422,18 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 []
             );
 
-            await this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(
-                        [0, 0],
-                        [0, 0],
-                        [0, 0],
-                        [0, 0],
-                        [0, 0],
-                        [0, 0],
-                        ethers.constants.MaxUint256,
-                        []
-                    )
-            
+            // await this.subject
+            //         .connect(this.mStrategyAdmin)
+            //         .rebalance(
+            //             [0, 0],
+            //             [0, 0],
+            //             [0, 0],
+            //             [0, 0],
+            //             [0, 0],
+            //             [0, 0],
+            //             ethers.constants.MaxUint256,
+            //             []
+            //         )
         });
     });
 
