@@ -27,7 +27,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     uint32 public constant DENOMINATOR = 10**9;
     bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3; // IERC20.approve.selector more consistent?
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
-    ISwapRouter public router;
+    ISwapRouter public immutable router;
 
     IERC20Vault public erc20Vault;
     IIntegrationVault public moneyVault;
@@ -38,7 +38,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     IUniswapV3Pool public pool;
     UniV3Helper private _uniV3Helper;
     LastShortInterval private lastShortInterval;
-    uint256 lastRebebalanceTimestamp;
 
     // MUTABLE PARAMS
     struct StrategyParams {
@@ -93,10 +92,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint32 token1RatioD;
         uint32 uniV3RatioD;
     }
-
-    // INTERNAL STATE
-    int24 public lastSwapRebalanceTick;
-    int24 public lastMintRebalanceTick;
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
@@ -188,6 +183,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions) external {
+        _requireAdmin();
         uint256 uniV3Nft = uniV3Vault.nft();
         INonfungiblePositionManager positionManager_ = positionManager;
         StrategyParams memory strategyParams_ = strategyParams;
@@ -196,7 +192,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (uniV3Nft != 0) {
             // cannot burn only if it is first call of the rebalance function
             // and we dont have any position
-            _burnPosition(restrictions.burnedAmounts, uniV3Nft, positionManager_);
+            _burnPosition(restrictions.burnedAmounts, uniV3Nft);
         }
         DomainPositionParams memory domainPositionParams;
         {
@@ -204,7 +200,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 pool_,
                 strategyParams_.oracleObservationDelta
             );
-            uniV3Nft = _mintPosition(strategyParams_, pool_, restrictions.deadline, positionManager_, averageTick);
+            uniV3Nft = _mintPosition(
+                strategyParams_,
+                pool_,
+                restrictions.deadline,
+                positionManager_,
+                averageTick,
+                uniV3Nft
+            );
 
             domainPositionParams = _calculateDomainPositionParams(
                 averageTick,
@@ -333,8 +336,13 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniswapV3Pool pool_,
         uint256 deadline,
         INonfungiblePositionManager positionManager_,
-        int24 averageTick
+        int24 averageTick,
+        uint256 oldNft
     ) internal returns (uint256 newNft) {
+        require(
+            strategyParams_.globalLowerTick <= averageTick && averageTick <= strategyParams_.globalUpperTick,
+            ExceptionsLibrary.INVARIANT
+        );
         int24 lowerTick = 0;
         int24 upperTick = 0;
 
@@ -343,7 +351,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (lastInterval.lowerTick == lastInterval.upperTick) {
             // in this case it is first mint
             int24 deltaToLowerTick = averageTick - strategyParams_.globalLowerTick;
-            require(deltaToLowerTick >= 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
             deltaToLowerTick -= (deltaToLowerTick % intervalWidth);
             int24 mintLeftTick = strategyParams_.globalLowerTick + deltaToLowerTick;
             int24 mintRightTick = mintLeftTick + intervalWidth;
@@ -396,29 +403,30 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IERC20(tokens[1]).safeApprove(address(positionManager_), 0);
 
         positionManager_.safeTransferFrom(address(this), address(uniV3Vault), newNft);
-
+        if (oldNft != 0) {
+            positionManager_.burn(oldNft);
+        }
         emit MintUniV3Position(tx.origin, newNft, lowerTick, upperTick);
     }
 
-    function _burnPosition(
-        uint256[] memory burnAmounts,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager_
-    ) internal {
+    function _burnPosition(uint256[] memory burnAmounts, uint256 uniV3Nft) internal {
         if (uniV3Nft == 0) {
             return;
         }
-
-        uint256[] memory burnedTokens = uniV3Vault.collectEarnings();
-        _compareAmounts(burnAmounts, burnedTokens);
-        {
-            (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager_.positions(
-                uniV3Nft
-            );
-            lastShortInterval = LastShortInterval({lowerTick: lowerTick, upperTick: upperTick});
-            require(liquidity == 0, ExceptionsLibrary.INVARIANT);
+        uint256[] memory collectedFees = uniV3Vault.collectEarnings();
+        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts[0] = type(uint256).max;
+        tokenAmounts[1] = type(uint256).max;
+        uint256[] memory pulledAmounts = uniV3Vault.pull(
+            address(erc20Vault),
+            tokens,
+            tokenAmounts,
+            _makeUniswapVaultOptions(tokenAmounts, 0)
+        );
+        for (uint256 i = 0; i < 2; i++) {
+            tokenAmounts[i] = collectedFees[i] + pulledAmounts[i];
         }
-        positionManager_.burn(uniV3Nft);
+        _compareAmounts(burnAmounts, tokenAmounts);
         emit BurnUniV3Position(tx.origin, uniV3Nft);
     }
 

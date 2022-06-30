@@ -144,43 +144,6 @@ contract UniV3Helper {
         );
     }
 
-    struct UniswapPositionParameters {
-        uint256 nft;
-        uint128 liquidity;
-        int24 lowerTick;
-        int24 upperTick;
-        int24 averageTick;
-        uint160 lowerPriceSqrtX96;
-        uint160 upperPriceSqrtX96;
-        uint160 averagePriceSqrtX96;
-        uint256 averagePriceX96;
-        uint160 spotPriceSqrtX96;
-    }
-
-    function getUniswapPositionParameters(
-        int24 averageTick,
-        uint160 sqrtSpotPriceX96,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager
-    ) external view returns (UniswapPositionParameters memory params) {
-        params.averageTick = averageTick;
-        params.averagePriceSqrtX96 = TickMath.getSqrtRatioAtTick(averageTick);
-        params.averagePriceX96 = FullMath.mulDiv(
-            params.averagePriceSqrtX96,
-            params.averagePriceSqrtX96,
-            CommonLibrary.Q96
-        );
-        params.spotPriceSqrtX96 = sqrtSpotPriceX96;
-        if (uniV3Nft == 0) return params;
-        params.nft = uniV3Nft;
-        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager.positions(uniV3Nft);
-        params.lowerTick = lowerTick;
-        params.upperTick = upperTick;
-        params.liquidity = liquidity;
-        params.lowerPriceSqrtX96 = TickMath.getSqrtRatioAtTick(lowerTick);
-        params.upperPriceSqrtX96 = TickMath.getSqrtRatioAtTick(upperTick);
-    }
-
     function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 oracleObservationDelta)
         external
         view
