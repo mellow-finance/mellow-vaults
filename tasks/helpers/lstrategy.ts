@@ -224,6 +224,9 @@ export const swapTokens = async (
     tokenOut: Contract,
     amountIn: BigNumber
 ) => {
+    // console.log("token: ", await tokenIn.name());
+    // console.log("amount: ", amountIn.toString());
+    // console.log("balance: ", (await tokenIn.balanceOf(senderAddress)).toString());
     const { ethers } = hre;
     await withSigner(hre, senderAddress, async (senderSigner) => {
         await tokenIn

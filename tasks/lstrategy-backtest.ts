@@ -280,8 +280,9 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         hre,
         "WETH",
         lstrategy.address,
-        BigNumber.from(10).pow(18).mul(4000)
+        BigNumber.from(10).pow(18).mul(1000)
     );
+    console.log("Minted lstrategy");
     await mint(
         hre,
         "WETH",
@@ -297,18 +298,18 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         wstethContract.address,
         ethers.constants.MaxUint256
     );
-    await wethContract.withdraw(BigNumber.from(10).pow(18).mul(3000));
-    const options = { value: BigNumber.from(10).pow(18).mul(3000) };
+    await wethContract.withdraw(BigNumber.from(10).pow(18).mul(2000));
+    const options = { value: BigNumber.from(10).pow(18).mul(2000) };
     console.log("Before exchange");
     await curvePool.exchange(
         0,
         1,
-        BigNumber.from(10).pow(18).mul(3000),
+        BigNumber.from(10).pow(18).mul(2000),
         ethers.constants.Zero,
         options
     );
     console.log("After exchange");
-    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(2900));
+    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(1990));
     console.log("After wrap");
 
     await wstethContract.transfer(
@@ -495,11 +496,14 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
     let startTry = BigNumber.from(10).pow(17).mul(60);
 
     let needIncrease = 0; //mock initialization
+
+    // console.log("Tick: ", tick.toString());
     
     while (true) {
 
         let currentPoolState = await pool.slot0();
         let currentPoolTick = BigNumber.from(currentPoolState.tick);
+        // console.log("currentTick: ", currentPoolState.tick);
 
         if (currentPoolTick.eq(tick)) {
             break;
@@ -572,7 +576,7 @@ const assureEquality = (x: BigNumber, y: BigNumber) => {
         x = y;
     }
 
-    return (delta.mul(40).lt(x.add(y).div(2)));
+    return (delta.mul(100).lt(x));
 };
 
 const getCapital = async (hre: HardhatRuntimeEnvironment, context: Context, priceX96: BigNumber, address: string)  => {
@@ -721,6 +725,7 @@ const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     let prev = Date.now();
     console.log("length: ", prices.length);
     for (let i = 1; i < prices.length; ++i) {
+        // console.log("Before first rebalance");
         if (i % 500 == 0) {
             let now = Date.now();
             console.log("Iteration: ", i);
@@ -729,7 +734,10 @@ const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvir
             prev = now;
         }
         await reportStats(hre, context, "output.csv", keys);
+        // console.log("price[i] = ", prices[i]);
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
+        // console.log("prices updated");
         await makeRebalances(hre, context, stringToPriceX96(prices[i]));
+        // console.log("after rebalance");
     }
 };
