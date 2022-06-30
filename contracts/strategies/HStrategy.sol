@@ -39,11 +39,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     UniV3Helper private _uniV3Helper;
 
     // MUTABLE PARAMS
-    struct IntervalParams {
-        int24 lowerTick;
-        int24 upperTick;
-    }
-
     struct StrategyParams {
         int24 widthCoefficient;
         int24 widthTicks;
@@ -51,11 +46,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint32 erc20MoneyRatioD;
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
+        int24 globalLowerTick;
+        int24 globalUpperTick;
         bool simulateUniV3Interval;
     }
 
     StrategyParams public strategyParams;
-    IntervalParams public globalIntervalParams;
 
     // INTERNAL STRUCTURES
     struct RebalanceRestrictions {
@@ -159,6 +155,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
+        int24 globalIntervalWidth = newStrategyParams.globalUpperTick - newStrategyParams.globalLowerTick;
+        int24 shortIntervalWidth = newStrategyParams.widthCoefficient * newStrategyParams.widthTicks;
         require(
             (newStrategyParams.widthCoefficient > 0 &&
                 newStrategyParams.widthTicks > 0 &&
@@ -167,18 +165,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 newStrategyParams.erc20MoneyRatioD <= DENOMINATOR &&
                 newStrategyParams.minToken0ForOpening > 0 &&
                 newStrategyParams.minToken1ForOpening > 0 &&
-                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient),
+                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient &&
+                globalIntervalWidth > 0 &&
+                shortIntervalWidth > 0 &&
+                (globalIntervalWidth % shortIntervalWidth == 0)),
             ExceptionsLibrary.INVARIANT
         );
         strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
-    }
-
-    function updateIntervalParams(IntervalParams calldata newIntervalParams) external {
-        _requireAdmin();
-        require((newIntervalParams.lowerTick < newIntervalParams.upperTick), ExceptionsLibrary.INVARIANT);
-        globalIntervalParams = newIntervalParams;
-        emit UpdateIntervalParams(tx.origin, msg.sender, newIntervalParams);
     }
 
     function manualPull(
@@ -216,13 +210,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             pool_,
             strategyParams_.oracleObservationDelta
         );
-        uniV3Nft = _mintPosition(globalIntervalParams, strategyParams_, pool_, deadline, positionManager_, averageTick);
+        uniV3Nft = _mintPosition(strategyParams_, pool_, deadline, positionManager_, averageTick);
 
         DomainPositionParams memory domainPositionParams = _calculateDomainPositionParams(
             averageTick,
             sqrtSpotPriceX96,
-            globalIntervalParams,
-            pool_,
             strategyParams_,
             uniV3Nft,
             positionManager_
@@ -255,7 +247,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     // -------------------  INTERNAL, MUTATING  -------------------
 
     function _mintPosition(
-        IntervalParams memory globalIntervalParams_,
         StrategyParams memory strategyParams_,
         IUniswapV3Pool pool_,
         uint256 deadline,
@@ -266,10 +257,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 upperTick = 0;
         {
             int24 intervalWidth = strategyParams_.widthTicks * strategyParams_.widthCoefficient;
-            int24 deltaToLowerTick = averageTick - globalIntervalParams_.lowerTick;
+            int24 deltaToLowerTick = averageTick - strategyParams_.globalLowerTick;
             require(deltaToLowerTick >= 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
             deltaToLowerTick -= (deltaToLowerTick % intervalWidth);
-            int24 mintLeftTick = globalIntervalParams_.lowerTick + deltaToLowerTick;
+            int24 mintLeftTick = strategyParams_.globalLowerTick + deltaToLowerTick;
             int24 mintRightTick = mintLeftTick + intervalWidth;
             int24 mintTick = 0;
             if (averageTick - mintLeftTick <= mintRightTick - averageTick) {
@@ -278,15 +269,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 mintTick = mintRightTick;
             }
 
-
             lowerTick = mintTick - intervalWidth;
             upperTick = mintTick + intervalWidth;
 
-            if (lowerTick < globalIntervalParams_.lowerTick) {
-                lowerTick = globalIntervalParams_.lowerTick;
+            if (lowerTick < strategyParams_.globalLowerTick) {
+                lowerTick = strategyParams_.globalLowerTick;
                 upperTick = lowerTick + 2 * intervalWidth;
-            } else if (upperTick > globalIntervalParams_.upperTick) {
-                upperTick = globalIntervalParams_.upperTick;
+            } else if (upperTick > strategyParams_.globalUpperTick) {
+                upperTick = strategyParams_.globalUpperTick;
                 lowerTick = upperTick - 2 * intervalWidth;
             }
         }
@@ -490,8 +480,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function _calculateDomainPositionParams(
         int24 averageTick,
         uint160 sqrtSpotPriceX96,
-        IntervalParams memory intervalParams_,
-        IUniswapV3Pool pool_,
         StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
         INonfungiblePositionManager _positionManager
@@ -504,13 +492,13 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             liquidity: liquidity,
             lowerTick: lowerTick,
             upperTick: upperTick,
-            lower0Tick: intervalParams_.lowerTick,
-            upper0Tick: intervalParams_.upperTick,
+            lower0Tick: strategyParams_.globalLowerTick,
+            upper0Tick: strategyParams_.globalUpperTick,
             averageTick: averageTick,
             lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
-            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(intervalParams_.lowerTick),
-            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(intervalParams_.upperTick),
+            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.globalLowerTick),
+            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.globalUpperTick),
             averagePriceSqrtX96: TickMath.getSqrtRatioAtTick(averageTick),
             averagePriceX96: 0,
             spotPriceSqrtX96: sqrtSpotPriceX96
@@ -688,10 +676,4 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param sender Sender of the call (msg.sender)
     /// @param domainPositionParams Updated domainPositionParams
     event UpdateStrategyParams(address indexed origin, address indexed sender, StrategyParams domainPositionParams);
-
-    /// @notice Emitted when Interval domainPositionParams are set.
-    /// @param origin Origin of the transaction (tx.origin)
-    /// @param sender Sender of the call (msg.sender)
-    /// @param domainPositionParams Updated domainPositionParams
-    event UpdateIntervalParams(address indexed origin, address indexed sender, IntervalParams domainPositionParams);
 }
