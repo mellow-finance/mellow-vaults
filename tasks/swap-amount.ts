@@ -204,10 +204,13 @@ async function liquidityToY(
     tickUpper: number,
     liquidity: BigNumber,
     tickMath: TickMathTest,
-    sqrtPriceX96?: BigNumber
+    knownSqrtPriceX96?: BigNumber
 ) {
-    if (sqrtPriceX96 == undefined) {
+    let sqrtPriceX96;
+    if (knownSqrtPriceX96 == undefined) {
         sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(currentTick);
+    } else {
+        sqrtPriceX96 = knownSqrtPriceX96;
     }
     let tickLowerPriceX96 = await tickMath.getSqrtRatioAtTick(tickLower);
     return sqrtPriceX96
@@ -221,10 +224,13 @@ async function liquidityToX(
     tickUpper: number,
     liquidity: BigNumber,
     tickMath: TickMathTest,
-    sqrtPriceX96?: BigNumber
+    knownSqrtPriceX96?: BigNumber
 ) {
-    if (sqrtPriceX96 == undefined) {
+    let sqrtPriceX96;
+    if (knownSqrtPriceX96 == undefined) {
         sqrtPriceX96 = await tickMath.getSqrtRatioAtTick(currentTick);
+    } else {
+        sqrtPriceX96 = knownSqrtPriceX96;
     }
     let tickUpperPriceX96 = await tickMath.getSqrtRatioAtTick(tickUpper);
     let smth = tickUpperPriceX96
