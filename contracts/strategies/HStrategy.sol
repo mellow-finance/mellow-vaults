@@ -33,6 +33,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     IIntegrationVault public moneyVault;
     IUniV3Vault public uniV3Vault;
     address[] public tokens;
+    uint256 public lastRebalanceTimestamp;
 
     INonfungiblePositionManager public positionManager;
     IUniswapV3Pool public pool;
@@ -181,6 +182,26 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         fromVault.pull(address(toVault), tokens, tokenAmounts, vaultOptions);
     }
 
+    function _checkRebalancePossibility(
+        StrategyParams memory params,
+        uint256 positionNft,
+        IUniswapV3Pool pool_
+    ) internal {
+        if (positionNft == 0) return;
+        uint256 currentTimestamp = block.timestamp;
+        require(currentTimestamp - lastRebalanceTimestamp >= 30 minutes, ExceptionsLibrary.LIMIT_UNDERFLOW);
+        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            pool_,
+            60 * 30 /* last 30 minutes */
+        );
+
+        require(
+            averageTick < params.globalLowerTick || averageTick > params.globalUpperTick,
+            ExceptionsLibrary.INVARIANT
+        );
+        lastRebalanceTimestamp = block.timestamp;
+    }
+
     function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
         external
         returns (RebalanceRestrictions memory actualPulledAmounts)
@@ -190,6 +211,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         INonfungiblePositionManager positionManager_ = positionManager;
         StrategyParams memory strategyParams_ = strategyParams;
         IUniswapV3Pool pool_ = pool;
+        _checkRebalancePossibility(strategyParams_, uniV3Nft, pool_);
 
         if (uniV3Nft != 0) {
             // cannot burn only if it is first call of the rebalance function
