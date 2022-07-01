@@ -8,7 +8,6 @@ import "hardhat-deploy";
 import "./plugins/contracts";
 import { config as dotenv } from "dotenv";
 import "./tasks/verify";
-import "./tasks/swap-amount";
 
 dotenv();
 

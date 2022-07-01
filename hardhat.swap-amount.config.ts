@@ -1,6 +1,7 @@
 import "hardhat-gas-reporter";
 import { HardhatUserConfig } from "hardhat/types";
 import defaultConfig from "./hardhat.test.config";
+import "./tasks/swap-amount";
 
 const config: HardhatUserConfig = {
     ...defaultConfig,

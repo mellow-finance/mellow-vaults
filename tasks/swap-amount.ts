@@ -409,8 +409,6 @@ async function countSwapAmount(
             upperPositionTickUpper,
             tvl
         );
-    console.log("proportion of tvls" + lowerPositionTVL.toString());
-    console.log("proportion of tvls" + upperPositionTVL.toString());
     let { xAmount: xAmountLower, yAmount: yAmountLower } =
         await splitTvlByRatio(
             lowerPositionTVL,
@@ -459,8 +457,6 @@ async function countSwapAmount(
         xAmountUpper,
         tickMath
     );
-    console.log("lower liq should be " + lowerLiquidity.toString());
-    console.log("upper liq should be " + upperLiquidity.toString());
 
     // mid liquidity is a liquidity of utility position, used in integration part
     let midLiquidity = BigNumber.from("143542847431368536505");
