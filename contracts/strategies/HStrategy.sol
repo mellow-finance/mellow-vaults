@@ -241,7 +241,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 positionManager_
             );
         }
-        TokenAmounts memory currentTokenAmounts = _calculateCurrentTokenAmoounts(domainPositionParams);
+        TokenAmounts memory currentTokenAmounts = _calculateCurrentTokenAmounts(domainPositionParams);
 
         TokenAmounts memory expectedTokenAmounts = _calculateExpectedTokenAmounts(
             currentTokenAmounts,
@@ -564,7 +564,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
     }
 
-    function _calculateCurrentTokenAmoounts(DomainPositionParams memory params)
+    function _calculateCurrentTokenAmounts(DomainPositionParams memory params)
         internal
         view
         returns (TokenAmounts memory amounts)
