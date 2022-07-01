@@ -419,43 +419,35 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     ) internal view returns (TokenAmounts memory missingTokenAmounts) {
         // for uniV3Vault
         {
-            (missingTokenAmounts.uniV3Token0, missingTokenAmounts.uniV3Token1) = LiquidityAmounts
-                .getAmountsForLiquidity(
-                    domainPositionParams.spotPriceSqrtX96,
-                    domainPositionParams.lowerPriceSqrtX96,
-                    domainPositionParams.upperPriceSqrtX96,
-                    domainPositionParams.liquidity
-                );
+            uint256 token0Amount = 0;
+            uint256 token1Amount = 0;
+            (token0Amount, token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.lowerPriceSqrtX96,
+                domainPositionParams.upperPriceSqrtX96,
+                domainPositionParams.liquidity
+            );
 
-            if (missingTokenAmounts.uniV3Token0 < expectedTokenAmounts.uniV3Token0) {
-                missingTokenAmounts.uniV3Token0 = expectedTokenAmounts.uniV3Token0 - missingTokenAmounts.uniV3Token0;
-            } else {
-                missingTokenAmounts.uniV3Token0 = 0;
+            if (token0Amount < expectedTokenAmounts.uniV3Token0) {
+                missingTokenAmounts.uniV3Token0 = expectedTokenAmounts.uniV3Token0 - token0Amount;
             }
-
-            if (missingTokenAmounts.uniV3Token1 < expectedTokenAmounts.uniV3Token1) {
-                missingTokenAmounts.uniV3Token1 = expectedTokenAmounts.uniV3Token1 - missingTokenAmounts.uniV3Token1;
-            } else {
-                missingTokenAmounts.uniV3Token1 = 0;
+            if (token1Amount < expectedTokenAmounts.uniV3Token1) {
+                missingTokenAmounts.uniV3Token1 = expectedTokenAmounts.uniV3Token1 - token1Amount;
             }
         }
 
         // for moneyVault
         {
             (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-            missingTokenAmounts.moneyToken0 = (minTvl[0] + maxTvl[0]) >> 1;
-            missingTokenAmounts.moneyToken1 = (minTvl[1] + maxTvl[1]) >> 1;
+            uint256 token0Amount = (minTvl[0] + maxTvl[0]) >> 1;
+            uint256 token1Amount = (minTvl[1] + maxTvl[1]) >> 1;
 
-            if (missingTokenAmounts.moneyToken0 < expectedTokenAmounts.moneyToken0) {
-                missingTokenAmounts.moneyToken0 = expectedTokenAmounts.moneyToken0 - missingTokenAmounts.moneyToken0;
-            } else {
-                missingTokenAmounts.moneyToken0 = 0;
+            if (token0Amount < expectedTokenAmounts.moneyToken0) {
+                missingTokenAmounts.moneyToken0 = expectedTokenAmounts.moneyToken0 - token0Amount;
             }
 
-            if (missingTokenAmounts.moneyToken1 < expectedTokenAmounts.moneyToken1) {
-                missingTokenAmounts.moneyToken1 = expectedTokenAmounts.moneyToken1 - missingTokenAmounts.moneyToken1;
-            } else {
-                missingTokenAmounts.moneyToken1 = 0;
+            if (token1Amount < expectedTokenAmounts.moneyToken1) {
+                missingTokenAmounts.moneyToken1 = expectedTokenAmounts.moneyToken1 - token1Amount;
             }
         }
     }
