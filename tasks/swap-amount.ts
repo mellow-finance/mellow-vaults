@@ -111,7 +111,7 @@ async function getContext(hre: HardhatRuntimeEnvironment) {
         wethAddress
     );
     const steth = await ethers.getContractAt(
-        "Contract",
+        "ERC20Token",
         "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
     );
     const wsteth: Contract = await ethers.getContractAt(
@@ -176,7 +176,7 @@ async function getContext(hre: HardhatRuntimeEnvironment) {
     );
 
     const MathTickTest: ContractFactory = await ethers.getContractFactory(
-        "Contract"
+        "TickMathTest"
     );
     const tickMath: Contract = await MathTickTest.deploy();
     await tickMath.deployed();
@@ -918,7 +918,7 @@ async function simulateSwap(
 
     // check if second swap is correct
     console.log("··swapping " + swapAmounts[1].toString() + " of 1");
-    out = await uniSwapTokensGivenInput(
+    await uniSwapTokensGivenInput(
         swapRouter,
         tokens,
         uniV3PoolFee,
