@@ -236,7 +236,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         await this.deploymentFixture();
     });
 
-    describe.only("#constructor", () => {
+    // Andrey:
+    describe("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
                 ethers.constants.AddressZero
@@ -276,13 +277,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("#constructor", () => {
-        it("deploys a new contract", async () => {
-            expect(this.subject.address).to.not.eq(
-                ethers.constants.AddressZero
-            );
-        });
-    });
+    describe("updateStrategyParams", () => {});
 
     describe("#manualPull", () => {
         it("pulls token amounts from fromVault to toVault", async () => {
@@ -439,6 +434,18 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             //         )
         });
     });
+
+    describe("calculateExpectedRatios", () => {});
+    describe("calculateDomainPositionParams", () => {});
+    describe("calculateExpectedTokenAmountsInToken0", () => {});
+    describe("calculateCurrentTokenAmountsInToken0", () => {});
+
+    // Artyom:
+    describe("calculateCurrentTokenAmounts", () => {});
+    describe("calculateExpectedTokenAmounts", () => {});
+    describe("calculateExtraTokenAmountsForMoneyVault", () => {});
+    describe("calculateMissingTokenAmounts", () => {});
+    describe("swapTokens", () => {});
 
     ContractMetaBehaviour.call(this, {
         contractName: "HStrategy",
