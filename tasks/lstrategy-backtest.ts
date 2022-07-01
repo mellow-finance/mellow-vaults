@@ -497,13 +497,10 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
 
     let needIncrease = 0; //mock initialization
 
-    // console.log("Tick: ", tick.toString());
-    
     while (true) {
 
         let currentPoolState = await pool.slot0();
         let currentPoolTick = BigNumber.from(currentPoolState.tick);
-        // console.log("currentTick: ", currentPoolState.tick);
 
         if (currentPoolTick.eq(tick)) {
             break;
@@ -613,11 +610,14 @@ const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context
             ],
             ethers.constants.MaxUint256
         );
+        await swapOnCowswap(hre, context);
 
         await makeSwap(hre, context);
         i += 1;
         if (i >= 10) {
-            console.log("More than 10 iterations needed in ERC20Uni rebalance!!!");
+            capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
+            capitalLower = await getCapital(hre, context, priceX96, await context.LStrategy.lowerVault());
+            capitalUpper = await getCapital(hre, context, priceX96, await context.LStrategy.upperVault());
             break;
         }
     }
@@ -725,7 +725,6 @@ const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     let prev = Date.now();
     console.log("length: ", prices.length);
     for (let i = 1; i < prices.length; ++i) {
-        // console.log("Before first rebalance");
         if (i % 500 == 0) {
             let now = Date.now();
             console.log("Iteration: ", i);
@@ -734,10 +733,7 @@ const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvir
             prev = now;
         }
         await reportStats(hre, context, "output.csv", keys);
-        // console.log("price[i] = ", prices[i]);
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
-        // console.log("prices updated");
         await makeRebalances(hre, context, stringToPriceX96(prices[i]));
-        // console.log("after rebalance");
     }
 };

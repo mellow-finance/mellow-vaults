@@ -36,7 +36,7 @@
     "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts test/integration/*.ts test/behaviors/*.ts",
     "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts",
     "clean": "rm -rf artifacts && rm -rf test/types",
-    "lstrategy-backtest": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.backtest.config.ts lstrategy-backtest --filename price_data.csv --width 100"
+    "lstrategy-backtest": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.backtest.config.ts lstrategy-backtest --filename price_data.csv --width 60"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
