@@ -316,35 +316,40 @@ const setup = async (hre: HardhatRuntimeEnvironment, width : number) => {
         lstrategy.address,
         BigNumber.from(10).pow(18).mul(4000)
     );
-    await mint(
-        hre,
-        "WETH",
-        deployerSigned.address,
-        BigNumber.from(10).pow(18).mul(4000)
-    );
-    await wethContract.approve(
-        curvePool.address,
-        ethers.constants.MaxUint256
-    );
-    await steth.approve(
-        wstethContract.address,
-        ethers.constants.MaxUint256
-    );
-    await wethContract.withdraw(BigNumber.from(10).pow(18).mul(2000));
-    const options = { value: BigNumber.from(10).pow(18).mul(2000) };
-    await curvePool.exchange(
-        0,
-        1,
-        BigNumber.from(10).pow(18).mul(2000),
-        ethers.constants.Zero,
-        options
-    );
-    await wstethContract.wrap(BigNumber.from(10).pow(18).mul(1999));
 
-    await wstethContract.transfer(
-        lstrategy.address,
-        BigNumber.from(10).pow(18).mul(3)
-    );
+    for (let i = 0; i < 30; ++i) {
+
+        await mint(
+            hre,
+            "WETH",
+            deployerSigned.address,
+            BigNumber.from(10).pow(18).mul(4000)
+        );
+        await wethContract.approve(
+            curvePool.address,
+            ethers.constants.MaxUint256
+        );
+        await steth.approve(
+            wstethContract.address,
+            ethers.constants.MaxUint256
+        );
+        await wethContract.withdraw(BigNumber.from(10).pow(18).mul(2000));
+        const options = { value: BigNumber.from(10).pow(18).mul(2000) };
+        await curvePool.exchange(
+            0,
+            1,
+            BigNumber.from(10).pow(18).mul(2000),
+            ethers.constants.Zero,
+            options
+        );
+        await wstethContract.wrap(BigNumber.from(10).pow(18).mul(1999));
+
+        await wstethContract.transfer(
+            lstrategy.address,
+            BigNumber.from(10).pow(18).mul(3)
+        );
+
+    }
 
     let oracleDeployParams = await deploy("MockOracle", {
         from: deployerSigned.address,
@@ -970,25 +975,6 @@ const swapTokens = async (
     });
 };
 
-const mintMockPosition = async (hre : HardhatRuntimeEnvironment, context: Context) => {
-    const { ethers } = hre;
-    const mintParams = {
-        token0: context.wsteth.address,
-        token1: context.weth.address,
-        fee: 500,
-        tickLower: -100000,
-        tickUpper: 100000,
-        amount0Desired: BigNumber.from(10).pow(20).mul(5),
-        amount1Desired: BigNumber.from(10).pow(20).mul(5),
-        amount0Min: 0,
-        amount1Min: 0,
-        recipient: randomAddress(hre),
-        deadline: ethers.constants.MaxUint256,
-    };
-    //mint a position in pull to provide liquidity for future swaps
-    await context.positionManager.mint(mintParams);
-};
-
 const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Context, width: number) => {
 
     const { ethers } = hre;
@@ -1005,15 +991,9 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
 
     let tickRightLower = tickLeftLower + semiPositionRange;
     let tickRightUpper = tickLeftUpper + semiPositionRange;
-
     let lowerVault = await context.LStrategy.lowerVault();
     let upperVault = await context.LStrategy.upperVault();
     await preparePush({hre, context, vault: lowerVault, tickLower: tickLeftLower, tickUpper: tickLeftUpper});
-
-    let lowerVaultContract = await ethers.getContractAt(
-        "IUniV3Vault",
-        lowerVault
-    );
 
     await preparePush({hre, context, vault: upperVault, tickLower: tickRightLower, tickUpper: tickRightUpper});
 
@@ -1021,7 +1001,7 @@ const buildInitialPositions = async (hre: HardhatRuntimeEnvironment, context: Co
     for (let token of [context.weth, context.wsteth]) {
         await token.transfer(
         erc20,
-        BigNumber.from(10).pow(18).mul(width/2)
+        BigNumber.from(10).pow(18).mul(30000)
         );
     }
 };
@@ -1048,13 +1028,9 @@ let wstethUsed = BigNumber.from(0);
 
 const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Context, tick: BigNumber, isMock: boolean) => {
 
-    const { ethers } = hre;
-
     let pool = await getPool(hre, context);
-    let currentPoolState = await pool.slot0();
-    let currentPoolTick = BigNumber.from(currentPoolState.tick);
 
-    let startTry = BigNumber.from(10).pow(17).mul((tick.sub(currentPoolTick)).abs());
+    let startTry = BigNumber.from(10).pow(19).mul(3);
 
     let needIncrease = 0; //mock initialization
 
@@ -1076,7 +1052,9 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
                 needIncrease = 1;
                 startTry = startTry.div(2);
             }
-            if (!isMock)  wethUsed = wethUsed.add(startTry);
+            if (!isMock) {
+                wethUsed = wethUsed.add(startTry);
+            }
             await swapTokens(
                 hre, 
                 context,
@@ -1093,7 +1071,9 @@ const makeDesiredPoolPrice = async (hre: HardhatRuntimeEnvironment, context: Con
                 needIncrease = 0;
                 startTry = startTry.div(2);
             }
-            if (!isMock) wstethUsed = wstethUsed.add(startTry);
+            if (!isMock) {
+                wstethUsed = wstethUsed.add(startTry);
+            }
             await swapTokens(
                 hre, 
                 context,
@@ -1317,54 +1297,18 @@ const allCapital = async(hre: HardhatRuntimeEnvironment, context: Context, price
     return (capitalErc20).add(capitalLower).add(capitalUpper);
 }
 
-const calculateTokensOwed = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-
-    const { getNamedAccounts, ethers } = hre;
-
-    const vault = await ethers.getContractAt(
-        "IUniV3Vault",
-        await context.LStrategy.lowerVault(),
-    );
-
-    const uniV3Nft = await vault.uniV3Nft();
-    let result: BigNumber[] = [];
-
-    await withSigner(hre, vault.address, async (signer) => {
-        const positionManager = await ethers.getContractAt(
-            INonfungiblePositionManager,
-            context.positionManager.address
-        );
-        result = await positionManager
-            .connect(signer)
-            .callStatic.collect({
-                tokenId: uniV3Nft,
-                recipient: context.deployer.address,
-                amount0Max: BigNumber.from(2).pow(100),
-                amount1Max: BigNumber.from(2).pow(100),
-            });
-    });
-    return result;
-};
-
 const process = async (tickChange: number, erc20ratio: number, percentagechange: number, hre: HardhatRuntimeEnvironment, context: Context) => {
 
-    const { getNamedAccounts, ethers } = hre;
-    const { weth, wsteth } = await getNamedAccounts();
-
-    const pool = await getPool(hre, context);
-    const wethContract = await ethers.getContractAt(IWETH, weth);
-    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
     let tick = await getUniV3Tick(hre, context);
 
     let percentageChange = percentagechange;
 
-    const width = tickChange * 2;
+    const width = 200;
     const startPrice = tick.toNumber();
-    const finishPrice = tick.toNumber() + (tickChange - tickChange % 3) / 3;
+    const finishPrice = tick.toNumber() + tickChange;
 
     await changeParams(hre, context, BigNumber.from(10).pow(7).mul(erc20ratio));
 
-  //  await mintMockPosition(hre, context); 
     await setInitialPrice(hre, context, startPrice, true);
 
     await buildInitialPositions(hre, context, width);
