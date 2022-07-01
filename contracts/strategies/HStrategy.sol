@@ -199,7 +199,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             averageTick < params.globalLowerTick || averageTick > params.globalUpperTick,
             ExceptionsLibrary.INVARIANT
         );
-        lastRebalanceTimestamp = block.timestamp;
+        lastRebalanceTimestamp = currentTimestamp;
     }
 
     function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
