@@ -8,7 +8,7 @@ import {
     YearnVault,
     ERC20Vault,
     ProtocolGovernance,
-    HStrategy,
+    MockHStrategy,
     UniV3Helper,
     UniV3Vault,
     IYearnProtocolVault,
@@ -38,7 +38,7 @@ type CustomContext = {
 
 type DeployOptions = {};
 
-contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
+contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
@@ -121,7 +121,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 const { uniswapV3PositionManager, uniswapV3Router } =
                     await getNamedAccounts();
                 const hStrategy = await (
-                    await ethers.getContractFactory("HStrategy")
+                    await ethers.getContractFactory("MockHStrategy")
                 ).deploy(uniswapV3PositionManager, uniswapV3Router);
                 this.params = {
                     tokens: tokens,
@@ -151,7 +151,10 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.admin,
                     this.params.uniV3Helper
                 );
-                this.subject = await ethers.getContractAt("HStrategy", address);
+                this.subject = await ethers.getContractAt(
+                    "MockHStrategy",
+                    address
+                );
 
                 /*
                  * Configure oracles for the HStrategy
@@ -233,7 +236,7 @@ contract<HStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         await this.deploymentFixture();
     });
 
-    describe("#constructor", () => {
+    describe.only("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
                 ethers.constants.AddressZero
