@@ -302,12 +302,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         RebalanceRestrictions memory restrictions,
         bytes memory moneyVaultOptions
     ) internal returns (uint256[] memory pulledAmounts) {
-        TokenAmounts memory extraTokenAmounts = _calculateExtraTokenAmountsForMoneyVault(expectedTokenAmounts);
+        (uint256 token0Amount, uint256 token1Amount) = _calculateExtraTokenAmountsForMoneyVault(expectedTokenAmounts);
 
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
-        if (extraTokenAmounts.moneyToken0 > 0 || extraTokenAmounts.moneyToken1 > 0) {
-            extraTokenAmountsForPull[0] = extraTokenAmounts.moneyToken0;
-            extraTokenAmountsForPull[1] = extraTokenAmounts.moneyToken1;
+        if (token0Amount > 0 || token1Amount > 0) {
+            extraTokenAmountsForPull[0] = token0Amount;
+            extraTokenAmountsForPull[1] = token1Amount;
             pulledAmounts = moneyVault.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
             _compareAmounts(restrictions.pulledFromMoneyVault, pulledAmounts);
         }
@@ -491,22 +491,22 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function _calculateExtraTokenAmountsForMoneyVault(TokenAmounts memory expectedTokenAmounts)
         internal
         view
-        returns (TokenAmounts memory extraTokenAmounts)
+        returns (uint256 token0Amount, uint256 token1Amount)
     {
         (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-        extraTokenAmounts.moneyToken0 = (minTvl[0] + maxTvl[0]) >> 1;
-        extraTokenAmounts.moneyToken1 = (minTvl[1] + maxTvl[1]) >> 1;
+        token0Amount = (minTvl[0] + maxTvl[0]) >> 1;
+        token1Amount = (minTvl[1] + maxTvl[1]) >> 1;
 
-        if (extraTokenAmounts.moneyToken0 > expectedTokenAmounts.moneyToken0) {
-            extraTokenAmounts.moneyToken0 -= expectedTokenAmounts.moneyToken0;
+        if (token0Amount > expectedTokenAmounts.moneyToken0) {
+            token0Amount -= expectedTokenAmounts.moneyToken0;
         } else {
-            extraTokenAmounts.moneyToken0 = 0;
+            token0Amount = 0;
         }
 
-        if (extraTokenAmounts.moneyToken1 > expectedTokenAmounts.moneyToken1) {
-            extraTokenAmounts.moneyToken1 -= expectedTokenAmounts.moneyToken1;
+        if (token1Amount > expectedTokenAmounts.moneyToken1) {
+            token1Amount -= expectedTokenAmounts.moneyToken1;
         } else {
-            extraTokenAmounts.moneyToken1 = 0;
+            token1Amount = 0;
         }
     }
 
