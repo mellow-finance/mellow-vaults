@@ -63,7 +63,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     struct RebalanceRestrictions {
         uint256[] pulledOnUniV3Vault;
-        uint256[] pulledFromUniV3Vault;
         uint256[] pulledOnMoneyVault;
         uint256[] pulledFromMoneyVault;
         uint256[] swappedAmounts;
@@ -182,7 +181,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         fromVault.pull(address(toVault), tokens, tokenAmounts, vaultOptions);
     }
 
-    function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions) external {
+    function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
+        external
+        returns (RebalanceRestrictions memory actualPulledAmounts)
+    {
         _requireAdmin();
         uint256 uniV3Nft = uniV3Vault.nft();
         INonfungiblePositionManager positionManager_ = positionManager;
@@ -192,7 +194,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (uniV3Nft != 0) {
             // cannot burn only if it is first call of the rebalance function
             // and we dont have any position
-            _burnPosition(restrictions.burnedAmounts, uniV3Nft);
+            actualPulledAmounts.burnedAmounts = _burnPosition(restrictions.burnedAmounts, uniV3Nft);
         }
         DomainPositionParams memory domainPositionParams;
         {
@@ -217,33 +219,32 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 positionManager_
             );
         }
-        ExpectedRatios memory expectedRatios = _calculateExpectedRatios(domainPositionParams);
         TokenAmounts memory currentTokenAmounts = _calculateCurrentTokenAmoounts(domainPositionParams);
 
-        TokenAmountsInToken0 memory currentTokenAmountsInToken0 = _calculateCurrentTokenAmountsInToken0(
-            domainPositionParams,
-            currentTokenAmounts
-        );
-        TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = _calculateExpectedTokenAmountsInToken0(
-            currentTokenAmountsInToken0,
-            expectedRatios,
-            strategyParams_
-        );
-
         TokenAmounts memory expectedTokenAmounts = _calculateExpectedTokenAmounts(
-            expectedRatios,
-            expectedTokenAmountsInToken0,
+            currentTokenAmounts,
+            strategyParams_,
             domainPositionParams
         );
 
-        _pullExtraTokensFromMoneyVault(expectedTokenAmounts, moneyVaultOptions);
+        actualPulledAmounts.pulledFromMoneyVault = _pullExtraTokensFromMoneyVault(
+            expectedTokenAmounts,
+            restrictions,
+            moneyVaultOptions
+        );
 
         TokenAmounts memory missingTokenAmounts = _calculateMissingTokenAmounts(
             expectedTokenAmounts,
             domainPositionParams
         );
-        _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
-        _pullMissingTokens(missingTokenAmounts, restrictions, moneyVaultOptions);
+
+        actualPulledAmounts.swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
+
+        (actualPulledAmounts.pulledOnUniV3Vault, actualPulledAmounts.pulledOnMoneyVault) = _pullMissingTokens(
+            missingTokenAmounts,
+            restrictions,
+            moneyVaultOptions
+        );
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -252,7 +253,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         TokenAmounts memory expectedTokenAmounts,
         TokenAmounts memory currentTokenAmounts,
         RebalanceRestrictions memory restrictions
-    ) internal {
+    ) internal returns (uint256[] memory swappedAmounts) {
         uint256 expectedToken0Amount = expectedTokenAmounts.erc20Token0 +
             expectedTokenAmounts.moneyToken0 +
             expectedTokenAmounts.uniV3Token0;
@@ -268,22 +269,25 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             currentTokenAmounts.uniV3Token1;
 
         if (currentToken0Amount > expectedToken0Amount) {
-            _swapTokensOnERC20Vault(currentToken0Amount - expectedToken0Amount, 0, restrictions);
+            swappedAmounts = _swapTokensOnERC20Vault(currentToken0Amount - expectedToken0Amount, 0, restrictions);
         } else if (currentToken1Amount > expectedToken1Amount) {
-            _swapTokensOnERC20Vault(currentToken1Amount - expectedToken1Amount, 1, restrictions);
+            swappedAmounts = _swapTokensOnERC20Vault(currentToken1Amount - expectedToken1Amount, 1, restrictions);
         }
     }
 
-    function _pullExtraTokensFromMoneyVault(TokenAmounts memory expectedTokenAmounts, bytes memory moneyVaultOptions)
-        internal
-    {
+    function _pullExtraTokensFromMoneyVault(
+        TokenAmounts memory expectedTokenAmounts,
+        RebalanceRestrictions memory restrictions,
+        bytes memory moneyVaultOptions
+    ) internal returns (uint256[] memory pulledAmounts) {
         TokenAmounts memory extraTokenAmounts = _calculateExtraTokenAmountsForMoneyVault(expectedTokenAmounts);
 
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
         if (extraTokenAmounts.moneyToken0 > 0 || extraTokenAmounts.moneyToken1 > 0) {
             extraTokenAmountsForPull[0] = extraTokenAmounts.moneyToken0;
             extraTokenAmountsForPull[1] = extraTokenAmounts.moneyToken1;
-            moneyVault.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
+            pulledAmounts = moneyVault.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
+            _compareAmounts(restrictions.pulledFromMoneyVault, pulledAmounts);
         }
     }
 
@@ -291,25 +295,32 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         TokenAmounts memory missingTokenAmounts,
         RebalanceRestrictions memory restrictions,
         bytes memory moneyVaultOptions
-    ) internal {
+    ) internal returns (uint256[] memory pulledOnUniV3Vault, uint256[] memory pulledOnMoneyVault) {
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
         {
             if (missingTokenAmounts.uniV3Token0 > 0 || missingTokenAmounts.uniV3Token1 > 0) {
                 extraTokenAmountsForPull[0] = missingTokenAmounts.uniV3Token0;
                 extraTokenAmountsForPull[1] = missingTokenAmounts.uniV3Token1;
-                erc20Vault.pull(
+                pulledOnUniV3Vault = erc20Vault.pull(
                     address(uniV3Vault),
                     tokens,
                     extraTokenAmountsForPull,
                     _makeUniswapVaultOptions(extraTokenAmountsForPull, restrictions.deadline)
                 );
+                _compareAmounts(restrictions.pulledOnUniV3Vault, pulledOnUniV3Vault);
             }
         }
         {
             if (missingTokenAmounts.moneyToken0 > 0 || missingTokenAmounts.moneyToken1 > 0) {
                 extraTokenAmountsForPull[0] = missingTokenAmounts.moneyToken0;
                 extraTokenAmountsForPull[1] = missingTokenAmounts.moneyToken1;
-                erc20Vault.pull(address(moneyVault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
+                pulledOnMoneyVault = erc20Vault.pull(
+                    address(moneyVault),
+                    tokens,
+                    extraTokenAmountsForPull,
+                    moneyVaultOptions
+                );
+                _compareAmounts(restrictions.pulledOnMoneyVault, pulledOnMoneyVault);
             }
         }
     }
@@ -392,12 +403,15 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         emit MintUniV3Position(tx.origin, newNft, lowerTick, upperTick);
     }
 
-    function _burnPosition(uint256[] memory burnAmounts, uint256 uniV3Nft) internal {
+    function _burnPosition(uint256[] memory burnAmounts, uint256 uniV3Nft)
+        internal
+        returns (uint256[] memory tokenAmounts)
+    {
         if (uniV3Nft == 0) {
-            return;
+            return tokenAmounts;
         }
         uint256[] memory collectedFees = uniV3Vault.collectEarnings();
-        uint256[] memory tokenAmounts = new uint256[](2);
+        tokenAmounts = new uint256[](2);
         tokenAmounts[0] = type(uint256).max;
         tokenAmounts[1] = type(uint256).max;
         uint256[] memory pulledAmounts = uniV3Vault.pull(
@@ -475,10 +489,22 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     function _calculateExpectedTokenAmounts(
-        ExpectedRatios memory expectedRatios,
-        TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
+        TokenAmounts memory currentTokenAmounts,
+        StrategyParams memory strategyParams_,
         DomainPositionParams memory domainPositionParams
-    ) internal pure returns (TokenAmounts memory amounts) {
+    ) internal view returns (TokenAmounts memory amounts) {
+        ExpectedRatios memory expectedRatios = _calculateExpectedRatios(domainPositionParams);
+        TokenAmountsInToken0 memory currentTokenAmountsInToken0 = _calculateCurrentTokenAmountsInToken0(
+            domainPositionParams,
+            currentTokenAmounts
+        );
+
+        TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = _calculateExpectedTokenAmountsInToken0(
+            currentTokenAmountsInToken0,
+            expectedRatios,
+            strategyParams_
+        );
+
         amounts.erc20Token0 = FullMath.mulDiv(
             expectedRatios.token0RatioD,
             expectedTokenAmountsInToken0.erc20TokensAmountInToken0,
