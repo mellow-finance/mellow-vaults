@@ -8,7 +8,6 @@ import {
     YearnVault,
     ERC20Vault,
     ProtocolGovernance,
-    MockHStrategy,
     UniV3Helper,
     UniV3Vault,
     IYearnProtocolVault,
@@ -22,6 +21,10 @@ import { Contract } from "@ethersproject/contracts";
 import { ContractMetaBehaviour } from "./behaviors/contractMeta";
 import { expect } from "chai";
 import { randomInt } from "crypto";
+import {
+    MockHStrategy,
+    DomainPositionParamsStruct,
+} from "./types/MockHStrategy";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -435,9 +438,35 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExpectedRatios", () => {});
+    const getDomainPositionParams = () => {
+        return {
+            nft: 0,
+            liquidity: 0,
+            lowerTick: 0,
+            upperTick: 0,
+            lower0Tick: 0,
+            upper0Tick: 0,
+            averageTick: 0,
+            lowerPriceSqrtX96: 0,
+            upperPriceSqrtX96: 0,
+            lower0PriceSqrtX96: 0,
+            upper0PriceSqrtX96: 0,
+            averagePriceSqrtX96: 0,
+            averagePriceX96: 0,
+            spotPriceSqrtX96: 0,
+        } as DomainPositionParamsStruct;
+    };
+
+    describe("calculateExpectedRatios", () => {
+        it("", async () => {
+            this.subject.calculateExpectedRatios(getDomainPositionParams());
+        });
+    });
+
     describe("calculateDomainPositionParams", () => {});
+
     describe("calculateExpectedTokenAmountsInToken0", () => {});
+
     describe("calculateCurrentTokenAmountsInToken0", () => {});
 
     // Artyom:
