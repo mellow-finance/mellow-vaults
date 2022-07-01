@@ -236,7 +236,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             domainPositionParams
         );
 
-        _pullExtraTokens(expectedTokenAmounts, domainPositionParams, restrictions, moneyVaultOptions);
+        _pullExtraTokensFromMoneyVault(expectedTokenAmounts, moneyVaultOptions);
 
         TokenAmounts memory missingTokenAmounts = _calculateMissingTokenAmounts(
             expectedTokenAmounts,
@@ -274,33 +274,16 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
     }
 
-    function _pullExtraTokens(
-        TokenAmounts memory expectedTokenAmounts,
-        DomainPositionParams memory domainPositionParams,
-        RebalanceRestrictions memory restrictions,
-        bytes memory moneyVaultOptions
-    ) internal {
-        TokenAmounts memory extraTokenAmounts = _calculateExtraTokenAmounts(expectedTokenAmounts, domainPositionParams);
+    function _pullExtraTokensFromMoneyVault(TokenAmounts memory expectedTokenAmounts, bytes memory moneyVaultOptions)
+        internal
+    {
+        TokenAmounts memory extraTokenAmounts = _calculateExtraTokenAmountsForMoneyVault(expectedTokenAmounts);
 
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
-        {
-            if (extraTokenAmounts.uniV3Token0 > 0 || extraTokenAmounts.uniV3Token1 > 0) {
-                extraTokenAmountsForPull[0] = extraTokenAmounts.uniV3Token0;
-                extraTokenAmountsForPull[1] = extraTokenAmounts.uniV3Token1;
-                uniV3Vault.pull(
-                    address(erc20Vault),
-                    tokens,
-                    extraTokenAmountsForPull,
-                    _makeUniswapVaultOptions(extraTokenAmountsForPull, restrictions.deadline)
-                );
-            }
-        }
-        {
-            if (extraTokenAmounts.moneyToken0 > 0 || extraTokenAmounts.moneyToken1 > 0) {
-                extraTokenAmountsForPull[0] = extraTokenAmounts.moneyToken0;
-                extraTokenAmountsForPull[1] = extraTokenAmounts.moneyToken1;
-                moneyVault.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
-            }
+        if (extraTokenAmounts.moneyToken0 > 0 || extraTokenAmounts.moneyToken1 > 0) {
+            extraTokenAmountsForPull[0] = extraTokenAmounts.moneyToken0;
+            extraTokenAmountsForPull[1] = extraTokenAmounts.moneyToken1;
+            moneyVault.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
         }
     }
 
@@ -477,49 +460,25 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
     }
 
-    function _calculateExtraTokenAmounts(
-        TokenAmounts memory expectedTokenAmounts,
-        DomainPositionParams memory domainPositionParams
-    ) internal view returns (TokenAmounts memory extraTokenAmounts) {
-        // for uniV3Vault
-        {
-            (extraTokenAmounts.uniV3Token0, extraTokenAmounts.uniV3Token1) = LiquidityAmounts.getAmountsForLiquidity(
-                domainPositionParams.spotPriceSqrtX96,
-                domainPositionParams.lowerPriceSqrtX96,
-                domainPositionParams.upperPriceSqrtX96,
-                domainPositionParams.liquidity
-            );
+    function _calculateExtraTokenAmountsForMoneyVault(TokenAmounts memory expectedTokenAmounts)
+        internal
+        view
+        returns (TokenAmounts memory extraTokenAmounts)
+    {
+        (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
+        extraTokenAmounts.moneyToken0 = (minTvl[0] + maxTvl[0]) >> 1;
+        extraTokenAmounts.moneyToken1 = (minTvl[1] + maxTvl[1]) >> 1;
 
-            if (extraTokenAmounts.uniV3Token0 > expectedTokenAmounts.uniV3Token0) {
-                extraTokenAmounts.uniV3Token0 -= expectedTokenAmounts.uniV3Token0;
-            } else {
-                extraTokenAmounts.uniV3Token0 = 0;
-            }
-
-            if (extraTokenAmounts.uniV3Token1 > expectedTokenAmounts.uniV3Token1) {
-                extraTokenAmounts.uniV3Token1 -= expectedTokenAmounts.uniV3Token1;
-            } else {
-                extraTokenAmounts.uniV3Token1 = 0;
-            }
+        if (extraTokenAmounts.moneyToken0 > expectedTokenAmounts.moneyToken0) {
+            extraTokenAmounts.moneyToken0 -= expectedTokenAmounts.moneyToken0;
+        } else {
+            extraTokenAmounts.moneyToken0 = 0;
         }
 
-        // for moneyVault
-        {
-            (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-            extraTokenAmounts.moneyToken0 = (minTvl[0] + maxTvl[0]) >> 1;
-            extraTokenAmounts.moneyToken1 = (minTvl[1] + maxTvl[1]) >> 1;
-
-            if (extraTokenAmounts.moneyToken0 > expectedTokenAmounts.moneyToken0) {
-                extraTokenAmounts.moneyToken0 -= expectedTokenAmounts.moneyToken0;
-            } else {
-                extraTokenAmounts.moneyToken0 = 0;
-            }
-
-            if (extraTokenAmounts.moneyToken1 > expectedTokenAmounts.moneyToken1) {
-                extraTokenAmounts.moneyToken1 -= expectedTokenAmounts.moneyToken1;
-            } else {
-                extraTokenAmounts.moneyToken1 = 0;
-            }
+        if (extraTokenAmounts.moneyToken1 > expectedTokenAmounts.moneyToken1) {
+            extraTokenAmounts.moneyToken1 -= expectedTokenAmounts.moneyToken1;
+        } else {
+            extraTokenAmounts.moneyToken1 = 0;
         }
     }
 
