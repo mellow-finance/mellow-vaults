@@ -32,6 +32,11 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         }
     );
 
+let erc20RebalanceCount = 0;
+let uniV3RebalanceCount = 0;
+let uniV3Gas = BigNumber.from(0);
+let erc20UniV3Gas = BigNumber.from(0);
+
 const initialMint = async (hre : HardhatRuntimeEnvironment) => {
 
     const { getNamedAccounts, ethers } = hre;
@@ -407,23 +412,26 @@ class PermissionIdsLibrary {
     static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
-const parseFile = (filename: string) : string[] =>  {
+const parseFile = (filename: string) : [BigNumber[], string[]] =>  {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: 'utf-8' });
     const fileLen = 30048;
     const blockNumberLen = 8;
     const pricePrecision = 29;
     let prices = new Array();
+    let blockNumbers = new Array();
 
     let index = 0;
     for (let i = 0; i < fileLen; ++i) {
         //let blockNumber = fileContent.slice(index, index + blockNumberLen);
         let price = fileContent.slice(index + blockNumberLen + 1, index + blockNumberLen + pricePrecision + 1);
+        let block = fileContent.slice(index, index + blockNumberLen);
         prices.push(price);
+        blockNumbers.push(BigNumber.from(block));
         index += blockNumberLen + pricePrecision + 2;
     }
 
-    return prices;
+    return [blockNumbers, prices];
 
 };
 
@@ -599,7 +607,7 @@ const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context
             break;
         }
 
-        await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
+        const tx = await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults(
             [
                 ethers.constants.Zero,
                 ethers.constants.Zero,
@@ -610,14 +618,15 @@ const ERC20UniRebalance = async(hre: HardhatRuntimeEnvironment, context: Context
             ],
             ethers.constants.MaxUint256
         );
+        let receipt = await tx.wait();
+        erc20UniV3Gas = erc20UniV3Gas.add(receipt.gasUsed);
+        erc20RebalanceCount += 1;
         await swapOnCowswap(hre, context);
 
         await makeSwap(hre, context);
         i += 1;
-        if (i >= 10) {
-            capitalErc20 = await getCapital(hre, context, priceX96, await context.LStrategy.erc20Vault());
-            capitalLower = await getCapital(hre, context, priceX96, await context.LStrategy.lowerVault());
-            capitalUpper = await getCapital(hre, context, priceX96, await context.LStrategy.upperVault());
+        if (i >= 20) {
+            console.log("More than 20 iterations of rebalanceERC20UniV3Vaults needed!");
             break;
         }
     }
@@ -636,7 +645,7 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
 
     while (!(await checkUniV3Balance(hre, context))) {
         wasRebalance = true;
-        await context.LStrategy.connect(context.admin).rebalanceUniV3Vaults([
+        let tx = await context.LStrategy.connect(context.admin).rebalanceUniV3Vaults([
             ethers.constants.Zero,
             ethers.constants.Zero,
         ],
@@ -645,7 +654,10 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
             ethers.constants.Zero,
         ],
         ethers.constants.MaxUint256);
-        await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults([
+        let receipt = await tx.wait();
+        uniV3Gas = uniV3Gas.add(receipt.gasUsed);
+        uniV3RebalanceCount += 1;
+        tx = await context.LStrategy.connect(context.admin).rebalanceERC20UniV3Vaults([
             ethers.constants.Zero,
             ethers.constants.Zero,
         ],
@@ -654,10 +666,13 @@ const makeRebalances = async(hre: HardhatRuntimeEnvironment, context: Context, p
             ethers.constants.Zero,
         ],
         ethers.constants.MaxUint256);
+        receipt = await tx.wait();
+        erc20UniV3Gas = erc20UniV3Gas.add(receipt.gasUsed);
+        erc20RebalanceCount += 1;
         await swapOnCowswap(hre, context);
         iter += 1;
-        if (iter >= 10) {
-            console.log("More than 10 iterations needed!!!");
+        if (iter >= 20) {
+            console.log("More than 20 iterations of rebalance needed needed!!!");
             break;
         }
     }
@@ -683,7 +698,7 @@ const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvir
 
     await mintMockPosition(hre, context);
     
-    let prices = parseFile(filename);
+    let [blocks, prices] = parseFile(filename);
 
     console.log("Before price update");
 
@@ -724,16 +739,27 @@ const execute = async (filename: string, width: number, hre: HardhatRuntimeEnvir
     console.log(process.memoryUsage())
     let prev = Date.now();
     console.log("length: ", prices.length);
+    let prev_block = BigNumber.from(0);
     for (let i = 1; i < prices.length; ++i) {
+        if (blocks[i].sub(prev_block).gte(24 * 60 * 60 / 15)) {
+            await makeRebalances(hre, context, stringToPriceX96(prices[i]));
+            prev_block = blocks[i];
+        }
         if (i % 500 == 0) {
             let now = Date.now();
             console.log("Iteration: ", i);
             console.log("Duration: ", now - prev);
-            console.log(process.memoryUsage());
+            console.log("ERC20Rebalances: ", erc20RebalanceCount);
+            console.log("UniV3 rebalances: ", uniV3RebalanceCount);
+            console.log("UniV3 used: ", uniV3Gas.toString());
+            console.log("ERC20UniV3 used: ", erc20UniV3Gas.toString());
             prev = now;
         }
         await reportStats(hre, context, "output.csv", keys);
         await fullPriceUpdate(hre, context, getTick(stringToSqrtPriceX96(prices[i])));
-        await makeRebalances(hre, context, stringToPriceX96(prices[i]));
     }
+    console.log("ERC20Rebalances: ", erc20RebalanceCount);
+    console.log("UniV3 rebalances: ", uniV3RebalanceCount);
+    console.log("UniV3 used: ", uniV3Gas.toString());
+    console.log("ERC20UniV3 used: ", erc20UniV3Gas.toString());
 };

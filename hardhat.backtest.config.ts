@@ -1,3 +1,4 @@
+import "hardhat-gas-reporter";
 import { HardhatUserConfig } from "hardhat/types";
 import defaultConfig from "./hardhat.test.config";
 import "./tasks/lstrategy-backtest";
@@ -15,7 +16,11 @@ const config: HardhatUserConfig = {
                   }
                 : undefined,
         }
-    }
+    },
+    gasReporter: {
+        outputFile: "lstrategy_gas.txt",
+        noColors: true,
+    },
 }
 
 export default config;
