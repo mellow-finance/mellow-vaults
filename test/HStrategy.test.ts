@@ -25,6 +25,8 @@ import {
     MockHStrategy,
     DomainPositionParamsStruct,
 } from "./types/MockHStrategy";
+import Exceptions from "./library/Exceptions";
+import { TickMath } from "@uniswap/v3-sdk";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -40,6 +42,8 @@ type CustomContext = {
 };
 
 type DeployOptions = {};
+
+const DENOMINATOR = BigNumber.from(10).pow(9);
 
 contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     before(async () => {
@@ -280,7 +284,232 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("updateStrategyParams", () => {});
+    describe("#updateStrategyParams", () => {
+        it("set new strategy parameters", async () => {
+            await expect(
+                this.subject.connect(this.mStrategyAdmin).updateStrategyParams({
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    oracleObservationDelta: 300,
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: 0,
+                    globalUpperTick: 30000,
+                    simulateUniV3Interval: false,
+                })
+            ).to.emit(this.subject, "UpdateStrategyParams");
+        });
+
+        describe("edge cases:", () => {
+            it("when widthCoefficient <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 0,
+                            widthTicks: 1,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when widthTicks <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 0,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when oracleObservationDelta <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 60,
+                            oracleObservationDelta: 0,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when erc20MoneyRatioD <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 60,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: 0,
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when erc20MoneyRatioD > DENOMINATOR (1e9), then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 60,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(9).add(1),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when minToken0ForOpening <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 60,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: 0,
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when minToken1ForOpening <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 60,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: 0,
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when (2 ^ 22) / widthTicks < widthCoefficient, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: BigNumber.from(2).pow(20),
+                            widthTicks: BigNumber.from(2).pow(20),
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 30000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when globalUpperTick <= globalLowerTick, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 30,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 0,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when widthCoefficient * widthTicks <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 0,
+                            widthTicks: 30,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 3000,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when globalIntervalWidth % shortIntervalWidth > 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            widthCoefficient: 1,
+                            widthTicks: 30,
+                            oracleObservationDelta: 300,
+                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            globalLowerTick: 0,
+                            globalUpperTick: 3001,
+                            simulateUniV3Interval: false,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when function called not by strategy admin, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject.connect(this.deployer).updateStrategyParams({
+                        widthCoefficient: 1,
+                        widthTicks: 30,
+                        oracleObservationDelta: 300,
+                        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                        minToken0ForOpening: BigNumber.from(10).pow(6),
+                        minToken1ForOpening: BigNumber.from(10).pow(6),
+                        globalLowerTick: 0,
+                        globalUpperTick: 3000,
+                        simulateUniV3Interval: false,
+                    })
+                ).to.be.revertedWith(Exceptions.FORBIDDEN);
+            });
+        });
+    });
 
     describe("#manualPull", () => {
         it("pulls token amounts from fromVault to toVault", async () => {
@@ -438,36 +667,183 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    const getDomainPositionParams = () => {
-        return {
-            nft: 0,
-            liquidity: 0,
-            lowerTick: 0,
-            upperTick: 0,
-            lower0Tick: 0,
-            upper0Tick: 0,
-            averageTick: 0,
-            lowerPriceSqrtX96: 0,
-            upperPriceSqrtX96: 0,
-            lower0PriceSqrtX96: 0,
-            upper0PriceSqrtX96: 0,
-            averagePriceSqrtX96: 0,
-            averagePriceX96: 0,
-            spotPriceSqrtX96: 0,
-        } as DomainPositionParamsStruct;
-    };
-
     describe("calculateExpectedRatios", () => {
-        it("", async () => {
-            this.subject.calculateExpectedRatios(getDomainPositionParams());
+        it.only("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    oracleObservationDelta: 300,
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: 0,
+                    globalUpperTick: 30000,
+                    simulateUniV3Interval: true,
+                });
+
+            for (var i = 0; i < 10; i++) {
+                var lower0Tick = randomInt(10000);
+                var lowerTick = lower0Tick + randomInt(10000);
+                var upperTick = lowerTick + randomInt(10000) + 1;
+                var upper0Tick = upperTick + randomInt(10000);
+                var averageTick = lowerTick + randomInt(upperTick - lowerTick);
+
+                const lowerPriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
+                );
+                const upperPriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(upperTick).toString()
+                );
+                const averagePriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(averageTick).toString()
+                );
+                const lower0PriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(lower0Tick).toString()
+                );
+                const upper0PriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(upper0Tick).toString()
+                );
+                expect(
+                    lower0PriceSqrtX96 <= lowerPriceSqrtX96 &&
+                        lowerPriceSqrtX96 <= averagePriceSqrtX96 &&
+                        averagePriceSqrtX96 <= upperPriceSqrtX96 &&
+                        upperPriceSqrtX96 <= upper0PriceSqrtX96
+                );
+
+                const { token0RatioD, token1RatioD, uniV3RatioD } =
+                    await this.subject.callStatic.calculateExpectedRatios({
+                        nft: 0,
+                        liquidity: 0,
+                        lowerTick: 0,
+                        upperTick: 0,
+                        lower0Tick: 0,
+                        upper0Tick: 0,
+                        averageTick: 0,
+                        lowerPriceSqrtX96: lowerPriceSqrtX96,
+                        upperPriceSqrtX96: upperPriceSqrtX96,
+                        lower0PriceSqrtX96: lower0PriceSqrtX96,
+                        upper0PriceSqrtX96: upper0PriceSqrtX96,
+                        averagePriceSqrtX96: averagePriceSqrtX96,
+                        averagePriceX96: 0,
+                        spotPriceSqrtX96: 0,
+                    } as DomainPositionParamsStruct);
+
+                const averagePriceX96 = averagePriceSqrtX96
+                    .mul(averagePriceSqrtX96)
+                    .div(BigNumber.from(2).pow(96));
+
+                const expectedToken0RatioDNominatorD = DENOMINATOR.mul(
+                    averagePriceX96
+                )
+                    .div(upperPriceSqrtX96)
+                    .sub(
+                        DENOMINATOR.mul(averagePriceX96).div(upper0PriceSqrtX96)
+                    );
+
+                const expectedToken0RatioDDenominatorD = DENOMINATOR.mul(
+                    averagePriceSqrtX96.mul(2)
+                )
+                    .sub(DENOMINATOR.mul(lower0PriceSqrtX96))
+                    .sub(
+                        DENOMINATOR.mul(averagePriceX96).div(upper0PriceSqrtX96)
+                    );
+
+                const expectedToken0RatioD = DENOMINATOR.mul(
+                    expectedToken0RatioDNominatorD
+                ).div(expectedToken0RatioDDenominatorD);
+
+                expect(token0RatioD + token1RatioD + uniV3RatioD).to.be.eq(
+                    DENOMINATOR.toNumber()
+                );
+                console.log(
+                    expectedToken0RatioD.toString(),
+                    token0RatioD.toString()
+                );
+                console.log(token1RatioD.toString());
+                console.log(uniV3RatioD.toString());
+
+                expect(expectedToken0RatioD.sub(token0RatioD).abs()).lte(1);
+                // expect(expectedToken1RatioD.sub(token1RatioD).abs()).lte(1);
+            }
+        });
+
+        it("correctly calculates the ratio of tokens according to the specification for UniV2 interval simulating", async () => {
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    oracleObservationDelta: 300,
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: 0,
+                    globalUpperTick: 30000,
+                    simulateUniV3Interval: false,
+                });
+
+            for (var i = 0; i < 10; i++) {
+                var lowerTick = randomInt(10000);
+                var upperTick = lowerTick + randomInt(10000) + 1;
+                var averageTick = lowerTick + randomInt(upperTick - lowerTick);
+                const lowerPriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
+                );
+                const upperPriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(upperTick).toString()
+                );
+                const averagePriceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(averageTick).toString()
+                );
+                const { token0RatioD, token1RatioD, uniV3RatioD } =
+                    await this.subject.callStatic.calculateExpectedRatios({
+                        nft: 0,
+                        liquidity: 0,
+                        lowerTick: 0,
+                        upperTick: 0,
+                        lower0Tick: 0,
+                        upper0Tick: 0,
+                        averageTick: 0,
+                        lowerPriceSqrtX96: lowerPriceSqrtX96,
+                        upperPriceSqrtX96: upperPriceSqrtX96,
+                        lower0PriceSqrtX96: 0,
+                        upper0PriceSqrtX96: 0,
+                        averagePriceSqrtX96: averagePriceSqrtX96,
+                        averagePriceX96: 0,
+                        spotPriceSqrtX96: 0,
+                    } as DomainPositionParamsStruct);
+
+                const expectedToken0RatioD = DENOMINATOR.mul(
+                    averagePriceSqrtX96
+                )
+                    .div(upperPriceSqrtX96)
+                    .div(2);
+                const expectedToken1RatioD = DENOMINATOR.mul(lowerPriceSqrtX96)
+                    .div(averagePriceSqrtX96)
+                    .div(2);
+
+                expect(token0RatioD + token1RatioD + uniV3RatioD).to.be.eq(
+                    DENOMINATOR.toNumber()
+                );
+                expect(expectedToken0RatioD.sub(token0RatioD).abs()).lte(1);
+                expect(expectedToken1RatioD.sub(token1RatioD).abs()).lte(1);
+            }
         });
     });
 
-    describe("calculateDomainPositionParams", () => {});
+    describe("calculateDomainPositionParams", () => {
+        it("", async () => {});
+    });
 
-    describe("calculateExpectedTokenAmountsInToken0", () => {});
+    describe("calculateExpectedTokenAmountsInToken0", () => {
+        it("", async () => {});
+    });
 
-    describe("calculateCurrentTokenAmountsInToken0", () => {});
+    describe("calculateCurrentTokenAmountsInToken0", () => {
+        it("", async () => {});
+    });
 
     // Artyom:
     describe("calculateCurrentTokenAmounts", () => {});

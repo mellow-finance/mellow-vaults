@@ -152,8 +152,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
-        int24 globalIntervalWidth = newStrategyParams.globalUpperTick - newStrategyParams.globalLowerTick;
-        int24 shortIntervalWidth = newStrategyParams.widthCoefficient * newStrategyParams.widthTicks;
         require(
             (newStrategyParams.widthCoefficient > 0 &&
                 newStrategyParams.widthTicks > 0 &&
@@ -162,12 +160,17 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 newStrategyParams.erc20MoneyRatioD <= DENOMINATOR &&
                 newStrategyParams.minToken0ForOpening > 0 &&
                 newStrategyParams.minToken1ForOpening > 0 &&
-                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient &&
-                globalIntervalWidth > 0 &&
-                shortIntervalWidth > 0 &&
-                (globalIntervalWidth % shortIntervalWidth == 0)),
+                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient),
             ExceptionsLibrary.INVARIANT
         );
+
+        int24 globalIntervalWidth = newStrategyParams.globalUpperTick - newStrategyParams.globalLowerTick;
+        int24 shortIntervalWidth = newStrategyParams.widthCoefficient * newStrategyParams.widthTicks;
+        require(
+            globalIntervalWidth > 0 && shortIntervalWidth > 0 && (globalIntervalWidth % shortIntervalWidth == 0),
+            ExceptionsLibrary.INVARIANT
+        );
+
         strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
@@ -719,8 +722,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         view
         returns (ExpectedRatios memory ratios)
     {
-        uint256 uniV3Nft = domainPositionParams.nft;
-        require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
         if (strategyParams.simulateUniV3Interval) {
             uint256 denominatorX96 = CommonLibrary.Q96 *
                 2 -
