@@ -52,4 +52,8 @@ contract DefaultAccessControlLateInit is IDefaultAccessControl, AccessControlEnu
     function _requireAdmin() internal view {
         require(isAdmin(msg.sender), ExceptionsLibrary.FORBIDDEN);
     }
+
+    function _requireAtLeastOperator() internal view {
+        require(isAdmin(msg.sender) || isOperator(msg.sender), ExceptionsLibrary.FORBIDDEN);
+    }
 }
