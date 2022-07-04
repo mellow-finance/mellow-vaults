@@ -152,8 +152,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
-        int24 globalIntervalWidth = newStrategyParams.globalUpperTick - newStrategyParams.globalLowerTick;
-        int24 shortIntervalWidth = newStrategyParams.widthCoefficient * newStrategyParams.widthTicks;
         require(
             (newStrategyParams.widthCoefficient > 0 &&
                 newStrategyParams.widthTicks > 0 &&
@@ -162,12 +160,17 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 newStrategyParams.erc20MoneyRatioD <= DENOMINATOR &&
                 newStrategyParams.minToken0ForOpening > 0 &&
                 newStrategyParams.minToken1ForOpening > 0 &&
-                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient &&
-                globalIntervalWidth > 0 &&
-                shortIntervalWidth > 0 &&
-                (globalIntervalWidth % shortIntervalWidth == 0)),
+                type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient),
             ExceptionsLibrary.INVARIANT
         );
+
+        int24 globalIntervalWidth = newStrategyParams.globalUpperTick - newStrategyParams.globalLowerTick;
+        int24 shortIntervalWidth = newStrategyParams.widthCoefficient * newStrategyParams.widthTicks;
+        require(
+            globalIntervalWidth > 0 && shortIntervalWidth > 0 && (globalIntervalWidth % shortIntervalWidth == 0),
+            ExceptionsLibrary.INVARIANT
+        );
+
         strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
@@ -207,7 +210,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (RebalanceRestrictions memory actualPulledAmounts)
     {
         _requireAdmin();
-        uint256 uniV3Nft = uniV3Vault.nft();
+        uint256 uniV3Nft = uniV3Vault.uniV3Nft();
         INonfungiblePositionManager positionManager_ = positionManager;
         StrategyParams memory strategyParams_ = strategyParams;
         IUniswapV3Pool pool_ = pool;
@@ -323,12 +326,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             if (missingTokenAmounts.uniV3Token0 > 0 || missingTokenAmounts.uniV3Token1 > 0) {
                 extraTokenAmountsForPull[0] = missingTokenAmounts.uniV3Token0;
                 extraTokenAmountsForPull[1] = missingTokenAmounts.uniV3Token1;
-                pulledOnUniV3Vault = erc20Vault.pull(
-                    address(uniV3Vault),
-                    tokens,
-                    extraTokenAmountsForPull,
-                    _makeUniswapVaultOptions(extraTokenAmountsForPull, restrictions.deadline)
-                );
+                pulledOnUniV3Vault = erc20Vault.pull(address(uniV3Vault), tokens, extraTokenAmountsForPull, "");
                 _compareAmounts(restrictions.pulledOnUniV3Vault, pulledOnUniV3Vault);
             }
         }
@@ -393,9 +391,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         } else if (averageTick > lastInterval.upperTick) {
             lowerTick = lastInterval.upperTick - intervalWidth;
             upperTick = lastInterval.upperTick + intervalWidth;
-        } else {
-            // cannot mint new position because we are in the current one
-            revert(ExceptionsLibrary.INVARIANT);
         }
 
         IERC20(tokens[0]).safeApprove(address(positionManager_), strategyParams_.minToken0ForOpening);
@@ -729,8 +724,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         view
         returns (ExpectedRatios memory ratios)
     {
-        uint256 uniV3Nft = domainPositionParams.nft;
-        require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
         if (strategyParams.simulateUniV3Interval) {
             uint256 denominatorX96 = CommonLibrary.Q96 *
                 2 -
