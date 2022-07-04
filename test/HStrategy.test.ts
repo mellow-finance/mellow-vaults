@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint } from "./library/Helpers";
+import { mint, mintUniV3Position_USDC_WETH } from "./library/Helpers";
 import { contract } from "./library/setup";
 import {
     ERC20RootVault,
@@ -24,9 +24,15 @@ import { randomInt } from "crypto";
 import {
     MockHStrategy,
     DomainPositionParamsStruct,
+    StrategyParamsStruct,
+    TokenAmountsInToken0Struct,
+    ExpectedRatiosStruct,
+    TokenAmountsStruct,
 } from "./types/MockHStrategy";
 import Exceptions from "./library/Exceptions";
+import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { TickMath } from "@uniswap/v3-sdk";
+import { RebalanceRestrictionsStruct } from "./types/HStrategy";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -127,6 +133,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                  */
                 const { uniswapV3PositionManager, uniswapV3Router } =
                     await getNamedAccounts();
+                this.positionManager = await ethers.getContractAt(
+                    INonfungiblePositionManager,
+                    uniswapV3PositionManager
+                );
                 const hStrategy = await (
                     await ethers.getContractFactory("MockHStrategy")
                 ).deploy(uniswapV3PositionManager, uniswapV3Router);
@@ -618,6 +628,19 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
     describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    oracleObservationDelta: 300,
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: -870000,
+                    globalUpperTick: 870000,
+                    simulateUniV3Interval: true,
+                });
             const pullExistentials =
                 await this.erc20RootVault.pullExistentials();
             for (var i = 0; i < 2; i++) {
@@ -652,23 +675,25 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 []
             );
 
-            // await this.subject
-            //         .connect(this.mStrategyAdmin)
-            //         .rebalance(
-            //             [0, 0],
-            //             [0, 0],
-            //             [0, 0],
-            //             [0, 0],
-            //             [0, 0],
-            //             [0, 0],
-            //             ethers.constants.MaxUint256,
-            //             []
-            //         )
+            var restrictions = {
+                pulledOnUniV3Vault: [0, 0],
+                pulledOnMoneyVault: [0, 0],
+                pulledFromMoneyVault: [0, 0],
+                swappedAmounts: [0, 0],
+                burnedAmounts: [0, 0],
+                deadline: ethers.constants.MaxUint256,
+            } as RebalanceRestrictionsStruct;
+
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
         });
     });
 
     describe("calculateExpectedRatios", () => {
-        it.only("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
+        it("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
@@ -742,30 +767,41 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         DENOMINATOR.mul(averagePriceX96).div(upper0PriceSqrtX96)
                     );
 
-                const expectedToken0RatioDDenominatorD = DENOMINATOR.mul(
-                    averagePriceSqrtX96.mul(2)
+                const expectedToken1RatioDNominatorD = DENOMINATOR.mul(
+                    lowerPriceSqrtX96
                 )
                     .sub(DENOMINATOR.mul(lower0PriceSqrtX96))
+                    .div(BigNumber.from(2).pow(96));
+
+                const expectedTokensRatioDDenominatorD = DENOMINATOR.mul(
+                    averagePriceSqrtX96.mul(2)
+                )
+                    .div(BigNumber.from(2).pow(96))
+                    .sub(
+                        DENOMINATOR.mul(lower0PriceSqrtX96).div(
+                            BigNumber.from(2).pow(96)
+                        )
+                    )
                     .sub(
                         DENOMINATOR.mul(averagePriceX96).div(upper0PriceSqrtX96)
                     );
 
                 const expectedToken0RatioD = DENOMINATOR.mul(
                     expectedToken0RatioDNominatorD
-                ).div(expectedToken0RatioDDenominatorD);
+                ).div(expectedTokensRatioDDenominatorD);
+                const expectedToken1RatioD = DENOMINATOR.mul(
+                    expectedToken1RatioDNominatorD
+                ).div(expectedTokensRatioDDenominatorD);
 
                 expect(token0RatioD + token1RatioD + uniV3RatioD).to.be.eq(
                     DENOMINATOR.toNumber()
                 );
-                console.log(
-                    expectedToken0RatioD.toString(),
-                    token0RatioD.toString()
+                expect(expectedToken0RatioD.sub(token0RatioD).abs()).lte(
+                    expectedToken0RatioD.div(10000)
                 );
-                console.log(token1RatioD.toString());
-                console.log(uniV3RatioD.toString());
-
-                expect(expectedToken0RatioD.sub(token0RatioD).abs()).lte(1);
-                // expect(expectedToken1RatioD.sub(token1RatioD).abs()).lte(1);
+                expect(expectedToken1RatioD.sub(token1RatioD).abs()).lte(
+                    expectedToken1RatioD.div(10000)
+                );
             }
         });
 
@@ -834,15 +870,240 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     });
 
     describe("calculateDomainPositionParams", () => {
-        it("", async () => {});
+        it("correctly calculates parameters of global and short intervals for given position and strategy parameters", async () => {
+            for (var i = 0; i < 3; i++) {
+                const lowerTick = 0;
+                const upperTick = 60 * 10 * 12;
+
+                const averageTick =
+                    lowerTick + randomInt(upperTick - lowerTick);
+
+                const { tokenId } = await mintUniV3Position_USDC_WETH({
+                    fee: 3000,
+                    tickLower: lowerTick,
+                    tickUpper: upperTick,
+                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
+                    wethAmount: BigNumber.from(10).pow(18),
+                });
+
+                const globalUpperTick = upperTick + randomInt(10);
+                const globalLowerTick = lowerTick - randomInt(100);
+
+                const strategyParams = {
+                    widthCoefficient: 0,
+                    widthTicks: 0,
+                    oracleObservationDelta: 0,
+                    erc20MoneyRatioD: 0,
+                    minToken0ForOpening: 0,
+                    minToken1ForOpening: 0,
+                    globalLowerTick: globalLowerTick,
+                    globalUpperTick: globalUpperTick,
+                    simulateUniV3Interval: false,
+                } as StrategyParamsStruct;
+
+                const result = await this.subject.calculateDomainPositionParams(
+                    averageTick,
+                    BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(averageTick).toString()
+                    ),
+                    strategyParams,
+                    tokenId,
+                    this.positionManager.address
+                );
+
+                expect(result.lower0Tick).to.be.eq(globalLowerTick);
+                expect(result.upper0Tick).to.be.eq(globalUpperTick);
+
+                expect(result.lowerTick).to.be.eq(lowerTick);
+                expect(result.upperTick).to.be.eq(upperTick);
+
+                expect(result.lower0PriceSqrtX96).to.be.eq(
+                    BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(globalLowerTick).toString()
+                    )
+                );
+                expect(result.upper0PriceSqrtX96).to.be.eq(
+                    BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(globalUpperTick).toString()
+                    )
+                );
+
+                expect(result.lowerPriceSqrtX96).to.be.eq(
+                    BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(lowerTick).toString()
+                    )
+                );
+                expect(result.upperPriceSqrtX96).to.be.eq(
+                    BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(upperTick).toString()
+                    )
+                );
+
+                expect(result.liquidity).to.be.gt(0);
+                expect(result.nft).to.be.eq(tokenId);
+                expect(result.averageTick).to.be.eq(averageTick);
+
+                const priceSqrtX96 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(averageTick).toString()
+                );
+                expect(result.averagePriceSqrtX96).to.be.eq(priceSqrtX96);
+                const priceX96 = priceSqrtX96
+                    .mul(priceSqrtX96)
+                    .div(BigNumber.from(2).pow(96));
+
+                expect(result.averagePriceX96).to.be.eq(priceX96);
+                expect(result.spotPriceSqrtX96).to.be.eq(priceSqrtX96);
+            }
+        });
     });
 
     describe("calculateExpectedTokenAmountsInToken0", () => {
-        it("", async () => {});
+        it("correctly calculates expected token amonuts in token 0", async () => {
+            for (var i = 0; i < 3; i++) {
+                var tokenAmounts = {
+                    erc20TokensAmountInToken0: randomInt(10 ** 9),
+                    moneyTokensAmountInToken0: randomInt(10 ** 9),
+                    uniV3TokensAmountInToken0: randomInt(10 ** 9),
+                    totalTokensInToken0: 0,
+                } as TokenAmountsInToken0Struct;
+                tokenAmounts.totalTokensInToken0 = BigNumber.from(
+                    tokenAmounts.erc20TokensAmountInToken0
+                )
+                    .add(tokenAmounts.moneyTokensAmountInToken0)
+                    .add(tokenAmounts.uniV3TokensAmountInToken0);
+
+                var ratios = {
+                    token0RatioD: randomInt(10 ** 8) * 4,
+                    token1RatioD: randomInt(10 ** 8) * 4,
+                    uniV3RatioD: 0,
+                } as ExpectedRatiosStruct;
+                ratios.uniV3RatioD = BigNumber.from(ratios.token0RatioD).add(
+                    ratios.token1RatioD
+                );
+
+                var strategyParams = {
+                    widthCoefficient: 1,
+                    widthTicks: 0,
+                    oracleObservationDelta: 300,
+                    erc20MoneyRatioD: BigNumber.from(10)
+                        .pow(7)
+                        .mul(randomInt(100)),
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: 0,
+                    globalUpperTick: 30000,
+                    simulateUniV3Interval: false,
+                };
+
+                const {
+                    erc20TokensAmountInToken0,
+                    uniV3TokensAmountInToken0,
+                    moneyTokensAmountInToken0,
+                    totalTokensInToken0,
+                } = await this.subject.calculateExpectedTokenAmountsInToken0(
+                    tokenAmounts,
+                    ratios,
+                    strategyParams
+                );
+
+                expect(totalTokensInToken0).to.be.eq(
+                    tokenAmounts.totalTokensInToken0
+                );
+                expect(uniV3TokensAmountInToken0).to.be.eq(
+                    totalTokensInToken0.mul(ratios.uniV3RatioD).div(DENOMINATOR)
+                );
+
+                const realRatio = erc20TokensAmountInToken0
+                    .mul(DENOMINATOR)
+                    .div(
+                        moneyTokensAmountInToken0.add(erc20TokensAmountInToken0)
+                    );
+
+                expect(realRatio).to.be.lte(
+                    strategyParams.erc20MoneyRatioD.add(10)
+                );
+                expect(realRatio).to.be.gte(
+                    strategyParams.erc20MoneyRatioD.sub(10)
+                );
+            }
+        });
     });
 
     describe("calculateCurrentTokenAmountsInToken0", () => {
-        it("", async () => {});
+        it("correctly calculates current token amonuts in token 0", async () => {
+            for (var i = 0; i < 3; i++) {
+                const domainParams = {
+                    nft: 0,
+                    liquidity: 0,
+                    lowerTick: 0,
+                    upperTick: 0,
+                    lower0Tick: 0,
+                    upper0Tick: 0,
+                    averageTick: 0,
+                    lowerPriceSqrtX96: 0,
+                    upperPriceSqrtX96: 0,
+                    lower0PriceSqrtX96: 0,
+                    upper0PriceSqrtX96: 0,
+                    averagePriceSqrtX96: 0,
+                    averagePriceX96: BigNumber.from(10)
+                        .pow(9)
+                        .mul(BigNumber.from(2).pow(96).div(1000)),
+                    spotPriceSqrtX96: 0,
+                } as DomainPositionParamsStruct;
+
+                const amounts = {
+                    erc20Token0: randomInt(10 ** 9),
+                    erc20Token1: randomInt(10 ** 9),
+                    uniV3Token0: randomInt(10 ** 9),
+                    uniV3Token1: randomInt(10 ** 9),
+                    moneyToken0: randomInt(10 ** 9),
+                    moneyToken1: randomInt(10 ** 9),
+                } as TokenAmountsStruct;
+
+                const {
+                    erc20TokensAmountInToken0,
+                    moneyTokensAmountInToken0,
+                    uniV3TokensAmountInToken0,
+                    totalTokensInToken0,
+                } = await this.subject.calculateCurrentTokenAmountsInToken0(
+                    domainParams,
+                    amounts
+                );
+
+                const convert = (t0: string, t1: string) => {
+                    return BigNumber.from(t0).add(
+                        BigNumber.from(t1)
+                            .mul(BigNumber.from(2).pow(96))
+                            .div(domainParams.averagePriceX96)
+                    );
+                };
+
+                expect(erc20TokensAmountInToken0).to.be.eq(
+                    convert(
+                        amounts.erc20Token0.toString(),
+                        amounts.erc20Token1.toString()
+                    )
+                );
+                expect(moneyTokensAmountInToken0).to.be.eq(
+                    convert(
+                        amounts.moneyToken0.toString(),
+                        amounts.moneyToken1.toString()
+                    )
+                );
+                expect(uniV3TokensAmountInToken0).to.be.eq(
+                    convert(
+                        amounts.uniV3Token0.toString(),
+                        amounts.uniV3Token1.toString()
+                    )
+                );
+
+                expect(
+                    erc20TokensAmountInToken0
+                        .add(moneyTokensAmountInToken0)
+                        .add(uniV3TokensAmountInToken0)
+                ).to.be.eq(totalTokensInToken0);
+            }
+        });
     });
 
     // Artyom:
