@@ -199,7 +199,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         );
 
         require(
-            averageTick < params.globalLowerTick || averageTick > params.globalUpperTick,
+            params.globalLowerTick < averageTick || averageTick < params.globalUpperTick,
             ExceptionsLibrary.INVARIANT
         );
         lastRebalanceTimestamp = currentTimestamp;
@@ -431,12 +431,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         tokenAmounts = new uint256[](2);
         tokenAmounts[0] = type(uint256).max;
         tokenAmounts[1] = type(uint256).max;
-        uint256[] memory pulledAmounts = uniV3Vault.pull(
-            address(erc20Vault),
-            tokens,
-            tokenAmounts,
-            _makeUniswapVaultOptions(tokenAmounts, 0)
-        );
+        uint256[] memory pulledAmounts = uniV3Vault.pull(address(erc20Vault), tokens, tokenAmounts, "");
         for (uint256 i = 0; i < 2; i++) {
             tokenAmounts[i] = collectedFees[i] + pulledAmounts[i];
         }
@@ -786,27 +781,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function _compareAmounts(uint256[] memory needed, uint256[] memory actual) internal pure {
         for (uint256 i = 0; i < 2; i++) {
             require(needed[i] <= actual[i], ExceptionsLibrary.LIMIT_UNDERFLOW);
-        }
-    }
-
-    /// @notice Covert token amounts and deadline to byte options
-    /// @dev Empty tokenAmounts are equivalent to zero tokenAmounts
-    function _makeUniswapVaultOptions(uint256[] memory tokenAmounts, uint256 deadline)
-        internal
-        pure
-        returns (bytes memory options)
-    {
-        options = new bytes(0x60);
-        assembly {
-            mstore(add(options, 0x60), deadline)
-        }
-        if (tokenAmounts.length == 2) {
-            uint256 tokenAmount0 = tokenAmounts[0];
-            uint256 tokenAmount1 = tokenAmounts[1];
-            assembly {
-                mstore(add(options, 0x20), tokenAmount0)
-                mstore(add(options, 0x40), tokenAmount1)
-            }
         }
     }
 
