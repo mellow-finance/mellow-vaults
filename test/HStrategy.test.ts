@@ -1196,6 +1196,17 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("#calculateCurrentTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
+            const { nft } = await this.getPositionParams();
+            const { tickLower, tickUpper } = await this.positionManager.positions(nft);
+            const strategyParams = await this.subject.strategyParams();
+            console.log(strategyParams);
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...strategyParams,
+                    globalLowerTick: tickLower - 600,
+                    globalUpperTick: tickUpper + 600,
+                });
         });
         describe("initial zero", () => {
             it("equals zero", async () => {
@@ -1392,6 +1403,16 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("calculateExpectedTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
+            const { nft } = await this.getPositionParams();
+            const { tickLower, tickUpper } = await this.positionManager.positions(nft);
+            const strategyParams = await this.subject.strategyParams();
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...strategyParams,
+                    globalLowerTick: tickLower - 600,
+                    globalUpperTick: tickUpper + 600,
+                });
         });
 
         const actualExpectedTokenAmounts = async (
@@ -1436,6 +1457,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         ) => {
             const DENOMINATOR = BigNumber.from(10).pow(9);
             const { ratio0, ratio1 } = await calculateRatiosUniV3();
+            console.log("ratios: ", {ratio0, ratio1});
             const tvl0 = await this.tvlToken0();
             const totalCapital = tvl0.erc20Vault
                 .add(tvl0.moneyVault)
