@@ -1258,6 +1258,19 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("#calculateCurrentTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
+            const { nft } = await this.getPositionParams();
+            const { tickLower, tickUpper } =
+                await this.positionManager.positions(nft);
+            const strategyParams = await this.subject.strategyParams();
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...strategyParams,
+                    globalLowerTick: tickLower - 600,
+                    globalUpperTick: tickUpper + 600,
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                });
         });
         describe("initial zero", () => {
             it("equals zero", async () => {
@@ -1454,6 +1467,19 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     describe("calculateExpectedTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
+            const { nft } = await this.getPositionParams();
+            const { tickLower, tickUpper } =
+                await this.positionManager.positions(nft);
+            const strategyParams = await this.subject.strategyParams();
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...strategyParams,
+                    globalLowerTick: tickLower - 600,
+                    globalUpperTick: tickUpper + 600,
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                });
         });
 
         const actualExpectedTokenAmounts = async (
@@ -1518,11 +1544,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         ) => {
             const { capitalUni, capitalERC20, moneyCapital } =
                 await getExpectedCapital(strategyParams);
-            console.log("Expected capital: ", {
-                capitalUni,
-                capitalERC20,
-                moneyCapital,
-            });
             const { ratio0, ratio1 } = await calculateRatiosUniV3();
             const Q96 = BigNumber.from(2).pow(96);
             const positionParams: DomainPositionParamsStruct =
@@ -1584,17 +1605,54 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     currentAmounts,
                     strategyParams
                 );
-                console.log("Required: ", required);
-                console.log("Actual: ", actual);
             });
         });
     });
 
-    describe("calculateExtraTokenAmountsForMoneyVault", () => {});
+    describe("calculateExtraTokenAmountsForMoneyVault", () => {
+        const actualExpectedTokenAmounts = async (
+            amountParams: TokenAmountsStruct,
+            strategyParams: StrategyParamsStruct
+        ) => {
+            const positionParams = await this.getPositionParams();
+            return await this.subject.calculateExpectedTokenAmounts(
+                amountParams,
+                strategyParams,
+                positionParams
+            );
+        };
+
+        // describe("on initial", () => {
+        //     it("works", async () => {
+        //         const strategyParams = await this.subject.strategyParams();
+        //         const currentAmounts =
+        //             await this.subject.calculateCurrentTokenAmounts(
+        //                 await this.getPositionParams()
+        //             );
+        //         const expected = await actualExpectedTokenAmounts(
+        //             currentAmounts,
+        //             strategyParams
+        //         );
+        //         const amounts = await this.subject.calculateExtraTokenAmountsForMoneyVault({
+        //             erc20Token0: expected.erc20Token0,
+        //             erc20Token1: expected.erc20Token1,
+
+        //         });
+        //         console.log("Amounts: ", amounts);
+        //     });
+        // });
+    });
 
     describe("  ", () => {});
 
-    describe("swapTokens", () => {});
+    describe("swapTokens", () => {
+        describe("on initial", () => {
+            beforeEach(async () => {
+                this.mintMockPosition();
+            });
+            it("works", async () => {});
+        });
+    });
 
     ContractMetaBehaviour.call(this, {
         contractName: "HStrategy",
