@@ -65,10 +65,26 @@ const deployUniV3Helper = async function (hre: HardhatRuntimeEnvironment) {
     });
 };
 
+const deployHStrategyHelper = async function (hre: HardhatRuntimeEnvironment) {
+    const { deployments, getNamedAccounts } = hre;
+    const { deploy } = deployments;
+    const { deployer } = await getNamedAccounts();
+
+    await deploy("HStrategyHelper", {
+        from: deployer,
+        contract: "HStrategyHelper",
+        args: [],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
+};
+
 const setupStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
     uniV3Helper: string,
+    hStrategyHelper: string,
     erc20Vault: string,
     moneyVault: string,
     uniV3Vault: string,
@@ -96,6 +112,7 @@ const setupStrategy = async (
         fee,
         deployer,
         uniV3Helper,
+        hStrategyHelper,
     ];
     const address = await hStrategy.callStatic.createStrategy(...params);
     await hStrategy.createStrategy(...params);
@@ -119,6 +136,7 @@ const setupStrategy = async (
         minToken1ForOpening: BigNumber.from(10).pow(6),
         globalLowerTick: 23400,
         globalUpperTick: 29700,
+        tickNeighborhood: 0,
         simulateUniV3Interval: false, // simulating uniV2 Interval
     };
     const txs: string[] = [];
@@ -142,14 +160,12 @@ const setupStrategy = async (
             mStrategyAdmin,
         ])
     );
-
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("renounceRole", [
             adminRole,
             deployer,
         ])
     );
-
     await execute(
         deploymentName,
         {
@@ -183,9 +199,11 @@ const buildHStrategy = async (
     const moneyGovernance =
         kind === "Aave" ? "AaveVaultGovernance" : "YearnVaultGovernance";
 
-    await deployUniV3Helper(hre);
     const { address: uniV3Helper } = await hre.ethers.getContract(
         "UniV3Helper"
+    );
+    const { address: hStrategyHelper } = await hre.ethers.getContract(
+        "HStrategyHelper"
     );
 
     await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
@@ -219,6 +237,7 @@ const buildHStrategy = async (
         hre,
         kind,
         uniV3Helper,
+        hStrategyHelper,
         erc20Vault,
         moneyVault,
         uniV3Vault,
@@ -243,6 +262,7 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
         const { weth, usdc, wbtc } = await getNamedAccounts();
         await deployHStrategy(hre, kind);
         await deployUniV3Helper(hre);
+        await deployHStrategyHelper(hre);
 
         for (let [tokens, deploymentName] of [
             [[weth, usdc], `HStrategy${kind}_WETH_USDC`],

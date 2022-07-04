@@ -18,6 +18,7 @@ import {
     UniV3Vault,
     ISwapRouter as SwapRouterInterface,
     IYearnProtocolVault,
+    HStrategyHelper,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -32,16 +33,17 @@ import { expect } from "chai";
 import { randomInt } from "crypto";
 import {
     MockHStrategy,
-    DomainPositionParamsStruct,
     StrategyParamsStruct,
-    TokenAmountsInToken0Struct,
-    ExpectedRatiosStruct,
     TokenAmountsStruct,
 } from "./types/MockHStrategy";
 import Exceptions from "./library/Exceptions";
 import { TickMath } from "@uniswap/v3-sdk";
 import { RebalanceRestrictionsStruct } from "./types/HStrategy";
-import exp from "constants";
+import {
+    DomainPositionParamsStruct,
+    ExpectedRatiosStruct,
+    TokenAmountsInToken0Struct,
+} from "./types/HStrategyHelper";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -55,6 +57,8 @@ type CustomContext = {
     deployerWethAmount: BigNumber;
     deployerUsdcAmount: BigNumber;
     swapRouter: SwapRouterInterface;
+    hStrategyHelper: HStrategyHelper;
+    strategyParams: StrategyParamsStruct;
 };
 
 type DeployOptions = {};
@@ -98,6 +102,23 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 const { address: uniV3Helper } = await ethers.getContract(
                     "UniV3Helper"
+                );
+
+                await deploy("HStrategyHelper", {
+                    from: this.deployer.address,
+                    contract: "HStrategyHelper",
+                    args: [],
+                    log: true,
+                    autoMine: true,
+                    ...TRANSACTION_GAS_LIMITS,
+                });
+                const { address: hStrategyHelper } = await ethers.getContract(
+                    "HStrategyHelper"
+                );
+
+                this.hStrategyHelper = await ethers.getContractAt(
+                    "HStrategyHelper",
+                    hStrategyHelper
                 );
 
                 await setupVault(hre, uniV3VaultNft, "UniV3VaultGovernance", {
@@ -158,6 +179,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     fee: 3000,
                     admin: this.mStrategyAdmin.address,
                     uniV3Helper: uniV3Helper,
+                    hStrategyHelper: hStrategyHelper,
                 };
 
                 const address = await hStrategy.callStatic.createStrategy(
@@ -167,7 +189,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.uniV3Vault,
                     this.params.fee,
                     this.params.admin,
-                    this.params.uniV3Helper
+                    this.params.uniV3Helper,
+                    this.params.hStrategyHelper
                 );
                 await hStrategy.createStrategy(
                     this.params.tokens,
@@ -176,7 +199,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.uniV3Vault,
                     this.params.fee,
                     this.params.admin,
-                    this.params.uniV3Helper
+                    this.params.uniV3Helper,
+                    this.params.hStrategyHelper
                 );
                 this.subject = await ethers.getContractAt(
                     "MockHStrategy",
@@ -200,7 +224,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                  * Configure oracles for the HStrategy
                  */
 
-                const startegyParams = {
+                const strategyParams = {
                     widthCoefficient: 15,
                     widthTicks: 60,
                     oracleObservationDelta: 150,
@@ -209,14 +233,16 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: 23400,
                     globalUpperTick: 29700,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: false, // simulating uniV2 Interval
                 };
+                this.strategyParams = strategyParams;
 
                 let txs: string[] = [];
                 txs.push(
                     this.subject.interface.encodeFunctionData(
                         "updateStrategyParams",
-                        [startegyParams]
+                        [strategyParams]
                     )
                 );
                 await this.subject
@@ -312,7 +338,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             pool,
                             strategyParams.oracleObservationDelta
                         );
-                    return await this.subject.calculateDomainPositionParams(
+                    return await this.hStrategyHelper.calculateDomainPositionParams(
                         priceInfo.averageTick,
                         priceInfo.sqrtSpotPriceX96,
                         strategyParams,
@@ -332,7 +358,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         .mul(averagePriceSqrtX96)
                         .div(Q96);
                     const currentAmounts =
-                        await this.subject.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                            this.erc20Vault.address,
+                            this.yearnVault.address,
                             positionParams
                         );
                     return {
@@ -377,7 +405,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.uniV3Vault,
                     this.params.fee,
                     this.params.admin,
-                    this.params.uniV3Helper
+                    this.params.uniV3Helper,
+                    this.params.hStrategyHelper
                 );
 
             expect(address).to.not.eq(ethers.constants.AddressZero);
@@ -392,7 +421,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         this.params.uniV3Vault,
                         this.params.fee,
                         this.params.admin,
-                        this.params.uniV3Helper
+                        this.params.uniV3Helper,
+                        this.params.hStrategyHelper
                     )
             ).to.not.be.reverted;
         });
@@ -410,6 +440,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: false,
                 })
             ).to.emit(this.subject, "UpdateStrategyParams");
@@ -429,6 +460,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -446,6 +478,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -463,6 +496,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -480,6 +514,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -497,6 +532,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -514,6 +550,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -531,6 +568,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: 0,
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -548,6 +586,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -566,6 +605,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 0,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -584,6 +624,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 3000,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -602,6 +643,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 3001,
+                            tickNeighborhood: 0,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -618,6 +660,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         minToken1ForOpening: BigNumber.from(10).pow(6),
                         globalLowerTick: 0,
                         globalUpperTick: 3000,
+                        tickNeighborhood: 0,
                         simulateUniV3Interval: false,
                     })
                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
@@ -770,6 +813,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: -870000,
                     globalUpperTick: 870000,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: true,
                 });
             const pullExistentials =
@@ -831,11 +875,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await push(BigNumber.from(10).pow(20), "WETH");
                 await sleep(this.governanceDelay);
             }
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
+            // await expect(
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .rebalance(restrictions, []);
+            // ).not.to.be.reverted;
         });
     });
 
@@ -852,8 +896,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: true,
-                });
+                } as StrategyParamsStruct);
 
             for (var i = 0; i < 10; i++) {
                 var lower0Tick = randomInt(10000);
@@ -883,24 +928,28 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         averagePriceSqrtX96 <= upperPriceSqrtX96 &&
                         upperPriceSqrtX96 <= upper0PriceSqrtX96
                 );
-
+                var strategyParams = this.strategyParams;
+                strategyParams.simulateUniV3Interval = true;
                 const { token0RatioD, token1RatioD, uniV3RatioD } =
-                    await this.subject.callStatic.calculateExpectedRatios({
-                        nft: 0,
-                        liquidity: 0,
-                        lowerTick: 0,
-                        upperTick: 0,
-                        lower0Tick: 0,
-                        upper0Tick: 0,
-                        averageTick: 0,
-                        lowerPriceSqrtX96: lowerPriceSqrtX96,
-                        upperPriceSqrtX96: upperPriceSqrtX96,
-                        lower0PriceSqrtX96: lower0PriceSqrtX96,
-                        upper0PriceSqrtX96: upper0PriceSqrtX96,
-                        averagePriceSqrtX96: averagePriceSqrtX96,
-                        averagePriceX96: 0,
-                        spotPriceSqrtX96: 0,
-                    } as DomainPositionParamsStruct);
+                    await this.hStrategyHelper.callStatic.calculateExpectedRatios(
+                        strategyParams,
+                        {
+                            nft: 0,
+                            liquidity: 0,
+                            lowerTick: 0,
+                            upperTick: 0,
+                            lower0Tick: 0,
+                            upper0Tick: 0,
+                            averageTick: 0,
+                            lowerPriceSqrtX96: lowerPriceSqrtX96,
+                            upperPriceSqrtX96: upperPriceSqrtX96,
+                            lower0PriceSqrtX96: lower0PriceSqrtX96,
+                            upper0PriceSqrtX96: upper0PriceSqrtX96,
+                            averagePriceSqrtX96: averagePriceSqrtX96,
+                            averagePriceX96: 0,
+                            spotPriceSqrtX96: 0,
+                        } as DomainPositionParamsStruct
+                    );
 
                 const averagePriceX96 = averagePriceSqrtX96
                     .mul(averagePriceSqrtX96)
@@ -964,6 +1013,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: false,
                 });
 
@@ -980,23 +1030,28 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 const averagePriceSqrtX96 = BigNumber.from(
                     TickMath.getSqrtRatioAtTick(averageTick).toString()
                 );
+                var strategyParams = this.strategyParams;
+                strategyParams.simulateUniV3Interval = false;
                 const { token0RatioD, token1RatioD, uniV3RatioD } =
-                    await this.subject.callStatic.calculateExpectedRatios({
-                        nft: 0,
-                        liquidity: 0,
-                        lowerTick: 0,
-                        upperTick: 0,
-                        lower0Tick: 0,
-                        upper0Tick: 0,
-                        averageTick: 0,
-                        lowerPriceSqrtX96: lowerPriceSqrtX96,
-                        upperPriceSqrtX96: upperPriceSqrtX96,
-                        lower0PriceSqrtX96: 0,
-                        upper0PriceSqrtX96: 0,
-                        averagePriceSqrtX96: averagePriceSqrtX96,
-                        averagePriceX96: 0,
-                        spotPriceSqrtX96: 0,
-                    } as DomainPositionParamsStruct);
+                    await this.hStrategyHelper.callStatic.calculateExpectedRatios(
+                        strategyParams,
+                        {
+                            nft: 0,
+                            liquidity: 0,
+                            lowerTick: 0,
+                            upperTick: 0,
+                            lower0Tick: 0,
+                            upper0Tick: 0,
+                            averageTick: 0,
+                            lowerPriceSqrtX96: lowerPriceSqrtX96,
+                            upperPriceSqrtX96: upperPriceSqrtX96,
+                            lower0PriceSqrtX96: 0,
+                            upper0PriceSqrtX96: 0,
+                            averagePriceSqrtX96: averagePriceSqrtX96,
+                            averagePriceX96: 0,
+                            spotPriceSqrtX96: 0,
+                        } as DomainPositionParamsStruct
+                    );
 
                 const expectedToken0RatioD = DENOMINATOR.mul(
                     averagePriceSqrtX96
@@ -1045,18 +1100,20 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: 0,
                     globalLowerTick: globalLowerTick,
                     globalUpperTick: globalUpperTick,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: false,
                 } as StrategyParamsStruct;
 
-                const result = await this.subject.calculateDomainPositionParams(
-                    averageTick,
-                    BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(averageTick).toString()
-                    ),
-                    strategyParams,
-                    tokenId,
-                    this.positionManager.address
-                );
+                const result =
+                    await this.hStrategyHelper.calculateDomainPositionParams(
+                        averageTick,
+                        BigNumber.from(
+                            TickMath.getSqrtRatioAtTick(averageTick).toString()
+                        ),
+                        strategyParams,
+                        tokenId,
+                        this.positionManager.address
+                    );
 
                 expect(result.lower0Tick).to.be.eq(globalLowerTick);
                 expect(result.upper0Tick).to.be.eq(globalUpperTick);
@@ -1139,6 +1196,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
+                    tickNeighborhood: 0,
                     simulateUniV3Interval: false,
                 };
 
@@ -1147,7 +1205,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     uniV3TokensAmountInToken0,
                     moneyTokensAmountInToken0,
                     totalTokensInToken0,
-                } = await this.subject.calculateExpectedTokenAmountsInToken0(
+                } = await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     tokenAmounts,
                     ratios,
                     strategyParams
@@ -1212,7 +1270,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     moneyTokensAmountInToken0,
                     uniV3TokensAmountInToken0,
                     totalTokensInToken0,
-                } = await this.subject.calculateCurrentTokenAmountsInToken0(
+                } = await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
                     domainParams,
                     amounts
                 );
@@ -1274,9 +1332,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         describe("initial zero", () => {
             it("equals zero", async () => {
                 const positionParams = await this.getPositionParams();
-                const result = await this.subject.calculateCurrentTokenAmounts(
-                    positionParams
-                );
+                const result =
+                    await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        this.erc20Vault.address,
+                        this.yearnVault.address,
+                        positionParams
+                    );
                 expect(result.erc20Token0.toNumber()).to.be.eq(0);
                 expect(result.erc20Token1.toNumber()).to.be.eq(0);
                 expect(result.moneyToken0.toNumber()).to.be.eq(0);
@@ -1303,7 +1364,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
                 {
                     const { erc20Token0, erc20Token1 } =
-                        await this.subject.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                            this.erc20Vault.address,
+                            this.yearnVault.address,
                             positionParams
                         );
                     expect(
@@ -1329,7 +1392,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 });
                 {
                     const { erc20Token0, erc20Token1 } =
-                        await this.subject.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                            this.erc20Vault.address,
+                            this.yearnVault.address,
                             positionParams
                         );
                     expect(
@@ -1390,7 +1455,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 });
                 {
                     const { moneyToken0, moneyToken1 } =
-                        await this.subject.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                            this.erc20Vault.address,
+                            this.yearnVault.address,
                             positionParams
                         );
                     expect(moneyToken0.toNumber()).to.be.eq(0);
@@ -1453,7 +1520,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 {
                     const positionParams = await this.getPositionParams();
                     const { uniV3Token0, uniV3Token1 } =
-                        await this.subject.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                            this.erc20Vault.address,
+                            this.yearnVault.address,
                             positionParams
                         );
                     expect(uniV3Token0.toNumber()).to.be.eq(0);
@@ -1481,146 +1550,147 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 });
         });
 
-        const actualExpectedTokenAmounts = async (
-            amountParams: TokenAmountsStruct,
-            strategyParams: StrategyParamsStruct
-        ) => {
-            const positionParams = await this.getPositionParams();
-            return await this.subject.calculateExpectedTokenAmounts(
-                amountParams,
-                strategyParams,
-                positionParams
-            );
-        };
+        // const actualExpectedTokenAmounts = async (
+        //     amountParams: TokenAmountsStruct,
+        //     strategyParams: StrategyParamsStruct
+        // ) => {
+        //     const positionParams = await this.getPositionParams();
+        //     return await this.hStrategyHelper.calculateExpectedTokenAmounts(
+        //         amountParams,
+        //         strategyParams,
+        //         positionParams
+        //     );
+        // };
 
-        const calculateRatiosUniV3 = async () => {
-            const Q96 = BigNumber.from(2).pow(96);
-            const positionParams: DomainPositionParamsStruct =
-                await this.getPositionParams();
-            const averagePriceSqrtX96 = BigNumber.from(
-                positionParams.averagePriceSqrtX96
-            );
-            const price = averagePriceSqrtX96.mul(averagePriceSqrtX96).div(Q96);
-            const denominator = averagePriceSqrtX96
-                .mul(2)
-                .sub(positionParams.lower0PriceSqrtX96)
-                .sub(price.mul(Q96).div(positionParams.upper0PriceSqrtX96));
-            const nominator0 = price
-                .mul(Q96)
-                .div(positionParams.upperPriceSqrtX96)
-                .sub(price.mul(Q96).div(positionParams.upper0PriceSqrtX96));
-            const nominator1 = BigNumber.from(
-                positionParams.lowerPriceSqrtX96
-            ).sub(positionParams.lower0PriceSqrtX96);
-            const DENOMINATOR = BigNumber.from(10).pow(9);
-            const ratio0 = nominator0.mul(DENOMINATOR).div(denominator);
-            const ratio1 = nominator1.mul(DENOMINATOR).div(denominator);
-            return { ratio0, ratio1 };
-        };
+        // const calculateRatiosUniV3 = async () => {
+        //     const Q96 = BigNumber.from(2).pow(96);
+        //     const positionParams: DomainPositionParamsStruct =
+        //         await this.getPositionParams();
+        //     const averagePriceSqrtX96 = BigNumber.from(
+        //         positionParams.averagePriceSqrtX96
+        //     );
+        //     const price = averagePriceSqrtX96.mul(averagePriceSqrtX96).div(Q96);
+        //     const denominator = averagePriceSqrtX96
+        //         .mul(2)
+        //         .sub(positionParams.lower0PriceSqrtX96)
+        //         .sub(price.mul(Q96).div(positionParams.upper0PriceSqrtX96));
+        //     const nominator0 = price
+        //         .mul(Q96)
+        //         .div(positionParams.upperPriceSqrtX96)
+        //         .sub(price.mul(Q96).div(positionParams.upper0PriceSqrtX96));
+        //     const nominator1 = BigNumber.from(
+        //         positionParams.lowerPriceSqrtX96
+        //     ).sub(positionParams.lower0PriceSqrtX96);
+        //     const DENOMINATOR = BigNumber.from(10).pow(9);
+        //     const ratio0 = nominator0.mul(DENOMINATOR).div(denominator);
+        //     const ratio1 = nominator1.mul(DENOMINATOR).div(denominator);
+        //     return { ratio0, ratio1 };
+        // };
 
-        const getExpectedCapital = async (
-            strategyParams: StrategyParamsStruct
-        ) => {
-            const DENOMINATOR = BigNumber.from(10).pow(9);
-            const { ratio0, ratio1 } = await calculateRatiosUniV3();
-            const tvl0 = await this.tvlToken0();
-            const totalCapital = tvl0.erc20Vault
-                .add(tvl0.moneyVault)
-                .add(tvl0.uniV3Vault);
-            const capitalUni = totalCapital.sub(
-                DENOMINATOR.sub(ratio0).sub(ratio1)
-            );
-            const capitalERC20 = totalCapital
-                .sub(capitalUni)
-                .mul(strategyParams.erc20MoneyRatioD)
-                .div(DENOMINATOR);
-            const moneyCapital = totalCapital.sub(capitalUni).sub(capitalERC20);
-            return { capitalUni, capitalERC20, moneyCapital };
-        };
+        // const getExpectedCapital = async (
+        //     strategyParams: StrategyParamsStruct
+        // ) => {
+        //     const DENOMINATOR = BigNumber.from(10).pow(9);
+        //     const { ratio0, ratio1 } = await calculateRatiosUniV3();
+        //     const tvl0 = await this.tvlToken0();
+        //     const totalCapital = tvl0.erc20Vault
+        //         .add(tvl0.moneyVault)
+        //         .add(tvl0.uniV3Vault);
+        //     const capitalUni = totalCapital.sub(
+        //         DENOMINATOR.sub(ratio0).sub(ratio1)
+        //     );
+        //     const capitalERC20 = totalCapital
+        //         .sub(capitalUni)
+        //         .mul(strategyParams.erc20MoneyRatioD)
+        //         .div(DENOMINATOR);
+        //     const moneyCapital = totalCapital.sub(capitalUni).sub(capitalERC20);
+        //     return { capitalUni, capitalERC20, moneyCapital };
+        // };
 
-        const requiredExpectedTokenAmounts = async (
-            strategyParams: StrategyParamsStruct
-        ) => {
-            const { capitalUni, capitalERC20, moneyCapital } =
-                await getExpectedCapital(strategyParams);
-            const { ratio0, ratio1 } = await calculateRatiosUniV3();
-            const Q96 = BigNumber.from(2).pow(96);
-            const positionParams: DomainPositionParamsStruct =
-                await this.getPositionParams();
-            const erc20Token0 = capitalERC20
-                .mul(ratio0)
-                .div(ratio0.add(ratio1));
-            const erc20Token1 = capitalERC20
-                .sub(erc20Token0)
-                .mul(positionParams.averagePriceX96)
-                .div(Q96);
-            const moneyToken0 = moneyCapital
-                .mul(ratio0)
-                .div(ratio0.add(ratio1));
-            const moneyToken1 = moneyCapital
-                .sub(moneyToken0)
-                .mul(positionParams.averagePriceX96)
-                .div(Q96);
-            const capitalUniRatio = BigNumber.from(
-                positionParams.spotPriceSqrtX96
-            )
-                .sub(positionParams.lowerPriceSqrtX96)
-                .div(
-                    BigNumber.from(positionParams.upperPriceSqrtX96).sub(
-                        positionParams.spotPriceSqrtX96
-                    )
-                )
-                .mul(positionParams.upperPriceSqrtX96)
-                .div(positionParams.spotPriceSqrtX96);
-            const capitalUni1 = capitalUni
-                .mul(capitalUniRatio)
-                .div(capitalUniRatio.add(Q96));
-            const uniV3Token0 = capitalUni.sub(capitalUni1);
-            const priceX96 = BigNumber.from(positionParams.spotPriceSqrtX96)
-                .mul(positionParams.spotPriceSqrtX96)
-                .div(Q96);
-            const uniV3Token1 = capitalUni1.mul(priceX96).div(Q96);
-            return {
-                erc20Token0,
-                erc20Token1,
-                moneyToken0,
-                moneyToken1,
-                uniV3Token0,
-                uniV3Token1,
-            } as TokenAmountsStruct;
-        };
+        // const requiredExpectedTokenAmounts = async (
+        //     strategyParams: StrategyParamsStruct
+        // ) => {
+        //     const { capitalUni, capitalERC20, moneyCapital } =
+        //         await getExpectedCapital(strategyParams);
+        //     const { ratio0, ratio1 } = await calculateRatiosUniV3();
+        //     const Q96 = BigNumber.from(2).pow(96);
+        //     const positionParams: DomainPositionParamsStruct =
+        //         await this.getPositionParams();
+        //     const erc20Token0 = capitalERC20
+        //         .mul(ratio0)
+        //         .div(ratio0.add(ratio1));
+        //     const erc20Token1 = capitalERC20
+        //         .sub(erc20Token0)
+        //         .mul(positionParams.averagePriceX96)
+        //         .div(Q96);
+        //     const moneyToken0 = moneyCapital
+        //         .mul(ratio0)
+        //         .div(ratio0.add(ratio1));
+        //     const moneyToken1 = moneyCapital
+        //         .sub(moneyToken0)
+        //         .mul(positionParams.averagePriceX96)
+        //         .div(Q96);
+        //     const capitalUniRatio = BigNumber.from(
+        //         positionParams.spotPriceSqrtX96
+        //     )
+        //         .sub(positionParams.lowerPriceSqrtX96)
+        //         .div(
+        //             BigNumber.from(positionParams.upperPriceSqrtX96).sub(
+        //                 positionParams.spotPriceSqrtX96
+        //             )
+        //         )
+        //         .mul(positionParams.upperPriceSqrtX96)
+        //         .div(positionParams.spotPriceSqrtX96);
+        //     const capitalUni1 = capitalUni
+        //         .mul(capitalUniRatio)
+        //         .div(capitalUniRatio.add(Q96));
+        //     const uniV3Token0 = capitalUni.sub(capitalUni1);
+        //     const priceX96 = BigNumber.from(positionParams.spotPriceSqrtX96)
+        //         .mul(positionParams.spotPriceSqrtX96)
+        //         .div(Q96);
+        //     const uniV3Token1 = capitalUni1.mul(priceX96).div(Q96);
+        //     return {
+        //         erc20Token0,
+        //         erc20Token1,
+        //         moneyToken0,
+        //         moneyToken1,
+        //         uniV3Token0,
+        //         uniV3Token1,
+        //     } as TokenAmountsStruct;
+        // };
 
-        describe("on initial position", () => {
-            it("works", async () => {
-                const strategyParams = await this.subject.strategyParams();
-                const currentAmounts =
-                    await this.subject.calculateCurrentTokenAmounts(
-                        await this.getPositionParams()
-                    );
-                const required = await requiredExpectedTokenAmounts(
-                    strategyParams
-                );
-                const actual = await actualExpectedTokenAmounts(
-                    currentAmounts,
-                    strategyParams
-                );
-            });
-        });
+        // describe("on initial position", () => {
+        //     it("works", async () => {
+        //         const strategyParams = await this.subject.strategyParams();
+        //         const currentAmounts =
+        //             await this.hStrategyHelper.calculateCurrentTokenAmounts(
+        //                 this.erc20Vault.address,
+        //                 this.yearnVault.address,
+        //                 await this.getPositionParams()
+        //             );
+        //         const required = await requiredExpectedTokenAmounts(
+        //             strategyParams
+        //         );
+        //         const actual = await actualExpectedTokenAmounts(
+        //             currentAmounts,
+        //             strategyParams
+        //         );
+        //     });
+        // });
     });
 
     describe.only("calculateExtraTokenAmountsForMoneyVault", () => {
-        const actualExpectedTokenAmounts = async (
-            amountParams: TokenAmountsStruct,
-            strategyParams: StrategyParamsStruct
-        ) => {
-            const positionParams = await this.getPositionParams();
-            return await this.subject.calculateExpectedTokenAmounts(
-                amountParams,
-                strategyParams,
-                positionParams
-            );
-        };
-
+        // const actualExpectedTokenAmounts = async (
+        //     amountParams: TokenAmountsStruct,
+        //     strategyParams: StrategyParamsStruct
+        // ) => {
+        //     const positionParams = await this.getPositionParams();
+        //     return await this.hStrategyHelper.calculateExpectedTokenAmounts(
+        //         amountParams,
+        //         strategyParams,
+        //         positionParams
+        //     );
+        // };
         // describe("on initial", () => {
         //     it("works", async () => {
         //         const strategyParams = await this.subject.strategyParams();
@@ -1635,7 +1705,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         //         const amounts = await this.subject.calculateExtraTokenAmountsForMoneyVault({
         //             erc20Token0: expected.erc20Token0,
         //             erc20Token1: expected.erc20Token1,
-
         //         });
         //         console.log("Amounts: ", amounts);
         //     });
