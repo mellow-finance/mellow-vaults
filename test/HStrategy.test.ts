@@ -16,9 +16,11 @@ import {
     ProtocolGovernance,
     UniV3Helper,
     UniV3Vault,
+    ISwapRouter as SwapRouterInterface,
     IYearnProtocolVault,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
+import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
 import {
     setupVault,
     combineVaults,
@@ -39,6 +41,7 @@ import {
 import Exceptions from "./library/Exceptions";
 import { TickMath } from "@uniswap/v3-sdk";
 import { RebalanceRestrictionsStruct } from "./types/HStrategy";
+import exp from "constants";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -51,6 +54,7 @@ type CustomContext = {
     params: any;
     deployerWethAmount: BigNumber;
     deployerUsdcAmount: BigNumber;
+    swapRouter: SwapRouterInterface;
 };
 
 type DeployOptions = {};
@@ -177,6 +181,19 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 this.subject = await ethers.getContractAt(
                     "MockHStrategy",
                     address
+                );
+
+                this.swapRouter = await ethers.getContractAt(
+                    ISwapRouter,
+                    uniswapV3Router
+                );
+                await this.usdc.approve(
+                    this.swapRouter.address,
+                    ethers.constants.MaxUint256
+                );
+                await this.weth.approve(
+                    this.swapRouter.address,
+                    ethers.constants.MaxUint256
                 );
 
                 /*
@@ -713,6 +730,33 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
+    const push = async (delta: BigNumber, tokenName: string) => {
+        const n = 20;
+        var from = "";
+        var to = "";
+        if (tokenName == "USDC") {
+            from = this.usdc.address;
+            to = this.weth.address;
+        } else {
+            from = this.weth.address;
+            to = this.usdc.address;
+        }
+
+        await mint(tokenName, this.deployer.address, delta);
+        for (var i = 0; i < n; i++) {
+            await this.swapRouter.exactInputSingle({
+                tokenIn: from,
+                tokenOut: to,
+                fee: 3000,
+                recipient: this.deployer.address,
+                deadline: ethers.constants.MaxUint256,
+                amountIn: delta.div(n),
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+            });
+        }
+    };
+
     describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
@@ -777,7 +821,22 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
 
-            await sleep(this.governanceDelay);
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).to.be.revertedWith(Exceptions.INVARIANT);
+
+            for (var i = 0; i < 5; i++) {
+                await push(BigNumber.from(10).pow(20), "WETH");
+                await sleep(this.governanceDelay);
+                console.log("ok");
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
         });
     });
 

@@ -429,8 +429,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         uint256[] memory collectedFees = uniV3Vault.collectEarnings();
         tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = type(uint256).max;
-        tokenAmounts[1] = type(uint256).max;
+        tokenAmounts[0] = type(uint128).max;
+        tokenAmounts[1] = type(uint128).max;
         uint256[] memory pulledAmounts = uniV3Vault.pull(address(erc20Vault), tokens, tokenAmounts, "");
         for (uint256 i = 0; i < 2; i++) {
             tokenAmounts[i] = collectedFees[i] + pulledAmounts[i];
