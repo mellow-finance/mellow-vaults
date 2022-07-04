@@ -440,7 +440,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         for (uint256 i = 0; i < 2; i++) {
             tokenAmounts[i] = collectedFees[i] + pulledAmounts[i];
         }
-        _compareAmounts(burnAmounts, tokenAmounts);
+        _compareAmounts(pulledAmounts, tokenAmounts);
         emit BurnUniV3Position(tx.origin, uniV3Nft);
     }
 
@@ -545,17 +545,27 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         );
 
         {
-            uint128 expectedLiquidity = LiquidityAmounts.getLiquidityForAmount0(
-                domainPositionParams.spotPriceSqrtX96,
+            uint256 uniCapitalRatioX96 = FullMath.mulDiv(
+                FullMath.mulDiv(
+                    domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
+                    CommonLibrary.Q96,
+                    domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96
+                ),
                 domainPositionParams.upperPriceSqrtX96,
-                expectedTokenAmountsInToken0.uniV3TokensAmountInToken0
+                domainPositionParams.spotPriceSqrtX96
             );
-            (amounts.uniV3Token0, amounts.uniV3Token1) = LiquidityAmounts.getAmountsForLiquidity(
+            uint256 uniCapital1 = FullMath.mulDiv(
+                expectedTokenAmountsInToken0.uniV3TokensAmountInToken0,
+                uniCapitalRatioX96,
+                uniCapitalRatioX96 + CommonLibrary.Q96
+            );
+            amounts.uniV3Token0 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0 - uniCapital1;
+            uint256 spotPriceX96 = FullMath.mulDiv(
                 domainPositionParams.spotPriceSqrtX96,
-                domainPositionParams.lowerPriceSqrtX96,
-                domainPositionParams.upperPriceSqrtX96,
-                expectedLiquidity
+                domainPositionParams.spotPriceSqrtX96,
+                CommonLibrary.Q96
             );
+            amounts.uniV3Token1 = FullMath.mulDiv(uniCapital1, spotPriceX96, CommonLibrary.Q96);
         }
     }
 
