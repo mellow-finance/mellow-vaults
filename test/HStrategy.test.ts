@@ -358,7 +358,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     });
 
     // Andrey:
-    describe("#constructor", () => {
+    describe.only("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
                 ethers.constants.AddressZero
@@ -366,7 +366,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("#createStrategy", () => {
+    describe.only("#createStrategy", () => {
         it("creates a new strategy and initializes it", async () => {
             const address = await this.subject
                 .connect(this.mStrategyAdmin)
@@ -398,7 +398,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("#updateStrategyParams", () => {
+    describe.only("#updateStrategyParams", () => {
         it("set new strategy parameters", async () => {
             await expect(
                 this.subject.connect(this.mStrategyAdmin).updateStrategyParams({
@@ -625,7 +625,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("#manualPull", () => {
+    describe.only("#manualPull", () => {
         it("pulls token amounts from fromVault to toVault", async () => {
             let amountWETH = randomInt(10 ** 4, 10 ** 6);
             let amountUSDC = randomInt(10 ** 4, 10 ** 6);
@@ -757,7 +757,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         }
     };
 
-    describe("#rebalance", () => {
+    describe.only("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -830,7 +830,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             for (var i = 0; i < 5; i++) {
                 await push(BigNumber.from(10).pow(20), "WETH");
                 await sleep(this.governanceDelay);
-                console.log("ok");
             }
             await expect(
                 this.subject
@@ -840,7 +839,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExpectedRatios", () => {
+    describe.only("calculateExpectedRatios", () => {
         it("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -1017,7 +1016,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateDomainPositionParams", () => {
+    describe.only("calculateDomainPositionParams", () => {
         it("correctly calculates parameters of global and short intervals for given position and strategy parameters", async () => {
             for (var i = 0; i < 3; i++) {
                 const lowerTick = 0;
@@ -1105,7 +1104,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExpectedTokenAmountsInToken0", () => {
+    describe.only("calculateExpectedTokenAmountsInToken0", () => {
         it("correctly calculates expected token amonuts in token 0", async () => {
             for (var i = 0; i < 3; i++) {
                 var tokenAmounts = {
@@ -1177,7 +1176,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateCurrentTokenAmountsInToken0", () => {
+    describe.only("calculateCurrentTokenAmountsInToken0", () => {
         it("correctly calculates current token amonuts in token 0", async () => {
             for (var i = 0; i < 3; i++) {
                 const domainParams = {
@@ -1255,7 +1254,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
     });
 
     // Artyom:
-    describe("#calculateCurrentTokenAmounts", () => {
+    describe.only("#calculateCurrentTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -1464,7 +1463,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExpectedTokenAmounts", () => {
+    describe.only("calculateExpectedTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -1609,7 +1608,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExtraTokenAmountsForMoneyVault", () => {
+    describe.only("calculateExtraTokenAmountsForMoneyVault", () => {
         const actualExpectedTokenAmounts = async (
             amountParams: TokenAmountsStruct,
             strategyParams: StrategyParamsStruct

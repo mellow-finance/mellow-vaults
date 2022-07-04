@@ -424,9 +424,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         internal
         returns (uint256[] memory tokenAmounts)
     {
-        if (uniV3Nft == 0) {
-            return tokenAmounts;
-        }
         uint256[] memory collectedFees = uniV3Vault.collectEarnings();
         tokenAmounts = new uint256[](2);
         tokenAmounts[0] = type(uint128).max;
