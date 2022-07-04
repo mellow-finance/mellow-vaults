@@ -197,9 +197,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             pool_,
             60 * 30 /* last 30 minutes */
         );
-
         require(
-            params.globalLowerTick < averageTick || averageTick < params.globalUpperTick,
+            averageTick < lastShortInterval.lowerTick || lastShortInterval.upperTick < averageTick,
             ExceptionsLibrary.INVARIANT
         );
         lastRebalanceTimestamp = currentTimestamp;
@@ -392,6 +391,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             lowerTick = lastInterval.upperTick - intervalWidth;
             upperTick = lastInterval.upperTick + intervalWidth;
         }
+        lastShortInterval = LastShortInterval({lowerTick: lowerTick, upperTick: upperTick});
 
         IERC20(tokens[0]).safeApprove(address(positionManager_), strategyParams_.minToken0ForOpening);
         IERC20(tokens[1]).safeApprove(address(positionManager_), strategyParams_.minToken1ForOpening);
