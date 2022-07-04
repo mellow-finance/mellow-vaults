@@ -5,6 +5,7 @@ import {
     mint,
     mintUniV3Position_USDC_WETH,
     randomAddress,
+    sleep,
     withSigner,
 } from "./library/Helpers";
 import { contract } from "./library/setup";
@@ -775,6 +776,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
+
+            await sleep(this.governanceDelay);
         });
     });
 
