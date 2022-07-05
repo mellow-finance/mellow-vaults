@@ -7,7 +7,6 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../strategies/HStrategy.sol";
-import "hardhat/console.sol";
 
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
@@ -192,11 +191,6 @@ contract HStrategyHelper {
             expectedTokenAmountsInToken0.moneyTokensAmountInToken0 - amounts.moneyToken0,
             domainPositionParams.averagePriceX96,
             CommonLibrary.Q96
-        );
-        console.log(
-            domainPositionParams.spotPriceSqrtX96,
-            domainPositionParams.lowerPriceSqrtX96,
-            domainPositionParams.upperPriceSqrtX96
         );
         {
             uint256 uniCapitalRatioX96 = FullMath.mulDiv(

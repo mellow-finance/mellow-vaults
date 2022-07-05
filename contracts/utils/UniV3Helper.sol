@@ -162,8 +162,8 @@ contract UniV3Helper {
             int24 deviation
         )
     {
-        (, int24 tick, , , , , ) = pool_.slot0();
-        sqrtSpotPriceX96 = TickMath.getSqrtRatioAtTick(tick);
+        int24 tick;
+        (sqrtSpotPriceX96, tick, , , , , ) = pool_.slot0();
         bool withFail = false;
         (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
         // Fails when we dont have observations, so return spot averageTick as this was the last trade price
