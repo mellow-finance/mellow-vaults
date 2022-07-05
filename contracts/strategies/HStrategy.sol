@@ -423,7 +423,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
         int24 intervalWidth = strategyParams_.widthTicks * strategyParams_.widthCoefficient;
         LastShortInterval memory lastInterval = lastShortInterval;
-        if (lastInterval.lowerTick == lastInterval.upperTick) {
+        if (lastInterval.lowerTick == lastInterval.upperTick || true) {
             // in this case it is first mint
             int24 deltaToLowerTick = averageTick - strategyParams_.globalLowerTick;
             deltaToLowerTick -= (deltaToLowerTick % intervalWidth);
@@ -446,13 +446,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 upperTick = strategyParams_.globalUpperTick;
                 lowerTick = upperTick - 2 * intervalWidth;
             }
-        } else if (averageTick < lastInterval.lowerTick) {
-            lowerTick = lastInterval.lowerTick - intervalWidth;
-            upperTick = lastInterval.lowerTick + intervalWidth;
-        } else if (averageTick > lastInterval.upperTick) {
-            lowerTick = lastInterval.upperTick - intervalWidth;
-            upperTick = lastInterval.upperTick + intervalWidth;
         }
+        // else if (averageTick < lastInterval.lowerTick) {
+        //     lowerTick = lastInterval.lowerTick - intervalWidth;
+        //     upperTick = lastInterval.lowerTick + intervalWidth;
+        // } else if (averageTick > lastInterval.upperTick) {
+        //     lowerTick = lastInterval.upperTick - intervalWidth;
+        //     upperTick = lastInterval.upperTick + intervalWidth;
+        // }
         lastShortInterval = LastShortInterval({lowerTick: lowerTick, upperTick: upperTick});
 
         IERC20(tokens[0]).safeApprove(address(positionManager_), strategyParams_.minToken0ForOpening);
