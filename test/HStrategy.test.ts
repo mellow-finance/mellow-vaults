@@ -234,6 +234,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: 23400,
                     globalUpperTick: 29700,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: false, // simulating uniV2 Interval
                 };
                 this.strategyParams = strategyParams;
@@ -441,8 +442,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: false,
-                })
+                } as StrategyParamsStruct)
             ).to.emit(this.subject, "UpdateStrategyParams");
         });
 
@@ -461,8 +463,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
-                        })
+                        } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
             it("when widthTicks <= 0, then reverts with INVARIANT", async () => {
@@ -479,6 +482,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -497,6 +501,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -515,6 +520,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -533,6 +539,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -551,6 +558,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -569,6 +577,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -587,6 +596,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 30000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -606,8 +616,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 0,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
-                        })
+                        } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
 
@@ -625,8 +636,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 3000,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
-                        })
+                        } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
 
@@ -644,8 +656,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             globalLowerTick: 0,
                             globalUpperTick: 3001,
                             tickNeighborhood: 0,
+                            maxTickDeviation: 100,
                             simulateUniV3Interval: false,
-                        })
+                        } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
 
@@ -661,8 +674,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         globalLowerTick: 0,
                         globalUpperTick: 3000,
                         tickNeighborhood: 0,
+                        maxTickDeviation: 100,
                         simulateUniV3Interval: false,
-                    })
+                    } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
         });
@@ -814,8 +828,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: -870000,
                     globalUpperTick: 870000,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: true,
-                });
+                } as StrategyParamsStruct);
             const pullExistentials =
                 await this.erc20RootVault.pullExistentials();
             for (var i = 0; i < 2; i++) {
@@ -871,10 +886,22 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .rebalance(restrictions, [])
             ).to.be.revertedWith(Exceptions.INVARIANT);
 
-            for (var i = 0; i < 5; i++) {
+            for (var i = 0; i < 4; i++) {
                 await push(BigNumber.from(10).pow(20), "WETH");
                 await sleep(this.governanceDelay);
             }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+            console.log("Done, going back");
+            for (var i = 0; i < 5; i++) {
+                console.log(i);
+                await push(BigNumber.from(10).pow(12), "USDC");
+                await sleep(this.governanceDelay);
+            }
+
             // await expect(
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -897,6 +924,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: true,
                 } as StrategyParamsStruct);
 
@@ -1014,8 +1042,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: false,
-                });
+                } as StrategyParamsStruct);
 
             for (var i = 0; i < 10; i++) {
                 var lowerTick = randomInt(10000);
@@ -1101,6 +1130,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: globalLowerTick,
                     globalUpperTick: globalUpperTick,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: false,
                 } as StrategyParamsStruct;
 
@@ -1197,6 +1227,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalLowerTick: 0,
                     globalUpperTick: 30000,
                     tickNeighborhood: 0,
+                    maxTickDeviation: 100,
                     simulateUniV3Interval: false,
                 };
 

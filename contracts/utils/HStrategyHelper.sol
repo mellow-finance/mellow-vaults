@@ -7,6 +7,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../strategies/HStrategy.sol";
+import "hardhat/console.sol";
 
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
@@ -170,7 +171,7 @@ contract HStrategyHelper {
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
         HStrategy.DomainPositionParams memory domainPositionParams
-    ) external pure returns (HStrategy.TokenAmounts memory amounts) {
+    ) external view returns (HStrategy.TokenAmounts memory amounts) {
         amounts.erc20Token0 = FullMath.mulDiv(
             expectedRatios.token0RatioD,
             expectedTokenAmountsInToken0.erc20TokensAmountInToken0,
@@ -192,7 +193,11 @@ contract HStrategyHelper {
             domainPositionParams.averagePriceX96,
             CommonLibrary.Q96
         );
-
+        console.log(
+            domainPositionParams.spotPriceSqrtX96,
+            domainPositionParams.lowerPriceSqrtX96,
+            domainPositionParams.upperPriceSqrtX96
+        );
         {
             uint256 uniCapitalRatioX96 = FullMath.mulDiv(
                 FullMath.mulDiv(

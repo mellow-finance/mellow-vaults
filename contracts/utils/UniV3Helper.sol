@@ -156,7 +156,11 @@ contract UniV3Helper {
     function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 oracleObservationDelta)
         external
         view
-        returns (int24 averageTick, uint160 sqrtSpotPriceX96)
+        returns (
+            int24 averageTick,
+            uint160 sqrtSpotPriceX96,
+            int24 deviation
+        )
     {
         (, int24 tick, , , , , ) = pool_.slot0();
         sqrtSpotPriceX96 = TickMath.getSqrtRatioAtTick(tick);
@@ -166,5 +170,6 @@ contract UniV3Helper {
         if (withFail) {
             averageTick = tick;
         }
+        deviation = tick - averageTick;
     }
 }

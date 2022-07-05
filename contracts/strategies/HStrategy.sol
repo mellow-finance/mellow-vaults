@@ -20,6 +20,7 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/HStrategyHelper.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/UniV3Helper.sol";
+import "hardhat/console.sol";
 
 contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -53,6 +54,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 globalLowerTick;
         int24 globalUpperTick;
         int24 tickNeighborhood;
+        int24 maxTickDeviation;
         bool simulateUniV3Interval;
     }
 
@@ -213,10 +215,19 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (positionNft == 0) return;
         uint256 currentTimestamp = block.timestamp;
         require(currentTimestamp - lastRebalanceTimestamp >= 30 minutes, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        (int24 averageTick, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+        (int24 averageTick, , int24 deviation) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
             pool_,
             60 * 30 /* last 30 minutes */
         );
+        if (deviation < 0) {
+            deviation = -deviation;
+        }
+        require(deviation <= params.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+        console.log("-===-");
+        console.logInt(deviation);
+        console.logInt(averageTick);
+        console.logInt(lastShortInterval.lowerTick);
+        console.logInt(lastShortInterval.upperTick);
         require(
             averageTick < lastShortInterval.lowerTick + params.tickNeighborhood ||
                 lastShortInterval.upperTick - params.tickNeighborhood < averageTick,
@@ -244,7 +255,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         DomainPositionParams memory domainPositionParams;
         HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
         {
-            (int24 averageTick, uint160 sqrtSpotPriceX96) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            (int24 averageTick, uint160 sqrtSpotPriceX96, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
                 pool_,
                 strategyParams_.oracleObservationDelta
             );
@@ -477,9 +488,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     {
         IUniV3Vault vault = uniV3Vault;
         uint256[] memory collectedFees = vault.collectEarnings();
-        tokenAmounts = new uint256[](2);
-        tokenAmounts[0] = type(uint128).max;
-        tokenAmounts[1] = type(uint128).max;
+        tokenAmounts = vault.liquidityToTokenAmounts(type(uint128).max);
         uint256[] memory pulledAmounts = vault.pull(address(erc20Vault), tokens, tokenAmounts, "");
         for (uint256 i = 0; i < 2; i++) {
             tokenAmounts[i] = collectedFees[i] + pulledAmounts[i];

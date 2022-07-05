@@ -137,6 +137,7 @@ const setupStrategy = async (
         globalLowerTick: 23400,
         globalUpperTick: 29700,
         tickNeighborhood: 0,
+        maxTickDeviation: 100,
         simulateUniV3Interval: false, // simulating uniV2 Interval
     };
     const txs: string[] = [];
