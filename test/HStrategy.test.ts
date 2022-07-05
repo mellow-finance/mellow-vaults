@@ -19,6 +19,7 @@ import {
     ISwapRouter as SwapRouterInterface,
     IYearnProtocolVault,
     HStrategyHelper,
+    IUniswapV3Pool,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -895,18 +896,85 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
-            console.log("Done, going back");
-            for (var i = 0; i < 5; i++) {
-                console.log(i);
+
+            for (var i = 0; i < 4; i++) {
                 await push(BigNumber.from(10).pow(12), "USDC");
                 await sleep(this.governanceDelay);
             }
+            await push(BigNumber.from(10).pow(12), "USDC");
 
-            // await expect(
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+
+            for (var i = 0; i < 10; i++) {
+                await push(BigNumber.from(10).pow(20), "WETH");
+                await sleep(this.governanceDelay);
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+
+            const { tickLower, tickUpper } =
+                await this.positionManager.callStatic.positions(
+                    await this.uniV3Vault.uniV3Nft()
+                );
+
             await this.subject
                 .connect(this.mStrategyAdmin)
-                .rebalance(restrictions, []);
-            // ).not.to.be.reverted;
+                .updateStrategyParams({
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    oracleObservationDelta: 300,
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                    globalLowerTick: tickLower,
+                    globalUpperTick: tickUpper + 60,
+                    tickNeighborhood: 0,
+                    maxTickDeviation: 100,
+                    simulateUniV3Interval: true,
+                } as StrategyParamsStruct);
+
+            const pool = await this.subject.pool();
+
+            let uniswapV3Pool: IUniswapV3Pool = await ethers.getContractAt(
+                "IUniswapV3Pool",
+                pool
+            );
+            while (true) {
+                let { tick } = await uniswapV3Pool.slot0();
+                if (tick <= tickUpper + 30) {
+                    await push(BigNumber.from(10).pow(20), "WETH");
+                    await sleep(this.governanceDelay);
+                } else {
+                    break;
+                }
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
+
+            while (true) {
+                let { tick } = await uniswapV3Pool.slot0();
+                if (tick >= tickLower + 30) {
+                    await push(BigNumber.from(10).pow(11), "USDC");
+                    await sleep(this.governanceDelay);
+                } else {
+                    break;
+                }
+            }
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
         });
     });
 
