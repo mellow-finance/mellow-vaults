@@ -170,7 +170,7 @@ contract HStrategyHelper {
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
         HStrategy.DomainPositionParams memory domainPositionParams
-    ) external view returns (HStrategy.TokenAmounts memory amounts) {
+    ) external pure returns (HStrategy.TokenAmounts memory amounts) {
         amounts.erc20Token0 = FullMath.mulDiv(
             expectedRatios.token0RatioD,
             expectedTokenAmountsInToken0.erc20TokensAmountInToken0,

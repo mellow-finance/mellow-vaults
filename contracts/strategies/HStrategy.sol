@@ -20,7 +20,6 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/HStrategyHelper.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/UniV3Helper.sol";
-import "hardhat/console.sol";
 
 contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -223,11 +222,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             deviation = -deviation;
         }
         require(deviation <= params.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
-        console.log("-===-");
-        console.logInt(deviation);
-        console.logInt(averageTick);
-        console.logInt(lastShortInterval.lowerTick);
-        console.logInt(lastShortInterval.upperTick);
+        require(
+            params.globalLowerTick <= averageTick && averageTick <= params.globalUpperTick,
+            ExceptionsLibrary.INVARIANT
+        );
         require(
             averageTick < lastShortInterval.lowerTick + params.tickNeighborhood ||
                 lastShortInterval.upperTick - params.tickNeighborhood < averageTick,
@@ -414,16 +412,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 averageTick,
         uint256 oldNft
     ) internal returns (uint256 newNft) {
-        require(
-            strategyParams_.globalLowerTick <= averageTick && averageTick <= strategyParams_.globalUpperTick,
-            ExceptionsLibrary.INVARIANT
-        );
         int24 lowerTick = 0;
         int24 upperTick = 0;
 
         int24 intervalWidth = strategyParams_.widthTicks * strategyParams_.widthCoefficient;
         LastShortInterval memory lastInterval = lastShortInterval;
-        if (lastInterval.lowerTick == lastInterval.upperTick) {
+        if (lastInterval.lowerTick == lastInterval.upperTick || true) {
             // in this case it is first mint
             int24 deltaToLowerTick = averageTick - strategyParams_.globalLowerTick;
             deltaToLowerTick -= (deltaToLowerTick % intervalWidth);
@@ -446,13 +440,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 upperTick = strategyParams_.globalUpperTick;
                 lowerTick = upperTick - 2 * intervalWidth;
             }
-        } else if (averageTick < lastInterval.lowerTick) {
-            lowerTick = lastInterval.lowerTick - intervalWidth;
-            upperTick = lastInterval.lowerTick + intervalWidth;
-        } else if (averageTick > lastInterval.upperTick) {
-            lowerTick = lastInterval.upperTick - intervalWidth;
-            upperTick = lastInterval.upperTick + intervalWidth;
         }
+        // else if (averageTick < lastInterval.lowerTick) {
+        //     lowerTick = lastInterval.lowerTick - intervalWidth;
+        //     upperTick = lastInterval.lowerTick + intervalWidth;
+        // } else if (averageTick > lastInterval.upperTick) {
+        //     lowerTick = lastInterval.upperTick - intervalWidth;
+        //     upperTick = lastInterval.upperTick + intervalWidth;
+        // }
         lastShortInterval = LastShortInterval({lowerTick: lowerTick, upperTick: upperTick});
 
         IERC20(tokens[0]).safeApprove(address(positionManager_), strategyParams_.minToken0ForOpening);
