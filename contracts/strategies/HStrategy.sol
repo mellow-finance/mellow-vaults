@@ -181,7 +181,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 newStrategyParams.minToken1ForOpening > 0 &&
                 type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient) &&
                 newStrategyParams.tickNeighborhood <= TickMath.MAX_TICK &&
-                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK,
+                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK &&
+                newStrategyParams.maxTickDeviation >= 0 &&
+                newStrategyParams.maxTickDeviation <= TickMath.MAX_TICK,
             ExceptionsLibrary.INVARIANT
         );
 

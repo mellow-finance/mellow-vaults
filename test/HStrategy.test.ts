@@ -350,8 +350,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     );
                 };
 
+                this.getSqrtRatioAtTick = (tick: number) => {
+                    return BigNumber.from(
+                        TickMath.getSqrtRatioAtTick(tick).toString()
+                    );
+                };
+
                 this.tvlToken0 = async () => {
-                    const Q96 = BigNumber.from(2).pow(96);
                     const positionParams: DomainPositionParamsStruct =
                         await this.getPositionParams();
                     const averagePriceSqrtX96 = BigNumber.from(
@@ -388,7 +393,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         await this.deploymentFixture();
     });
 
-    // Andrey:
     describe.only("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
@@ -435,17 +439,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         it("set new strategy parameters", async () => {
             await expect(
                 this.subject.connect(this.mStrategyAdmin).updateStrategyParams({
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    oracleObservationDelta: 300,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
-                    globalLowerTick: 0,
-                    globalUpperTick: 30000,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
-                    simulateUniV3Interval: false,
+                    ...this.strategyParams,
                 } as StrategyParamsStruct)
             ).to.emit(this.subject, "UpdateStrategyParams");
         });
@@ -456,17 +450,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
+                            ...this.strategyParams,
                             widthCoefficient: 0,
-                            widthTicks: 1,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -475,17 +460,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
+                            ...this.strategyParams,
                             widthTicks: 0,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -494,17 +470,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
-                            widthTicks: 60,
+                            ...this.strategyParams,
                             oracleObservationDelta: 0,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -513,17 +480,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
-                            widthTicks: 60,
-                            oracleObservationDelta: 300,
+                            ...this.strategyParams,
                             erc20MoneyRatioD: 0,
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -532,17 +490,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
-                            widthTicks: 60,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(9).add(1),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
+                            ...this.strategyParams,
+                            erc20MoneyRatioD: DENOMINATOR.add(1),
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -551,17 +500,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
-                            widthTicks: 60,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
+                            ...this.strategyParams,
                             minToken0ForOpening: 0,
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -570,17 +510,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
-                            widthTicks: 60,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
+                            ...this.strategyParams,
                             minToken1ForOpening: 0,
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -589,17 +520,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
+                            ...this.strategyParams,
                             widthCoefficient: BigNumber.from(2).pow(20),
                             widthTicks: BigNumber.from(2).pow(20),
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 30000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -609,17 +532,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
-                            widthCoefficient: 1,
-                            widthTicks: 30,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
+                            ...this.strategyParams,
                             globalLowerTick: 0,
                             globalUpperTick: 0,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -629,17 +544,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
+                            ...this.strategyParams,
                             widthCoefficient: 0,
                             widthTicks: 30,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
-                            globalLowerTick: 0,
-                            globalUpperTick: 3000,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -649,35 +556,63 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
+                            ...this.strategyParams,
                             widthCoefficient: 1,
                             widthTicks: 30,
-                            oracleObservationDelta: 300,
-                            erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                            minToken0ForOpening: BigNumber.from(10).pow(6),
-                            minToken1ForOpening: BigNumber.from(10).pow(6),
                             globalLowerTick: 0,
                             globalUpperTick: 3001,
-                            tickNeighborhood: 0,
-                            maxTickDeviation: 100,
-                            simulateUniV3Interval: false,
                         } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
 
-            it("when function called not by strategy admin, then reverts with INVARIANT", async () => {
+            it("when tickNeighborhood > MAX_TICK, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            ...this.strategyParams,
+                            tickNeighborhood: TickMath.MAX_TICK + 1,
+                        } as StrategyParamsStruct)
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when tickNeighborhood < MIN_TICK, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            ...this.strategyParams,
+                            tickNeighborhood: TickMath.MIN_TICK - 1,
+                        } as StrategyParamsStruct)
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when maxTickDeviation > MAX_TICK, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            ...this.strategyParams,
+                            maxTickDeviation: TickMath.MAX_TICK + 1,
+                        } as StrategyParamsStruct)
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when maxTickDeviation < 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateStrategyParams({
+                            ...this.strategyParams,
+                            maxTickDeviation: -1,
+                        } as StrategyParamsStruct)
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+
+            it("when function called not by strategy admin, then reverts with FORBIDDEN", async () => {
                 await expect(
                     this.subject.connect(this.deployer).updateStrategyParams({
-                        widthCoefficient: 1,
-                        widthTicks: 30,
-                        oracleObservationDelta: 300,
-                        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                        minToken0ForOpening: BigNumber.from(10).pow(6),
-                        minToken1ForOpening: BigNumber.from(10).pow(6),
-                        globalLowerTick: 0,
-                        globalUpperTick: 3000,
-                        tickNeighborhood: 0,
-                        maxTickDeviation: 100,
-                        simulateUniV3Interval: false,
+                        ...this.strategyParams,
                     } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.FORBIDDEN);
             });
@@ -821,16 +756,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
+                    ...this.strategyParams,
                     widthCoefficient: 1,
                     widthTicks: 60,
-                    oracleObservationDelta: 300,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: -870000,
                     globalUpperTick: 870000,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
                     simulateUniV3Interval: true,
                 } as StrategyParamsStruct);
             const pullExistentials =
@@ -928,16 +858,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
+                    ...this.strategyParams,
                     widthCoefficient: 1,
                     widthTicks: 60,
-                    oracleObservationDelta: 300,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: tickLower,
                     globalUpperTick: tickUpper + 60,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
                     simulateUniV3Interval: true,
                 } as StrategyParamsStruct);
 
@@ -984,17 +909,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    oracleObservationDelta: 300,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
-                    globalLowerTick: 0,
-                    globalUpperTick: 30000,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
-                    simulateUniV3Interval: true,
+                    ...this.strategyParams,
                 } as StrategyParamsStruct);
 
             for (var i = 0; i < 10; i++) {
@@ -1004,21 +919,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 var upper0Tick = upperTick + randomInt(10000);
                 var averageTick = lowerTick + randomInt(upperTick - lowerTick);
 
-                const lowerPriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
-                );
-                const upperPriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upperTick).toString()
-                );
-                const averagePriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(averageTick).toString()
-                );
-                const lower0PriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lower0Tick).toString()
-                );
-                const upper0PriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upper0Tick).toString()
-                );
+                const lowerPriceSqrtX96 = this.getSqrtRatioAtTick(lowerTick);
+                const upperPriceSqrtX96 = this.getSqrtRatioAtTick(upperTick);
+                const averagePriceSqrtX96 =
+                    this.getSqrtRatioAtTick(averageTick);
+                const lower0PriceSqrtX96 = this.getSqrtRatioAtTick(lower0Tick);
+                const upper0PriceSqrtX96 = this.getSqrtRatioAtTick(upper0Tick);
                 expect(
                     lower0PriceSqrtX96 <= lowerPriceSqrtX96 &&
                         lowerPriceSqrtX96 <= averagePriceSqrtX96 &&
@@ -1050,7 +956,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 const averagePriceX96 = averagePriceSqrtX96
                     .mul(averagePriceSqrtX96)
-                    .div(BigNumber.from(2).pow(96));
+                    .div(Q96);
 
                 const expectedToken0RatioDNominatorD = DENOMINATOR.mul(
                     averagePriceX96
@@ -1064,17 +970,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     lowerPriceSqrtX96
                 )
                     .sub(DENOMINATOR.mul(lower0PriceSqrtX96))
-                    .div(BigNumber.from(2).pow(96));
+                    .div(Q96);
 
                 const expectedTokensRatioDDenominatorD = DENOMINATOR.mul(
                     averagePriceSqrtX96.mul(2)
                 )
-                    .div(BigNumber.from(2).pow(96))
-                    .sub(
-                        DENOMINATOR.mul(lower0PriceSqrtX96).div(
-                            BigNumber.from(2).pow(96)
-                        )
-                    )
+                    .div(Q96)
+                    .sub(DENOMINATOR.mul(lower0PriceSqrtX96).div(Q96))
                     .sub(
                         DENOMINATOR.mul(averagePriceX96).div(upper0PriceSqrtX96)
                     );
@@ -1102,32 +1004,17 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    oracleObservationDelta: 300,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
-                    globalLowerTick: 0,
-                    globalUpperTick: 30000,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
-                    simulateUniV3Interval: false,
+                    ...this.strategyParams,
                 } as StrategyParamsStruct);
 
             for (var i = 0; i < 10; i++) {
                 var lowerTick = randomInt(10000);
                 var upperTick = lowerTick + randomInt(10000) + 1;
                 var averageTick = lowerTick + randomInt(upperTick - lowerTick);
-                const lowerPriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
-                );
-                const upperPriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upperTick).toString()
-                );
-                const averagePriceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(averageTick).toString()
-                );
+                const lowerPriceSqrtX96 = this.getSqrtRatioAtTick(lowerTick);
+                const upperPriceSqrtX96 = this.getSqrtRatioAtTick(upperTick);
+                const averagePriceSqrtX96 =
+                    this.getSqrtRatioAtTick(averageTick);
                 var strategyParams = this.strategyParams;
                 strategyParams.simulateUniV3Interval = false;
                 const { token0RatioD, token1RatioD, uniV3RatioD } =
@@ -1182,33 +1069,23 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     fee: 3000,
                     tickLower: lowerTick,
                     tickUpper: upperTick,
-                    usdcAmount: BigNumber.from(10).pow(6).mul(3000),
-                    wethAmount: BigNumber.from(10).pow(18),
+                    usdcAmount: this.deployerUsdcAmount,
+                    wethAmount: this.deployerWethAmount,
                 });
 
                 const globalUpperTick = upperTick + randomInt(10);
                 const globalLowerTick = lowerTick - randomInt(100);
 
                 const strategyParams = {
-                    widthCoefficient: 0,
-                    widthTicks: 0,
-                    oracleObservationDelta: 0,
-                    erc20MoneyRatioD: 0,
-                    minToken0ForOpening: 0,
-                    minToken1ForOpening: 0,
+                    ...this.strategyParams,
                     globalLowerTick: globalLowerTick,
                     globalUpperTick: globalUpperTick,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
-                    simulateUniV3Interval: false,
                 } as StrategyParamsStruct;
 
                 const result =
                     await this.hStrategyHelper.calculateDomainPositionParams(
                         averageTick,
-                        BigNumber.from(
-                            TickMath.getSqrtRatioAtTick(averageTick).toString()
-                        ),
+                        this.getSqrtRatioAtTick(averageTick),
                         strategyParams,
                         tokenId,
                         this.positionManager.address
@@ -1221,38 +1098,26 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 expect(result.upperTick).to.be.eq(upperTick);
 
                 expect(result.lower0PriceSqrtX96).to.be.eq(
-                    BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(globalLowerTick).toString()
-                    )
+                    this.getSqrtRatioAtTick(globalLowerTick)
                 );
                 expect(result.upper0PriceSqrtX96).to.be.eq(
-                    BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(globalUpperTick).toString()
-                    )
+                    this.getSqrtRatioAtTick(globalUpperTick)
                 );
 
                 expect(result.lowerPriceSqrtX96).to.be.eq(
-                    BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(lowerTick).toString()
-                    )
+                    this.getSqrtRatioAtTick(lowerTick)
                 );
                 expect(result.upperPriceSqrtX96).to.be.eq(
-                    BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(upperTick).toString()
-                    )
+                    this.getSqrtRatioAtTick(upperTick)
                 );
 
                 expect(result.liquidity).to.be.gt(0);
                 expect(result.nft).to.be.eq(tokenId);
                 expect(result.averageTick).to.be.eq(averageTick);
 
-                const priceSqrtX96 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(averageTick).toString()
-                );
+                const priceSqrtX96 = this.getSqrtRatioAtTick(averageTick);
                 expect(result.averagePriceSqrtX96).to.be.eq(priceSqrtX96);
-                const priceX96 = priceSqrtX96
-                    .mul(priceSqrtX96)
-                    .div(BigNumber.from(2).pow(96));
+                const priceX96 = priceSqrtX96.mul(priceSqrtX96).div(Q96);
 
                 expect(result.averagePriceX96).to.be.eq(priceX96);
                 expect(result.spotPriceSqrtX96).to.be.eq(priceSqrtX96);
@@ -1352,7 +1217,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     averagePriceSqrtX96: 0,
                     averagePriceX96: BigNumber.from(10)
                         .pow(9)
-                        .mul(BigNumber.from(2).pow(96).div(1000)),
+                        .mul(Q96.div(1000)),
                     spotPriceSqrtX96: 0,
                 } as DomainPositionParamsStruct;
 
@@ -1378,7 +1243,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 const convert = (t0: string, t1: string) => {
                     return BigNumber.from(t0).add(
                         BigNumber.from(t1)
-                            .mul(BigNumber.from(2).pow(96))
+                            .mul(Q96)
                             .div(domainParams.averagePriceX96)
                     );
                 };
@@ -1411,7 +1276,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    // Artyom:
     describe.only("#calculateCurrentTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
@@ -1634,10 +1498,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         .pull(
                             this.erc20Vault.address,
                             [this.usdc.address, this.weth.address],
-                            [
-                                BigNumber.from(2).pow(96),
-                                BigNumber.from(2).pow(96),
-                            ],
+                            [Q96, Q96],
                             []
                         );
                 });
