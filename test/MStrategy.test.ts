@@ -1144,6 +1144,29 @@ contract<MStrategy, DeployOptions, CustomContext>("MStrategy", function () {
                 ).to.not.be.reverted;
             });
 
+            it("allowed: MStrategy operator", async () => {
+                let mStrategyOperator = randomAddress();
+                let operatorRole = await this.subject.OPERATOR();
+                let delegateRole = await this.subject.ADMIN_DELEGATE_ROLE();
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .grantRole(delegateRole, this.mStrategyAdmin.address);
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .grantRole(operatorRole, mStrategyOperator);
+
+                await withSigner(mStrategyOperator, async (signer) => {
+                    await expect(
+                        this.subject
+                            .connect(signer)
+                            .rebalance(
+                                [BigNumber.from(0), BigNumber.from(0)],
+                                []
+                            )
+                    ).to.not.be.reverted;
+                });
+            });
+
             it("denied: any other address", async () => {
                 await withSigner(randomAddress(), async (s) => {
                     await expect(
