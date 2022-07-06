@@ -1775,7 +1775,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             } as TokenAmountsStruct;
         };
 
-        const compareAmounts = async () => {
+        const compareExpectedAmounts = async () => {
             const strategyParams = await this.subject.strategyParams();
             const required = await requiredExpectedTokenAmounts(strategyParams);
             const actual = await actualExpectedTokenAmounts(strategyParams);
@@ -1811,9 +1811,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             ).to.be.eq(0);
         };
 
-        describe("compare to typescript", () => {
-            it("equals to typescript", async () => {
-                await compareAmounts();
+        describe("simple test", () => {
+            it("works", async () => {
+                await compareExpectedAmounts();
                 await this.weth.transfer(
                     this.erc20Vault.address,
                     BigNumber.from(10).pow(18)
@@ -1822,7 +1822,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.erc20Vault.address,
                     BigNumber.from(10).pow(6).mul(2000)
                 );
-                await compareAmounts();
+                await compareExpectedAmounts();
                 await withSigner(this.subject.address, async (signer) => {
                     await this.erc20Vault
                         .connect(signer)
@@ -1833,7 +1833,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             []
                         );
                 });
-                await compareAmounts();
+                await compareExpectedAmounts();
             });
         });
 
