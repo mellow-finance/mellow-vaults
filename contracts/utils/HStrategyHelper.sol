@@ -192,7 +192,6 @@ contract HStrategyHelper {
             domainPositionParams.averagePriceX96,
             CommonLibrary.Q96
         );
-
         {
             uint256 uniCapitalRatioX96 = FullMath.mulDiv(
                 FullMath.mulDiv(
