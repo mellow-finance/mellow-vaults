@@ -609,7 +609,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     let erc20Tvl = await this.erc20Vault.tvl();
                     let tokens = [this.wsteth, this.weth];
                     let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
-
                     if (delta.lt(BigNumber.from(-1))) {
                         await this.swapTokens(
                             this.erc20Vault.address,
@@ -1085,11 +1084,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 describe("erc20 rebalance", () => {
                     describe("when pulling from erc 20 to uni v3", () => {
                         it("works", async () => {
+                            await this.balanceERC20();
                             let ratioParams = {
                                 erc20UniV3CapitalRatioD:
-                                    this.baseParams.erc20UniV3CapitalRatioD.div(
-                                        2
-                                    ),
+                                    this.baseParams.erc20UniV3CapitalRatioD
+                                        .mul(3)
+                                        .div(4),
                                 erc20TokenRatioD:
                                     this.baseParams.erc20TokenRatioD,
                                 minErc20UniV3CapitalRatioDeviationD:
@@ -1153,21 +1153,19 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 await upperVault.liquidityToTokenAmounts(
                                     upperVaultDelta
                                 );
-                            await expect(
-                                this.subject
-                                    .connect(this.admin)
-                                    .callStatic.rebalanceERC20UniV3Vaults(
-                                        [
-                                            lowerTokenAmounts[0].sub(10),
-                                            lowerTokenAmounts[1].sub(10),
-                                        ],
-                                        [
-                                            upperTokenAmounts[0].sub(10),
-                                            upperTokenAmounts[1].sub(10),
-                                        ],
-                                        ethers.constants.MaxUint256
-                                    )
-                            ).not.to.be.reverted;
+                            await this.subject
+                                .connect(this.admin)
+                                .callStatic.rebalanceERC20UniV3Vaults(
+                                    [
+                                        lowerTokenAmounts[0].sub(10),
+                                        lowerTokenAmounts[1].sub(10),
+                                    ],
+                                    [
+                                        upperTokenAmounts[0].sub(10),
+                                        upperTokenAmounts[1].sub(10),
+                                    ],
+                                    ethers.constants.MaxUint256
+                                );
                             await expect(
                                 this.subject
                                     .connect(this.admin)
@@ -1439,6 +1437,16 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     expect(lowerVaultLiquidity).to.be.eq(0);
                     expect(upperVaultLiquidity).to.be.eq(0);
 
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .rebalanceERC20UniV3Vaults(
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                [ethers.constants.Zero, ethers.constants.Zero],
+                                ethers.constants.MaxUint256
+                            )
+                    ).not.to.be.reverted;
+                    await this.trySwapERC20();
                     await expect(
                         this.subject
                             .connect(this.admin)
