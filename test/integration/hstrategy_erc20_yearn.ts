@@ -29,22 +29,18 @@ import {
     TRANSACTION_GAS_LIMITS,
 } from "../../deploy/0000_utils";
 import { Contract } from "@ethersproject/contracts";
-import { ContractMetaBehaviour } from "../behaviors/contractMeta";
 import { expect } from "chai";
-import { randomInt } from "crypto";
-import {
-    MockHStrategy,
-    StrategyParamsStruct,
-    TokenAmountsStruct,
-} from "../types/MockHStrategy";
-import Exceptions from "../library/Exceptions";
-import { TickMath } from "@uniswap/v3-sdk";
+
+import { MockHStrategy, StrategyParamsStruct } from "../types/MockHStrategy";
 import { RebalanceRestrictionsStruct } from "../types/HStrategy";
-import {
-    DomainPositionParamsStruct,
-    ExpectedRatiosStruct,
-    TokenAmountsInToken0Struct,
-} from "../types/HStrategyHelper";
+import { DomainPositionParamsStruct } from "../types/HStrategyHelper";
+import { randomInt } from "crypto";
+import exp from "constants";
+import { resourceLimits } from "worker_threads";
+import { TickMath } from "@uniswap/v3-sdk";
+
+const DENOMINATOR = BigNumber.from(10).pow(9);
+const Q96 = BigNumber.from(2).pow(96);
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -60,6 +56,27 @@ type CustomContext = {
     swapRouter: SwapRouterInterface;
     hStrategyHelper: HStrategyHelper;
     strategyParams: StrategyParamsStruct;
+};
+
+type StrategyState = {
+    spotTick: BigNumber;
+    averageTick: BigNumber;
+    erc20Token0: BigNumber;
+    erc20Token1: BigNumber;
+    moneyToken0: BigNumber;
+    moneyToken1: BigNumber;
+    uniV3Token0: BigNumber;
+    uniV3Token1: BigNumber;
+};
+
+type RebalanceResult = {
+    revertedWith: string;
+    erc20Token0: BigNumber;
+    erc20Token1: BigNumber;
+    moneyToken0: BigNumber;
+    moneyToken1: BigNumber;
+    uniV3Token0: BigNumber;
+    uniV3Token1: BigNumber;
 };
 
 type DeployOptions = {};
@@ -414,61 +431,40 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
     describe.only("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
-            // initial deposit
-            // amount deposit
-            // many times:
-            // multiple price swapping && deposit
-            // rebalance with checks parameters
-            // thats all
+            {
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateStrategyParams({
+                        ...this.strategyParams,
+                    } as StrategyParamsStruct);
+                const pullExistentials =
+                    await this.erc20RootVault.pullExistentials();
 
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    widthCoefficient: 15,
-                    widthTicks: 60,
-                    oracleObservationDelta: 300,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
-                    globalLowerTick: -870000,
-                    globalUpperTick: 870000,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
-                    simulateUniV3Interval: true,
-                } as StrategyParamsStruct);
-            const pullExistentials =
-                await this.erc20RootVault.pullExistentials();
-            for (var i = 0; i < 2; i++) {
-                await this.tokens[i].approve(
-                    this.erc20RootVault.address,
-                    pullExistentials[i].mul(10)
+                for (var i = 0; i < 2; i++) {
+                    await this.tokens[i].approve(
+                        this.erc20RootVault.address,
+                        pullExistentials[i].mul(10)
+                    );
+                }
+
+                await mint(
+                    "USDC",
+                    this.subject.address,
+                    BigNumber.from(10).pow(10)
+                );
+
+                await mint(
+                    "WETH",
+                    this.subject.address,
+                    BigNumber.from(10).pow(10)
+                );
+                // deposit to zero-vault
+                await this.erc20RootVault.deposit(
+                    [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
+                    0,
+                    []
                 );
             }
-
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-            await mint(
-                "WETH",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-
-            // deposit to zero-vault
-            await this.erc20RootVault.deposit(
-                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
-                0,
-                []
-            );
-
-            // normal deposit
-            await this.erc20RootVault.deposit(
-                [BigNumber.from(10).pow(18), BigNumber.from(10).pow(18)],
-                0,
-                []
-            );
 
             var restrictions = {
                 pulledOnUniV3Vault: [0, 0],
@@ -479,12 +475,192 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 deadline: ethers.constants.MaxUint256,
             } as RebalanceRestrictionsStruct;
 
-            for (var i = 0; i < 100; i++) {
-                await expect(
-                    this.subject
+            var STEPS = 100;
+            var STEP = 0;
+            var currentState: StrategyState;
+            var expectedState: RebalanceResult;
+
+            var lastTick = -1 * 10 ** 7;
+
+            const changeCapital = async () => {
+                if (STEP < STEPS / 10 || Math.random() > 0.5) {
+                    const amount = BigNumber.from(10).pow(18);
+                    const usdcRatio = BigNumber.from(
+                        randomInt(
+                            DENOMINATOR.div(100).toNumber(),
+                            DENOMINATOR.div(5).toNumber()
+                        )
+                    );
+                    const wethRatio = BigNumber.from(
+                        randomInt(
+                            DENOMINATOR.div(100).toNumber(),
+                            DENOMINATOR.div(5).toNumber()
+                        )
+                    );
+                    const usdcAmount = amount.mul(usdcRatio).div(DENOMINATOR);
+                    const wethAmount = amount.mul(wethRatio).div(DENOMINATOR);
+                    await mint("USDC", this.deployer.address, usdcAmount);
+                    await mint("WETH", this.deployer.address, wethAmount);
+                    await this.erc20RootVault.deposit(
+                        [usdcAmount, wethAmount],
+                        0,
+                        []
+                    );
+                }
+                {
+                    const totalSupply = await this.erc20RootVault.totalSupply();
+                    const lpAmonut = totalSupply
+                        .mul(randomInt(0, DENOMINATOR.div(2).toNumber()))
+                        .div(DENOMINATOR);
+                    await this.erc20RootVault.withdraw(
+                        ethers.constants.AddressZero,
+                        lpAmonut,
+                        [0, 0],
+                        [[], []]
+                    );
+                }
+            };
+
+            const changePrice = async () => {
+                if (STEP < STEPS / 2) {
+                    await push(BigNumber.from(10).pow(11), "USDC");
+                } else {
+                    await push(BigNumber.from(10).pow(20), "WETH");
+                }
+                await sleep(this.governanceDelay);
+            };
+
+            const recalculateCurrentState = async () => {
+                const { minTokenAmounts: erc20Tvl } =
+                    await this.erc20Vault.tvl();
+                const { minTokenAmounts: moneyTvl } =
+                    await this.yearnVault.tvl();
+                const nft = await this.uniV3Vault.nft();
+                const position = await this.positionManager.positions(nft);
+                const uniV3Tvl = await this.uniV3Vault.liquidityToTokenAmounts(
+                    position.liquidity
+                );
+                const priceInfo =
+                    await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
+                        await this.subject.pool(),
+                        this.strategyParams.oracleObservationDelta
+                    );
+                currentState = {
+                    spotTick: position.tick,
+                    averageTick: BigNumber.from(priceInfo.averageTick),
+                    erc20Token0: erc20Tvl[0],
+                    erc20Token1: erc20Tvl[1],
+                    moneyToken0: moneyTvl[0],
+                    moneyToken1: moneyTvl[1],
+                    uniV3Token0: uniV3Tvl[0],
+                    uniV3Token1: uniV3Tvl[1],
+                } as StrategyState;
+            };
+
+            const updateParameters = async () => {
+                var averageTick = currentState.spotTick.toNumber();
+                averageTick = averageTick - (averageTick % 900);
+
+                var globalLowerTick = averageTick - 900 * 20;
+                var globalUpperTick = averageTick + 900 * 20;
+                var erc20MoneyRatioD = randomInt(5 * 10 ** 7, 10 * 10 ** 7);
+
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateStrategyParams({
+                        ...this.strategyParams,
+                        globalLowerTick: globalLowerTick,
+                        globalUpperTick: globalUpperTick,
+                        erc20MoneyRatioD: erc20MoneyRatioD,
+                    });
+            };
+
+            const getSqrtTickRatio = (tick: BigNumber) => {
+                return BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(tick.toNumber()).toString()
+                );
+            };
+
+            const getCapital = (
+                tick: BigNumber,
+                token0: BigNumber,
+                token1: BigNumber
+            ) => {
+                return token0.add(
+                    token1.mul(Q96).div(getSqrtTickRatio(tick).pow(2).div(Q96))
+                );
+            };
+
+            const expectedStateAfterRebalance = async () => {
+                const capital = getCapital(
+                    currentState.averageTick,
+                    currentState.erc20Token0,
+                    currentState.erc20Token1
+                )
+                    .add(
+                        getCapital(
+                            currentState.averageTick,
+                            currentState.moneyToken0,
+                            currentState.moneyToken1
+                        )
+                    )
+                    .add(
+                        getCapital(
+                            currentState.spotTick,
+                            currentState.uniV3Token0,
+                            currentState.uniV3Token1
+                        )
+                    );
+
+                // calculate expected ratios
+                // calculate expected amounts
+            };
+
+            const rebalanceAndCompareResults = async () => {
+                if (expectedState.revertedWith != "") {
+                    await expect(
+                        this.subject
+                            .connect(this.mStrategyAdmin)
+                            .rebalance(restrictions, [])
+                    ).to.be.revertedWith(expectedState.revertedWith);
+                } else {
+                    await this.subject
                         .connect(this.mStrategyAdmin)
-                        .rebalance(restrictions, [])
-                ).not.to.be.reverted;
+                        .rebalance(restrictions, []);
+                    const stateBeforeRebalance = currentState;
+                    await recalculateCurrentState();
+                    // check with some delta
+                    expect(stateBeforeRebalance.erc20Token0).to.be.eq(
+                        expectedState.erc20Token0
+                    );
+                    expect(stateBeforeRebalance.erc20Token1).to.be.eq(
+                        expectedState.erc20Token1
+                    );
+                    expect(stateBeforeRebalance.uniV3Token0).to.be.eq(
+                        expectedState.uniV3Token0
+                    );
+                    expect(stateBeforeRebalance.uniV3Token1).to.be.eq(
+                        expectedState.uniV3Token1
+                    );
+                    expect(stateBeforeRebalance.moneyToken0).to.be.eq(
+                        expectedState.moneyToken0
+                    );
+                    expect(stateBeforeRebalance.moneyToken1).to.be.eq(
+                        expectedState.moneyToken1
+                    );
+                }
+                lastTick = await this.positionManager.positions(
+                    await this.uniV3Vault.uniV3Nft()
+                ).tick;
+            };
+
+            while (STEP < STEPS) {
+                await changeCapital();
+                await changePrice();
+                await recalculateCurrentState();
+                await updateParameters();
+                await expectedStateAfterRebalance();
+                await rebalanceAndCompareResults();
             }
         });
     });
