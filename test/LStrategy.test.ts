@@ -1153,19 +1153,21 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 await upperVault.liquidityToTokenAmounts(
                                     upperVaultDelta
                                 );
-                            await this.subject
-                                .connect(this.admin)
-                                .callStatic.rebalanceERC20UniV3Vaults(
-                                    [
-                                        lowerTokenAmounts[0].sub(10),
-                                        lowerTokenAmounts[1].sub(10),
-                                    ],
-                                    [
-                                        upperTokenAmounts[0].sub(10),
-                                        upperTokenAmounts[1].sub(10),
-                                    ],
-                                    ethers.constants.MaxUint256
-                                );
+                            await expect(
+                                this.subject
+                                    .connect(this.admin)
+                                    .callStatic.rebalanceERC20UniV3Vaults(
+                                        [
+                                            lowerTokenAmounts[0].sub(10),
+                                            lowerTokenAmounts[1].sub(10),
+                                        ],
+                                        [
+                                            upperTokenAmounts[0].sub(10),
+                                            upperTokenAmounts[1].sub(10),
+                                        ],
+                                        ethers.constants.MaxUint256
+                                    )
+                            ).not.to.be.reverted;
                             await expect(
                                 this.subject
                                     .connect(this.admin)
