@@ -289,7 +289,8 @@ contract HStrategyHelper {
     function swapNeeded(
         HStrategy.TokenAmounts memory missingTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
-        IIntegrationVault erc20Vault
+        IIntegrationVault erc20Vault,
+        HStrategy.RatioParams memory ratioParams
     ) external view returns (bool) {
         (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
 
@@ -300,28 +301,44 @@ contract HStrategyHelper {
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
         {
-            uint256 maxDeltaToken0 = FullMath.mulDiv(totalToken0Amount, 15, DENOMINATOR);
+            uint256 maxDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minUniV3RatioDeviation0D,
+                DENOMINATOR
+            );
             if (erc20Tvl[0] + maxDeltaToken0 < missingTokenAmounts.uniV3Token0) {
                 return true;
             }
         }
 
         {
-            uint256 maxDeltaToken1 = FullMath.mulDiv(totalToken1Amount, 15, DENOMINATOR);
+            uint256 maxDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minUniV3RatioDeviation1D,
+                DENOMINATOR
+            );
             if (erc20Tvl[0] + maxDeltaToken1 < missingTokenAmounts.uniV3Token1) {
                 return true;
             }
         }
 
         {
-            uint256 maxDeltaToken0 = FullMath.mulDiv(totalToken0Amount, 15, DENOMINATOR);
+            uint256 maxDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minMoneyRatioDeviation0D,
+                DENOMINATOR
+            );
             if (erc20Tvl[0] + maxDeltaToken0 < missingTokenAmounts.uniV3Token0 + missingTokenAmounts.moneyToken0) {
                 return true;
             }
         }
 
         {
-            uint256 maxDeltaToken1 = FullMath.mulDiv(totalToken1Amount, 15, DENOMINATOR);
+            uint256 maxDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minMoneyRatioDeviation1D,
+                DENOMINATOR
+            );
             if (erc20Tvl[1] + maxDeltaToken1 < missingTokenAmounts.uniV3Token1 + missingTokenAmounts.moneyToken1) {
                 return true;
             }
