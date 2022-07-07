@@ -351,7 +351,7 @@ contract HStrategyHelper {
         HStrategy.TokenAmounts memory currentTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
         HStrategy.RatioParams memory ratioParams
-    ) external view returns (bool) {
+    ) external pure returns (bool) {
         uint256 totalToken0Amount = expectedTokenAmounts.erc20Token0 +
             expectedTokenAmounts.moneyToken0 +
             expectedTokenAmounts.uniV3Token0;
