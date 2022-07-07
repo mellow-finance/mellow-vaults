@@ -828,6 +828,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             var restrictions = {
                 pulledOnUniV3Vault: [0, 0],
                 pulledOnMoneyVault: [0, 0],
+                pulledFromUniV3Vault: [0, 0],
                 pulledFromMoneyVault: [0, 0],
                 swappedAmounts: [0, 0],
                 burnedAmounts: [0, 0],
@@ -850,6 +851,26 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await push(BigNumber.from(10).pow(20), "WETH");
                 await sleep(this.governanceDelay);
             }
+
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).to.be.revertedWith(Exceptions.INVARIANT);
+
+            {
+                const ratioParams = await this.subject.ratioParams();
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateRatioParams({
+                        ...ratioParams,
+                        minUniV3RatioDeviation0D: 0,
+                        minUniV3RatioDeviation1D: 0,
+                        minMoneyRatioDeviation0D: 0,
+                        minMoneyRatioDeviation1D: 0,
+                    } as RatioParamsStruct);
+            }
+
             await expect(
                 this.subject
                     .connect(this.mStrategyAdmin)
@@ -872,6 +893,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await push(BigNumber.from(10).pow(20), "WETH");
                 await sleep(this.governanceDelay);
             }
+
             await expect(
                 this.subject
                     .connect(this.mStrategyAdmin)
@@ -929,6 +951,90 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
+        });
+    });
+
+    describe.only("#tokenRebalance", () => {
+        it("performs a rebalance according to strategy params", async () => {
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...this.strategyParams,
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    globalLowerTick: -870000,
+                    globalUpperTick: 870000,
+                    simulateUniV3Interval: true,
+                } as StrategyParamsStruct);
+            const pullExistentials =
+                await this.erc20RootVault.pullExistentials();
+            for (var i = 0; i < 2; i++) {
+                await this.tokens[i].approve(
+                    this.erc20RootVault.address,
+                    pullExistentials[i].mul(10)
+                );
+            }
+
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
+
+            // deposit to zero-vault
+            await this.erc20RootVault.deposit(
+                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
+                0,
+                []
+            );
+
+            // normal deposit
+            await this.erc20RootVault.deposit(
+                [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
+                0,
+                []
+            );
+
+            var restrictions = {
+                pulledOnUniV3Vault: [0, 0],
+                pulledOnMoneyVault: [0, 0],
+                pulledFromUniV3Vault: [0, 0],
+                pulledFromMoneyVault: [0, 0],
+                swappedAmounts: [0, 0],
+                burnedAmounts: [0, 0],
+                deadline: ethers.constants.MaxUint256,
+            } as RebalanceRestrictionsStruct;
+
+            {
+                const ratioParams = await this.subject.ratioParams();
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateRatioParams({
+                        ...ratioParams,
+                        minUniV3RatioDeviation0D: 0,
+                        minUniV3RatioDeviation1D: 0,
+                        minMoneyRatioDeviation0D: 0,
+                        minMoneyRatioDeviation1D: 0,
+                    } as RatioParamsStruct);
+            }
+
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .rebalance(restrictions, []);
+            await this.erc20RootVault.withdraw(
+                ethers.constants.AddressZero,
+                10 ** 5,
+                [0, 0],
+                [[], [], []]
+            );
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .tokenRebalance(restrictions, []);
         });
     });
 

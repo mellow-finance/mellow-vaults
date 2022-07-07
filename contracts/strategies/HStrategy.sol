@@ -332,6 +332,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         public
         returns (RebalanceRestrictions memory actualPulledAmounts)
     {
+        _requireAtLeastOperator();
         INonfungiblePositionManager positionManager_ = positionManager;
         StrategyParams memory strategyParams_ = strategyParams;
         OracleParams memory oracleParams_ = oracleParams;
