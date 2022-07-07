@@ -26,7 +26,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     // IMMUTABLES
     uint32 public constant DENOMINATOR = 10**9;
-    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3; // IERC20.approve.selector more consistent?
+    bytes4 public constant APPROVE_SELECTOR = 0x095ea7b3;
     bytes4 public constant EXACT_INPUT_SINGLE_SELECTOR = ISwapRouter.exactInputSingle.selector;
     ISwapRouter public immutable router;
 
@@ -46,18 +46,33 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     struct StrategyParams {
         int24 widthCoefficient;
         int24 widthTicks;
-        uint32 oracleObservationDelta;
-        uint32 erc20MoneyRatioD;
-        uint256 minToken0ForOpening;
-        uint256 minToken1ForOpening;
+        int24 tickNeighborhood;
         int24 globalLowerTick;
         int24 globalUpperTick;
-        int24 tickNeighborhood;
-        int24 maxTickDeviation;
-        bool simulateUniV3Interval;
+    }
+
+    struct MintingParams {
+        uint256 minToken0ForOpening;
+        uint256 minToken1ForOpening;
+    }
+
+    struct OracleParams {
+        uint32 oracleObservationDelta;
+        uint24 maxTickDeviation;
+    }
+
+    struct RatioParams {
+        uint256 erc20MoneyRatioD;
+        uint256 minUniV3RatioDeviation0D;
+        uint256 minUniV3RatioDeviation1D;
+        uint256 minMoneyRatioDeviation0D;
+        uint256 minMoneyRatioDeviation1D;
     }
 
     StrategyParams public strategyParams;
+    MintingParams public mintingParams;
+    OracleParams public oracleParams;
+    RatioParams public ratioParams;
 
     // INTERNAL STRUCTURES
 
@@ -70,6 +85,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint256[] pulledOnUniV3Vault;
         uint256[] pulledOnMoneyVault;
         uint256[] pulledFromMoneyVault;
+        uint256[] pulledFromUniV3Vault;
         uint256[] swappedAmounts;
         uint256[] burnedAmounts;
         uint256 deadline;
@@ -95,6 +111,23 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint32 token0RatioD;
         uint32 token1RatioD;
         uint32 uniV3RatioD;
+    }
+
+    struct DomainPositionParams {
+        uint256 nft;
+        uint128 liquidity;
+        int24 lowerTick;
+        int24 upperTick;
+        int24 lower0Tick;
+        int24 upper0Tick;
+        int24 averageTick;
+        uint160 lowerPriceSqrtX96;
+        uint160 upperPriceSqrtX96;
+        uint160 lower0PriceSqrtX96;
+        uint160 upper0PriceSqrtX96;
+        uint160 averagePriceSqrtX96;
+        uint256 averagePriceX96;
+        uint160 spotPriceSqrtX96;
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
@@ -174,16 +207,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             (newStrategyParams.widthCoefficient > 0 &&
                 newStrategyParams.widthTicks > 0 &&
-                newStrategyParams.oracleObservationDelta > 0 &&
-                newStrategyParams.erc20MoneyRatioD > 0 &&
-                newStrategyParams.erc20MoneyRatioD <= DENOMINATOR &&
-                newStrategyParams.minToken0ForOpening > 0 &&
-                newStrategyParams.minToken1ForOpening > 0 &&
                 type(int24).max / newStrategyParams.widthTicks / 2 >= newStrategyParams.widthCoefficient) &&
                 newStrategyParams.tickNeighborhood <= TickMath.MAX_TICK &&
-                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK &&
-                newStrategyParams.maxTickDeviation >= 0 &&
-                newStrategyParams.maxTickDeviation <= TickMath.MAX_TICK,
+                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK,
             ExceptionsLibrary.INVARIANT
         );
 
@@ -198,6 +224,40 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
 
+    function updateMintingParams(MintingParams calldata newMintingParams) external {
+        _requireAdmin();
+        require(
+            newMintingParams.minToken0ForOpening > 0 && newMintingParams.minToken1ForOpening > 0,
+            ExceptionsLibrary.INVARIANT
+        );
+        mintingParams = newMintingParams;
+        emit UpdateMintingParams(tx.origin, msg.sender, newMintingParams);
+    }
+
+    function updateOracleParams(OracleParams calldata newOracleParams) external {
+        _requireAdmin();
+        require(
+            newOracleParams.oracleObservationDelta > 0 && newOracleParams.maxTickDeviation > 0,
+            ExceptionsLibrary.INVARIANT
+        );
+        oracleParams = newOracleParams;
+        emit UpdateOracleParams(tx.origin, msg.sender, newOracleParams);
+    }
+
+    function updateRatioParams(RatioParams calldata newRatioParams) external {
+        _requireAdmin();
+        require(
+            newRatioParams.erc20MoneyRatioD <= DENOMINATOR &&
+                newRatioParams.minUniV3RatioDeviation0D <= DENOMINATOR &&
+                newRatioParams.minUniV3RatioDeviation1D <= DENOMINATOR &&
+                newRatioParams.minMoneyRatioDeviation0D <= DENOMINATOR &&
+                newRatioParams.minMoneyRatioDeviation1D <= DENOMINATOR,
+            ExceptionsLibrary.INVARIANT
+        );
+        ratioParams = newRatioParams;
+        emit UpdateRatioParams(tx.origin, msg.sender, newRatioParams);
+    }
+
     function manualPull(
         IIntegrationVault fromVault,
         IIntegrationVault toVault,
@@ -209,34 +269,30 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     function _checkRebalancePossibility(
-        StrategyParams memory params,
+        StrategyParams memory strategyParams_,
         uint256 positionNft,
         IUniswapV3Pool pool_
     ) internal {
         if (positionNft == 0) return;
         uint256 currentTimestamp = block.timestamp;
         require(currentTimestamp - lastRebalanceTimestamp >= 30 minutes, ExceptionsLibrary.LIMIT_UNDERFLOW);
-        (int24 averageTick, , int24 deviation) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+        (int24 averageTick, , ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
             pool_,
-            60 * 30 /* last 30 minutes */
+            30 * 60 /* last 30 minutes */
         );
-        if (deviation < 0) {
-            deviation = -deviation;
-        }
-        require(deviation <= params.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(
-            params.globalLowerTick <= averageTick && averageTick <= params.globalUpperTick,
+            strategyParams_.globalLowerTick <= averageTick && averageTick <= strategyParams_.globalUpperTick,
             ExceptionsLibrary.INVARIANT
         );
         require(
-            averageTick < lastShortInterval.lowerTick + params.tickNeighborhood ||
-                lastShortInterval.upperTick - params.tickNeighborhood < averageTick,
+            averageTick < lastShortInterval.lowerTick + strategyParams_.tickNeighborhood ||
+                lastShortInterval.upperTick - strategyParams_.tickNeighborhood < averageTick,
             ExceptionsLibrary.INVARIANT
         );
         lastRebalanceTimestamp = currentTimestamp;
     }
 
-    function positionRebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
+    function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
         external
         returns (RebalanceRestrictions memory actualPulledAmounts)
     {
@@ -244,6 +300,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint256 uniV3Nft = uniV3Vault.uniV3Nft();
         INonfungiblePositionManager positionManager_ = positionManager;
         StrategyParams memory strategyParams_ = strategyParams;
+        OracleParams memory oracleParams_ = oracleParams;
         IUniswapV3Pool pool_ = pool;
         _checkRebalancePossibility(strategyParams_, uniV3Nft, pool_);
 
@@ -255,7 +312,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
         (int24 averageTick, , ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
             pool_,
-            strategyParams_.oracleObservationDelta
+            oracleParams_.oracleObservationDelta
         );
         uniV3Nft = _mintPosition(
             strategyParams_,
@@ -274,21 +331,27 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     {
         INonfungiblePositionManager positionManager_ = positionManager;
         StrategyParams memory strategyParams_ = strategyParams;
+        OracleParams memory oracleParams_ = oracleParams;
         IUniswapV3Pool pool_ = pool;
         HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
         uint256 uniV3Nft = uniV3Vault.uniV3Nft();
         require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
-        (int24 averageTick, uint160 sqrtSpotPriceX96, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
-            pool_,
-            strategyParams_.oracleObservationDelta
-        );
-        DomainPositionParams memory domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-            averageTick,
-            sqrtSpotPriceX96,
-            strategyParams_,
-            uniV3Nft,
-            positionManager_
-        );
+        DomainPositionParams memory domainPositionParams;
+        {
+            (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = _uniV3Helper
+                .getAverageTickAndSqrtSpotPrice(pool_, oracleParams_.oracleObservationDelta);
+            if (deviation < 0) {
+                deviation = -deviation;
+            }
+            require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+            domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
+                averageTick,
+                sqrtSpotPriceX96,
+                strategyParams_,
+                uniV3Nft,
+                positionManager_
+            );
+        }
         TokenAmounts memory currentTokenAmounts = hStrategyHelper_.calculateCurrentTokenAmounts(
             erc20Vault,
             moneyVault,
@@ -297,10 +360,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         TokenAmounts memory expectedTokenAmounts;
         {
             {
-                ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(
-                    strategyParams_,
-                    domainPositionParams
-                );
+                RatioParams memory ratioParams_ = ratioParams;
+                ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
                 TokenAmountsInToken0 memory expectedTokenAmountsInToken0;
                 {
                     TokenAmountsInToken0 memory currentTokenAmountsInToken0 = hStrategyHelper_
@@ -308,7 +369,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                     expectedTokenAmountsInToken0 = hStrategyHelper_.calculateExpectedTokenAmountsInToken0(
                         currentTokenAmountsInToken0,
                         expectedRatios,
-                        strategyParams_
+                        ratioParams_
                     );
                 }
 
@@ -319,11 +380,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 );
             }
 
-            actualPulledAmounts.pulledFromMoneyVault = _pullExtraTokensFromMoneyVault(
+            (actualPulledAmounts.pulledFromUniV3Vault, actualPulledAmounts.pulledFromMoneyVault) = _pullExtraTokens(
                 hStrategyHelper_,
                 expectedTokenAmounts,
                 restrictions,
-                moneyVaultOptions
+                moneyVaultOptions,
+                domainPositionParams
             );
         }
 
@@ -333,7 +395,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             domainPositionParams
         );
 
-        if (_swapIsNeeded()) {
+        if (_hStrategyHelper.swapNeeded(missingTokenAmounts, expectedTokenAmounts, erc20Vault)) {
             actualPulledAmounts.swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
         }
 
@@ -344,12 +406,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         );
     }
 
-    // -------------------  INTERNAL, MUTATING  -------------------
-
-    function _swapIsNeeded() internal returns (bool needed) {
-        // TODO:
-        return true;
-    }
+    // -------------------  INTERNAL  -------------------
 
     function _swapTokens(
         TokenAmounts memory expectedTokenAmounts,
@@ -377,23 +434,48 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
     }
 
-    function _pullExtraTokensFromMoneyVault(
+    function _pullExtraTokens(
         HStrategyHelper hStrategyHelper_,
         TokenAmounts memory expectedTokenAmounts,
         RebalanceRestrictions memory restrictions,
-        bytes memory moneyVaultOptions
-    ) internal returns (uint256[] memory pulledAmounts) {
-        (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForMoneyVault(
-            moneyVault,
-            expectedTokenAmounts
-        );
+        bytes memory moneyVaultOptions,
+        DomainPositionParams memory domainPositionParams
+    ) internal returns (uint256[] memory pulledFromUniV3VaultAmounts, uint256[] memory pulledFromMoneyVaultAmounts) {
+        {
+            IUniV3Vault vault_ = uniV3Vault;
+            (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForUniV3Vault(
+                expectedTokenAmounts,
+                domainPositionParams
+            );
 
-        uint256[] memory extraTokenAmountsForPull = new uint256[](2);
-        if (token0Amount > 0 || token1Amount > 0) {
-            extraTokenAmountsForPull[0] = token0Amount;
-            extraTokenAmountsForPull[1] = token1Amount;
-            pulledAmounts = moneyVault.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, moneyVaultOptions);
-            _compareAmounts(restrictions.pulledFromMoneyVault, pulledAmounts);
+            uint256[] memory extraTokenAmountsForPull = new uint256[](2);
+            if (token0Amount > 0 || token1Amount > 0) {
+                extraTokenAmountsForPull[0] = token0Amount;
+                extraTokenAmountsForPull[1] = token1Amount;
+                pulledFromUniV3VaultAmounts = vault_.pull(address(erc20Vault), tokens, extraTokenAmountsForPull, "");
+                _compareAmounts(restrictions.pulledFromUniV3Vault, pulledFromUniV3VaultAmounts);
+            }
+        }
+
+        {
+            IIntegrationVault vault_ = moneyVault;
+            (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForMoneyVault(
+                vault_,
+                expectedTokenAmounts
+            );
+
+            uint256[] memory extraTokenAmountsForPull = new uint256[](2);
+            if (token0Amount > 0 || token1Amount > 0) {
+                extraTokenAmountsForPull[0] = token0Amount;
+                extraTokenAmountsForPull[1] = token1Amount;
+                pulledFromMoneyVaultAmounts = vault_.pull(
+                    address(erc20Vault),
+                    tokens,
+                    extraTokenAmountsForPull,
+                    moneyVaultOptions
+                );
+                _compareAmounts(restrictions.pulledFromMoneyVault, pulledFromMoneyVaultAmounts);
+            }
         }
     }
 
@@ -438,8 +520,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 upperTick = 0;
 
         int24 intervalWidth = strategyParams_.widthTicks * strategyParams_.widthCoefficient;
-        LastShortInterval memory lastInterval = lastShortInterval;
-        if (lastInterval.lowerTick == lastInterval.upperTick || true) {
+        {
             // in this case it is first mint
             int24 deltaToLowerTick = averageTick - strategyParams_.globalLowerTick;
             deltaToLowerTick -= (deltaToLowerTick % intervalWidth);
@@ -463,17 +544,18 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 lowerTick = upperTick - 2 * intervalWidth;
             }
         }
-        // else if (averageTick < lastInterval.lowerTick) {
-        //     lowerTick = lastInterval.lowerTick - intervalWidth;
-        //     upperTick = lastInterval.lowerTick + intervalWidth;
-        // } else if (averageTick > lastInterval.upperTick) {
-        //     lowerTick = lastInterval.upperTick - intervalWidth;
-        //     upperTick = lastInterval.upperTick + intervalWidth;
-        // }
+
         lastShortInterval = LastShortInterval({lowerTick: lowerTick, upperTick: upperTick});
 
-        IERC20(tokens[0]).safeApprove(address(positionManager_), strategyParams_.minToken0ForOpening);
-        IERC20(tokens[1]).safeApprove(address(positionManager_), strategyParams_.minToken1ForOpening);
+        uint256 minToken0ForOpening;
+        uint256 minToken1ForOpening;
+        {
+            MintingParams memory mintingParams_ = mintingParams;
+            minToken0ForOpening = mintingParams_.minToken0ForOpening;
+            minToken1ForOpening = mintingParams_.minToken1ForOpening;
+        }
+        IERC20(tokens[0]).safeApprove(address(positionManager_), minToken0ForOpening);
+        IERC20(tokens[1]).safeApprove(address(positionManager_), minToken1ForOpening);
         (newNft, , , ) = positionManager_.mint(
             INonfungiblePositionManager.MintParams({
                 token0: tokens[0],
@@ -481,8 +563,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 fee: pool_.fee(),
                 tickLower: lowerTick,
                 tickUpper: upperTick,
-                amount0Desired: strategyParams_.minToken0ForOpening,
-                amount1Desired: strategyParams_.minToken1ForOpening,
+                amount0Desired: minToken0ForOpening,
+                amount1Desired: minToken1ForOpening,
                 amount0Min: 0,
                 amount1Min: 0,
                 recipient: address(this),
@@ -512,23 +594,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         _compareAmounts(burnAmounts, tokenAmounts);
         emit BurnUniV3Position(tx.origin, uniV3Nft);
-    }
-
-    struct DomainPositionParams {
-        uint256 nft;
-        uint128 liquidity;
-        int24 lowerTick;
-        int24 upperTick;
-        int24 lower0Tick;
-        int24 upper0Tick;
-        int24 averageTick;
-        uint160 lowerPriceSqrtX96;
-        uint160 upperPriceSqrtX96;
-        uint160 lower0PriceSqrtX96;
-        uint160 upper0PriceSqrtX96;
-        uint160 averagePriceSqrtX96;
-        uint256 averagePriceX96;
-        uint160 spotPriceSqrtX96;
     }
 
     function _swapTokensOnERC20Vault(
@@ -599,9 +664,27 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param swapParams Swap domainPositionParams
     event SwapTokensOnERC20Vault(address indexed origin, ISwapRouter.ExactInputSingleParams swapParams);
 
-    /// @notice Emitted when Strategy domainPositionParams are set.
+    /// @notice Emitted when Strategy strategyParams are set.
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    /// @param domainPositionParams Updated domainPositionParams
-    event UpdateStrategyParams(address indexed origin, address indexed sender, StrategyParams domainPositionParams);
+    /// @param strategyParams Updated strategyParams
+    event UpdateStrategyParams(address indexed origin, address indexed sender, StrategyParams strategyParams);
+
+    /// @notice Emitted when Strategy mintingParams are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param mintingParams Updated mintingParams
+    event UpdateMintingParams(address indexed origin, address indexed sender, MintingParams mintingParams);
+
+    /// @notice Emitted when Strategy oracleParams are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param oracleParams Updated oracleParams
+    event UpdateOracleParams(address indexed origin, address indexed sender, OracleParams oracleParams);
+
+    /// @notice Emitted when Strategy ratioParams are set.
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param ratioParams Updated ratioParams
+    event UpdateRatioParams(address indexed origin, address indexed sender, RatioParams ratioParams);
 }
