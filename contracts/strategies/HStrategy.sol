@@ -395,7 +395,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             domainPositionParams
         );
 
-        if (_hStrategyHelper.swapNeeded(missingTokenAmounts, expectedTokenAmounts, erc20Vault)) {
+        if (_hStrategyHelper.swapNeeded(missingTokenAmounts, expectedTokenAmounts, erc20Vault, ratioParams)) {
             actualPulledAmounts.swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
         }
 
