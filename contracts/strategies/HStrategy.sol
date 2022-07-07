@@ -236,7 +236,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         lastRebalanceTimestamp = currentTimestamp;
     }
 
-    function rebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
+    function positionRebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
         external
         returns (RebalanceRestrictions memory actualPulledAmounts)
     {
@@ -252,30 +252,43 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             // and we dont have any position
             actualPulledAmounts.burnedAmounts = _burnPosition(restrictions.burnedAmounts, uniV3Nft);
         }
-        DomainPositionParams memory domainPositionParams;
-        HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
-        {
-            (int24 averageTick, uint160 sqrtSpotPriceX96, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                pool_,
-                strategyParams_.oracleObservationDelta
-            );
-            uniV3Nft = _mintPosition(
-                strategyParams_,
-                pool_,
-                restrictions.deadline,
-                positionManager_,
-                averageTick,
-                uniV3Nft
-            );
 
-            domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-                averageTick,
-                sqrtSpotPriceX96,
-                strategyParams_,
-                uniV3Nft,
-                positionManager_
-            );
-        }
+        (int24 averageTick, , ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            pool_,
+            strategyParams_.oracleObservationDelta
+        );
+        uniV3Nft = _mintPosition(
+            strategyParams_,
+            pool_,
+            restrictions.deadline,
+            positionManager_,
+            averageTick,
+            uniV3Nft
+        );
+        actualPulledAmounts = tokenRebalance(restrictions, moneyVaultOptions);
+    }
+
+    function tokenRebalance(RebalanceRestrictions memory restrictions, bytes memory moneyVaultOptions)
+        public
+        returns (RebalanceRestrictions memory actualPulledAmounts)
+    {
+        INonfungiblePositionManager positionManager_ = positionManager;
+        StrategyParams memory strategyParams_ = strategyParams;
+        IUniswapV3Pool pool_ = pool;
+        HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
+        uint256 uniV3Nft = uniV3Vault.uniV3Nft();
+        require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
+        (int24 averageTick, uint160 sqrtSpotPriceX96, ) = _uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            pool_,
+            strategyParams_.oracleObservationDelta
+        );
+        DomainPositionParams memory domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
+            averageTick,
+            sqrtSpotPriceX96,
+            strategyParams_,
+            uniV3Nft,
+            positionManager_
+        );
         TokenAmounts memory currentTokenAmounts = hStrategyHelper_.calculateCurrentTokenAmounts(
             erc20Vault,
             moneyVault,
@@ -320,7 +333,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             domainPositionParams
         );
 
-        actualPulledAmounts.swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
+        if (_swapIsNeeded()) {
+            actualPulledAmounts.swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
+        }
 
         (actualPulledAmounts.pulledOnUniV3Vault, actualPulledAmounts.pulledOnMoneyVault) = _pullMissingTokens(
             missingTokenAmounts,
@@ -330,6 +345,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
+
+    function _swapIsNeeded() internal returns (bool needed) {
+        // TODO:
+        return true;
+    }
 
     function _swapTokens(
         TokenAmounts memory expectedTokenAmounts,
