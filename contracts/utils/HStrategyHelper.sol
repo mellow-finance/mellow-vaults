@@ -346,4 +346,61 @@ contract HStrategyHelper {
 
         return false;
     }
+
+    function tokenRebalanceNeeded(
+        HStrategy.TokenAmounts memory currentTokenAmounts,
+        HStrategy.TokenAmounts memory expectedTokenAmounts,
+        HStrategy.RatioParams memory ratioParams
+    ) external view returns (bool) {
+        uint256 totalToken0Amount = expectedTokenAmounts.erc20Token0 +
+            expectedTokenAmounts.moneyToken0 +
+            expectedTokenAmounts.uniV3Token0;
+        uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
+            expectedTokenAmounts.moneyToken1 +
+            expectedTokenAmounts.uniV3Token1;
+
+        {
+            uint256 minDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minUniV3RatioDeviation0D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.uniV3Token0 + minDeltaToken0 <= expectedTokenAmounts.uniV3Token0) {
+                return true;
+            }
+        }
+        {
+            uint256 minDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minUniV3RatioDeviation1D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.uniV3Token1 + minDeltaToken1 <= expectedTokenAmounts.uniV3Token1) {
+                return true;
+            }
+        }
+        {
+            uint256 minDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minMoneyRatioDeviation0D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.moneyToken0 + minDeltaToken0 <= expectedTokenAmounts.moneyToken0) {
+                return true;
+            }
+        }
+
+        {
+            uint256 minDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minMoneyRatioDeviation1D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.moneyToken1 + minDeltaToken1 <= expectedTokenAmounts.moneyToken1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

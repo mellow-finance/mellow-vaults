@@ -361,6 +361,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             domainPositionParams
         );
         TokenAmounts memory expectedTokenAmounts;
+
         {
             {
                 RatioParams memory ratioParams_ = ratioParams;
@@ -381,6 +382,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                     expectedTokenAmountsInToken0,
                     domainPositionParams
                 );
+                require(
+                    _hStrategyHelper.tokenRebalanceNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams),
+                    ExceptionsLibrary.INVARIANT
+                );
             }
 
             (actualPulledAmounts.pulledFromUniV3Vault, actualPulledAmounts.pulledFromMoneyVault) = _pullExtraTokens(
@@ -391,7 +396,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 domainPositionParams
             );
         }
-
         TokenAmounts memory missingTokenAmounts = hStrategyHelper_.calculateMissingTokenAmounts(
             moneyVault,
             expectedTokenAmounts,
