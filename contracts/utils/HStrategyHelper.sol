@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
+import "../interfaces/vaults/IUniV3Vault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -11,65 +12,49 @@ import "../strategies/HStrategy.sol";
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
 
-    function calculateExpectedRatios(
-        HStrategy.StrategyParams memory strategyParams_,
-        HStrategy.DomainPositionParams memory domainPositionParams
-    ) external pure returns (HStrategy.ExpectedRatios memory ratios) {
-        if (strategyParams_.simulateUniV3Interval) {
-            uint256 denominatorX96 = CommonLibrary.Q96 *
-                2 -
-                FullMath.mulDiv(
-                    domainPositionParams.lower0PriceSqrtX96,
-                    CommonLibrary.Q96,
-                    domainPositionParams.averagePriceSqrtX96
-                ) -
-                FullMath.mulDiv(
-                    domainPositionParams.averagePriceSqrtX96,
-                    CommonLibrary.Q96,
-                    domainPositionParams.upper0PriceSqrtX96
-                );
-
-            uint256 nominator0X96 = FullMath.mulDiv(
-                domainPositionParams.averagePriceSqrtX96,
-                CommonLibrary.Q96,
-                domainPositionParams.upperPriceSqrtX96
-            ) -
-                FullMath.mulDiv(
-                    domainPositionParams.averagePriceSqrtX96,
-                    CommonLibrary.Q96,
-                    domainPositionParams.upper0PriceSqrtX96
-                );
-
-            uint256 nominator1X96 = FullMath.mulDiv(
-                domainPositionParams.lowerPriceSqrtX96,
+    function calculateExpectedRatios(HStrategy.DomainPositionParams memory domainPositionParams)
+        external
+        pure
+        returns (HStrategy.ExpectedRatios memory ratios)
+    {
+        uint256 denominatorX96 = CommonLibrary.Q96 *
+            2 -
+            FullMath.mulDiv(
+                domainPositionParams.lower0PriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.averagePriceSqrtX96
             ) -
-                FullMath.mulDiv(
-                    domainPositionParams.lower0PriceSqrtX96,
-                    CommonLibrary.Q96,
-                    domainPositionParams.averagePriceSqrtX96
-                );
+            FullMath.mulDiv(
+                domainPositionParams.averagePriceSqrtX96,
+                CommonLibrary.Q96,
+                domainPositionParams.upper0PriceSqrtX96
+            );
 
-            ratios.token0RatioD = uint32(FullMath.mulDiv(nominator0X96, DENOMINATOR, denominatorX96));
-            ratios.token1RatioD = uint32(FullMath.mulDiv(nominator1X96, DENOMINATOR, denominatorX96));
-        } else {
-            ratios.token0RatioD = uint32(
-                FullMath.mulDiv(
-                    domainPositionParams.averagePriceSqrtX96,
-                    DENOMINATOR >> 1,
-                    domainPositionParams.upperPriceSqrtX96
-                )
+        uint256 nominator0X96 = FullMath.mulDiv(
+            domainPositionParams.averagePriceSqrtX96,
+            CommonLibrary.Q96,
+            domainPositionParams.upperPriceSqrtX96
+        ) -
+            FullMath.mulDiv(
+                domainPositionParams.averagePriceSqrtX96,
+                CommonLibrary.Q96,
+                domainPositionParams.upper0PriceSqrtX96
             );
-            ratios.token1RatioD = uint32(
-                FullMath.mulDiv(
-                    domainPositionParams.lowerPriceSqrtX96,
-                    DENOMINATOR >> 1,
-                    domainPositionParams.averagePriceSqrtX96
-                )
+
+        uint256 nominator1X96 = FullMath.mulDiv(
+            domainPositionParams.lowerPriceSqrtX96,
+            CommonLibrary.Q96,
+            domainPositionParams.averagePriceSqrtX96
+        ) -
+            FullMath.mulDiv(
+                domainPositionParams.lower0PriceSqrtX96,
+                CommonLibrary.Q96,
+                domainPositionParams.averagePriceSqrtX96
             );
-        }
-        // remaining part goes to UniV3Vault
+
+        ratios.token0RatioD = uint32(FullMath.mulDiv(nominator0X96, DENOMINATOR, denominatorX96));
+        ratios.token1RatioD = uint32(FullMath.mulDiv(nominator1X96, DENOMINATOR, denominatorX96));
+
         ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
     }
 
@@ -145,6 +130,25 @@ contract HStrategyHelper {
         }
     }
 
+    function calculateExtraTokenAmountsForUniV3Vault(
+        HStrategy.TokenAmounts memory expectedTokenAmounts,
+        HStrategy.DomainPositionParams memory domainPositionParams
+    ) external pure returns (uint256 extraToken0Amount, uint256 extraToken1Amount) {
+        (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+            domainPositionParams.spotPriceSqrtX96,
+            domainPositionParams.lowerPriceSqrtX96,
+            domainPositionParams.upperPriceSqrtX96,
+            domainPositionParams.liquidity
+        );
+
+        if (expectedTokenAmounts.uniV3Token0 < token0Amount) {
+            extraToken0Amount = token0Amount - expectedTokenAmounts.uniV3Token0;
+        }
+        if (expectedTokenAmounts.uniV3Token1 < token1Amount) {
+            extraToken1Amount = token1Amount - expectedTokenAmounts.uniV3Token1;
+        }
+    }
+
     function calculateExtraTokenAmountsForMoneyVault(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts
@@ -192,7 +196,6 @@ contract HStrategyHelper {
             domainPositionParams.averagePriceX96,
             CommonLibrary.Q96
         );
-
         {
             uint256 uniCapitalRatioX96 = FullMath.mulDiv(
                 FullMath.mulDiv(
@@ -264,7 +267,7 @@ contract HStrategyHelper {
     function calculateExpectedTokenAmountsInToken0(
         HStrategy.TokenAmountsInToken0 memory currentTokenAmounts,
         HStrategy.ExpectedRatios memory expectedRatios,
-        HStrategy.StrategyParams memory strategyParams_
+        HStrategy.RatioParams memory ratioParams_
     ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
         amounts.uniV3TokensAmountInToken0 = FullMath.mulDiv(
             currentTokenAmounts.totalTokensInToken0,
@@ -274,12 +277,130 @@ contract HStrategyHelper {
         amounts.totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
         amounts.erc20TokensAmountInToken0 = FullMath.mulDiv(
             amounts.totalTokensInToken0 - amounts.uniV3TokensAmountInToken0,
-            strategyParams_.erc20MoneyRatioD,
+            ratioParams_.erc20MoneyRatioD,
             DENOMINATOR
         );
         amounts.moneyTokensAmountInToken0 =
             amounts.totalTokensInToken0 -
             amounts.uniV3TokensAmountInToken0 -
             amounts.erc20TokensAmountInToken0;
+    }
+
+    function swapNeeded(
+        HStrategy.TokenAmounts memory missingTokenAmounts,
+        HStrategy.TokenAmounts memory expectedTokenAmounts,
+        IIntegrationVault erc20Vault,
+        HStrategy.RatioParams memory ratioParams
+    ) external view returns (bool) {
+        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
+
+        uint256 totalToken0Amount = expectedTokenAmounts.erc20Token0 +
+            expectedTokenAmounts.moneyToken0 +
+            expectedTokenAmounts.uniV3Token0;
+        uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
+            expectedTokenAmounts.moneyToken1 +
+            expectedTokenAmounts.uniV3Token1;
+        {
+            uint256 maxDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minUniV3RatioDeviation0D,
+                DENOMINATOR
+            );
+            if (erc20Tvl[0] + maxDeltaToken0 < missingTokenAmounts.uniV3Token0) {
+                return true;
+            }
+        }
+
+        {
+            uint256 maxDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minUniV3RatioDeviation1D,
+                DENOMINATOR
+            );
+            if (erc20Tvl[0] + maxDeltaToken1 < missingTokenAmounts.uniV3Token1) {
+                return true;
+            }
+        }
+
+        {
+            uint256 maxDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minMoneyRatioDeviation0D,
+                DENOMINATOR
+            );
+            if (erc20Tvl[0] + maxDeltaToken0 < missingTokenAmounts.uniV3Token0 + missingTokenAmounts.moneyToken0) {
+                return true;
+            }
+        }
+
+        {
+            uint256 maxDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minMoneyRatioDeviation1D,
+                DENOMINATOR
+            );
+            if (erc20Tvl[1] + maxDeltaToken1 < missingTokenAmounts.uniV3Token1 + missingTokenAmounts.moneyToken1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function tokenRebalanceNeeded(
+        HStrategy.TokenAmounts memory currentTokenAmounts,
+        HStrategy.TokenAmounts memory expectedTokenAmounts,
+        HStrategy.RatioParams memory ratioParams
+    ) external pure returns (bool) {
+        uint256 totalToken0Amount = expectedTokenAmounts.erc20Token0 +
+            expectedTokenAmounts.moneyToken0 +
+            expectedTokenAmounts.uniV3Token0;
+        uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
+            expectedTokenAmounts.moneyToken1 +
+            expectedTokenAmounts.uniV3Token1;
+
+        {
+            uint256 minDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minUniV3RatioDeviation0D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.uniV3Token0 + minDeltaToken0 <= expectedTokenAmounts.uniV3Token0) {
+                return true;
+            }
+        }
+        {
+            uint256 minDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minUniV3RatioDeviation1D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.uniV3Token1 + minDeltaToken1 <= expectedTokenAmounts.uniV3Token1) {
+                return true;
+            }
+        }
+        {
+            uint256 minDeltaToken0 = FullMath.mulDiv(
+                totalToken0Amount,
+                ratioParams.minMoneyRatioDeviation0D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.moneyToken0 + minDeltaToken0 <= expectedTokenAmounts.moneyToken0) {
+                return true;
+            }
+        }
+
+        {
+            uint256 minDeltaToken1 = FullMath.mulDiv(
+                totalToken1Amount,
+                ratioParams.minMoneyRatioDeviation1D,
+                DENOMINATOR
+            );
+            if (currentTokenAmounts.moneyToken1 + minDeltaToken1 <= expectedTokenAmounts.moneyToken1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

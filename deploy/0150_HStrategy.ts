@@ -127,29 +127,69 @@ const setupStrategy = async (
 
     log("Setting Strategy params");
 
-    const startegyParams = {
+    const strategyParams = {
         widthCoefficient: 15,
         widthTicks: 60,
-        oracleObservationDelta: 150,
-        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-        minToken0ForOpening: BigNumber.from(10).pow(6),
-        minToken1ForOpening: BigNumber.from(10).pow(6),
         globalLowerTick: 23400,
         globalUpperTick: 29700,
         tickNeighborhood: 0,
-        maxTickDeviation: 100,
         simulateUniV3Interval: false, // simulating uniV2 Interval
     };
     const txs: string[] = [];
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("updateStrategyParams", [
-            startegyParams,
+            strategyParams,
         ])
     );
 
     log(
         `Strategy Params:`,
-        map((x) => x.toString(), startegyParams)
+        map((x) => x.toString(), strategyParams)
+    );
+
+    const oracleParams = {
+        oracleObservationDelta: 150,
+        maxTickDeviation: 100,
+    };
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("updateOracleParams", [
+            oracleParams,
+        ])
+    );
+    log(
+        `Oracle Params:`,
+        map((x) => x.toString(), oracleParams)
+    );
+
+    const ratioParams = {
+        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
+        minUniV3RatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
+        minUniV3RatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
+        minMoneyRatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
+        minMoneyRatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
+    };
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("updateRatioParams", [
+            ratioParams,
+        ])
+    );
+    log(
+        `Ratio Params:`,
+        map((x) => x.toString(),ratioParams)
+    );
+
+    const mintingParams = {
+        minToken0ForOpening: BigNumber.from(10).pow(6),
+        minToken1ForOpening: BigNumber.from(10).pow(6),
+    };
+    txs.push(
+        hStrategyWethUsdc.interface.encodeFunctionData("updateMintingParams", [
+            mintingParams,
+        ])
+    );
+    log(
+        `Minting Params:`,
+        map((x) => x.toString(), mintingParams)
     );
 
     log("Transferring ownership to mStrategyAdmin");
