@@ -237,7 +237,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function updateOracleParams(OracleParams calldata newOracleParams) external {
         _requireAdmin();
         require(
-            newOracleParams.oracleObservationDelta > 0 && newOracleParams.maxTickDeviation > 0,
+            newOracleParams.oracleObservationDelta > 0 &&
+                newOracleParams.maxTickDeviation > 0 &&
+                newOracleParams.maxTickDeviation <= uint24(TickMath.MAX_TICK),
             ExceptionsLibrary.INVARIANT
         );
         oracleParams = newOracleParams;
@@ -251,7 +253,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 newRatioParams.minUniV3RatioDeviation0D <= DENOMINATOR &&
                 newRatioParams.minUniV3RatioDeviation1D <= DENOMINATOR &&
                 newRatioParams.minMoneyRatioDeviation0D <= DENOMINATOR &&
-                newRatioParams.minMoneyRatioDeviation1D <= DENOMINATOR,
+                newRatioParams.minMoneyRatioDeviation1D <= DENOMINATOR &&
+                newRatioParams.erc20MoneyRatioD > 0,
             ExceptionsLibrary.INVARIANT
         );
         ratioParams = newRatioParams;

@@ -36,10 +36,14 @@ import {
     MockHStrategy,
     StrategyParamsStruct,
     TokenAmountsStruct,
+    RatioParamsStruct,
 } from "./types/MockHStrategy";
 import Exceptions from "./library/Exceptions";
 import { TickMath } from "@uniswap/v3-sdk";
-import { RebalanceRestrictionsStruct } from "./types/HStrategy";
+import {
+    OracleParamsStruct,
+    RebalanceRestrictionsStruct,
+} from "./types/HStrategy";
 import {
     DomainPositionParamsStruct,
     ExpectedRatiosStruct,
@@ -229,23 +233,57 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 const strategyParams = {
                     widthCoefficient: 15,
                     widthTicks: 60,
-                    oracleObservationDelta: 150,
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
                     globalLowerTick: 23400,
                     globalUpperTick: 29700,
                     tickNeighborhood: 0,
-                    maxTickDeviation: 100,
                     simulateUniV3Interval: false, // simulating uniV2 Interval
                 };
                 this.strategyParams = strategyParams;
+
+                const oracleParams = {
+                    oracleObservationDelta: 150,
+                    maxTickDeviation: 100,
+                };
+                this.oracleParams = oracleParams;
+
+                const ratioParams = {
+                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
+                    minUniV3RatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
+                    minUniV3RatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
+                    minMoneyRatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
+                    minMoneyRatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
+                };
+                this.ratioParams = ratioParams;
+
+                const mintingParams = {
+                    minToken0ForOpening: BigNumber.from(10).pow(6),
+                    minToken1ForOpening: BigNumber.from(10).pow(6),
+                };
+                this.mintingParams = mintingParams;
 
                 let txs: string[] = [];
                 txs.push(
                     this.subject.interface.encodeFunctionData(
                         "updateStrategyParams",
                         [strategyParams]
+                    )
+                );
+                txs.push(
+                    this.subject.interface.encodeFunctionData(
+                        "updateOracleParams",
+                        [oracleParams]
+                    )
+                );
+                txs.push(
+                    this.subject.interface.encodeFunctionData(
+                        "updateRatioParams",
+                        [ratioParams]
+                    )
+                );
+                txs.push(
+                    this.subject.interface.encodeFunctionData(
+                        "updateMintingParams",
+                        [mintingParams]
                     )
                 );
                 await this.subject
@@ -335,11 +373,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 this.getPositionParams = async () => {
                     const strategyParams = await this.subject.strategyParams();
+                    const oracleParams = await this.subject.oracleParams();
                     const pool = await this.subject.pool();
                     const priceInfo =
                         await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
                             pool,
-                            strategyParams.oracleObservationDelta
+                            oracleParams.oracleObservationDelta
                         );
                     return await this.hStrategyHelper.calculateDomainPositionParams(
                         priceInfo.averageTick,
@@ -435,7 +474,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#updateStrategyParams", () => {
+    describe.only("#updateParams", () => {
         it("set new strategy parameters", async () => {
             await expect(
                 this.subject.connect(this.mStrategyAdmin).updateStrategyParams({
@@ -469,8 +508,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
+                        .updateOracleParams({
+                            ...this.oracleParams,
                             oracleObservationDelta: 0,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -479,8 +518,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
+                        .updateRatioParams({
+                            ...this.ratioParams,
                             erc20MoneyRatioD: 0,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -489,8 +528,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
+                        .updateRatioParams({
+                            ...this.ratioParams,
                             erc20MoneyRatioD: DENOMINATOR.add(1),
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -499,8 +538,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
+                        .updateMintingParams({
+                            ...this.mintingParams,
                             minToken0ForOpening: 0,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -509,8 +548,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
+                        .updateMintingParams({
+                            ...this.mintingParams,
                             minToken1ForOpening: 0,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
@@ -591,21 +630,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
+                        .updateOracleParams({
+                            ...this.oracleParams,
                             maxTickDeviation: TickMath.MAX_TICK + 1,
-                        } as StrategyParamsStruct)
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-
-            it("when maxTickDeviation < 0, then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
-                            maxTickDeviation: -1,
-                        } as StrategyParamsStruct)
+                        } as OracleParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
 
@@ -932,10 +960,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         upperPriceSqrtX96 <= upper0PriceSqrtX96
                 );
                 var strategyParams = this.strategyParams;
-                strategyParams.simulateUniV3Interval = true;
                 const { token0RatioD, token1RatioD, uniV3RatioD } =
                     await this.hStrategyHelper.callStatic.calculateExpectedRatios(
-                        strategyParams,
                         {
                             nft: 0,
                             liquidity: 0,
@@ -997,61 +1023,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 expect(expectedToken1RatioD.sub(token1RatioD).abs()).lte(
                     expectedToken1RatioD.div(10000)
                 );
-            }
-        });
-
-        it("correctly calculates the ratio of tokens according to the specification for UniV2 interval simulating", async () => {
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    ...this.strategyParams,
-                } as StrategyParamsStruct);
-
-            for (var i = 0; i < 10; i++) {
-                var lowerTick = randomInt(10000);
-                var upperTick = lowerTick + randomInt(10000) + 1;
-                var averageTick = lowerTick + randomInt(upperTick - lowerTick);
-                const lowerPriceSqrtX96 = this.getSqrtRatioAtTick(lowerTick);
-                const upperPriceSqrtX96 = this.getSqrtRatioAtTick(upperTick);
-                const averagePriceSqrtX96 =
-                    this.getSqrtRatioAtTick(averageTick);
-                var strategyParams = this.strategyParams;
-                strategyParams.simulateUniV3Interval = false;
-                const { token0RatioD, token1RatioD, uniV3RatioD } =
-                    await this.hStrategyHelper.callStatic.calculateExpectedRatios(
-                        strategyParams,
-                        {
-                            nft: 0,
-                            liquidity: 0,
-                            lowerTick: 0,
-                            upperTick: 0,
-                            lower0Tick: 0,
-                            upper0Tick: 0,
-                            averageTick: 0,
-                            lowerPriceSqrtX96: lowerPriceSqrtX96,
-                            upperPriceSqrtX96: upperPriceSqrtX96,
-                            lower0PriceSqrtX96: 0,
-                            upper0PriceSqrtX96: 0,
-                            averagePriceSqrtX96: averagePriceSqrtX96,
-                            averagePriceX96: 0,
-                            spotPriceSqrtX96: 0,
-                        } as DomainPositionParamsStruct
-                    );
-
-                const expectedToken0RatioD = DENOMINATOR.mul(
-                    averagePriceSqrtX96
-                )
-                    .div(upperPriceSqrtX96)
-                    .div(2);
-                const expectedToken1RatioD = DENOMINATOR.mul(lowerPriceSqrtX96)
-                    .div(averagePriceSqrtX96)
-                    .div(2);
-
-                expect(token0RatioD + token1RatioD + uniV3RatioD).to.be.eq(
-                    DENOMINATOR.toNumber()
-                );
-                expect(expectedToken0RatioD.sub(token0RatioD).abs()).lte(1);
-                expect(expectedToken1RatioD.sub(token1RatioD).abs()).lte(1);
             }
         });
     });
@@ -1149,20 +1120,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     ratios.token1RatioD
                 );
 
-                var strategyParams = {
-                    widthCoefficient: 1,
-                    widthTicks: 0,
-                    oracleObservationDelta: 300,
+                const ratioParams = {
+                    ...this.ratioParams,
                     erc20MoneyRatioD: BigNumber.from(10)
                         .pow(7)
                         .mul(randomInt(100)),
-                    minToken0ForOpening: BigNumber.from(10).pow(6),
-                    minToken1ForOpening: BigNumber.from(10).pow(6),
-                    globalLowerTick: 0,
-                    globalUpperTick: 30000,
-                    tickNeighborhood: 0,
-                    maxTickDeviation: 100,
-                    simulateUniV3Interval: false,
                 };
 
                 const {
@@ -1173,7 +1135,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 } = await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     tokenAmounts,
                     ratios,
-                    strategyParams
+                    ratioParams
                 );
 
                 expect(totalTokensInToken0).to.be.eq(
@@ -1190,10 +1152,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     );
 
                 expect(realRatio).to.be.lte(
-                    strategyParams.erc20MoneyRatioD.add(10)
+                    ratioParams.erc20MoneyRatioD.add(10)
                 );
                 expect(realRatio).to.be.gte(
-                    strategyParams.erc20MoneyRatioD.sub(10)
+                    ratioParams.erc20MoneyRatioD.sub(10)
                 );
             }
         });
@@ -1537,11 +1499,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
 
         const actualExpectedTokenAmounts = async (
-            strategyParams: StrategyParamsStruct
+            ratioParams: RatioParamsStruct
         ) => {
             const positionParams = await this.getPositionParams();
             const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                strategyParams,
                 positionParams
             );
             const currentAmounts =
@@ -1559,7 +1520,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     currentAmountsInToken0,
                     ratios,
-                    strategyParams
+                    ratioParams
                 );
             return await this.hStrategyHelper.calculateExpectedTokenAmounts(
                 ratios,
@@ -1569,11 +1530,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         };
 
         const requiredExpectedTokenAmounts = async (
-            strategyParams: StrategyParamsStruct
+            ratioParams: RatioParamsStruct
         ) => {
             const positionParams = await this.getPositionParams();
             const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                strategyParams,
                 positionParams
             );
             const currentAmounts =
@@ -1591,7 +1551,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     currentAmountsInToken0,
                     ratios,
-                    strategyParams
+                    ratioParams
                 );
             const erc20Token0 = expectedInToken0.erc20TokensAmountInToken0
                 .mul(ratios.token0RatioD)
@@ -1637,9 +1597,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         };
 
         const compareExpectedAmounts = async () => {
-            const strategyParams = await this.subject.strategyParams();
-            const required = await requiredExpectedTokenAmounts(strategyParams);
-            const actual = await actualExpectedTokenAmounts(strategyParams);
+            const ratioParams = await this.subject.ratioParams();
+            const required = await requiredExpectedTokenAmounts(ratioParams);
+            const actual = await actualExpectedTokenAmounts(ratioParams);
             expect(
                 BigNumber.from(required.erc20Token0)
                     .sub(actual.erc20Token0)
@@ -1700,8 +1660,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
         const compareCurrentAndExpected = async () => {
             const positionParams = await this.getPositionParams();
-            const strategyParams = await this.subject.strategyParams();
-            const expected = await actualExpectedTokenAmounts(strategyParams);
+            const ratioParams = await this.subject.ratioParams();
+            const expected = await actualExpectedTokenAmounts(ratioParams);
             const totalCapital0 = expected.erc20Token0
                 .add(expected.moneyToken0)
                 .add(expected.uniV3Token0);
@@ -1777,7 +1737,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
 
         const checkExtraAmounts = async () => {
-            const strategyParams = await this.subject.strategyParams();
+            const ratioParams = await this.subject.ratioParams();
             const position = await this.getPositionParams();
             const currentAmounts =
                 await this.hStrategyHelper.calculateCurrentTokenAmounts(
@@ -1791,14 +1751,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     currentAmounts
                 );
             const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                strategyParams,
                 position
             );
             const amountsInToken0 =
                 await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     currentAmountsInToken0,
                     ratios,
-                    strategyParams
+                    ratioParams
                 );
             const expectedAmounts =
                 await this.hStrategyHelper.calculateExpectedTokenAmounts(
@@ -1884,7 +1843,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
 
         const checkMissingAmounts = async () => {
-            const strategyParams = await this.subject.strategyParams();
+            const ratioParams = await this.subject.ratioParams();
             const position = await this.getPositionParams();
             const currentAmounts =
                 await this.hStrategyHelper.calculateCurrentTokenAmounts(
@@ -1898,14 +1857,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     currentAmounts
                 );
             const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                strategyParams,
                 position
             );
             const amountsInToken0 =
                 await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     currentAmountsInToken0,
                     ratios,
-                    strategyParams
+                    ratioParams
                 );
             const expectedAmounts =
                 await this.hStrategyHelper.calculateExpectedTokenAmounts(
@@ -2024,7 +1982,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
 
         const getSwapParams = async () => {
-            const strategyParams = await this.subject.strategyParams();
+            const ratioParams = await this.subject.ratioParams();
             const position = await this.getPositionParams();
             const currentAmounts =
                 await this.hStrategyHelper.calculateCurrentTokenAmounts(
@@ -2038,14 +1996,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     currentAmounts
                 );
             const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                strategyParams,
                 position
             );
             const amountsInToken0 =
                 await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
                     currentAmountsInToken0,
                     ratios,
-                    strategyParams
+                    ratioParams
                 );
             const expectedAmounts =
                 await this.hStrategyHelper.calculateExpectedTokenAmounts(
@@ -2071,6 +2028,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             ethers.constants.Zero,
                         ],
                         pulledFromMoneyVault: [
+                            ethers.constants.Zero,
+                            ethers.constants.Zero,
+                        ],
+                        pulledFromUniV3Vault: [
                             ethers.constants.Zero,
                             ethers.constants.Zero,
                         ],
@@ -2103,6 +2064,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             ethers.constants.Zero,
                         ],
                         pulledFromMoneyVault: [
+                            ethers.constants.Zero,
+                            ethers.constants.Zero,
+                        ],
+                        pulledFromUniV3Vault: [
                             ethers.constants.Zero,
                             ethers.constants.Zero,
                         ],
