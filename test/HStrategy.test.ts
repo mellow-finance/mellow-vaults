@@ -39,7 +39,7 @@ import {
     RatioParamsStruct,
 } from "./types/MockHStrategy";
 import Exceptions from "./library/Exceptions";
-import { TickMath } from "@uniswap/v3-sdk";
+import { LiquidityMath, Tick, TickMath } from "@uniswap/v3-sdk";
 import {
     OracleParamsStruct,
     RebalanceRestrictionsStruct,
@@ -961,8 +961,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     ...this.strategyParams,
                     widthCoefficient: 1,
                     widthTicks: 60,
-                    globalLowerTick: -870000,
-                    globalUpperTick: 870000,
+                    globalLowerTick: 150000,
+                    globalUpperTick: 210000,
                     simulateUniV3Interval: true,
                 } as StrategyParamsStruct);
             const pullExistentials =
@@ -1065,9 +1065,122 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 .connect(this.admin)
                 .commitDelayedStrategyParams(this.erc20RootVaultNft);
 
+            const compare = (x: BigNumber, y: BigNumber, delta: number) => {
+                return x
+                    .sub(y)
+                    .abs()
+                    .lte((x.lt(y) ? y : x).mul(delta).div(100));
+            };
+
+            const checkState = async () => {
+                const erc20Tvl = (await this.erc20Vault.tvl()).minTokenAmounts;
+                const moneyTvl = (await this.yearnVault.tvl()).minTokenAmounts;
+                const positions = await this.positionManager.positions(
+                    await this.uniV3Vault.uniV3Nft()
+                );
+                const lowerTick = positions.tickLower;
+                const upperTick = positions.tickUpper;
+                const strategyParams = await this.subject.strategyParams();
+                const lower0Tick = strategyParams.globalLowerTick;
+                const upper0Tick = strategyParams.globalUpperTick;
+                const averageTick = await getAverageTick();
+                const averagePriceX96 = getPriceX96(averageTick);
+                const erc20MoneyRatioD = (await this.subject.ratioParams())
+                    .erc20MoneyRatioD;
+                const uniV3Tvl = await this.uniV3Vault.liquidityToTokenAmounts(
+                    positions.liquidity
+                );
+                const sqrtA = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
+                );
+                const sqrtB = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(upperTick).toString()
+                );
+                const sqrtA0 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(lower0Tick).toString()
+                );
+                const sqrtB0 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(upper0Tick).toString()
+                );
+                const sqrtC0 = BigNumber.from(
+                    TickMath.getSqrtRatioAtTick(averageTick).toString()
+                );
+
+                // devide all by sqrtC0
+                const getWxD = () => {
+                    const nominatorX96 = Q96.mul(sqrtC0)
+                        .div(sqrtB)
+                        .sub(Q96.mul(sqrtC0).div(sqrtB0));
+                    const denominatorX96 = Q96.mul(2)
+                        .sub(Q96.mul(sqrtA0).div(sqrtC0))
+                        .sub(Q96.mul(sqrtC0).div(sqrtB0));
+                    return nominatorX96.mul(DENOMINATOR).div(denominatorX96);
+                };
+
+                const getWyD = () => {
+                    const nominatorX96 = Q96.mul(sqrtA)
+                        .div(sqrtC0)
+                        .sub(Q96.mul(sqrtA0).div(sqrtC0));
+                    const denominatorX96 = Q96.mul(2)
+                        .sub(Q96.mul(sqrtA0).div(sqrtC0))
+                        .sub(Q96.mul(sqrtC0).div(sqrtB0));
+                    return nominatorX96.mul(DENOMINATOR).div(denominatorX96);
+                };
+
+                const wxD = getWxD();
+                const wyD = getWyD();
+                const wUniD = DENOMINATOR.sub(wxD).sub(wyD);
+
+                // total tvl:
+                const totalToken0 = erc20Tvl[0]
+                    .add(moneyTvl[0])
+                    .add(uniV3Tvl[0]);
+                const totalToken1 = erc20Tvl[1]
+                    .add(moneyTvl[1])
+                    .add(uniV3Tvl[1]);
+
+                const totalCapital = totalToken0.add(
+                    totalToken1.mul(Q96).div(averagePriceX96)
+                );
+
+                const xCapital = totalCapital.mul(wxD).div(DENOMINATOR);
+                const yCapital = totalCapital
+                    .mul(wyD)
+                    .div(DENOMINATOR)
+                    .mul(averagePriceX96)
+                    .div(Q96);
+
+                const uniV3Capital = totalCapital.mul(wUniD).div(DENOMINATOR);
+
+                const expectedErc20Token0 = xCapital
+                    .mul(erc20MoneyRatioD)
+                    .div(DENOMINATOR);
+                const expectedErc20Token1 = yCapital
+                    .mul(erc20MoneyRatioD)
+                    .div(DENOMINATOR);
+
+                const expectedMoneyToken0 = xCapital.sub(expectedErc20Token0);
+                const expectedMoneyToken1 = yCapital.sub(expectedErc20Token1);
+
+                const currentUniV3Capital = uniV3Tvl[0].add(
+                    uniV3Tvl[1].mul(Q96).div(averagePriceX96)
+                );
+
+                expect(compare(expectedErc20Token0, erc20Tvl[0], 10)).to.be
+                    .true;
+                expect(compare(expectedErc20Token1, erc20Tvl[1], 10)).to.be
+                    .true;
+                expect(compare(expectedMoneyToken0, moneyTvl[0], 10)).to.be
+                    .true;
+                expect(compare(expectedMoneyToken1, moneyTvl[1], 10)).to.be
+                    .true;
+                expect(compare(uniV3Capital, currentUniV3Capital, 10)).to.be
+                    .true;
+            };
+
             const interationsNumber = 10;
             for (var i = 0; i < interationsNumber; i++) {
-                if (i > 0) {
+                {
                     if (Math.random() < 0.5) {
                         const initialTick = await getSpotTick();
                         var currentTick = initialTick;
@@ -1111,6 +1224,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             .mul(Q96)
                             .div(spotPriceX96)
                     );
+
+                await checkState();
             }
             await this.uniV3Vault.collectEarnings();
             const tvlAfter = (await this.erc20RootVault.tvl()).minTokenAmounts;
