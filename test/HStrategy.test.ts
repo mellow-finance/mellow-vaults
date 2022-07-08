@@ -297,6 +297,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.subject.address,
                     this.deployer.address
                 );
+                this.erc20RootVaultNft = erc20RootVaultNft;
 
                 const erc20RootVault = await read(
                     "VaultRegistry",
@@ -432,7 +433,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         await this.deploymentFixture();
     });
 
-    describe.only("#constructor", () => {
+    describe("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
                 ethers.constants.AddressZero
@@ -440,7 +441,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#createStrategy", () => {
+    describe("#createStrategy", () => {
         it("creates a new strategy and initializes it", async () => {
             const address = await this.subject
                 .connect(this.mStrategyAdmin)
@@ -474,7 +475,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#updateParams", () => {
+    describe("#updateParams", () => {
         it("set new strategy parameters", async () => {
             await expect(
                 this.subject.connect(this.mStrategyAdmin).updateStrategyParams({
@@ -647,7 +648,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#manualPull", () => {
+    describe("#manualPull", () => {
         it("pulls token amounts from fromVault to toVault", async () => {
             let amountWETH = randomInt(10 ** 4, 10 ** 6);
             let amountUSDC = randomInt(10 ** 4, 10 ** 6);
@@ -779,7 +780,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         }
     };
 
-    describe.only("#rebalance", () => {
+    describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -952,9 +953,157 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
         });
+
+        it.only("tvl chanages only on fees", async () => {
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .updateStrategyParams({
+                    ...this.strategyParams,
+                    widthCoefficient: 1,
+                    widthTicks: 60,
+                    globalLowerTick: -870000,
+                    globalUpperTick: 870000,
+                    simulateUniV3Interval: true,
+                } as StrategyParamsStruct);
+            const pullExistentials =
+                await this.erc20RootVault.pullExistentials();
+            for (var i = 0; i < 2; i++) {
+                await this.tokens[i].approve(
+                    this.erc20RootVault.address,
+                    pullExistentials[i].mul(10)
+                );
+            }
+
+            await mint(
+                "USDC",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
+            await mint(
+                "WETH",
+                this.subject.address,
+                BigNumber.from(10).pow(10)
+            );
+
+            // deposit to zero-vault
+            await this.erc20RootVault.deposit(
+                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
+                0,
+                []
+            );
+
+            // normal deposit
+            await this.erc20RootVault.deposit(
+                [BigNumber.from(10).pow(14), BigNumber.from(10).pow(14)],
+                0,
+                []
+            );
+
+            var restrictions = {
+                pulledOnUniV3Vault: [0, 0],
+                pulledOnMoneyVault: [0, 0],
+                pulledFromUniV3Vault: [0, 0],
+                pulledFromMoneyVault: [0, 0],
+                swappedAmounts: [0, 0],
+                burnedAmounts: [0, 0],
+                deadline: ethers.constants.MaxUint256,
+            } as RebalanceRestrictionsStruct;
+            {
+                const ratioParams = await this.subject.ratioParams();
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .updateRatioParams({
+                        ...ratioParams,
+                        minUniV3RatioDeviation0D: 0,
+                        minUniV3RatioDeviation1D: 0,
+                        minMoneyRatioDeviation0D: 0,
+                        minMoneyRatioDeviation1D: 0,
+                    } as RatioParamsStruct);
+            }
+
+            const getAverageTick = async () => {
+                return (
+                    await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
+                        await this.subject.pool(),
+                        30 * 60
+                    )
+                ).averageTick;
+            };
+
+            await sleep(this.governanceDelay);
+            const tvlBefore = (await this.erc20RootVault.tvl()).minTokenAmounts;
+            const priceBefore = BigNumber.from(
+                TickMath.getSqrtRatioAtTick(await getAverageTick()).toString()
+            )
+                .pow(2)
+                .div(Q96);
+            const capitalBefore = tvlBefore[0].add(
+                tvlBefore[1].mul(Q96).div(priceBefore)
+            );
+
+            await this.erc20RootVaultGovernance
+                .connect(this.admin)
+                .stageDelayedStrategyParams(this.erc20RootVaultNft, {
+                    strategyTreasury: this.erc20Vault.address,
+                    strategyPerformanceTreasury: this.erc20Vault.address,
+                    privateVault: true,
+                    managementFee: 0,
+                    performanceFee: 0,
+                    depositCallbackAddress: ethers.constants.AddressZero,
+                    withdrawCallbackAddress: ethers.constants.AddressZero,
+                });
+            await sleep(this.governanceDelay);
+            await this.erc20RootVaultGovernance
+                .connect(this.admin)
+                .commitDelayedStrategyParams(this.erc20RootVaultNft);
+
+            const interationsNumber = 5;
+            for (var i = 0; i < interationsNumber; i++) {
+                console.log("Iteration:", i);
+                if (Math.random() < 0.5) {
+                    const initialTick = await getAverageTick();
+                    var currentTick = initialTick;
+                    while (Math.abs(currentTick - initialTick) <= 60) {
+                        await push(BigNumber.from(10).pow(13), "USDC");
+                        currentTick = await getAverageTick();
+                    }
+                } else {
+                    const initialTick = await getAverageTick();
+                    var currentTick = initialTick;
+                    while (Math.abs(currentTick - initialTick) <= 60) {
+                        await push(BigNumber.from(10).pow(21), "WETH");
+                        currentTick = await getAverageTick();
+                    }
+                }
+                await sleep(this.governanceDelay);
+                await this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, []);
+            }
+
+            await this.uniV3Vault.collectEarnings();
+            const tvlAfter = (await this.erc20RootVault.tvl()).minTokenAmounts;
+            const priceAfter = BigNumber.from(
+                TickMath.getSqrtRatioAtTick(await getAverageTick()).toString()
+            )
+                .pow(2)
+                .div(Q96);
+            const capitalAfter = tvlAfter[0].add(
+                tvlAfter[1].mul(Q96).div(priceAfter)
+            );
+
+            const capitalDelta = capitalAfter.sub(capitalBefore).abs();
+            expect(
+                capitalDelta.lt(
+                    BigNumber.from(10 ** 6)
+                        .mul(interationsNumber)
+                        .mul(2)
+                )
+            );
+        });
     });
 
-    describe.only("#tokenRebalance", () => {
+    describe("#tokenRebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -1038,7 +1187,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateExpectedRatios", () => {
+    describe("calculateExpectedRatios", () => {
         it("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -1133,7 +1282,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateDomainPositionParams", () => {
+    describe("calculateDomainPositionParams", () => {
         it("correctly calculates parameters of global and short intervals for given position and strategy parameters", async () => {
             for (var i = 0; i < 3; i++) {
                 const lowerTick = 0;
@@ -1202,7 +1351,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateExpectedTokenAmountsInToken0", () => {
+    describe("calculateExpectedTokenAmountsInToken0", () => {
         it("correctly calculates expected token amonuts in token 0", async () => {
             for (var i = 0; i < 3; i++) {
                 var tokenAmounts = {
@@ -1267,7 +1416,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateCurrentTokenAmountsInToken0", () => {
+    describe("calculateCurrentTokenAmountsInToken0", () => {
         it("correctly calculates current token amonuts in token 0", async () => {
             for (var i = 0; i < 3; i++) {
                 const domainParams = {
@@ -1344,7 +1493,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("#calculateCurrentTokenAmounts", () => {
+    describe("#calculateCurrentTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -1586,7 +1735,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateExpectedTokenAmounts", () => {
+    describe("calculateExpectedTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -1824,7 +1973,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateExtraTokenAmountsForMoneyVault", () => {
+    describe("calculateExtraTokenAmountsForMoneyVault", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -1930,7 +2079,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("calculateMissingTokenAmounts", () => {
+    describe("calculateMissingTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
@@ -2061,7 +2210,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe.only("swapTokens", () => {
+    describe("swapTokens", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
             const { nft } = await this.getPositionParams();
