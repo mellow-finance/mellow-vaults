@@ -458,4 +458,16 @@ contract HStrategyHelper {
 
         return false;
     }
+
+    function requireTicksInCurrentPosition(HStrategy.DomainPositionParams memory params) external pure {
+        require(
+            params.lowerPriceSqrtX96 <= params.spotPriceSqrtX96 && params.spotPriceSqrtX96 <= params.upperPriceSqrtX96,
+            ExceptionsLibrary.INVARIANT
+        );
+        require(
+            params.lowerPriceSqrtX96 <= params.averagePriceSqrtX96 &&
+                params.averagePriceSqrtX96 <= params.upperPriceSqrtX96,
+            ExceptionsLibrary.INVARIANT
+        );
+    }
 }

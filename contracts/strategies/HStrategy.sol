@@ -442,6 +442,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 positionManager_
             );
         }
+        hStrategyHelper_.requireTicksInCurrentPosition(domainPositionParams);
         TokenAmounts memory currentTokenAmounts = hStrategyHelper_.calculateCurrentTokenAmounts(
             erc20Vault,
             moneyVault,
@@ -469,10 +470,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                     expectedTokenAmountsInToken0,
                     domainPositionParams
                 );
-                require(
-                    _hStrategyHelper.tokenRebalanceNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams),
-                    ExceptionsLibrary.INVARIANT
-                );
+                if (!_hStrategyHelper.tokenRebalanceNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams)) {
+                    return actualPulledAmounts;
+                }
             }
 
             (actualPulledAmounts.pulledFromUniV3Vault, actualPulledAmounts.pulledFromMoneyVault) = _pullExtraTokens(

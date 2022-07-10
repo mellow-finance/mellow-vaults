@@ -19,7 +19,6 @@ import {
     ISwapRouter as SwapRouterInterface,
     IYearnProtocolVault,
     HStrategyHelper,
-    IUniswapV3Pool,
 } from "./types";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/ISwapRouter.sol/ISwapRouter.json";
@@ -39,7 +38,7 @@ import {
     RatioParamsStruct,
 } from "./types/MockHStrategy";
 import Exceptions from "./library/Exceptions";
-import { LiquidityMath, Tick, TickMath } from "@uniswap/v3-sdk";
+import { TickMath } from "@uniswap/v3-sdk";
 import {
     OracleParamsStruct,
     RebalanceRestrictionsStruct,
@@ -392,7 +391,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 this.getSqrtRatioAtTick = (tick: number) => {
                     return BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(tick).toString()
+                        TickMath.getSqrtRatioAtTick(
+                            BigNumber.from(tick).toNumber()
+                        ).toString()
                     );
                 };
 
@@ -917,14 +918,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     simulateUniV3Interval: true,
                 } as StrategyParamsStruct);
 
-            const pool = await this.subject.pool();
-
-            let uniswapV3Pool: IUniswapV3Pool = await ethers.getContractAt(
-                "IUniswapV3Pool",
-                pool
-            );
             while (true) {
-                let { tick } = await uniswapV3Pool.slot0();
+                let { tick } = await this.pool.slot0();
                 if (tick <= tickUpper + 30) {
                     await push(BigNumber.from(10).pow(20), "WETH");
                     await sleep(this.governanceDelay);
@@ -939,7 +934,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             ).not.to.be.reverted;
 
             while (true) {
-                let { tick } = await uniswapV3Pool.slot0();
+                let { tick } = await this.pool.slot0();
                 if (tick >= tickLower + 30) {
                     await push(BigNumber.from(10).pow(11), "USDC");
                     await sleep(this.governanceDelay);
@@ -952,289 +947,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
-        });
-
-        it.only("tvl chanages only on fees", async () => {
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    ...this.strategyParams,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    globalLowerTick: 150000,
-                    globalUpperTick: 210000,
-                    simulateUniV3Interval: true,
-                } as StrategyParamsStruct);
-            const pullExistentials =
-                await this.erc20RootVault.pullExistentials();
-            for (var i = 0; i < 2; i++) {
-                await this.tokens[i].approve(
-                    this.erc20RootVault.address,
-                    pullExistentials[i].mul(10)
-                );
-            }
-
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-            await mint(
-                "WETH",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-
-            // deposit to zero-vault
-            await this.erc20RootVault.deposit(
-                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
-                0,
-                []
-            );
-
-            // normal deposit
-            await this.erc20RootVault.deposit(
-                [BigNumber.from(10).pow(14), BigNumber.from(10).pow(14)],
-                0,
-                []
-            );
-
-            var restrictions = {
-                pulledOnUniV3Vault: [0, 0],
-                pulledOnMoneyVault: [0, 0],
-                pulledFromUniV3Vault: [0, 0],
-                pulledFromMoneyVault: [0, 0],
-                swappedAmounts: [0, 0],
-                burnedAmounts: [0, 0],
-                deadline: ethers.constants.MaxUint256,
-            } as RebalanceRestrictionsStruct;
-
-            const ratioParams = await this.subject.ratioParams();
-            await this.subject.connect(this.mStrategyAdmin).updateRatioParams({
-                ...ratioParams,
-                minUniV3RatioDeviation0D: 0,
-                minUniV3RatioDeviation1D: 0,
-                minMoneyRatioDeviation0D: 0,
-                minMoneyRatioDeviation1D: 0,
-            } as RatioParamsStruct);
-
-            const getAverageTick = async () => {
-                return (
-                    await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                        await this.subject.pool(),
-                        30 * 60
-                    )
-                ).averageTick;
-            };
-            const getSpotTick = async () => {
-                var { averageTick, deviation } =
-                    await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                        await this.subject.pool(),
-                        30 * 60
-                    );
-                return averageTick + deviation;
-            };
-
-            const getPriceX96 = (tick: number) => {
-                return BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(tick).toString()
-                )
-                    .pow(2)
-                    .div(Q96);
-            };
-
-            await sleep(this.governanceDelay);
-            const tvlBefore = (await this.erc20RootVault.tvl()).minTokenAmounts;
-            var totalCapital = tvlBefore[0].add(
-                tvlBefore[1].mul(Q96).div(getPriceX96(await getSpotTick()))
-            );
-
-            await this.erc20RootVaultGovernance
-                .connect(this.admin)
-                .stageDelayedStrategyParams(this.erc20RootVaultNft, {
-                    strategyTreasury: this.erc20Vault.address,
-                    strategyPerformanceTreasury: this.erc20Vault.address,
-                    privateVault: true,
-                    managementFee: 0,
-                    performanceFee: 0,
-                    depositCallbackAddress: ethers.constants.AddressZero,
-                    withdrawCallbackAddress: ethers.constants.AddressZero,
-                });
-            await sleep(this.governanceDelay);
-            await this.erc20RootVaultGovernance
-                .connect(this.admin)
-                .commitDelayedStrategyParams(this.erc20RootVaultNft);
-
-            const compare = (x: BigNumber, y: BigNumber, delta: number) => {
-                return x
-                    .sub(y)
-                    .abs()
-                    .lte((x.lt(y) ? y : x).mul(delta).div(100));
-            };
-
-            const checkState = async () => {
-                const erc20Tvl = (await this.erc20Vault.tvl()).minTokenAmounts;
-                const moneyTvl = (await this.yearnVault.tvl()).minTokenAmounts;
-                const positions = await this.positionManager.positions(
-                    await this.uniV3Vault.uniV3Nft()
-                );
-                const lowerTick = positions.tickLower;
-                const upperTick = positions.tickUpper;
-                const strategyParams = await this.subject.strategyParams();
-                const lower0Tick = strategyParams.globalLowerTick;
-                const upper0Tick = strategyParams.globalUpperTick;
-                const averageTick = await getAverageTick();
-                const averagePriceX96 = getPriceX96(averageTick);
-                const erc20MoneyRatioD = (await this.subject.ratioParams())
-                    .erc20MoneyRatioD;
-                const uniV3Tvl = await this.uniV3Vault.liquidityToTokenAmounts(
-                    positions.liquidity
-                );
-                const sqrtA = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
-                );
-                const sqrtB = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upperTick).toString()
-                );
-                const sqrtA0 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lower0Tick).toString()
-                );
-                const sqrtB0 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upper0Tick).toString()
-                );
-                const sqrtC0 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(averageTick).toString()
-                );
-
-                // devide all by sqrtC0
-                const getWxD = () => {
-                    const nominatorX96 = Q96.mul(sqrtC0)
-                        .div(sqrtB)
-                        .sub(Q96.mul(sqrtC0).div(sqrtB0));
-                    const denominatorX96 = Q96.mul(2)
-                        .sub(Q96.mul(sqrtA0).div(sqrtC0))
-                        .sub(Q96.mul(sqrtC0).div(sqrtB0));
-                    return nominatorX96.mul(DENOMINATOR).div(denominatorX96);
-                };
-
-                const getWyD = () => {
-                    const nominatorX96 = Q96.mul(sqrtA)
-                        .div(sqrtC0)
-                        .sub(Q96.mul(sqrtA0).div(sqrtC0));
-                    const denominatorX96 = Q96.mul(2)
-                        .sub(Q96.mul(sqrtA0).div(sqrtC0))
-                        .sub(Q96.mul(sqrtC0).div(sqrtB0));
-                    return nominatorX96.mul(DENOMINATOR).div(denominatorX96);
-                };
-
-                const wxD = getWxD();
-                const wyD = getWyD();
-                const wUniD = DENOMINATOR.sub(wxD).sub(wyD);
-
-                // total tvl:
-                const totalToken0 = erc20Tvl[0]
-                    .add(moneyTvl[0])
-                    .add(uniV3Tvl[0]);
-                const totalToken1 = erc20Tvl[1]
-                    .add(moneyTvl[1])
-                    .add(uniV3Tvl[1]);
-
-                const totalCapital = totalToken0.add(
-                    totalToken1.mul(Q96).div(averagePriceX96)
-                );
-
-                const xCapital = totalCapital.mul(wxD).div(DENOMINATOR);
-                const yCapital = totalCapital
-                    .mul(wyD)
-                    .div(DENOMINATOR)
-                    .mul(averagePriceX96)
-                    .div(Q96);
-
-                const uniV3Capital = totalCapital.mul(wUniD).div(DENOMINATOR);
-
-                const expectedErc20Token0 = xCapital
-                    .mul(erc20MoneyRatioD)
-                    .div(DENOMINATOR);
-                const expectedErc20Token1 = yCapital
-                    .mul(erc20MoneyRatioD)
-                    .div(DENOMINATOR);
-
-                const expectedMoneyToken0 = xCapital.sub(expectedErc20Token0);
-                const expectedMoneyToken1 = yCapital.sub(expectedErc20Token1);
-
-                const currentUniV3Capital = uniV3Tvl[0].add(
-                    uniV3Tvl[1].mul(Q96).div(averagePriceX96)
-                );
-
-                expect(compare(expectedErc20Token0, erc20Tvl[0], 10)).to.be
-                    .true;
-                expect(compare(expectedErc20Token1, erc20Tvl[1], 10)).to.be
-                    .true;
-                expect(compare(expectedMoneyToken0, moneyTvl[0], 10)).to.be
-                    .true;
-                expect(compare(expectedMoneyToken1, moneyTvl[1], 10)).to.be
-                    .true;
-                expect(compare(uniV3Capital, currentUniV3Capital, 10)).to.be
-                    .true;
-            };
-
-            const interationsNumber = 10;
-            for (var i = 0; i < interationsNumber; i++) {
-                {
-                    if (Math.random() < 0.5) {
-                        const initialTick = await getSpotTick();
-                        var currentTick = initialTick;
-                        while (Math.abs(currentTick - initialTick) <= 60) {
-                            await push(BigNumber.from(10).pow(13), "USDC");
-                            await sleep(this.governanceDelay);
-                            currentTick = await getSpotTick();
-                        }
-                    } else {
-                        const initialTick = await getSpotTick();
-                        var currentTick = initialTick;
-                        while (Math.abs(currentTick - initialTick) <= 60) {
-                            await push(BigNumber.from(10).pow(21), "WETH");
-                            await sleep(this.governanceDelay);
-                            currentTick = await getSpotTick();
-                        }
-                    }
-                }
-                await sleep(this.governanceDelay);
-                const token0BalanceBefore = await this.usdc.balanceOf(
-                    this.subject.address
-                );
-                const token1BalanceBefore = await this.weth.balanceOf(
-                    this.subject.address
-                );
-                const spotPriceX96 = getPriceX96(await getSpotTick());
-                await this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, []);
-                const token0BalanceAfter = await this.usdc.balanceOf(
-                    this.subject.address
-                );
-                const token1BalanceAfter = await this.weth.balanceOf(
-                    this.subject.address
-                );
-                totalCapital = totalCapital
-                    .add(token0BalanceBefore.sub(token0BalanceAfter))
-                    .add(
-                        token1BalanceAfter
-                            .sub(token1BalanceBefore)
-                            .mul(Q96)
-                            .div(spotPriceX96)
-                    );
-
-                await checkState();
-            }
-            await this.uniV3Vault.collectEarnings();
-            const tvlAfter = (await this.erc20RootVault.tvl()).minTokenAmounts;
-            const capitalAfter = tvlAfter[0].add(
-                tvlAfter[1].mul(Q96).div(getPriceX96(await getSpotTick()))
-            );
-
-            expect(totalCapital.mul(110).div(100).gte(capitalAfter)).to.be.true;
-            expect(capitalAfter.mul(110).div(100).gte(totalCapital)).to.be.true;
         });
     });
 
