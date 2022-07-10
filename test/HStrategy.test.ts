@@ -1175,7 +1175,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
             const interationsNumber = 10;
             for (var i = 0; i < interationsNumber; i++) {
-                console.log("Iteration:", i);
                 var doFullRebalance = i == 0 ? true : Math.random() < 0.5;
                 if (doFullRebalance) {
                     if (Math.random() < 0.5) {
@@ -1232,12 +1231,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         lowerPrice.lte(averagePrice) &&
                         upperPrice.gte(averagePrice)
                     ) {
-                        console.log("Normal token rebalance");
                         await this.subject
                             .connect(this.mStrategyAdmin)
                             .tokenRebalance(restrictions, []);
                     } else {
-                        console.log("Revert by INVARIANT");
                         await expect(
                             this.subject
                                 .connect(this.mStrategyAdmin)
