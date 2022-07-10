@@ -12,6 +12,9 @@ import "../strategies/HStrategy.sol";
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
 
+    /// @notice calculates the ratios of the capital on all vaults using price from the oracle
+    /// @param domainPositionParams the current state of the position, pool and oracle prediction
+    /// @return ratios ratios of the capital
     function calculateExpectedRatios(HStrategy.DomainPositionParams memory domainPositionParams)
         external
         pure
@@ -58,6 +61,13 @@ contract HStrategyHelper {
         ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
     }
 
+    /// @notice calculates the current state of the position and pool with given oracle predictions
+    /// @param averageTick tick got from oracle
+    /// @param sqrtSpotPriceX96 square root of the spot price
+    /// @param strategyParams_ parameters of the strategy
+    /// @param uniV3Nft the current position nft from position manager
+    /// @param _positionManager uniV3 position manager
+    /// @return domainPositionParams current position and pool state combined with predictions from the oracle
     function calculateDomainPositionParams(
         int24 averageTick,
         uint160 sqrtSpotPriceX96,
@@ -90,6 +100,11 @@ contract HStrategyHelper {
         );
     }
 
+    /// @notice calculates amount of missing tokens for uniV3 and money vaults
+    /// @param moneyVault the strategy money vault
+    /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
+    /// @param domainPositionParams current position and pool state combined with predictions from the oracle
+    /// @return missingTokenAmounts amounts of missing tokens
     function calculateMissingTokenAmounts(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
@@ -130,6 +145,11 @@ contract HStrategyHelper {
         }
     }
 
+    /// @notice calculates extra tokens on uniV3 vault
+    /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
+    /// @param domainPositionParams current position and pool state combined with predictions from the oracle
+    /// @return extraToken0Amount amount of token0 needed to be pulled from uniV3
+    /// @return extraToken1Amount amount of token1 needed to be pulled from uniV3
     function calculateExtraTokenAmountsForUniV3Vault(
         HStrategy.TokenAmounts memory expectedTokenAmounts,
         HStrategy.DomainPositionParams memory domainPositionParams
@@ -149,6 +169,11 @@ contract HStrategyHelper {
         }
     }
 
+    /// @notice calculates extra tokens on money vault
+    /// @param moneyVault the strategy money vault
+    /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
+    /// @return token0Amount amount of token0 needed to be pulled from uniV3
+    /// @return token1Amount amount of token1 needed to be pulled from uniV3
     function calculateExtraTokenAmountsForMoneyVault(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts
@@ -170,6 +195,11 @@ contract HStrategyHelper {
         }
     }
 
+    /// @notice calculates expected amounts of tokens after rebalance
+    /// @param expectedRatios ratios of the capital on different assets
+    /// @param expectedTokenAmountsInToken0 expected capitals (in token0) on the strategy vaults
+    /// @param domainPositionParams current position and pool state combined with predictions from the oracle
+    /// @return amounts amounts of tokens expected after rebalance on the strategy vaults
     function calculateExpectedTokenAmounts(
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
@@ -221,6 +251,11 @@ contract HStrategyHelper {
         }
     }
 
+    /// @notice calculates current amounts of tokens
+    /// @param erc20Vault the erc20 vault of the strategy
+    /// @param moneyVault the money vault of the strategy
+    /// @param params current position and pool state combined with predictions from the oracle
+    /// @return amounts amounts of tokens
     function calculateCurrentTokenAmounts(
         IIntegrationVault erc20Vault,
         IIntegrationVault moneyVault,
@@ -245,6 +280,10 @@ contract HStrategyHelper {
         }
     }
 
+    /// @notice calculates current capitals on the vaults of the strategy (in token0)
+    /// @param params current position and pool state combined with predictions from the oracle
+    /// @param currentTokenAmounts amounts of the tokens on the erc20 and money vaults
+    /// @return amounts capitals measured in token0
     function calculateCurrentTokenAmountsInToken0(
         HStrategy.DomainPositionParams memory params,
         HStrategy.TokenAmounts memory currentTokenAmounts
@@ -264,6 +303,11 @@ contract HStrategyHelper {
             amounts.moneyTokensAmountInToken0;
     }
 
+    /// @notice calculates expected capitals on the vaults after rebalance
+    /// @param currentTokenAmounts current amount of tokens on the vaults
+    /// @param expectedRatios ratios of the capitals on the vaults expected after rebalance
+    /// @param ratioParams_ ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
+    /// @return amounts capitals expected after rebalance measured in token0
     function calculateExpectedTokenAmountsInToken0(
         HStrategy.TokenAmountsInToken0 memory currentTokenAmounts,
         HStrategy.ExpectedRatios memory expectedRatios,
@@ -286,6 +330,12 @@ contract HStrategyHelper {
             amounts.erc20TokensAmountInToken0;
     }
 
+    /// @notice return true if the token swap is needed. It is needed if we cannot mint a new position without it
+    /// @param missingTokenAmounts the amounts of tokens to be pulled on uniV3 and money vault
+    /// @param expectedTokenAmounts the amounts of tokens expected after rebalancing
+    /// @param erc20vault the erc20 vault of the strategy
+    /// @param ratioParams ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
+    /// @return bool true if the token swap is needed
     function swapNeeded(
         HStrategy.TokenAmounts memory missingTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
@@ -347,6 +397,11 @@ contract HStrategyHelper {
         return false;
     }
 
+    /// @notice returns true if the rebalance between assets on different vaults is needed
+    /// @param currentTokenAmounts the current amounts of tokens on the vaults
+    /// @param expectedTokenAmounts the amounts of tokens expected after rebalance
+    /// @param ratioParams ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
+    /// @return bool true if the rebalance is needed
     function tokenRebalanceNeeded(
         HStrategy.TokenAmounts memory currentTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
