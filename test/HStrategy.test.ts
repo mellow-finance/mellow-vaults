@@ -983,7 +983,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             return this.getSqrtRatioAtTick(tick).pow(2).div(Q96);
         };
 
-        it.only("tvl chanages only on fees", async () => {
+        it("tvl chanages only on fees", async () => {
             const centralTick = await getAverageTick();
             const globalLowerTick = centralTick - 6000 - (centralTick % 600);
             const globalUpperTick = centralTick + 6000 - (centralTick % 600);
