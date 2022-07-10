@@ -217,7 +217,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param uniV3Vault_ the address of uniV3Vault. It is expected to not hold the position
     /// @param fee_ the fee of the uniV3 pool on which the vault operates
     /// @param admin_ the addres of the admin of the strategy
-    /// @param uniV3Hepler_ the address of the helper contract for uniV3
+    /// @param uniV3Helper_ the address of the helper contract for uniV3
     /// @param hStrategyHelper_ the address of the strategy helper contract
     function initialize(
         INonfungiblePositionManager positionManager_,
@@ -227,7 +227,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniV3Vault uniV3Vault_,
         uint24 fee_,
         address admin_,
-        address uniV3Hepler_,
+        address uniV3Helper_,
         address hStrategyHelper_
     ) external {
         DefaultAccessControlLateInit.init(admin_); // call once is checked here
@@ -251,9 +251,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniswapV3Factory factory = IUniswapV3Factory(positionManager_.factory());
         pool = IUniswapV3Pool(factory.getPool(tokens[0], tokens[1], fee_));
         require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(uniV3Hepler_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(uniV3Helper_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(hStrategyHelper_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        _uniV3Helper = UniV3Helper(uniV3Hepler_);
+        _uniV3Helper = UniV3Helper(uniV3Helper_);
         _hStrategyHelper = HStrategyHelper(hStrategyHelper_);
     }
 
