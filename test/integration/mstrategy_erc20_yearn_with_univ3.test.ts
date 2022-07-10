@@ -167,7 +167,7 @@ contract<MStrategy, DeployOptions, CustomContext>(
                         yearnVaultNft + 1,
                         [erc20VaultNft, univ3VaultNft, yearnVaultNft],
                         this.deployer.address,
-                        this.deployer.address
+                        randomAddress()
                     );
 
                     const erc20Vault = await read(
@@ -371,6 +371,44 @@ contract<MStrategy, DeployOptions, CustomContext>(
                                 this.subject.address,
                                 await this.uniV3Vault.nft()
                             );
+                    });
+
+                    let firstDepositor = randomAddress();
+                    let firstUsdcAmount = BigNumber.from(10).pow(3).mul(3)
+                    let firstWethAmount = BigNumber.from(10).pow(12);
+
+                    await mint(
+                        "USDC",
+                        firstDepositor,
+                        firstUsdcAmount
+                    );
+                    await mint(
+                        "WETH",
+                        firstDepositor,
+                        firstWethAmount
+                    );
+
+                    await this.erc20RootVault
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([firstDepositor]);
+
+                    await withSigner(firstDepositor, async (signer) => {
+
+                        await this.weth.connect(signer).approve(
+                            this.erc20RootVault.address,
+                            ethers.constants.MaxUint256
+                        );
+                        await this.usdc.connect(signer).approve(
+                            this.erc20RootVault.address,
+                            ethers.constants.MaxUint256
+                        );
+                        await this.erc20RootVault
+                            .connect(signer)
+                            .deposit(
+                                [firstUsdcAmount, firstWethAmount],
+                                0,
+                                []
+                        );
                     });
 
                     return this.subject;

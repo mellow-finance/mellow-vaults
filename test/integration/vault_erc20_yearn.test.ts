@@ -136,6 +136,45 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     const { uniswapV3Router } = await getNamedAccounts();
                     this.swapRouter = uniswapV3Router;
+
+                    let firstDepositor = randomAddress();
+                    let firstUsdcAmount = BigNumber.from(10).pow(4)
+                    let firstWethAmount = BigNumber.from(10).pow(10);
+
+                    await mint(
+                        "USDC",
+                        firstDepositor,
+                        firstUsdcAmount
+                    );
+                    await mint(
+                        "WETH",
+                        firstDepositor,
+                        firstWethAmount
+                    );
+
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([firstDepositor]);
+
+                    await withSigner(firstDepositor, async (signer) => {
+
+                        await this.weth.connect(signer).approve(
+                            this.subject.address,
+                            ethers.constants.MaxUint256
+                        );
+                        await this.usdc.connect(signer).approve(
+                            this.subject.address,
+                            ethers.constants.MaxUint256
+                        );
+                        await this.subject
+                            .connect(signer)
+                            .deposit(
+                                [firstUsdcAmount, firstWethAmount],
+                                0,
+                                []
+                        );
+                    });
+
                     return this.subject;
                 }
             );
