@@ -46,7 +46,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     /// @notice general params of the strategy - responsible for emulating interval and rebalance conditions
     /// @param widthCoefficient width of the uniV3 position measured in the strategy tickspace
-    /// @param widthTicks width of one tick in the strategy tickspacing measured in ticks of the uniV3 pool
+    /// @param widthTicks width of one interval in the strategy tickspacing measured in ticks of the uniV3 pool
     /// @param tickNeighborhood width of the neighbourhood of the current position border, in which rebalance can be called.
     /// Example: if the upperTick=10, tickNeighbourhood=5, rebalance can be called for all ticks greater than 10 - 5 = 5
     /// @param globalLowerTick the lower tick of emulated uniV3 position
@@ -69,7 +69,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     /// @notice params of the interaction with oracle
     /// @param oracleObservationDelta delta in seconds, passed to oracle to get the price oracleObservationDelta seconds ago
-    /// @param maxTickDeviation the upper bound for deviation between the spot price and the price oracleObservationDelta seconds ago
+    /// @param maxTickDeviation the upper bound for an absolute deviation between the spot price and the price oracleObservationDelta seconds ago
     struct OracleParams {
         uint32 oracleObservationDelta;
         uint24 maxTickDeviation;
