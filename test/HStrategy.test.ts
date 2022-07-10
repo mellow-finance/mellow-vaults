@@ -49,6 +49,7 @@ import {
     ExpectedRatiosStruct,
     TokenAmountsInToken0Struct,
 } from "./types/HStrategyHelper";
+import { mapAccumRight } from "ramda";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -392,7 +393,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 this.getSqrtRatioAtTick = (tick: number) => {
                     return BigNumber.from(
-                        TickMath.getSqrtRatioAtTick(tick).toString()
+                        TickMath.getSqrtRatioAtTick(
+                            BigNumber.from(tick).toNumber()
+                        ).toString()
                     );
                 };
 
@@ -780,6 +783,32 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         }
     };
 
+    const getAverageTick = async () => {
+        return (
+            await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
+                await this.subject.pool(),
+                30 * 60
+            )
+        ).averageTick;
+    };
+    const getSpotTick = async () => {
+        var result: number;
+        let { tick } = await this.pool.slot0();
+        result = tick;
+        return result;
+    };
+
+    const getSpotPriceX96 = async () => {
+        let { sqrtPriceX96 } = await this.pool.slot0();
+        return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
+    };
+
+    const getAveragePriceX96 = async () => {
+        let tick = await getAverageTick();
+        const sqrtPriceX96 = this.getSqrtRatioAtTick(tick);
+        return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
+    };
+
     describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
@@ -919,12 +948,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
             const pool = await this.subject.pool();
 
-            let uniswapV3Pool: IUniswapV3Pool = await ethers.getContractAt(
-                "IUniswapV3Pool",
-                pool
-            );
             while (true) {
-                let { tick } = await uniswapV3Pool.slot0();
+                let { tick } = await this.pool.slot0();
                 if (tick <= tickUpper + 30) {
                     await push(BigNumber.from(10).pow(20), "WETH");
                     await sleep(this.governanceDelay);
@@ -939,7 +964,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             ).not.to.be.reverted;
 
             while (true) {
-                let { tick } = await uniswapV3Pool.slot0();
+                let { tick } = await this.pool.slot0();
                 if (tick >= tickLower + 30) {
                     await push(BigNumber.from(10).pow(11), "USDC");
                     await sleep(this.governanceDelay);
@@ -954,16 +979,22 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             ).not.to.be.reverted;
         });
 
+        const getPriceX96 = (tick: number) => {
+            return this.getSqrtRatioAtTick(tick).pow(2).div(Q96);
+        };
+
         it.only("tvl chanages only on fees", async () => {
+            const centralTick = await getAverageTick();
+            const globalLowerTick = centralTick - 6000 - (centralTick % 600);
+            const globalUpperTick = centralTick + 6000 - (centralTick % 600);
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
                     ...this.strategyParams,
                     widthCoefficient: 1,
                     widthTicks: 60,
-                    globalLowerTick: 150000,
-                    globalUpperTick: 210000,
-                    simulateUniV3Interval: true,
+                    globalLowerTick: globalLowerTick,
+                    globalUpperTick: globalUpperTick,
                 } as StrategyParamsStruct);
             const pullExistentials =
                 await this.erc20RootVault.pullExistentials();
@@ -1017,36 +1048,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 minMoneyRatioDeviation0D: 0,
                 minMoneyRatioDeviation1D: 0,
             } as RatioParamsStruct);
-
-            const getAverageTick = async () => {
-                return (
-                    await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                        await this.subject.pool(),
-                        30 * 60
-                    )
-                ).averageTick;
-            };
-            const getSpotTick = async () => {
-                var { averageTick, deviation } =
-                    await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                        await this.subject.pool(),
-                        30 * 60
-                    );
-                return averageTick + deviation;
-            };
-
-            const getPriceX96 = (tick: number) => {
-                return BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(tick).toString()
-                )
-                    .pow(2)
-                    .div(Q96);
-            };
-
             await sleep(this.governanceDelay);
             const tvlBefore = (await this.erc20RootVault.tvl()).minTokenAmounts;
             var totalCapital = tvlBefore[0].add(
-                tvlBefore[1].mul(Q96).div(getPriceX96(await getSpotTick()))
+                tvlBefore[1].mul(Q96).div(await getSpotPriceX96())
             );
 
             await this.erc20RootVaultGovernance
@@ -1090,21 +1095,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 const uniV3Tvl = await this.uniV3Vault.liquidityToTokenAmounts(
                     positions.liquidity
                 );
-                const sqrtA = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lowerTick).toString()
-                );
-                const sqrtB = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upperTick).toString()
-                );
-                const sqrtA0 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(lower0Tick).toString()
-                );
-                const sqrtB0 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(upper0Tick).toString()
-                );
-                const sqrtC0 = BigNumber.from(
-                    TickMath.getSqrtRatioAtTick(averageTick).toString()
-                );
+                const sqrtA = this.getSqrtRatioAtTick(lowerTick);
+                const sqrtB = this.getSqrtRatioAtTick(upperTick);
+                const sqrtA0 = this.getSqrtRatioAtTick(lower0Tick);
+                const sqrtB0 = this.getSqrtRatioAtTick(upper0Tick);
+                const sqrtC0 = this.getSqrtRatioAtTick(averageTick);
 
                 // devide all by sqrtC0
                 const getWxD = () => {
@@ -1180,7 +1175,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
             const interationsNumber = 10;
             for (var i = 0; i < interationsNumber; i++) {
-                {
+                console.log("Iteration:", i);
+                var doFullRebalance = i == 0 ? true : Math.random() < 0.5;
+                if (doFullRebalance) {
                     if (Math.random() < 0.5) {
                         const initialTick = await getSpotTick();
                         var currentTick = initialTick;
@@ -1198,7 +1195,16 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             currentTick = await getSpotTick();
                         }
                     }
+                } else {
+                    if (Math.random() < 0.5) {
+                        await push(BigNumber.from(10).pow(10), "USDC");
+                        await sleep(this.governanceDelay);
+                    } else {
+                        await push(BigNumber.from(10).pow(15), "WETH");
+                        await sleep(this.governanceDelay);
+                    }
                 }
+
                 await sleep(this.governanceDelay);
                 const token0BalanceBefore = await this.usdc.balanceOf(
                     this.subject.address
@@ -1206,10 +1212,40 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 const token1BalanceBefore = await this.weth.balanceOf(
                     this.subject.address
                 );
-                const spotPriceX96 = getPriceX96(await getSpotTick());
-                await this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, []);
+                const spotPriceX96 = await getSpotPriceX96();
+
+                if (doFullRebalance) {
+                    await this.subject
+                        .connect(this.mStrategyAdmin)
+                        .rebalance(restrictions, []);
+                } else {
+                    const spotPrice = await getSpotPriceX96();
+                    const averagePrice = await getAveragePriceX96();
+                    const nft = await this.uniV3Vault.uniV3Nft();
+                    const position = await this.positionManager.positions(nft);
+                    const lowerPrice = getPriceX96(position.tickLower);
+                    const upperPrice = getPriceX96(position.tickUpper);
+
+                    if (
+                        lowerPrice.lte(spotPrice) &&
+                        upperPrice.gte(spotPrice) &&
+                        lowerPrice.lte(averagePrice) &&
+                        upperPrice.gte(averagePrice)
+                    ) {
+                        console.log("Normal token rebalance");
+                        await this.subject
+                            .connect(this.mStrategyAdmin)
+                            .tokenRebalance(restrictions, []);
+                    } else {
+                        console.log("Revert by INVARIANT");
+                        await expect(
+                            this.subject
+                                .connect(this.mStrategyAdmin)
+                                .tokenRebalance(restrictions, [])
+                        ).to.be.revertedWith(Exceptions.INVARIANT);
+                    }
+                }
+
                 const token0BalanceAfter = await this.usdc.balanceOf(
                     this.subject.address
                 );
@@ -1230,7 +1266,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.uniV3Vault.collectEarnings();
             const tvlAfter = (await this.erc20RootVault.tvl()).minTokenAmounts;
             const capitalAfter = tvlAfter[0].add(
-                tvlAfter[1].mul(Q96).div(getPriceX96(await getSpotTick()))
+                tvlAfter[1].mul(Q96).div(await getSpotPriceX96())
             );
 
             expect(totalCapital.mul(110).div(100).gte(capitalAfter)).to.be.true;
