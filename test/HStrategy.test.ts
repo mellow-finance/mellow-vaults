@@ -842,7 +842,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
-
             await expect(
                 this.subject
                     .connect(this.mStrategyAdmin)
@@ -853,12 +852,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 await push(BigNumber.from(10).pow(20), "WETH");
                 await sleep(this.governanceDelay);
             }
-
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).to.be.revertedWith(Exceptions.INVARIANT);
 
             {
                 const ratioParams = await this.subject.ratioParams();
