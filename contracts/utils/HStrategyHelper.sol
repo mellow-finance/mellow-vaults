@@ -333,7 +333,7 @@ contract HStrategyHelper {
     /// @notice return true if the token swap is needed. It is needed if we cannot mint a new position without it
     /// @param missingTokenAmounts the amounts of tokens to be pulled on uniV3 and money vault
     /// @param expectedTokenAmounts the amounts of tokens expected after rebalancing
-    /// @param erc20vault the erc20 vault of the strategy
+    /// @param erc20Vault the erc20 vault of the strategy
     /// @param ratioParams ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
     /// @return bool true if the token swap is needed
     function swapNeeded(

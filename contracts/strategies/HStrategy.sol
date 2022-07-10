@@ -217,7 +217,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param uniV3Vault_ the address of uniV3Vault. It is expected to not hold the position
     /// @param fee_ the fee of the uniV3 pool on which the vault operates
     /// @param admin_ the addres of the admin of the strategy
-    /// @param uniV3Helper_ the address of the helper contract for uniV3
+    /// @param uniV3Hepler_ the address of the helper contract for uniV3
     /// @param hStrategyHelper_ the address of the strategy helper contract
     function initialize(
         INonfungiblePositionManager positionManager_,
