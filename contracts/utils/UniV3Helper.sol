@@ -75,9 +75,6 @@ contract UniV3Helper {
                 feeGrowthBelow1X128 = feeGrowthGlobal1X128 - lowerFeeGrowthOutside1X128;
             }
 
-<<<<<<< HEAD
-        unchecked {
-=======
             // calculate fee growth above
             uint256 feeGrowthAbove0X128;
             uint256 feeGrowthAbove1X128;
@@ -89,7 +86,6 @@ contract UniV3Helper {
                 feeGrowthAbove1X128 = feeGrowthGlobal1X128 - upperFeeGrowthOutside1X128;
             }
 
->>>>>>> main
             feeGrowthInside0X128 = feeGrowthGlobal0X128 - feeGrowthBelow0X128 - feeGrowthAbove0X128;
             feeGrowthInside1X128 = feeGrowthGlobal1X128 - feeGrowthBelow1X128 - feeGrowthAbove1X128;
         }
