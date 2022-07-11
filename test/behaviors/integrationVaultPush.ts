@@ -31,7 +31,8 @@ export function integrationVaultPushBehavior<S extends Contract>(
         ];
         const amounts = await this.staticCallPushFunction(...args);
         await this.pushFunction(...args);
-        expect(amounts[0]).to.deep.equal(BigNumber.from(10).pow(6).mul(3000));
+        expect(BigNumber.from(amounts[0]).gt(0)).to.be.true;
+        expect(BigNumber.from(amounts[1]).gt(0)).to.be.true;
     });
 
     describe("edge cases", () => {

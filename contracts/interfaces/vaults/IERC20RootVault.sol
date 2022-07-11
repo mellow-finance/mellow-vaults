@@ -3,6 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./IAggregateVault.sol";
+import "../utils/IERC20RootVaultHelper.sol";
 
 interface IERC20RootVault is IAggregateVault, IERC20 {
     /// @notice Initialized a new contract.
@@ -15,7 +16,8 @@ interface IERC20RootVault is IAggregateVault, IERC20 {
         uint256 nft_,
         address[] memory vaultTokens_,
         address strategy_,
-        uint256[] memory subvaultNfts_
+        uint256[] memory subvaultNfts_,
+        IERC20RootVaultHelper helper_
     ) external;
 
     /// @notice The timestamp of last charging of fees

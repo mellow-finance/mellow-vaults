@@ -2,6 +2,7 @@ import hre, { getNamedAccounts } from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
+    makeFirstDeposit,
     mint,
     now,
     randomAddress,
@@ -22,6 +23,7 @@ import { Address } from "hardhat-deploy/dist/types";
 import { assert } from "console";
 import { max } from "ramda";
 import { randomInt } from "crypto";
+import { BigNumberish } from "ethers";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -37,7 +39,7 @@ type CustomContext = {
 type DeployOptions = {};
 
 contract<ERC20RootVault, DeployOptions, CustomContext>(
-    "Integration__erc20_yearn",
+    "Integration__erc20_yearn_multiple_deposits",
     function () {
         before(async () => {
             this.deploymentFixture = deployments.createFixture(
@@ -46,6 +48,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     const tokens = [this.weth.address, this.usdc.address]
                         .map((t) => t.toLowerCase())
                         .sort();
+
                     const startNft =
                         (
                             await read("VaultRegistry", "vaultsCount")
@@ -75,7 +78,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         yearnVaultNft + 1,
                         [erc20VaultNft, yearnVaultNft],
                         this.deployer.address,
-                        this.deployer.address
+                        randomAddress()
                     );
 
                     const erc20Vault = await read(
@@ -112,18 +115,24 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    this.wethDeployerSupply = BigNumber.from(10).pow(10).mul(5);
-                    this.usdcDeployerSupply = BigNumber.from(10).pow(10).mul(5);
+                    let wethAmounts = await this.weth.balanceOf(
+                        this.deployer.address
+                    );
+                    let usdcAmounts = await this.usdc.balanceOf(
+                        this.deployer.address
+                    );
+                    this.wethDeployerSupply = BigNumber.from(10).pow(15);
+                    this.usdcDeployerSupply = BigNumber.from(10).pow(15);
 
                     await mint(
                         "USDC",
                         this.deployer.address,
-                        this.usdcDeployerSupply
+                        this.usdcDeployerSupply.sub(usdcAmounts)
                     );
                     await mint(
                         "WETH",
                         this.deployer.address,
-                        this.wethDeployerSupply
+                        this.wethDeployerSupply.sub(wethAmounts)
                     );
 
                     await this.weth.approve(
@@ -143,6 +152,37 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.mellowOracle = await ethers.getContract(
                         "MellowOracle"
                     );
+
+                    this.firstDepositor = randomAddress();
+                    await mint(
+                        "USDC",
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
+                    );
+                    await mint(
+                        "WETH",
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
+                    );
+
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([this.firstDepositor]);
+
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                    });
                     return this.subject;
                 }
             );
@@ -193,6 +233,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .commitParams();
             });
 
+            // checks that given values differ less then 1/denom
+            function closeToEqual(
+                valueToCompare: BigNumber,
+                value: BigNumber,
+                denom: BigNumberish
+            ) {
+                denom = BigNumber.from(denom);
+                let diff = valueToCompare.sub(value).abs();
+                let maxDiff = value.div(denom);
+                expect(diff.lt(maxDiff)).to.be.true;
+            }
+
             pit(
                 `
                 when fees are zero, sum of deposit[i] = sum of withdraw[j]
@@ -200,10 +252,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 { numRuns: RUNS.mid, endOnFailure: true },
                 integer({ min: 1, max: 10 }),
                 integer({ min: 1, max: 10 }),
-                integer({ min: 10 ** 6, max: 10 ** 9 }).map((x) =>
+                integer({ min: 10 ** 5, max: 10 ** 6 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
-                integer({ min: 10 ** 7, max: 10 ** 10 }).map((x) =>
+                integer({ min: 10 ** 12, max: 10 ** 14 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
                 async (
@@ -218,6 +270,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         (
                             await this.subject.balanceOf(this.deployer.address)
                         ).eq(BigNumber.from(0))
+                    );
+                    await makeFirstDeposit(
+                        [this.usdc, this.weth],
+                        [
+                            amountUSDC.div(numDeposits),
+                            amountWETH.div(numDeposits),
+                        ],
+                        this.subject,
+                        this.firstDepositor
                     );
                     for (let i = 0; i < numDeposits; ++i) {
                         await this.subject
@@ -236,9 +297,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
 
                     for (let i = 1; i < numDeposits; ++i) {
-                        expect(lpAmounts[i].sub(lpAmounts[i - 1])).to.be.equal(
-                            lpAmounts[0]
-                        );
+                        expect(
+                            lpAmounts[i]
+                                .sub(lpAmounts[i - 1])
+                                .sub(lpAmounts[0])
+                                .abs()
+                                .lte(1)
+                        ).to.be.true;
                     }
 
                     const lpTokensAmount = await this.subject.balanceOf(
@@ -291,14 +356,17 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         await this.subject.balanceOf(this.deployer.address)
                     ).to.deep.equals(BigNumber.from(0));
 
-                    expect(
-                        await this.weth.balanceOf(this.deployer.address)
-                    ).to.be.equal(this.wethDeployerSupply);
+                    closeToEqual(
+                        await this.weth.balanceOf(this.deployer.address),
+                        this.wethDeployerSupply,
+                        100000
+                    );
 
-                    expect(
-                        await this.usdc.balanceOf(this.deployer.address)
-                    ).to.be.equal(this.usdcDeployerSupply);
-
+                    closeToEqual(
+                        await this.usdc.balanceOf(this.deployer.address),
+                        this.usdcDeployerSupply,
+                        100000
+                    );
                     return true;
                 }
             );
