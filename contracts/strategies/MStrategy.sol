@@ -148,7 +148,7 @@ contract MStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             bool zeroToOne
         )
     {
-        _requireAdmin();
+        _requireAtLeastOperator();
         SwapToTargetParams memory params;
         params.tokens = tokens;
         params.pool = pool;

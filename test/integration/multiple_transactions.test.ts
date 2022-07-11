@@ -4,6 +4,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import {
     compareAddresses,
     encodeToBytes,
+    makeFirstDeposit,
     mint,
     randomAddress,
     randomChoice,
@@ -160,7 +161,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             this.yearnVaultNft,
                         ],
                         this.deployer.address,
-                        this.deployer.address
+                        randomAddress()
                     );
                     const erc20VaultAddress = await read(
                         "VaultRegistry",
@@ -342,6 +343,36 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ]
                     );
 
+                    this.firstDepositor = randomAddress();
+                    await mint(
+                        "USDC",
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
+                    );
+                    await mint(
+                        "WETH",
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
+                    );
+
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([this.firstDepositor]);
+
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                    });
                     return this.subject;
                 }
             );
@@ -360,9 +391,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         async function randomPullAction(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext
         ): Promise<PullAction> {
-            let tvls = await Promise.all(
-                this.targets.map((target) => target.tvl())
-            );
+            let tvls = await getVaults.call(this);
             let nonEmptyVaults = this.targets.filter((_, index) => {
                 return (
                     tvls[index][0][0].gt(this.pullExistentials[0]) ||
@@ -790,6 +819,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 if (fromLiquidityStateAfter[0].eq(0)) {
                     this.uniV3VaultIsEmpty = true;
                     await countImpermanentLossDuringLastPosition.call(this);
+
                     await checkInvariant.call(this, false);
                 }
             }
@@ -1250,14 +1280,22 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 await this.setZeroFeesFixture({ targets: targets });
 
                 // deposit
-                this.depositAmount = [
+                this.tryToDepositAmount = [
                     BigNumber.from(10).pow(6).mul(1000),
                     BigNumber.from(10).pow(15).mul(300),
                 ];
+                await makeFirstDeposit(
+                    this.tokens,
+                    this.tryToDepositAmount,
+                    this.subject,
+                    this.firstDepositor
+                );
+                this.depositAmount = await this.subject
+                    .connect(this.deployer)
+                    .callStatic.deposit(this.tryToDepositAmount, 0, []);
                 await this.subject
                     .connect(this.deployer)
-                    .deposit(this.depositAmount, 0, []);
-
+                    .deposit(this.tryToDepositAmount, 0, []);
                 // random actions
                 for (let i = 0; i < 100; i++) {
                     if (randomInt(2) == 0) {
@@ -1282,19 +1320,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 // withdraw and check final invariant
                 await checkInvariant.call(this, true);
-
-                // make sure nothing left
-                let tvls = await getVaults.call(this);
-                for (let tvl of tvls) {
-                    for (
-                        let tokenIndex = 0;
-                        tokenIndex < this.tokens.length;
-                        tokenIndex++
-                    ) {
-                        expect(tvl[0][tokenIndex].lt(10)).to.be.true;
-                        expect(tvl[1][tokenIndex].lt(10)).to.be.true;
-                    }
-                }
             });
         });
     }

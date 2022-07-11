@@ -176,7 +176,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             uniV3UpperVault,
             strategyOrderHelper.address,
             deployer,
-            intervalWidthInTicks,
+            120,
         ],
         log: true,
         autoMine: true,
