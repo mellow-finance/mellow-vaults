@@ -385,6 +385,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         actualPulledAmounts.burnedAmounts = burnedAmounts;
     }
 
+    /// @notice rebalance, that if needed burns old univ3 position and mints new
+    /// @param restrictions the restrictions of the amount of tokens to be transferred
+    /// @return burnedAmounts actual transferred amounts of tokens from position while burn
     function rebalanceUniV3Position(RebalanceRestrictions memory restrictions)
         public
         returns (uint256[] memory burnedAmounts)
