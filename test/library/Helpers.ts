@@ -24,6 +24,7 @@ import {
     ERC20Token as ERC20,
     ERC20Token,
     ISwapRouter,
+    ERC20RootVault,
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -569,6 +570,49 @@ export async function uniSwapTokensGivenOutput(
         await tokens[tokenIndex].connect(signer).approve(router.address, 0);
     });
     return amountIn;
+}
+
+export async function makeFirstDeposit(
+    tokens: ERC20Token[],
+    tokenAmounts: BigNumber[],
+    rootVault: ERC20RootVault,
+    firstDepositor: string
+) {
+    if (tokens.length != tokenAmounts.length || tokens.length == 0) {
+        throw `tokens length does not match amount`;
+    }
+    let decimals = await Promise.all(tokens.map((token) => token.decimals()));
+    let tokenMultipliers = tokenAmounts.map((amount, index) =>
+        amount.div(
+            BigNumber.from(10).pow(Math.floor((decimals[index] + 3) / 2))
+        )
+    );
+    let good = false;
+    let depositAmount = [BigNumber.from(0), BigNumber.from(0)];
+    for (let i = 0; i < tokens.length && !good; i++) {
+        if (tokenMultipliers[i].eq(0)) {
+            continue;
+        }
+        good = true;
+        depositAmount = [BigNumber.from(0), BigNumber.from(0)];
+        for (let j = 0; j < tokens.length; j++) {
+            depositAmount[j] = tokenAmounts[j].div(tokenMultipliers[i]);
+            good &&= depositAmount[j].gte(
+                BigNumber.from(10).pow(Math.floor((decimals[j] + 3) / 2))
+            );
+            good &&= depositAmount[j].lte(
+                BigNumber.from(10).pow(Math.floor(decimals[j]))
+            );
+        }
+    }
+    if (!good) {
+        throw `couldn't make first deposit keeping given ratio`;
+    }
+    await withSigner(firstDepositor, async (signer) => {
+        await rootVault.connect(signer).deposit(depositAmount, 0, []);
+    });
+
+    return depositAmount;
 }
 
 export async function mintUniV3Position_WBTC_WETH(options: {
