@@ -29,10 +29,8 @@ contract<TickMathTest, DeployOptions, CustomContext>(
             let x = generateSingleParams(uint256);
             let upperBound = BigNumber.from(2).pow(b);
             let lowerBound = BigNumber.from(2).pow(a);
-            if (x >= upperBound) {
-                x = x.mod(upperBound);
-            }
-            if (x < lowerBound) {
+            x = x.mod(upperBound);
+            if (x.lt(lowerBound)) {
                 x = x.add(lowerBound);
             }
             return x;
