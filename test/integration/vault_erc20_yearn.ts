@@ -1,7 +1,13 @@
 import hre from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, randomAddress, sleep, withSigner } from "../library/Helpers";
+import {
+    makeFirstDeposit,
+    mint,
+    randomAddress,
+    sleep,
+    withSigner,
+} from "../library/Helpers";
 import { contract } from "../library/setup";
 import { pit, RUNS } from "../library/property";
 import { ERC20RootVault } from "../types/ERC20RootVault";
@@ -135,42 +141,35 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ethers.constants.MaxUint256
                     );
 
-                    let firstDepositor = randomAddress();
-                    let firstUsdcAmount = BigNumber.from(10).pow(4)
-                    let firstWethAmount = BigNumber.from(10).pow(10);
-
+                    this.firstDepositor = randomAddress();
                     await mint(
                         "USDC",
-                        firstDepositor,
-                        firstUsdcAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
                     );
                     await mint(
                         "WETH",
-                        firstDepositor,
-                        firstWethAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
                     );
 
                     await this.subject
                         .connect(this.admin)
-                        .addDepositorsToAllowlist([firstDepositor]);
+                        .addDepositorsToAllowlist([this.firstDepositor]);
 
-                    await withSigner(firstDepositor, async (signer) => {
-
-                        await this.weth.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.usdc.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.subject
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
                             .connect(signer)
-                            .deposit(
-                                [firstUsdcAmount, firstWethAmount],
-                                0,
-                                []
-                        );
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
                     });
 
                     return this.subject;
@@ -208,6 +207,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 amountUSDC: BigNumber,
                 amountWETH: BigNumber
             ) => {
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [amountUSDC, amountWETH],
+                    this.subject,
+                    this.firstDepositor
+                );
                 await this.subject
                     .connect(this.deployer)
                     .deposit([amountUSDC, amountWETH], 0, []);

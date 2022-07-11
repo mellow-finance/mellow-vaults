@@ -25,7 +25,6 @@ import {
     ERC20Token,
     ISwapRouter,
     ERC20RootVault,
-
 } from "../types";
 import {
     DelayedProtocolPerVaultParamsStruct as ERC20RootVaultDelayedProtocolPerVaultParamsStruct,
@@ -573,61 +572,47 @@ export async function uniSwapTokensGivenOutput(
     return amountIn;
 }
 
-export async function makeFirstDeposit(tokens:ERC20Token[], tokenAmounts: BigNumber[], rootVault: ERC20RootVault, rootAdmin: string) {
+export async function makeFirstDeposit(
+    tokens: ERC20Token[],
+    tokenAmounts: BigNumber[],
+    rootVault: ERC20RootVault,
+    firstDepositor: string
+) {
     if (tokens.length != 2 || tokenAmounts.length != 2) {
-        throw `too much tokens`;
+        throw `only two tokens allowed`;
     }
-
-    let decimals = await Promise.all(
-        tokens.map((token) => token.decimals())
+    let decimals = await Promise.all(tokens.map((token) => token.decimals()));
+    let tokenMultipliers = tokenAmounts.map((amount, index) =>
+        amount.div(
+            BigNumber.from(10).pow(Math.floor((decimals[index] + 3) / 2))
+        )
     );
-    let tokenMultipliers = tokenAmounts.map((amount, index) => amount.div(BigNumber.from(10).pow(Math.floor(decimals[index] + 1 / 2))));
-
     let good = false;
     let depositAmount = [BigNumber.from(0), BigNumber.from(0)];
-    for (let i = 0; (i < tokens.length) && good; i++) {
+    for (let i = 0; i < tokens.length && !good; i++) {
+        if (tokenMultipliers[i].eq(0)) {
+            continue;
+        }
         good = true;
         depositAmount = [BigNumber.from(0), BigNumber.from(0)];
         for (let j = 0; j < tokens.length; j++) {
-            depositAmount[j] = tokenAmounts[j].div(tokenMultipliers[i])
-            good &&= depositAmount[j].gt(BigNumber.from(10).pow(Math.floor(decimals[j] / 2)))
-            good &&= depositAmount[j].lt(BigNumber.from(10).pow(Math.floor(decimals[j])))
+            depositAmount[j] = tokenAmounts[j].div(tokenMultipliers[i]);
+            good &&= depositAmount[j].gte(
+                BigNumber.from(10).pow(Math.floor((decimals[j] + 3) / 2))
+            );
+            good &&= depositAmount[j].lte(
+                BigNumber.from(10).pow(Math.floor(decimals[j]))
+            );
         }
     }
     if (!good) {
-        depositAmount = [BigNumber.from(10).pow(Math.floor(decimals[0] / 2) + 1), BigNumber.from(10).pow(Math.floor(decimals[1] / 2) + 1)];
+        throw `couldn't make first deposit keeping given ratio`;
     }
-     
-    let firstDepositor = randomAddress();
-    for (let i = 0; i < tokens.length; i++) {
-        await mint(
-            await tokens[i].symbol(),
-            firstDepositor,
-            depositAmount[i]
-        );
-    }
-
-    await withSigner(rootAdmin, async (signer) => {
-        await rootVault
-            .connect(signer)
-            .addDepositorsToAllowlist([firstDepositor]);
-    });
-
     await withSigner(firstDepositor, async (signer) => {
-        for (let i = 0; i < tokens.length; i++) {
-            await tokens[i].connect(signer).approve(
-                rootVault.address,
-                ethers.constants.MaxUint256
-            );
-        }
-        await rootVault
-            .connect(signer)
-            .deposit(
-                depositAmount,
-                0,
-                []
-        );
+        await rootVault.connect(signer).deposit(depositAmount, 0, []);
     });
+
+    return depositAmount;
 }
 
 export async function mintUniV3Position_WBTC_WETH(options: {

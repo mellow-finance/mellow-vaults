@@ -2,6 +2,7 @@ import hre from "hardhat";
 import { ethers, deployments, getNamedAccounts } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
+    makeFirstDeposit,
     mint,
     mintUniV3Position_USDC_WETH,
     randomAddress,
@@ -373,42 +374,35 @@ contract<MStrategy, DeployOptions, CustomContext>(
                             );
                     });
 
-                    let firstDepositor = randomAddress();
-                    let firstUsdcAmount = BigNumber.from(10).pow(3).mul(3)
-                    let firstWethAmount = BigNumber.from(10).pow(12);
-
+                    this.firstDepositor = randomAddress();
                     await mint(
                         "USDC",
-                        firstDepositor,
-                        firstUsdcAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
                     );
                     await mint(
                         "WETH",
-                        firstDepositor,
-                        firstWethAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
                     );
 
                     await this.erc20RootVault
                         .connect(this.admin)
-                        .addDepositorsToAllowlist([firstDepositor]);
+                        .addDepositorsToAllowlist([this.firstDepositor]);
 
-                    await withSigner(firstDepositor, async (signer) => {
-
-                        await this.weth.connect(signer).approve(
-                            this.erc20RootVault.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.usdc.connect(signer).approve(
-                            this.erc20RootVault.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.erc20RootVault
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
                             .connect(signer)
-                            .deposit(
-                                [firstUsdcAmount, firstWethAmount],
-                                0,
-                                []
-                        );
+                            .approve(
+                                this.erc20RootVault.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.erc20RootVault.address,
+                                ethers.constants.MaxUint256
+                            );
                     });
 
                     return this.subject;
@@ -715,6 +709,12 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
                 const wethAmountForDeposit = this.wethDeployerSupply;
 
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [usdcAmountForDeposit, wethAmountForDeposit],
+                    this.erc20RootVault,
+                    this.firstDepositor
+                );
                 await this.erc20RootVault
                     .connect(this.deployer)
                     .deposit(
@@ -849,6 +849,12 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 const usdcAmountForDeposit = this.usdcDeployerSupply;
                 const wethAmountForDeposit = this.wethDeployerSupply;
 
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [usdcAmountForDeposit, wethAmountForDeposit],
+                    this.erc20RootVault,
+                    this.firstDepositor
+                );
                 await this.erc20RootVault
                     .connect(this.deployer)
                     .deposit(
@@ -1045,6 +1051,12 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 await mint("USDC", this.deployer.address, usdcAmount);
                 await mint("WETH", this.deployer.address, wethAmount);
 
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [usdcAmount, wethAmount],
+                    this.erc20RootVault,
+                    this.firstDepositor
+                );
                 await this.erc20RootVault.deposit(
                     [usdcAmount, wethAmount],
                     BigNumber.from(0),
@@ -1206,6 +1218,12 @@ contract<MStrategy, DeployOptions, CustomContext>(
                 await mint("USDC", this.deployer.address, usdcAmount);
                 await mint("WETH", this.deployer.address, wethAmount);
 
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [usdcAmount, wethAmount],
+                    this.erc20RootVault,
+                    this.firstDepositor
+                );
                 await this.erc20RootVault.deposit(
                     [usdcAmount, wethAmount],
                     BigNumber.from(0),

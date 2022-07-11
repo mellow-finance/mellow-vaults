@@ -2,6 +2,7 @@ import hre, { getNamedAccounts } from "hardhat";
 import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
+    makeFirstDeposit,
     mint,
     now,
     randomAddress,
@@ -114,8 +115,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         .connect(this.admin)
                         .addDepositorsToAllowlist([this.deployer.address]);
 
-                    let wethAmounts = await this.weth.balanceOf(this.deployer.address)
-                    let usdcAmounts = await this.usdc.balanceOf(this.deployer.address)
+                    let wethAmounts = await this.weth.balanceOf(
+                        this.deployer.address
+                    );
+                    let usdcAmounts = await this.usdc.balanceOf(
+                        this.deployer.address
+                    );
                     this.wethDeployerSupply = BigNumber.from(10).pow(15);
                     this.usdcDeployerSupply = BigNumber.from(10).pow(15);
 
@@ -148,42 +153,35 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         "MellowOracle"
                     );
 
-                    let firstDepositor = randomAddress();
-                    let firstUsdcAmount = BigNumber.from(10).pow(4)
-                    let firstWethAmount = BigNumber.from(10).pow(10);
-
+                    this.firstDepositor = randomAddress();
                     await mint(
                         "USDC",
-                        firstDepositor,
-                        firstUsdcAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
                     );
                     await mint(
                         "WETH",
-                        firstDepositor,
-                        firstWethAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
                     );
 
                     await this.subject
                         .connect(this.admin)
-                        .addDepositorsToAllowlist([firstDepositor]);
+                        .addDepositorsToAllowlist([this.firstDepositor]);
 
-                    await withSigner(firstDepositor, async (signer) => {
-
-                        await this.weth.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.usdc.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.subject
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
                             .connect(signer)
-                            .deposit(
-                                [firstUsdcAmount, firstWethAmount],
-                                0,
-                                []
-                        );
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
                     });
                     return this.subject;
                 }
@@ -254,7 +252,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 { numRuns: RUNS.mid, endOnFailure: true },
                 integer({ min: 1, max: 10 }),
                 integer({ min: 1, max: 10 }),
-                integer({ min: 10 ** 12, max: 10 ** 14 }).map((x) =>
+                integer({ min: 10 ** 5, max: 10 ** 6 }).map((x) =>
                     BigNumber.from(x.toString())
                 ),
                 integer({ min: 10 ** 12, max: 10 ** 14 }).map((x) =>
@@ -273,6 +271,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                             await this.subject.balanceOf(this.deployer.address)
                         ).eq(BigNumber.from(0))
                     );
+                    await makeFirstDeposit(
+                        [this.usdc, this.weth],
+                        [
+                            amountUSDC.div(numDeposits),
+                            amountWETH.div(numDeposits),
+                        ],
+                        this.subject,
+                        this.firstDepositor
+                    );
                     for (let i = 0; i < numDeposits; ++i) {
                         await this.subject
                             .connect(this.deployer)
@@ -290,7 +297,13 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     }
 
                     for (let i = 1; i < numDeposits; ++i) {
-                        expect(lpAmounts[i].sub(lpAmounts[i - 1]).sub(lpAmounts[0]).abs().lte(1)).to.be.true;
+                        expect(
+                            lpAmounts[i]
+                                .sub(lpAmounts[i - 1])
+                                .sub(lpAmounts[0])
+                                .abs()
+                                .lte(1)
+                        ).to.be.true;
                     }
 
                     const lpTokensAmount = await this.subject.balanceOf(
@@ -348,10 +361,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         this.wethDeployerSupply,
                         100000
                     );
-                    
+
                     closeToEqual(
                         await this.usdc.balanceOf(this.deployer.address),
-                        this.usdcDeployerSupply, 
+                        this.usdcDeployerSupply,
                         100000
                     );
                     return true;

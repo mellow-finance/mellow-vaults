@@ -1,7 +1,12 @@
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { BigNumber } from "@ethersproject/bignumber";
-import { BigNumberish, Contract, ContractFactory, PopulatedTransaction } from "ethers";
+import {
+    BigNumberish,
+    Contract,
+    ContractFactory,
+    PopulatedTransaction,
+} from "ethers";
 import { abi as ICurvePool } from "../test/helpers/curvePoolABI.json";
 import { abi as IWETH } from "../test/helpers/wethABI.json";
 import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
@@ -106,18 +111,12 @@ async function getContext(hre: HardhatRuntimeEnvironment) {
         ICurvePool,
         "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
     );
-    const weth: Contract = await ethers.getContractAt(
-        IWETH,
-        wethAddress
-    );
+    const weth: Contract = await ethers.getContractAt(IWETH, wethAddress);
     const steth = await ethers.getContractAt(
         "ERC20Token",
         "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
     );
-    const wsteth: Contract = await ethers.getContractAt(
-        IWSTETH,
-        wstethAddress
-    );
+    const wsteth: Contract = await ethers.getContractAt(IWSTETH, wstethAddress);
 
     let tokens: Contract[] = [wsteth, weth];
 

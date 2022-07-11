@@ -2,7 +2,14 @@ import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { abi as INonfungiblePositionManager } from "@uniswap/v3-periphery/artifacts/contracts/interfaces/INonfungiblePositionManager.sol/INonfungiblePositionManager.json";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, sleep, mintUniV3Position_USDC_WETH, randomAddress, withSigner } from "../library/Helpers";
+import {
+    mint,
+    sleep,
+    mintUniV3Position_USDC_WETH,
+    randomAddress,
+    withSigner,
+    makeFirstDeposit,
+} from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault } from "../types/ERC20RootVault";
 import { UniV3Vault } from "../types/UniV3Vault";
@@ -135,51 +142,41 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ethers.constants.MaxUint256
                     );
 
-
-                    let firstDepositor = randomAddress();
-                    let firstUsdcAmount = BigNumber.from(10).pow(4)
-                    let firstWethAmount = BigNumber.from(10).pow(10);
-
+                    this.firstDepositor = randomAddress();
                     await mint(
                         "USDC",
-                        firstDepositor,
-                        firstUsdcAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
                     );
                     await mint(
                         "WETH",
-                        firstDepositor,
-                        firstWethAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
                     );
 
                     await this.subject
                         .connect(this.admin)
-                        .addDepositorsToAllowlist([firstDepositor]);
-                    
-                    this.firstDepositAmount = [firstUsdcAmount, firstWethAmount];
-                    await withSigner(firstDepositor, async (signer) => {
+                        .addDepositorsToAllowlist([this.firstDepositor]);
 
-                        await this.weth.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.usdc.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.subject
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
                             .connect(signer)
-                            .deposit(
-                                this.firstDepositAmount,
-                                0,
-                                []
-                        );
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
                     });
-
                     return this.subject;
                 }
             );
         });
-        
+
         const setZeroFeesFixture = deployments.createFixture(async () => {
             await this.deploymentFixture();
             let erc20RootVaultGovernance: ERC20RootVaultGovernance =
@@ -189,8 +186,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 .connect(this.admin)
                 .stageDelayedStrategyParams(this.erc20RootVaultNft, {
                     strategyTreasury: randomAddress(),
-                    strategyPerformanceTreasury:
-                        randomAddress(),
+                    strategyPerformanceTreasury: randomAddress(),
                     privateVault: true,
                     managementFee: BigNumber.from(0),
                     performanceFee: BigNumber.from(0),
@@ -225,7 +221,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
         });
 
-        
         describe("rebalance", () => {
             it("initializes uniV3 vault with position nft and increases tvl respectivly", async () => {
                 const result = await mintUniV3Position_USDC_WETH({
@@ -250,8 +245,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 expect(uniV3Tvl).to.not.contain(0);
                 console.log((await this.erc20Vault.tvl()).toString());
                 expect(await this.erc20Vault.tvl()).to.deep.equals([
-                    this.firstDepositAmount,
-                    this.firstDepositAmount
+                    [BigNumber.from(0), BigNumber.from(0)],
+                    [BigNumber.from(0), BigNumber.from(0)],
                 ]);
             });
 
@@ -271,14 +266,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.uniV3Vault.address,
                     result.tokenId
                 );
-                await this.subject.deposit(
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                        BigNumber.from(10).pow(18),
-                    ],
-                    0,
-                    []
+                let amountUSDC = BigNumber.from(10).pow(6).mul(3000);
+                let amountWETH = BigNumber.from(10).pow(18);
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [amountUSDC, amountWETH],
+                    this.subject,
+                    this.firstDepositor
                 );
+                await this.subject.deposit([amountUSDC, amountWETH], 0, []);
                 expect(
                     (await this.subject.balanceOf(this.deployer.address)).gt(0)
                 ).to.be.true;
@@ -300,14 +296,15 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     this.uniV3Vault.address,
                     result.tokenId
                 );
-                await this.subject.deposit(
-                    [
-                        BigNumber.from(10).pow(6).mul(3000),
-                        BigNumber.from(10).pow(18),
-                    ],
-                    0,
-                    []
+                let amountUSDC = BigNumber.from(10).pow(6).mul(3000);
+                let amountWETH = BigNumber.from(10).pow(18);
+                await makeFirstDeposit(
+                    [this.usdc, this.weth],
+                    [amountUSDC, amountWETH],
+                    this.subject,
+                    this.firstDepositor
                 );
+                await this.subject.deposit([amountUSDC, amountWETH], 0, []);
                 await this.uniV3Vault.collectEarnings();
                 await this.uniV3Vault.pull(
                     this.erc20Vault.address,

@@ -4,6 +4,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import {
     compareAddresses,
     encodeToBytes,
+    makeFirstDeposit,
     mint,
     randomAddress,
     randomChoice,
@@ -342,43 +343,35 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         ]
                     );
 
-                    let firstDepositor = randomAddress();
-                    let firstUsdcAmount = BigNumber.from(10).pow(4)
-                    let firstWethAmount = BigNumber.from(10).pow(10);
-
+                    this.firstDepositor = randomAddress();
                     await mint(
                         "USDC",
-                        firstDepositor,
-                        firstUsdcAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(6).mul(100)
                     );
                     await mint(
                         "WETH",
-                        firstDepositor,
-                        firstWethAmount
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
                     );
 
                     await this.subject
                         .connect(this.admin)
-                        .addDepositorsToAllowlist([firstDepositor]);
+                        .addDepositorsToAllowlist([this.firstDepositor]);
 
-                    this.firstDepositAmount = [firstUsdcAmount, firstWethAmount];
-                    await withSigner(firstDepositor, async (signer) => {
-
-                        await this.weth.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.usdc.connect(signer).approve(
-                            this.subject.address,
-                            ethers.constants.MaxUint256
-                        );
-                        await this.subject
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.usdc
                             .connect(signer)
-                            .deposit(
-                                this.firstDepositAmount,
-                                0,
-                                []
-                        );
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
                     });
                     return this.subject;
                 }
@@ -389,19 +382,9 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
         async function getVaults(
             this: TestContext<ERC20RootVault, DeployOptions> & CustomContext
         ) {
-            let tvls = await Promise.all(
+            return await Promise.all(
                 this.targets.map((target) => target.tvl())
             );
-            let newTvls = [];
-            for (let vaultIndex = 0; vaultIndex < tvls.length; vaultIndex++) {
-                let toPush = [...tvls[vaultIndex]];
-                if (vaultIndex == 0) {
-                    let withoutFirst = [[toPush[0][0].sub(this.firstDepositAmount[0]), toPush[0][1].sub(this.firstDepositAmount[1])], [toPush[1][0].sub(this.firstDepositAmount[0]), toPush[1][1].sub(this.firstDepositAmount[1])]];
-                    toPush = withoutFirst;
-                }
-                newTvls.push(toPush);
-            }
-            return newTvls;
         }
 
         // generates random PullAction, which will result in vault state change
@@ -1301,14 +1284,18 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     BigNumber.from(10).pow(6).mul(1000),
                     BigNumber.from(10).pow(15).mul(300),
                 ];
+                await makeFirstDeposit(
+                    this.tokens,
+                    this.tryToDepositAmount,
+                    this.subject,
+                    this.firstDepositor
+                );
                 this.depositAmount = await this.subject
                     .connect(this.deployer)
-                    .callStatic
-                    .deposit(this.tryToDepositAmount, 0, []);
+                    .callStatic.deposit(this.tryToDepositAmount, 0, []);
                 await this.subject
                     .connect(this.deployer)
                     .deposit(this.tryToDepositAmount, 0, []);
-
                 // random actions
                 for (let i = 0; i < 100; i++) {
                     if (randomInt(2) == 0) {
@@ -1333,19 +1320,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                 // withdraw and check final invariant
                 await checkInvariant.call(this, true);
-
-                // make sure nothing left
-                let tvls = await getVaults.call(this);
-                for (let tvl of tvls) {
-                    for (
-                        let tokenIndex = 0;
-                        tokenIndex < this.tokens.length;
-                        tokenIndex++
-                    ) {
-                        expect(tvl[0][tokenIndex].lt(10)).to.be.true;
-                        expect(tvl[1][tokenIndex].lt(10)).to.be.true;
-                    }
-                }
             });
         });
     }
