@@ -578,8 +578,8 @@ export async function makeFirstDeposit(
     rootVault: ERC20RootVault,
     firstDepositor: string
 ) {
-    if (tokens.length != 2 || tokenAmounts.length != 2) {
-        throw `only two tokens allowed`;
+    if (tokens.length != tokenAmounts.length || tokens.length == 0) {
+        throw `tokens length does not match amount`;
     }
     let decimals = await Promise.all(tokens.map((token) => token.decimals()));
     let tokenMultipliers = tokenAmounts.map((amount, index) =>

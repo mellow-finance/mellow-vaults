@@ -181,7 +181,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
             await this.deploymentFixture();
             let erc20RootVaultGovernance: ERC20RootVaultGovernance =
                 await ethers.getContract("ERC20RootVaultGovernance");
-            console.log("1");
             await erc20RootVaultGovernance
                 .connect(this.admin)
                 .stageDelayedStrategyParams(this.erc20RootVaultNft, {
@@ -193,7 +192,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     depositCallbackAddress: ethers.constants.AddressZero,
                     withdrawCallbackAddress: ethers.constants.AddressZero,
                 });
-            console.log("2");
             await sleep(this.governanceDelay);
             await this.erc20RootVaultGovernance
                 .connect(this.admin)
@@ -201,7 +199,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
             const { protocolTreasury } = await getNamedAccounts();
 
-            console.log("3");
             const params = {
                 forceAllowMask: ALLOW_MASK,
                 maxTokensPerVault: 10,
@@ -209,7 +206,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 protocolTreasury,
                 withdrawLimit: Common.D18.mul(100),
             };
-            console.log("4");
             await this.protocolGovernance
                 .connect(this.admin)
                 .stageParams(params);
@@ -243,7 +239,6 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 );
                 const uniV3Tvl = await this.uniV3Vault.tvl();
                 expect(uniV3Tvl).to.not.contain(0);
-                console.log((await this.erc20Vault.tvl()).toString());
                 expect(await this.erc20Vault.tvl()).to.deep.equals([
                     [BigNumber.from(0), BigNumber.from(0)],
                     [BigNumber.from(0), BigNumber.from(0)],
