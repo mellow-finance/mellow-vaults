@@ -37,7 +37,7 @@ contract<TickMathTest, DeployOptions, CustomContext>(
             }
             return x;
         }
-        
+
         const getRatioAtTick = (tick: number) => {
             const D = BigNumber.from(2).pow(1024);
             const Q96 = BigNumber.from(2).pow(96);
@@ -69,7 +69,7 @@ contract<TickMathTest, DeployOptions, CustomContext>(
             }
             return result;
         };
-        
+
         beforeEach(async () => {
             await this.deploymentFixture();
         });
@@ -81,8 +81,12 @@ contract<TickMathTest, DeployOptions, CustomContext>(
                     if (tick.gt(887220)) {
                         continue;
                     }
-                    let realSqrtRatio = await this.subject.getSqrtRatioAtTick(tick);
-                    let realRatio = realSqrtRatio.pow(2).div(BigNumber.from(2).pow(96));
+                    let realSqrtRatio = await this.subject.getSqrtRatioAtTick(
+                        tick
+                    );
+                    let realRatio = realSqrtRatio
+                        .pow(2)
+                        .div(BigNumber.from(2).pow(96));
                     let realRatioLower = realRatio.mul(99).div(100);
                     let realRatioUpper = realRatio.mul(101).div(100);
                     let expectedRatio = getRatioAtTick(tick.toNumber());
@@ -99,8 +103,12 @@ contract<TickMathTest, DeployOptions, CustomContext>(
                     if (tick.lt(-887220)) {
                         continue;
                     }
-                    let realSqrtRatio = await this.subject.getSqrtRatioAtTick(tick);
-                    let realRatio = realSqrtRatio.pow(2).div(BigNumber.from(2).pow(96));
+                    let realSqrtRatio = await this.subject.getSqrtRatioAtTick(
+                        tick
+                    );
+                    let realRatio = realSqrtRatio
+                        .pow(2)
+                        .div(BigNumber.from(2).pow(96));
                     let realRatioLower = realRatio.mul(99).div(100);
                     let realRatioUpper = realRatio.mul(101).div(100);
                     let expectedRatio = getRatioAtTick(tick.toNumber());
