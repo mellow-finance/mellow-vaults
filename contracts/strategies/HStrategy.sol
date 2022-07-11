@@ -637,9 +637,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param pool_ address of uniV3 pool
     /// @param deadline maximal duration of swap offer on uniV3
     /// @param positionManager_ uniV3 position manager
-    /// @param averageTick tick from the oracle oracleDelta seconds ago
     /// @param oldNft the nft of the burning position
-    /// @return newNft the nft of the minted position
     function _mintPosition(
         StrategyParams memory strategyParams_,
         IUniswapV3Pool pool_,
