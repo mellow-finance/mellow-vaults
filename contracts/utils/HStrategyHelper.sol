@@ -460,6 +460,8 @@ contract HStrategyHelper {
         return false;
     }
 
+    /// @notice returns true if the rebalance between assets on different vaults is needed
+    /// @param params the current amounts of tokens on the vaults
     function requireTicksInCurrentPosition(HStrategy.DomainPositionParams memory params) external pure {
         require(
             params.lowerPriceSqrtX96 <= params.spotPriceSqrtX96 && params.spotPriceSqrtX96 <= params.upperPriceSqrtX96,
@@ -472,6 +474,14 @@ contract HStrategyHelper {
         );
     }
 
+    /// @notice returns true if the rebalance between assets on different vaults is needed
+    /// @param pool_ Uniswap V3 pool of the strategy
+    /// @param oracleParams_ params of the interaction with oracle
+    /// @param hStrategyHelper_ the helper of the strategy
+    /// @param strategyParams_ the current parameters of the strategy
+    /// @param uniV3Nft the nft of the position from position manager
+    /// @param positionManager_ the position manager for uniV3
+    /// @param uniV3Helper helper contact for UniV3 calculations
     function calculateAndCheckDomainPositionParams(
         IUniswapV3Pool pool_,
         HStrategy.OracleParams memory oracleParams_,
@@ -479,11 +489,13 @@ contract HStrategyHelper {
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager_,
-        UniV3Helper _uniV3Helper
+        UniV3Helper uniV3Helper
     ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
         {
-            (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = _uniV3Helper
-                .getAverageTickAndSqrtSpotPrice(pool_, oracleParams_.oracleObservationDelta);
+            (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(
+                pool_,
+                oracleParams_.oracleObservationDelta
+            );
             if (deviation < 0) {
                 deviation = -deviation;
             }
