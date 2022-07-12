@@ -519,12 +519,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
             return BigNumber.from(sqrtPriceX96).pow(2).div(Q96);
         };
 
-        describe.only("#rebalance", () => {
+        describe("#rebalance", () => {
             const getPriceX96 = (tick: number) => {
                 return this.getSqrtRatioAtTick(tick).pow(2).div(Q96);
             };
 
-            it("`tvl chanages only on fees`", async () => {
+            it("tvl chanages only on fees", async () => {
                 const centralTick = await getAverageTick();
                 const globalLowerTick =
                     centralTick - 6000 - (centralTick % 600);
