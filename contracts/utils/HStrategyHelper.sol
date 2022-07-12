@@ -8,6 +8,7 @@ import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../strategies/HStrategy.sol";
+import "./UniV3Helper.sol";
 
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
@@ -469,5 +470,32 @@ contract HStrategyHelper {
                 params.averagePriceSqrtX96 <= params.upperPriceSqrtX96,
             ExceptionsLibrary.INVARIANT
         );
+    }
+
+    function calculateAndCheckDomainPositionParams(
+        IUniswapV3Pool pool_,
+        HStrategy.OracleParams memory oracleParams_,
+        HStrategyHelper hStrategyHelper_,
+        HStrategy.StrategyParams memory strategyParams_,
+        uint256 uniV3Nft,
+        INonfungiblePositionManager positionManager_,
+        UniV3Helper _uniV3Helper
+    ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
+        {
+            (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = _uniV3Helper
+                .getAverageTickAndSqrtSpotPrice(pool_, oracleParams_.oracleObservationDelta);
+            if (deviation < 0) {
+                deviation = -deviation;
+            }
+            require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+            domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
+                averageTick,
+                sqrtSpotPriceX96,
+                strategyParams_,
+                uniV3Nft,
+                positionManager_
+            );
+        }
+        hStrategyHelper_.requireTicksInCurrentPosition(domainPositionParams);
     }
 }
