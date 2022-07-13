@@ -35,7 +35,9 @@
     "size": "rm -rf artifacts && hardhat size-contracts --config hardhat.size-test.config.ts",
     "prettier": "./node_modules/.bin/prettier -w contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts test/integration/*.ts test/behaviors/*.ts tasks/*.ts",
     "prettier:check": "./node_modules/.bin/prettier -c contracts/**/*.sol test/*.test.ts test/*.spec.ts test/library/*.ts",
-    "clean": "rm -rf artifacts && rm -rf test/types"
+    "clean": "rm -rf artifacts && rm -rf test/types",
+    "lstrategy-slippage": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.test.config.ts lstrategy-slippage --tickchange 100 --erc20ratio 5 --percentagechange 90",
+    "lstrategy-backtest": "rm -rf artifacts && hardhat compile && hardhat --config hardhat.backtest.config.ts lstrategy-backtest --filename price_data.csv --width 60"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
@@ -73,6 +75,7 @@
     "@uniswap/v3-core": "^1.0.0",
     "@uniswap/v3-periphery": "^1.4.0",
     "@uniswap/v3-sdk": "^3.8.1",
+    "csv-parse": "^5.1.0",
     "dotenv": "^10.0.0",
     "solc": "0.8.9",
     "solidity-docgen": "^0.5.16"

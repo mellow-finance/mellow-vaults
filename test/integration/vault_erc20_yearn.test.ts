@@ -3,6 +3,7 @@ import { ethers, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
 import {
     encodeToBytes,
+    makeFirstDeposit,
     mint,
     randomAddress,
     sleep,
@@ -35,7 +36,7 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 async (_, __?: DeployOptions) => {
                     const { read } = deployments;
 
-                    const tokens = [this.wbtc.address, this.weth.address]
+                    this.usedTokens = [this.wbtc.address, this.weth.address]
                         .map((t) => t.toLowerCase())
                         .sort();
 
@@ -54,7 +55,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         erc20VaultNft,
                         "ERC20VaultGovernance",
                         {
-                            createVaultArgs: [tokens, this.deployer.address],
+                            createVaultArgs: [
+                                this.usedTokens,
+                                this.deployer.address,
+                            ],
                         }
                     );
 
@@ -64,7 +68,10 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                         yearnVaultNft,
                         "YearnVaultGovernance",
                         {
-                            createVaultArgs: [tokens, this.deployer.address],
+                            createVaultArgs: [
+                                this.usedTokens,
+                                this.deployer.address,
+                            ],
                         }
                     );
 
@@ -136,6 +143,38 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     const { uniswapV3Router } = await getNamedAccounts();
                     this.swapRouter = uniswapV3Router;
+
+                    this.firstDepositor = randomAddress();
+                    await mint(
+                        "WBTC",
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(8).mul(100)
+                    );
+                    await mint(
+                        "WETH",
+                        this.firstDepositor,
+                        BigNumber.from(10).pow(18).mul(100)
+                    );
+
+                    await this.subject
+                        .connect(this.admin)
+                        .addDepositorsToAllowlist([this.firstDepositor]);
+
+                    await withSigner(this.firstDepositor, async (signer) => {
+                        await this.wbtc
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                        await this.weth
+                            .connect(signer)
+                            .approve(
+                                this.subject.address,
+                                ethers.constants.MaxUint256
+                            );
+                    });
+
                     return this.subject;
                 }
             );
@@ -151,8 +190,8 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                 const token0 = this.wbtc;
                 const token1 = this.weth;
 
-                const token0Amount = BigNumber.from(10).pow(10);
-                const token1Amount = BigNumber.from(10).pow(10);
+                const token0Amount = BigNumber.from(10).pow(6);
+                const token1Amount = BigNumber.from(10).pow(12);
                 const rewardAmount = BigNumber.from(10).pow(6);
 
                 // add token0Amount of token0 to balance of deployer
@@ -170,6 +209,12 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
                     .approve(this.subject.address, token1Amount);
 
                 // deposit all given amounts of tokens
+                this.firstDepositAmount = await makeFirstDeposit(
+                    [token0, token1],
+                    [token0Amount, token1Amount],
+                    this.subject,
+                    this.firstDepositor
+                );
                 await this.subject.deposit(
                     [token0Amount, token1Amount],
                     BigNumber.from(0),
@@ -409,20 +454,20 @@ contract<ERC20RootVault, DeployOptions, CustomContext>(
 
                     // amount of token0 before swap must to be equal to zero
                     expect(zeroVaultToken0AmountBeforeSwap).to.be.eq(
-                        BigNumber.from(0)
+                        this.firstDepositAmount[0]
                     );
                     // amount of token0 after swap must to be greater than zero
                     expect(zeroVaultToken0AmountAfterSwap).to.be.gt(
-                        BigNumber.from(0)
+                        this.firstDepositAmount[0]
                     );
 
                     // amount of token1 before swap must to be equal to zero
                     expect(zeroVaultToken1AmountBeforeSwap).to.be.eq(
-                        BigNumber.from(0)
+                        this.firstDepositAmount[1]
                     );
                     // amount of token1 after swap must to be greater than zero
                     expect(zeroVaultToken1AmountAfterSwap).to.be.gt(
-                        BigNumber.from(0)
+                        this.firstDepositAmount[1]
                     );
                 }
             });
