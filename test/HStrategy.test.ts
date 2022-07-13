@@ -910,7 +910,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     globalUpperTick: tickUpper + 60,
                     simulateUniV3Interval: true,
                 } as StrategyParamsStruct);
-
+            await sleep(this.governanceDelay);
             while (true) {
                 let { tick } = await this.pool.slot0();
                 if (tick <= tickUpper + 30) {
@@ -925,7 +925,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
-
+            await sleep(this.governanceDelay);
             while (true) {
                 let { tick } = await this.pool.slot0();
                 if (tick >= tickLower + 30) {
