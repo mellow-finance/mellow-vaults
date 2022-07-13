@@ -849,7 +849,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             ).to.be.revertedWith(Exceptions.INVARIANT);
 
             for (var i = 0; i < 4; i++) {
-                await push(BigNumber.from(10).pow(20), "WETH");
+                await push(BigNumber.from(10).pow(21), "WETH");
                 await sleep(this.governanceDelay);
             }
 
@@ -864,29 +864,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         minMoneyRatioDeviation0D: 0,
                         minMoneyRatioDeviation1D: 0,
                     } as RatioParamsStruct);
-            }
-
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
-
-            for (var i = 0; i < 4; i++) {
-                await push(BigNumber.from(10).pow(12), "USDC");
-                await sleep(this.governanceDelay);
-            }
-            await push(BigNumber.from(10).pow(12), "USDC");
-
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
-
-            for (var i = 0; i < 10; i++) {
-                await push(BigNumber.from(10).pow(20), "WETH");
-                await sleep(this.governanceDelay);
             }
 
             await expect(
@@ -920,11 +897,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     break;
                 }
             }
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
+            // await expect(
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .rebalance(restrictions, []);
+            // ).not.to.be.reverted;
             await sleep(this.governanceDelay);
             while (true) {
                 let { tick } = await this.pool.slot0();
@@ -935,11 +912,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     break;
                 }
             }
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
+            // await expect(
+            await this.subject
+                .connect(this.mStrategyAdmin)
+                .rebalance(restrictions, []);
+            // ).not.to.be.reverted;
         });
     });
 
