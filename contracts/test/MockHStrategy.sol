@@ -13,6 +13,6 @@ contract MockHStrategy is HStrategy {
         TokenAmounts memory currentTokenAmounts,
         RebalanceRestrictions memory restrictions
     ) external returns (uint256[] memory swappedAmounts) {
-        swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions);
+        swappedAmounts = _swapTokens(expectedTokenAmounts, currentTokenAmounts, restrictions, erc20Vault, tokens);
     }
 }
