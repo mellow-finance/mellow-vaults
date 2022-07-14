@@ -705,13 +705,13 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             // in this case it is first mint
             int24 deltaToLowerTick = averageTick - strategyParams_.globalLowerTick;
             deltaToLowerTick -= (deltaToLowerTick % intervalWidth);
-            lowerTick = strategyParams_.globalLowerTick + deltaToLowerTick;
-            upperTick = lowerTick + intervalWidth;
+            int24 lowerEstimationCentralTick = strategyParams_.globalLowerTick + deltaToLowerTick;
+            int24 upperEstimationCentralTick = lowerEstimationCentralTick + intervalWidth;
             int24 mintTick = 0;
-            if (averageTick - lowerTick <= upperTick - averageTick) {
-                mintTick = lowerTick;
+            if (averageTick - lowerEstimationCentralTick <= upperEstimationCentralTick - averageTick) {
+                mintTick = lowerEstimationCentralTick;
             } else {
-                mintTick = upperTick;
+                mintTick = upperEstimationCentralTick;
             }
 
             lowerTick = mintTick - intervalWidth;
