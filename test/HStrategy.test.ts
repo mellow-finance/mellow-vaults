@@ -920,7 +920,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("#tokenRebalance", () => {
+    describe("#capitalRebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
@@ -1000,7 +1000,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             );
             await this.subject
                 .connect(this.mStrategyAdmin)
-                .tokenRebalance(restrictions, []);
+                .capitalRebalance(restrictions, []);
         });
     });
 

@@ -792,12 +792,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         ) {
                             await this.subject
                                 .connect(this.mStrategyAdmin)
-                                .tokenRebalance(restrictions, []);
+                                .capitalRebalance(restrictions, []);
                         } else {
                             await expect(
                                 this.subject
                                     .connect(this.mStrategyAdmin)
-                                    .tokenRebalance(restrictions, [])
+                                    .capitalRebalance(restrictions, [])
                             ).to.be.revertedWith(Exceptions.INVARIANT);
                         }
                     }
