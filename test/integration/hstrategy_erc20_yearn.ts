@@ -737,7 +737,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         if (Math.random() < 0.5) {
                             const initialTick = await getSpotTick();
                             var currentTick = initialTick;
-                            while (Math.abs(currentTick - initialTick) <= 60) {
+                            while (Math.abs(currentTick - initialTick) <= 100) {
                                 await push(BigNumber.from(10).pow(13), "USDC");
                                 await sleep(this.governanceDelay);
                                 currentTick = await getSpotTick();
@@ -745,7 +745,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         } else {
                             const initialTick = await getSpotTick();
                             var currentTick = initialTick;
-                            while (Math.abs(currentTick - initialTick) <= 60) {
+                            while (Math.abs(currentTick - initialTick) <= 100) {
                                 await push(BigNumber.from(10).pow(21), "WETH");
                                 await sleep(this.governanceDelay);
                                 currentTick = await getSpotTick();
@@ -761,7 +761,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         }
                     }
 
-                    await sleep(this.governanceDelay);
+                    await sleep(this.governanceDelay * 2);
                     const token0BalanceBefore = await this.usdc.balanceOf(
                         this.subject.address
                     );
