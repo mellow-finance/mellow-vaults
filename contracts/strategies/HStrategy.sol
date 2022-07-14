@@ -861,21 +861,19 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         DomainPositionParams memory domainPositionParams,
         HStrategyHelper hStrategyHelper_
     ) internal view returns (TokenAmounts memory expectedTokenAmounts) {
-        ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(
-            domainPositionParams
+        ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
+        TokenAmountsInToken0 memory currentTokenAmountsInToken0 = hStrategyHelper_.calculateCurrentTokenAmountsInToken0(
+            domainPositionParams,
+            currentTokenAmounts
         );
-        TokenAmountsInToken0 memory currentTokenAmountsInToken0 = hStrategyHelper_
-            .calculateCurrentTokenAmountsInToken0(domainPositionParams, currentTokenAmounts);
-        TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_.calculateExpectedTokenAmountsInToken0(
-            currentTokenAmountsInToken0,
-            expectedRatios,
-            ratioParams
-        );
-        return hStrategyHelper_.calculateExpectedTokenAmounts(
-            expectedRatios,
-            expectedTokenAmountsInToken0,
-            domainPositionParams
-        );
+        TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
+            .calculateExpectedTokenAmountsInToken0(currentTokenAmountsInToken0, expectedRatios, ratioParams);
+        return
+            hStrategyHelper_.calculateExpectedTokenAmounts(
+                expectedRatios,
+                expectedTokenAmountsInToken0,
+                domainPositionParams
+            );
     }
 
     /// @notice Emitted when new position in UniV3Pool has been minted.
