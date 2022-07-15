@@ -325,46 +325,46 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         if (elapsed < delayedProtocolParams.managementFeeChargeDelay) {
             return;
         }
+        (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
+            tvls,
+            supply,
+            deltaTvls,
+            deltaSupply,
+            isWithdraw
+        );
+        lastFeeCharge = uint64(block.timestamp);
+        // don't charge on initial deposit as well as on the last withdraw
+        if (baseSupply == 0) {
+            return;
+        }
         {
-            (uint256 baseSupply, uint256[] memory baseTvls) = _getBaseParamsForFees(
-                tvls,
-                supply,
-                deltaTvls,
-                deltaSupply,
-                isWithdraw
-            );
-            lastFeeCharge = uint64(block.timestamp);
-            // don't charge on initial deposit as well as on the last withdraw
-            if (baseSupply == 0) {
-                return;
+            bool needSkip = true;
+            uint256[] memory pullExistentials = _pullExistentials;
+            for (uint256 i = 0; i < pullExistentials.length; ++i) {
+                if (baseTvls[i] >= pullExistentials[i]) {
+                    needSkip = false;
+                    break;
+                }
             }
-            {
-                bool needSkip = true;
-                uint256[] memory pullExistentials = _pullExistentials;
-                for (uint256 i = 0; i < pullExistentials.length; ++i) {
-                    if (baseTvls[i] >= pullExistentials[i]) {
-                        needSkip = false;
-                        break;
-                    }
-                }
-                if (needSkip) {
-                    return;
-                }
+            if (needSkip) {
+                return;
             }
         }
         IERC20RootVaultGovernance.DelayedStrategyParams memory strategyParams = vg.delayedStrategyParams(thisNft);
+        uint256 protocolFee = vg.delayedProtocolPerVaultParams(thisNft).protocolFee;
+        address protocolTreasury = vg.internalParams().protocolGovernance.protocolTreasury();
         _chargeManagementFees(
             strategyParams.managementFee,
-            vg.delayedProtocolPerVaultParams(thisNft).protocolFee,
+            protocolFee,
             strategyParams.strategyTreasury,
-            vg.internalParams().protocolGovernance.protocolTreasury(),
+            protocolTreasury,
             elapsed,
-            supply
+            baseSupply
         );
 
         _chargePerformanceFees(
-            supply,
-            tvls,
+            baseSupply,
+            baseTvls,
             strategyParams.performanceFee,
             strategyParams.strategyPerformanceTreasury,
             tokens,
