@@ -103,6 +103,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         }
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
+        _chargeFees(thisNft, minTvl, supply, new uint256[](tokens.length), 0, tokens, false);
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
@@ -135,7 +136,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             .strategyParams(thisNft);
         require(lpAmount + balanceOf[msg.sender] <= params.tokenLimitPerAddress, ExceptionsLibrary.LIMIT_OVERFLOW);
         require(lpAmount + supply <= params.tokenLimit, ExceptionsLibrary.LIMIT_OVERFLOW);
-        _chargeFees(thisNft, minTvl, supply, actualTokenAmounts, lpAmount, tokens, false);
         // lock tokens on first deposit
         if (supply == 0) {
             _mint(address(0), lpAmount);
