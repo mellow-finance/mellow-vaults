@@ -175,6 +175,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
         uint256 balance = balanceOf[msg.sender];
+        _chargeFees(_nft, minTvl, supply, new uint256[](tokens.length), 0, tokens, true);
         if (lpTokenAmount > balance) {
             lpTokenAmount = balance;
         }
@@ -195,7 +196,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
             }
         }
         _updateWithdrawnAmounts(actualTokenAmounts);
-        _chargeFees(_nft, minTvl, supply, actualTokenAmounts, lpTokenAmount, tokens, true);
         if (sufficientAmountRest) {
             _burn(msg.sender, lpTokenAmount);
         } else {
