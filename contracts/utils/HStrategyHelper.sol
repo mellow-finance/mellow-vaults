@@ -83,13 +83,13 @@ contract HStrategyHelper {
             liquidity: liquidity,
             lowerTick: lowerTick,
             upperTick: upperTick,
-            lower0Tick: strategyParams_.globalLowerTick,
-            upper0Tick: strategyParams_.globalUpperTick,
+            lower0Tick: strategyParams_.domainLowerTick,
+            upper0Tick: strategyParams_.domainUpperTick,
             averageTick: averageTick,
             lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
-            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.globalLowerTick),
-            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.globalUpperTick),
+            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
+            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
             averagePriceSqrtX96: TickMath.getSqrtRatioAtTick(averageTick),
             averagePriceX96: 0,
             spotPriceSqrtX96: sqrtSpotPriceX96
@@ -314,100 +314,77 @@ contract HStrategyHelper {
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.RatioParams memory ratioParams_
     ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
+        uint256 totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
+        amounts.erc20TokensAmountInToken0 = FullMath.mulDiv(
+            totalTokensInToken0,
+            ratioParams_.erc20CapitalRatioD,
+            DENOMINATOR
+        );
         amounts.uniV3TokensAmountInToken0 = FullMath.mulDiv(
-            currentTokenAmounts.totalTokensInToken0,
+            totalTokensInToken0 - amounts.erc20TokensAmountInToken0,
             expectedRatios.uniV3RatioD,
             DENOMINATOR
         );
-        amounts.totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
-        amounts.erc20TokensAmountInToken0 = FullMath.mulDiv(
-            amounts.totalTokensInToken0 - amounts.uniV3TokensAmountInToken0,
-            ratioParams_.erc20MoneyRatioD,
-            DENOMINATOR
-        );
         amounts.moneyTokensAmountInToken0 =
-            amounts.totalTokensInToken0 -
-            amounts.uniV3TokensAmountInToken0 -
-            amounts.erc20TokensAmountInToken0;
+            totalTokensInToken0 -
+            amounts.erc20TokensAmountInToken0 -
+            amounts.uniV3TokensAmountInToken0;
+        amounts.totalTokensInToken0 = totalTokensInToken0;
     }
 
     /// @notice return true if the token swap is needed. It is needed if we cannot mint a new position without it
-    /// @param missingTokenAmounts the amounts of tokens to be pulled on uniV3 and money vault
+    /// @param currentTokenAmounts the amounts of tokens on the vaults
     /// @param expectedTokenAmounts the amounts of tokens expected after rebalancing
-    /// @param erc20Vault the erc20 vault of the strategy
     /// @param ratioParams ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
-    /// @return bool true if the token swap is needed
+    /// @return needed true if the token swap is needed
     function swapNeeded(
-        HStrategy.TokenAmounts memory missingTokenAmounts,
+        HStrategy.TokenAmounts memory currentTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
-        IIntegrationVault erc20Vault,
         HStrategy.RatioParams memory ratioParams
-    ) external view returns (bool) {
-        (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
-
-        uint256 totalToken0Amount = expectedTokenAmounts.erc20Token0 +
+    ) external pure returns (bool needed) {
+        uint256 expectedTotalToken0Amount = expectedTokenAmounts.erc20Token0 +
             expectedTokenAmounts.moneyToken0 +
             expectedTokenAmounts.uniV3Token0;
-        uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
+        uint256 expectedTotalToken1Amount = expectedTokenAmounts.erc20Token1 +
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
-        {
-            uint256 maxDeltaToken0 = FullMath.mulDiv(
-                totalToken0Amount,
-                ratioParams.minUniV3RatioDeviation0D,
-                DENOMINATOR
-            );
-            if (erc20Tvl[0] + maxDeltaToken0 < missingTokenAmounts.uniV3Token0) {
-                return true;
-            }
-        }
 
-        {
-            uint256 maxDeltaToken1 = FullMath.mulDiv(
-                totalToken1Amount,
-                ratioParams.minUniV3RatioDeviation1D,
-                DENOMINATOR
-            );
-            if (erc20Tvl[0] + maxDeltaToken1 < missingTokenAmounts.uniV3Token1) {
-                return true;
-            }
-        }
+        uint256 currentTotalToken0Amount = currentTokenAmounts.erc20Token0 +
+            currentTokenAmounts.moneyToken0 +
+            currentTokenAmounts.uniV3Token0;
+        uint256 currentTotalToken1Amount = currentTokenAmounts.erc20Token1 +
+            currentTokenAmounts.moneyToken1 +
+            currentTokenAmounts.uniV3Token1;
 
-        {
-            uint256 maxDeltaToken0 = FullMath.mulDiv(
-                totalToken0Amount,
-                ratioParams.minMoneyRatioDeviation0D,
-                DENOMINATOR
-            );
-            if (erc20Tvl[0] + maxDeltaToken0 < missingTokenAmounts.uniV3Token0 + missingTokenAmounts.moneyToken0) {
-                return true;
-            }
+        int256 token0Delta = int256(currentTotalToken0Amount) - int256(expectedTotalToken0Amount);
+        int256 token1Delta = int256(currentTotalToken1Amount) - int256(expectedTotalToken1Amount);
+        uint256 minToken0Deviation = FullMath.mulDiv(
+            expectedTotalToken0Amount,
+            ratioParams.minRebalanceDeviationInToken0D,
+            DENOMINATOR
+        );
+        uint256 minToken1Deviation = FullMath.mulDiv(
+            expectedTotalToken1Amount,
+            ratioParams.minRebalanceDeviationInToken1D,
+            DENOMINATOR
+        );
+        if (token0Delta < 0 && token1Delta > 0) {
+            needed = uint256(-token0Delta) >= minToken0Deviation || uint256(token1Delta) >= minToken1Deviation;
+        } else if (token0Delta > 0 && token1Delta < 0) {
+            needed = uint256(token0Delta) >= minToken0Deviation || uint256(-token1Delta) >= minToken1Deviation;
         }
-
-        {
-            uint256 maxDeltaToken1 = FullMath.mulDiv(
-                totalToken1Amount,
-                ratioParams.minMoneyRatioDeviation1D,
-                DENOMINATOR
-            );
-            if (erc20Tvl[1] + maxDeltaToken1 < missingTokenAmounts.uniV3Token1 + missingTokenAmounts.moneyToken1) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param currentTokenAmounts the current amounts of tokens on the vaults
     /// @param expectedTokenAmounts the amounts of tokens expected after rebalance
     /// @param ratioParams ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
-    /// @return bool true if the rebalance is needed
+    /// @return needed true if the rebalance is needed
     function tokenRebalanceNeeded(
         HStrategy.TokenAmounts memory currentTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
         HStrategy.RatioParams memory ratioParams
-    ) external pure returns (bool) {
+    ) external pure returns (bool needed) {
         uint256 totalToken0Amount = expectedTokenAmounts.erc20Token0 +
             expectedTokenAmounts.moneyToken0 +
             expectedTokenAmounts.uniV3Token0;
@@ -415,49 +392,35 @@ contract HStrategyHelper {
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
 
-        {
-            uint256 minDeltaToken0 = FullMath.mulDiv(
-                totalToken0Amount,
-                ratioParams.minUniV3RatioDeviation0D,
-                DENOMINATOR
-            );
-            if (currentTokenAmounts.uniV3Token0 + minDeltaToken0 <= expectedTokenAmounts.uniV3Token0) {
-                return true;
-            }
-        }
-        {
-            uint256 minDeltaToken1 = FullMath.mulDiv(
-                totalToken1Amount,
-                ratioParams.minUniV3RatioDeviation1D,
-                DENOMINATOR
-            );
-            if (currentTokenAmounts.uniV3Token1 + minDeltaToken1 <= expectedTokenAmounts.uniV3Token1) {
-                return true;
-            }
-        }
-        {
-            uint256 minDeltaToken0 = FullMath.mulDiv(
-                totalToken0Amount,
-                ratioParams.minMoneyRatioDeviation0D,
-                DENOMINATOR
-            );
-            if (currentTokenAmounts.moneyToken0 + minDeltaToken0 <= expectedTokenAmounts.moneyToken0) {
-                return true;
-            }
-        }
+        uint256 minToken0Amount = FullMath.mulDiv(
+            ratioParams.erc20CapitalRatioD - ratioParams.minErc20CaptialDeviationD,
+            totalToken0Amount,
+            DENOMINATOR
+        );
+        uint256 minToken1Amount = FullMath.mulDiv(
+            ratioParams.erc20CapitalRatioD - ratioParams.minErc20CaptialDeviationD,
+            totalToken1Amount,
+            DENOMINATOR
+        );
+        uint256 maxToken0Amount = FullMath.mulDiv(
+            ratioParams.erc20CapitalRatioD + ratioParams.minErc20CaptialDeviationD,
+            totalToken0Amount,
+            DENOMINATOR
+        );
+        uint256 maxToken1Amount = FullMath.mulDiv(
+            ratioParams.erc20CapitalRatioD + ratioParams.minErc20CaptialDeviationD,
+            totalToken1Amount,
+            DENOMINATOR
+        );
 
-        {
-            uint256 minDeltaToken1 = FullMath.mulDiv(
-                totalToken1Amount,
-                ratioParams.minMoneyRatioDeviation1D,
-                DENOMINATOR
-            );
-            if (currentTokenAmounts.moneyToken1 + minDeltaToken1 <= expectedTokenAmounts.moneyToken1) {
-                return true;
-            }
+        if (
+            currentTokenAmounts.erc20Token0 < minToken0Amount ||
+            currentTokenAmounts.erc20Token0 > maxToken0Amount ||
+            currentTokenAmounts.erc20Token1 < minToken1Amount ||
+            currentTokenAmounts.erc20Token1 > maxToken1Amount
+        ) {
+            needed = true;
         }
-
-        return false;
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
@@ -494,7 +457,7 @@ contract HStrategyHelper {
         {
             (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(
                 pool_,
-                oracleParams_.oracleObservationDelta
+                oracleParams_.averagePriceTimeSpan
             );
             if (deviation < 0) {
                 deviation = -deviation;
