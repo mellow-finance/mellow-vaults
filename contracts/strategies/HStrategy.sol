@@ -33,7 +33,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     IUniV3Vault public uniV3Vault;
     address[] public tokens;
 
-    INonfungiblePositionManager public positionManager; // immutable
+    INonfungiblePositionManager private immutable _positionManager;
     IUniswapV3Pool public pool;
     UniV3Helper private immutable _uniV3Helper;
     HStrategyHelper private immutable _hStrategyHelper;
@@ -194,7 +194,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(address(router_) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(uniV3Helper_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(hStrategyHelper_ != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        positionManager = positionManager_;
+        _positionManager = positionManager_;
         router = router_;
         _uniV3Helper = UniV3Helper(uniV3Helper_);
         _hStrategyHelper = HStrategyHelper(hStrategyHelper_);
@@ -209,7 +209,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param fee_ the fee of the uniV3 pool on which the vault operates
     /// @param admin_ the addres of the admin of the strategy
     function initialize(
-        INonfungiblePositionManager positionManager_,
         address[] memory tokens_,
         IERC20Vault erc20Vault_,
         IIntegrationVault moneyVault_,
@@ -234,7 +233,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         moneyVault = moneyVault_;
         uniV3Vault = uniV3Vault_;
         tokens = tokens_;
-        IUniswapV3Factory factory = IUniswapV3Factory(positionManager_.factory());
+        IUniswapV3Factory factory = IUniswapV3Factory(_positionManager.factory());
         pool = IUniswapV3Pool(factory.getPool(tokens_[0], tokens_[1], fee_));
         require(address(pool) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
     }
@@ -256,7 +255,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address admin_
     ) external returns (HStrategy strategy) {
         strategy = HStrategy(Clones.clone(address(this)));
-        strategy.initialize(positionManager, tokens_, erc20Vault_, moneyVault_, uniV3Vault_, fee_, admin_);
+        strategy.initialize(tokens_, erc20Vault_, moneyVault_, uniV3Vault_, fee_, admin_);
     }
 
     /// @notice updates parameters of the strategy. Can be called only by admin
@@ -302,7 +301,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             newOracleParams.averagePriceTimeSpan > 0 &&
                 newOracleParams.averagePriceTimeSpanForRebalanceChecks > 0 &&
-                newOracleParams.maxTickDeviation > 0,
+                newOracleParams.maxTickDeviation > 0 &&
+                newOracleParams.maxTickDeviation <= uint24(TickMath.MAX_TICK),
             ExceptionsLibrary.INVARIANT
         );
         oracleParams = newOracleParams;
@@ -314,10 +314,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function updateRatioParams(RatioParams calldata newRatioParams) external {
         _requireAdmin();
         require(
-            newRatioParams.erc20CapitalRatioD > 0 &&
-                newRatioParams.erc20CapitalRatioD <= DENOMINATOR &&
-                newRatioParams.minErc20CaptialDeviationD > 0 &&
-                newRatioParams.minErc20CaptialDeviationD <= DENOMINATOR,
+            newRatioParams.erc20CapitalRatioD <= DENOMINATOR && newRatioParams.minErc20CaptialDeviationD <= DENOMINATOR,
             ExceptionsLibrary.INVARIANT
         );
         ratioParams = newRatioParams;
@@ -385,7 +382,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             strategyParams_,
             pool_,
             restrictions.deadline,
-            positionManager,
+            _positionManager,
             uniV3Vault_,
             uniV3Nft,
             tokens_,
@@ -414,7 +411,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             hStrategyHelper_,
             strategyParams,
             uniV3Nft,
-            positionManager,
+            _positionManager,
             _uniV3Helper
         );
 
