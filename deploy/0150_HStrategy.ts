@@ -86,7 +86,9 @@ const setupStrategy = async (
     moneyVault: string,
     uniV3Vault: string,
     tokens: string[],
-    deploymentName: string
+    deploymentName: string,
+    mintingParamToken0: BigNumber,
+    mintingParamToken1: BigNumber
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
@@ -163,8 +165,8 @@ const setupStrategy = async (
         map((x) => x.toString(), ratioParams)
     );
     const mintingParams = {
-        minToken0ForOpening: BigNumber.from(10).pow(6),
-        minToken1ForOpening: BigNumber.from(10).pow(6),
+        minToken0ForOpening: mintingParamToken0,
+        minToken1ForOpening: mintingParamToken1,
     };
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("updateMintingParams", [
@@ -207,7 +209,9 @@ const buildHStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
     tokens: any,
-    deploymentName: any
+    deploymentName: any,
+    mintingParamToken0: BigNumber,
+    mintingParamToken1: BigNumber
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { read, get } = deployments;
@@ -264,7 +268,9 @@ const buildHStrategy = async (
         moneyVault,
         uniV3Vault,
         tokens,
-        deploymentName
+        deploymentName,
+        mintingParamToken0,
+        mintingParamToken1
     );
 
     const strategy = await get(deploymentName);
@@ -284,11 +290,33 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
         const { weth, usdc, wbtc } = await getNamedAccounts();
         await deployHStrategy(hre, kind);
 
-        for (let [tokens, deploymentName] of [
-            [[weth, usdc], `HStrategy${kind}_WETH_USDC`],
-            [[weth, wbtc], `HStrategy${kind}_WETH_WBTC`],
+        for (let [
+            tokens,
+            deploymentName,
+            mintingParamToken0,
+            mintingParamToken1,
+        ] of [
+            [
+                [weth, usdc],
+                `HStrategy${kind}_WETH_USDC`,
+                BigNumber.from(10).pow(9),
+                BigNumber.from(1000),
+            ],
+            [
+                [weth, wbtc],
+                `HStrategy${kind}_WETH_WBTC`,
+                BigNumber.from(10).pow(9),
+                BigNumber.from(1000),
+            ],
         ]) {
-            await buildHStrategy(hre, kind, tokens, deploymentName);
+            await buildHStrategy(
+                hre,
+                kind,
+                tokens,
+                deploymentName,
+                mintingParamToken0 as BigNumber,
+                mintingParamToken1 as BigNumber
+            );
         }
     };
 

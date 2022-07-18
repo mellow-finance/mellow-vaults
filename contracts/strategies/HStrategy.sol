@@ -35,8 +35,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     INonfungiblePositionManager public positionManager; // immutable
     IUniswapV3Pool public pool;
-    UniV3Helper private _uniV3Helper; // immutable
-    HStrategyHelper private _hStrategyHelper; // immutable
+    UniV3Helper private immutable _uniV3Helper;
+    HStrategyHelper private immutable _hStrategyHelper;
     Interval private lastShortInterval;
 
     // MUTABLE PARAMS
@@ -54,7 +54,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 domainUpperTick;
     }
 
-    /// TODO: in deploy: replace with more specific params: btc - 1e3, eth - 1e9, usdc - 1e3
     /// @notice params of the actual minted position
     /// @param minToken0ForOpening the amount of token0 are tried to be depositted on the new position
     /// @param minToken1ForOpening the amount of token1 are tried to be depositted on the new position
@@ -271,7 +270,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 newStrategyParams.domainLowerTick < newStrategyParams.domainUpperTick,
             ExceptionsLibrary.INVARIANT
         );
-        // TODO: shortIntervalWidth rename to halfOfShortInterval
 
         int24 globalIntervalWidth = newStrategyParams.domainUpperTick - newStrategyParams.domainLowerTick;
         require(
@@ -345,12 +343,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param moneyVaultOptions additional parameters for pulling for `pull` method for money vault
     /// @return actualPulledAmounts actual transferred amounts
-    function rebalance(
-        RebalanceTokenAmounts memory restrictions,
-        bytes memory moneyVaultOptions /// rename to rebalanceUniV3
-    ) external returns (RebalanceTokenAmounts memory actualPulledAmounts) {
+    function rebalance(RebalanceTokenAmounts memory restrictions, bytes memory moneyVaultOptions)
+        external
+        returns (RebalanceTokenAmounts memory actualPulledAmounts)
+    {
         _requireAtLeastOperator();
-        (bool newPositionMinted, uint256[] memory burnedAmounts) = _rebalanceUniV3Position(restrictions);
+        (bool newPositionMinted, uint256[] memory burnedAmounts) = _partialRebalanceOfUniV3Position(restrictions);
         require(newPositionMinted == restrictions.newPositionMinted, ExceptionsLibrary.INVARIANT);
         actualPulledAmounts = _capitalRebalance(restrictions, moneyVaultOptions);
         actualPulledAmounts.burnedAmounts = burnedAmounts;
@@ -360,9 +358,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @return newPositionMinted true if position minted successefully
     /// @return burnedAmounts actual transferred amounts of tokens from position while burn
-    function _rebalanceUniV3Position(
-        RebalanceTokenAmounts memory restrictions /// rename to internal _partialRebalanceOfUniV3Position
-    ) internal returns (bool newPositionMinted, uint256[] memory burnedAmounts) {
+    function _partialRebalanceOfUniV3Position(RebalanceTokenAmounts memory restrictions)
+        internal
+        returns (bool newPositionMinted, uint256[] memory burnedAmounts)
+    {
         IIntegrationVault erc20Vault_ = erc20Vault;
         IUniV3Vault uniV3Vault_ = uniV3Vault;
         uint256 uniV3Nft = uniV3Vault_.uniV3Nft();
