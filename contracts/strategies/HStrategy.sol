@@ -18,6 +18,7 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/HStrategyHelper.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/UniV3Helper.sol";
+import "hardhat/console.sol";
 
 contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -676,6 +677,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 pool_,
                 oracleParams.averagePriceTimeSpan
             );
+            if (averageTick < strategyParams_.domainLowerTick) {
+                averageTick = strategyParams_.domainLowerTick;
+            } else if (averageTick > strategyParams_.domainUpperTick) {
+                averageTick = strategyParams_.domainUpperTick;
+            }
             // in this case it is first mint
             int24 deltaToLowerTick = averageTick - strategyParams_.domainLowerTick;
             deltaToLowerTick -= (deltaToLowerTick % strategyParams_.halfOfShortInterval);

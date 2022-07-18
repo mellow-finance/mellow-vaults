@@ -9,6 +9,7 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../strategies/HStrategy.sol";
 import "./UniV3Helper.sol";
+import "hardhat/console.sol";
 
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
@@ -18,7 +19,7 @@ contract HStrategyHelper {
     /// @return ratios ratios of the capital
     function calculateExpectedRatios(HStrategy.DomainPositionParams memory domainPositionParams)
         external
-        pure
+        view
         returns (HStrategy.ExpectedRatios memory ratios)
     {
         uint256 denominatorX96 = CommonLibrary.Q96 *
@@ -60,6 +61,12 @@ contract HStrategyHelper {
         ratios.token1RatioD = uint32(FullMath.mulDiv(nominator1X96, DENOMINATOR, denominatorX96));
 
         ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
+        console.log("Ratios:");
+        console.log(
+            (uint256(100) * ratios.token0RatioD) / DENOMINATOR,
+            (uint256(100) * ratios.token1RatioD) / DENOMINATOR,
+            (uint256(100) * ratios.uniV3RatioD) / DENOMINATOR
+        );
     }
 
     /// @notice calculates the current state of the position and pool with given oracle predictions
@@ -425,23 +432,29 @@ contract HStrategyHelper {
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param params the current amounts of tokens on the vaults
-    function requireTicksInCurrentPosition(HStrategy.DomainPositionParams memory params) external pure {
-        require(
-            params.lowerPriceSqrtX96 <= params.spotPriceSqrtX96 && params.spotPriceSqrtX96 <= params.upperPriceSqrtX96,
-            ExceptionsLibrary.INVARIANT
-        );
-        require(
-            params.lowerPriceSqrtX96 <= params.averagePriceSqrtX96 &&
-                params.averagePriceSqrtX96 <= params.upperPriceSqrtX96,
-            ExceptionsLibrary.INVARIANT
-        );
+    function moveTicksInCurrentPosition(HStrategy.DomainPositionParams memory params)
+        external
+        pure
+        returns (HStrategy.DomainPositionParams memory)
+    {
+        if (params.spotPriceSqrtX96 < params.lowerPriceSqrtX96) {
+            params.spotPriceSqrtX96 = params.lowerPriceSqrtX96;
+        } else if (params.lowerPriceSqrtX96 > params.upperPriceSqrtX96) {
+            params.spotPriceSqrtX96 = params.upperPriceSqrtX96;
+        }
+        if (params.averagePriceSqrtX96 < params.lowerPriceSqrtX96) {
+            params.averagePriceSqrtX96 = params.lowerPriceSqrtX96;
+        } else if (params.averagePriceSqrtX96 > params.upperPriceSqrtX96) {
+            params.averagePriceSqrtX96 = params.upperPriceSqrtX96;
+        }
+        return params;
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param pool_ Uniswap V3 pool of the strategy
     /// @param oracleParams_ params of the interaction with oracle
     /// @param hStrategyHelper_ the helper of the strategy
-    /// @param strategyParams_ the current parameters of the strategy
+    /// @param strategyParams_ the current parameters of the strategy`
     /// @param uniV3Nft the nft of the position from position manager
     /// @param positionManager_ the position manager for uniV3
     /// @param uniV3Helper helper contact for UniV3 calculations
@@ -471,6 +484,6 @@ contract HStrategyHelper {
                 positionManager_
             );
         }
-        hStrategyHelper_.requireTicksInCurrentPosition(domainPositionParams);
+        domainPositionParams = hStrategyHelper_.moveTicksInCurrentPosition(domainPositionParams);
     }
 }
