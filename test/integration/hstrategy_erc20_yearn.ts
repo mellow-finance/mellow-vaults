@@ -801,8 +801,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     await checkState();
                 }
             });
-        });
-        describe("#rebalance", () => {
+
             it("works correctly for small interval", async () => {
                 const centralTick = await getAverageTick();
                 const domainLowerTick = centralTick - 600 - (centralTick % 600);

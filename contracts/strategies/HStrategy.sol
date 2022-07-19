@@ -777,6 +777,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault erc20Vault_,
         address[] memory tokens_
     ) internal returns (uint256[] memory amountsOut) {
+        {
+            (uint256[] memory tvl, ) = erc20Vault_.tvl();
+            if (tvl[tokenInIndex] < amountIn) {
+                amountIn = tvl[tokenInIndex];
+            }
+        }
         ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
             tokenIn: tokens_[tokenInIndex],
             tokenOut: tokens_[tokenInIndex ^ 1],
@@ -789,20 +795,22 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         });
 
         bytes memory routerResult;
-        {
+        if (amountIn > 0) {
             bytes memory data = abi.encode(swapParams);
             erc20Vault_.externalCall(tokens_[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), amountIn)); // approve
             routerResult = erc20Vault_.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data); // swap
             erc20Vault_.externalCall(tokens_[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), 0)); // reset allowance
+            uint256 amountOut = abi.decode(routerResult, (uint256));
+            require(restrictions.swappedAmounts[tokenInIndex ^ 1] <= amountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
+
+            amountsOut = new uint256[](2);
+            amountsOut[tokenInIndex ^ 1] = amountOut;
+
+            emit SwapTokensOnERC20Vault(tx.origin, swapParams);
+        } else {
+            require(restrictions.swappedAmounts[tokenInIndex ^ 1] == 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
+            return new uint256[](2);
         }
-
-        uint256 amountOut = abi.decode(routerResult, (uint256));
-        require(restrictions.swappedAmounts[tokenInIndex ^ 1] <= amountOut, ExceptionsLibrary.LIMIT_UNDERFLOW);
-
-        amountsOut = new uint256[](2);
-        amountsOut[tokenInIndex ^ 1] = amountOut;
-
-        emit SwapTokensOnERC20Vault(tx.origin, swapParams);
     }
 
     // -------------------  INTERNAL, VIEW  -------------------
