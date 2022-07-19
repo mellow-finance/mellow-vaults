@@ -456,22 +456,20 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             );
         }
 
-        {
-            uint256[] memory pulledToUniV3Vault = _pullMissingTokens(
-                missingTokenAmounts,
-                restrictions,
-                moneyVaultOptions,
-                erc20Vault_,
-                moneyVault_,
-                uniV3Vault_,
-                tokens_
-            );
+        uint256[] memory pulledToUniV3Vault = _pullMissingTokens(
+            missingTokenAmounts,
+            restrictions,
+            moneyVaultOptions,
+            erc20Vault_,
+            moneyVault_,
+            uniV3Vault_,
+            tokens_
+        );
 
-            for (uint256 i = 0; i < 2; i++) {
-                if (pulledToUniV3Vault[i] != 0) {
-                    require(actualPulledAmounts.pulledToUniV3Vault[i] == 0, ExceptionsLibrary.INVARIANT);
-                    actualPulledAmounts.pulledToUniV3Vault[i] = int256(pulledToUniV3Vault[i]);
-                }
+        for (uint256 i = 0; i < 2; i++) {
+            if (pulledToUniV3Vault[i] != 0) {
+                require(actualPulledAmounts.pulledToUniV3Vault[i] == 0, ExceptionsLibrary.INVARIANT);
+                actualPulledAmounts.pulledToUniV3Vault[i] = int256(pulledToUniV3Vault[i]);
             }
         }
     }
