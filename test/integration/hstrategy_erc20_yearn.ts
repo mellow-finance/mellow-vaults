@@ -256,10 +256,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         minErc20CaptialDeviationD: BigNumber.from(10)
                             .pow(7)
                             .mul(1), // 1%
-                        minRebalanceDeviationInToken0D: BigNumber.from(10)
-                            .pow(7)
-                            .mul(1), // 1%
-                        minRebalanceDeviationInToken1D: BigNumber.from(10)
+                        minRebalanceDeviationD: BigNumber.from(10)
                             .pow(7)
                             .mul(1), // 1%
                     };
@@ -523,8 +520,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
 
             it("tvl chanages only on fees", async () => {
                 const centralTick = await getAverageTick();
-                const domainLowerTick = centralTick - 600 - (centralTick % 600);
-                const domainUpperTick = centralTick + 600 - (centralTick % 600);
+                const domainLowerTick =
+                    centralTick - 60000 - (centralTick % 600);
+                const domainUpperTick =
+                    centralTick + 60000 - (centralTick % 600);
                 await this.subject
                     .connect(this.mStrategyAdmin)
                     .updateStrategyParams({
@@ -579,8 +578,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     .updateRatioParams({
                         erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5),
                         minErc20CaptialDeviationD: 0,
-                        minRebalanceDeviationInToken0D: 0,
-                        minRebalanceDeviationInToken1D: 0,
+                        minRebalanceDeviationD: 0,
                     } as RatioParamsStruct);
                 await sleep(this.governanceDelay);
                 const tvlBefore = (await this.erc20RootVault.tvl())
@@ -631,12 +629,16 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     } else if (averageTick > upper0Tick) {
                         averageTick = upper0Tick;
                     }
-                    const averagePriceX96 = getPriceX96(averageTick);
                     const erc20CapitalRatioD = (
                         await this.subject.ratioParams()
                     ).erc20CapitalRatioD;
-                    const uniV3Tvl = (await this.uniV3Vault.tvl())
-                        .maxTokenAmounts;
+                    const { liquidity } = await this.positionManager.positions(
+                        await this.uniV3Vault.uniV3Nft()
+                    );
+                    const uniV3Tvl =
+                        await this.uniV3Vault.liquidityToTokenAmounts(
+                            liquidity
+                        );
                     const sqrtA = this.getSqrtRatioAtTick(lowerTick);
                     const sqrtB = this.getSqrtRatioAtTick(upperTick);
                     const sqrtA0 = this.getSqrtRatioAtTick(lower0Tick);
@@ -687,12 +689,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     const erc20Capital = totalCapital
                         .mul(erc20CapitalRatioD)
                         .div(DENOMINATOR);
-                    console.log(
-                        "Total and erc20:",
-                        totalCapital.toString(),
-                        erc20Capital.toString()
-                    );
-                    console.log("wUniD:", wUniD.toString());
+
                     const uniV3Capital = totalCapital
                         .sub(erc20Capital)
                         .mul(wUniD)
@@ -704,39 +701,30 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                     const currentUniV3Capital = uniV3Tvl[0].add(
                         uniV3Tvl[1].mul(Q96).div(spotPriceX96)
                     );
+                    const averagePriceX96 = await getAveragePriceX96();
 
-                    const currentMoneyCapital = moneyTvl[0].add(
-                        moneyTvl[1].mul(Q96).div(spotPriceX96)
-                    );
+                    const expectedErc20Token0Amount = erc20Capital
+                        .mul(wxD)
+                        .div(wxD.add(wyD));
+                    const expectedErc20Token1Amount = erc20Capital
+                        .mul(wyD)
+                        .div(wxD.add(wyD))
+                        .mul(averagePriceX96)
+                        .div(Q96);
+                    const expectedMoneyToken0Amount = moneyCapital
+                        .mul(wxD)
+                        .div(wxD.add(wyD));
+                    const expectedMoneyToken1Amount = moneyCapital
+                        .mul(wyD)
+                        .div(wxD.add(wyD))
+                        .mul(averagePriceX96)
+                        .div(Q96);
 
-                    const currentErc20Capital = erc20Tvl[0].add(
-                        erc20Tvl[1].mul(Q96).div(spotPriceX96)
-                    );
-
-                    console.log("Checks vaules:");
-                    console.log(
-                        uniV3Capital.toString(),
-                        currentUniV3Capital.div(2).toString()
-                    );
-                    console.log(
-                        erc20Capital.toString(),
-                        currentErc20Capital.toString()
-                    );
-                    console.log(
-                        moneyCapital.toString(),
-                        currentMoneyCapital.toString()
-                    );
-
-                    // expect(compare(expectedErc20Token0, erc20Tvl[0], 10)).to.be
-                    //     .true;
-                    // expect(compare(expectedErc20Token1, erc20Tvl[1], 10)).to.be
-                    //     .true;
-                    // expect(compare(expectedMoneyToken0, moneyTvl[0], 10)).to.be
-                    //     .true;
-                    // expect(compare(expectedMoneyToken1, moneyTvl[1], 10)).to.be
-                    //     .true;
-                    // expect(compare(uniV3Capital, currentUniV3Capital, 10)).to.be
-                    //     .true;
+                    compare(uniV3Capital, currentUniV3Capital, 1);
+                    compare(expectedErc20Token0Amount, erc20Tvl[0], 1);
+                    compare(expectedErc20Token1Amount, erc20Tvl[1], 1);
+                    compare(expectedMoneyToken0Amount, moneyTvl[0], 1);
+                    compare(expectedMoneyToken1Amount, moneyTvl[1], 1);
                 };
 
                 const interationsNumber = 10;
@@ -769,15 +757,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                             await sleep(this.governanceDelay);
                         }
                     }
-                    const token0BalanceBefore = await this.usdc.balanceOf(
-                        this.subject.address
-                    );
-                    const token1BalanceBefore = await this.weth.balanceOf(
-                        this.subject.address
-                    );
-                    await sleep(this.governanceDelay * 2);
-                    const spotPriceX96 = await getSpotPriceX96();
-                    console.log("Do full rebalance?", doFullRebalance);
+
+                    await sleep(this.governanceDelay);
                     if (doFullRebalance) {
                         await this.subject
                             .connect(this.mStrategyAdmin)
@@ -822,34 +803,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>(
                         }
                     }
 
-                    const token0BalanceAfter = await this.usdc.balanceOf(
-                        this.subject.address
-                    );
-                    const token1BalanceAfter = await this.weth.balanceOf(
-                        this.subject.address
-                    );
-                    totalCapital = totalCapital
-                        .add(token0BalanceBefore.sub(token0BalanceAfter))
-                        .add(
-                            token1BalanceAfter
-                                .sub(token1BalanceBefore)
-                                .mul(Q96)
-                                .div(spotPriceX96)
-                        );
-
                     await checkState();
                 }
-                await this.uniV3Vault.collectEarnings();
-                const tvlAfter = (await this.erc20RootVault.tvl())
-                    .minTokenAmounts;
-                const capitalAfter = tvlAfter[0].add(
-                    tvlAfter[1].mul(Q96).div(await getSpotPriceX96())
-                );
-
-                expect(totalCapital.mul(110).div(100).gte(capitalAfter)).to.be
-                    .true;
-                expect(capitalAfter.mul(110).div(100).gte(totalCapital)).to.be
-                    .true;
             });
         });
     }

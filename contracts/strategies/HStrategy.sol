@@ -18,7 +18,6 @@ import "../utils/DefaultAccessControlLateInit.sol";
 import "../utils/HStrategyHelper.sol";
 import "../utils/ContractMeta.sol";
 import "../utils/UniV3Helper.sol";
-import "hardhat/console.sol";
 
 contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     using SafeERC20 for IERC20;
@@ -75,13 +74,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     /// @param erc20CapitalRatioD the ratio of tokens kept in money vault instead of erc20. The ratio is maintained for each token
     /// @param minErc20CaptialDeviationD the needed deviation from target amount of capital in erc20Vault to call rebalance or swap tokens
-    /// @param minRebalanceDeviationInToken0D the needed deviation from expected amounts of token0 to call swap of tokens
-    /// @param minRebalanceDeviationInToken1D the needed deviation from expected amounts of token1 to call swap of tokens
+    /// @param minRebalanceDeviationD the needed deviation from expected amounts to call swap of tokens
     struct RatioParams {
         uint256 erc20CapitalRatioD;
         uint256 minErc20CaptialDeviationD;
-        uint256 minRebalanceDeviationInToken0D;
-        uint256 minRebalanceDeviationInToken1D;
+        uint256 minRebalanceDeviationD;
     }
 
     StrategyParams public strategyParams;
@@ -400,7 +397,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         internal
         returns (RebalanceTokenAmounts memory actualPulledAmounts)
     {
-        actualPulledAmounts.pulledToUniV3Vault = new int256[](2);
         HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
         IUniV3Vault uniV3Vault_ = uniV3Vault;
         uint256 uniV3Nft = uniV3Vault_.uniV3Nft();
@@ -432,26 +428,25 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             return actualPulledAmounts;
         }
 
-        if (!restrictions.newPositionMinted) {
-            actualPulledAmounts.pulledToUniV3Vault = _pullExtraTokens(
-                hStrategyHelper_,
-                expectedTokenAmounts,
-                restrictions,
-                moneyVaultOptions,
-                domainPositionParams,
-                erc20Vault_,
-                moneyVault_,
-                uniV3Vault_,
-                tokens_
-            );
-        }
+        actualPulledAmounts.pulledToUniV3Vault = _pullExtraTokens(
+            hStrategyHelper_,
+            expectedTokenAmounts,
+            restrictions,
+            moneyVaultOptions,
+            domainPositionParams,
+            erc20Vault_,
+            moneyVault_,
+            uniV3Vault_,
+            tokens_
+        );
+
         TokenAmounts memory missingTokenAmounts = hStrategyHelper_.calculateMissingTokenAmounts(
             moneyVault_,
             expectedTokenAmounts,
             domainPositionParams
         );
 
-        if (hStrategyHelper_.swapNeeded(missingTokenAmounts, expectedTokenAmounts, ratioParams)) {
+        if (hStrategyHelper_.swapNeeded(missingTokenAmounts, expectedTokenAmounts, ratioParams, domainPositionParams)) {
             actualPulledAmounts.swappedAmounts = _swapTokens(
                 expectedTokenAmounts,
                 currentTokenAmounts,
@@ -567,6 +562,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniV3Vault uniV3Vault_,
         address[] memory tokens_
     ) internal returns (int256[] memory pulledOnUniV3Vault) {
+        pulledOnUniV3Vault = new int256[](2);
         if (!restrictions.newPositionMinted) {
             (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForUniV3Vault(
                 expectedTokenAmounts,
@@ -627,6 +623,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IUniV3Vault uniV3Vault_,
         address[] memory tokens_
     ) internal returns (uint256[] memory pulledOnUniV3Vault) {
+        pulledOnUniV3Vault = new uint256[](2);
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
         {
             if (missingTokenAmounts.uniV3Token0 > 0 || missingTokenAmounts.uniV3Token1 > 0) {

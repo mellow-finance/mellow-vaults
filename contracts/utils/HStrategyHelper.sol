@@ -9,7 +9,6 @@ import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
 import "../strategies/HStrategy.sol";
 import "./UniV3Helper.sol";
-import "hardhat/console.sol";
 
 contract HStrategyHelper {
     uint32 constant DENOMINATOR = 10**9;
@@ -19,7 +18,7 @@ contract HStrategyHelper {
     /// @return ratios ratios of the capital
     function calculateExpectedRatios(HStrategy.DomainPositionParams memory domainPositionParams)
         external
-        view
+        pure
         returns (HStrategy.ExpectedRatios memory ratios)
     {
         uint256 denominatorX96 = CommonLibrary.Q96 *
@@ -61,12 +60,6 @@ contract HStrategyHelper {
         ratios.token1RatioD = uint32(FullMath.mulDiv(nominator1X96, DENOMINATOR, denominatorX96));
 
         ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
-        console.log("Ratios:");
-        console.log(
-            (uint256(100) * ratios.token0RatioD) / DENOMINATOR,
-            (uint256(100) * ratios.token1RatioD) / DENOMINATOR,
-            (uint256(100) * ratios.uniV3RatioD) / DENOMINATOR
-        );
     }
 
     /// @notice calculates the current state of the position and pool with given oracle predictions
@@ -347,7 +340,8 @@ contract HStrategyHelper {
     function swapNeeded(
         HStrategy.TokenAmounts memory currentTokenAmounts,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
-        HStrategy.RatioParams memory ratioParams
+        HStrategy.RatioParams memory ratioParams,
+        HStrategy.DomainPositionParams memory domainPositionParams
     ) external pure returns (bool needed) {
         uint256 expectedTotalToken0Amount = expectedTokenAmounts.erc20Token0 +
             expectedTokenAmounts.moneyToken0 +
@@ -365,21 +359,27 @@ contract HStrategyHelper {
 
         int256 token0Delta = int256(currentTotalToken0Amount) - int256(expectedTotalToken0Amount);
         int256 token1Delta = int256(currentTotalToken1Amount) - int256(expectedTotalToken1Amount);
-        uint256 minToken0Deviation = FullMath.mulDiv(
-            expectedTotalToken0Amount,
-            ratioParams.minRebalanceDeviationInToken0D,
-            DENOMINATOR
-        );
-        uint256 minToken1Deviation = FullMath.mulDiv(
-            expectedTotalToken1Amount,
-            ratioParams.minRebalanceDeviationInToken1D,
-            DENOMINATOR
-        );
-        if (token0Delta < 0 && token1Delta > 0) {
-            needed = uint256(-token0Delta) >= minToken0Deviation || uint256(token1Delta) >= minToken1Deviation;
-        } else if (token0Delta > 0 && token1Delta < 0) {
-            needed = uint256(token0Delta) >= minToken0Deviation || uint256(-token1Delta) >= minToken1Deviation;
+        int256 token1DeltaInToken0;
+
+        if (token1Delta < 0) {
+            token1DeltaInToken0 = -int256(
+                FullMath.mulDiv(uint256(-token1Delta), CommonLibrary.Q96, domainPositionParams.averagePriceX96)
+            );
+        } else {
+            token1DeltaInToken0 = int256(
+                FullMath.mulDiv(uint256(token1Delta), CommonLibrary.Q96, domainPositionParams.averagePriceX96)
+            );
         }
+
+        int256 minDeviation = int256(
+            FullMath.mulDiv(
+                expectedTotalToken0Amount +
+                    FullMath.mulDiv(expectedTotalToken1Amount, CommonLibrary.Q96, domainPositionParams.averagePriceX96),
+                ratioParams.minRebalanceDeviationD,
+                DENOMINATOR
+            )
+        );
+        return minDeviation + token0Delta <= token1DeltaInToken0 || minDeviation + token1DeltaInToken0 <= token0Delta;
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed

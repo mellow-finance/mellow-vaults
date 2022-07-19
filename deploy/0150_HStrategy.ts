@@ -152,8 +152,7 @@ const setupStrategy = async (
     const ratioParams = {
         erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
         minErc20CaptialDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
-        minRebalanceDeviationInToken0D: BigNumber.from(10).pow(7).mul(1), // 1%
-        minRebalanceDeviationInToken1D: BigNumber.from(10).pow(7).mul(1), // 1%
+        minRebalanceDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
     };
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("updateRatioParams", [
