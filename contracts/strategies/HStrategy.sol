@@ -365,7 +365,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_ = tokens;
         UniV3Helper uniV3Helper_ = _uniV3Helper;
         if (!_isPositionRebalancePossible(strategyParams_, uniV3Nft, pool_, uniV3Helper_)) {
-            return (newPositionMinted, new uint256[](2));
+            return (false, new uint256[](2));
         }
 
         if (uniV3Nft != 0) {
