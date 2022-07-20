@@ -308,7 +308,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
     // -------------------  INTERNAL, MUTATING  -------------------
 
     /// @dev we are charging fees on the deposit / withdrawal
-    /// fees are charged before the tokens transfer and changing the balance of the lp tokens
+    /// fees are charged before the tokens transfer and change the balance of the lp tokens
     function _chargeFees(
         uint256 thisNft,
         uint256[] memory tvls,
