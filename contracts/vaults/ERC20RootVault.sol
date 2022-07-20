@@ -307,9 +307,6 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    /// @dev We don't charge on any deposit / withdraw to save gas.
-    /// While this introduce some error, the charge always goes for lower lp token supply (pre-deposit / post-withdraw)
-    /// So the error results in slightly lower management fees than in exact case
     function _chargeFees(
         uint256 thisNft,
         uint256[] memory tvls,
