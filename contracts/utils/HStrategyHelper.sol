@@ -314,22 +314,21 @@ contract HStrategyHelper {
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.RatioParams memory ratioParams_
     ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
-        uint256 totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
         amounts.erc20TokensAmountInToken0 = FullMath.mulDiv(
-            totalTokensInToken0,
+            currentTokenAmounts.totalTokensInToken0,
             ratioParams_.erc20CapitalRatioD,
             DENOMINATOR
         );
         amounts.uniV3TokensAmountInToken0 = FullMath.mulDiv(
-            totalTokensInToken0 - amounts.erc20TokensAmountInToken0,
+            currentTokenAmounts.totalTokensInToken0 - amounts.erc20TokensAmountInToken0,
             expectedRatios.uniV3RatioD,
             DENOMINATOR
         );
         amounts.moneyTokensAmountInToken0 =
-            totalTokensInToken0 -
+            currentTokenAmounts.totalTokensInToken0 -
             amounts.erc20TokensAmountInToken0 -
             amounts.uniV3TokensAmountInToken0;
-        amounts.totalTokensInToken0 = totalTokensInToken0;
+        amounts.totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
     }
 
     /// @notice return true if the token swap is needed. It is needed if we cannot mint a new position without it

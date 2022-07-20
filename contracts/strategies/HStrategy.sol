@@ -263,8 +263,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             newStrategyParams.halfOfShortInterval > 0 &&
                 newStrategyParams.tickNeighborhood <= newStrategyParams.halfOfShortInterval &&
-                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK &&
-                newStrategyParams.domainLowerTick < newStrategyParams.domainUpperTick,
+                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK,
             ExceptionsLibrary.INVARIANT
         );
 
@@ -440,21 +439,21 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             tokens_
         );
 
-        TokenAmounts memory missingTokenAmounts = hStrategyHelper_.calculateMissingTokenAmounts(
-            moneyVault_,
-            expectedTokenAmounts,
-            domainPositionParams
-        );
-
-        if (hStrategyHelper_.swapNeeded(missingTokenAmounts, expectedTokenAmounts, ratioParams, domainPositionParams)) {
+        if (hStrategyHelper_.swapNeeded(currentTokenAmounts, expectedTokenAmounts, ratioParams, domainPositionParams)) {
             actualPulledAmounts.swappedAmounts = _swapTokens(
-                expectedTokenAmounts,
                 currentTokenAmounts,
+                expectedTokenAmounts,
                 restrictions,
                 erc20Vault_,
                 tokens_
             );
         }
+
+        TokenAmounts memory missingTokenAmounts = hStrategyHelper_.calculateMissingTokenAmounts(
+            moneyVault_,
+            expectedTokenAmounts,
+            domainPositionParams
+        );
 
         uint256[] memory pulledToUniV3Vault = _pullMissingTokens(
             missingTokenAmounts,
@@ -504,15 +503,15 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @notice determining the amount of tokens to be swapped and swapping it
-    /// @param expectedTokenAmounts the amount of tokens we expect to have after rebalance
     /// @param currentTokenAmounts the current amount of tokens
+    /// @param expectedTokenAmounts the amount of tokens we expect to have after rebalance
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param erc20Vault_ ERC20 vault of the strategy
     /// @param tokens_ the addresses of the tokens managed by the strategy
     /// @return swappedAmounts acutal amount of swapped tokens
     function _swapTokens(
-        TokenAmounts memory expectedTokenAmounts,
         TokenAmounts memory currentTokenAmounts,
+        TokenAmounts memory expectedTokenAmounts,
         RebalanceTokenAmounts memory restrictions,
         IIntegrationVault erc20Vault_,
         address[] memory tokens_
@@ -548,7 +547,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param moneyVault_ Money vault of the strategy
     /// @param uniV3Vault_ UniswapV3 vault of the strategy
     /// @param tokens_ the addresses of the tokens managed by the strategy
-    /// @return pulledOnUniV3Vault array of negative values representing amounts pulled from uniV3Vault
+    /// @return pulledToUniV3Vault the actual amount of tokens pulled into UniV3Vault (if negative, then pulled from UniV3Vault)
     function _pullExtraTokens(
         HStrategyHelper hStrategyHelper_,
         TokenAmounts memory expectedTokenAmounts,
@@ -559,8 +558,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault_,
         IUniV3Vault uniV3Vault_,
         address[] memory tokens_
-    ) internal returns (int256[] memory pulledOnUniV3Vault) {
-        pulledOnUniV3Vault = new int256[](2);
+    ) internal returns (int256[] memory pulledToUniV3Vault) {
+        pulledToUniV3Vault = new int256[](2);
         if (!restrictions.newPositionMinted) {
             (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForUniV3Vault(
                 expectedTokenAmounts,
@@ -579,7 +578,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 );
                 uint256[] memory expectedPulledFromUniV3Vault = new uint256[](2);
                 for (uint256 i = 0; i < 2; i++) {
-                    pulledOnUniV3Vault[i] = -int256(pulledFromUniV3VaultAmounts[i]);
+                    pulledToUniV3Vault[i] = -int256(pulledFromUniV3VaultAmounts[i]);
                     if (restrictions.pulledToUniV3Vault[i] < 0) {
                         expectedPulledFromUniV3Vault[i] = uint256(-restrictions.pulledToUniV3Vault[i]);
                     }
@@ -611,7 +610,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param moneyVault_ Money vault of the strategy
     /// @param uniV3Vault_ UniswapV3 vault of the strategy
     /// @param tokens_ the addresses of the tokens managed by the strategy
-    /// @return pulledOnUniV3Vault actual amount of tokens pulled on uniV3
+    /// @return pulledToUniV3Vault the actual amount of tokens pulled into UniV3Vault (if negative, then pulled from UniV3Vault)
     function _pullMissingTokens(
         TokenAmounts memory missingTokenAmounts,
         RebalanceTokenAmounts memory restrictions,
@@ -620,21 +619,21 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         IIntegrationVault moneyVault_,
         IUniV3Vault uniV3Vault_,
         address[] memory tokens_
-    ) internal returns (uint256[] memory pulledOnUniV3Vault) {
-        pulledOnUniV3Vault = new uint256[](2);
+    ) internal returns (uint256[] memory pulledToUniV3Vault) {
+        pulledToUniV3Vault = new uint256[](2);
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
         {
             if (missingTokenAmounts.uniV3Token0 > 0 || missingTokenAmounts.uniV3Token1 > 0) {
                 extraTokenAmountsForPull[0] = missingTokenAmounts.uniV3Token0;
                 extraTokenAmountsForPull[1] = missingTokenAmounts.uniV3Token1;
-                pulledOnUniV3Vault = erc20Vault_.pull(address(uniV3Vault_), tokens_, extraTokenAmountsForPull, "");
+                pulledToUniV3Vault = erc20Vault_.pull(address(uniV3Vault_), tokens_, extraTokenAmountsForPull, "");
                 uint256[] memory expectedPulledToUniV3Vault = new uint256[](2);
                 for (uint256 i = 0; i < 2; i++) {
                     if (restrictions.pulledToUniV3Vault[i] > 0) {
                         expectedPulledToUniV3Vault[i] = uint256(restrictions.pulledToUniV3Vault[i]);
                     }
                 }
-                _compareAmounts(expectedPulledToUniV3Vault, pulledOnUniV3Vault);
+                _compareAmounts(expectedPulledToUniV3Vault, pulledToUniV3Vault);
             }
         }
         {
