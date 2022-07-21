@@ -8,6 +8,9 @@ import { withSigner } from "./sign";
 import { sqrt } from "@uniswap/sdk-core";
 import { toObject } from "./utils";
 import { equals } from "ramda";
+import { mint} from "./utils";
+import { addSigner} from "./sign";
+import { expect } from "chai";
 
 export type Context = {
     protocolGovernance: Contract;
@@ -104,56 +107,26 @@ export const getUniV3Price = async (hre: HardhatRuntimeEnvironment, context: Con
     return sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
 };
 
-export const makeSwap = async (hre: HardhatRuntimeEnvironment, context: Context) => {
-    const { ethers } = hre;
-    let erc20Vault = await context.LStrategy.erc20Vault();
-    let vault = await ethers.getContractAt(
-        "IVault",
-        erc20Vault
-    );
-
-    let erc20Tvl = await vault.tvl();
-    let tokens = [context.wsteth, context.weth];
-    let delta = erc20Tvl[0][0].sub(erc20Tvl[0][1]);
-
-    if (delta.lt(BigNumber.from(-1))) {
-        await swapTokens(
-            hre,
-            context,
-            erc20Vault,
-            erc20Vault,
-            tokens[1],
-            tokens[0],
-            delta.div(2).mul(-1)
-        );
-    }
-
-    if (delta.gt(BigNumber.from(1))) {
-        await swapTokens(
-            hre,
-            context,
-            erc20Vault,
-            erc20Vault,
-            tokens[0],
-            tokens[1],
-            delta.div(2)
-        );
-    }
-};
-
 export const swapOnCowswap = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
+    wstethAmountInPool: BigNumber,
+    wethAmountInPool: BigNumber,
+    curvePool: any,
+    wethContract: any,
+    wstethContract: any,
+    stethContract: any
 ) => {
+
     const { ethers } = hre;
     await context.LStrategy
         .connect(context.admin)
         .postPreOrder(ethers.constants.Zero);
     const preOrder = await context.LStrategy.preOrder();
     if (preOrder.tokenIn == context.weth.address) {
-        await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut);
+        await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
     } else {
-        await swapWstethToWeth(hre, context, preOrder.amountIn, preOrder.minAmountOut);
+        await swapWstethToWeth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
     }
 };
 
@@ -161,20 +134,147 @@ export const getTick = (x: BigNumber) => {
     return BigNumber.from(TickMath.getTickAtSqrtRatio(JSBI.BigInt(x)));
 };
 
+const mintForPool = async (
+    hre: HardhatRuntimeEnvironment,
+    context: Context,
+    toMintEth: BigNumber,
+    toMintSteth: BigNumber,
+    wethContract: any,
+    wstethContract: any,
+    stethContract: any,
+    curvePool: any
+) => {
+
+    // gas cover
+    toMintEth = toMintEth.add(BigNumber.from(10).pow(17));
+
+    const { ethers, getNamedAccounts } = hre;
+
+    const {deployer} = await getNamedAccounts();
+    const deployerSigned = await addSigner(hre, deployer);
+
+    let mintedEth = await ethers.provider.getBalance(deployerSigned.address);
+    let mintedSteth = await stethContract.balanceOf(deployerSigned.address);
+
+    while (toMintEth.gt(BigNumber.from(0))) {
+
+        let mintNow = BigNumber.from(10).pow(21);
+        if (mintNow.gt(toMintEth)) {
+            mintNow = toMintEth;
+        }
+
+        await mint(hre, "WETH", deployerSigned.address, mintNow);
+        await wethContract.withdraw(mintNow);
+
+        toMintEth = toMintEth.sub(mintNow);
+    }
+
+    while (toMintSteth.gt(BigNumber.from(0))) {
+        
+        let mintNow = BigNumber.from(10).pow(21);
+        if (mintNow.gt(toMintSteth)) {
+            mintNow = toMintSteth;
+        }
+        await mint(hre, "WETH", deployerSigned.address, mintNow);
+        await wethContract.withdraw(mintNow);
+        await stethContract.submit(deployerSigned.address, {value : mintNow});
+
+        toMintSteth = toMintSteth.sub(mintNow);
+    }
+
+    mintedEth = (await ethers.provider.getBalance(deployerSigned.address)).sub(mintedEth);
+    mintedSteth = (await stethContract.balanceOf(deployerSigned.address)).sub(mintedSteth);
+
+    await stethContract.approve(curvePool.address, ethers.constants.MaxUint256);
+    await curvePool.add_liquidity([mintedEth, mintedSteth], 0, {value : mintedEth});
+    
+}
+
+const exchange = async (
+    hre: HardhatRuntimeEnvironment,
+    context: Context,
+    amountIn: BigNumber,
+    wstethAmountInPool: BigNumber,
+    wethAmountInPool: BigNumber,
+    curvePool: any,
+    wstethContract: any,
+    wethContract: any,
+    stethContract: any,
+    wstethToWeth: boolean
+) => {
+
+    const { ethers } = hre;
+
+    const steth = await ethers.getContractAt(
+        "ERC20Token",
+        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    );  
+    
+    const poolEthBalance = await ethers.provider.getBalance(curvePool.address);
+    const poolStethBalance = await steth.balanceOf(curvePool.address);
+
+    // poolEthBalance * wstethAmountInPool = poolStethBalance * wethAmountInPool
+
+    let firstMultiplier = poolEthBalance.mul(wstethAmountInPool);
+    let secondMuliplier = poolStethBalance.mul(wethAmountInPool);
+
+    let newPoolEth = poolEthBalance;
+    let newPoolSteth = poolStethBalance;
+
+    if (firstMultiplier.lt(secondMuliplier)) {
+        newPoolEth = secondMuliplier.div(wstethAmountInPool);
+    }
+    if (secondMuliplier.lt(firstMultiplier)) {
+        newPoolSteth = firstMultiplier.div(wethAmountInPool);
+    }
+
+    await mintForPool(hre, context, newPoolEth.sub(poolEthBalance), newPoolSteth.sub(poolStethBalance), wethContract, wstethContract, stethContract, curvePool);
+
+    firstMultiplier = (await ethers.provider.getBalance(curvePool.address)).mul(wstethAmountInPool);
+    secondMuliplier = (await steth.balanceOf(curvePool.address)).mul(wethAmountInPool);
+
+    const delta = firstMultiplier.sub(secondMuliplier).abs();
+    expect(delta.mul(1000)).to.be.lt(firstMultiplier);
+
+    let from = 0;
+    let to = 1;
+    let val = amountIn.mul(newPoolEth).div(wethAmountInPool);
+
+    if (wstethToWeth) {
+        from = 1;
+        to = 0;
+        val = BigNumber.from(0);
+    }
+
+    // proportional to the our situation in the pool
+    let result = await curvePool.callStatic.exchange(from, to, amountIn.mul(newPoolEth).div(wethAmountInPool), 0, {value: val});
+
+    // return adjusted
+    return result.mul(wethAmountInPool).div(newPoolEth);
+
+}
+
 const swapWethToWsteth = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
     amountIn: BigNumber,
     minAmountOut: BigNumber,
+    wstethAmountInPool: BigNumber,
+    wethAmountInPool: BigNumber,
+    curvePool: any,
+    wstethContract: any,
+    wethContract: any,
+    stethContract: any
 ) => {
+
+    const { ethers } = hre;
+
     const erc20 = await context.LStrategy.erc20Vault();
-    const { deployer, wsteth, weth } = context;
-    const pool = await getPool(hre, context);
-    const sqrtPriceX96 = (await pool.slot0()).sqrtPriceX96;
-    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
-    const denominator = BigNumber.from(2).pow(96);
+    const { deployer, wsteth, weth} = context;
     const balance = await wsteth.balanceOf(deployer.address);
-    let expectedOut = amountIn.mul(denominator).div(priceX96);
+
+    let expectedOut = await exchange(hre, context, amountIn, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, false);
+
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
     }
@@ -192,16 +292,23 @@ const swapWstethToWeth = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
     amountIn: BigNumber,
-    minAmountOut: BigNumber
+    minAmountOut: BigNumber,
+    wstethAmountInPool: BigNumber,
+    wethAmountInPool: BigNumber,
+    curvePool: any,
+    wstethContract: any,
+    wethContract: any,
+    stethContract: any
 ) => {
+
+    const { ethers } = hre;
+
     const erc20 = await context.LStrategy.erc20Vault();
     const { deployer, wsteth, weth } = context;
-    const pool = await getPool(hre, context);
-    const sqrtPriceX96 = (await pool.slot0()).sqrtPriceX96;
-    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
-    const denominator = BigNumber.from(2).pow(96);
     const balance = await weth.balanceOf(deployer.address);
-    let expectedOut = amountIn.mul(priceX96).div(denominator);
+
+    let expectedOut = await exchange(hre, context, amountIn, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, true);
+
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
     }

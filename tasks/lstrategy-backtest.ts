@@ -3,6 +3,7 @@ import { abi as ISwapRouter } from "@uniswap/v3-periphery/artifacts/contracts/in
 import { abi as ICurvePool } from "../test/helpers/curvePoolABI.json";
 import { abi as IWETH } from "../test/helpers/wethABI.json";
 import { abi as IWSTETH } from "../test/helpers/wstethABI.json";
+import { abi as ISTETH } from "../test/helpers/stethABI.json";
 import { BigNumber } from "@ethersproject/bignumber";
 import { task, types } from "hardhat/config";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -14,7 +15,6 @@ import {
     getUniV3Tick,
     swapTokens,
     getTvl,
-    makeSwap,
     stringToPriceX96,
     getStrategyStats,
     checkUniV3Balance,
@@ -105,6 +105,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         weth,
         wsteth,
     } = await getNamedAccounts();
+
     const swapRouter = await ethers.getContractAt(ISwapRouter, uniswapV3Router);
     const positionManager = await ethers.getContractAt(
         INonfungiblePositionManager,
@@ -398,14 +399,20 @@ class PermissionIdsLibrary {
     static ERC20_TRUSTED_STRATEGY: number = 6;
 }
 
-const parseFile = (filename: string): [BigNumber[], string[]] => {
+const parseFile = (
+    filename: string
+): [BigNumber[], string[], BigNumber[], BigNumber[]] => {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: "utf-8" });
     const fileLen = 30048;
     const blockNumberLen = 8;
     const pricePrecision = 29;
+
     let prices = new Array();
     let blockNumbers = new Array();
+
+    let wstethAmounts = new Array();
+    let wethAmounts = new Array();
 
     let index = 0;
     for (let i = 0; i < fileLen; ++i) {
@@ -418,9 +425,17 @@ const parseFile = (filename: string): [BigNumber[], string[]] => {
         prices.push(price);
         blockNumbers.push(BigNumber.from(block));
         index += blockNumberLen + pricePrecision + 2;
+
+        // TO BE FILLED CORRECTLY AFTER WE GET THE DATA
+        wstethAmounts.push(
+            BigNumber.from(600000).mul(BigNumber.from(10).pow(18))
+        );
+        wethAmounts.push(
+            BigNumber.from(600000).mul(BigNumber.from(10).pow(18))
+        );
     }
 
-    return [blockNumbers, prices];
+    return [blockNumbers, prices, wstethAmounts, wethAmounts];
 };
 
 const changePrice = async (currentTick: BigNumber, context: Context) => {
@@ -607,9 +622,11 @@ const getCapital = async (
 const ERC20UniRebalance = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
-    priceX96: BigNumber
+    priceX96: BigNumber,
+    wstethAmount: BigNumber,
+    wethAmount: BigNumber
 ) => {
-    const { ethers } = hre;
+    const { ethers, getNamedAccounts } = hre;
 
     let i = 0;
     while (true) {
@@ -648,9 +665,30 @@ const ERC20UniRebalance = async (
         let receipt = await tx.wait();
         erc20UniV3Gas = erc20UniV3Gas.add(receipt.gasUsed);
         erc20RebalanceCount += 1;
-        await swapOnCowswap(hre, context);
 
-        await makeSwap(hre, context);
+        const curvePool = await ethers.getContractAt(
+            ICurvePool,
+            "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+        );
+        const { weth, wsteth } = await getNamedAccounts();
+        const wethContract = await ethers.getContractAt(IWETH, weth);
+        const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+        const stethContract = await ethers.getContractAt(
+            ISTETH,
+            "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+        );
+
+        await swapOnCowswap(
+            hre,
+            context,
+            wstethAmount,
+            wethAmount,
+            curvePool,
+            wethContract,
+            wstethContract,
+            stethContract
+        );
+
         i += 1;
         if (i >= 20) {
             console.log(
@@ -666,9 +704,11 @@ const ERC20UniRebalance = async (
 const makeRebalances = async (
     hre: HardhatRuntimeEnvironment,
     context: Context,
-    priceX96: BigNumber
+    priceX96: BigNumber,
+    wstethAmount: BigNumber,
+    wethAmount: BigNumber
 ) => {
-    const { ethers } = hre;
+    const { ethers, getNamedAccounts } = hre;
 
     let wasRebalance = false;
 
@@ -696,7 +736,30 @@ const makeRebalances = async (
         receipt = await tx.wait();
         erc20UniV3Gas = erc20UniV3Gas.add(receipt.gasUsed);
         erc20RebalanceCount += 1;
-        await swapOnCowswap(hre, context);
+
+        const curvePool = await ethers.getContractAt(
+            ICurvePool,
+            "0xDC24316b9AE028F1497c275EB9192a3Ea0f67022" // address of curve weth-wsteth
+        );
+        const { weth, wsteth } = await getNamedAccounts();
+        const wethContract = await ethers.getContractAt(IWETH, weth);
+        const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+        const stethContract = await ethers.getContractAt(
+            ISTETH,
+            "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+        );
+
+        await swapOnCowswap(
+            hre,
+            context,
+            wstethAmount,
+            wethAmount,
+            curvePool,
+            wethContract,
+            wstethContract,
+            stethContract
+        );
+
         iter += 1;
         if (iter >= 20) {
             console.log(
@@ -706,7 +769,14 @@ const makeRebalances = async (
         }
     }
 
-    if (wasRebalance) await ERC20UniRebalance(hre, context, priceX96);
+    if (wasRebalance)
+        await ERC20UniRebalance(
+            hre,
+            context,
+            priceX96,
+            wstethAmount,
+            wethAmount
+        );
 };
 
 const reportStats = async (
@@ -736,7 +806,7 @@ const execute = async (
 
     await mintMockPosition(hre, context);
 
-    let [blocks, prices] = parseFile(filename);
+    let [blocks, prices, wstethAmounts, wethAmounts] = parseFile(filename);
 
     console.log("Before price update");
 
@@ -755,7 +825,13 @@ const execute = async (
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
 
-    await ERC20UniRebalance(hre, context, stringToPriceX96(prices[0]));
+    await ERC20UniRebalance(
+        hre,
+        context,
+        stringToPriceX96(prices[0]),
+        wstethAmounts[0],
+        wethAmounts[0]
+    );
 
     const keys = [
         "erc20token0",
@@ -793,7 +869,13 @@ const execute = async (
     let prev_block = BigNumber.from(0);
     for (let i = 1; i < prices.length; ++i) {
         if (blocks[i].sub(prev_block).gte((24 * 60 * 60) / 15)) {
-            await makeRebalances(hre, context, stringToPriceX96(prices[i]));
+            await makeRebalances(
+                hre,
+                context,
+                stringToPriceX96(prices[i]),
+                wstethAmounts[i],
+                wethAmounts[i]
+            );
             prev_block = blocks[i];
         }
         if (i % 500 == 0) {
