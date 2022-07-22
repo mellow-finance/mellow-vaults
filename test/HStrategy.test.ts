@@ -41,7 +41,7 @@ import Exceptions from "./library/Exceptions";
 import { TickMath } from "@uniswap/v3-sdk";
 import {
     OracleParamsStruct,
-    RebalanceRestrictionsStruct,
+    RebalanceTokenAmountsStruct,
 } from "./types/HStrategy";
 import {
     DomainPositionParamsStruct,
@@ -175,7 +175,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
                 const hStrategy = await (
                     await ethers.getContractFactory("MockHStrategy")
-                ).deploy(uniswapV3PositionManager, uniswapV3Router);
+                ).deploy(
+                    uniswapV3PositionManager,
+                    uniswapV3Router,
+                    uniV3Helper,
+                    hStrategyHelper
+                );
                 this.params = {
                     tokens: tokens,
                     erc20Vault: erc20Vault,
@@ -193,9 +198,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.moneyVault,
                     this.params.uniV3Vault,
                     this.params.fee,
-                    this.params.admin,
-                    this.params.uniV3Helper,
-                    this.params.hStrategyHelper
+                    this.params.admin
                 );
                 await hStrategy.createStrategy(
                     this.params.tokens,
@@ -203,9 +206,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.moneyVault,
                     this.params.uniV3Vault,
                     this.params.fee,
-                    this.params.admin,
-                    this.params.uniV3Helper,
-                    this.params.hStrategyHelper
+                    this.params.admin
                 );
                 this.subject = await ethers.getContractAt(
                     "MockHStrategy",
@@ -230,27 +231,24 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                  */
 
                 const strategyParams = {
-                    widthCoefficient: 15,
-                    widthTicks: 60,
-                    globalLowerTick: 23400,
-                    globalUpperTick: 29700,
-                    tickNeighborhood: 0,
-                    simulateUniV3Interval: false, // simulating uniV2 Interval
+                    halfOfShortInterval: 900,
+                    tickNeighborhood: 100,
+                    domainLowerTick: 23400,
+                    domainUpperTick: 29700,
                 };
                 this.strategyParams = strategyParams;
 
                 const oracleParams = {
-                    oracleObservationDelta: 150,
+                    averagePriceTimeSpan: 150,
+                    averagePriceTimeSpanForRebalanceChecks: 150,
                     maxTickDeviation: 100,
                 };
                 this.oracleParams = oracleParams;
 
                 const ratioParams = {
-                    erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-                    minUniV3RatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
-                    minUniV3RatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
-                    minMoneyRatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
-                    minMoneyRatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
+                    erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
+                    minErc20CaptialDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
+                    minRebalanceDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
                 };
                 this.ratioParams = ratioParams;
 
@@ -378,7 +376,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     const priceInfo =
                         await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
                             pool,
-                            oracleParams.oracleObservationDelta
+                            oracleParams.averagePriceTimeSpan
                         );
                     return await this.hStrategyHelper.calculateDomainPositionParams(
                         priceInfo.averageTick,
@@ -434,6 +432,33 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         await this.deploymentFixture();
     });
 
+    const push = async (delta: BigNumber, tokenName: string) => {
+        const n = 20;
+        var from = "";
+        var to = "";
+        if (tokenName == "USDC") {
+            from = this.usdc.address;
+            to = this.weth.address;
+        } else {
+            from = this.weth.address;
+            to = this.usdc.address;
+        }
+
+        await mint(tokenName, this.deployer.address, delta);
+        for (var i = 0; i < n; i++) {
+            await this.swapRouter.exactInputSingle({
+                tokenIn: from,
+                tokenOut: to,
+                fee: 3000,
+                recipient: this.deployer.address,
+                deadline: ethers.constants.MaxUint256,
+                amountIn: delta.div(n),
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0,
+            });
+        }
+    };
+
     describe("#constructor", () => {
         it("deploys a new contract", async () => {
             expect(this.subject.address).to.not.eq(
@@ -452,9 +477,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     this.params.moneyVault,
                     this.params.uniV3Vault,
                     this.params.fee,
-                    this.params.admin,
-                    this.params.uniV3Helper,
-                    this.params.hStrategyHelper
+                    this.params.admin
                 );
 
             expect(address).to.not.eq(ethers.constants.AddressZero);
@@ -468,9 +491,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         this.params.moneyVault,
                         this.params.uniV3Vault,
                         this.params.fee,
-                        this.params.admin,
-                        this.params.uniV3Helper,
-                        this.params.hStrategyHelper
+                        this.params.admin
                     )
             ).to.not.be.reverted;
         });
@@ -486,53 +507,33 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
 
         describe("edge cases:", () => {
-            it("when widthCoefficient <= 0, then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
-                            widthCoefficient: 0,
-                        } as StrategyParamsStruct)
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("when widthTicks <= 0, then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
-                            widthTicks: 0,
-                        })
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("when oracleObservationDelta <= 0, then reverts with INVARIANT", async () => {
+            it("when averagePriceTimeSpan <= 0, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateOracleParams({
                             ...this.oracleParams,
-                            oracleObservationDelta: 0,
+                            averagePriceTimeSpan: 0,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
-            it("when erc20MoneyRatioD <= 0, then reverts with INVARIANT", async () => {
+            it("when averagePriceTimeSpanForRebalanceChecks <= 0, then reverts with INVARIANT", async () => {
+                await expect(
+                    this.subject
+                        .connect(this.mStrategyAdmin)
+                        .updateOracleParams({
+                            ...this.oracleParams,
+                            averagePriceTimeSpanForRebalanceChecks: 0,
+                        })
+                ).to.be.revertedWith(Exceptions.INVARIANT);
+            });
+            it("when erc20CapitalRatioD > DENOMINATOR (1e9), then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateRatioParams({
                             ...this.ratioParams,
-                            erc20MoneyRatioD: 0,
-                        })
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("when erc20MoneyRatioD > DENOMINATOR (1e9), then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateRatioParams({
-                            ...this.ratioParams,
-                            erc20MoneyRatioD: DENOMINATOR.add(1),
+                            erc20CapitalRatioD: DENOMINATOR.add(1),
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -556,17 +557,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
-            it("when (2 ^ 22) / widthTicks < widthCoefficient, then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
-                            widthCoefficient: BigNumber.from(2).pow(20),
-                            widthTicks: BigNumber.from(2).pow(20),
-                        })
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
 
             it("when globalUpperTick <= globalLowerTick, then reverts with INVARIANT", async () => {
                 await expect(
@@ -574,34 +564,21 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
                             ...this.strategyParams,
-                            globalLowerTick: 0,
-                            globalUpperTick: 0,
+                            domainLowerTick: 0,
+                            domainUpperTick: 0,
                         } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
 
-            it("when widthCoefficient * widthTicks <= 0, then reverts with INVARIANT", async () => {
+            it("when globalIntervalWidth % halfOfShortInterval > 0, then reverts with INVARIANT", async () => {
                 await expect(
                     this.subject
                         .connect(this.mStrategyAdmin)
                         .updateStrategyParams({
                             ...this.strategyParams,
-                            widthCoefficient: 0,
-                            widthTicks: 30,
-                        } as StrategyParamsStruct)
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-
-            it("when globalIntervalWidth % shortIntervalWidth > 0, then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateStrategyParams({
-                            ...this.strategyParams,
-                            widthCoefficient: 1,
-                            widthTicks: 30,
-                            globalLowerTick: 0,
-                            globalUpperTick: 3001,
+                            halfOfShortInterval: 30,
+                            domainLowerTick: 0,
+                            domainUpperTick: 3001,
                         } as StrategyParamsStruct)
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -754,44 +731,16 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    const push = async (delta: BigNumber, tokenName: string) => {
-        const n = 20;
-        var from = "";
-        var to = "";
-        if (tokenName == "USDC") {
-            from = this.usdc.address;
-            to = this.weth.address;
-        } else {
-            from = this.weth.address;
-            to = this.usdc.address;
-        }
-
-        await mint(tokenName, this.deployer.address, delta);
-        for (var i = 0; i < n; i++) {
-            await this.swapRouter.exactInputSingle({
-                tokenIn: from,
-                tokenOut: to,
-                fee: 3000,
-                recipient: this.deployer.address,
-                deadline: ethers.constants.MaxUint256,
-                amountIn: delta.div(n),
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0,
-            });
-        }
-    };
-
     describe("#rebalance", () => {
         it("performs a rebalance according to strategy params", async () => {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
                     ...this.strategyParams,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    globalLowerTick: -870000,
-                    globalUpperTick: 870000,
-                    simulateUniV3Interval: true,
+                    tickNeighborhood: 10,
+                    halfOfShortInterval: 60,
+                    domainlLowerTick: -870000,
+                    domainUpperTick: 870000,
                 } as StrategyParamsStruct);
             const pullExistentials =
                 await this.erc20RootVault.pullExistentials();
@@ -828,20 +777,18 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             );
 
             var restrictions = {
-                pulledOnUniV3Vault: [0, 0],
-                pulledOnMoneyVault: [0, 0],
-                pulledFromUniV3Vault: [0, 0],
-                pulledFromMoneyVault: [0, 0],
+                pulledToUniV3Vault: [0, 0],
                 swappedAmounts: [0, 0],
                 burnedAmounts: [0, 0],
                 deadline: ethers.constants.MaxUint256,
-            } as RebalanceRestrictionsStruct;
-
+                newPositionMinted: true,
+            } as RebalanceTokenAmountsStruct;
             await expect(
                 this.subject
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
+
             await expect(
                 this.subject
                     .connect(this.mStrategyAdmin)
@@ -859,19 +806,15 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     .connect(this.mStrategyAdmin)
                     .updateRatioParams({
                         ...ratioParams,
-                        minUniV3RatioDeviation0D: 0,
-                        minUniV3RatioDeviation1D: 0,
-                        minMoneyRatioDeviation0D: 0,
-                        minMoneyRatioDeviation1D: 0,
+                        minErc20CaptialDeviationD: 0,
+                        minRebalanceDeviationD: 0,
                     } as RatioParamsStruct);
             }
-
             await expect(
                 this.subject
                     .connect(this.mStrategyAdmin)
                     .rebalance(restrictions, [])
             ).not.to.be.reverted;
-
             const { tickLower, tickUpper } =
                 await this.positionManager.callStatic.positions(
                     await this.uniV3Vault.uniV3Nft()
@@ -880,12 +823,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    ...this.strategyParams,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    globalLowerTick: tickLower,
-                    globalUpperTick: tickUpper + 60,
-                    simulateUniV3Interval: true,
+                    tickNeighborhood: 10,
+                    halfOfShortInterval: 60,
+                    domainLowerTick: tickLower,
+                    domainUpperTick: tickUpper + 60,
                 } as StrategyParamsStruct);
             await sleep(this.governanceDelay);
             while (true) {
@@ -897,12 +838,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     break;
                 }
             }
-            // await expect(
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .rebalance(restrictions, []);
-            // ).not.to.be.reverted;
+            await expect(
+                this.subject
+                    .connect(this.mStrategyAdmin)
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
             await sleep(this.governanceDelay);
+
             while (true) {
                 let { tick } = await this.pool.slot0();
                 if (tick >= tickLower + 30) {
@@ -912,95 +854,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     break;
                 }
             }
-            // await expect(
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .rebalance(restrictions, []);
-            // ).not.to.be.reverted;
-        });
-    });
-
-    describe("#tokenRebalance", () => {
-        it("performs a rebalance according to strategy params", async () => {
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    ...this.strategyParams,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
-                    globalLowerTick: -870000,
-                    globalUpperTick: 870000,
-                    simulateUniV3Interval: true,
-                } as StrategyParamsStruct);
-            const pullExistentials =
-                await this.erc20RootVault.pullExistentials();
-            for (var i = 0; i < 2; i++) {
-                await this.tokens[i].approve(
-                    this.erc20RootVault.address,
-                    pullExistentials[i].mul(10)
-                );
-            }
-
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-            await mint(
-                "WETH",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-
-            // deposit to zero-vault
-            await this.erc20RootVault.deposit(
-                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
-                0,
-                []
-            );
-
-            // normal deposit
-            await this.erc20RootVault.deposit(
-                [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
-                0,
-                []
-            );
-
-            var restrictions = {
-                pulledOnUniV3Vault: [0, 0],
-                pulledOnMoneyVault: [0, 0],
-                pulledFromUniV3Vault: [0, 0],
-                pulledFromMoneyVault: [0, 0],
-                swappedAmounts: [0, 0],
-                burnedAmounts: [0, 0],
-                deadline: ethers.constants.MaxUint256,
-            } as RebalanceRestrictionsStruct;
-
-            {
-                const ratioParams = await this.subject.ratioParams();
-                await this.subject
+            await expect(
+                this.subject
                     .connect(this.mStrategyAdmin)
-                    .updateRatioParams({
-                        ...ratioParams,
-                        minUniV3RatioDeviation0D: 0,
-                        minUniV3RatioDeviation1D: 0,
-                        minMoneyRatioDeviation0D: 0,
-                        minMoneyRatioDeviation1D: 0,
-                    } as RatioParamsStruct);
-            }
-
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .rebalance(restrictions, []);
-            await this.erc20RootVault.withdraw(
-                ethers.constants.AddressZero,
-                10 ** 5,
-                [0, 0],
-                [[], [], []]
-            );
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .tokenRebalance(restrictions, []);
+                    .rebalance(restrictions, [])
+            ).not.to.be.reverted;
         });
     });
 
@@ -1121,8 +979,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 const strategyParams = {
                     ...this.strategyParams,
-                    globalLowerTick: globalLowerTick,
-                    globalUpperTick: globalUpperTick,
+                    domainLowerTick: globalLowerTick,
+                    domainUpperTick: globalUpperTick,
                 } as StrategyParamsStruct;
 
                 const result =
@@ -1193,11 +1051,12 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
 
                 const ratioParams = {
-                    ...this.ratioParams,
-                    erc20MoneyRatioD: BigNumber.from(10)
+                    erc20CapitalRatioD: BigNumber.from(10)
                         .pow(7)
                         .mul(randomInt(100)),
-                };
+                    minErc20CaptialDeviationD: 0,
+                    minRebalanceDeviationD: 0,
+                } as RatioParamsStruct;
 
                 const {
                     erc20TokensAmountInToken0,
@@ -1213,28 +1072,42 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 expect(totalTokensInToken0).to.be.eq(
                     tokenAmounts.totalTokensInToken0
                 );
-                expect(uniV3TokensAmountInToken0).to.be.eq(
-                    totalTokensInToken0.mul(ratios.uniV3RatioD).div(DENOMINATOR)
+                expect(erc20TokensAmountInToken0).to.be.eq(
+                    totalTokensInToken0
+                        .mul(ratioParams.erc20CapitalRatioD)
+                        .div(DENOMINATOR)
                 );
 
-                const realRatio = erc20TokensAmountInToken0
-                    .mul(DENOMINATOR)
-                    .div(
-                        moneyTokensAmountInToken0.add(erc20TokensAmountInToken0)
-                    );
+                const exptectedOnUniV3 = totalTokensInToken0
+                    .sub(erc20TokensAmountInToken0)
+                    .mul(ratios.uniV3RatioD)
+                    .div(DENOMINATOR);
+                const exptectedOnMoney = totalTokensInToken0
+                    .sub(erc20TokensAmountInToken0)
+                    .sub(exptectedOnUniV3);
 
-                expect(realRatio).to.be.lte(
-                    ratioParams.erc20MoneyRatioD.add(10)
+                expect(
+                    uniV3TokensAmountInToken0
+                        .sub(exptectedOnUniV3)
+                        .abs()
+                        .mul(100)
+                        .div(exptectedOnUniV3)
+                        .lte(1)
                 );
-                expect(realRatio).to.be.gte(
-                    ratioParams.erc20MoneyRatioD.sub(10)
+                expect(
+                    moneyTokensAmountInToken0
+                        .sub(exptectedOnMoney)
+                        .abs()
+                        .mul(100)
+                        .div(exptectedOnMoney)
+                        .lte(1)
                 );
             }
         });
     });
 
     describe("calculateCurrentTokenAmountsInToken0", () => {
-        it("correctly calculates current token amonuts in token 0", async () => {
+        it("correctly calculates current token amounts in token 0", async () => {
             for (var i = 0; i < 3; i++) {
                 const domainParams = {
                     nft: 0,
@@ -1320,11 +1193,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    ...strategyParams,
-                    globalLowerTick: tickLower - 600,
-                    globalUpperTick: tickUpper + 600,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
+                    domainLowerTick: tickLower - 600,
+                    domainUpperTick: tickUpper + 600,
+                    halfOfShortInterval: 60,
+                    tickNeighborhood: 10,
                 });
         });
         describe("initial zero", () => {
@@ -1558,15 +1430,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { nft } = await this.getPositionParams();
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
-            const strategyParams = await this.subject.strategyParams();
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    ...strategyParams,
-                    globalLowerTick: tickLower - 600,
-                    globalUpperTick: tickUpper + 600,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
+                    domainLowerTick: tickLower - 600,
+                    domainUpperTick: tickUpper + 600,
+                    halfOfShortInterval: 60,
+                    tickNeighborhood: 10,
                 });
         });
 
@@ -1796,15 +1666,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { nft } = await this.getPositionParams();
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
-            const strategyParams = await this.subject.strategyParams();
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    ...strategyParams,
-                    globalLowerTick: tickLower - 600,
-                    globalUpperTick: tickUpper + 600,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
+                    domainLowerTick: tickLower - 600,
+                    domainUpperTick: tickUpper + 600,
+                    halfOfShortInterval: 60,
+                    tickNeighborhood: 10,
                 });
         });
 
@@ -1902,15 +1770,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { nft } = await this.getPositionParams();
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
-            const strategyParams = await this.subject.strategyParams();
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    ...strategyParams,
-                    globalLowerTick: tickLower - 600,
-                    globalUpperTick: tickUpper + 600,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
+                    domainLowerTick: tickLower - 600,
+                    domainUpperTick: tickUpper + 600,
+                    halfOfShortInterval: 60,
+                    tickNeighborhood: 10,
                 });
         });
 
@@ -2033,15 +1899,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             const { nft } = await this.getPositionParams();
             const { tickLower, tickUpper } =
                 await this.positionManager.positions(nft);
-            const strategyParams = await this.subject.strategyParams();
             await this.subject
                 .connect(this.mStrategyAdmin)
                 .updateStrategyParams({
-                    ...strategyParams,
-                    globalLowerTick: tickLower - 600,
-                    globalUpperTick: tickUpper + 600,
-                    widthCoefficient: 1,
-                    widthTicks: 60,
+                    domainLowerTick: tickLower - 600,
+                    domainUpperTick: tickUpper + 600,
+                    halfOfShortInterval: 60,
+                    tickNeighborhood: 10,
                 });
             await this.weth.transfer(
                 this.erc20Vault.address,
@@ -2091,19 +1955,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     await getSwapParams();
                 await expect(
                     this.subject.swapTokens(expectedAmounts, currentAmounts, {
-                        pulledOnUniV3Vault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        pulledOnMoneyVault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        pulledFromMoneyVault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        pulledFromUniV3Vault: [
+                        pulledToUniV3Vault: [
                             ethers.constants.Zero,
                             ethers.constants.Zero,
                         ],
@@ -2116,6 +1968,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             ethers.constants.Zero,
                         ],
                         deadline: ethers.constants.MaxUint256,
+                        newPositionMinted: true,
                     })
                 ).to.emit(this.subject, "SwapTokensOnERC20Vault");
             });
@@ -2127,19 +1980,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     await getSwapParams();
                 await expect(
                     this.subject.swapTokens(expectedAmounts, currentAmounts, {
-                        pulledOnUniV3Vault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        pulledOnMoneyVault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        pulledFromMoneyVault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        pulledFromUniV3Vault: [
+                        pulledToUniV3Vault: [
                             ethers.constants.Zero,
                             ethers.constants.Zero,
                         ],
@@ -2152,6 +1993,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             ethers.constants.Zero,
                         ],
                         deadline: ethers.constants.MaxUint256,
+                        newPositionMinted: true,
                     })
                 ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
             });

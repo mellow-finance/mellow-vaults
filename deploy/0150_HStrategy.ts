@@ -40,21 +40,6 @@ const deployHStrategy = async function (
     const { deployer, uniswapV3Router, uniswapV3PositionManager } =
         await getNamedAccounts();
 
-    await deploy(`HStrategy${kind}`, {
-        from: deployer,
-        contract: "HStrategy",
-        args: [uniswapV3PositionManager, uniswapV3Router],
-        log: true,
-        autoMine: true,
-        ...TRANSACTION_GAS_LIMITS,
-    });
-};
-
-const deployUniV3Helper = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy } = deployments;
-    const { deployer } = await getNamedAccounts();
-
     await deploy("UniV3Helper", {
         from: deployer,
         contract: "UniV3Helper",
@@ -63,12 +48,6 @@ const deployUniV3Helper = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
-};
-
-const deployHStrategyHelper = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
-    const { deploy } = deployments;
-    const { deployer } = await getNamedAccounts();
 
     await deploy("HStrategyHelper", {
         from: deployer,
@@ -78,18 +57,38 @@ const deployHStrategyHelper = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS,
     });
+
+    const { address: uniV3Helper } = await hre.ethers.getContract(
+        "UniV3Helper"
+    );
+    const { address: hStrategyHelper } = await hre.ethers.getContract(
+        "HStrategyHelper"
+    );
+    await deploy(`HStrategy${kind}`, {
+        from: deployer,
+        contract: "HStrategy",
+        args: [
+            uniswapV3PositionManager,
+            uniswapV3Router,
+            uniV3Helper,
+            hStrategyHelper,
+        ],
+        log: true,
+        autoMine: true,
+        ...TRANSACTION_GAS_LIMITS,
+    });
 };
 
 const setupStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
-    uniV3Helper: string,
-    hStrategyHelper: string,
     erc20Vault: string,
     moneyVault: string,
     uniV3Vault: string,
     tokens: string[],
-    deploymentName: string
+    deploymentName: string,
+    mintingParamToken0: BigNumber,
+    mintingParamToken1: BigNumber
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { log, execute, read } = deployments;
@@ -104,16 +103,7 @@ const setupStrategy = async (
 
     const fee = 3000;
     await setupCardinality(hre, tokens, fee);
-    const params = [
-        tokens,
-        erc20Vault,
-        moneyVault,
-        uniV3Vault,
-        fee,
-        deployer,
-        uniV3Helper,
-        hStrategyHelper,
-    ];
+    const params = [tokens, erc20Vault, moneyVault, uniV3Vault, fee, deployer];
     const address = await hStrategy.callStatic.createStrategy(...params);
     await hStrategy.createStrategy(...params);
     await deployments.save(deploymentName, {
@@ -126,14 +116,11 @@ const setupStrategy = async (
     );
 
     log("Setting Strategy params");
-
     const strategyParams = {
-        widthCoefficient: 15,
-        widthTicks: 60,
-        globalLowerTick: 23400,
-        globalUpperTick: 29700,
-        tickNeighborhood: 0,
-        simulateUniV3Interval: false, // simulating uniV2 Interval
+        halfOfShortInterval: 900,
+        tickNeighborhood: 100,
+        domainLowerTick: 23400,
+        domainUpperTick: 29700,
     };
     const txs: string[] = [];
     txs.push(
@@ -148,7 +135,8 @@ const setupStrategy = async (
     );
 
     const oracleParams = {
-        oracleObservationDelta: 150,
+        averagePriceTimeSpan: 150,
+        averagePriceTimeSpanForRebalanceChecks: 150,
         maxTickDeviation: 100,
     };
     txs.push(
@@ -162,11 +150,9 @@ const setupStrategy = async (
     );
 
     const ratioParams = {
-        erc20MoneyRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-        minUniV3RatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
-        minUniV3RatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
-        minMoneyRatioDeviation0D: BigNumber.from(10).pow(7).mul(5),
-        minMoneyRatioDeviation1D: BigNumber.from(10).pow(7).mul(5),
+        erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
+        minErc20CaptialDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
+        minRebalanceDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
     };
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("updateRatioParams", [
@@ -175,12 +161,11 @@ const setupStrategy = async (
     );
     log(
         `Ratio Params:`,
-        map((x) => x.toString(),ratioParams)
+        map((x) => x.toString(), ratioParams)
     );
-
     const mintingParams = {
-        minToken0ForOpening: BigNumber.from(10).pow(6),
-        minToken1ForOpening: BigNumber.from(10).pow(6),
+        minToken0ForOpening: mintingParamToken0,
+        minToken1ForOpening: mintingParamToken1,
     };
     txs.push(
         hStrategyWethUsdc.interface.encodeFunctionData("updateMintingParams", [
@@ -191,7 +176,6 @@ const setupStrategy = async (
         `Minting Params:`,
         map((x) => x.toString(), mintingParams)
     );
-
     log("Transferring ownership to mStrategyAdmin");
 
     const adminRole = await read("ProtocolGovernance", "ADMIN_ROLE");
@@ -224,7 +208,9 @@ const buildHStrategy = async (
     hre: HardhatRuntimeEnvironment,
     kind: MoneyVault,
     tokens: any,
-    deploymentName: any
+    deploymentName: any,
+    mintingParamToken0: BigNumber,
+    mintingParamToken1: BigNumber
 ) => {
     const { deployments, getNamedAccounts } = hre;
     const { read, get } = deployments;
@@ -277,13 +263,13 @@ const buildHStrategy = async (
     await setupStrategy(
         hre,
         kind,
-        uniV3Helper,
-        hStrategyHelper,
         erc20Vault,
         moneyVault,
         uniV3Vault,
         tokens,
-        deploymentName
+        deploymentName,
+        mintingParamToken0,
+        mintingParamToken1
     );
 
     const strategy = await get(deploymentName);
@@ -302,14 +288,34 @@ export const buildHStrategies: (kind: MoneyVault) => DeployFunction =
         const { getNamedAccounts } = hre;
         const { weth, usdc, wbtc } = await getNamedAccounts();
         await deployHStrategy(hre, kind);
-        await deployUniV3Helper(hre);
-        await deployHStrategyHelper(hre);
 
-        for (let [tokens, deploymentName] of [
-            [[weth, usdc], `HStrategy${kind}_WETH_USDC`],
-            [[weth, wbtc], `HStrategy${kind}_WETH_WBTC`],
+        for (let [
+            tokens,
+            deploymentName,
+            mintingParamToken0,
+            mintingParamToken1,
+        ] of [
+            [
+                [weth, usdc],
+                `HStrategy${kind}_WETH_USDC`,
+                BigNumber.from(10).pow(9),
+                BigNumber.from(1000),
+            ],
+            [
+                [weth, wbtc],
+                `HStrategy${kind}_WETH_WBTC`,
+                BigNumber.from(10).pow(9),
+                BigNumber.from(1000),
+            ],
         ]) {
-            await buildHStrategy(hre, kind, tokens, deploymentName);
+            await buildHStrategy(
+                hre,
+                kind,
+                tokens,
+                deploymentName,
+                mintingParamToken0 as BigNumber,
+                mintingParamToken1 as BigNumber
+            );
         }
     };
 
