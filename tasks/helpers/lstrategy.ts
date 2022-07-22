@@ -203,6 +203,10 @@ const exchange = async (
     wstethToWeth: boolean
 ) => {
 
+    const pool = await getPool(hre, context);
+    const sqrtPriceX96 = (await pool.slot0()).sqrtPriceX96;
+    const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
+
     const { ethers } = hre;
 
     const steth = await ethers.getContractAt(
@@ -236,22 +240,33 @@ const exchange = async (
     const delta = firstMultiplier.sub(secondMuliplier).abs();
     expect(delta.mul(1000)).to.be.lt(firstMultiplier);
 
-    let from = 0;
-    let to = 1;
-    let val = amountIn.mul(newPoolEth).div(wethAmountInPool);
+    let smallResult = await curvePool.callStatic.exchange(0, 1, BigNumber.from(10).pow(15), 0, {value: BigNumber.from(10).pow(15)});
 
     if (wstethToWeth) {
-        from = 1;
-        to = 0;
-        val = BigNumber.from(0);
+
+        let valWsteth = amountIn;
+        // val / price * (smallResult / 10^15)
+        let valSteth = valWsteth.mul(priceX96).div(BigNumber.from(2).pow(96)).mul(smallResult).div(BigNumber.from(10).pow(15));
+        let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool);
+
+        // proportional to the our situation in the pool
+        let result = await curvePool.callStatic.exchange(1, 0, adjustedVal, 0, {value: BigNumber.from(0)});
+
+        // return adjusted
+        return result.mul(wethAmountInPool).div(newPoolEth);
     }
 
-    // proportional to the our situation in the pool
-    let result = await curvePool.callStatic.exchange(from, to, amountIn.mul(newPoolEth).div(wethAmountInPool), 0, {value: val});
+    else {
+        let valWeth = amountIn;
 
-    // return adjusted
-    return result.mul(wethAmountInPool).div(newPoolEth);
+        let adjustedVal = valWeth.mul(newPoolEth).div(wethAmountInPool);
+        // proportional to the our situation in the pool
+        let valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
 
+        let result = valSteth.mul(BigNumber.from(10).pow(15)).div(smallResult).mul(BigNumber.from(2).pow(96)).div(priceX96);
+        return result.mul(wethAmountInPool).div(newPoolEth);
+
+    }
 }
 
 const swapWethToWsteth = async (
