@@ -408,7 +408,7 @@ const parseFile = (
     let prices = new Array();
     let blockNumbers = new Array();
 
-    let wstethAmounts = new Array();
+    let stethAmounts = new Array();
     let wethAmounts = new Array();
     let cols = rows[0].split(",");
     for (let i = 1; i < rows.length; ++i) {
@@ -424,7 +424,7 @@ const parseFile = (
                 blockNumbers.push(BigNumber.from(data[col]));
             }
             if (cols[col] == "stETH_amount") {
-                wstethAmounts.push(BigNumber.from(data[col]));
+                stethAmounts.push(BigNumber.from(data[col]));
             }
             if (cols[col] == "ETH_amount") {
                 wethAmounts.push(BigNumber.from(data[col]));
@@ -432,7 +432,7 @@ const parseFile = (
         }
     }
 
-    return [blockNumbers, prices, wstethAmounts, wethAmounts];
+    return [blockNumbers, prices, stethAmounts, wethAmounts];
 };
 
 const changePrice = async (currentTick: BigNumber, context: Context) => {
@@ -803,7 +803,7 @@ const execute = async (
 
     await mintMockPosition(hre, context);
 
-    let [blocks, prices, wstethAmounts, wethAmounts] = parseFile(filename);
+    let [blocks, prices, stethAmounts, wethAmounts] = parseFile(filename);
 
     console.log("Before price update");
 
@@ -826,7 +826,7 @@ const execute = async (
         hre,
         context,
         stringToPriceX96(prices[0]),
-        wstethAmounts[0],
+        stethAmounts[0],
         wethAmounts[0]
     );
 
@@ -870,7 +870,7 @@ const execute = async (
                 hre,
                 context,
                 stringToPriceX96(prices[i]),
-                wstethAmounts[i],
+                stethAmounts[i],
                 wethAmounts[i]
             );
             prev_block = blocks[i];
