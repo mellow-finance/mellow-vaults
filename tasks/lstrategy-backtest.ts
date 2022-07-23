@@ -404,35 +404,32 @@ const parseFile = (
 ): [BigNumber[], string[], BigNumber[], BigNumber[]] => {
     const csvFilePath = path.resolve(__dirname, filename);
     const fileContent = fs.readFileSync(csvFilePath, { encoding: "utf-8" });
-    const fileLen = 30048;
-    const blockNumberLen = 8;
-    const pricePrecision = 29;
-
+    const rows = fileContent.split("\n");
     let prices = new Array();
     let blockNumbers = new Array();
 
     let wstethAmounts = new Array();
     let wethAmounts = new Array();
-
-    let index = 0;
-    for (let i = 0; i < fileLen; ++i) {
-        //let blockNumber = fileContent.slice(index, index + blockNumberLen);
-        let price = fileContent.slice(
-            index + blockNumberLen + 1,
-            index + blockNumberLen + pricePrecision + 1
-        );
-        let block = fileContent.slice(index, index + blockNumberLen);
-        prices.push(price);
-        blockNumbers.push(BigNumber.from(block));
-        index += blockNumberLen + pricePrecision + 2;
-
-        // TO BE FILLED CORRECTLY AFTER WE GET THE DATA
-        wstethAmounts.push(
-            BigNumber.from(600000).mul(BigNumber.from(10).pow(18))
-        );
-        wethAmounts.push(
-            BigNumber.from(600000).mul(BigNumber.from(10).pow(18))
-        );
+    let cols = rows[0].split(",");
+    for (let i = 1; i < rows.length; ++i) {
+        if (rows[i].length == 0) {
+            continue;
+        }
+        const data = rows[i].split(",");
+        for (let col = 0; col < cols.length; ++col) {
+            if (cols[col] == "wsteth_eth") {
+                prices.push(data[col]);
+            }
+            if (cols[col] == "block_number") {
+                blockNumbers.push(BigNumber.from(data[col]));
+            }
+            if (cols[col] == "stETH_amount") {
+                wstethAmounts.push(BigNumber.from(data[col]));
+            }
+            if (cols[col] == "ETH_amount") {
+                wethAmounts.push(BigNumber.from(data[col]));
+            }
+        }
     }
 
     return [blockNumbers, prices, wstethAmounts, wethAmounts];
