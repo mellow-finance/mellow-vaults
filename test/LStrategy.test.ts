@@ -29,8 +29,6 @@ import { randomBytes } from "ethers/lib/utils";
 import { TickMath } from "@uniswap/v3-sdk";
 import { sqrt } from "@uniswap/sdk-core";
 import JSBI from "jsbi";
-import { uintToBytes32 } from "../tasks/base";
-import { T } from "ramda";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
@@ -850,6 +848,12 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 minUniV3LiquidityRatioDeviationD: BigNumber.from(10)
                     .pow(7)
                     .div(2),
+            });
+
+            await this.subject.connect(this.admin).updateOtherParams({
+                minToken0ForOpening: BigNumber.from(10).pow(6),
+                minToken1ForOpening: BigNumber.from(10).pow(6),
+                rebalanceDeadline: BigNumber.from(0),
             });
         });
 
@@ -3180,7 +3184,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                     it(`reverts with ${Exceptions.TIMESTAMP}`, async () => {
                         await ethers.provider.send("hardhat_setStorageAt", [
                             this.subject.address,
-                            "0x5", // address of orderDeadline
+                            "0x7", // address of orderDeadline
                             "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
                         ]);
                         await expect(
@@ -3543,173 +3547,6 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                                 )
                         ).to.be.reverted;
                     });
-                });
-            });
-        });
-
-        describe("#depositCallback", () => {
-            it("calls rebalance inside", async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await expect(this.subject.connect(this.admin).depositCallback())
-                    .to.not.be.reverted;
-            });
-            describe("access control:", () => {
-                beforeEach(async () => {
-                    await this.grantPermissions();
-                    await this.preparePush({ vault: this.uniV3LowerVault });
-                    await this.preparePush({ vault: this.uniV3UpperVault });
-                });
-
-                it("allowed: admin", async () => {
-                    await expect(
-                        this.subject.connect(this.admin).depositCallback()
-                    ).to.not.be.reverted;
-                });
-                it("allowed: operator", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await this.subject
-                            .connect(this.admin)
-                            .grantRole(
-                                await this.subject.ADMIN_DELEGATE_ROLE(),
-                                signer.address
-                            );
-                        await expect(
-                            this.subject.connect(signer).depositCallback()
-                        ).to.not.be.reverted;
-                    });
-                });
-                it("not allowed: any address", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject.connect(signer).depositCallback()
-                        ).to.be.reverted;
-                    });
-                });
-            });
-        });
-        describe("#withdrawCallback", () => {
-            it("calls rebalance inside", async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-                await expect(
-                    this.subject.connect(this.admin).withdrawCallback()
-                ).to.not.be.reverted;
-            });
-            describe("access control:", () => {
-                beforeEach(async () => {
-                    await this.grantPermissions();
-                    await this.preparePush({ vault: this.uniV3LowerVault });
-                    await this.preparePush({ vault: this.uniV3UpperVault });
-                });
-
-                it("allowed: admin", async () => {
-                    await expect(
-                        this.subject.connect(this.admin).withdrawCallback()
-                    ).to.not.be.reverted;
-                });
-                it("allowed: operator", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await this.subject
-                            .connect(this.admin)
-                            .grantRole(
-                                await this.subject.ADMIN_DELEGATE_ROLE(),
-                                signer.address
-                            );
-                        await expect(
-                            this.subject.connect(signer).withdrawCallback()
-                        ).to.not.be.reverted;
-                    });
-                });
-                it("not allowed: any address", async () => {
-                    await withSigner(randomAddress(), async (signer) => {
-                        await expect(
-                            this.subject.connect(signer).withdrawCallback()
-                        ).to.be.reverted;
-                    });
-                });
-            });
-        });
-    });
-    describe("#depositCallback", () => {
-        it("calls rebalance inside", async () => {
-            await this.grantPermissions();
-            await this.preparePush({ vault: this.uniV3LowerVault });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            await expect(this.subject.connect(this.admin).depositCallback()).to
-                .not.be.reverted;
-        });
-        describe("access control:", () => {
-            beforeEach(async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-            });
-
-            it("allowed: admin", async () => {
-                await expect(this.subject.connect(this.admin).depositCallback())
-                    .to.not.be.reverted;
-            });
-            it("allowed: operator", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .grantRole(
-                            await this.subject.ADMIN_DELEGATE_ROLE(),
-                            signer.address
-                        );
-                    await expect(this.subject.connect(signer).depositCallback())
-                        .to.not.be.reverted;
-                });
-            });
-            it("not allowed: any address", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(this.subject.connect(signer).depositCallback())
-                        .to.be.reverted;
-                });
-            });
-        });
-    });
-    describe("#withdrawCallback", () => {
-        it("calls rebalance inside", async () => {
-            await this.grantPermissions();
-            await this.preparePush({ vault: this.uniV3LowerVault });
-            await this.preparePush({ vault: this.uniV3UpperVault });
-            await expect(this.subject.connect(this.admin).withdrawCallback()).to
-                .not.be.reverted;
-        });
-        describe("access control:", () => {
-            beforeEach(async () => {
-                await this.grantPermissions();
-                await this.preparePush({ vault: this.uniV3LowerVault });
-                await this.preparePush({ vault: this.uniV3UpperVault });
-            });
-
-            it("allowed: admin", async () => {
-                await expect(
-                    this.subject.connect(this.admin).withdrawCallback()
-                ).to.not.be.reverted;
-            });
-            it("allowed: operator", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await this.subject
-                        .connect(this.admin)
-                        .grantRole(
-                            await this.subject.ADMIN_DELEGATE_ROLE(),
-                            signer.address
-                        );
-                    await expect(
-                        this.subject.connect(signer).withdrawCallback()
-                    ).to.not.be.reverted;
-                });
-            });
-            it("not allowed: any address", async () => {
-                await withSigner(randomAddress(), async (signer) => {
-                    await expect(
-                        this.subject.connect(signer).withdrawCallback()
-                    ).to.be.reverted;
                 });
             });
         });
