@@ -35,30 +35,35 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         "filename",
         "The name of the file with historical data",
         undefined,
-        types.string,
+        types.string
     )
     .addParam(
         "width",
         "The width of the interval of positions",
         undefined,
-        types.int,
+        types.int
     )
     .addParam(
         "weth",
         "The amount of weth to be deposited on the strategy",
         undefined,
-        types.int,
+        types.int
     )
     .addParam(
         "wsteth",
         "The amount of wsteth to be deposited on the strategy",
         undefined,
-        types.int,
+        types.int
     )
-    .setAction(async ({ filename, width, weth, wsteth }, hre: HardhatRuntimeEnvironment) => {
-        const context = await setup(hre, width);
-        await execute(filename, width, weth, wsteth, hre, context);
-    });
+    .setAction(
+        async (
+            { filename, width, weth, wsteth },
+            hre: HardhatRuntimeEnvironment
+        ) => {
+            const context = await setup(hre, width);
+            await execute(filename, width, weth, wsteth, hre, context);
+        }
+    );
 
 let erc20RebalanceCount = 0;
 let uniV3RebalanceCount = 0;
@@ -478,7 +483,7 @@ const buildInitialPositions = async (
     context: Context,
     width: number,
     weth_amount: number,
-    wsteth_amount: number,
+    wsteth_amount: number
 ) => {
     let tick = await getUniV3Tick(hre, context);
     await changePrice(tick, context);
@@ -511,8 +516,14 @@ const buildInitialPositions = async (
     });
 
     let erc20 = await context.LStrategy.erc20Vault();
-    await context.weth.transfer(erc20, BigNumber.from(10).pow(18).mul(weth_amount));
-    await context.wsteth.transfer(erc20, BigNumber.from(10).pow(18).mul(wsteth_amount));
+    await context.weth.transfer(
+        erc20,
+        BigNumber.from(10).pow(18).mul(weth_amount)
+    );
+    await context.wsteth.transfer(
+        erc20,
+        BigNumber.from(10).pow(18).mul(wsteth_amount)
+    );
 };
 
 const makeDesiredPoolPrice = async (
@@ -823,7 +834,13 @@ const execute = async (
     );
     console.log("After price update");
     console.log("Price is: ", (await getUniV3Price(hre, context)).toString());
-    await buildInitialPositions(hre, context, width, weth_amount, wsteth_amount);
+    await buildInitialPositions(
+        hre,
+        context,
+        width,
+        weth_amount,
+        wsteth_amount
+    );
     const lowerVault = await context.LStrategy.lowerVault();
     const upperVault = await context.LStrategy.upperVault();
     const erc20vault = await context.LStrategy.erc20Vault();
