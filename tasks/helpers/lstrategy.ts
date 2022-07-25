@@ -123,6 +123,9 @@ export const swapOnCowswap = async (
         .connect(context.admin)
         .postPreOrder(ethers.constants.Zero);
     const preOrder = await context.LStrategy.preOrder();
+    if (preOrder.amountIn.eq(0)) {
+        return;
+    }
     if (preOrder.tokenIn == context.weth.address) {
         await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
     } else {
@@ -133,6 +136,47 @@ export const swapOnCowswap = async (
 export const getTick = (x: BigNumber) => {
     return BigNumber.from(TickMath.getTickAtSqrtRatio(JSBI.BigInt(x)));
 };
+
+const mintForDeployer = async (
+    hre: HardhatRuntimeEnvironment,
+    stethContract: any,
+    wethContract: any,
+    toMintEth: BigNumber,
+    toMintSteth: BigNumber,
+) => {
+    // gas cover
+    toMintEth = toMintEth.add(BigNumber.from(10).pow(17));
+    const { ethers, getNamedAccounts } = hre;
+    const { deployer } = await getNamedAccounts();
+    const deployerSigned = await addSigner(hre, deployer);
+
+    while (toMintEth.gt(BigNumber.from(0))) {
+
+        let mintNow = BigNumber.from(10).pow(21);
+        if (mintNow.gt(toMintEth)) {
+            mintNow = toMintEth;
+        }
+
+        await mint(hre, "WETH", deployerSigned.address, mintNow);
+        await wethContract.withdraw(mintNow);
+
+        toMintEth = toMintEth.sub(mintNow);
+    }
+
+    while (toMintSteth.gt(BigNumber.from(0))) {
+        
+        let mintNow = BigNumber.from(10).pow(21);
+        if (mintNow.gt(toMintSteth)) {
+            mintNow = toMintSteth;
+        }
+        await mint(hre, "WETH", deployerSigned.address, mintNow);
+        await wethContract.withdraw(mintNow);
+        await stethContract.submit(deployerSigned.address, {value : mintNow});
+
+        toMintSteth = toMintSteth.sub(mintNow);
+    }
+}
+
 
 const mintForPool = async (
     hre: HardhatRuntimeEnvironment,
@@ -187,7 +231,6 @@ const mintForPool = async (
 
     await stethContract.approve(curvePool.address, ethers.constants.MaxUint256);
     await curvePool.add_liquidity([mintedEth, mintedSteth], 0, {value : mintedEth});
-    
 }
 
 const exchange = async (
@@ -208,6 +251,8 @@ const exchange = async (
     const priceX96 = sqrtPriceX96.mul(sqrtPriceX96).div(BigNumber.from(2).pow(96));
 
     const { ethers } = hre;
+    const { provider } = ethers;
+    const { deployer } = context;
 
     const steth = await ethers.getContractAt(
         "ERC20Token",
@@ -250,7 +295,20 @@ const exchange = async (
         let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool);
 
         // proportional to the our situation in the pool
-        let result = await curvePool.callStatic.exchange(1, 0, adjustedVal, 0, {value: BigNumber.from(0)});
+        const balance = await stethContract.balanceOf(context.deployer.address);
+        if (balance.lt(adjustedVal)) {
+            await mintForDeployer(
+                hre,
+                stethContract,
+                wethContract,
+                BigNumber.from(0),
+                BigNumber.from(balance).sub(adjustedVal),
+            );
+        }
+        let result = BigNumber.from(0);
+        if (adjustedVal.gt(0)) {
+            result = await curvePool.callStatic.exchange(1, 0, adjustedVal, 0);
+        }
 
         // return adjusted
         return result.mul(wethAmountInPool).div(newPoolEth);
@@ -261,8 +319,20 @@ const exchange = async (
 
         let adjustedVal = valWeth.mul(newPoolEth).div(wethAmountInPool);
         // proportional to the our situation in the pool
-        let valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
-
+        const balance = await provider.getBalance(context.deployer.address);
+        if (balance.lt(adjustedVal)) {
+            await mintForDeployer(
+                hre,
+                stethContract,
+                wethContract,
+                BigNumber.from(adjustedVal),
+                BigNumber.from(0),
+            );
+        }
+        let valSteth = BigNumber.from(0);
+        if (adjustedVal.gt(0)) {
+            valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
+        }
         let result = valSteth.mul(BigNumber.from(10).pow(15)).div(smallResult).mul(BigNumber.from(2).pow(96)).div(priceX96);
         return result.mul(wethAmountInPool).div(newPoolEth);
 
@@ -346,9 +416,6 @@ export const swapTokens = async (
     tokenOut: Contract,
     amountIn: BigNumber
 ) => {
-    // console.log("token: ", await tokenIn.name());
-    // console.log("amount: ", amountIn.toString());
-    // console.log("balance: ", (await tokenIn.balanceOf(senderAddress)).toString());
     const { ethers } = hre;
     await withSigner(hre, senderAddress, async (senderSigner) => {
         await tokenIn
