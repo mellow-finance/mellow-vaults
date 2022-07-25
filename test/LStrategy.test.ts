@@ -1958,7 +1958,9 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 describe("when secondsBetweenRebalances is incorrect", () => {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
-                        params.secondsBetweenRebalances = BigNumber.from(86400 * 31);
+                        params.secondsBetweenRebalances = BigNumber.from(
+                            86400 * 31
+                        );
                         await expect(
                             this.subject
                                 .connect(this.admin)
