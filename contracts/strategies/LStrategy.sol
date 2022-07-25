@@ -61,7 +61,7 @@ contract LStrategy is DefaultAccessControl {
     struct OtherParams {
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
-        uint256 rebalanceDeadline;
+        uint256 secondsBetweenRebalances;
     }
 
     struct PreOrder {
@@ -181,7 +181,7 @@ contract LStrategy is DefaultAccessControl {
     {
         _requireAtLeastOperator();
         require(
-            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.rebalanceDeadline,
+            block.timestamp >= lastRebalanceERC20UniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
             ExceptionsLibrary.TIMESTAMP
         );
         lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
@@ -295,7 +295,7 @@ contract LStrategy is DefaultAccessControl {
     {
         _requireAtLeastOperator();
         require(
-            block.timestamp >= lastRebalanceUniV3VaultsTimestamp + otherParams.rebalanceDeadline,
+            block.timestamp >= lastRebalanceUniV3VaultsTimestamp + otherParams.secondsBetweenRebalances,
             ExceptionsLibrary.TIMESTAMP
         );
         lastRebalanceERC20UniV3VaultsTimestamp = block.timestamp;
@@ -542,7 +542,7 @@ contract LStrategy is DefaultAccessControl {
                 (newOtherParams.minToken1ForOpening > 0) &&
                 (newOtherParams.minToken0ForOpening <= 1000000000) &&
                 (newOtherParams.minToken1ForOpening <= 1000000000) &&
-                (newOtherParams.rebalanceDeadline <= 86400 * 30),
+                (newOtherParams.secondsBetweenRebalances <= 86400 * 30),
             ExceptionsLibrary.INVARIANT
         );
         otherParams = newOtherParams;

@@ -782,7 +782,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 await this.subject.connect(this.admin).updateOtherParams({
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
-                    rebalanceDeadline: BigNumber.from(10).pow(6),
+                    secondsBetweenRebalances: BigNumber.from(10).pow(6),
                 });
 
                 return this.subject;
@@ -853,7 +853,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
             await this.subject.connect(this.admin).updateOtherParams({
                 minToken0ForOpening: BigNumber.from(10).pow(6),
                 minToken1ForOpening: BigNumber.from(10).pow(6),
-                rebalanceDeadline: BigNumber.from(0),
+                secondsBetweenRebalances: BigNumber.from(0),
             });
         });
 
@@ -1879,7 +1879,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 this.baseParams = {
                     minToken0ForOpening: BigNumber.from(10).pow(6),
                     minToken1ForOpening: BigNumber.from(10).pow(6),
-                    rebalanceDeadline: BigNumber.from(86400 * 30),
+                    secondsBetweenRebalances: BigNumber.from(86400 * 30),
                 };
             });
 
@@ -1894,7 +1894,7 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                 expect(returnedParams.minToken1ForOpening).eq(
                     BigNumber.from(10).pow(6)
                 );
-                expect(returnedParams.rebalanceDeadline).eq(
+                expect(returnedParams.secondsBetweenRebalances).eq(
                     BigNumber.from(86400 * 30)
                 );
             });
@@ -1955,10 +1955,10 @@ contract<LStrategy, DeployOptions, CustomContext>("LStrategy", function () {
                         ).to.be.revertedWith(Exceptions.INVARIANT);
                     });
                 });
-                describe("when rebalanceDeadline is incorrect", () => {
+                describe("when secondsBetweenRebalances is incorrect", () => {
                     it(`reverts with ${Exceptions.INVARIANT}`, async () => {
                         let params = this.baseParams;
-                        params.rebalanceDeadline = BigNumber.from(86400 * 31);
+                        params.secondsBetweenRebalances = BigNumber.from(86400 * 31);
                         await expect(
                             this.subject
                                 .connect(this.admin)
