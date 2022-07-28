@@ -104,6 +104,7 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         (uint256[] memory minTvl, uint256[] memory maxTvl) = tvl();
         uint256 thisNft = _nft;
         _chargeFees(thisNft, minTvl, supply, tokens);
+        supply = totalSupply;
         IERC20RootVaultGovernance.DelayedStrategyParams memory delayedStrategyParams = IERC20RootVaultGovernance(
             address(_vaultGovernance)
         ).delayedStrategyParams(thisNft);
@@ -174,8 +175,9 @@ contract ERC20RootVault is IERC20RootVault, ERC20Token, ReentrancyGuard, Aggrega
         address[] memory tokens = _vaultTokens;
         uint256[] memory tokenAmounts = new uint256[](_vaultTokens.length);
         (uint256[] memory minTvl, ) = tvl();
-        uint256 balance = balanceOf[msg.sender];
         _chargeFees(_nft, minTvl, supply, tokens);
+        supply = totalSupply;
+        uint256 balance = balanceOf[msg.sender];
         if (lpTokenAmount > balance) {
             lpTokenAmount = balance;
         }
