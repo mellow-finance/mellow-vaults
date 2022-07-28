@@ -29,8 +29,6 @@ import { randomBytes } from "ethers/lib/utils";
 import { TickMath } from "@uniswap/v3-sdk";
 import { sqrt } from "@uniswap/sdk-core";
 import JSBI from "jsbi";
-import { uintToBytes32 } from "../tasks/base";
-import { T } from "ramda";
 
 type CustomContext = {
     uniV3LowerVault: UniV3Vault;
