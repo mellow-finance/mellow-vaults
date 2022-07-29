@@ -13,9 +13,11 @@ import "../libraries/external/LiquidityAmounts.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/external/univ3/IUniswapV3Pool.sol";
 import "../interfaces/external/univ3/IUniswapV3Factory.sol";
+import "../interfaces/vaults/IPerpVaultGovernance.sol";
 
 // FUTURE: CHECK SECURITY & SLIPPAGE EVERYWHERE
-abstract contract PerpVault is IPerpVault, IntegrationVault {
+// check liquidation scenario
+contract PerpVault is IPerpVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     address public baseToken;
@@ -27,43 +29,41 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
     uint256 public constant DENOMINATOR = 10**9;
     uint256 public constant Q96 = 2**96;
 
-    struct PositionInfo {
-        int24 lowerTick;
-        int24 upperTick;
-        uint128 liquidity;
-    }
-
     bool public isPositionOpened;
-    PositionInfo public position;
     uint256 public leverageMultiplierD;
-    address usdc;
+    address public usdc;
+
+    PositionInfo private _position;
 
     function initialize(
         uint256 nft_,
-        address usdc_,
-        address secondVToken_,
-        address usdcAddress_,
-        address vusdcAddress_,
-        address perpVaultAddress_,
-        address clearingHouseAddress_,
-        address accountBalanceAddress_,
-        address uniV3Factory_,
+        address baseToken_,
         uint256 leverageMultiplierD_
     ) external {
-        require(!IBaseToken(secondVToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
+        require(!IBaseToken(baseToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
         require(leverageMultiplierD_ <= DENOMINATOR * 9); // leverage more than 10x isn't available on Perp (exactly 10x may be subject to precision failures)
+
+        IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(_vaultGovernance))
+            .delayedProtocolParams();
 
         leverageMultiplierD = leverageMultiplierD_;
         address[] memory vaultTokens_ = new address[](1);
-        vaultTokens_[0] = usdcAddress_;
+        vaultTokens_[0] = params.usdcAddress;
         _initialize(vaultTokens_, nft_);
-        vault = IPerpInternalVault(perpVaultAddress_);
-        clearingHouse = IClearingHouse(clearingHouseAddress_);
-        accountBalance = IAccountBalance(accountBalanceAddress_);
-        baseToken = secondVToken_;
-        usdc = usdc_;
 
-        pool = IUniswapV3Pool(IUniswapV3Factory(uniV3Factory_).getPool(vusdcAddress_, secondVToken_, 3000));
+        vault = params.vault;
+        clearingHouse = params.clearingHouse;
+        accountBalance = params.accountBalance;
+        address vusdcAddress_ = params.vusdcAddress;
+        usdc = params.usdcAddress;
+
+        baseToken = baseToken_;
+
+        pool = IUniswapV3Pool(IUniswapV3Factory(params.uniV3FactoryAddress).getPool(vusdcAddress_, baseToken_, 3000));
+    }
+
+    function position() public view returns (PositionInfo memory) {
+        return _position;
     }
 
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
@@ -78,7 +78,7 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
     function openUniPosition(
         int24 lowerTick,
         int24 upperTick,
-        uint256[] memory minVTokenAmounts, /*maybe not needed*/ /*usdc, second token*/
+        uint256[] memory minVTokenAmounts, /*maybe not needed*/ /*usdc, base token*/
         uint256 deadline
     ) external returns (uint128 liquidityAdded) {
         require(!isPositionOpened, ExceptionsLibrary.DUPLICATE);
@@ -88,25 +88,30 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
         require(vaultCapital > 0, ExceptionsLibrary.VALUE_ZERO);
 
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
+        uint256 amountUsdcPerLiquidityUnitD;
+        uint256 expectedVUsdc;
+        uint256 expectedSecondToken;
 
-        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-        uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(lowerTick);
-        uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(upperTick);
+        {
+            (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
+            uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(lowerTick);
+            uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(upperTick);
 
-        uint256 amountUsdcPerLiquidityUnitD = _calculatePositionCapital(
-            uint128(DENOMINATOR),
-            sqrtRatioX96,
-            sqrtRatioAX96,
-            sqrtRatioBX96
-        );
+            amountUsdcPerLiquidityUnitD = _calculatePositionCapital(
+                uint128(DENOMINATOR),
+                sqrtRatioX96,
+                sqrtRatioAX96,
+                sqrtRatioBX96
+            );
 
-        uint256 liquidityWanted = FullMath.mulDiv(capitalToUse, DENOMINATOR, amountUsdcPerLiquidityUnitD);
-        (uint256 expectedVUsdc, uint256 expectedSecondToken) = LiquidityAmounts.getAmountsForLiquidity(
-            sqrtRatioX96,
-            sqrtRatioAX96,
-            sqrtRatioBX96,
-            uint128(liquidityWanted)
-        );
+            uint256 liquidityWanted = FullMath.mulDiv(capitalToUse, DENOMINATOR, amountUsdcPerLiquidityUnitD);
+            (expectedVUsdc, expectedSecondToken) = LiquidityAmounts.getAmountsForLiquidity(
+                sqrtRatioX96,
+                sqrtRatioAX96,
+                sqrtRatioBX96,
+                uint128(liquidityWanted)
+            );
+        }
 
         IClearingHouse.AddLiquidityResponse memory response = clearingHouse.addLiquidity(
             IClearingHouse.AddLiquidityParams({
@@ -123,7 +128,7 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
         );
 
         isPositionOpened = true;
-        position = PositionInfo({lowerTick: lowerTick, upperTick: upperTick, liquidity: uint128(response.liquidity)});
+        _position = PositionInfo({lowerTick: lowerTick, upperTick: upperTick, liquidity: uint128(response.liquidity)});
         liquidityAdded = uint128(response.liquidity);
     }
 
@@ -132,7 +137,7 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
         uint256 deadline
     ) external {
         require(isPositionOpened, ExceptionsLibrary.NOT_FOUND);
-        PositionInfo memory currentPosition = position;
+        PositionInfo memory currentPosition = _position;
 
         clearingHouse.removeLiquidity(
             IClearingHouse.RemoveLiquidityParams({
@@ -156,6 +161,21 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
             return 0;
         }
         return uint256(usdcValue);
+    }
+
+    function updateLeverage(uint256 newLeverageMultiplierD_, uint256 deadline) external {
+        require(_isApprovedOrOwner(msg.sender));
+        require(newLeverageMultiplierD_ <= DENOMINATOR * 9);
+        leverageMultiplierD = newLeverageMultiplierD_;
+
+        uint256 vaultCapital = getAccountValue();
+        uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
+
+        _adjustPosition(capitalToUse, deadline);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpVault).interfaceId);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)
@@ -182,31 +202,8 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
         uint256 vaultCapital = getAccountValue();
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
-        PositionInfo memory currentPosition = position;
-
-        (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
-        uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(currentPosition.lowerTick);
-        uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(currentPosition.upperTick);
-
         Options memory opts = _parseOptions(options);
-
-        uint256 usdcCapital = _calculatePositionCapital(
-            currentPosition.liquidity,
-            sqrtRatioX96,
-            sqrtRatioAX96,
-            sqrtRatioBX96
-        );
-        _makePositionMarginallyCorrect(
-            usdcCapital,
-            capitalToUse,
-            currentPosition.liquidity,
-            currentPosition.lowerTick,
-            currentPosition.upperTick,
-            sqrtRatioX96,
-            sqrtRatioAX96,
-            sqrtRatioBX96,
-            opts.deadline
-        );
+        _adjustPosition(capitalToUse, opts.deadline);
     }
 
     function _pull(
@@ -221,16 +218,25 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
         uint256 vaultCapital = getAccountValue();
         require(vaultCapital >= usdcAmount, ExceptionsLibrary.LIMIT_OVERFLOW);
 
-        uint256 futureCapital = vaultCapital - usdcAmount;
-        uint256 capitalToUse = FullMath.mulDiv(futureCapital, leverageMultiplierD, DENOMINATOR);
+        if (isPositionOpened) {
+            uint256 futureCapital = vaultCapital - usdcAmount;
+            uint256 capitalToUse = FullMath.mulDiv(futureCapital, leverageMultiplierD, DENOMINATOR);
 
-        PositionInfo memory currentPosition = position;
+            Options memory opts = _parseOptions(options);
+            _adjustPosition(capitalToUse, opts.deadline);
+        }
+
+        vault.withdraw(usdc, usdcAmount);
+
+        IERC20(usdc).safeTransfer(to, usdcAmount);
+    }
+
+    function _adjustPosition(uint256 capitalToUse, uint256 deadline) internal {
+        PositionInfo memory currentPosition = _position;
 
         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
         uint160 sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(currentPosition.lowerTick);
         uint160 sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(currentPosition.upperTick);
-
-        Options memory opts = _parseOptions(options);
 
         uint256 usdcCapital = _calculatePositionCapital(
             currentPosition.liquidity,
@@ -247,15 +253,12 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
             sqrtRatioX96,
             sqrtRatioAX96,
             sqrtRatioBX96,
-            opts.deadline
+            deadline
         );
-        vault.withdraw(usdc, usdcAmount);
-
-        IERC20(usdc).safeTransfer(to, usdcAmount);
     }
 
     function _isStrategy(address addr) internal view returns (bool) {
-        return true; // write after governance is ready
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
     function _closePermanentPositions(uint256 deadline) internal {
@@ -349,5 +352,13 @@ abstract contract PerpVault is IPerpVault, IntegrationVault {
 
         require(options.length == 32, ExceptionsLibrary.INVALID_VALUE);
         return abi.decode(options, (Options));
+    }
+
+    // check if v tokens are really non-transferrable
+    function _isReclaimForbidden(address addr) internal view override returns (bool) {
+        if (addr == usdc) {
+            return true;
+        }
+        return false;
     }
 }
