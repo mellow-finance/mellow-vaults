@@ -231,6 +231,8 @@ const mintForPool = async (
 
     await stethContract.approve(curvePool.address, ethers.constants.MaxUint256);
     console.log("Before adding liquidity");
+    console.log("mintedEth: ", mintedEth.toString());
+    console.log("mintedSteth: ", mintedSteth.toString());
     await curvePool.add_liquidity([mintedEth, mintedSteth], 0, {value : mintedEth});
     console.log("After adding liquidity");
 }
