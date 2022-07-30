@@ -190,7 +190,7 @@ const mintForPool = async (
 ) => {
 
     // gas cover
-    toMintEth = toMintEth.add(BigNumber.from(10).pow(17));
+    toMintEth = toMintEth.add(BigNumber.from(10).pow(17).mul(5));
 
     const { ethers, getNamedAccounts } = hre;
 
