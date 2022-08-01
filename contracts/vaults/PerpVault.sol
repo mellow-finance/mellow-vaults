@@ -40,11 +40,12 @@ contract PerpVault is IPerpVault, IntegrationVault {
         address baseToken_,
         uint256 leverageMultiplierD_
     ) external {
-        require(!IBaseToken(baseToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
-        require(leverageMultiplierD_ <= DENOMINATOR * 9); // leverage more than 10x isn't available on Perp (exactly 10x may be subject to precision failures)
-
+        require(IBaseToken(baseToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
         IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(_vaultGovernance))
             .delayedProtocolParams();
+        uint256 maxProtocolLeverage = params.maxProtocolLeverage;
+
+        require(leverageMultiplierD_ <= DENOMINATOR * (maxProtocolLeverage - 1)); // leverage more than 10x isn't available on Perp (exactly 10x may be subject to precision failures)
 
         leverageMultiplierD = leverageMultiplierD_;
         address[] memory vaultTokens_ = new address[](1);
@@ -54,12 +55,11 @@ contract PerpVault is IPerpVault, IntegrationVault {
         vault = params.vault;
         clearingHouse = params.clearingHouse;
         accountBalance = params.accountBalance;
-        address vusdcAddress_ = params.vusdcAddress;
         usdc = params.usdcAddress;
 
         baseToken = baseToken_;
 
-        pool = IUniswapV3Pool(IUniswapV3Factory(params.uniV3FactoryAddress).getPool(vusdcAddress_, baseToken_, 3000));
+        pool = IUniswapV3Pool(IUniswapV3Factory(params.uniV3FactoryAddress).getPool(params.vusdcAddress, baseToken_, 3000));
     }
 
     function position() public view returns (PositionInfo memory) {
@@ -137,6 +137,8 @@ contract PerpVault is IPerpVault, IntegrationVault {
         uint256 deadline
     ) external {
         require(isPositionOpened, ExceptionsLibrary.NOT_FOUND);
+        require(_isStrategy(msg.sender), ExceptionsLibrary.FORBIDDEN);
+
         PositionInfo memory currentPosition = _position;
 
         clearingHouse.removeLiquidity(
@@ -165,7 +167,12 @@ contract PerpVault is IPerpVault, IntegrationVault {
 
     function updateLeverage(uint256 newLeverageMultiplierD_, uint256 deadline) external {
         require(_isApprovedOrOwner(msg.sender));
-        require(newLeverageMultiplierD_ <= DENOMINATOR * 9);
+
+        IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(_vaultGovernance))
+            .delayedProtocolParams();
+        uint256 maxProtocolLeverage = params.maxProtocolLeverage;
+        require(newLeverageMultiplierD_ <= DENOMINATOR * (maxProtocolLeverage - 1));
+
         leverageMultiplierD = newLeverageMultiplierD_;
 
         uint256 vaultCapital = getAccountValue();
@@ -183,6 +190,9 @@ contract PerpVault is IPerpVault, IntegrationVault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
+
+        require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
+
         uint256 usdcAmount = tokenAmounts[0];
         if (usdcAmount == 0) {
             return new uint256[](1);
@@ -211,6 +221,9 @@ contract PerpVault is IPerpVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
+
+        require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
+
         uint256 usdcAmount = tokenAmounts[0];
         if (usdcAmount == 0) {
             return new uint256[](1);
@@ -229,6 +242,8 @@ contract PerpVault is IPerpVault, IntegrationVault {
         vault.withdraw(usdc, usdcAmount);
 
         IERC20(usdc).safeTransfer(to, usdcAmount);
+        actualTokenAmounts = new uint256[](1);
+        actualTokenAmounts[0] = usdcAmount;
     }
 
     function _adjustPosition(uint256 capitalToUse, uint256 deadline) internal {
@@ -313,7 +328,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
                 sqrtRatioBX96,
                 delta
             );
-            clearingHouse.addLiquidity(
+            IClearingHouse.AddLiquidityResponse memory response = clearingHouse.addLiquidity(
                 IClearingHouse.AddLiquidityParams({
                     baseToken: baseToken,
                     base: amountBase,
@@ -326,6 +341,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
                     deadline: deadline
                 })
             );
+            _position.liquidity += uint128(response.liquidity);
         } else {
             uint128 delta = liquidity - newLiquidity;
             clearingHouse.removeLiquidity(
@@ -344,6 +360,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
             if (newLiquidity == 0) {
                 isPositionOpened = false;
             }
+            _position.liquidity = newLiquidity;
         }
     }
 
@@ -354,7 +371,6 @@ contract PerpVault is IPerpVault, IntegrationVault {
         return abi.decode(options, (Options));
     }
 
-    // check if v tokens are really non-transferrable
     function _isReclaimForbidden(address addr) internal view override returns (bool) {
         if (addr == usdc) {
             return true;

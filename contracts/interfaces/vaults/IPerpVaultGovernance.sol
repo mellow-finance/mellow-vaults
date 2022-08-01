@@ -16,6 +16,7 @@ interface IPerpVaultGovernance is IVaultGovernance {
         address vusdcAddress;
         address usdcAddress;
         address uniV3FactoryAddress;
+        uint256 maxProtocolLeverage;
     }
 
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.

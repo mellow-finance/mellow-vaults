@@ -39,7 +39,8 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
                     accountBalance: IAccountBalance(address(0)),
                     vusdcAddress: address(0),
                     usdcAddress: address(0),
-                    uniV3FactoryAddress: address(0)
+                    uniV3FactoryAddress: address(0),
+                    maxProtocolLeverage: 0
                 });
         }
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
