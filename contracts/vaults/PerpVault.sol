@@ -59,7 +59,9 @@ contract PerpVault is IPerpVault, IntegrationVault {
 
         baseToken = baseToken_;
 
-        pool = IUniswapV3Pool(IUniswapV3Factory(params.uniV3FactoryAddress).getPool(params.vusdcAddress, baseToken_, 3000));
+        pool = IUniswapV3Pool(
+            IUniswapV3Factory(params.uniV3FactoryAddress).getPool(params.vusdcAddress, baseToken_, 3000)
+        );
     }
 
     function position() public view returns (PositionInfo memory) {
@@ -190,7 +192,6 @@ contract PerpVault is IPerpVault, IntegrationVault {
         override
         returns (uint256[] memory actualTokenAmounts)
     {
-
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
         uint256 usdcAmount = tokenAmounts[0];
@@ -221,7 +222,6 @@ contract PerpVault is IPerpVault, IntegrationVault {
         uint256[] memory tokenAmounts,
         bytes memory options
     ) internal override returns (uint256[] memory actualTokenAmounts) {
-
         require(tokenAmounts.length == 1, ExceptionsLibrary.INVALID_LENGTH);
 
         uint256 usdcAmount = tokenAmounts[0];
