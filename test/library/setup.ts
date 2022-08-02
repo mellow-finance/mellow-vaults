@@ -137,9 +137,7 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
     );
     this.yearnVaultSingleton = await ethers.getContract("YearnVault");
 
-    this.perpVaultGovernance = await ethers.getContract(
-        "PerpVaultGovernance"
-    );
+    this.perpVaultGovernance = await ethers.getContract("PerpVaultGovernance");
     this.perpVaultSingleton = await ethers.getContract("PerpVault");
 
     this.erc20VaultGovernance = await ethers.getContract(
