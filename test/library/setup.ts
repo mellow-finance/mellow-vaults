@@ -25,7 +25,9 @@ import {
     UniV3VaultGovernance,
     VaultRegistry,
     YearnVaultGovernance,
+    PerpVaultGovernance,
     YearnVault,
+    PerpVault,
     ERC20Vault,
     AaveVault,
     UniV3Vault,
@@ -43,6 +45,8 @@ export interface TestContext<T, F> extends Suite {
     yearnVaultSingleton: YearnVault;
     erc20VaultGovernance: ERC20VaultGovernance;
     erc20VaultSingleton: ERC20Vault;
+    perpVaultGovernance: PerpVaultGovernance;
+    perpVaultSingleton: PerpVault;
     aaveVaultGovernance: AaveVaultGovernance;
     aaveVaultSingleton: AaveVault;
     uniV3VaultGovernance: UniV3VaultGovernance;
@@ -132,6 +136,11 @@ export async function setupDefaultContext<T, F>(this: TestContext<T, F>) {
         "YearnVaultGovernance"
     );
     this.yearnVaultSingleton = await ethers.getContract("YearnVault");
+
+    this.perpVaultGovernance = await ethers.getContract(
+        "PerpVaultGovernance"
+    );
+    this.perpVaultSingleton = await ethers.getContract("PerpVault");
 
     this.erc20VaultGovernance = await ethers.getContract(
         "ERC20VaultGovernance"
