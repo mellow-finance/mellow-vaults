@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import {MAIN_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils";
 import {BigNumber} from "ethers";
+import { ethers } from "hardhat";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
@@ -12,7 +13,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, yearnVaultRegistry } = await getNamedAccounts();
+    const { deployer, yearnVaultRegistry, stranger } = await getNamedAccounts();
+    let yearnRegistryAddress = yearnVaultRegistry;
+    if (yearnRegistryAddress == ethers.constants.AddressZero) {
+        yearnRegistryAddress = stranger;
+    }
+
     const { address: singleton } = await deploy("YearnVault", {
         from: deployer,
         args: [],
@@ -28,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 registry: vaultRegistry.address,
                 singleton,
             },
-            { yearnVaultRegistry: yearnVaultRegistry },
+            { yearnVaultRegistry: yearnRegistryAddress },
         ],
         log: true,
         autoMine: true,

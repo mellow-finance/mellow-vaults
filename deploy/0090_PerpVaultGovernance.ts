@@ -13,19 +13,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, aaveLendingPool, stranger } = await getNamedAccounts();
-    let lendingPoolAddress = aaveLendingPool;
-    if (lendingPoolAddress == ethers.constants.AddressZero) {
-        lendingPoolAddress = stranger;
-    }
-    const { address: singleton } = await deploy("AaveVault", {
+    const { deployer, perpVault, accountBalance, clearingHouse, vusdcAddress, usdc, uniswapV3Factory} = await getNamedAccounts();
+
+    const { address: singleton } = await deploy("PerpVault", {
         from: deployer,
         args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
     });
-    await deploy("AaveVaultGovernance", {
+    await deploy("PerpVaultGovernance", {
         from: deployer,
         args: [
             {
@@ -34,8 +31,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 singleton,
             },
             {
-                lendingPool: lendingPoolAddress,
-                estimatedAaveAPY: BigNumber.from(10).pow(9).div(20), // 5%
+                vault: perpVault,
+                clearingHouse: clearingHouse,
+                accountBalance: accountBalance,
+                vusdcAddress: vusdcAddress,
+                usdcAddress: usdc,
+                uniV3FactoryAddress: uniswapV3Factory,
+                maxProtocolLeverage: 10
             },
         ],
         log: true,
@@ -45,7 +47,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.tags = [
-    "AaveVaultGovernance",
+    "PerpVaultGovernance",
     "core",
     ...MAIN_NETWORKS,
     "avalanche",

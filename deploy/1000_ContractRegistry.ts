@@ -7,7 +7,7 @@ import {ALL_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils";
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deploy, get, execute } = deployments;
-    const { deployer } = await getNamedAccounts();
+    const { deployer} = await getNamedAccounts();
     const protocolGovernance = await get("ProtocolGovernance");
     await deploy("ContractRegistry", {
         from: deployer,
@@ -25,6 +25,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const aaveVaultGovernance = await get("AaveVaultGovernance");
     const uniV3VaultGovernance = await get("UniV3VaultGovernance");
     const erc20VaultGovernance = await get("ERC20VaultGovernance");
+    const perpVaultGovernance = await get("PerpVaultGovernance");
     const erc20RootVaultGovernance = await get("ERC20RootVaultGovernance");
     const yearnVaultGovernance = await get("YearnVaultGovernance");
     
@@ -39,6 +40,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         contractRegistry.interface.encodeFunctionData("registerContract", [aaveVaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [uniV3VaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [erc20VaultGovernance.address]),
+        contractRegistry.interface.encodeFunctionData("registerContract", [perpVaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [erc20RootVaultGovernance.address]),
         contractRegistry.interface.encodeFunctionData("registerContract", [yearnVaultGovernance.address]),
     ];
@@ -67,6 +69,7 @@ func.dependencies = [
     "AaveVaultGovernance",
     "UniV3VaultGovernance",
     "ERC20VaultGovernance",
+    "PerpVaultGovernance",
     "ERC20RootVaultGovernance",
     "YearnVaultGovernance"
 ];

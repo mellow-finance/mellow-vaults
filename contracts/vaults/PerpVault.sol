@@ -41,7 +41,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         uint256 leverageMultiplierD_
     ) external {
         require(IBaseToken(baseToken_).isOpen(), ExceptionsLibrary.INVALID_TOKEN);
-        IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(_vaultGovernance))
+        IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(msg.sender))
             .delayedProtocolParams();
         uint256 maxProtocolLeverage = params.maxProtocolLeverage;
 
@@ -58,7 +58,6 @@ contract PerpVault is IPerpVault, IntegrationVault {
         usdc = params.usdcAddress;
 
         baseToken = baseToken_;
-
         pool = IUniswapV3Pool(
             IUniswapV3Factory(params.uniV3FactoryAddress).getPool(params.vusdcAddress, baseToken_, 3000)
         );
