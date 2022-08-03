@@ -1,6 +1,5 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "hardhat-contract-sizer";
-import "hardhat-contract-sizer";
 
 const config: HardhatUserConfig = {
     solidity: {
@@ -29,6 +28,7 @@ const config: HardhatUserConfig = {
     },
     contractSizer: {
         strict: true,
+        except: ["test/"],
     },
 };
 

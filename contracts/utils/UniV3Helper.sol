@@ -6,6 +6,7 @@ import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
+import "../libraries/external/OracleLibrary.sol";
 
 contract UniV3Helper {
     function liquidityToTokenAmounts(
@@ -150,5 +151,25 @@ contract UniV3Helper {
         tokensOwed0 += uint128(FullMath.mulDiv(feeGrowthInside0DeltaX128, liquidity, CommonLibrary.Q128));
 
         tokensOwed1 += uint128(FullMath.mulDiv(feeGrowthInside1DeltaX128, liquidity, CommonLibrary.Q128));
+    }
+
+    function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 oracleObservationDelta)
+        external
+        view
+        returns (
+            int24 averageTick,
+            uint160 sqrtSpotPriceX96,
+            int24 deviation
+        )
+    {
+        int24 tick;
+        (sqrtSpotPriceX96, tick, , , , , ) = pool_.slot0();
+        bool withFail = false;
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
+        // Fails when we dont have observations, so return spot averageTick as this was the last trade price
+        if (withFail) {
+            averageTick = tick;
+        }
+        deviation = tick - averageTick;
     }
 }
