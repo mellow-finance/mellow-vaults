@@ -532,7 +532,7 @@ const makeDesiredPoolPrice = async (
     tick: BigNumber
 ) => {
     let pool = await getPool(hre, context);
-    let startTry = BigNumber.from(10).pow(17).mul(60);
+    let startTry = BigNumber.from(10).pow(18);
 
     let needIncrease = 0; //mock initialization
 
