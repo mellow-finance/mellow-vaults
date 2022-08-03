@@ -217,8 +217,15 @@ const buildMStrategy = async (
 export const buildMStrategies: (kind: MoneyVault) => DeployFunction =
     (kind) => async (hre: HardhatRuntimeEnvironment) => {
         const { deployments, getNamedAccounts } = hre;
-        const { weth, usdc, wbtc } = await getNamedAccounts();
+        const { weth, usdc, wbtc, aaveLendingPool, yearnVaultRegistry} = await getNamedAccounts();
         await deployMStrategy(hre, kind);
+
+        if (kind == "Yearn" && yearnVaultRegistry == ethers.constants.AddressZero) {
+            return;
+        }
+        if (kind == "Aave" && aaveLendingPool == ethers.constants.AddressZero) {
+            return;
+        }
 
         for (let [tokens, deploymentName] of [
             [[weth, usdc], `MStrategy${kind}_WETH_USDC`],

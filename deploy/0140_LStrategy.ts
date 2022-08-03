@@ -24,10 +24,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         cowswap,
         weth,
         wsteth,
+        usdc,
         mStrategyTreasury,
         mStrategyAdmin,
     } = await getNamedAccounts();
-    const tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
+    let tokens = [weth, wsteth].map((t) => t.toLowerCase()).sort();
+    if (wsteth == ethers.constants.AddressZero) {
+        tokens = [weth, usdc].map((t) => t.toLowerCase()).sort(); // fake tokens in case of optimism
+    }
     const startNft =
         (await read("VaultRegistry", "vaultsCount")).toNumber() + 1;
 
@@ -55,6 +59,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         let signer = await ethers.getSigner(approver);
 
         const wethContract = await ethers.getContractAt("ERC20Token", weth);
+        if (wsteth == ethers.constants.AddressZero) {
+            return;
+        }
         const wstethContract = await ethers.getContractAt("ERC20Token", wsteth);
         const amount = BigNumber.from(10).pow(12);
 

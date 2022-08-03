@@ -109,6 +109,7 @@ async function registerGovernances(
         "UniV3VaultGovernance",
         "ERC20VaultGovernance",
         "YearnVaultGovernance",
+        "PerpVaultGovernance",
         "ERC20RootVaultGovernance",
         "MellowVaultGovernance",
     ]) {
@@ -136,7 +137,7 @@ async function registerTokens(
     const { weth, wbtc, usdc, dai, wsteth } = await hre.getNamedAccounts();
     const tokens = [weth, wbtc, usdc, dai, wsteth].map((t) => t.toLowerCase()).sort();
     for (const token of tokens) {
-        if (!token) {
+        if (!token || token == ethers.constants.AddressZero) {
             continue
         }
         let tx =
@@ -222,7 +223,7 @@ async function setUnitPrices(
             WETH_PRICE
         );
     txDatas.push(txWETH.data);
-    if (wsteth) {
+    if (wsteth && wsteth != ethers.constants.AddressZero) {
         const txWSTETH =
             await protocolGovernance.connect(admin).populateTransaction.stageUnitPrice(
                 wsteth,
@@ -244,7 +245,7 @@ async function setUnitPrices(
     txDatas.push(txUSDC.data);
     const txWETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(weth);
     txDatas.push(txWETHc.data);
-    if (wsteth) {
+    if (wsteth && wsteth != ethers.constants.AddressZero) {
         const txWSTETHc = await protocolGovernance.connect(admin).populateTransaction.commitUnitPrice(wsteth);
         txDatas.push(txWSTETHc.data);
     }

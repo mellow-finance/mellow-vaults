@@ -292,7 +292,19 @@ const config: HardhatUserConfig = {
         },
         curveRouter: {
             default: "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
-        }
+        },
+        perpVault: {
+            default: "0xAD7b4C162707E0B2b5f6fdDbD3f8538A5fbA0d60"
+        },
+        clearingHouse: {
+            default: "0x82ac2CE43e33683c58BE4cDc40975E73aA50f459"
+        },
+        accountBalance: {
+            default: "0xA7f3FC32043757039d5e13d790EE43edBcBa8b7c"
+        },
+        vusdcAddress: {
+            default: "0xC84Da6c8ec7A57cD10B939E79eaF9d2D17834E04"
+        },
     },
 
     solidity: {
