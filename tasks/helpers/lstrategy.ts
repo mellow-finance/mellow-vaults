@@ -190,7 +190,11 @@ const mintForPool = async (
 ) => {
 
     // gas cover
+<<<<<<< HEAD
     toMintEth = toMintEth.add(BigNumber.from(10).pow(17));
+=======
+    toMintEth = toMintEth.add(BigNumber.from(10).pow(17).mul(5));
+>>>>>>> main
 
     const { ethers, getNamedAccounts } = hre;
 
@@ -230,7 +234,15 @@ const mintForPool = async (
     mintedSteth = (await stethContract.balanceOf(deployerSigned.address)).sub(mintedSteth);
 
     await stethContract.approve(curvePool.address, ethers.constants.MaxUint256);
+<<<<<<< HEAD
     await curvePool.add_liquidity([mintedEth, mintedSteth], 0, {value : mintedEth});
+=======
+    console.log("Before adding liquidity");
+    console.log("mintedEth: ", mintedEth.toString());
+    console.log("mintedSteth: ", mintedSteth.toString());
+    await curvePool.add_liquidity([mintedEth, mintedSteth], 0, {value : mintedEth});
+    console.log("After adding liquidity");
+>>>>>>> main
 }
 
 const exchange = async (
@@ -285,8 +297,24 @@ const exchange = async (
     const delta = firstMultiplier.sub(secondMuliplier).abs();
     expect(delta.mul(1000)).to.be.lt(firstMultiplier);
 
+<<<<<<< HEAD
     let smallResult = await curvePool.callStatic.exchange(0, 1, BigNumber.from(10).pow(15), 0, {value: BigNumber.from(10).pow(15)});
 
+=======
+    const balance = await provider.getBalance(context.deployer.address);
+    if (balance.lt(BigNumber.from(10).pow(16))) {
+        await mintForDeployer(
+            hre,
+            stethContract,
+            wethContract,
+            BigNumber.from(BigNumber.from(10).pow(16)),
+            BigNumber.from(0),
+        );
+    }
+    console.log("Before small result");
+    let smallResult = await curvePool.callStatic.exchange(0, 1, BigNumber.from(10).pow(15), 0, {value: BigNumber.from(10).pow(15)});
+    console.log("After small result");
+>>>>>>> main
     if (wstethToWeth) {
 
         let valWsteth = amountIn;
@@ -296,18 +324,35 @@ const exchange = async (
 
         // proportional to the our situation in the pool
         const balance = await stethContract.balanceOf(context.deployer.address);
+<<<<<<< HEAD
         if (balance.lt(adjustedVal)) {
+=======
+        console.log("Balance before: ", balance);
+        if (balance.mul(10).lt(adjustedVal.mul(11))) {
+>>>>>>> main
             await mintForDeployer(
                 hre,
                 stethContract,
                 wethContract,
                 BigNumber.from(0),
+<<<<<<< HEAD
                 BigNumber.from(balance).sub(adjustedVal),
+=======
+                BigNumber.from(adjustedVal.mul(11).div(10).sub(balance)),
+>>>>>>> main
             );
         }
         let result = BigNumber.from(0);
         if (adjustedVal.gt(0)) {
+<<<<<<< HEAD
             result = await curvePool.callStatic.exchange(1, 0, adjustedVal, 0);
+=======
+            console.log("Before steth->eth swap");
+            console.log("Balance: ", await stethContract.balanceOf(context.deployer.address));
+            console.log("Needed: ", adjustedVal);
+            result = await curvePool.callStatic.exchange(1, 0, adjustedVal, 0);
+            console.log("Before steth->eth swap");
+>>>>>>> main
         }
 
         // return adjusted
@@ -320,18 +365,35 @@ const exchange = async (
         let adjustedVal = valWeth.mul(newPoolEth).div(wethAmountInPool);
         // proportional to the our situation in the pool
         const balance = await provider.getBalance(context.deployer.address);
+<<<<<<< HEAD
         if (balance.lt(adjustedVal)) {
+=======
+        console.log("Balance before: ", balance);
+        if (balance.mul(10).lt(adjustedVal.mul(11))) {
+>>>>>>> main
             await mintForDeployer(
                 hre,
                 stethContract,
                 wethContract,
+<<<<<<< HEAD
                 BigNumber.from(adjustedVal),
+=======
+                BigNumber.from(adjustedVal.mul(11).div(10).sub(balance)),
+>>>>>>> main
                 BigNumber.from(0),
             );
         }
         let valSteth = BigNumber.from(0);
         if (adjustedVal.gt(0)) {
+<<<<<<< HEAD
             valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
+=======
+            console.log("Before eth->steth swap");
+            console.log("Balance: ", await provider.getBalance(context.deployer.address));
+            console.log("Adjusted val: ", adjustedVal);
+            valSteth = await curvePool.callStatic.exchange(0, 1, adjustedVal, 0, {value: adjustedVal});
+            console.log("After eth->steth swap");
+>>>>>>> main
         }
         let result = valSteth.mul(BigNumber.from(10).pow(15)).div(smallResult).mul(BigNumber.from(2).pow(96)).div(priceX96);
         return result.mul(wethAmountInPool).div(newPoolEth);
