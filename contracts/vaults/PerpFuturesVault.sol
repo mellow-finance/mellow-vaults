@@ -23,8 +23,8 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
     uint256 public constant DENOMINATOR = 10**9;
     uint256 public constant Q96 = 2**96;
-    
-    uint256 public leverageMultiplierD; // leverage using by usd 
+
+    uint256 public leverageMultiplierD; // leverage using by usd
     bool isLongBaseToken; // true if we long base token, false else
     address public usdc;
 
@@ -71,7 +71,11 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         return uint256(usdcValue);
     }
 
-    function updateLeverage(uint256 newLeverageMultiplierD_, bool isLongBaseToken_, uint256 deadline) external {
+    function updateLeverage(
+        uint256 newLeverageMultiplierD_,
+        bool isLongBaseToken_,
+        uint256 deadline
+    ) external {
         require(_isApprovedOrOwner(msg.sender));
 
         IPerpVaultGovernance.DelayedProtocolParams memory params = IPerpVaultGovernance(address(_vaultGovernance))
@@ -163,7 +167,6 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
         Options memory opts = _parseOptions(options);
         _adjustPosition(capitalToUse, opts.deadline);
-        
 
         vault.withdraw(usdc, usdcAmount);
 
@@ -177,35 +180,38 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         if (isLongBaseToken) {
             if (int256(capitalToUse) > positionSize) {
                 _makeAdjustment(true, uint256(int256(capitalToUse) - positionSize), deadline);
-            }
-            else {
+            } else {
                 _makeAdjustment(false, uint256(positionSize - int256(capitalToUse)), deadline);
             }
-        }
-        else {
+        } else {
             if (-int256(capitalToUse) < positionSize) {
                 _makeAdjustment(true, uint256(positionSize + int256(capitalToUse)), deadline);
-            }
-            else {
+            } else {
                 _makeAdjustment(false, uint256(-positionSize - int256(capitalToUse)), deadline);
             }
         }
     }
 
-    function _makeAdjustment(bool longBaseTokenInAdjustment, uint256 amount, uint256 deadline) internal {
+    function _makeAdjustment(
+        bool longBaseTokenInAdjustment,
+        uint256 amount,
+        uint256 deadline
+    ) internal {
         if (amount == 0) {
             return;
         }
-        clearingHouse.openPosition(IClearingHouse.OpenPositionParams({
-            baseToken: baseToken,
-            isBaseToQuote: !longBaseTokenInAdjustment,
-            isExactInput: true,
-            amount: amount,
-            oppositeAmountBound: 0,
-            deadline: deadline,
-            sqrtPriceLimitX96: 0,
-            referralCode: 0
-        }));
+        clearingHouse.openPosition(
+            IClearingHouse.OpenPositionParams({
+                baseToken: baseToken,
+                isBaseToQuote: !longBaseTokenInAdjustment,
+                isExactInput: true,
+                amount: amount,
+                oppositeAmountBound: 0,
+                deadline: deadline,
+                sqrtPriceLimitX96: 0,
+                referralCode: 0
+            })
+        );
     }
 
     function _parseOptions(bytes memory options) internal view returns (Options memory) {

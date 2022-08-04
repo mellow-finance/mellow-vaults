@@ -72,8 +72,7 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         if (isLPVault_) {
             IPerpLPVault perpVault = IPerpLPVault(vaddr);
             perpVault.initialize(nft, baseToken_, leverageMultiplierD_);
-        }
-        else {
+        } else {
             IPerpFuturesVault perpVault = IPerpFuturesVault(vaddr);
             perpVault.initialize(nft, baseToken_, leverageMultiplierD_, isLongBaseTokenIfFutures_);
         }
