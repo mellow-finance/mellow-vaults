@@ -4,7 +4,8 @@ pragma solidity 0.8.9;
 import "../external/perp/IPerpInternalVault.sol";
 import "../external/perp/IClearingHouse.sol";
 import "../external/perp/IAccountBalance.sol";
-import "./IPerpVault.sol";
+import "./IPerpLPVault.sol";
+import "./IPerpFuturesVault.sol";
 import "./IVaultGovernance.sol";
 
 interface IPerpVaultGovernance is IVaultGovernance {
@@ -34,7 +35,7 @@ interface IPerpVaultGovernance is IVaultGovernance {
     function commitDelayedProtocolParams() external;
 
     /// @notice Deploys a new vault.
-    function createVault(address owner_, address baseToken_, uint256 leverageMultiplierD_)
+    function createVault(address owner_, address baseToken_, uint256 leverageMultiplierD_, bool isLPVault_, bool isLongBaseTokenIfFutures_)
         external
-        returns (IPerpVault vault, uint256 nft);
+        returns (IVault vault, uint256 nft);
 }

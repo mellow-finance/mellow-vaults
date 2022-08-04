@@ -6,7 +6,7 @@ import {
     sleep,
 } from "../library/Helpers";
 import { contract } from "../library/setup";
-import { ERC20RootVault, ERC20Vault, PerpVault } from "../types";
+import { ERC20RootVault, ERC20Vault, PerpFuturesVault } from "../types";
 import {
     combineVaults,
     setupVault,
@@ -25,7 +25,7 @@ type CustomContext = {
 
 type DeployOptions = {};
 
-contract<PerpVault, DeployOptions, CustomContext>("Optimism__PerpVault", function () {
+contract<PerpFuturesVault, DeployOptions, CustomContext>("Optimism__PerpFuturesVault", function () {
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
@@ -51,7 +51,7 @@ contract<PerpVault, DeployOptions, CustomContext>("Optimism__PerpVault", functio
                 let veth = "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB";
 
                 await setupVault(hre, perpVaultNft, "PerpVaultGovernance", {
-                    createVaultArgs: [this.deployer.address, veth, 10],
+                    createVaultArgs: [this.deployer.address, veth, 10, false, true],
                 });
                 await setupVault(hre, erc20VaultNft, "ERC20VaultGovernance", {
                     createVaultArgs: [tokens, this.deployer.address],
@@ -86,7 +86,7 @@ contract<PerpVault, DeployOptions, CustomContext>("Optimism__PerpVault", functio
                 );
 
                 this.subject = await ethers.getContractAt(
-                    "PerpVault",
+                    "PerpFuturesVault",
                     perpVault
                 );
 

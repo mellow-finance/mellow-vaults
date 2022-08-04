@@ -6,7 +6,7 @@ import "../interfaces/external/perp/IClearingHouse.sol";
 import "../interfaces/external/perp/IBaseToken.sol";
 import "../interfaces/external/perp/IAccountBalance.sol";
 import "./IntegrationVault.sol";
-import "../interfaces/vaults/IPerpVault.sol";
+import "../interfaces/vaults/IPerpLPVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -17,7 +17,7 @@ import "../interfaces/vaults/IPerpVaultGovernance.sol";
 
 // FUTURE: CHECK SECURITY & SLIPPAGE EVERYWHERE
 // check liquidation scenario
-contract PerpVault is IPerpVault, IntegrationVault {
+contract PerpLPVault is IPerpLPVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
     address public baseToken;
@@ -183,7 +183,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpVault).interfaceId);
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpLPVault).interfaceId);
     }
 
     function _push(uint256[] memory tokenAmounts, bytes memory options)

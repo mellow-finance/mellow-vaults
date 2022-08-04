@@ -8,7 +8,7 @@ import "../external/perp/IBaseToken.sol";
 import "../external/perp/IAccountBalance.sol";
 import "../external/univ3/IUniswapV3Pool.sol";
 
-interface IPerpVault is IIntegrationVault {
+interface IPerpLPVault is IIntegrationVault {
     struct Options {
         uint256 deadline;
     }
