@@ -67,6 +67,8 @@ const config: HardhatUserConfig = {
     mocha: {
         timeout: 800000,
         reporter: process.env["REPORTER"],
+        forbidOnly: true,
+        grep: "^(?!.*(Optimism__))",
     },
 };
 

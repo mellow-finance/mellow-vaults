@@ -25,7 +25,7 @@ type CustomContext = {
 
 type DeployOptions = {};
 
-contract<PerpVault, DeployOptions, CustomContext>("PerpVault", function () {
+contract<PerpVault, DeployOptions, CustomContext>("Optimism__PerpVault", function () {
     before(async () => {
         this.deploymentFixture = deployments.createFixture(
             async (_, __?: DeployOptions) => {
