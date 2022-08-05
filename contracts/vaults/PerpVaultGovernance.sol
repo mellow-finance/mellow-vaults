@@ -54,10 +54,16 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         require(params.usdcAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniV3FactoryAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
+        emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
     function commitDelayedProtocolParams() external {
         _commitDelayedProtocolParams();
+        emit CommitDelayedProtocolParams(
+            tx.origin,
+            msg.sender,
+            abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
+        );
     }
 
     function createVault(
@@ -69,6 +75,9 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         (vaddr, nft) = _createVault(owner_);
         vault = IPerpVault(vaddr);
         vault.initialize(nft, baseToken_, leverageMultiplierD_);
+        address[] memory vaultTokens;
+        vaultTokens[0] = baseToken_;
+        emit DeployedVault(tx.origin, msg.sender, vaultTokens, abi.encode(leverageMultiplierD_), owner_, vaddr, nft);
     }
 
     function _contractName() internal pure override returns (bytes32) {
@@ -78,4 +87,24 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
     function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
     }
+
+    // --------------------------  EVENTS  --------------------------
+
+    /// @notice Emitted when new DelayedProtocolParams are staged for commit
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params New params that were staged for commit
+    /// @param when When the params could be committed
+    event StageDelayedProtocolParams(
+        address indexed origin,
+        address indexed sender,
+        DelayedProtocolParams params,
+        uint256 when
+    );
+
+    /// @notice Emitted when new DelayedProtocolParams are committed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param params New params that are committed
+    event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }

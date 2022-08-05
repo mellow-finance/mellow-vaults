@@ -131,6 +131,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         isPositionOpened = true;
         _position = PositionInfo({lowerTick: lowerTick, upperTick: upperTick, liquidity: uint128(response.liquidity)});
         liquidityAdded = uint128(response.liquidity);
+        emit OpenedUniPosition(tx.origin, msg.sender, lowerTick, upperTick, liquidityAdded);
     }
 
     function closeUniPosition(
@@ -156,6 +157,13 @@ contract PerpVault is IPerpVault, IntegrationVault {
 
         _closePermanentPositions(deadline);
         isPositionOpened = false;
+        emit ClosedUniPosition(
+            tx.origin,
+            msg.sender,
+            currentPosition.lowerTick,
+            currentPosition.upperTick,
+            currentPosition.liquidity
+        );
     }
 
     function getAccountValue() public view returns (uint256) {
@@ -180,6 +188,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, deadline);
+        emit UpdatedLeverage(tx.origin, msg.sender, newLeverageMultiplierD_);
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
@@ -376,4 +385,40 @@ contract PerpVault is IPerpVault, IntegrationVault {
         }
         return false;
     }
+
+    // --------------------------  EVENTS  --------------------------
+
+    /// @notice Emitted when the new Uni position is opened
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tickLower The lower tick boundary of the position
+    /// @param tickUpper The upper tick boundary of the position
+    /// @param liquidity The liquidity of the position after openning
+    event OpenedUniPosition(
+        address indexed origin,
+        address indexed sender,
+        int256 tickLower,
+        int256 tickUpper,
+        uint128 liquidity
+    );
+
+    /// @notice Emitted when the current Uni position is closed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tickLower The lower tick boundary of the position
+    /// @param tickUpper The upper tick boundary of the position
+    /// @param liquidity The liquidity of the position before closing
+    event ClosedUniPosition(
+        address indexed origin,
+        address indexed sender,
+        int256 tickLower,
+        int256 tickUpper,
+        uint128 liquidity
+    );
+
+    /// @notice Emitted when the vault capital leverage is updated (multiplied by DENOMINATOR)
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param newLeverageMultiplierD The new vault capital leverage (multiplied by DENOMINATOR)
+    event UpdatedLeverage(address indexed origin, address indexed sender, uint256 newLeverageMultiplierD);
 }
