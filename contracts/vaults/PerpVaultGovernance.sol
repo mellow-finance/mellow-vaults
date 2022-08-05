@@ -8,6 +8,7 @@ import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGovernance {
+    //
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {

@@ -416,9 +416,9 @@ contract PerpVault is IPerpVault, IntegrationVault {
         uint128 liquidity
     );
 
-    /// @notice Emitted when the vault capital leverage is updated (multiplied by DENOMINATOR)
+    /// @notice Emitted when the vault capital leverage multiplier is updated (multiplied by DENOMINATOR)
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    /// @param newLeverageMultiplierD The new vault capital leverage (multiplied by DENOMINATOR)
+    /// @param newLeverageMultiplierD The new vault capital leverage multiplier (multiplied by DENOMINATOR)
     event UpdatedLeverage(address indexed origin, address indexed sender, uint256 newLeverageMultiplierD);
 }
