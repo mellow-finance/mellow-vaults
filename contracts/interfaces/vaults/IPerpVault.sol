@@ -91,7 +91,12 @@ interface IPerpVault is IIntegrationVault {
         uint256 deadline
     ) external;
 
+    /// @notice Returns how much your position is worth (nominated in USDC)
+    /// @return value Position capital estimated in USDC
     function getAccountValue() external view returns (uint256 value);
 
+    /// @notice Updates vault capital leverage multiplier (multiplied by DENOMINATOR)
+    /// @param newLeverageMultiplierD_ The new vault capital leverage multiplier (multiplied by DENOMINATOR)
+    /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function updateLeverage(uint256 newLeverageMultiplierD_, uint256 deadline) external;
 }
