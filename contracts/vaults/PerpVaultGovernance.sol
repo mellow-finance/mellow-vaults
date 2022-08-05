@@ -8,7 +8,7 @@ import "../utils/ContractMeta.sol";
 import "./VaultGovernance.sol";
 
 contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGovernance {
-    //
+    /// @notice Creates a new contract
     constructor(InternalParams memory internalParams_, DelayedProtocolParams memory delayedProtocolParams_)
         VaultGovernance(internalParams_)
     {
@@ -22,15 +22,20 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IPerpVaultGovernance
     function delayedProtocolParams() public view returns (DelayedProtocolParams memory) {
         // params are initialized in constructor, so cannot be 0
         return abi.decode(_delayedProtocolParams, (DelayedProtocolParams));
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return super.supportsInterface(interfaceId) || interfaceId == type(IPerpVaultGovernance).interfaceId;
     }
 
+    /// @inheritdoc IPerpVaultGovernance
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory) {
         if (_stagedDelayedProtocolParams.length == 0) {
             return
@@ -47,6 +52,9 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IPerpVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
         require(address(params.vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.clearingHouse) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -58,6 +66,7 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
+    /// @inheritdoc IPerpVaultGovernance
     function commitDelayedProtocolParams() external {
         _commitDelayedProtocolParams();
         emit CommitDelayedProtocolParams(
@@ -67,6 +76,7 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         );
     }
 
+    /// @inheritdoc IPerpVaultGovernance
     function createVault(
         address owner_,
         address baseToken_,
@@ -80,6 +90,8 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         vaultTokens[0] = baseToken_;
         emit DeployedVault(tx.origin, msg.sender, vaultTokens, abi.encode(leverageMultiplierD_), owner_, vaddr, nft);
     }
+
+    // -------------------  INTERNAL, VIEW  -------------------
 
     function _contractName() internal pure override returns (bytes32) {
         return bytes32("PerpVaultGovernance");

@@ -26,11 +26,15 @@ interface IPerpVaultGovernance is IVaultGovernance {
         uint256 maxProtocolLeverage;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
     /// @notice Delayed Protocol Params staged for commit after delay.
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @dev Can only be called after delayedProtocolParamsTimestamp.

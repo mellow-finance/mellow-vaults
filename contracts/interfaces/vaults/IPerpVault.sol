@@ -25,6 +25,8 @@ interface IPerpVault is IIntegrationVault {
         uint128 liquidity;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @notice Returns the base token, the virtual underlying asset that a user is trading with
     /// @return address Base token contract address
     function baseToken() external view returns (address);
@@ -56,6 +58,12 @@ interface IPerpVault is IIntegrationVault {
     /// @notice Address of the USDC used as a collateral
     /// @return address Address of the USDC contract
     function usdc() external view returns (address);
+
+    /// @notice Returns how much your position is worth (nominated in USDC)
+    /// @return value Position capital estimated in USDC
+    function getAccountValue() external view returns (uint256 value);
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Initialized a new contract
     /// @dev Can only be initialized by vault governance
@@ -90,10 +98,6 @@ interface IPerpVault is IIntegrationVault {
         uint256[] memory minVTokenAmounts, /*maybe not needed*/
         uint256 deadline
     ) external;
-
-    /// @notice Returns how much your position is worth (nominated in USDC)
-    /// @return value Position capital estimated in USDC
-    function getAccountValue() external view returns (uint256 value);
 
     /// @notice Updates vault capital leverage multiplier (multiplied by DENOMINATOR)
     /// @param newLeverageMultiplierD_ The new vault capital leverage multiplier (multiplied by DENOMINATOR)
