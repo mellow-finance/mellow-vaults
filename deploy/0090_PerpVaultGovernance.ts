@@ -7,7 +7,7 @@ import {ALL_NETWORKS, MAIN_NETWORKS, TRANSACTION_GAS_LIMITS} from "./0000_utils"
 import { ethers } from "hardhat";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-    const { deployments, getNamedAccounts } = hre;
+    const { deployments, getNamedAccounts, getChainId } = hre;
     const { deploy, get, log, execute, read } = deployments;
     const protocolGovernance = await hre.ethers.getContract(
         "ProtocolGovernance"
@@ -15,13 +15,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const vaultRegistry = await get("VaultRegistry");
     const { deployer, perpVault, accountBalance, clearingHouse, vusdcAddress, usdc, uniswapV3Factory} = await getNamedAccounts();
 
-    const { address: singleton } = await deploy("PerpVault", {
+    const { address: singleton } = await deploy("PerpFuturesVault", {
         from: deployer,
         args: [],
         log: true,
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
     });
+    const chainId = await getChainId();
+    const hardhatChainId = "31337";
+    if (chainId == hardhatChainId) {
+        await deploy("PerpLPVault", { //mock deploy
+            from: deployer,
+            args: [],
+            log: true,
+            autoMine: true,
+            ...TRANSACTION_GAS_LIMITS
+        });
+    }
     await deploy("PerpVaultGovernance", {
         from: deployer,
         args: [

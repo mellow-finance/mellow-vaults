@@ -6,7 +6,7 @@ import "../interfaces/external/perp/IClearingHouse.sol";
 import "../interfaces/external/perp/IBaseToken.sol";
 import "../interfaces/external/perp/IAccountBalance.sol";
 import "./IntegrationVault.sol";
-import "../interfaces/vaults/IPerpVault.sol";
+import "../interfaces/vaults/IPerpLPVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -17,35 +17,35 @@ import "../interfaces/vaults/IPerpVaultGovernance.sol";
 
 // FUTURE: CHECK SECURITY & SLIPPAGE EVERYWHERE
 // check liquidation scenario
-contract PerpVault is IPerpVault, IntegrationVault {
+contract PerpLPVault is IPerpLPVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     address public baseToken;
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     IPerpInternalVault public vault;
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     IClearingHouse public clearingHouse;
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     IUniswapV3Pool public pool;
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     IAccountBalance public accountBalance;
 
     uint256 public constant DENOMINATOR = 10**9;
     uint256 public constant Q96 = 2**96;
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     bool public isPositionOpened;
     /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR)
     uint256 public leverageMultiplierD;
-    // @inheritdoc IPerpVault
+    // @inheritdoc IPerpLPVault
     address public usdc;
 
     PositionInfo private _position;
 
     // -------------------  EXTERNAL, VIEW  -------------------
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     function position() public view returns (PositionInfo memory) {
         return _position;
     }
@@ -60,7 +60,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         maxTokenAmounts[0] = usdcValue;
     }
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     function getAccountValue() public view returns (uint256) {
         int256 usdcValue = clearingHouse.getAccountValue(address(this));
         if (usdcValue < 0) {
@@ -70,12 +70,12 @@ contract PerpVault is IPerpVault, IntegrationVault {
     }
 
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpVault).interfaceId);
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpLPVault).interfaceId);
     }
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     function initialize(
         uint256 nft_,
         address baseToken_,
@@ -104,7 +104,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         );
     }
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     function openUniPosition(
         int24 lowerTick,
         int24 upperTick,
@@ -163,7 +163,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         emit OpenedUniPosition(tx.origin, msg.sender, lowerTick, upperTick, liquidityAdded);
     }
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     function closeUniPosition(
         uint256[] memory minVTokenAmounts, /*maybe not needed*/
         uint256 deadline
@@ -196,7 +196,7 @@ contract PerpVault is IPerpVault, IntegrationVault {
         );
     }
 
-    /// @inheritdoc IPerpVault
+    /// @inheritdoc IPerpLPVault
     function updateLeverage(uint256 newLeverageMultiplierD_, uint256 deadline) external {
         require(_isApprovedOrOwner(msg.sender));
 

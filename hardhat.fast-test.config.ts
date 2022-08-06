@@ -8,7 +8,7 @@ const config: HardhatUserConfig = {
         timeout: 800000,
         reporter: process.env["REPORTER"],
         forbidOnly: true,
-        grep: "^(?!.*(Integration__))",
+        grep: "^(?!.*(Integration__|Optimism__))",
     },
 };
 

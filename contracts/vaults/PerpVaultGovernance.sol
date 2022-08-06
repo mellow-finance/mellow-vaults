@@ -80,15 +80,31 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
     function createVault(
         address owner_,
         address baseToken_,
-        uint256 leverageMultiplierD_
-    ) external returns (IPerpVault vault, uint256 nft) {
+        uint256 leverageMultiplierD_,
+        bool isLPVault_,
+        bool isLongBaseTokenIfFutures_
+    ) external returns (IVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
-        vault = IPerpVault(vaddr);
-        vault.initialize(nft, baseToken_, leverageMultiplierD_);
-        address[] memory vaultTokens;
+        if (isLPVault_) {
+            IPerpLPVault perpVault = IPerpLPVault(vaddr);
+            perpVault.initialize(nft, baseToken_, leverageMultiplierD_);
+        } else {
+            IPerpFuturesVault perpVault = IPerpFuturesVault(vaddr);
+            perpVault.initialize(nft, baseToken_, leverageMultiplierD_, isLongBaseTokenIfFutures_);
+        }
+        vault = IVault(vaddr);
+        address[] memory vaultTokens = new address[](1);
         vaultTokens[0] = baseToken_;
-        emit DeployedVault(tx.origin, msg.sender, vaultTokens, abi.encode(leverageMultiplierD_), owner_, vaddr, nft);
+        emit DeployedVault(
+            tx.origin,
+            msg.sender,
+            vaultTokens,
+            abi.encode(leverageMultiplierD_, isLPVault_, isLongBaseTokenIfFutures_),
+            owner_,
+            vaddr,
+            nft
+        );
     }
 
     // -------------------  INTERNAL, VIEW  -------------------

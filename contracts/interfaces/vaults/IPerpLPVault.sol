@@ -8,7 +8,7 @@ import "../external/perp/IBaseToken.sol";
 import "../external/perp/IAccountBalance.sol";
 import "../external/univ3/IUniswapV3Pool.sol";
 
-interface IPerpVault is IIntegrationVault {
+interface IPerpLPVault is IIntegrationVault {
     /// @notice Options for operations with Uni position
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     struct Options {
