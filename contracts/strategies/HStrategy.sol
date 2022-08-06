@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-pragma solidity ^0.8.9;
+pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/utils/Multicall.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -257,8 +257,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param newStrategyParams the new parameters
     function updateStrategyParams(StrategyParams calldata newStrategyParams) external {
         _requireAdmin();
+        int24 tickSpacing = pool.tickSpacing();
         require(
             newStrategyParams.halfOfShortInterval > 0 &&
+                (newStrategyParams.halfOfShortInterval % tickSpacing == 0) &&
                 newStrategyParams.tickNeighborhood <= newStrategyParams.halfOfShortInterval &&
                 newStrategyParams.tickNeighborhood >= 1000,
             ExceptionsLibrary.INVARIANT
@@ -266,7 +268,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
         int24 globalIntervalWidth = newStrategyParams.domainUpperTick - newStrategyParams.domainLowerTick;
         require(
-            globalIntervalWidth > 0 &&
+            (newStrategyParams.domainLowerTick % tickSpacing == 0) &&
+                (newStrategyParams.domainUpperTick % tickSpacing == 0) &&
+                globalIntervalWidth > 0 &&
                 globalIntervalWidth > newStrategyParams.halfOfShortInterval &&
                 (globalIntervalWidth % newStrategyParams.halfOfShortInterval == 0),
             ExceptionsLibrary.INVARIANT
