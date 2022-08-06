@@ -38,9 +38,10 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
     bool public isPositionOpened;
     /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR)
     uint256 public leverageMultiplierD;
-    // @inheritdoc IPerpLPVault
+    /// @inheritdoc IPerpLPVault
     address public usdc;
 
+    /// @notice The representation of the Uni position
     PositionInfo private _position;
 
     // -------------------  EXTERNAL, VIEW  -------------------
