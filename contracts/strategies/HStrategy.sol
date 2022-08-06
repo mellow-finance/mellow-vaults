@@ -147,7 +147,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param upperTick the upper tick of the position
     /// @param lower0Tick the lower tick of the emulated position
     /// @param upper0Tick the upper tick of the emulated position
-    /// @param averageTick the tick from the oracle
     /// @param lowerPriceSqrtX96 the square root of the price at lower tick of the position
     /// @param upperPriceSqrtX96 the square root of the price at upper tick of the position
     /// @param lower0PriceSqrtX96 the square root of the price at lower tick of the emulated position
@@ -161,7 +160,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         int24 upperTick;
         int24 lower0Tick;
         int24 upper0Tick;
-        int24 averageTick;
         uint160 lowerPriceSqrtX96;
         uint160 upperPriceSqrtX96;
         uint160 lower0PriceSqrtX96;
@@ -346,6 +344,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (RebalanceTokenAmounts memory actualPulledAmounts, uint256[] memory burnedAmounts)
     {
         _requireAtLeastOperator();
+        _hStrategyHelper.checkSpotTickDeviationFromAverage(pool, oracleParams, _uniV3Helper);
         burnedAmounts = _partialRebalanceOfUniV3Position(restrictions);
         actualPulledAmounts = _capitalRebalance(restrictions, moneyVaultOptions);
     }
@@ -363,13 +362,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         StrategyParams memory strategyParams_ = strategyParams;
         IUniswapV3Pool pool_ = pool;
         address[] memory tokens_ = tokens;
-        UniV3Helper uniV3Helper_ = _uniV3Helper;
         burnedAmounts = new uint256[](2);
         burnedAmounts[0] = type(uint256).max;
         burnedAmounts[1] = type(uint256).max;
 
         {
-            (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, pool_, uniV3Helper_);
+            (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, pool_);
             Interval memory shortInterval_ = shortInterval;
             if (newLowerTick != shortInterval_.lowerTick || shortInterval_.upperTick != newUpperTick) {
                 shortInterval_ = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
@@ -402,12 +400,10 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
         DomainPositionParams memory domainPositionParams = hStrategyHelper_.calculateAndCheckDomainPositionParams(
             pool,
-            oracleParams,
             hStrategyHelper_,
             strategyParams,
             uniV3Nft,
-            _positionManager,
-            _uniV3Helper
+            _positionManager
         );
 
         IIntegrationVault moneyVault_ = moneyVault;
@@ -477,21 +473,20 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @notice checks if the new position is needed. If no rebalance needed it reverts
     /// @param strategyParams_ current parameters of the strategy
     /// @param pool_ the address of the uniV3 pool
-    /// @param uniV3Helper_ helper contact for UniV3 calculations
     /// @return newLowerTick lower tick of new position to be minted
     /// @return newUpperTick upper tick of new position to be minted
-    function _calculateNewPosition(
-        StrategyParams memory strategyParams_,
-        IUniswapV3Pool pool_,
-        UniV3Helper uniV3Helper_
-    ) internal view returns (int24 newLowerTick, int24 newUpperTick) {
-        (int24 averageTick, , ) = uniV3Helper_.getAverageTickAndSqrtSpotPrice(pool_, oracleParams.averagePriceTimeSpan);
-        if (strategyParams_.domainLowerTick >= averageTick) {
-            averageTick = strategyParams_.domainLowerTick;
-        } else if (averageTick >= strategyParams_.domainUpperTick) {
-            averageTick = strategyParams_.domainUpperTick;
+    function _calculateNewPosition(StrategyParams memory strategyParams_, IUniswapV3Pool pool_)
+        internal
+        view
+        returns (int24 newLowerTick, int24 newUpperTick)
+    {
+        (, int24 spotTick, , , , , ) = pool_.slot0();
+        if (strategyParams_.domainLowerTick > spotTick) {
+            spotTick = strategyParams_.domainLowerTick;
+        } else if (spotTick > strategyParams_.domainUpperTick) {
+            spotTick = strategyParams_.domainUpperTick;
         }
-        (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(averageTick, strategyParams_);
+        (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(spotTick, strategyParams_);
     }
 
     /// @notice determining the amount of tokens to be swapped and swapping it

@@ -63,14 +63,12 @@ contract HStrategyHelper {
     }
 
     /// @notice calculates the current state of the position and pool with given oracle predictions
-    /// @param averageTick tick got from oracle
     /// @param sqrtSpotPriceX96 square root of the spot price
     /// @param strategyParams_ parameters of the strategy
     /// @param uniV3Nft the current position nft from position manager
     /// @param _positionManager uniV3 position manager
     /// @return domainPositionParams current position and pool state combined with predictions from the oracle
     function calculateDomainPositionParams(
-        int24 averageTick,
         uint160 sqrtSpotPriceX96,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
@@ -85,7 +83,6 @@ contract HStrategyHelper {
             upperTick: upperTick,
             lower0Tick: strategyParams_.domainLowerTick,
             upper0Tick: strategyParams_.domainUpperTick,
-            averageTick: averageTick,
             lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
             lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
@@ -440,32 +437,20 @@ contract HStrategyHelper {
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param pool_ Uniswap V3 pool of the strategy
-    /// @param oracleParams_ params of the interaction with oracle
     /// @param hStrategyHelper_ the helper of the strategy
     /// @param strategyParams_ the current parameters of the strategy`
     /// @param uniV3Nft the nft of the position from position manager
     /// @param positionManager_ the position manager for uniV3
-    /// @param uniV3Helper helper contact for UniV3 calculations
     function calculateAndCheckDomainPositionParams(
         IUniswapV3Pool pool_,
-        HStrategy.OracleParams memory oracleParams_,
         HStrategyHelper hStrategyHelper_,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager_,
-        UniV3Helper uniV3Helper
+        INonfungiblePositionManager positionManager_
     ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
         {
-            (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                pool_,
-                oracleParams_.averagePriceTimeSpan
-            );
-            if (deviation < 0) {
-                deviation = -deviation;
-            }
-            require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+            (uint160 sqrtSpotPriceX96, , , , , , ) = pool_.slot0();
             domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-                averageTick,
                 sqrtSpotPriceX96,
                 strategyParams_,
                 uniV3Nft,
@@ -475,23 +460,35 @@ contract HStrategyHelper {
         domainPositionParams = hStrategyHelper_.movePricesInDomainPosition(domainPositionParams);
     }
 
-    function calculateNewPositionTicks(int24 averageTick, HStrategy.StrategyParams memory strategyParams_)
+    function checkSpotTickDeviationFromAverage(
+        IUniswapV3Pool pool_,
+        HStrategy.OracleParams memory oracleParams_,
+        UniV3Helper uniV3Helper
+    ) external view {
+        (, , int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(pool_, oracleParams_.averagePriceTimeSpan);
+        if (deviation < 0) {
+            deviation = -deviation;
+        }
+        require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+    }
+
+    function calculateNewPositionTicks(int24 spotTick, HStrategy.StrategyParams memory strategyParams_)
         external
         pure
         returns (int24 lowerTick, int24 upperTick)
     {
-        if (averageTick < strategyParams_.domainLowerTick) {
-            averageTick = strategyParams_.domainLowerTick;
-        } else if (averageTick > strategyParams_.domainUpperTick) {
-            averageTick = strategyParams_.domainUpperTick;
+        if (spotTick < strategyParams_.domainLowerTick) {
+            spotTick = strategyParams_.domainLowerTick;
+        } else if (spotTick > strategyParams_.domainUpperTick) {
+            spotTick = strategyParams_.domainUpperTick;
         }
 
-        int24 deltaToLowerTick = averageTick - strategyParams_.domainLowerTick;
+        int24 deltaToLowerTick = spotTick - strategyParams_.domainLowerTick;
         deltaToLowerTick -= (deltaToLowerTick % strategyParams_.halfOfShortInterval);
         int24 lowerEstimationCentralTick = strategyParams_.domainLowerTick + deltaToLowerTick;
         int24 upperEstimationCentralTick = lowerEstimationCentralTick + strategyParams_.halfOfShortInterval;
         int24 mintTick = 0;
-        if (averageTick - lowerEstimationCentralTick <= upperEstimationCentralTick - averageTick) {
+        if (spotTick - lowerEstimationCentralTick <= upperEstimationCentralTick - spotTick) {
             mintTick = lowerEstimationCentralTick;
         } else {
             mintTick = upperEstimationCentralTick;
