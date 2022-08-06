@@ -9,7 +9,14 @@ import "./IPerpFuturesVault.sol";
 import "./IVaultGovernance.sol";
 
 interface IPerpVaultGovernance is IVaultGovernance {
-
+    /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
+    /// @param vault Perp Protocol internal vault contract (deposits/withdrawals)
+    /// @param clearingHouse Perp Protocol clearing house contract (open/close positions, add/remove liquidity, liquidate positions)
+    /// @param accountBalance Perp Protocol account balance contract (get position total value, add/remove base token)
+    /// @param vusdcAddress Reference to Perp Protocol vUSDC (virtual USDC after applying leverage multiplier)
+    /// @param usdcAddress Reference to USDC
+    /// @param uniV3FactoryAddress Reference to UniswapV3 factory
+    /// @param maxProtocolLeverage Max possible vault capital leverage multiplier (currently 10x)
     struct DelayedProtocolParams {
         IPerpInternalVault vault;
         IClearingHouse clearingHouse;
@@ -20,11 +27,15 @@ interface IPerpVaultGovernance is IVaultGovernance {
         uint256 maxProtocolLeverage;
     }
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
     /// @notice Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function delayedProtocolParams() external view returns (DelayedProtocolParams memory);
 
     /// @notice Delayed Protocol Params staged for commit after delay.
     function stagedDelayedProtocolParams() external view returns (DelayedProtocolParams memory);
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @dev Can only be called after delayedProtocolParamsTimestamp.

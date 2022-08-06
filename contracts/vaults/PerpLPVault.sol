@@ -20,21 +20,63 @@ import "../interfaces/vaults/IPerpVaultGovernance.sol";
 contract PerpLPVault is IPerpLPVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    /// @inheritdoc IPerpLPVault
     address public baseToken;
+    /// @inheritdoc IPerpLPVault
     IPerpInternalVault public vault;
+    /// @inheritdoc IPerpLPVault
     IClearingHouse public clearingHouse;
+    /// @inheritdoc IPerpLPVault
     IUniswapV3Pool public pool;
+    /// @inheritdoc IPerpLPVault
     IAccountBalance public accountBalance;
 
     uint256 public constant DENOMINATOR = 10**9;
     uint256 public constant Q96 = 2**96;
 
+    /// @inheritdoc IPerpLPVault
     bool public isPositionOpened;
+    /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR)
     uint256 public leverageMultiplierD;
+    /// @inheritdoc IPerpLPVault
     address public usdc;
 
+    /// @notice The representation of the Uni position
     PositionInfo private _position;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IPerpLPVault
+    function position() public view returns (PositionInfo memory) {
+        return _position;
+    }
+
+    /// @inheritdoc IVault
+    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        uint256 usdcValue = getAccountValue();
+        minTokenAmounts = new uint256[](1);
+        maxTokenAmounts = new uint256[](1);
+
+        minTokenAmounts[0] = usdcValue;
+        maxTokenAmounts[0] = usdcValue;
+    }
+
+    /// @inheritdoc IPerpLPVault
+    function getAccountValue() public view returns (uint256) {
+        int256 usdcValue = clearingHouse.getAccountValue(address(this));
+        if (usdcValue < 0) {
+            return 0;
+        }
+        return uint256(usdcValue);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpLPVault).interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IPerpLPVault
     function initialize(
         uint256 nft_,
         address baseToken_,
@@ -63,19 +105,7 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         );
     }
 
-    function position() public view returns (PositionInfo memory) {
-        return _position;
-    }
-
-    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        uint256 usdcValue = getAccountValue();
-        minTokenAmounts = new uint256[](1);
-        maxTokenAmounts = new uint256[](1);
-
-        minTokenAmounts[0] = usdcValue;
-        maxTokenAmounts[0] = usdcValue;
-    }
-
+    /// @inheritdoc IPerpLPVault
     function openUniPosition(
         int24 lowerTick,
         int24 upperTick,
@@ -131,8 +161,10 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         isPositionOpened = true;
         _position = PositionInfo({lowerTick: lowerTick, upperTick: upperTick, liquidity: uint128(response.liquidity)});
         liquidityAdded = uint128(response.liquidity);
+        emit OpenedUniPosition(tx.origin, msg.sender, lowerTick, upperTick, liquidityAdded);
     }
 
+    /// @inheritdoc IPerpLPVault
     function closeUniPosition(
         uint256[] memory minVTokenAmounts, /*maybe not needed*/
         uint256 deadline
@@ -156,16 +188,16 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
 
         _closePermanentPositions(deadline);
         isPositionOpened = false;
+        emit ClosedUniPosition(
+            tx.origin,
+            msg.sender,
+            currentPosition.lowerTick,
+            currentPosition.upperTick,
+            currentPosition.liquidity
+        );
     }
 
-    function getAccountValue() public view returns (uint256) {
-        int256 usdcValue = clearingHouse.getAccountValue(address(this));
-        if (usdcValue < 0) {
-            return 0;
-        }
-        return uint256(usdcValue);
-    }
-
+    /// @inheritdoc IPerpLPVault
     function updateLeverage(uint256 newLeverageMultiplierD_, uint256 deadline) external {
         require(_isApprovedOrOwner(msg.sender));
 
@@ -180,12 +212,15 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, deadline);
+        emit UpdatedLeverage(tx.origin, msg.sender, newLeverageMultiplierD_);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpLPVault).interfaceId);
-    }
+    // -------------------  INTERNAL, MUTATING  -------------------
 
+    /// @notice Push token amounts to vault
+    /// @param tokenAmounts Token amounts (nominated in USDC)
+    /// @param options Encoded options for the vault
+    /// @return actualTokenAmounts Actual pushed token amounts (nominated in USDC)
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
         override
@@ -216,6 +251,10 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         _adjustPosition(capitalToUse, opts.deadline);
     }
 
+    /// @notice Pulls token amounts from vault
+    /// @param to Recepient address
+    /// @param tokenAmounts Token amounts (nominated in USDC)
+    /// @param options Encoded options for the vault
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
@@ -245,6 +284,9 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         actualTokenAmounts[0] = usdcAmount;
     }
 
+    /// @notice Adjusts position capital from the current one to capitalToUse (nominated in USDC)
+    /// @param capitalToUse New position capital to be used after adjustment (nominated in USDC)
+    /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _adjustPosition(uint256 capitalToUse, uint256 deadline) internal {
         PositionInfo memory currentPosition = _position;
 
@@ -271,10 +313,9 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         );
     }
 
-    function _isStrategy(address addr) internal view returns (bool) {
-        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
-    }
-
+    /// @notice Close a temporarily created position
+    /// @dev Makes a call to clearing house only if the taker position size is not zero
+    /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _closePermanentPositions(uint256 deadline) internal {
         int256 positionSize = accountBalance.getTakerPositionSize(address(this), baseToken);
         if (positionSize == 0) {
@@ -291,22 +332,17 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         );
     }
 
-    function _calculatePositionCapital(
-        uint128 liquidity,
-        uint160 sqrtRatioX96,
-        uint160 sqrtRatioAX96,
-        uint160 sqrtRatioBX96
-    ) internal pure returns (uint256) {
-        uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
-
-        (uint256 amountVUsdcPerLiquidityUnitD, uint256 amountVSecondTokenPerLiquidityUnitD) = LiquidityAmounts
-            .getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, uint128(DENOMINATOR));
-        uint256 amountUsdcPerLiquidityUnitD = amountVUsdcPerLiquidityUnitD +
-            FullMath.mulDiv(amountVSecondTokenPerLiquidityUnitD, Q96, priceX96);
-
-        return FullMath.mulDiv(amountUsdcPerLiquidityUnitD, liquidity, DENOMINATOR);
-    }
-
+    /// @notice Corrects (add / remove) the position capital according with the current capital and the desired capital
+    /// @dev Closes permament positions after manipulating the position capital
+    /// @param capital The current position capital (nominated in USDC)
+    /// @param desiredCapital The desired position capital (nominated in USDC)
+    /// @param liquidity The position liquidity
+    /// @param lowerTick The lower price boundary of the position
+    /// @param upperTick The upper price boundary of the position
+    /// @param sqrtRatioX96 A sqrt price representing the current pool prices
+    /// @param sqrtRatioAX96 A sqrt price representing the lower tick boundary
+    /// @param sqrtRatioBX96 A sqrt price representing the upper tick boundary
+    /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _makePositionMarginallyCorrect(
         uint256 capital,
         uint256 desiredCapital,
@@ -363,6 +399,39 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         }
     }
 
+    // -------------------  INTERNAL, VIEW  -------------------
+
+    /// @notice A helper function which returns if the caller is a strategy or not
+    /// @return bool Returns true if the caller is a strategy, else - false
+    function _isStrategy(address addr) internal view returns (bool) {
+        return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
+    }
+
+    /// @notice Calculates the position capital (nominated in USDC)
+    /// @param liquidity Uni position liquidity
+    /// @param sqrtRatioX96 A sqrt price representing the current pool prices
+    /// @param sqrtRatioAX96 A sqrt price representing the lower tick boundary
+    /// @param sqrtRatioBX96 A sqrt price representing the upper tick boundary
+    /// @return uint256 Capital of the position (nominatted in USDC)
+    function _calculatePositionCapital(
+        uint128 liquidity,
+        uint160 sqrtRatioX96,
+        uint160 sqrtRatioAX96,
+        uint160 sqrtRatioBX96
+    ) internal pure returns (uint256) {
+        uint256 priceX96 = FullMath.mulDiv(sqrtRatioX96, sqrtRatioX96, Q96);
+
+        (uint256 amountVUsdcPerLiquidityUnitD, uint256 amountVSecondTokenPerLiquidityUnitD) = LiquidityAmounts
+            .getAmountsForLiquidity(sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, uint128(DENOMINATOR));
+        uint256 amountUsdcPerLiquidityUnitD = amountVUsdcPerLiquidityUnitD +
+            FullMath.mulDiv(amountVSecondTokenPerLiquidityUnitD, Q96, priceX96);
+
+        return FullMath.mulDiv(amountUsdcPerLiquidityUnitD, liquidity, DENOMINATOR);
+    }
+
+    /// @notice A helper function which parses an encoded instance of Options struct or any other byes array
+    /// @param options Bytes array of the encoded options
+    /// @return Options memory Options struct
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
         if (options.length == 0) return Options({deadline: block.timestamp + 600});
 
@@ -376,4 +445,40 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         }
         return false;
     }
+
+    // --------------------------  EVENTS  --------------------------
+
+    /// @notice Emitted when the new Uni position is opened
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tickLower The lower tick boundary of the position
+    /// @param tickUpper The upper tick boundary of the position
+    /// @param liquidity The liquidity of the position after openning
+    event OpenedUniPosition(
+        address indexed origin,
+        address indexed sender,
+        int256 tickLower,
+        int256 tickUpper,
+        uint128 liquidity
+    );
+
+    /// @notice Emitted when the current Uni position is closed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param tickLower The lower tick boundary of the position
+    /// @param tickUpper The upper tick boundary of the position
+    /// @param liquidity The liquidity of the position before closing
+    event ClosedUniPosition(
+        address indexed origin,
+        address indexed sender,
+        int256 tickLower,
+        int256 tickUpper,
+        uint128 liquidity
+    );
+
+    /// @notice Emitted when the vault capital leverage multiplier is updated (multiplied by DENOMINATOR)
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param newLeverageMultiplierD The new vault capital leverage multiplier (multiplied by DENOMINATOR)
+    event UpdatedLeverage(address indexed origin, address indexed sender, uint256 newLeverageMultiplierD);
 }
