@@ -37,7 +37,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     IUniswapV3Pool public pool;
     UniV3Helper private immutable _uniV3Helper;
     HStrategyHelper private immutable _hStrategyHelper;
-    Interval private lastShortInterval;
+    Interval private shortInterval;
 
     // MUTABLE PARAMS
 
@@ -260,7 +260,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             newStrategyParams.halfOfShortInterval > 0 &&
                 newStrategyParams.tickNeighborhood <= newStrategyParams.halfOfShortInterval &&
-                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK,
+                newStrategyParams.tickNeighborhood >= 1000,
             ExceptionsLibrary.INVARIANT
         );
 
@@ -365,8 +365,15 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         burnedAmounts = new uint256[](2);
         burnedAmounts[0] = type(uint256).max;
         burnedAmounts[1] = type(uint256).max;
-        if (!_isPositionRebalancePossible(strategyParams_, uniV3Nft, pool_, uniV3Helper_)) {
-            return burnedAmounts;
+
+        {
+            (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, pool_, uniV3Helper_);
+            Interval memory shortInterval_ = shortInterval;
+            if (newLowerTick != shortInterval_.lowerTick || shortInterval_.upperTick != newUpperTick) {
+                shortInterval_ = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
+            } else {
+                return burnedAmounts;
+            }
         }
 
         if (uniV3Nft != 0) {
@@ -375,16 +382,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             burnedAmounts = _drainPosition(restrictions.burnedAmounts, erc20Vault_, uniV3Vault_, uniV3Nft, tokens_);
         }
 
-        _mintPosition(
-            strategyParams_,
-            pool_,
-            restrictions.deadline,
-            _positionManager,
-            uniV3Vault_,
-            uniV3Nft,
-            tokens_,
-            uniV3Helper_
-        );
+        _mintPosition(pool_, restrictions.deadline, _positionManager, uniV3Vault_, uniV3Nft, tokens_);
     }
 
     /// @notice rebalance amount of tokens between vaults. Need to be called when no new position is needed
@@ -476,31 +474,22 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     /// @notice checks if the new position is needed. If no rebalance needed it reverts
     /// @param strategyParams_ current parameters of the strategy
-    /// @param positionNft the current position nft from position manager
     /// @param pool_ the address of the uniV3 pool
     /// @param uniV3Helper_ helper contact for UniV3 calculations
-    function _isPositionRebalancePossible(
+    /// @return newLowerTick lower tick of new position to be minted
+    /// @return newUpperTick upper tick of new position to be minted
+    function _calculateNewPosition(
         StrategyParams memory strategyParams_,
-        uint256 positionNft,
         IUniswapV3Pool pool_,
         UniV3Helper uniV3Helper_
-    ) internal view returns (bool possible) {
-        if (positionNft == 0) return true;
+    ) internal view returns (int24 newLowerTick, int24 newUpperTick) {
         (int24 averageTick, , ) = uniV3Helper_.getAverageTickAndSqrtSpotPrice(pool_, oracleParams.averagePriceTimeSpan);
         if (strategyParams_.domainLowerTick >= averageTick) {
             averageTick = strategyParams_.domainLowerTick;
         } else if (averageTick >= strategyParams_.domainUpperTick) {
             averageTick = strategyParams_.domainUpperTick;
         }
-        Interval memory lastShortInterval_ = lastShortInterval;
-        // domainLowerTick = 10
-        // lowerTick = 10
-        // averageTick = 20
-        // tickNeighborhood = 10
-        // must return false
-        possible =
-            averageTick < lastShortInterval_.lowerTick + strategyParams_.tickNeighborhood ||
-            lastShortInterval_.upperTick - strategyParams_.tickNeighborhood < averageTick;
+        (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(averageTick, strategyParams_);
     }
 
     /// @notice determining the amount of tokens to be swapped and swapping it
@@ -647,37 +636,20 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @notice minting new position inside emulated interval
-    /// @param strategyParams_ the current parameters of the strategy
     /// @param pool_ address of uniV3 pool
     /// @param deadline maximal duration of swap offer on uniV3
     /// @param positionManager_ uniV3 position manager
     /// @param uniV3Vault_ UniswapV3 vault of the strategy
     /// @param oldNft the nft of the burning position
     /// @param tokens_ the addresses of the tokens managed by the strategy
-    /// @param uniV3Helper_ helper contact for UniV3 calculations
     function _mintPosition(
-        StrategyParams memory strategyParams_,
         IUniswapV3Pool pool_,
         uint256 deadline,
         INonfungiblePositionManager positionManager_,
         IUniV3Vault uniV3Vault_,
         uint256 oldNft,
-        address[] memory tokens_,
-        UniV3Helper uniV3Helper_
+        address[] memory tokens_
     ) internal {
-        // TODO: move to helper
-        int24 lowerTick = 0;
-        int24 upperTick = 0;
-        {
-            (int24 averageTick, , ) = uniV3Helper_.getAverageTickAndSqrtSpotPrice(
-                pool_,
-                oracleParams.averagePriceTimeSpan
-            );
-            (lowerTick, upperTick) = _hStrategyHelper.calculateNewPositionTicks(averageTick, strategyParams_);
-        }
-
-        lastShortInterval = Interval({lowerTick: lowerTick, upperTick: upperTick});
-
         uint256 minToken0ForOpening;
         uint256 minToken1ForOpening;
         {
@@ -687,13 +659,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
         IERC20(tokens_[0]).safeApprove(address(positionManager_), minToken0ForOpening);
         IERC20(tokens_[1]).safeApprove(address(positionManager_), minToken1ForOpening);
+        Interval memory shortInterval_ = shortInterval;
         (uint256 newNft, , , ) = positionManager_.mint(
             INonfungiblePositionManager.MintParams({
                 token0: tokens_[0],
                 token1: tokens_[1],
                 fee: pool_.fee(),
-                tickLower: lowerTick,
-                tickUpper: upperTick,
+                tickLower: shortInterval_.lowerTick,
+                tickUpper: shortInterval_.upperTick,
                 amount0Desired: minToken0ForOpening,
                 amount1Desired: minToken1ForOpening,
                 amount0Min: 0,
@@ -709,7 +682,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (oldNft != 0) {
             positionManager_.burn(oldNft);
         }
-        emit MintUniV3Position(newNft, lowerTick, upperTick);
+        emit MintUniV3Position(newNft, shortInterval_.lowerTick, shortInterval_.upperTick);
     }
 
     /// @notice draining all assets from uniV3

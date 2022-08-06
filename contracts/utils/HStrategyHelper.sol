@@ -488,6 +488,7 @@ contract HStrategyHelper {
 
     function calculateNewPositionTicks(int24 averageTick, HStrategy.StrategyParams memory strategyParams_)
         external
+        pure
         returns (int24 lowerTick, int24 upperTick)
     {
         if (averageTick < strategyParams_.domainLowerTick) {
@@ -495,7 +496,7 @@ contract HStrategyHelper {
         } else if (averageTick > strategyParams_.domainUpperTick) {
             averageTick = strategyParams_.domainUpperTick;
         }
-        // in this case it is first mint
+
         int24 deltaToLowerTick = averageTick - strategyParams_.domainLowerTick;
         deltaToLowerTick -= (deltaToLowerTick % strategyParams_.halfOfShortInterval);
         int24 lowerEstimationCentralTick = strategyParams_.domainLowerTick + deltaToLowerTick;
@@ -506,8 +507,6 @@ contract HStrategyHelper {
         } else {
             mintTick = upperEstimationCentralTick;
         }
-
-        // if last mintTick == current Mint tick -> do not do rebalance
 
         lowerTick = mintTick - strategyParams_.halfOfShortInterval;
         upperTick = mintTick + strategyParams_.halfOfShortInterval;
