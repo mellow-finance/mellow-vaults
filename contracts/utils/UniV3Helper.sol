@@ -153,6 +153,7 @@ contract UniV3Helper {
         tokensOwed1 += uint128(FullMath.mulDiv(feeGrowthInside1DeltaX128, liquidity, CommonLibrary.Q128));
     }
 
+    // TODO: add test for oracleObservationDelta, when pool exists less time
     function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 oracleObservationDelta)
         external
         view

@@ -431,20 +431,20 @@ contract HStrategyHelper {
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param params the current amounts of tokens on the vaults
-    function moveTicksInCurrentPosition(HStrategy.DomainPositionParams memory params)
+    function movePricesInDomainPosition(HStrategy.DomainPositionParams memory params)
         external
         pure
         returns (HStrategy.DomainPositionParams memory)
     {
-        if (params.spotPriceSqrtX96 < params.lowerPriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.lowerPriceSqrtX96;
-        } else if (params.lowerPriceSqrtX96 > params.upperPriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.upperPriceSqrtX96;
+        if (params.spotPriceSqrtX96 < params.lower0PriceSqrtX96) {
+            params.spotPriceSqrtX96 = params.lower0PriceSqrtX96;
+        } else if (params.averagePriceSqrtX96 > params.upper0PriceSqrtX96) {
+            params.spotPriceSqrtX96 = params.upper0PriceSqrtX96;
         }
-        if (params.averagePriceSqrtX96 < params.lowerPriceSqrtX96) {
-            params.averagePriceSqrtX96 = params.lowerPriceSqrtX96;
-        } else if (params.averagePriceSqrtX96 > params.upperPriceSqrtX96) {
-            params.averagePriceSqrtX96 = params.upperPriceSqrtX96;
+        if (params.averagePriceSqrtX96 < params.lower0PriceSqrtX96) {
+            params.averagePriceSqrtX96 = params.lower0PriceSqrtX96;
+        } else if (params.averagePriceSqrtX96 > params.upper0PriceSqrtX96) {
+            params.averagePriceSqrtX96 = params.upper0PriceSqrtX96;
         }
         return params;
     }
@@ -483,6 +483,41 @@ contract HStrategyHelper {
                 positionManager_
             );
         }
-        domainPositionParams = hStrategyHelper_.moveTicksInCurrentPosition(domainPositionParams);
+        domainPositionParams = hStrategyHelper_.movePricesInDomainPosition(domainPositionParams);
+    }
+
+    function calculateNewPositionTicks(int24 averageTick, HStrategy.StrategyParams memory strategyParams_)
+        external
+        returns (int24 lowerTick, int24 upperTick)
+    {
+        if (averageTick < strategyParams_.domainLowerTick) {
+            averageTick = strategyParams_.domainLowerTick;
+        } else if (averageTick > strategyParams_.domainUpperTick) {
+            averageTick = strategyParams_.domainUpperTick;
+        }
+        // in this case it is first mint
+        int24 deltaToLowerTick = averageTick - strategyParams_.domainLowerTick;
+        deltaToLowerTick -= (deltaToLowerTick % strategyParams_.halfOfShortInterval);
+        int24 lowerEstimationCentralTick = strategyParams_.domainLowerTick + deltaToLowerTick;
+        int24 upperEstimationCentralTick = lowerEstimationCentralTick + strategyParams_.halfOfShortInterval;
+        int24 mintTick = 0;
+        if (averageTick - lowerEstimationCentralTick <= upperEstimationCentralTick - averageTick) {
+            mintTick = lowerEstimationCentralTick;
+        } else {
+            mintTick = upperEstimationCentralTick;
+        }
+
+        // if last mintTick == current Mint tick -> do not do rebalance
+
+        lowerTick = mintTick - strategyParams_.halfOfShortInterval;
+        upperTick = mintTick + strategyParams_.halfOfShortInterval;
+
+        if (lowerTick < strategyParams_.domainLowerTick) {
+            lowerTick = strategyParams_.domainLowerTick;
+            upperTick = lowerTick + (strategyParams_.halfOfShortInterval << 1);
+        } else if (upperTick > strategyParams_.domainUpperTick) {
+            upperTick = strategyParams_.domainUpperTick;
+            lowerTick = upperTick - (strategyParams_.halfOfShortInterval << 1);
+        }
     }
 }
