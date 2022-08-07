@@ -26,21 +26,21 @@ contract HStrategyHelper {
             FullMath.mulDiv(
                 domainPositionParams.lower0PriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.averagePriceSqrtX96
+                domainPositionParams.spotPriceSqrtX96
             ) -
             FullMath.mulDiv(
-                domainPositionParams.averagePriceSqrtX96,
+                domainPositionParams.spotPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.upper0PriceSqrtX96
             );
 
         uint256 nominator0X96 = FullMath.mulDiv(
-            domainPositionParams.averagePriceSqrtX96,
+            domainPositionParams.spotPriceSqrtX96,
             CommonLibrary.Q96,
             domainPositionParams.upperPriceSqrtX96
         ) -
             FullMath.mulDiv(
-                domainPositionParams.averagePriceSqrtX96,
+                domainPositionParams.spotPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.upper0PriceSqrtX96
             );
@@ -48,12 +48,12 @@ contract HStrategyHelper {
         uint256 nominator1X96 = FullMath.mulDiv(
             domainPositionParams.lowerPriceSqrtX96,
             CommonLibrary.Q96,
-            domainPositionParams.averagePriceSqrtX96
+            domainPositionParams.spotPriceSqrtX96
         ) -
             FullMath.mulDiv(
                 domainPositionParams.lower0PriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.averagePriceSqrtX96
+                domainPositionParams.spotPriceSqrtX96
             );
 
         ratios.token0RatioD = uint32(FullMath.mulDiv(nominator0X96, DENOMINATOR, denominatorX96));
@@ -63,14 +63,12 @@ contract HStrategyHelper {
     }
 
     /// @notice calculates the current state of the position and pool with given oracle predictions
-    /// @param averageTick tick got from oracle
     /// @param sqrtSpotPriceX96 square root of the spot price
     /// @param strategyParams_ parameters of the strategy
     /// @param uniV3Nft the current position nft from position manager
     /// @param _positionManager uniV3 position manager
     /// @return domainPositionParams current position and pool state combined with predictions from the oracle
     function calculateDomainPositionParams(
-        int24 averageTick,
         uint160 sqrtSpotPriceX96,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
@@ -85,20 +83,14 @@ contract HStrategyHelper {
             upperTick: upperTick,
             lower0Tick: strategyParams_.domainLowerTick,
             upper0Tick: strategyParams_.domainUpperTick,
-            averageTick: averageTick,
             lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
             lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
             upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
-            averagePriceSqrtX96: TickMath.getSqrtRatioAtTick(averageTick),
-            averagePriceX96: 0,
-            spotPriceSqrtX96: sqrtSpotPriceX96
+            spotPriceSqrtX96: sqrtSpotPriceX96,
+            spotPriceX96: 0
         });
-        domainPositionParams.averagePriceX96 = FullMath.mulDiv(
-            domainPositionParams.averagePriceSqrtX96,
-            domainPositionParams.averagePriceSqrtX96,
-            CommonLibrary.Q96
-        );
+        domainPositionParams.spotPriceX96 = FullMath.mulDiv(sqrtSpotPriceX96, sqrtSpotPriceX96, CommonLibrary.Q96);
     }
 
     /// @notice calculates amount of missing tokens for uniV3 and money vaults
@@ -213,7 +205,7 @@ contract HStrategyHelper {
         );
         amounts.erc20Token1 = FullMath.mulDiv(
             expectedTokenAmountsInToken0.erc20TokensAmountInToken0 - amounts.erc20Token0,
-            domainPositionParams.averagePriceX96,
+            domainPositionParams.spotPriceX96,
             CommonLibrary.Q96
         );
 
@@ -224,7 +216,7 @@ contract HStrategyHelper {
         );
         amounts.moneyToken1 = FullMath.mulDiv(
             expectedTokenAmountsInToken0.moneyTokensAmountInToken0 - amounts.moneyToken0,
-            domainPositionParams.averagePriceX96,
+            domainPositionParams.spotPriceX96,
             CommonLibrary.Q96
         );
         {
@@ -291,13 +283,13 @@ contract HStrategyHelper {
     ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
         amounts.erc20TokensAmountInToken0 =
             currentTokenAmounts.erc20Token0 +
-            FullMath.mulDiv(currentTokenAmounts.erc20Token1, CommonLibrary.Q96, params.averagePriceX96);
+            FullMath.mulDiv(currentTokenAmounts.erc20Token1, CommonLibrary.Q96, params.spotPriceX96);
         amounts.uniV3TokensAmountInToken0 =
             currentTokenAmounts.uniV3Token0 +
-            FullMath.mulDiv(currentTokenAmounts.uniV3Token1, CommonLibrary.Q96, params.averagePriceX96);
+            FullMath.mulDiv(currentTokenAmounts.uniV3Token1, CommonLibrary.Q96, params.spotPriceX96);
         amounts.moneyTokensAmountInToken0 =
             currentTokenAmounts.moneyToken0 +
-            FullMath.mulDiv(currentTokenAmounts.moneyToken1, CommonLibrary.Q96, params.averagePriceX96);
+            FullMath.mulDiv(currentTokenAmounts.moneyToken1, CommonLibrary.Q96, params.spotPriceX96);
         amounts.totalTokensInToken0 =
             amounts.erc20TokensAmountInToken0 +
             amounts.uniV3TokensAmountInToken0 +
@@ -362,18 +354,18 @@ contract HStrategyHelper {
 
         if (token1Delta < 0) {
             token1DeltaInToken0 = -int256(
-                FullMath.mulDiv(uint256(-token1Delta), CommonLibrary.Q96, domainPositionParams.averagePriceX96)
+                FullMath.mulDiv(uint256(-token1Delta), CommonLibrary.Q96, domainPositionParams.spotPriceX96)
             );
         } else {
             token1DeltaInToken0 = int256(
-                FullMath.mulDiv(uint256(token1Delta), CommonLibrary.Q96, domainPositionParams.averagePriceX96)
+                FullMath.mulDiv(uint256(token1Delta), CommonLibrary.Q96, domainPositionParams.spotPriceX96)
             );
         }
 
         int256 minDeviation = int256(
             FullMath.mulDiv(
                 expectedTotalToken0Amount +
-                    FullMath.mulDiv(expectedTotalToken1Amount, CommonLibrary.Q96, domainPositionParams.averagePriceX96),
+                    FullMath.mulDiv(expectedTotalToken1Amount, CommonLibrary.Q96, domainPositionParams.spotPriceX96),
                 ratioParams.minRebalanceDeviationD,
                 DENOMINATOR
             )
@@ -429,8 +421,6 @@ contract HStrategyHelper {
         }
     }
 
-    /// @notice returns true if the rebalance between assets on different vaults is needed
-    /// @param params the current amounts of tokens on the vaults
     function movePricesInDomainPosition(HStrategy.DomainPositionParams memory params)
         external
         pure
@@ -438,45 +428,29 @@ contract HStrategyHelper {
     {
         if (params.spotPriceSqrtX96 < params.lower0PriceSqrtX96) {
             params.spotPriceSqrtX96 = params.lower0PriceSqrtX96;
-        } else if (params.averagePriceSqrtX96 > params.upper0PriceSqrtX96) {
+        } else if (params.spotPriceSqrtX96 > params.upper0PriceSqrtX96) {
             params.spotPriceSqrtX96 = params.upper0PriceSqrtX96;
         }
-        if (params.averagePriceSqrtX96 < params.lower0PriceSqrtX96) {
-            params.averagePriceSqrtX96 = params.lower0PriceSqrtX96;
-        } else if (params.averagePriceSqrtX96 > params.upper0PriceSqrtX96) {
-            params.averagePriceSqrtX96 = params.upper0PriceSqrtX96;
-        }
+        params.spotPriceX96 = FullMath.mulDiv(params.spotPriceSqrtX96, params.spotPriceSqrtX96, CommonLibrary.Q96);
         return params;
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param pool_ Uniswap V3 pool of the strategy
-    /// @param oracleParams_ params of the interaction with oracle
     /// @param hStrategyHelper_ the helper of the strategy
     /// @param strategyParams_ the current parameters of the strategy`
     /// @param uniV3Nft the nft of the position from position manager
     /// @param positionManager_ the position manager for uniV3
-    /// @param uniV3Helper helper contact for UniV3 calculations
     function calculateAndCheckDomainPositionParams(
         IUniswapV3Pool pool_,
-        HStrategy.OracleParams memory oracleParams_,
         HStrategyHelper hStrategyHelper_,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager_,
-        UniV3Helper uniV3Helper
+        INonfungiblePositionManager positionManager_
     ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
         {
-            (int24 averageTick, uint160 sqrtSpotPriceX96, int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                pool_,
-                oracleParams_.averagePriceTimeSpan
-            );
-            if (deviation < 0) {
-                deviation = -deviation;
-            }
-            require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+            (uint160 sqrtSpotPriceX96, , , , , , ) = pool_.slot0();
             domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-                averageTick,
                 sqrtSpotPriceX96,
                 strategyParams_,
                 uniV3Nft,
@@ -486,23 +460,35 @@ contract HStrategyHelper {
         domainPositionParams = hStrategyHelper_.movePricesInDomainPosition(domainPositionParams);
     }
 
-    function calculateNewPositionTicks(int24 averageTick, HStrategy.StrategyParams memory strategyParams_)
+    function checkSpotTickDeviationFromAverage(
+        IUniswapV3Pool pool_,
+        HStrategy.OracleParams memory oracleParams_,
+        UniV3Helper uniV3Helper
+    ) external view {
+        (, , int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(pool_, oracleParams_.averagePriceTimeSpan);
+        if (deviation < 0) {
+            deviation = -deviation;
+        }
+        require(uint24(deviation) <= oracleParams_.maxTickDeviation, ExceptionsLibrary.LIMIT_OVERFLOW);
+    }
+
+    function calculateNewPositionTicks(int24 spotTick, HStrategy.StrategyParams memory strategyParams_)
         external
         pure
         returns (int24 lowerTick, int24 upperTick)
     {
-        if (averageTick < strategyParams_.domainLowerTick) {
-            averageTick = strategyParams_.domainLowerTick;
-        } else if (averageTick > strategyParams_.domainUpperTick) {
-            averageTick = strategyParams_.domainUpperTick;
+        if (spotTick < strategyParams_.domainLowerTick) {
+            spotTick = strategyParams_.domainLowerTick;
+        } else if (spotTick > strategyParams_.domainUpperTick) {
+            spotTick = strategyParams_.domainUpperTick;
         }
 
-        int24 deltaToLowerTick = averageTick - strategyParams_.domainLowerTick;
+        int24 deltaToLowerTick = spotTick - strategyParams_.domainLowerTick;
         deltaToLowerTick -= (deltaToLowerTick % strategyParams_.halfOfShortInterval);
         int24 lowerEstimationCentralTick = strategyParams_.domainLowerTick + deltaToLowerTick;
         int24 upperEstimationCentralTick = lowerEstimationCentralTick + strategyParams_.halfOfShortInterval;
         int24 mintTick = 0;
-        if (averageTick - lowerEstimationCentralTick <= upperEstimationCentralTick - averageTick) {
+        if (spotTick - lowerEstimationCentralTick <= upperEstimationCentralTick - spotTick) {
             mintTick = lowerEstimationCentralTick;
         } else {
             mintTick = upperEstimationCentralTick;
