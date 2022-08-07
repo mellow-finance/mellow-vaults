@@ -71,11 +71,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @param erc20CapitalRatioD the ratio of tokens kept in money vault instead of erc20. The ratio is maintained for each token
-    /// @param minErc20CaptialDeviationD the needed deviation from target amount of capital in erc20Vault to call rebalance or swap tokens
+    /// @param minCaptialDeviationD the needed deviation from target amount of capital in some vault to call rebalance or swap tokens
     /// @param minRebalanceDeviationD the needed deviation from expected amounts to call swap of tokens
     struct RatioParams {
         uint256 erc20CapitalRatioD;
-        uint256 minErc20CaptialDeviationD;
+        uint256 minCaptialDeviationD;
         uint256 minRebalanceDeviationD;
     }
 
@@ -311,7 +311,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         _requireAdmin();
         require(
             newRatioParams.erc20CapitalRatioD <= DENOMINATOR &&
-                newRatioParams.minErc20CaptialDeviationD <= DENOMINATOR &&
+                newRatioParams.minCaptialDeviationD <= DENOMINATOR &&
                 newRatioParams.minRebalanceDeviationD > 0 &&
                 newRatioParams.minRebalanceDeviationD <= DENOMINATOR,
             ExceptionsLibrary.INVARIANT

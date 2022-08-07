@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "../interfaces/external/univ3/INonfungiblePositionManager.sol";
 import "../interfaces/vaults/IIntegrationVault.sol";
 import "../interfaces/vaults/IUniV3Vault.sol";
+import "../interfaces/vaults/IAaveVault.sol";
 import "../libraries/CommonLibrary.sol";
 import "../libraries/external/TickMath.sol";
 import "../libraries/external/LiquidityAmounts.sol";
@@ -253,7 +254,7 @@ contract HStrategyHelper {
         IIntegrationVault erc20Vault,
         IIntegrationVault moneyVault,
         HStrategy.DomainPositionParams memory params
-    ) external view returns (HStrategy.TokenAmounts memory amounts) {
+    ) external returns (HStrategy.TokenAmounts memory amounts) {
         (amounts.uniV3Token0, amounts.uniV3Token1) = LiquidityAmounts.getAmountsForLiquidity(
             params.spotPriceSqrtX96,
             params.lowerPriceSqrtX96,
@@ -262,9 +263,12 @@ contract HStrategyHelper {
         );
 
         {
-            (uint256[] memory minMoneyTvl, uint256[] memory maxMoneyTvl) = moneyVault.tvl();
-            amounts.moneyToken0 = (minMoneyTvl[0] + maxMoneyTvl[0]) >> 1;
-            amounts.moneyToken1 = (minMoneyTvl[1] + maxMoneyTvl[1]) >> 1;
+            if (moneyVault.supportsInterface(type(IAaveVault).interfaceId)) {
+                IAaveVault(address(moneyVault)).updateTvls();
+            }
+            (uint256[] memory minMoneyTvl, ) = moneyVault.tvl();
+            amounts.moneyToken0 = minMoneyTvl[0];
+            amounts.moneyToken1 = minMoneyTvl[1];
         }
         {
             (uint256[] memory erc20Tvl, ) = erc20Vault.tvl();
@@ -344,24 +348,10 @@ contract HStrategyHelper {
         uint256 currentTotalToken0Amount = currentTokenAmounts.erc20Token0 +
             currentTokenAmounts.moneyToken0 +
             currentTokenAmounts.uniV3Token0;
-        uint256 currentTotalToken1Amount = currentTokenAmounts.erc20Token1 +
-            currentTokenAmounts.moneyToken1 +
-            currentTokenAmounts.uniV3Token1;
-
         int256 token0Delta = int256(currentTotalToken0Amount) - int256(expectedTotalToken0Amount);
-        int256 token1Delta = int256(currentTotalToken1Amount) - int256(expectedTotalToken1Amount);
-        int256 token1DeltaInToken0;
-
-        if (token1Delta < 0) {
-            token1DeltaInToken0 = -int256(
-                FullMath.mulDiv(uint256(-token1Delta), CommonLibrary.Q96, domainPositionParams.spotPriceX96)
-            );
-        } else {
-            token1DeltaInToken0 = int256(
-                FullMath.mulDiv(uint256(token1Delta), CommonLibrary.Q96, domainPositionParams.spotPriceX96)
-            );
+        if (token0Delta < 0) {
+            token0Delta = -token0Delta;
         }
-
         int256 minDeviation = int256(
             FullMath.mulDiv(
                 expectedTotalToken0Amount +
@@ -370,7 +360,7 @@ contract HStrategyHelper {
                 DENOMINATOR
             )
         );
-        return minDeviation + token0Delta <= token1DeltaInToken0 || minDeviation + token1DeltaInToken0 <= token0Delta;
+        return token0Delta >= minDeviation;
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
@@ -389,35 +379,53 @@ contract HStrategyHelper {
         uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
+        {
+            uint256 erc20CapitalDeltaD = 0;
+            if (ratioParams.erc20CapitalRatioD > ratioParams.minCaptialDeviationD) {
+                erc20CapitalDeltaD = ratioParams.erc20CapitalRatioD - ratioParams.minCaptialDeviationD;
+            }
+            uint256 minToken0Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken0Amount, DENOMINATOR);
+            uint256 minToken1Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken1Amount, DENOMINATOR);
+            uint256 maxToken0Amount = FullMath.mulDiv(
+                ratioParams.erc20CapitalRatioD + ratioParams.minCaptialDeviationD,
+                totalToken0Amount,
+                DENOMINATOR
+            );
+            uint256 maxToken1Amount = FullMath.mulDiv(
+                ratioParams.erc20CapitalRatioD + ratioParams.minCaptialDeviationD,
+                totalToken1Amount,
+                DENOMINATOR
+            );
 
-        uint256 minToken0Amount = FullMath.mulDiv(
-            ratioParams.erc20CapitalRatioD - ratioParams.minErc20CaptialDeviationD,
-            totalToken0Amount,
-            DENOMINATOR
-        );
-        uint256 minToken1Amount = FullMath.mulDiv(
-            ratioParams.erc20CapitalRatioD - ratioParams.minErc20CaptialDeviationD,
-            totalToken1Amount,
-            DENOMINATOR
-        );
-        uint256 maxToken0Amount = FullMath.mulDiv(
-            ratioParams.erc20CapitalRatioD + ratioParams.minErc20CaptialDeviationD,
-            totalToken0Amount,
-            DENOMINATOR
-        );
-        uint256 maxToken1Amount = FullMath.mulDiv(
-            ratioParams.erc20CapitalRatioD + ratioParams.minErc20CaptialDeviationD,
-            totalToken1Amount,
-            DENOMINATOR
-        );
+            if (
+                currentTokenAmounts.erc20Token0 < minToken0Amount ||
+                currentTokenAmounts.erc20Token0 > maxToken0Amount ||
+                currentTokenAmounts.erc20Token1 < minToken1Amount ||
+                currentTokenAmounts.erc20Token1 > maxToken1Amount
+            ) {
+                needed = true;
+            }
+        }
+        if (!needed) {
+            uint256 minToken0Deviation = FullMath.mulDiv(
+                ratioParams.minCaptialDeviationD,
+                totalToken0Amount,
+                DENOMINATOR
+            );
+            uint256 minToken1Deviation = FullMath.mulDiv(
+                ratioParams.minCaptialDeviationD,
+                totalToken1Amount,
+                DENOMINATOR
+            );
 
-        if (
-            currentTokenAmounts.erc20Token0 < minToken0Amount ||
-            currentTokenAmounts.erc20Token0 > maxToken0Amount ||
-            currentTokenAmounts.erc20Token1 < minToken1Amount ||
-            currentTokenAmounts.erc20Token1 > maxToken1Amount
-        ) {
-            needed = true;
+            if (
+                currentTokenAmounts.moneyToken0 + minToken0Deviation < expectedTokenAmounts.moneyToken0 ||
+                currentTokenAmounts.moneyToken0 > expectedTokenAmounts.moneyToken0 + minToken0Deviation ||
+                currentTokenAmounts.moneyToken1 + minToken1Deviation < expectedTokenAmounts.moneyToken1 ||
+                currentTokenAmounts.moneyToken1 > expectedTokenAmounts.moneyToken1 + minToken1Deviation
+            ) {
+                needed = true;
+            }
         }
     }
 
