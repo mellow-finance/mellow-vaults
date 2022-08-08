@@ -221,20 +221,25 @@ contract HStrategyHelper {
             CommonLibrary.Q96
         );
         {
-            uint256 uniCapitalRatioX96 = FullMath.mulDiv(
-                FullMath.mulDiv(
-                    domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
-                    CommonLibrary.Q96,
-                    domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96
-                ),
-                domainPositionParams.upperPriceSqrtX96,
-                domainPositionParams.spotPriceSqrtX96
-            );
-            uint256 uniCapital1 = FullMath.mulDiv(
-                expectedTokenAmountsInToken0.uniV3TokensAmountInToken0,
-                uniCapitalRatioX96,
-                uniCapitalRatioX96 + CommonLibrary.Q96
-            );
+            uint256 uniCapital1;
+            if (domainPositionParams.spotPriceSqrtX96 != domainPositionParams.upperPriceSqrtX96) {
+                uint256 uniCapitalRatioX96 = FullMath.mulDiv(
+                    FullMath.mulDiv(
+                        domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
+                        CommonLibrary.Q96,
+                        domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96
+                    ),
+                    domainPositionParams.upperPriceSqrtX96,
+                    domainPositionParams.spotPriceSqrtX96
+                );
+                uniCapital1 = FullMath.mulDiv(
+                    expectedTokenAmountsInToken0.uniV3TokensAmountInToken0,
+                    uniCapitalRatioX96,
+                    uniCapitalRatioX96 + CommonLibrary.Q96
+                );
+            } else {
+                uniCapital1 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0;
+            }
             amounts.uniV3Token0 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0 - uniCapital1;
             uint256 spotPriceX96 = FullMath.mulDiv(
                 domainPositionParams.spotPriceSqrtX96,
