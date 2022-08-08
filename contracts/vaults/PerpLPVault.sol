@@ -256,6 +256,7 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
     /// @param to Recepient address
     /// @param tokenAmounts Token amounts (nominated in USDC weis)
     /// @param options Encoded options for the vault
+    /// @return actualTokenAmounts Actual pulled token amounts (nominated in USDC weis)
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
@@ -314,7 +315,7 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         );
     }
 
-    /// @notice Close a Uni position, if the position has non-zero funds
+    /// @notice Close permament positions. (If you have a position and remove your liquidity from it, this position will become “permanent”)
     /// @dev Makes a call to the clearing house only if the taker position size is not zero
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _closePermanentPositions(uint256 deadline) internal {

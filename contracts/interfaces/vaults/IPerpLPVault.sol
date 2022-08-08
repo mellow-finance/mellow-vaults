@@ -60,7 +60,7 @@ interface IPerpLPVault is IIntegrationVault {
     function usdc() external view returns (address);
 
     /// @notice Returns how much pure capital is there on your account (nominated in USDC weis)
-    /// @return value The position capital estimated in USDC
+    /// @return value The account pure capital (estimated in USDC weis)
     function getAccountValue() external view returns (uint256 value);
 
     // -------------------  EXTERNAL, MUTATING  -------------------

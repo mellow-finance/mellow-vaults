@@ -16,18 +16,54 @@ import "../interfaces/vaults/IPerpVaultGovernance.sol";
 contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     using SafeERC20 for IERC20;
 
+    /// @inheritdoc IPerpFuturesVault
     address public baseToken;
+    /// @inheritdoc IPerpFuturesVault
     IPerpInternalVault public vault;
+    /// @inheritdoc IPerpFuturesVault
     IClearingHouse public clearingHouse;
+    /// @inheritdoc IPerpFuturesVault
     IAccountBalance public accountBalance;
 
     uint256 public constant DENOMINATOR = 10**9;
     uint256 public constant Q96 = 2**96;
 
+    /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR). Your real capital is C and your virtual capital is C * leverageMultiplier (a user will be trading the virtual asset)
     uint256 public leverageMultiplierD; // leverage using by usd
+    /// @notice Returns true if the user`s base token position is a long one, else - false
     bool isLongBaseToken; // true if we long base token, false else
+    /// @inheritdoc IPerpFuturesVault
     address public usdc;
 
+    // -------------------  EXTERNAL, VIEW  -------------------
+
+    /// @inheritdoc IVault
+    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
+        uint256 usdcValue = getAccountValue();
+        minTokenAmounts = new uint256[](1);
+        maxTokenAmounts = new uint256[](1);
+
+        minTokenAmounts[0] = usdcValue;
+        maxTokenAmounts[0] = usdcValue;
+    }
+
+    /// @inheritdoc IPerpFuturesVault
+    function getAccountValue() public view returns (uint256) {
+        int256 usdcValue = clearingHouse.getAccountValue(address(this));
+        if (usdcValue < 0) {
+            return 0;
+        }
+        return uint256(usdcValue);
+    }
+
+    /// @inheritdoc IERC165
+    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
+        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpFuturesVault).interfaceId);
+    }
+
+    // -------------------  EXTERNAL, MUTATING  -------------------
+
+    /// @inheritdoc IPerpFuturesVault
     function initialize(
         uint256 nft_,
         address baseToken_,
@@ -54,23 +90,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         baseToken = baseToken_;
     }
 
-    function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        uint256 usdcValue = getAccountValue();
-        minTokenAmounts = new uint256[](1);
-        maxTokenAmounts = new uint256[](1);
-
-        minTokenAmounts[0] = usdcValue;
-        maxTokenAmounts[0] = usdcValue;
-    }
-
-    function getAccountValue() public view returns (uint256) {
-        int256 usdcValue = clearingHouse.getAccountValue(address(this));
-        if (usdcValue < 0) {
-            return 0;
-        }
-        return uint256(usdcValue);
-    }
-
+    /// @inheritdoc IPerpFuturesVault
     function updateLeverage(
         uint256 newLeverageMultiplierD_,
         bool isLongBaseToken_,
@@ -90,8 +110,10 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, deadline);
+        emit UpdatedLeverage(tx.origin, msg.sender, newLeverageMultiplierD_, isLongBaseToken_);
     }
 
+    /// @inheritdoc IPerpFuturesVault
     function adjustPosition(uint256 deadline) external {
         require(_isApprovedOrOwner(msg.sender));
 
@@ -99,8 +121,10 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, deadline);
+        emit AdjustedPosition(tx.origin, msg.sender);
     }
 
+    /// @inheritdoc IPerpFuturesVault
     function closePosition(uint256 deadline) external {
         int256 positionSize = accountBalance.getTakerPositionSize(address(this), baseToken);
         if (positionSize == 0) {
@@ -115,12 +139,15 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
                 referralCode: 0
             })
         );
+        emit ClosedPosition(tx.origin, msg.sender, positionSize);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
-        return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpFuturesVault).interfaceId);
-    }
+    // -------------------  INTERNAL, MUTATING  -------------------
 
+    /// @notice Push token amounts to the vault
+    /// @param tokenAmounts Token amounts (nominated in USDC weis)
+    /// @param options Encoded options for the vault
+    /// @return actualTokenAmounts Actual pushed token amounts (nominated in USDC weis)
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
         override
@@ -148,6 +175,11 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         _adjustPosition(capitalToUse, opts.deadline);
     }
 
+    /// @notice Pulls token amounts from the vault
+    /// @param to Recepient address
+    /// @param tokenAmounts Token amounts (nominated in USDC weis)
+    /// @param options Encoded options for the vault
+    /// @return actualTokenAmounts Actual pulled token amounts (nominated in USDC weis)
     function _pull(
         address to,
         uint256[] memory tokenAmounts,
@@ -175,6 +207,9 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         actualTokenAmounts[0] = usdcAmount;
     }
 
+    /// @notice Adjusts the current position to the capitalToUse by making comparison with the takerPositionSize
+    /// @param capitalToUse The new position capital to be used after adjustment (nominated in USDC weis)
+    /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _adjustPosition(uint256 capitalToUse, uint256 deadline) internal {
         int256 positionSize = accountBalance.getTakerPositionSize(address(this), baseToken);
         if (isLongBaseToken) {
@@ -192,6 +227,11 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         }
     }
 
+    /// @notice Makes the actual position capital adjustment by "longing" / "shorting" the baseToken
+    /// @dev The call to ClearingHouse is performed only if the amount is not zero
+    /// @param longBaseTokenInAdjustment True if "longing" the base token, if "shorting" - false
+    /// @param amount The amount of token to push into the position
+    /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _makeAdjustment(
         bool longBaseTokenInAdjustment,
         uint256 amount,
@@ -214,6 +254,9 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         );
     }
 
+    /// @notice A helper function which parses an encoded instance of Options struct or any other byes array
+    /// @param options Bytes array of the encoded options
+    /// @return Options memory Options struct
     function _parseOptions(bytes memory options) internal view returns (Options memory) {
         if (options.length == 0) return Options({deadline: block.timestamp + 600});
 
@@ -227,4 +270,29 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         }
         return false;
     }
+
+    // --------------------------  EVENTS  --------------------------
+
+    /// @notice Emitted when the vault capital leverage multiplier is updated (multiplied by DENOMINATOR)
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param newLeverageMultiplierD The new vault capital leverage multiplier (multiplied by DENOMINATOR)
+    /// @param isLongBaseToken Returns true if the user`s base token position is a long one, else - false
+    event UpdatedLeverage(
+        address indexed origin,
+        address indexed sender,
+        uint256 newLeverageMultiplierD,
+        bool isLongBaseToken
+    );
+
+    /// @notice Emitted when the current position is closed
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    /// @param positionSize The current taker position size from Perp AccountBalance contract
+    event ClosedPosition(address indexed origin, address indexed sender, int256 positionSize);
+
+    /// @notice Emitted when the current position`s capital is adjusted
+    /// @param origin Origin of the transaction (tx.origin)
+    /// @param sender Sender of the call (msg.sender)
+    event AdjustedPosition(address indexed origin, address indexed sender);
 }
