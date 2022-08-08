@@ -38,6 +38,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     UniV3Helper private immutable _uniV3Helper;
     HStrategyHelper private immutable _hStrategyHelper;
     Interval private shortInterval;
+    bool private needPositionRebalance;
+    bool private newPositionMinted;
 
     // MUTABLE PARAMS
 
@@ -71,11 +73,11 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @param erc20CapitalRatioD the ratio of tokens kept in money vault instead of erc20. The ratio is maintained for each token
-    /// @param minCaptialDeviationD the needed deviation from target amount of capital in some vault to call rebalance or swap tokens
+    /// @param minCapitalDeviationD the needed deviation from target amount of capital in some vault to call rebalance or swap tokens
     /// @param minRebalanceDeviationD the needed deviation from expected amounts to call swap of tokens
     struct RatioParams {
         uint256 erc20CapitalRatioD;
-        uint256 minCaptialDeviationD;
+        uint256 minCapitalDeviationD;
         uint256 minRebalanceDeviationD;
     }
 
@@ -190,6 +192,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         _uniV3Helper = UniV3Helper(uniV3Helper_);
         _hStrategyHelper = HStrategyHelper(hStrategyHelper_);
         DefaultAccessControlLateInit.init(address(this));
+        needPositionRebalance = false;
     }
 
     /// @notice initializes the strategy
@@ -270,7 +273,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 (globalIntervalWidth % newStrategyParams.halfOfShortInterval == 0),
             ExceptionsLibrary.INVARIANT
         );
-
+        StrategyParams memory strategyParams_ = strategyParams;
+        if (
+            newStrategyParams.halfOfShortInterval != strategyParams_.halfOfShortInterval ||
+            newStrategyParams.domainLowerTick != strategyParams_.domainLowerTick ||
+            newStrategyParams.domainUpperTick != strategyParams_.domainUpperTick
+        ) {
+            needPositionRebalance = true;
+        }
         strategyParams = newStrategyParams;
         emit UpdateStrategyParams(tx.origin, msg.sender, newStrategyParams);
     }
@@ -310,8 +320,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         _requireAdmin();
         require(
             newRatioParams.erc20CapitalRatioD <= DENOMINATOR &&
-                newRatioParams.minCaptialDeviationD <= DENOMINATOR &&
-                newRatioParams.erc20CapitalRatioD >= newRatioParams.minCaptialDeviationD &&
+                newRatioParams.minCapitalDeviationD <= newRatioParams.erc20CapitalRatioD &&
                 newRatioParams.minRebalanceDeviationD > 0 &&
                 newRatioParams.minRebalanceDeviationD <= DENOMINATOR,
             ExceptionsLibrary.INVARIANT
@@ -368,14 +377,14 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         burnedAmounts = new uint256[](2);
         burnedAmounts[0] = type(uint256).max;
         burnedAmounts[1] = type(uint256).max;
-
+        newPositionMinted = false;
         {
             Interval memory shortInterval_ = shortInterval;
             int24 tickNeighborhood = strategyParams_.tickNeighborhood;
 
             if (
-                shortInterval_.lowerTick + tickNeighborhood <= tick &&
-                shortInterval_.upperTick - tickNeighborhood >= tick
+                (shortInterval_.lowerTick + tickNeighborhood <= tick &&
+                    shortInterval_.upperTick - tickNeighborhood >= tick) || needPositionRebalance
             ) {
                 return burnedAmounts;
             }
@@ -388,6 +397,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 return burnedAmounts;
             }
         }
+
+        needPositionRebalance = false;
 
         if (uniV3Nft != 0) {
             // cannot burn only if it is first call of the rebalance function
@@ -476,9 +487,15 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             tokens_
         );
 
+        {
+            bool nothingPulledFrom = pulledToUniV3Vault[0] == 0 && pulledToUniV3Vault[1] == 0;
+            bool nothingPulledTo = actualPulledAmounts.pulledToUniV3Vault[0] == 0 &&
+                actualPulledAmounts.pulledToUniV3Vault[1] == 0;
+            require(nothingPulledFrom || nothingPulledTo, ExceptionsLibrary.INVARIANT);
+        }
+
         for (uint256 i = 0; i < 2; i++) {
             if (pulledToUniV3Vault[i] != 0) {
-                require(actualPulledAmounts.pulledToUniV3Vault[i] == 0, ExceptionsLibrary.INVARIANT);
                 actualPulledAmounts.pulledToUniV3Vault[i] = int256(pulledToUniV3Vault[i]);
             }
         }
@@ -557,7 +574,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         address[] memory tokens_
     ) internal returns (int256[] memory pulledToUniV3Vault) {
         pulledToUniV3Vault = new int256[](2);
-        if (restrictions.burnedAmounts[0] != type(uint256).max || restrictions.burnedAmounts[1] != type(uint256).max) {
+        if (!newPositionMinted) {
             (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForUniV3Vault(
                 expectedTokenAmounts,
                 domainPositionParams
@@ -689,6 +706,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (oldNft != 0) {
             positionManager_.burn(oldNft);
         }
+        newPositionMinted = true;
         emit MintUniV3Position(newNft, shortInterval_.lowerTick, shortInterval_.upperTick);
     }
 
@@ -732,19 +750,19 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
                 amountIn = tvl[tokenInIndex];
             }
         }
-        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
-            tokenIn: tokens_[tokenInIndex],
-            tokenOut: tokens_[tokenInIndex ^ 1],
-            fee: pool.fee(),
-            recipient: address(erc20Vault_),
-            deadline: restrictions.deadline,
-            amountIn: amountIn,
-            amountOutMinimum: 0,
-            sqrtPriceLimitX96: 0
-        });
 
         bytes memory routerResult;
         if (amountIn > 0) {
+            ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams({
+                tokenIn: tokens_[tokenInIndex],
+                tokenOut: tokens_[tokenInIndex ^ 1],
+                fee: pool.fee(),
+                recipient: address(erc20Vault_),
+                deadline: restrictions.deadline,
+                amountIn: amountIn,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            });
             bytes memory data = abi.encode(swapParams);
             erc20Vault_.externalCall(tokens_[tokenInIndex], APPROVE_SELECTOR, abi.encode(address(router), amountIn)); // approve
             routerResult = erc20Vault_.externalCall(address(router), EXACT_INPUT_SINGLE_SELECTOR, data); // swap

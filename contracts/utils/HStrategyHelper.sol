@@ -63,41 +63,6 @@ contract HStrategyHelper {
         ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
     }
 
-    /// @notice calculates the current state of the position and pool with given oracle predictions
-    /// @param tick current price tick
-    /// @param strategyParams_ parameters of the strategy
-    /// @param uniV3Nft the current position nft from position manager
-    /// @param _positionManager uniV3 position manager
-    /// @return domainPositionParams current position and pool state combined with predictions from the oracle
-    function calculateDomainPositionParams(
-        int24 tick,
-        HStrategy.StrategyParams memory strategyParams_,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager _positionManager
-    ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
-        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = _positionManager.positions(uniV3Nft);
-
-        domainPositionParams = HStrategy.DomainPositionParams({
-            nft: uniV3Nft,
-            liquidity: liquidity,
-            lowerTick: lowerTick,
-            upperTick: upperTick,
-            lower0Tick: strategyParams_.domainLowerTick,
-            upper0Tick: strategyParams_.domainUpperTick,
-            lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
-            upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
-            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
-            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
-            spotPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
-            spotPriceX96: 0
-        });
-        domainPositionParams.spotPriceX96 = FullMath.mulDiv(
-            domainPositionParams.spotPriceSqrtX96,
-            domainPositionParams.spotPriceSqrtX96,
-            CommonLibrary.Q96
-        );
-    }
-
     /// @notice calculates amount of missing tokens for uniV3 and money vaults
     /// @param moneyVault the strategy money vault
     /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
@@ -129,9 +94,9 @@ contract HStrategyHelper {
 
         // for moneyVault
         {
-            (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-            uint256 token0Amount = (minTvl[0] + maxTvl[0]) >> 1;
-            uint256 token1Amount = (minTvl[1] + maxTvl[1]) >> 1;
+            (, uint256[] memory maxTvl) = moneyVault.tvl();
+            uint256 token0Amount = maxTvl[0];
+            uint256 token1Amount = maxTvl[1];
 
             if (token0Amount < expectedTokenAmounts.moneyToken0) {
                 missingTokenAmounts.moneyToken0 = expectedTokenAmounts.moneyToken0 - token0Amount;
@@ -176,9 +141,9 @@ contract HStrategyHelper {
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts
     ) external view returns (uint256 token0Amount, uint256 token1Amount) {
-        (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-        token0Amount = (minTvl[0] + maxTvl[0]) >> 1;
-        token1Amount = (minTvl[1] + maxTvl[1]) >> 1;
+        (uint256[] memory minTvl, ) = moneyVault.tvl();
+        token0Amount = minTvl[0];
+        token1Amount = minTvl[1];
 
         if (token0Amount > expectedTokenAmounts.moneyToken0) {
             token0Amount -= expectedTokenAmounts.moneyToken0;
@@ -225,32 +190,30 @@ contract HStrategyHelper {
             CommonLibrary.Q96
         );
         {
-            uint256 uniCapital1;
-            if (domainPositionParams.spotPriceSqrtX96 != domainPositionParams.upperPriceSqrtX96) {
-                uint256 uniCapitalRatioX96 = FullMath.mulDiv(
-                    FullMath.mulDiv(
-                        domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
-                        CommonLibrary.Q96,
-                        domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96
-                    ),
-                    domainPositionParams.upperPriceSqrtX96,
-                    domainPositionParams.spotPriceSqrtX96
-                );
-                uniCapital1 = FullMath.mulDiv(
-                    expectedTokenAmountsInToken0.uniV3TokensAmountInToken0,
-                    uniCapitalRatioX96,
-                    uniCapitalRatioX96 + CommonLibrary.Q96
-                );
-            } else {
-                uniCapital1 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0;
-            }
-            amounts.uniV3Token0 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0 - uniCapital1;
-            uint256 spotPriceX96 = FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
-                domainPositionParams.spotPriceSqrtX96,
+            // sqrt(upperPrice) * (sqrt(price) - sqrt(lowerPrice))
+            uint256 upperTermX96 = FullMath.mulDiv(
+                domainPositionParams.upperPriceSqrtX96,
+                domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
                 CommonLibrary.Q96
             );
-            amounts.uniV3Token1 = FullMath.mulDiv(uniCapital1, spotPriceX96, CommonLibrary.Q96);
+            // sqrt(price) * (sqrt(upperPrice) - sqrt(price))
+            uint256 lowerTermX96 = FullMath.mulDiv(
+                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96,
+                CommonLibrary.Q96
+            );
+            // x0
+            uint256 uniV3CapitalInToken0 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0;
+
+            amounts.uniV3Token1 = FullMath.mulDiv(
+                FullMath.mulDiv(uniV3CapitalInToken0, domainPositionParams.spotPriceX96, CommonLibrary.Q96),
+                upperTermX96,
+                upperTermX96 + lowerTermX96
+            );
+
+            amounts.uniV3Token0 =
+                uniV3CapitalInToken0 -
+                FullMath.mulDiv(amounts.uniV3Token1, CommonLibrary.Q96, domainPositionParams.spotPriceX96);
         }
     }
 
@@ -389,19 +352,16 @@ contract HStrategyHelper {
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
         {
-            uint256 erc20CapitalDeltaD = 0;
-            if (ratioParams.erc20CapitalRatioD > ratioParams.minCaptialDeviationD) {
-                erc20CapitalDeltaD = ratioParams.erc20CapitalRatioD - ratioParams.minCaptialDeviationD;
-            }
+            uint256 erc20CapitalDeltaD = ratioParams.erc20CapitalRatioD - ratioParams.minCapitalDeviationD;
             uint256 minToken0Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken0Amount, DENOMINATOR);
             uint256 minToken1Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken1Amount, DENOMINATOR);
             uint256 maxToken0Amount = FullMath.mulDiv(
-                ratioParams.erc20CapitalRatioD + ratioParams.minCaptialDeviationD,
+                ratioParams.erc20CapitalRatioD + ratioParams.minCapitalDeviationD,
                 totalToken0Amount,
                 DENOMINATOR
             );
             uint256 maxToken1Amount = FullMath.mulDiv(
-                ratioParams.erc20CapitalRatioD + ratioParams.minCaptialDeviationD,
+                ratioParams.erc20CapitalRatioD + ratioParams.minCapitalDeviationD,
                 totalToken1Amount,
                 DENOMINATOR
             );
@@ -416,8 +376,8 @@ contract HStrategyHelper {
             }
         }
 
-        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCaptialDeviationD, totalToken0Amount, DENOMINATOR);
-        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCaptialDeviationD, totalToken1Amount, DENOMINATOR);
+        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken0Amount, DENOMINATOR);
+        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken1Amount, DENOMINATOR);
 
         {
             if (
@@ -442,40 +402,39 @@ contract HStrategyHelper {
         }
     }
 
-    function movePricesInDomainPosition(HStrategy.DomainPositionParams memory params)
-        external
-        pure
-        returns (HStrategy.DomainPositionParams memory)
-    {
+    /// @notice returns true if the rebalance between assets on different vaults is needed
+    /// @param tick current price tick
+    /// @param strategyParams_ the current parameters of the strategy`
+    /// @param uniV3Nft the nft of the position from position manager
+    /// @param positionManager_ the position manager for uniV3
+    function calculateAndCheckDomainPositionParams(
+        int24 tick,
+        HStrategy.StrategyParams memory strategyParams_,
+        uint256 uniV3Nft,
+        INonfungiblePositionManager positionManager_
+    ) external view returns (HStrategy.DomainPositionParams memory params) {
+        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager_.positions(uniV3Nft);
+
+        params = HStrategy.DomainPositionParams({
+            nft: uniV3Nft,
+            liquidity: liquidity,
+            lowerTick: lowerTick,
+            upperTick: upperTick,
+            lower0Tick: strategyParams_.domainLowerTick,
+            upper0Tick: strategyParams_.domainUpperTick,
+            lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
+            upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
+            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
+            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
+            spotPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
+            spotPriceX96: 0
+        });
         if (params.spotPriceSqrtX96 < params.lower0PriceSqrtX96) {
             params.spotPriceSqrtX96 = params.lower0PriceSqrtX96;
         } else if (params.spotPriceSqrtX96 > params.upper0PriceSqrtX96) {
             params.spotPriceSqrtX96 = params.upper0PriceSqrtX96;
         }
         params.spotPriceX96 = FullMath.mulDiv(params.spotPriceSqrtX96, params.spotPriceSqrtX96, CommonLibrary.Q96);
-        return params;
-    }
-
-    /// @notice returns true if the rebalance between assets on different vaults is needed
-    /// @param tick current price tick
-    /// @param hStrategyHelper_ the helper of the strategy
-    /// @param strategyParams_ the current parameters of the strategy`
-    /// @param uniV3Nft the nft of the position from position manager
-    /// @param positionManager_ the position manager for uniV3
-    function calculateAndCheckDomainPositionParams(
-        int24 tick,
-        HStrategyHelper hStrategyHelper_,
-        HStrategy.StrategyParams memory strategyParams_,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager positionManager_
-    ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
-        domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-            tick,
-            strategyParams_,
-            uniV3Nft,
-            positionManager_
-        );
-        domainPositionParams = hStrategyHelper_.movePricesInDomainPosition(domainPositionParams);
     }
 
     function checkSpotTickDeviationFromAverage(
