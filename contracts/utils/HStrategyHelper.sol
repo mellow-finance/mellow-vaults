@@ -25,14 +25,14 @@ contract HStrategyHelper {
         uint256 denominatorX96 = CommonLibrary.Q96 *
             2 -
             FullMath.mulDiv(
-                domainPositionParams.lower0PriceSqrtX96,
+                domainPositionParams.domainLowerPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.spotPriceSqrtX96
             ) -
             FullMath.mulDiv(
                 domainPositionParams.spotPriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.upper0PriceSqrtX96
+                domainPositionParams.domainUpperPriceSqrtX96
             );
 
         uint256 nominator0X96 = FullMath.mulDiv(
@@ -43,7 +43,7 @@ contract HStrategyHelper {
             FullMath.mulDiv(
                 domainPositionParams.spotPriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.upper0PriceSqrtX96
+                domainPositionParams.domainUpperPriceSqrtX96
             );
 
         uint256 nominator1X96 = FullMath.mulDiv(
@@ -52,7 +52,7 @@ contract HStrategyHelper {
             domainPositionParams.spotPriceSqrtX96
         ) -
             FullMath.mulDiv(
-                domainPositionParams.lower0PriceSqrtX96,
+                domainPositionParams.domainLowerPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.spotPriceSqrtX96
             );
@@ -82,12 +82,12 @@ contract HStrategyHelper {
             liquidity: liquidity,
             lowerTick: lowerTick,
             upperTick: upperTick,
-            lower0Tick: strategyParams_.domainLowerTick,
-            upper0Tick: strategyParams_.domainUpperTick,
+            domainLowerTick: strategyParams_.domainLowerTick,
+            domainUpperTick: strategyParams_.domainUpperTick,
             lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
-            lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
-            upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
+            domainLowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
+            domainUpperPriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
             spotPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
             spotPriceX96: 0
         });
@@ -447,10 +447,10 @@ contract HStrategyHelper {
         pure
         returns (HStrategy.DomainPositionParams memory)
     {
-        if (params.spotPriceSqrtX96 < params.lower0PriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.lower0PriceSqrtX96;
-        } else if (params.spotPriceSqrtX96 > params.upper0PriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.upper0PriceSqrtX96;
+        if (params.spotPriceSqrtX96 < params.domainLowerPriceSqrtX96) {
+            params.spotPriceSqrtX96 = params.domainLowerPriceSqrtX96;
+        } else if (params.spotPriceSqrtX96 > params.domainUpperPriceSqrtX96) {
+            params.spotPriceSqrtX96 = params.domainUpperPriceSqrtX96;
         }
         params.spotPriceX96 = FullMath.mulDiv(params.spotPriceSqrtX96, params.spotPriceSqrtX96, CommonLibrary.Q96);
         return params;

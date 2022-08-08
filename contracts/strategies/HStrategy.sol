@@ -45,8 +45,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param halfOfShortInterval half of width of the uniV3 position measured in the strategy in ticks
     /// @param tickNeighborhood width of the neighbourhood of the current position border, in which rebalance can be called.
     /// Example: if the upperTick=10, tickNeighbourhood=5, rebalance can be called for all ticks greater than 10 - 5 = 5
-    /// @param domainLowerTick the lower tick of emulated uniV3 position
-    /// @param domainUpperTick the upper tick of emulated uniV3 position
+    /// @param domainLowerTick the lower tick of domain uniV3 position
+    /// @param domainUpperTick the upper tick of domain uniV3 position
     struct StrategyParams {
         int24 halfOfShortInterval;
         int24 tickNeighborhood;
@@ -145,12 +145,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param liquidity the total liquidity of the position
     /// @param lowerTick the lower tick of the position
     /// @param upperTick the upper tick of the position
-    /// @param lower0Tick the lower tick of the emulated position
-    /// @param upper0Tick the upper tick of the emulated position
+    /// @param domainLowerTick the lower tick of the domain position
+    /// @param domainUpperTick the upper tick of the domain position
     /// @param lowerPriceSqrtX96 the square root of the price at lower tick of the position
     /// @param upperPriceSqrtX96 the square root of the price at upper tick of the position
-    /// @param lower0PriceSqrtX96 the square root of the price at lower tick of the emulated position
-    /// @param upper0PriceSqrtX96 the square root of the price at upper tick of the emulated position
+    /// @param domainLowerPriceSqrtX96 the square root of the price at lower tick of the domain position
+    /// @param domainUpperPriceSqrtX96 the square root of the price at upper tick of the domain position
     /// @param spotPriceSqrtX96 the square root of the spot price
     /// @param spotPriceSqrtX96 the spot price
     struct DomainPositionParams {
@@ -158,12 +158,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint128 liquidity;
         int24 lowerTick;
         int24 upperTick;
-        int24 lower0Tick;
-        int24 upper0Tick;
+        int24 domainLowerTick;
+        int24 domainUpperTick;
         uint160 lowerPriceSqrtX96;
         uint160 upperPriceSqrtX96;
-        uint160 lower0PriceSqrtX96;
-        uint160 upper0PriceSqrtX96;
+        uint160 domainLowerPriceSqrtX96;
+        uint160 domainUpperPriceSqrtX96;
         uint160 spotPriceSqrtX96;
         uint256 spotPriceX96;
     }
@@ -642,7 +642,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
     }
 
-    /// @notice minting new position inside emulated interval
+    /// @notice minting new position inside domain interval
     /// @param pool_ address of uniV3 pool
     /// @param deadline maximal duration of swap offer on uniV3
     /// @param positionManager_ uniV3 position manager
