@@ -8,7 +8,11 @@ import "hardhat-deploy";
 import "./plugins/contracts";
 import { config as dotenv } from "dotenv";
 import "./tasks/verify";
+import * as tdly from "@tenderly/hardhat-tenderly";
 
+tdly.setup({
+    automaticVerifications: false
+});
 dotenv();
 
 const config: HardhatUserConfig = {
