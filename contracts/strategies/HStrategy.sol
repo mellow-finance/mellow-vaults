@@ -45,8 +45,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param halfOfShortInterval half of width of the uniV3 position measured in the strategy in ticks
     /// @param tickNeighborhood width of the neighbourhood of the current position border, in which rebalance can be called.
     /// Example: if the upperTick=10, tickNeighbourhood=5, rebalance can be called for all ticks greater than 10 - 5 = 5
-    /// @param domainLowerTick the lower tick of domain uniV3 position
-    /// @param domainUpperTick the upper tick of domain uniV3 position
+    /// @param domainLowerTick the lower tick of the domain uniV3 position
+    /// @param domainUpperTick the upper tick of the domain uniV3 position
     struct StrategyParams {
         int24 halfOfShortInterval;
         int24 tickNeighborhood;
@@ -642,7 +642,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
     }
 
-    /// @notice minting new position inside domain interval
+    /// @notice minting new position inside the domain interval
     /// @param pool_ address of uniV3 pool
     /// @param deadline maximal duration of swap offer on uniV3
     /// @param positionManager_ uniV3 position manager
