@@ -154,15 +154,13 @@ contract UniV3Helper {
     }
 
     // TODO: add test for oracleObservationDelta, when pool exists less time
-    function getTickDeviationForTimeSpan(IUniswapV3Pool pool_, uint32 secondsAgo)
-        external
-        view
-        returns (bool withFail, int24 deviation)
-    {
-        int24 tick;
+    function getTickDeviationForTimeSpan(
+        int24 tick,
+        address pool_,
+        uint32 secondsAgo
+    ) external view returns (bool withFail, int24 deviation) {
         int24 averageTick;
-        (, tick, , , , , ) = pool_.slot0();
-        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), secondsAgo);
+        (averageTick, , withFail) = OracleLibrary.consult(pool_, secondsAgo);
         deviation = tick - averageTick;
     }
 }

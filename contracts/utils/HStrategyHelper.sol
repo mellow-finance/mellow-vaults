@@ -64,13 +64,13 @@ contract HStrategyHelper {
     }
 
     /// @notice calculates the current state of the position and pool with given oracle predictions
-    /// @param sqrtSpotPriceX96 square root of the spot price
+    /// @param tick current price tick
     /// @param strategyParams_ parameters of the strategy
     /// @param uniV3Nft the current position nft from position manager
     /// @param _positionManager uniV3 position manager
     /// @return domainPositionParams current position and pool state combined with predictions from the oracle
     function calculateDomainPositionParams(
-        uint160 sqrtSpotPriceX96,
+        int24 tick,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
         INonfungiblePositionManager _positionManager
@@ -88,10 +88,14 @@ contract HStrategyHelper {
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
             lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
             upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
-            spotPriceSqrtX96: sqrtSpotPriceX96,
+            spotPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
             spotPriceX96: 0
         });
-        domainPositionParams.spotPriceX96 = FullMath.mulDiv(sqrtSpotPriceX96, sqrtSpotPriceX96, CommonLibrary.Q96);
+        domainPositionParams.spotPriceX96 = FullMath.mulDiv(
+            domainPositionParams.spotPriceSqrtX96,
+            domainPositionParams.spotPriceSqrtX96,
+            CommonLibrary.Q96
+        );
     }
 
     /// @notice calculates amount of missing tokens for uniV3 and money vaults
@@ -453,36 +457,35 @@ contract HStrategyHelper {
     }
 
     /// @notice returns true if the rebalance between assets on different vaults is needed
-    /// @param pool_ Uniswap V3 pool of the strategy
+    /// @param tick current price tick
     /// @param hStrategyHelper_ the helper of the strategy
     /// @param strategyParams_ the current parameters of the strategy`
     /// @param uniV3Nft the nft of the position from position manager
     /// @param positionManager_ the position manager for uniV3
     function calculateAndCheckDomainPositionParams(
-        IUniswapV3Pool pool_,
+        int24 tick,
         HStrategyHelper hStrategyHelper_,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager_
     ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
-        {
-            (uint160 sqrtSpotPriceX96, , , , , , ) = pool_.slot0();
-            domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-                sqrtSpotPriceX96,
-                strategyParams_,
-                uniV3Nft,
-                positionManager_
-            );
-        }
+        domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
+            tick,
+            strategyParams_,
+            uniV3Nft,
+            positionManager_
+        );
         domainPositionParams = hStrategyHelper_.movePricesInDomainPosition(domainPositionParams);
     }
 
     function checkSpotTickDeviationFromAverage(
-        IUniswapV3Pool pool_,
+        int24 tick,
+        address pool_,
         HStrategy.OracleParams memory oracleParams_,
         UniV3Helper uniV3Helper
     ) external view {
         (bool withFail, int24 deviation) = uniV3Helper.getTickDeviationForTimeSpan(
+            tick,
             pool_,
             oracleParams_.averagePriceTimeSpan
         );

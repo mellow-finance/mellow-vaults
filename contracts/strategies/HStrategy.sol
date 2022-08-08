@@ -344,15 +344,18 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (RebalanceTokenAmounts memory actualPulledAmounts, uint256[] memory burnedAmounts)
     {
         _requireAtLeastOperator();
-        _hStrategyHelper.checkSpotTickDeviationFromAverage(pool, oracleParams, _uniV3Helper);
-        burnedAmounts = _partialRebalanceOfUniV3Position(restrictions);
-        actualPulledAmounts = _capitalRebalance(restrictions, moneyVaultOptions);
+        IUniswapV3Pool pool_ = pool;
+        (, int24 tick, , , , , ) = pool_.slot0();
+        _hStrategyHelper.checkSpotTickDeviationFromAverage(tick, address(pool_), oracleParams, _uniV3Helper);
+        burnedAmounts = _partialRebalanceOfUniV3Position(restrictions, tick);
+        actualPulledAmounts = _capitalRebalance(restrictions, moneyVaultOptions, tick);
     }
 
     /// @notice rebalance, that if needed burns old univ3 position and mints new
     /// @param restrictions the restrictions of the amount of tokens to be transferred
+    /// @param tick current price tick
     /// @return burnedAmounts actual transferred amounts of tokens from position while burn
-    function _partialRebalanceOfUniV3Position(RebalanceTokenAmounts memory restrictions)
+    function _partialRebalanceOfUniV3Position(RebalanceTokenAmounts memory restrictions, int24 tick)
         internal
         returns (uint256[] memory burnedAmounts)
     {
@@ -367,8 +370,18 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         burnedAmounts[1] = type(uint256).max;
 
         {
-            (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, pool_);
             Interval memory shortInterval_ = shortInterval;
+            int24 tickNeighborhood = strategyParams_.tickNeighborhood;
+
+            if (
+                shortInterval_.lowerTick + tickNeighborhood <= tick &&
+                shortInterval_.upperTick - tickNeighborhood >= tick
+            ) {
+                return burnedAmounts;
+            }
+
+            (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, tick);
+
             if (newLowerTick != shortInterval_.lowerTick || shortInterval_.upperTick != newUpperTick) {
                 shortInterval = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
             } else {
@@ -389,23 +402,25 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param moneyVaultOptions additional parameters for pulling for `pull` method for money vault
     /// @return actualPulledAmounts actual transferred amounts
-    function _capitalRebalance(RebalanceTokenAmounts memory restrictions, bytes memory moneyVaultOptions)
-        internal
-        returns (RebalanceTokenAmounts memory actualPulledAmounts)
-    {
+    function _capitalRebalance(
+        RebalanceTokenAmounts memory restrictions,
+        bytes memory moneyVaultOptions,
+        int24 tick
+    ) internal returns (RebalanceTokenAmounts memory actualPulledAmounts) {
         HStrategyHelper hStrategyHelper_ = _hStrategyHelper;
         IUniV3Vault uniV3Vault_ = uniV3Vault;
-        uint256 uniV3Nft = uniV3Vault_.uniV3Nft();
-        address[] memory tokens_ = tokens;
-        require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
-        DomainPositionParams memory domainPositionParams = hStrategyHelper_.calculateAndCheckDomainPositionParams(
-            pool,
-            hStrategyHelper_,
-            strategyParams,
-            uniV3Nft,
-            _positionManager
-        );
-
+        DomainPositionParams memory domainPositionParams;
+        {
+            uint256 uniV3Nft = uniV3Vault_.uniV3Nft();
+            require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
+            domainPositionParams = hStrategyHelper_.calculateAndCheckDomainPositionParams(
+                tick,
+                hStrategyHelper_,
+                strategyParams,
+                uniV3Nft,
+                _positionManager
+            );
+        }
         IIntegrationVault moneyVault_ = moneyVault;
         IIntegrationVault erc20Vault_ = erc20Vault;
         TokenAmounts memory currentTokenAmounts = hStrategyHelper_.calculateCurrentTokenAmounts(
@@ -422,6 +437,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             return actualPulledAmounts;
         }
 
+        address[] memory tokens_ = tokens;
         actualPulledAmounts.pulledToUniV3Vault = _pullExtraTokens(
             hStrategyHelper_,
             expectedTokenAmounts,
@@ -472,16 +488,15 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     /// @notice checks if the new position is needed. If no rebalance needed it reverts
     /// @param strategyParams_ current parameters of the strategy
-    /// @param pool_ the address of the uniV3 pool
+    /// @param tick current price tick
     /// @return newLowerTick lower tick of new position to be minted
     /// @return newUpperTick upper tick of new position to be minted
-    function _calculateNewPosition(StrategyParams memory strategyParams_, IUniswapV3Pool pool_)
+    function _calculateNewPosition(StrategyParams memory strategyParams_, int24 tick)
         internal
         view
         returns (int24 newLowerTick, int24 newUpperTick)
     {
-        (, int24 spotTick, , , , , ) = pool_.slot0();
-        (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(spotTick, strategyParams_);
+        (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(tick, strategyParams_);
     }
 
     /// @notice determining the amount of tokens to be swapped and swapping it
