@@ -36,7 +36,7 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
 
     /// @inheritdoc IPerpLPVault
     bool public isPositionOpened;
-    /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR)
+    /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR). Your real capital is C and your virtual capital is C * leverageMultiplier (a user will be trading the virtual asset)
     uint256 public leverageMultiplierD;
     /// @inheritdoc IPerpLPVault
     address public usdc;
@@ -70,6 +70,7 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         return uint256(usdcValue);
     }
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
         return super.supportsInterface(interfaceId) || (interfaceId == type(IPerpLPVault).interfaceId);
     }
@@ -217,10 +218,10 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
 
     // -------------------  INTERNAL, MUTATING  -------------------
 
-    /// @notice Push token amounts to vault
-    /// @param tokenAmounts Token amounts (nominated in USDC)
+    /// @notice Push token amounts to the vault
+    /// @param tokenAmounts Token amounts (nominated in USDC weis)
     /// @param options Encoded options for the vault
-    /// @return actualTokenAmounts Actual pushed token amounts (nominated in USDC)
+    /// @return actualTokenAmounts Actual pushed token amounts (nominated in USDC weis)
     function _push(uint256[] memory tokenAmounts, bytes memory options)
         internal
         override
@@ -251,9 +252,9 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         _adjustPosition(capitalToUse, opts.deadline);
     }
 
-    /// @notice Pulls token amounts from vault
+    /// @notice Pulls token amounts from the vault
     /// @param to Recepient address
-    /// @param tokenAmounts Token amounts (nominated in USDC)
+    /// @param tokenAmounts Token amounts (nominated in USDC weis)
     /// @param options Encoded options for the vault
     function _pull(
         address to,
@@ -284,8 +285,8 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         actualTokenAmounts[0] = usdcAmount;
     }
 
-    /// @notice Adjusts position capital from the current one to capitalToUse (nominated in USDC)
-    /// @param capitalToUse New position capital to be used after adjustment (nominated in USDC)
+    /// @notice Adjusts the position capital from the current one to capitalToUse (nominated in USDC weis)
+    /// @param capitalToUse The new position capital to be used after adjustment (nominated in USDC weis)
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _adjustPosition(uint256 capitalToUse, uint256 deadline) internal {
         PositionInfo memory currentPosition = _position;
@@ -313,8 +314,8 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         );
     }
 
-    /// @notice Close a temporarily created position
-    /// @dev Makes a call to clearing house only if the taker position size is not zero
+    /// @notice Close a Uni position, if the position has non-zero funds
+    /// @dev Makes a call to the clearing house only if the taker position size is not zero
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _closePermanentPositions(uint256 deadline) internal {
         int256 positionSize = accountBalance.getTakerPositionSize(address(this), baseToken);
@@ -334,8 +335,8 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
 
     /// @notice Corrects (add / remove) the position capital according with the current capital and the desired capital
     /// @dev Closes permament positions after manipulating the position capital
-    /// @param capital The current position capital (nominated in USDC)
-    /// @param desiredCapital The desired position capital (nominated in USDC)
+    /// @param capital The current position capital (nominated in USDC weis)
+    /// @param desiredCapital The desired position capital (nominated in USDC weis)
     /// @param liquidity The position liquidity
     /// @param lowerTick The lower price boundary of the position
     /// @param upperTick The upper price boundary of the position
@@ -407,12 +408,12 @@ contract PerpLPVault is IPerpLPVault, IntegrationVault {
         return _vaultGovernance.internalParams().registry.getApproved(_nft) == addr;
     }
 
-    /// @notice Calculates the position capital (nominated in USDC)
+    /// @notice Calculates the position capital (nominated in USDC weis)
     /// @param liquidity Uni position liquidity
     /// @param sqrtRatioX96 A sqrt price representing the current pool prices
     /// @param sqrtRatioAX96 A sqrt price representing the lower tick boundary
     /// @param sqrtRatioBX96 A sqrt price representing the upper tick boundary
-    /// @return uint256 Capital of the position (nominatted in USDC)
+    /// @return uint256 Capital of the position (nominated in USDC weis)
     function _calculatePositionCapital(
         uint128 liquidity,
         uint160 sqrtRatioX96,

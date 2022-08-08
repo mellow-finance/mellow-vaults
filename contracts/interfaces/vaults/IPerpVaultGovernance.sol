@@ -13,9 +13,9 @@ interface IPerpVaultGovernance is IVaultGovernance {
     /// @param vault Perp Protocol internal vault contract (deposits/withdrawals)
     /// @param clearingHouse Perp Protocol clearing house contract (open/close positions, add/remove liquidity, liquidate positions)
     /// @param accountBalance Perp Protocol account balance contract (get position total value, add/remove base token)
-    /// @param vusdcAddress Reference to Perp Protocol vUSDC (virtual USDC after applying leverage multiplier)
+    /// @param vusdcAddress Reference to Perp Protocol vUSDC (virtual USDC, it`s amount is equal to USDC amount multiplied by the current leverageMultiplier)
     /// @param usdcAddress Reference to USDC
-    /// @param uniV3FactoryAddress Reference to UniswapV3 factory
+    /// @param uniV3FactoryAddress Reference to the UniswapV3 factory
     /// @param maxProtocolLeverage Max possible vault capital leverage multiplier (currently 10x)
     struct DelayedProtocolParams {
         IPerpInternalVault vault;
