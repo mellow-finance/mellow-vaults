@@ -191,13 +191,13 @@ contract HStrategyHelper {
         );
         {
             // sqrt(upperPrice) * (sqrt(price) - sqrt(lowerPrice))
-            uint256 upperTermX96 = FullMath.mulDiv(
+            uint256 lowerPriceTermX96 = FullMath.mulDiv(
                 domainPositionParams.upperPriceSqrtX96,
                 domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
                 CommonLibrary.Q96
             );
             // sqrt(price) * (sqrt(upperPrice) - sqrt(price))
-            uint256 lowerTermX96 = FullMath.mulDiv(
+            uint256 upperPriceTermX96 = FullMath.mulDiv(
                 domainPositionParams.spotPriceSqrtX96,
                 domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96,
                 CommonLibrary.Q96
@@ -207,8 +207,8 @@ contract HStrategyHelper {
 
             amounts.uniV3Token1 = FullMath.mulDiv(
                 FullMath.mulDiv(uniV3CapitalInToken0, domainPositionParams.spotPriceX96, CommonLibrary.Q96),
-                upperTermX96,
-                upperTermX96 + lowerTermX96
+                lowerPriceTermX96,
+                lowerPriceTermX96 + upperPriceTermX96
             );
 
             amounts.uniV3Token0 =
