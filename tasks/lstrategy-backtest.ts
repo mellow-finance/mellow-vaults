@@ -383,7 +383,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         intervalWidthInTicks: 100,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
-        secondsBetweenRebalances: BigNumber.from(10).pow(6),
+        secondsBetweenRebalances: BigNumber.from(0),
     });
 
     return {
