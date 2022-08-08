@@ -408,28 +408,32 @@ contract HStrategyHelper {
                 currentTokenAmounts.erc20Token1 < minToken1Amount ||
                 currentTokenAmounts.erc20Token1 > maxToken1Amount
             ) {
-                needed = true;
+                return true;
             }
         }
-        if (!needed) {
-            uint256 minToken0Deviation = FullMath.mulDiv(
-                ratioParams.minCaptialDeviationD,
-                totalToken0Amount,
-                DENOMINATOR
-            );
-            uint256 minToken1Deviation = FullMath.mulDiv(
-                ratioParams.minCaptialDeviationD,
-                totalToken1Amount,
-                DENOMINATOR
-            );
 
+        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCaptialDeviationD, totalToken0Amount, DENOMINATOR);
+        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCaptialDeviationD, totalToken1Amount, DENOMINATOR);
+
+        {
             if (
                 currentTokenAmounts.moneyToken0 + minToken0Deviation < expectedTokenAmounts.moneyToken0 ||
                 currentTokenAmounts.moneyToken0 > expectedTokenAmounts.moneyToken0 + minToken0Deviation ||
                 currentTokenAmounts.moneyToken1 + minToken1Deviation < expectedTokenAmounts.moneyToken1 ||
                 currentTokenAmounts.moneyToken1 > expectedTokenAmounts.moneyToken1 + minToken1Deviation
             ) {
-                needed = true;
+                return true;
+            }
+        }
+
+        {
+            if (
+                currentTokenAmounts.uniV3Token0 + minToken0Deviation < expectedTokenAmounts.uniV3Token0 ||
+                currentTokenAmounts.uniV3Token0 > expectedTokenAmounts.uniV3Token0 + minToken0Deviation ||
+                currentTokenAmounts.uniV3Token1 + minToken1Deviation < expectedTokenAmounts.uniV3Token1 ||
+                currentTokenAmounts.uniV3Token1 > expectedTokenAmounts.uniV3Token1 + minToken1Deviation
+            ) {
+                return true;
             }
         }
     }
@@ -478,7 +482,11 @@ contract HStrategyHelper {
         HStrategy.OracleParams memory oracleParams_,
         UniV3Helper uniV3Helper
     ) external view {
-        (, , int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(pool_, oracleParams_.averagePriceTimeSpan);
+        (bool withFail, int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(
+            pool_,
+            oracleParams_.averagePriceTimeSpan
+        );
+        require(!withFail, ExceptionsLibrary.INVALID_STATE);
         if (deviation < 0) {
             deviation = -deviation;
         }
@@ -500,15 +508,15 @@ contract HStrategyHelper {
         deltaToLowerTick -= (deltaToLowerTick % strategyParams_.halfOfShortInterval);
         int24 lowerEstimationCentralTick = strategyParams_.domainLowerTick + deltaToLowerTick;
         int24 upperEstimationCentralTick = lowerEstimationCentralTick + strategyParams_.halfOfShortInterval;
-        int24 mintTick = 0;
+        int24 centralTick = 0;
         if (spotTick - lowerEstimationCentralTick <= upperEstimationCentralTick - spotTick) {
-            mintTick = lowerEstimationCentralTick;
+            centralTick = lowerEstimationCentralTick;
         } else {
-            mintTick = upperEstimationCentralTick;
+            centralTick = upperEstimationCentralTick;
         }
 
-        lowerTick = mintTick - strategyParams_.halfOfShortInterval;
-        upperTick = mintTick + strategyParams_.halfOfShortInterval;
+        lowerTick = centralTick - strategyParams_.halfOfShortInterval;
+        upperTick = centralTick + strategyParams_.halfOfShortInterval;
 
         if (lowerTick < strategyParams_.domainLowerTick) {
             lowerTick = strategyParams_.domainLowerTick;

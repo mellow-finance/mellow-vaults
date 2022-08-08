@@ -154,23 +154,15 @@ contract UniV3Helper {
     }
 
     // TODO: add test for oracleObservationDelta, when pool exists less time
-    function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 oracleObservationDelta)
+    function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 secondsAgo)
         external
         view
-        returns (
-            int24 averageTick,
-            uint160 sqrtSpotPriceX96,
-            int24 deviation
-        )
+        returns (bool withFail, int24 deviation)
     {
         int24 tick;
-        (sqrtSpotPriceX96, tick, , , , , ) = pool_.slot0();
-        bool withFail = false;
-        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), oracleObservationDelta);
-        // Fails when we dont have observations, so return spot averageTick as this was the last trade price
-        if (withFail) {
-            averageTick = tick;
-        }
+        int24 averageTick;
+        (, tick, , , , , ) = pool_.slot0();
+        (averageTick, , withFail) = OracleLibrary.consult(address(pool_), secondsAgo);
         deviation = tick - averageTick;
     }
 }

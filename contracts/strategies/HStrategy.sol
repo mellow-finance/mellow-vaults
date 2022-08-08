@@ -258,7 +258,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             newStrategyParams.halfOfShortInterval > 0 &&
                 (newStrategyParams.halfOfShortInterval % tickSpacing == 0) &&
                 newStrategyParams.tickNeighborhood <= newStrategyParams.halfOfShortInterval &&
-                newStrategyParams.tickNeighborhood >= 1000,
+                newStrategyParams.tickNeighborhood >= TickMath.MIN_TICK,
             ExceptionsLibrary.INVARIANT
         );
 
@@ -266,7 +266,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             (newStrategyParams.domainLowerTick % tickSpacing == 0) &&
                 (newStrategyParams.domainUpperTick % tickSpacing == 0) &&
-                globalIntervalWidth > 0 &&
                 globalIntervalWidth > newStrategyParams.halfOfShortInterval &&
                 (globalIntervalWidth % newStrategyParams.halfOfShortInterval == 0),
             ExceptionsLibrary.INVARIANT
@@ -312,6 +311,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             newRatioParams.erc20CapitalRatioD <= DENOMINATOR &&
                 newRatioParams.minCaptialDeviationD <= DENOMINATOR &&
+                newRatioParams.erc20CapitalRatioD >= newRatioParams.minCaptialDeviationD &&
                 newRatioParams.minRebalanceDeviationD > 0 &&
                 newRatioParams.minRebalanceDeviationD <= DENOMINATOR,
             ExceptionsLibrary.INVARIANT
@@ -370,7 +370,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, pool_);
             Interval memory shortInterval_ = shortInterval;
             if (newLowerTick != shortInterval_.lowerTick || shortInterval_.upperTick != newUpperTick) {
-                shortInterval_ = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
+                shortInterval = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
             } else {
                 return burnedAmounts;
             }
@@ -379,9 +379,9 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         if (uniV3Nft != 0) {
             // cannot burn only if it is first call of the rebalance function
             // and we dont have any position
-            burnedAmounts = _drainPosition(restrictions.burnedAmounts, erc20Vault_, uniV3Vault_, uniV3Nft, tokens_);
+            burnedAmounts = _drainPosition(restrictions, erc20Vault_, uniV3Vault_, uniV3Nft, tokens_);
         }
-
+        // --> you here now
         _mintPosition(pool_, restrictions.deadline, _positionManager, uniV3Vault_, uniV3Nft, tokens_);
     }
 
@@ -481,11 +481,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         returns (int24 newLowerTick, int24 newUpperTick)
     {
         (, int24 spotTick, , , , , ) = pool_.slot0();
-        if (strategyParams_.domainLowerTick > spotTick) {
-            spotTick = strategyParams_.domainLowerTick;
-        } else if (spotTick > strategyParams_.domainUpperTick) {
-            spotTick = strategyParams_.domainUpperTick;
-        }
         (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(spotTick, strategyParams_);
     }
 
@@ -683,22 +678,22 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     }
 
     /// @notice draining all assets from uniV3
-    /// @param burnAmounts minimum amount of tokens got from draining position
+    /// @param restrictions the restrictions of the amount of tokens to be transferred
     /// @param erc20Vault_ ERC20 vault of the strategy
     /// @param uniV3Vault_ UniswapV3 vault of the strategy
     /// @param uniV3Nft the nft of the position from position manager
     /// @param tokens_ the addresses of the tokens managed by the strategy
-    /// @return tokenAmounts actual amount of tokens got from draining position
+    /// @return drainedTokens actual amount of tokens got from draining position
     function _drainPosition(
-        uint256[] memory burnAmounts,
+        RebalanceTokenAmounts memory restrictions,
         IIntegrationVault erc20Vault_,
         IUniV3Vault uniV3Vault_,
         uint256 uniV3Nft,
         address[] memory tokens_
-    ) internal returns (uint256[] memory tokenAmounts) {
-        tokenAmounts = uniV3Vault_.liquidityToTokenAmounts(type(uint128).max);
-        tokenAmounts = uniV3Vault_.pull(address(erc20Vault_), tokens_, tokenAmounts, "");
-        _compareAmounts(burnAmounts, tokenAmounts);
+    ) internal returns (uint256[] memory drainedTokens) {
+        drainedTokens = uniV3Vault_.liquidityToTokenAmounts(type(uint128).max);
+        drainedTokens = uniV3Vault_.pull(address(erc20Vault_), tokens_, drainedTokens, "");
+        _compareAmounts(restrictions.burnedAmounts, drainedTokens);
         emit BurnUniV3Position(uniV3Nft);
     }
 
