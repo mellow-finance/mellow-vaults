@@ -154,7 +154,7 @@ contract UniV3Helper {
     }
 
     // TODO: add test for oracleObservationDelta, when pool exists less time
-    function getAverageTickAndSqrtSpotPrice(IUniswapV3Pool pool_, uint32 secondsAgo)
+    function getTickDeviationForTimeSpan(IUniswapV3Pool pool_, uint32 secondsAgo)
         external
         view
         returns (bool withFail, int24 deviation)

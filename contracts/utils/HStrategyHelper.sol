@@ -482,7 +482,7 @@ contract HStrategyHelper {
         HStrategy.OracleParams memory oracleParams_,
         UniV3Helper uniV3Helper
     ) external view {
-        (bool withFail, int24 deviation) = uniV3Helper.getAverageTickAndSqrtSpotPrice(
+        (bool withFail, int24 deviation) = uniV3Helper.getTickDeviationForTimeSpan(
             pool_,
             oracleParams_.averagePriceTimeSpan
         );
