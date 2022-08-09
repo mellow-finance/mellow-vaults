@@ -399,10 +399,10 @@ contract HStrategyHelper {
             params.intervalPriceSqrtX96,
             CommonLibrary.Q96
         );
-        if (params.intervalPriceSqrtX96 < params.lower0PriceSqrtX96) {
-            params.intervalPriceSqrtX96 = params.lower0PriceSqrtX96;
-        } else if (params.intervalPriceSqrtX96 > params.upper0PriceSqrtX96) {
-            params.intervalPriceSqrtX96 = params.upper0PriceSqrtX96;
+        if (params.intervalPriceSqrtX96 < params.lowerPriceSqrtX96) {
+            params.intervalPriceSqrtX96 = params.lowerPriceSqrtX96;
+        } else if (params.intervalPriceSqrtX96 > params.upperPriceSqrtX96) {
+            params.intervalPriceSqrtX96 = params.upperPriceSqrtX96;
         }
     }
 
