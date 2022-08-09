@@ -166,7 +166,8 @@ contract HStrategyHelper {
     function calculateExpectedTokenAmounts(
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
-        HStrategy.DomainPositionParams memory domainPositionParams
+        HStrategy.DomainPositionParams memory domainPositionParams,
+        UniV3Helper uniV3Helper
     ) external pure returns (HStrategy.TokenAmounts memory amounts) {
         amounts.erc20Token0 = FullMath.mulDiv(
             expectedRatios.token0RatioD,
@@ -189,32 +190,14 @@ contract HStrategyHelper {
             domainPositionParams.spotPriceX96,
             CommonLibrary.Q96
         );
-        {
-            // sqrt(upperPrice) * (sqrt(price) - sqrt(lowerPrice))
-            uint256 lowerPriceTermX96 = FullMath.mulDiv(
-                domainPositionParams.upperPriceSqrtX96,
-                domainPositionParams.intervalPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
-                CommonLibrary.Q96
-            );
-            // sqrt(price) * (sqrt(upperPrice) - sqrt(price))
-            uint256 upperPriceTermX96 = FullMath.mulDiv(
-                domainPositionParams.intervalPriceSqrtX96,
-                domainPositionParams.upperPriceSqrtX96 - domainPositionParams.intervalPriceSqrtX96,
-                CommonLibrary.Q96
-            );
-            // x0
-            uint256 uniV3CapitalInToken0 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0;
 
-            amounts.uniV3Token1 = FullMath.mulDiv(
-                FullMath.mulDiv(uniV3CapitalInToken0, domainPositionParams.spotPriceX96, CommonLibrary.Q96),
-                lowerPriceTermX96,
-                lowerPriceTermX96 + upperPriceTermX96
-            );
-
-            amounts.uniV3Token0 =
-                uniV3CapitalInToken0 -
-                FullMath.mulDiv(amounts.uniV3Token1, CommonLibrary.Q96, domainPositionParams.spotPriceX96);
-        }
+        (amounts.uniV3Token0, amounts.uniV3Token1) = uniV3Helper.getPositionTokenAmountsByCapitalOfToken0(
+            domainPositionParams.lowerPriceSqrtX96,
+            domainPositionParams.upperPriceSqrtX96,
+            domainPositionParams.intervalPriceSqrtX96,
+            domainPositionParams.spotPriceX96,
+            expectedTokenAmountsInToken0.uniV3TokensAmountInToken0
+        );
     }
 
     /// @notice calculates current amounts of tokens
