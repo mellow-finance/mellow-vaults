@@ -567,7 +567,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             );
             // --> you here now
 
-            if (extraTokenAmountsForPull[0] > 0 && extraTokenAmountsForPull[1] > 0) {
+            if (extraTokenAmountsForPull[0] > 0 || extraTokenAmountsForPull[1] > 0) {
                 uint256[] memory pulledFromUniV3VaultAmounts = uniV3Vault_.pull(
                     address(erc20Vault_),
                     tokens_,
@@ -618,7 +618,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         pulledToUniV3Vault = new uint256[](2);
         uint256[] memory extraTokenAmountsForPull = new uint256[](2);
         {
-            if (missingTokenAmounts.uniV3Token0 > 0 && missingTokenAmounts.uniV3Token1 > 0) {
+            if (missingTokenAmounts.uniV3Token0 > 0 || missingTokenAmounts.uniV3Token1 > 0) {
                 extraTokenAmountsForPull[0] = missingTokenAmounts.uniV3Token0;
                 extraTokenAmountsForPull[1] = missingTokenAmounts.uniV3Token1;
                 pulledToUniV3Vault = erc20Vault_.pull(address(uniV3Vault_), tokens_, extraTokenAmountsForPull, "");
