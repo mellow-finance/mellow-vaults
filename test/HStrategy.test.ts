@@ -1252,7 +1252,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
 
         describe("uni v3 vault", () => {
-            it("works", async () => {
+            xit("works", async () => {
                 await this.weth.transfer(
                     this.erc20Vault.address,
                     BigNumber.from(10).pow(18)
