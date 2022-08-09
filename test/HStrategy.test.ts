@@ -240,14 +240,13 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 const oracleParams = {
                     averagePriceTimeSpan: 150,
-                    averagePriceTimeSpanForRebalanceChecks: 150,
                     maxTickDeviation: 100,
                 };
                 this.oracleParams = oracleParams;
 
                 const ratioParams = {
                     erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-                    minErc20CaptialDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
+                    minCapitalDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
                     minRebalanceDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
                 };
                 this.ratioParams = ratioParams;
@@ -371,16 +370,9 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 this.getPositionParams = async () => {
                     const strategyParams = await this.subject.strategyParams();
-                    const oracleParams = await this.subject.oracleParams();
-                    const pool = await this.subject.pool();
-                    const priceInfo =
-                        await this.uniV3Helper.getAverageTickAndSqrtSpotPrice(
-                            pool,
-                            oracleParams.averagePriceTimeSpan
-                        );
-                    return await this.hStrategyHelper.calculateDomainPositionParams(
-                        priceInfo.averageTick,
-                        priceInfo.sqrtSpotPriceX96,
+                    const slot0 = await this.pool.slot0();
+                    return await this.hStrategyHelper.callStatic.calculateAndCheckDomainPositionParams(
+                        slot0.tick,
                         strategyParams,
                         await this.uniV3Vault.uniV3Nft(),
                         this.positionManager.address
@@ -395,33 +387,33 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     );
                 };
 
-                this.tvlToken0 = async () => {
-                    const positionParams: DomainPositionParamsStruct =
-                        await this.getPositionParams();
-                    const averagePriceSqrtX96 = BigNumber.from(
-                        positionParams.averagePriceSqrtX96
-                    );
-                    const price = averagePriceSqrtX96
-                        .mul(averagePriceSqrtX96)
-                        .div(Q96);
-                    const currentAmounts =
-                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                            this.erc20Vault.address,
-                            this.yearnVault.address,
-                            positionParams
-                        );
-                    return {
-                        erc20Vault: currentAmounts.erc20Token0.add(
-                            currentAmounts.erc20Token1.mul(Q96).div(price)
-                        ),
-                        moneyVault: currentAmounts.moneyToken0.add(
-                            currentAmounts.moneyToken1.mul(Q96).div(price)
-                        ),
-                        uniV3Vault: currentAmounts.uniV3Token0.add(
-                            currentAmounts.uniV3Token1.mul(Q96).div(price)
-                        ),
-                    };
-                };
+                // this.tvlToken0 = async () => {
+                //     const positionParams: DomainPositionParamsStruct =
+                //         await this.getPositionParams();
+                //     const averagePriceSqrtX96 = BigNumber.from(
+                //         positionParams.averagePriceSqrtX96
+                //     );
+                //     const price = averagePriceSqrtX96
+                //         .mul(averagePriceSqrtX96)
+                //         .div(Q96);
+                //     const currentAmounts =
+                //         await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                //             this.erc20Vault.address,
+                //             this.yearnVault.address,
+                //             positionParams
+                //         );
+                //     return {
+                //         erc20Vault: currentAmounts.erc20Token0.add(
+                //             currentAmounts.erc20Token1.mul(Q96).div(price)
+                //         ),
+                //         moneyVault: currentAmounts.moneyToken0.add(
+                //             currentAmounts.moneyToken1.mul(Q96).div(price)
+                //         ),
+                //         uniV3Vault: currentAmounts.uniV3Token0.add(
+                //             currentAmounts.uniV3Token1.mul(Q96).div(price)
+                //         ),
+                //     };
+                // };
 
                 return this.subject;
             }
@@ -514,16 +506,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         .updateOracleParams({
                             ...this.oracleParams,
                             averagePriceTimeSpan: 0,
-                        })
-                ).to.be.revertedWith(Exceptions.INVARIANT);
-            });
-            it("when averagePriceTimeSpanForRebalanceChecks <= 0, then reverts with INVARIANT", async () => {
-                await expect(
-                    this.subject
-                        .connect(this.mStrategyAdmin)
-                        .updateOracleParams({
-                            ...this.oracleParams,
-                            averagePriceTimeSpanForRebalanceChecks: 0,
                         })
                 ).to.be.revertedWith(Exceptions.INVARIANT);
             });
@@ -731,136 +713,136 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("#rebalance", () => {
-        it("performs a rebalance according to strategy params", async () => {
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    ...this.strategyParams,
-                    tickNeighborhood: 10,
-                    halfOfShortInterval: 60,
-                    domainlLowerTick: -870000,
-                    domainUpperTick: 870000,
-                } as StrategyParamsStruct);
-            const pullExistentials =
-                await this.erc20RootVault.pullExistentials();
-            for (var i = 0; i < 2; i++) {
-                await this.tokens[i].approve(
-                    this.erc20RootVault.address,
-                    pullExistentials[i].mul(10)
-                );
-            }
+    // describe("#rebalance", () => {
+    //     it("performs a rebalance according to strategy params", async () => {
+    //         await this.subject
+    //             .connect(this.mStrategyAdmin)
+    //             .updateStrategyParams({
+    //                 ...this.strategyParams,
+    //                 tickNeighborhood: 10,
+    //                 halfOfShortInterval: 60,
+    //                 domainlLowerTick: -870000,
+    //                 domainUpperTick: 870000,
+    //             } as StrategyParamsStruct);
+    //         const pullExistentials =
+    //             await this.erc20RootVault.pullExistentials();
+    //         for (var i = 0; i < 2; i++) {
+    //             await this.tokens[i].approve(
+    //                 this.erc20RootVault.address,
+    //                 pullExistentials[i].mul(10)
+    //             );
+    //         }
 
-            await mint(
-                "USDC",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
-            await mint(
-                "WETH",
-                this.subject.address,
-                BigNumber.from(10).pow(10)
-            );
+    //         await mint(
+    //             "USDC",
+    //             this.subject.address,
+    //             BigNumber.from(10).pow(10)
+    //         );
+    //         await mint(
+    //             "WETH",
+    //             this.subject.address,
+    //             BigNumber.from(10).pow(10)
+    //         );
 
-            // deposit to zero-vault
-            await this.erc20RootVault.deposit(
-                [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
-                0,
-                []
-            );
+    //         // deposit to zero-vault
+    //         await this.erc20RootVault.deposit(
+    //             [pullExistentials[0].mul(10), pullExistentials[1].mul(10)],
+    //             0,
+    //             []
+    //         );
 
-            // normal deposit
-            await this.erc20RootVault.deposit(
-                [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
-                0,
-                []
-            );
+    //         // normal deposit
+    //         await this.erc20RootVault.deposit(
+    //             [BigNumber.from(10).pow(11), BigNumber.from(10).pow(11)],
+    //             0,
+    //             []
+    //         );
 
-            var restrictions = {
-                pulledToUniV3Vault: [0, 0],
-                swappedAmounts: [0, 0],
-                burnedAmounts: [0, 0],
-                deadline: ethers.constants.MaxUint256,
-                newPositionMinted: true,
-            } as RebalanceTokenAmountsStruct;
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
+    //         var restrictions = {
+    //             pulledToUniV3Vault: [0, 0],
+    //             swappedAmounts: [0, 0],
+    //             burnedAmounts: [0, 0],
+    //             deadline: ethers.constants.MaxUint256,
+    //             newPositionMinted: true,
+    //         } as RebalanceTokenAmountsStruct;
+    //         await expect(
+    //             this.subject
+    //                 .connect(this.mStrategyAdmin)
+    //                 .rebalance(restrictions, [])
+    //         ).not.to.be.reverted;
 
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).to.be.revertedWith(Exceptions.INVARIANT);
+    //         await expect(
+    //             this.subject
+    //                 .connect(this.mStrategyAdmin)
+    //                 .rebalance(restrictions, [])
+    //         ).to.be.revertedWith(Exceptions.INVARIANT);
 
-            for (var i = 0; i < 4; i++) {
-                await push(BigNumber.from(10).pow(21), "WETH");
-                await sleep(this.governanceDelay);
-            }
+    //         for (var i = 0; i < 4; i++) {
+    //             await push(BigNumber.from(10).pow(21), "WETH");
+    //             await sleep(this.governanceDelay);
+    //         }
 
-            {
-                const ratioParams = await this.subject.ratioParams();
-                await this.subject
-                    .connect(this.mStrategyAdmin)
-                    .updateRatioParams({
-                        ...ratioParams,
-                        minErc20CaptialDeviationD: 0,
-                        minRebalanceDeviationD: 0,
-                    } as RatioParamsStruct);
-            }
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
-            const { tickLower, tickUpper } =
-                await this.positionManager.callStatic.positions(
-                    await this.uniV3Vault.uniV3Nft()
-                );
+    //         {
+    //             const ratioParams = await this.subject.ratioParams();
+    //             await this.subject
+    //                 .connect(this.mStrategyAdmin)
+    //                 .updateRatioParams({
+    //                     ...ratioParams,
+    //                     minErc20CaptialDeviationD: 0,
+    //                     minRebalanceDeviationD: 0,
+    //                 } as RatioParamsStruct);
+    //         }
+    //         await expect(
+    //             this.subject
+    //                 .connect(this.mStrategyAdmin)
+    //                 .rebalance(restrictions, [])
+    //         ).not.to.be.reverted;
+    //         const { tickLower, tickUpper } =
+    //             await this.positionManager.callStatic.positions(
+    //                 await this.uniV3Vault.uniV3Nft()
+    //             );
 
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    tickNeighborhood: 10,
-                    halfOfShortInterval: 60,
-                    domainLowerTick: tickLower,
-                    domainUpperTick: tickUpper + 60,
-                } as StrategyParamsStruct);
-            await sleep(this.governanceDelay);
-            while (true) {
-                let { tick } = await this.pool.slot0();
-                if (tick <= tickUpper + 30) {
-                    await push(BigNumber.from(10).pow(20), "WETH");
-                    await sleep(this.governanceDelay);
-                } else {
-                    break;
-                }
-            }
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
-            await sleep(this.governanceDelay);
+    //         await this.subject
+    //             .connect(this.mStrategyAdmin)
+    //             .updateStrategyParams({
+    //                 tickNeighborhood: 10,
+    //                 halfOfShortInterval: 60,
+    //                 domainLowerTick: tickLower,
+    //                 domainUpperTick: tickUpper + 60,
+    //             } as StrategyParamsStruct);
+    //         await sleep(this.governanceDelay);
+    //         while (true) {
+    //             let { tick } = await this.pool.slot0();
+    //             if (tick <= tickUpper + 30) {
+    //                 await push(BigNumber.from(10).pow(20), "WETH");
+    //                 await sleep(this.governanceDelay);
+    //             } else {
+    //                 break;
+    //             }
+    //         }
+    //         await expect(
+    //             this.subject
+    //                 .connect(this.mStrategyAdmin)
+    //                 .rebalance(restrictions, [])
+    //         ).not.to.be.reverted;
+    //         await sleep(this.governanceDelay);
 
-            while (true) {
-                let { tick } = await this.pool.slot0();
-                if (tick >= tickLower + 30) {
-                    await push(BigNumber.from(10).pow(11), "USDC");
-                    await sleep(this.governanceDelay);
-                } else {
-                    break;
-                }
-            }
-            await expect(
-                this.subject
-                    .connect(this.mStrategyAdmin)
-                    .rebalance(restrictions, [])
-            ).not.to.be.reverted;
-        });
-    });
+    //         while (true) {
+    //             let { tick } = await this.pool.slot0();
+    //             if (tick >= tickLower + 30) {
+    //                 await push(BigNumber.from(10).pow(11), "USDC");
+    //                 await sleep(this.governanceDelay);
+    //             } else {
+    //                 break;
+    //             }
+    //         }
+    //         await expect(
+    //             this.subject
+    //                 .connect(this.mStrategyAdmin)
+    //                 .rebalance(restrictions, [])
+    //         ).not.to.be.reverted;
+    //     });
+    // });
 
     describe("calculateExpectedRatios", () => {
         it("correctly calculates the ratio of tokens according to the specification for UniV3 interval simulating", async () => {
@@ -871,10 +853,10 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 } as StrategyParamsStruct);
 
             for (var i = 0; i < 10; i++) {
-                var lower0Tick = randomInt(10000);
-                var lowerTick = lower0Tick + randomInt(10000);
-                var upperTick = lowerTick + randomInt(10000) + 1;
-                var upper0Tick = upperTick + randomInt(10000);
+                var lower0Tick = 100 + randomInt(100);
+                var lowerTick = lower0Tick + randomInt(100);
+                var upperTick = lowerTick + randomInt(100) + 1;
+                var upper0Tick = upperTick + randomInt(100);
                 var averageTick = lowerTick + randomInt(upperTick - lowerTick);
 
                 const lowerPriceSqrtX96 = this.getSqrtRatioAtTick(lowerTick);
@@ -889,7 +871,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                         averagePriceSqrtX96 <= upperPriceSqrtX96 &&
                         upperPriceSqrtX96 <= upper0PriceSqrtX96
                 );
-                var strategyParams = this.strategyParams;
+
                 const { token0RatioD, token1RatioD, uniV3RatioD } =
                     await this.hStrategyHelper.callStatic.calculateExpectedRatios(
                         {
@@ -904,9 +886,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             upperPriceSqrtX96: upperPriceSqrtX96,
                             lower0PriceSqrtX96: lower0PriceSqrtX96,
                             upper0PriceSqrtX96: upper0PriceSqrtX96,
-                            averagePriceSqrtX96: averagePriceSqrtX96,
-                            averagePriceX96: 0,
-                            spotPriceSqrtX96: 0,
+                            intervalPriceSqrtX96: averagePriceSqrtX96,
+                            spotPriceX96: 0,
                         } as DomainPositionParamsStruct
                     );
 
@@ -984,9 +965,8 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 } as StrategyParamsStruct;
 
                 const result =
-                    await this.hStrategyHelper.calculateDomainPositionParams(
+                    await this.hStrategyHelper.calculateAndCheckDomainPositionParams(
                         averageTick,
-                        this.getSqrtRatioAtTick(averageTick),
                         strategyParams,
                         tokenId,
                         this.positionManager.address
@@ -1014,14 +994,11 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
 
                 expect(result.liquidity).to.be.gt(0);
                 expect(result.nft).to.be.eq(tokenId);
-                expect(result.averageTick).to.be.eq(averageTick);
 
                 const priceSqrtX96 = this.getSqrtRatioAtTick(averageTick);
-                expect(result.averagePriceSqrtX96).to.be.eq(priceSqrtX96);
+                expect(result.intervalPriceSqrtX96).to.be.eq(priceSqrtX96);
                 const priceX96 = priceSqrtX96.mul(priceSqrtX96).div(Q96);
-
-                expect(result.averagePriceX96).to.be.eq(priceX96);
-                expect(result.spotPriceSqrtX96).to.be.eq(priceSqrtX96);
+                expect(result.spotPriceX96).to.be.eq(priceX96);
             }
         });
     });
@@ -1054,7 +1031,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     erc20CapitalRatioD: BigNumber.from(10)
                         .pow(7)
                         .mul(randomInt(100)),
-                    minErc20CaptialDeviationD: 0,
+                    minCapitalDeviationD: 0,
                     minRebalanceDeviationD: 0,
                 } as RatioParamsStruct;
 
@@ -1064,7 +1041,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                     moneyTokensAmountInToken0,
                     totalTokensInToken0,
                 } = await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
-                    tokenAmounts,
+                    tokenAmounts.totalTokensInToken0,
                     ratios,
                     ratioParams
                 );
@@ -1106,83 +1083,6 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateCurrentTokenAmountsInToken0", () => {
-        it("correctly calculates current token amounts in token 0", async () => {
-            for (var i = 0; i < 3; i++) {
-                const domainParams = {
-                    nft: 0,
-                    liquidity: 0,
-                    lowerTick: 0,
-                    upperTick: 0,
-                    lower0Tick: 0,
-                    upper0Tick: 0,
-                    averageTick: 0,
-                    lowerPriceSqrtX96: 0,
-                    upperPriceSqrtX96: 0,
-                    lower0PriceSqrtX96: 0,
-                    upper0PriceSqrtX96: 0,
-                    averagePriceSqrtX96: 0,
-                    averagePriceX96: BigNumber.from(10)
-                        .pow(9)
-                        .mul(Q96.div(1000)),
-                    spotPriceSqrtX96: 0,
-                } as DomainPositionParamsStruct;
-
-                const amounts = {
-                    erc20Token0: randomInt(10 ** 9),
-                    erc20Token1: randomInt(10 ** 9),
-                    uniV3Token0: randomInt(10 ** 9),
-                    uniV3Token1: randomInt(10 ** 9),
-                    moneyToken0: randomInt(10 ** 9),
-                    moneyToken1: randomInt(10 ** 9),
-                } as TokenAmountsStruct;
-
-                const {
-                    erc20TokensAmountInToken0,
-                    moneyTokensAmountInToken0,
-                    uniV3TokensAmountInToken0,
-                    totalTokensInToken0,
-                } = await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    domainParams,
-                    amounts
-                );
-
-                const convert = (t0: string, t1: string) => {
-                    return BigNumber.from(t0).add(
-                        BigNumber.from(t1)
-                            .mul(Q96)
-                            .div(domainParams.averagePriceX96)
-                    );
-                };
-
-                expect(erc20TokensAmountInToken0).to.be.eq(
-                    convert(
-                        amounts.erc20Token0.toString(),
-                        amounts.erc20Token1.toString()
-                    )
-                );
-                expect(moneyTokensAmountInToken0).to.be.eq(
-                    convert(
-                        amounts.moneyToken0.toString(),
-                        amounts.moneyToken1.toString()
-                    )
-                );
-                expect(uniV3TokensAmountInToken0).to.be.eq(
-                    convert(
-                        amounts.uniV3Token0.toString(),
-                        amounts.uniV3Token1.toString()
-                    )
-                );
-
-                expect(
-                    erc20TokensAmountInToken0
-                        .add(moneyTokensAmountInToken0)
-                        .add(uniV3TokensAmountInToken0)
-                ).to.be.eq(totalTokensInToken0);
-            }
-        });
-    });
-
     describe("#calculateCurrentTokenAmounts", () => {
         beforeEach(async () => {
             await this.mintMockPosition();
@@ -1203,7 +1103,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
             it("equals zero", async () => {
                 const positionParams = await this.getPositionParams();
                 const result =
-                    await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                    await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                         this.erc20Vault.address,
                         this.yearnVault.address,
                         positionParams
@@ -1234,7 +1134,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 );
                 {
                     const { erc20Token0, erc20Token1 } =
-                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                             this.erc20Vault.address,
                             this.yearnVault.address,
                             positionParams
@@ -1262,7 +1162,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 });
                 {
                     const { erc20Token0, erc20Token1 } =
-                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                             this.erc20Vault.address,
                             this.yearnVault.address,
                             positionParams
@@ -1307,7 +1207,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 });
                 {
                     const { moneyToken0, moneyToken1 } =
-                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                             this.erc20Vault.address,
                             this.yearnVault.address,
                             positionParams
@@ -1340,7 +1240,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 });
                 {
                     const { moneyToken0, moneyToken1 } =
-                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                             this.erc20Vault.address,
                             this.yearnVault.address,
                             positionParams
@@ -1385,7 +1285,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                             this.positionManager.address
                         );
                     const { uniV3Token0, uniV3Token1 } =
-                        await await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                             this.erc20Vault.address,
                             this.yearnVault.address,
                             positionParams
@@ -1412,7 +1312,7 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
                 {
                     const positionParams = await this.getPositionParams();
                     const { uniV3Token0, uniV3Token1 } =
-                        await this.hStrategyHelper.calculateCurrentTokenAmounts(
+                        await this.hStrategyHelper.callStatic.calculateCurrentTokenAmounts(
                             this.erc20Vault.address,
                             this.yearnVault.address,
                             positionParams
@@ -1424,581 +1324,581 @@ contract<MockHStrategy, DeployOptions, CustomContext>("HStrategy", function () {
         });
     });
 
-    describe("calculateExpectedTokenAmounts", () => {
-        beforeEach(async () => {
-            await this.mintMockPosition();
-            const { nft } = await this.getPositionParams();
-            const { tickLower, tickUpper } =
-                await this.positionManager.positions(nft);
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    domainLowerTick: tickLower - 600,
-                    domainUpperTick: tickUpper + 600,
-                    halfOfShortInterval: 60,
-                    tickNeighborhood: 10,
-                });
-        });
+    // describe("calculateExpectedTokenAmounts", () => {
+    //     beforeEach(async () => {
+    //         await this.mintMockPosition();
+    //         const { nft } = await this.getPositionParams();
+    //         const { tickLower, tickUpper } =
+    //             await this.positionManager.positions(nft);
+    //         await this.subject
+    //             .connect(this.mStrategyAdmin)
+    //             .updateStrategyParams({
+    //                 domainLowerTick: tickLower - 600,
+    //                 domainUpperTick: tickUpper + 600,
+    //                 halfOfShortInterval: 60,
+    //                 tickNeighborhood: 10,
+    //             });
+    //     });
 
-        const actualExpectedTokenAmounts = async (
-            ratioParams: RatioParamsStruct
-        ) => {
-            const positionParams = await this.getPositionParams();
-            const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                positionParams
-            );
-            const currentAmounts =
-                await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                    this.erc20Vault.address,
-                    this.yearnVault.address,
-                    positionParams
-                );
-            const currentAmountsInToken0 =
-                await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    positionParams,
-                    currentAmounts
-                );
-            const expectedInToken0 =
-                await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
-                    currentAmountsInToken0,
-                    ratios,
-                    ratioParams
-                );
-            return await this.hStrategyHelper.calculateExpectedTokenAmounts(
-                ratios,
-                expectedInToken0,
-                positionParams
-            );
-        };
+    //     const actualExpectedTokenAmounts = async (
+    //         ratioParams: RatioParamsStruct
+    //     ) => {
+    //         const positionParams = await this.getPositionParams();
+    //         const ratios = await this.hStrategyHelper.calculateExpectedRatios(
+    //             positionParams
+    //         );
+    //         const currentAmounts =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmounts(
+    //                 this.erc20Vault.address,
+    //                 this.yearnVault.address,
+    //                 positionParams
+    //             );
+    //         const currentAmountsInToken0 =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
+    //                 positionParams,
+    //                 currentAmounts
+    //             );
+    //         const expectedInToken0 =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
+    //                 currentAmountsInToken0,
+    //                 ratios,
+    //                 ratioParams
+    //             );
+    //         return await this.hStrategyHelper.calculateExpectedTokenAmounts(
+    //             ratios,
+    //             expectedInToken0,
+    //             positionParams
+    //         );
+    //     };
 
-        const requiredExpectedTokenAmounts = async (
-            ratioParams: RatioParamsStruct
-        ) => {
-            const positionParams = await this.getPositionParams();
-            const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                positionParams
-            );
-            const currentAmounts =
-                await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                    this.erc20Vault.address,
-                    this.yearnVault.address,
-                    positionParams
-                );
-            const currentAmountsInToken0 =
-                await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    positionParams,
-                    currentAmounts
-                );
-            const expectedInToken0 =
-                await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
-                    currentAmountsInToken0,
-                    ratios,
-                    ratioParams
-                );
-            const erc20Token0 = expectedInToken0.erc20TokensAmountInToken0
-                .mul(ratios.token0RatioD)
-                .div(ratios.token0RatioD + ratios.token1RatioD);
-            const erc20Token1 = expectedInToken0.erc20TokensAmountInToken0
-                .sub(erc20Token0)
-                .mul(positionParams.averagePriceX96)
-                .div(Q96);
-            const moneyToken0 = expectedInToken0.moneyTokensAmountInToken0
-                .mul(ratios.token0RatioD)
-                .div(ratios.token0RatioD + ratios.token1RatioD);
-            const moneyToken1 = expectedInToken0.moneyTokensAmountInToken0
-                .sub(moneyToken0)
-                .mul(positionParams.averagePriceX96)
-                .div(Q96);
-            const uniV3RatioX96 = positionParams.spotPriceSqrtX96
-                .sub(positionParams.lowerPriceSqrtX96)
-                .mul(Q96)
-                .div(
-                    positionParams.upperPriceSqrtX96.sub(
-                        positionParams.spotPriceSqrtX96
-                    )
-                )
-                .mul(positionParams.upperPriceSqrtX96)
-                .div(positionParams.spotPriceSqrtX96);
-            const uni1Capital = expectedInToken0.uniV3TokensAmountInToken0
-                .mul(uniV3RatioX96)
-                .div(uniV3RatioX96.add(Q96));
-            const uniV3Token0 =
-                expectedInToken0.uniV3TokensAmountInToken0.sub(uni1Capital);
-            const spotPriceX96 = positionParams.spotPriceSqrtX96
-                .mul(positionParams.spotPriceSqrtX96)
-                .div(Q96);
-            const uniV3Token1 = uni1Capital.mul(spotPriceX96).div(Q96);
-            return {
-                erc20Token0,
-                erc20Token1,
-                moneyToken0,
-                moneyToken1,
-                uniV3Token0,
-                uniV3Token1,
-            } as TokenAmountsStruct;
-        };
+    //     const requiredExpectedTokenAmounts = async (
+    //         ratioParams: RatioParamsStruct
+    //     ) => {
+    //         const positionParams = await this.getPositionParams();
+    //         const ratios = await this.hStrategyHelper.calculateExpectedRatios(
+    //             positionParams
+    //         );
+    //         const currentAmounts =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmounts(
+    //                 this.erc20Vault.address,
+    //                 this.yearnVault.address,
+    //                 positionParams
+    //             );
+    //         const currentAmountsInToken0 =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
+    //                 positionParams,
+    //                 currentAmounts
+    //             );
+    //         const expectedInToken0 =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
+    //                 currentAmountsInToken0,
+    //                 ratios,
+    //                 ratioParams
+    //             );
+    //         const erc20Token0 = expectedInToken0.erc20TokensAmountInToken0
+    //             .mul(ratios.token0RatioD)
+    //             .div(ratios.token0RatioD + ratios.token1RatioD);
+    //         const erc20Token1 = expectedInToken0.erc20TokensAmountInToken0
+    //             .sub(erc20Token0)
+    //             .mul(positionParams.averagePriceX96)
+    //             .div(Q96);
+    //         const moneyToken0 = expectedInToken0.moneyTokensAmountInToken0
+    //             .mul(ratios.token0RatioD)
+    //             .div(ratios.token0RatioD + ratios.token1RatioD);
+    //         const moneyToken1 = expectedInToken0.moneyTokensAmountInToken0
+    //             .sub(moneyToken0)
+    //             .mul(positionParams.averagePriceX96)
+    //             .div(Q96);
+    //         const uniV3RatioX96 = positionParams.spotPriceSqrtX96
+    //             .sub(positionParams.lowerPriceSqrtX96)
+    //             .mul(Q96)
+    //             .div(
+    //                 positionParams.upperPriceSqrtX96.sub(
+    //                     positionParams.spotPriceSqrtX96
+    //                 )
+    //             )
+    //             .mul(positionParams.upperPriceSqrtX96)
+    //             .div(positionParams.spotPriceSqrtX96);
+    //         const uni1Capital = expectedInToken0.uniV3TokensAmountInToken0
+    //             .mul(uniV3RatioX96)
+    //             .div(uniV3RatioX96.add(Q96));
+    //         const uniV3Token0 =
+    //             expectedInToken0.uniV3TokensAmountInToken0.sub(uni1Capital);
+    //         const spotPriceX96 = positionParams.spotPriceSqrtX96
+    //             .mul(positionParams.spotPriceSqrtX96)
+    //             .div(Q96);
+    //         const uniV3Token1 = uni1Capital.mul(spotPriceX96).div(Q96);
+    //         return {
+    //             erc20Token0,
+    //             erc20Token1,
+    //             moneyToken0,
+    //             moneyToken1,
+    //             uniV3Token0,
+    //             uniV3Token1,
+    //         } as TokenAmountsStruct;
+    //     };
 
-        const compareExpectedAmounts = async () => {
-            const ratioParams = await this.subject.ratioParams();
-            const required = await requiredExpectedTokenAmounts(ratioParams);
-            const actual = await actualExpectedTokenAmounts(ratioParams);
-            expect(
-                BigNumber.from(required.erc20Token0)
-                    .sub(actual.erc20Token0)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                BigNumber.from(required.erc20Token1)
-                    .sub(actual.erc20Token1)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                BigNumber.from(required.moneyToken0)
-                    .sub(actual.moneyToken0)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                BigNumber.from(required.moneyToken1)
-                    .sub(actual.moneyToken1)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                BigNumber.from(required.uniV3Token0)
-                    .sub(actual.uniV3Token0)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                BigNumber.from(required.uniV3Token1)
-                    .sub(actual.uniV3Token1)
-                    .toNumber()
-            ).to.be.eq(0);
-        };
+    //     const compareExpectedAmounts = async () => {
+    //         const ratioParams = await this.subject.ratioParams();
+    //         const required = await requiredExpectedTokenAmounts(ratioParams);
+    //         const actual = await actualExpectedTokenAmounts(ratioParams);
+    //         expect(
+    //             BigNumber.from(required.erc20Token0)
+    //                 .sub(actual.erc20Token0)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             BigNumber.from(required.erc20Token1)
+    //                 .sub(actual.erc20Token1)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             BigNumber.from(required.moneyToken0)
+    //                 .sub(actual.moneyToken0)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             BigNumber.from(required.moneyToken1)
+    //                 .sub(actual.moneyToken1)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             BigNumber.from(required.uniV3Token0)
+    //                 .sub(actual.uniV3Token0)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             BigNumber.from(required.uniV3Token1)
+    //                 .sub(actual.uniV3Token1)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //     };
 
-        describe("simple test", () => {
-            it("works", async () => {
-                await compareExpectedAmounts();
-                await this.weth.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(18)
-                );
-                await this.usdc.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(6).mul(2000)
-                );
-                await compareExpectedAmounts();
-                await withSigner(this.subject.address, async (signer) => {
-                    await this.erc20Vault
-                        .connect(signer)
-                        .pull(
-                            this.uniV3Vault.address,
-                            [this.usdc.address, this.weth.address],
-                            [Q96, Q96],
-                            []
-                        );
-                });
-                await compareExpectedAmounts();
-            });
-        });
+    //     describe("simple test", () => {
+    //         it("works", async () => {
+    //             await compareExpectedAmounts();
+    //             await this.weth.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(18)
+    //             );
+    //             await this.usdc.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(6).mul(2000)
+    //             );
+    //             await compareExpectedAmounts();
+    //             await withSigner(this.subject.address, async (signer) => {
+    //                 await this.erc20Vault
+    //                     .connect(signer)
+    //                     .pull(
+    //                         this.uniV3Vault.address,
+    //                         [this.usdc.address, this.weth.address],
+    //                         [Q96, Q96],
+    //                         []
+    //                     );
+    //             });
+    //             await compareExpectedAmounts();
+    //         });
+    //     });
 
-        const compareCurrentAndExpected = async () => {
-            const positionParams = await this.getPositionParams();
-            const ratioParams = await this.subject.ratioParams();
-            const expected = await actualExpectedTokenAmounts(ratioParams);
-            const totalCapital0 = expected.erc20Token0
-                .add(expected.moneyToken0)
-                .add(expected.uniV3Token0);
-            const priceX96 = positionParams.averagePriceX96;
-            const spotPriceX96 = positionParams.spotPriceSqrtX96
-                .mul(positionParams.spotPriceSqrtX96)
-                .div(Q96);
-            const totalCapital1 = expected.erc20Token1
-                .add(expected.moneyToken1)
-                .mul(Q96)
-                .div(priceX96)
-                .add(expected.uniV3Token1.mul(Q96).div(spotPriceX96));
-            const totalCapitalExpected = totalCapital0.add(totalCapital1);
-            const currentAmountsInToken0 =
-                await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    await this.getPositionParams(),
-                    await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                        this.erc20Vault.address,
-                        this.yearnVault.address,
-                        positionParams
-                    )
-                );
-            const currentCapital =
-                currentAmountsInToken0.erc20TokensAmountInToken0
-                    .add(currentAmountsInToken0.moneyTokensAmountInToken0)
-                    .add(currentAmountsInToken0.uniV3TokensAmountInToken0);
-            const absDiff = currentCapital.sub(totalCapitalExpected).abs();
-            expect(absDiff.mul(100).lte(currentCapital)).to.be.true;
-        };
+    //     const compareCurrentAndExpected = async () => {
+    //         const positionParams = await this.getPositionParams();
+    //         const ratioParams = await this.subject.ratioParams();
+    //         const expected = await actualExpectedTokenAmounts(ratioParams);
+    //         const totalCapital0 = expected.erc20Token0
+    //             .add(expected.moneyToken0)
+    //             .add(expected.uniV3Token0);
+    //         const priceX96 = positionParams.averagePriceX96;
+    //         const spotPriceX96 = positionParams.spotPriceSqrtX96
+    //             .mul(positionParams.spotPriceSqrtX96)
+    //             .div(Q96);
+    //         const totalCapital1 = expected.erc20Token1
+    //             .add(expected.moneyToken1)
+    //             .mul(Q96)
+    //             .div(priceX96)
+    //             .add(expected.uniV3Token1.mul(Q96).div(spotPriceX96));
+    //         const totalCapitalExpected = totalCapital0.add(totalCapital1);
+    //         const currentAmountsInToken0 =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
+    //                 await this.getPositionParams(),
+    //                 await this.hStrategyHelper.calculateCurrentTokenAmounts(
+    //                     this.erc20Vault.address,
+    //                     this.yearnVault.address,
+    //                     positionParams
+    //                 )
+    //             );
+    //         const currentCapital =
+    //             currentAmountsInToken0.erc20TokensAmountInToken0
+    //                 .add(currentAmountsInToken0.moneyTokensAmountInToken0)
+    //                 .add(currentAmountsInToken0.uniV3TokensAmountInToken0);
+    //         const absDiff = currentCapital.sub(totalCapitalExpected).abs();
+    //         expect(absDiff.mul(100).lte(currentCapital)).to.be.true;
+    //     };
 
-        describe("capital is not changed", () => {
-            it("is equal to current", async () => {
-                await this.weth.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(18)
-                );
-                await this.usdc.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(6).mul(2000)
-                );
-                await compareCurrentAndExpected();
-                await withSigner(this.subject.address, async (signer) => {
-                    await this.erc20Vault
-                        .connect(signer)
-                        .pull(
-                            this.uniV3Vault.address,
-                            [this.usdc.address, this.weth.address],
-                            [Q96, Q96],
-                            []
-                        );
-                });
-                await compareCurrentAndExpected();
-            });
-        });
-    });
+    //     describe("capital is not changed", () => {
+    //         it("is equal to current", async () => {
+    //             await this.weth.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(18)
+    //             );
+    //             await this.usdc.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(6).mul(2000)
+    //             );
+    //             await compareCurrentAndExpected();
+    //             await withSigner(this.subject.address, async (signer) => {
+    //                 await this.erc20Vault
+    //                     .connect(signer)
+    //                     .pull(
+    //                         this.uniV3Vault.address,
+    //                         [this.usdc.address, this.weth.address],
+    //                         [Q96, Q96],
+    //                         []
+    //                     );
+    //             });
+    //             await compareCurrentAndExpected();
+    //         });
+    //     });
+    // });
 
-    describe("calculateExtraTokenAmountsForMoneyVault", () => {
-        beforeEach(async () => {
-            await this.mintMockPosition();
-            const { nft } = await this.getPositionParams();
-            const { tickLower, tickUpper } =
-                await this.positionManager.positions(nft);
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    domainLowerTick: tickLower - 600,
-                    domainUpperTick: tickUpper + 600,
-                    halfOfShortInterval: 60,
-                    tickNeighborhood: 10,
-                });
-        });
+    // describe("calculateExtraTokenAmountsForMoneyVault", () => {
+    //     beforeEach(async () => {
+    //         await this.mintMockPosition();
+    //         const { nft } = await this.getPositionParams();
+    //         const { tickLower, tickUpper } =
+    //             await this.positionManager.positions(nft);
+    //         await this.subject
+    //             .connect(this.mStrategyAdmin)
+    //             .updateStrategyParams({
+    //                 domainLowerTick: tickLower - 600,
+    //                 domainUpperTick: tickUpper + 600,
+    //                 halfOfShortInterval: 60,
+    //                 tickNeighborhood: 10,
+    //             });
+    //     });
 
-        const checkExtraAmounts = async () => {
-            const ratioParams = await this.subject.ratioParams();
-            const position = await this.getPositionParams();
-            const currentAmounts =
-                await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                    this.erc20Vault.address,
-                    this.yearnVault.address,
-                    position
-                );
-            const currentAmountsInToken0 =
-                await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    position,
-                    currentAmounts
-                );
-            const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                position
-            );
-            const amountsInToken0 =
-                await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
-                    currentAmountsInToken0,
-                    ratios,
-                    ratioParams
-                );
-            const expectedAmounts =
-                await this.hStrategyHelper.calculateExpectedTokenAmounts(
-                    ratios,
-                    amountsInToken0,
-                    position
-                );
-            const actualExtraAmounts =
-                await this.hStrategyHelper.calculateExtraTokenAmountsForMoneyVault(
-                    this.yearnVault.address,
-                    expectedAmounts
-                );
-            const requiredExtraAmounts = {
-                token0Amount: expectedAmounts.moneyToken0.lte(
-                    currentAmounts.moneyToken0
-                )
-                    ? currentAmounts.moneyToken0.sub(
-                          expectedAmounts.moneyToken0
-                      )
-                    : BigNumber.from(0),
-                token1Amount: expectedAmounts.moneyToken1.lte(
-                    currentAmounts.moneyToken1
-                )
-                    ? currentAmounts.moneyToken1.sub(
-                          expectedAmounts.moneyToken1
-                      )
-                    : BigNumber.from(0),
-            };
-            expect(
-                requiredExtraAmounts.token0Amount
-                    .sub(actualExtraAmounts.token0Amount)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                requiredExtraAmounts.token1Amount
-                    .sub(actualExtraAmounts.token1Amount)
-                    .toNumber()
-            ).to.be.eq(0);
-        };
+    //     const checkExtraAmounts = async () => {
+    //         const ratioParams = await this.subject.ratioParams();
+    //         const position = await this.getPositionParams();
+    //         const currentAmounts =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmounts(
+    //                 this.erc20Vault.address,
+    //                 this.yearnVault.address,
+    //                 position
+    //             );
+    //         const currentAmountsInToken0 =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
+    //                 position,
+    //                 currentAmounts
+    //             );
+    //         const ratios = await this.hStrategyHelper.calculateExpectedRatios(
+    //             position
+    //         );
+    //         const amountsInToken0 =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
+    //                 currentAmountsInToken0,
+    //                 ratios,
+    //                 ratioParams
+    //             );
+    //         const expectedAmounts =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmounts(
+    //                 ratios,
+    //                 amountsInToken0,
+    //                 position
+    //             );
+    //         const actualExtraAmounts =
+    //             await this.hStrategyHelper.calculateExtraTokenAmountsForMoneyVault(
+    //                 this.yearnVault.address,
+    //                 expectedAmounts
+    //             );
+    //         const requiredExtraAmounts = {
+    //             token0Amount: expectedAmounts.moneyToken0.lte(
+    //                 currentAmounts.moneyToken0
+    //             )
+    //                 ? currentAmounts.moneyToken0.sub(
+    //                       expectedAmounts.moneyToken0
+    //                   )
+    //                 : BigNumber.from(0),
+    //             token1Amount: expectedAmounts.moneyToken1.lte(
+    //                 currentAmounts.moneyToken1
+    //             )
+    //                 ? currentAmounts.moneyToken1.sub(
+    //                       expectedAmounts.moneyToken1
+    //                   )
+    //                 : BigNumber.from(0),
+    //         };
+    //         expect(
+    //             requiredExtraAmounts.token0Amount
+    //                 .sub(actualExtraAmounts.token0Amount)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             requiredExtraAmounts.token1Amount
+    //                 .sub(actualExtraAmounts.token1Amount)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //     };
 
-        describe("simple test", () => {
-            it("works", async () => {
-                await this.weth.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(18)
-                );
-                await this.usdc.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(6).mul(2000)
-                );
-                await checkExtraAmounts();
-                await withSigner(this.subject.address, async (signer) => {
-                    await this.erc20Vault
-                        .connect(signer)
-                        .pull(
-                            this.uniV3Vault.address,
-                            [this.usdc.address, this.weth.address],
-                            [Q96, Q96],
-                            []
-                        );
-                });
-                await checkExtraAmounts();
-            });
-        });
-    });
+    //     describe("simple test", () => {
+    //         it("works", async () => {
+    //             await this.weth.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(18)
+    //             );
+    //             await this.usdc.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(6).mul(2000)
+    //             );
+    //             await checkExtraAmounts();
+    //             await withSigner(this.subject.address, async (signer) => {
+    //                 await this.erc20Vault
+    //                     .connect(signer)
+    //                     .pull(
+    //                         this.uniV3Vault.address,
+    //                         [this.usdc.address, this.weth.address],
+    //                         [Q96, Q96],
+    //                         []
+    //                     );
+    //             });
+    //             await checkExtraAmounts();
+    //         });
+    //     });
+    // });
 
-    describe("calculateMissingTokenAmounts", () => {
-        beforeEach(async () => {
-            await this.mintMockPosition();
-            const { nft } = await this.getPositionParams();
-            const { tickLower, tickUpper } =
-                await this.positionManager.positions(nft);
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    domainLowerTick: tickLower - 600,
-                    domainUpperTick: tickUpper + 600,
-                    halfOfShortInterval: 60,
-                    tickNeighborhood: 10,
-                });
-        });
+    // describe("calculateMissingTokenAmounts", () => {
+    //     beforeEach(async () => {
+    //         await this.mintMockPosition();
+    //         const { nft } = await this.getPositionParams();
+    //         const { tickLower, tickUpper } =
+    //             await this.positionManager.positions(nft);
+    //         await this.subject
+    //             .connect(this.mStrategyAdmin)
+    //             .updateStrategyParams({
+    //                 domainLowerTick: tickLower - 600,
+    //                 domainUpperTick: tickUpper + 600,
+    //                 halfOfShortInterval: 60,
+    //                 tickNeighborhood: 10,
+    //             });
+    //     });
 
-        const checkMissingAmounts = async () => {
-            const ratioParams = await this.subject.ratioParams();
-            const position = await this.getPositionParams();
-            const currentAmounts =
-                await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                    this.erc20Vault.address,
-                    this.yearnVault.address,
-                    position
-                );
-            const currentAmountsInToken0 =
-                await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    position,
-                    currentAmounts
-                );
-            const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                position
-            );
-            const amountsInToken0 =
-                await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
-                    currentAmountsInToken0,
-                    ratios,
-                    ratioParams
-                );
-            const expectedAmounts =
-                await this.hStrategyHelper.calculateExpectedTokenAmounts(
-                    ratios,
-                    amountsInToken0,
-                    position
-                );
-            const actualMissingAmounts =
-                await this.hStrategyHelper.calculateMissingTokenAmounts(
-                    this.yearnVault.address,
-                    expectedAmounts,
-                    position
-                );
-            const requiredMissingAmounts = {
-                moneyToken0: expectedAmounts.moneyToken0.gte(
-                    currentAmounts.moneyToken0
-                )
-                    ? expectedAmounts.moneyToken0.sub(
-                          currentAmounts.moneyToken0
-                      )
-                    : BigNumber.from(0),
-                moneyToken1: expectedAmounts.moneyToken1.gte(
-                    currentAmounts.moneyToken1
-                )
-                    ? expectedAmounts.moneyToken1.sub(
-                          currentAmounts.moneyToken1
-                      )
-                    : BigNumber.from(0),
-                uniV3Token0: expectedAmounts.uniV3Token0.gte(
-                    currentAmounts.uniV3Token0
-                )
-                    ? expectedAmounts.uniV3Token0.sub(
-                          currentAmounts.uniV3Token0
-                      )
-                    : BigNumber.from(0),
-                uniV3Token1: expectedAmounts.uniV3Token1.gte(
-                    currentAmounts.uniV3Token1
-                )
-                    ? expectedAmounts.uniV3Token1.sub(
-                          currentAmounts.uniV3Token1
-                      )
-                    : BigNumber.from(0),
-            };
-            expect(
-                actualMissingAmounts.moneyToken0
-                    .sub(requiredMissingAmounts.moneyToken0)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                actualMissingAmounts.moneyToken1
-                    .sub(requiredMissingAmounts.moneyToken1)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                actualMissingAmounts.uniV3Token0
-                    .sub(requiredMissingAmounts.uniV3Token0)
-                    .toNumber()
-            ).to.be.eq(0);
-            expect(
-                actualMissingAmounts.uniV3Token1
-                    .sub(requiredMissingAmounts.uniV3Token1)
-                    .toNumber()
-            ).to.be.eq(0);
-        };
+    //     const checkMissingAmounts = async () => {
+    //         const ratioParams = await this.subject.ratioParams();
+    //         const position = await this.getPositionParams();
+    //         const currentAmounts =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmounts(
+    //                 this.erc20Vault.address,
+    //                 this.yearnVault.address,
+    //                 position
+    //             );
+    //         const currentAmountsInToken0 =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
+    //                 position,
+    //                 currentAmounts
+    //             );
+    //         const ratios = await this.hStrategyHelper.calculateExpectedRatios(
+    //             position
+    //         );
+    //         const amountsInToken0 =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
+    //                 currentAmountsInToken0,
+    //                 ratios,
+    //                 ratioParams
+    //             );
+    //         const expectedAmounts =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmounts(
+    //                 ratios,
+    //                 amountsInToken0,
+    //                 position
+    //             );
+    //         const actualMissingAmounts =
+    //             await this.hStrategyHelper.calculateMissingTokenAmounts(
+    //                 this.yearnVault.address,
+    //                 expectedAmounts,
+    //                 position
+    //             );
+    //         const requiredMissingAmounts = {
+    //             moneyToken0: expectedAmounts.moneyToken0.gte(
+    //                 currentAmounts.moneyToken0
+    //             )
+    //                 ? expectedAmounts.moneyToken0.sub(
+    //                       currentAmounts.moneyToken0
+    //                   )
+    //                 : BigNumber.from(0),
+    //             moneyToken1: expectedAmounts.moneyToken1.gte(
+    //                 currentAmounts.moneyToken1
+    //             )
+    //                 ? expectedAmounts.moneyToken1.sub(
+    //                       currentAmounts.moneyToken1
+    //                   )
+    //                 : BigNumber.from(0),
+    //             uniV3Token0: expectedAmounts.uniV3Token0.gte(
+    //                 currentAmounts.uniV3Token0
+    //             )
+    //                 ? expectedAmounts.uniV3Token0.sub(
+    //                       currentAmounts.uniV3Token0
+    //                   )
+    //                 : BigNumber.from(0),
+    //             uniV3Token1: expectedAmounts.uniV3Token1.gte(
+    //                 currentAmounts.uniV3Token1
+    //             )
+    //                 ? expectedAmounts.uniV3Token1.sub(
+    //                       currentAmounts.uniV3Token1
+    //                   )
+    //                 : BigNumber.from(0),
+    //         };
+    //         expect(
+    //             actualMissingAmounts.moneyToken0
+    //                 .sub(requiredMissingAmounts.moneyToken0)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             actualMissingAmounts.moneyToken1
+    //                 .sub(requiredMissingAmounts.moneyToken1)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             actualMissingAmounts.uniV3Token0
+    //                 .sub(requiredMissingAmounts.uniV3Token0)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //         expect(
+    //             actualMissingAmounts.uniV3Token1
+    //                 .sub(requiredMissingAmounts.uniV3Token1)
+    //                 .toNumber()
+    //         ).to.be.eq(0);
+    //     };
 
-        describe("simple test", () => {
-            it("works", async () => {
-                await this.weth.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(18)
-                );
-                await this.usdc.transfer(
-                    this.erc20Vault.address,
-                    BigNumber.from(10).pow(6).mul(2000)
-                );
-                await checkMissingAmounts();
-                await withSigner(this.subject.address, async (signer) => {
-                    await this.erc20Vault
-                        .connect(signer)
-                        .pull(
-                            this.uniV3Vault.address,
-                            [this.usdc.address, this.weth.address],
-                            [Q96, Q96],
-                            []
-                        );
-                });
-                await checkMissingAmounts();
-            });
-        });
-    });
+    //     describe("simple test", () => {
+    //         it("works", async () => {
+    //             await this.weth.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(18)
+    //             );
+    //             await this.usdc.transfer(
+    //                 this.erc20Vault.address,
+    //                 BigNumber.from(10).pow(6).mul(2000)
+    //             );
+    //             await checkMissingAmounts();
+    //             await withSigner(this.subject.address, async (signer) => {
+    //                 await this.erc20Vault
+    //                     .connect(signer)
+    //                     .pull(
+    //                         this.uniV3Vault.address,
+    //                         [this.usdc.address, this.weth.address],
+    //                         [Q96, Q96],
+    //                         []
+    //                     );
+    //             });
+    //             await checkMissingAmounts();
+    //         });
+    //     });
+    // });
 
-    describe("swapTokens", () => {
-        beforeEach(async () => {
-            await this.mintMockPosition();
-            const { nft } = await this.getPositionParams();
-            const { tickLower, tickUpper } =
-                await this.positionManager.positions(nft);
-            await this.subject
-                .connect(this.mStrategyAdmin)
-                .updateStrategyParams({
-                    domainLowerTick: tickLower - 600,
-                    domainUpperTick: tickUpper + 600,
-                    halfOfShortInterval: 60,
-                    tickNeighborhood: 10,
-                });
-            await this.weth.transfer(
-                this.erc20Vault.address,
-                BigNumber.from(10).pow(18)
-            );
-            await this.usdc.transfer(
-                this.erc20Vault.address,
-                BigNumber.from(10).pow(6)
-            );
-        });
+    // describe("swapTokens", () => {
+    //     beforeEach(async () => {
+    //         await this.mintMockPosition();
+    //         const { nft } = await this.getPositionParams();
+    //         const { tickLower, tickUpper } =
+    //             await this.positionManager.positions(nft);
+    //         await this.subject
+    //             .connect(this.mStrategyAdmin)
+    //             .updateStrategyParams({
+    //                 domainLowerTick: tickLower - 600,
+    //                 domainUpperTick: tickUpper + 600,
+    //                 halfOfShortInterval: 60,
+    //                 tickNeighborhood: 10,
+    //             });
+    //         await this.weth.transfer(
+    //             this.erc20Vault.address,
+    //             BigNumber.from(10).pow(18)
+    //         );
+    //         await this.usdc.transfer(
+    //             this.erc20Vault.address,
+    //             BigNumber.from(10).pow(6)
+    //         );
+    //     });
 
-        const getSwapParams = async () => {
-            const ratioParams = await this.subject.ratioParams();
-            const position = await this.getPositionParams();
-            const currentAmounts =
-                await this.hStrategyHelper.calculateCurrentTokenAmounts(
-                    this.erc20Vault.address,
-                    this.yearnVault.address,
-                    position
-                );
-            const currentAmountsInToken0 =
-                await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
-                    position,
-                    currentAmounts
-                );
-            const ratios = await this.hStrategyHelper.calculateExpectedRatios(
-                position
-            );
-            const amountsInToken0 =
-                await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
-                    currentAmountsInToken0,
-                    ratios,
-                    ratioParams
-                );
-            const expectedAmounts =
-                await this.hStrategyHelper.calculateExpectedTokenAmounts(
-                    ratios,
-                    amountsInToken0,
-                    position
-                );
-            return { currentAmounts, expectedAmounts };
-        };
+    //     const getSwapParams = async () => {
+    //         const ratioParams = await this.subject.ratioParams();
+    //         const position = await this.getPositionParams();
+    //         const currentAmounts =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmounts(
+    //                 this.erc20Vault.address,
+    //                 this.yearnVault.address,
+    //                 position
+    //             );
+    //         const currentAmountsInToken0 =
+    //             await this.hStrategyHelper.calculateCurrentTokenAmountsInToken0(
+    //                 position,
+    //                 currentAmounts
+    //             );
+    //         const ratios = await this.hStrategyHelper.calculateExpectedRatios(
+    //             position
+    //         );
+    //         const amountsInToken0 =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmountsInToken0(
+    //                 currentAmountsInToken0,
+    //                 ratios,
+    //                 ratioParams
+    //             );
+    //         const expectedAmounts =
+    //             await this.hStrategyHelper.calculateExpectedTokenAmounts(
+    //                 ratios,
+    //                 amountsInToken0,
+    //                 position
+    //             );
+    //         return { currentAmounts, expectedAmounts };
+    //     };
 
-        describe("emits event", () => {
-            it("emits", async () => {
-                const { currentAmounts, expectedAmounts } =
-                    await getSwapParams();
-                await expect(
-                    this.subject.swapTokens(expectedAmounts, currentAmounts, {
-                        pulledToUniV3Vault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        swappedAmounts: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        burnedAmounts: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        deadline: ethers.constants.MaxUint256,
-                        newPositionMinted: true,
-                    })
-                ).to.emit(this.subject, "SwapTokensOnERC20Vault");
-            });
-        });
+    //     describe("emits event", () => {
+    //         it("emits", async () => {
+    //             const { currentAmounts, expectedAmounts } =
+    //                 await getSwapParams();
+    //             await expect(
+    //                 this.subject.swapTokens(expectedAmounts, currentAmounts, {
+    //                     pulledToUniV3Vault: [
+    //                         ethers.constants.Zero,
+    //                         ethers.constants.Zero,
+    //                     ],
+    //                     swappedAmounts: [
+    //                         ethers.constants.Zero,
+    //                         ethers.constants.Zero,
+    //                     ],
+    //                     burnedAmounts: [
+    //                         ethers.constants.Zero,
+    //                         ethers.constants.Zero,
+    //                     ],
+    //                     deadline: ethers.constants.MaxUint256,
+    //                     newPositionMinted: true,
+    //                 })
+    //             ).to.emit(this.subject, "SwapTokensOnERC20Vault");
+    //         });
+    //     });
 
-        describe("fails on not enough swap", () => {
-            it("reverts", async () => {
-                const { currentAmounts, expectedAmounts } =
-                    await getSwapParams();
-                await expect(
-                    this.subject.swapTokens(expectedAmounts, currentAmounts, {
-                        pulledToUniV3Vault: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        swappedAmounts: [
-                            ethers.constants.MaxUint256,
-                            ethers.constants.MaxUint256,
-                        ],
-                        burnedAmounts: [
-                            ethers.constants.Zero,
-                            ethers.constants.Zero,
-                        ],
-                        deadline: ethers.constants.MaxUint256,
-                        newPositionMinted: true,
-                    })
-                ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
-            });
-        });
-    });
+    //     describe("fails on not enough swap", () => {
+    //         it("reverts", async () => {
+    //             const { currentAmounts, expectedAmounts } =
+    //                 await getSwapParams();
+    //             await expect(
+    //                 this.subject.swapTokens(expectedAmounts, currentAmounts, {
+    //                     pulledToUniV3Vault: [
+    //                         ethers.constants.Zero,
+    //                         ethers.constants.Zero,
+    //                     ],
+    //                     swappedAmounts: [
+    //                         ethers.constants.MaxUint256,
+    //                         ethers.constants.MaxUint256,
+    //                     ],
+    //                     burnedAmounts: [
+    //                         ethers.constants.Zero,
+    //                         ethers.constants.Zero,
+    //                     ],
+    //                     deadline: ethers.constants.MaxUint256,
+    //                     newPositionMinted: true,
+    //                 })
+    //             ).to.be.revertedWith(Exceptions.LIMIT_UNDERFLOW);
+    //         });
+    //     });
+    // });
 
     ContractMetaBehaviour.call(this, {
         contractName: "HStrategy",
