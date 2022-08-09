@@ -192,7 +192,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         _uniV3Helper = UniV3Helper(uniV3Helper_);
         _hStrategyHelper = HStrategyHelper(hStrategyHelper_);
         DefaultAccessControlLateInit.init(address(this));
-        needPositionRebalance = false;
     }
 
     /// @notice initializes the strategy
@@ -305,9 +304,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     function updateOracleParams(OracleParams calldata newOracleParams) external {
         _requireAdmin();
         require(
-            newOracleParams.averagePriceTimeSpan > 0 &&
-                newOracleParams.maxTickDeviation > 0 &&
-                newOracleParams.maxTickDeviation <= uint24(TickMath.MAX_TICK),
+            newOracleParams.averagePriceTimeSpan > 0 && newOracleParams.maxTickDeviation <= uint24(TickMath.MAX_TICK),
             ExceptionsLibrary.INVARIANT
         );
         oracleParams = newOracleParams;
@@ -383,29 +380,32 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             int24 tickNeighborhood = strategyParams_.tickNeighborhood;
 
             if (
-                (shortInterval_.lowerTick + tickNeighborhood <= tick &&
-                    shortInterval_.upperTick - tickNeighborhood >= tick) || needPositionRebalance
+                shortInterval_.lowerTick + tickNeighborhood <= tick &&
+                shortInterval_.upperTick - tickNeighborhood >= tick &&
+                !needPositionRebalance
             ) {
                 return burnedAmounts;
             }
+            needPositionRebalance = false;
 
-            (int24 newLowerTick, int24 newUpperTick) = _calculateNewPosition(strategyParams_, tick);
+            (int24 newLowerTick, int24 newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(
+                tick,
+                strategyParams_
+            );
 
-            if (newLowerTick != shortInterval_.lowerTick || shortInterval_.upperTick != newUpperTick) {
-                shortInterval = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
-            } else {
+            if (newLowerTick == shortInterval_.lowerTick && shortInterval_.upperTick == newUpperTick) {
                 return burnedAmounts;
             }
-        }
 
-        needPositionRebalance = false;
+            shortInterval = Interval({lowerTick: newLowerTick, upperTick: newUpperTick});
+        }
 
         if (uniV3Nft != 0) {
             // cannot burn only if it is first call of the rebalance function
             // and we dont have any position
             burnedAmounts = _drainPosition(restrictions, erc20Vault_, uniV3Vault_, uniV3Nft, tokens_);
         }
-        // --> you here now
+
         _mintPosition(pool_, restrictions.deadline, _positionManager, uniV3Vault_, uniV3Nft, tokens_);
     }
 
@@ -502,19 +502,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
     // -------------------  INTERNAL, MUTABLE  -------------------
 
-    /// @notice checks if the new position is needed. If no rebalance needed it reverts
-    /// @param strategyParams_ current parameters of the strategy
-    /// @param tick current price tick
-    /// @return newLowerTick lower tick of new position to be minted
-    /// @return newUpperTick upper tick of new position to be minted
-    function _calculateNewPosition(StrategyParams memory strategyParams_, int24 tick)
-        internal
-        view
-        returns (int24 newLowerTick, int24 newUpperTick)
-    {
-        (newLowerTick, newUpperTick) = _hStrategyHelper.calculateNewPositionTicks(tick, strategyParams_);
-    }
-
     /// @notice determining the amount of tokens to be swapped and swapping it
     /// @param currentTokenAmounts the current amount of tokens
     /// @param expectedTokenAmounts the amount of tokens we expect to have after rebalance
@@ -574,15 +561,13 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     ) internal returns (int256[] memory pulledToUniV3Vault) {
         pulledToUniV3Vault = new int256[](2);
         if (!newPositionMinted) {
-            (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForUniV3Vault(
+            uint256[] memory extraTokenAmountsForPull = hStrategyHelper_.calculateExtraTokenAmountsForUniV3Vault(
                 expectedTokenAmounts,
                 domainPositionParams
             );
+            // --> you here now
 
-            uint256[] memory extraTokenAmountsForPull = new uint256[](2);
-            if (token0Amount > 0 || token1Amount > 0) {
-                extraTokenAmountsForPull[0] = token0Amount;
-                extraTokenAmountsForPull[1] = token1Amount;
+            if (extraTokenAmountsForPull[0] > 0 || extraTokenAmountsForPull[1] > 0) {
                 uint256[] memory pulledFromUniV3VaultAmounts = uniV3Vault_.pull(
                     address(erc20Vault_),
                     tokens_,
@@ -601,15 +586,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         }
 
         {
-            (uint256 token0Amount, uint256 token1Amount) = hStrategyHelper_.calculateExtraTokenAmountsForMoneyVault(
+            uint256[] memory extraTokenAmountsForPull = hStrategyHelper_.calculateExtraTokenAmountsForMoneyVault(
                 moneyVault_,
                 expectedTokenAmounts
             );
 
-            if (token0Amount > 0 || token1Amount > 0) {
-                uint256[] memory extraTokenAmountsForPull = new uint256[](2);
-                extraTokenAmountsForPull[0] = token0Amount;
-                extraTokenAmountsForPull[1] = token1Amount;
+            if (extraTokenAmountsForPull[0] > 0 || extraTokenAmountsForPull[1] > 0) {
                 moneyVault_.pull(address(erc20Vault_), tokens_, extraTokenAmountsForPull, moneyVaultOptions);
             }
         }
@@ -813,12 +795,12 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         HStrategyHelper hStrategyHelper_
     ) internal view returns (TokenAmounts memory expectedTokenAmounts) {
         ExpectedRatios memory expectedRatios = hStrategyHelper_.calculateExpectedRatios(domainPositionParams);
-        TokenAmountsInToken0 memory currentTokenAmountsInToken0 = hStrategyHelper_.calculateCurrentTokenAmountsInToken0(
+        uint256 currentCapitalInToken0 = hStrategyHelper_.calculateCurrentCapitalInToken0(
             domainPositionParams,
             currentTokenAmounts
         );
         TokenAmountsInToken0 memory expectedTokenAmountsInToken0 = hStrategyHelper_
-            .calculateExpectedTokenAmountsInToken0(currentTokenAmountsInToken0, expectedRatios, ratioParams);
+            .calculateExpectedTokenAmountsInToken0(currentCapitalInToken0, expectedRatios, ratioParams);
         return
             hStrategyHelper_.calculateExpectedTokenAmounts(
                 expectedRatios,

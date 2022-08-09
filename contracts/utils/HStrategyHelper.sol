@@ -111,50 +111,52 @@ contract HStrategyHelper {
     /// @notice calculates extra tokens on uniV3 vault
     /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
     /// @param domainPositionParams current position and pool state combined with predictions from the oracle
-    /// @return extraToken0Amount amount of token0 needed to be pulled from uniV3
-    /// @return extraToken1Amount amount of token1 needed to be pulled from uniV3
+    /// @return tokenAmounts extra token amounts on UniV3Vault
     function calculateExtraTokenAmountsForUniV3Vault(
         HStrategy.TokenAmounts memory expectedTokenAmounts,
         HStrategy.DomainPositionParams memory domainPositionParams
-    ) external pure returns (uint256 extraToken0Amount, uint256 extraToken1Amount) {
-        (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
+    ) external pure returns (uint256[] memory tokenAmounts) {
+        tokenAmounts = new uint256[](2);
+        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
             domainPositionParams.intervalPriceSqrtX96,
             domainPositionParams.lowerPriceSqrtX96,
             domainPositionParams.upperPriceSqrtX96,
             domainPositionParams.liquidity
         );
 
-        if (expectedTokenAmounts.uniV3Token0 < token0Amount) {
-            extraToken0Amount = token0Amount - expectedTokenAmounts.uniV3Token0;
+        if (tokenAmounts[0] > expectedTokenAmounts.uniV3Token0) {
+            tokenAmounts[0] -= expectedTokenAmounts.uniV3Token0;
+        } else {
+            tokenAmounts[0] = 0;
         }
-        if (expectedTokenAmounts.uniV3Token1 < token1Amount) {
-            extraToken1Amount = token1Amount - expectedTokenAmounts.uniV3Token1;
+
+        if (tokenAmounts[1] > expectedTokenAmounts.uniV3Token1) {
+            tokenAmounts[1] -= expectedTokenAmounts.uniV3Token1;
+        } else {
+            tokenAmounts[1] = 0;
         }
     }
 
     /// @notice calculates extra tokens on money vault
     /// @param moneyVault the strategy money vault
     /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
-    /// @return token0Amount amount of token0 needed to be pulled from uniV3
-    /// @return token1Amount amount of token1 needed to be pulled from uniV3
+    /// @return tokenAmounts extra token amounts on MoneyVault
     function calculateExtraTokenAmountsForMoneyVault(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts
-    ) external view returns (uint256 token0Amount, uint256 token1Amount) {
-        (uint256[] memory minTvl, ) = moneyVault.tvl();
-        token0Amount = minTvl[0];
-        token1Amount = minTvl[1];
+    ) external view returns (uint256[] memory tokenAmounts) {
+        (tokenAmounts, ) = moneyVault.tvl();
 
-        if (token0Amount > expectedTokenAmounts.moneyToken0) {
-            token0Amount -= expectedTokenAmounts.moneyToken0;
+        if (tokenAmounts[0] > expectedTokenAmounts.moneyToken0) {
+            tokenAmounts[0] -= expectedTokenAmounts.moneyToken0;
         } else {
-            token0Amount = 0;
+            tokenAmounts[0] = 0;
         }
 
-        if (token1Amount > expectedTokenAmounts.moneyToken1) {
-            token1Amount -= expectedTokenAmounts.moneyToken1;
+        if (tokenAmounts[1] > expectedTokenAmounts.moneyToken1) {
+            tokenAmounts[1] -= expectedTokenAmounts.moneyToken1;
         } else {
-            token1Amount = 0;
+            tokenAmounts[1] = 0;
         }
     }
 
@@ -235,51 +237,45 @@ contract HStrategyHelper {
     /// @notice calculates current capitals on the vaults of the strategy (in token0)
     /// @param params current position and pool state combined with predictions from the oracle
     /// @param currentTokenAmounts amounts of the tokens on the erc20 and money vaults
-    /// @return amounts capitals measured in token0
-    function calculateCurrentTokenAmountsInToken0(
+    /// @return capital total capital measured in token0
+    function calculateCurrentCapitalInToken0(
         HStrategy.DomainPositionParams memory params,
         HStrategy.TokenAmounts memory currentTokenAmounts
-    ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
-        amounts.erc20TokensAmountInToken0 =
+    ) external pure returns (uint256 capital) {
+        capital =
             currentTokenAmounts.erc20Token0 +
-            FullMath.mulDiv(currentTokenAmounts.erc20Token1, CommonLibrary.Q96, params.spotPriceX96);
-        amounts.uniV3TokensAmountInToken0 =
+            FullMath.mulDiv(currentTokenAmounts.erc20Token1, CommonLibrary.Q96, params.spotPriceX96) +
             currentTokenAmounts.uniV3Token0 +
-            FullMath.mulDiv(currentTokenAmounts.uniV3Token1, CommonLibrary.Q96, params.spotPriceX96);
-        amounts.moneyTokensAmountInToken0 =
+            FullMath.mulDiv(currentTokenAmounts.uniV3Token1, CommonLibrary.Q96, params.spotPriceX96) +
             currentTokenAmounts.moneyToken0 +
             FullMath.mulDiv(currentTokenAmounts.moneyToken1, CommonLibrary.Q96, params.spotPriceX96);
-        amounts.totalTokensInToken0 =
-            amounts.erc20TokensAmountInToken0 +
-            amounts.uniV3TokensAmountInToken0 +
-            amounts.moneyTokensAmountInToken0;
     }
 
     /// @notice calculates expected capitals on the vaults after rebalance
-    /// @param currentTokenAmounts current amount of tokens on the vaults
+    /// @param totalCapitalInToken0 total capital in token0
     /// @param expectedRatios ratios of the capitals on the vaults expected after rebalance
     /// @param ratioParams_ ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
     /// @return amounts capitals expected after rebalance measured in token0
     function calculateExpectedTokenAmountsInToken0(
-        HStrategy.TokenAmountsInToken0 memory currentTokenAmounts,
+        uint256 totalCapitalInToken0,
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.RatioParams memory ratioParams_
     ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
         amounts.erc20TokensAmountInToken0 = FullMath.mulDiv(
-            currentTokenAmounts.totalTokensInToken0,
+            totalCapitalInToken0,
             ratioParams_.erc20CapitalRatioD,
             DENOMINATOR
         );
         amounts.uniV3TokensAmountInToken0 = FullMath.mulDiv(
-            currentTokenAmounts.totalTokensInToken0 - amounts.erc20TokensAmountInToken0,
+            totalCapitalInToken0 - amounts.erc20TokensAmountInToken0,
             expectedRatios.uniV3RatioD,
             DENOMINATOR
         );
         amounts.moneyTokensAmountInToken0 =
-            currentTokenAmounts.totalTokensInToken0 -
+            totalCapitalInToken0 -
             amounts.erc20TokensAmountInToken0 -
             amounts.uniV3TokensAmountInToken0;
-        amounts.totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
+        amounts.totalTokensInToken0 = totalCapitalInToken0;
     }
 
     /// @notice return true if the token swap is needed. It is needed if we cannot mint a new position without it
@@ -334,33 +330,20 @@ contract HStrategyHelper {
         uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
-        {
-            uint256 erc20CapitalDeltaD = ratioParams.erc20CapitalRatioD - ratioParams.minCapitalDeviationD;
-            uint256 minToken0Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken0Amount, DENOMINATOR);
-            uint256 minToken1Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken1Amount, DENOMINATOR);
-            uint256 maxToken0Amount = FullMath.mulDiv(
-                ratioParams.erc20CapitalRatioD + ratioParams.minCapitalDeviationD,
-                totalToken0Amount,
-                DENOMINATOR
-            );
-            uint256 maxToken1Amount = FullMath.mulDiv(
-                ratioParams.erc20CapitalRatioD + ratioParams.minCapitalDeviationD,
-                totalToken1Amount,
-                DENOMINATOR
-            );
 
+        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken0Amount, DENOMINATOR);
+        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken1Amount, DENOMINATOR);
+
+        {
             if (
-                currentTokenAmounts.erc20Token0 < minToken0Amount ||
-                currentTokenAmounts.erc20Token0 > maxToken0Amount ||
-                currentTokenAmounts.erc20Token1 < minToken1Amount ||
-                currentTokenAmounts.erc20Token1 > maxToken1Amount
+                currentTokenAmounts.erc20Token0 + minToken0Deviation < expectedTokenAmounts.erc20Token0 ||
+                currentTokenAmounts.erc20Token0 > expectedTokenAmounts.erc20Token0 + minToken0Deviation ||
+                currentTokenAmounts.erc20Token1 + minToken1Deviation < expectedTokenAmounts.erc20Token1 ||
+                currentTokenAmounts.erc20Token1 > expectedTokenAmounts.erc20Token1 + minToken1Deviation
             ) {
                 return true;
             }
         }
-
-        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken0Amount, DENOMINATOR);
-        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken1Amount, DENOMINATOR);
 
         {
             if (
