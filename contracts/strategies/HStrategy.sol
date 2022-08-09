@@ -426,7 +426,6 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
             require(uniV3Nft != 0, ExceptionsLibrary.INVARIANT);
             domainPositionParams = hStrategyHelper_.calculateAndCheckDomainPositionParams(
                 tick,
-                hStrategyHelper_,
                 strategyParams,
                 uniV3Nft,
                 _positionManager
