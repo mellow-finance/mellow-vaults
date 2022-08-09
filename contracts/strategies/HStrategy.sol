@@ -153,8 +153,8 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param upperPriceSqrtX96 the square root of the price at upper tick of the position
     /// @param lower0PriceSqrtX96 the square root of the price at lower tick of the emulated position
     /// @param upper0PriceSqrtX96 the square root of the price at upper tick of the emulated position
-    /// @param spotPriceSqrtX96 the square root of the spot price
-    /// @param spotPriceSqrtX96 the spot price
+    /// @param intervalPriceSqrtX96 the square root of the spot price
+    /// @param spotPriceX96 the spot price
     struct DomainPositionParams {
         uint256 nft;
         uint128 liquidity;
@@ -166,7 +166,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         uint160 upperPriceSqrtX96;
         uint160 lower0PriceSqrtX96;
         uint160 upper0PriceSqrtX96;
-        uint160 spotPriceSqrtX96;
+        uint160 intervalPriceSqrtX96;
         uint256 spotPriceX96;
     }
 

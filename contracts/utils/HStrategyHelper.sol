@@ -27,21 +27,21 @@ contract HStrategyHelper {
             FullMath.mulDiv(
                 domainPositionParams.lower0PriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.spotPriceSqrtX96
+                domainPositionParams.intervalPriceSqrtX96
             ) -
             FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.upper0PriceSqrtX96
             );
 
         uint256 nominator0X96 = FullMath.mulDiv(
-            domainPositionParams.spotPriceSqrtX96,
+            domainPositionParams.intervalPriceSqrtX96,
             CommonLibrary.Q96,
             domainPositionParams.upperPriceSqrtX96
         ) -
             FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.upper0PriceSqrtX96
             );
@@ -49,12 +49,12 @@ contract HStrategyHelper {
         uint256 nominator1X96 = FullMath.mulDiv(
             domainPositionParams.lowerPriceSqrtX96,
             CommonLibrary.Q96,
-            domainPositionParams.spotPriceSqrtX96
+            domainPositionParams.intervalPriceSqrtX96
         ) -
             FullMath.mulDiv(
                 domainPositionParams.lower0PriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.spotPriceSqrtX96
+                domainPositionParams.intervalPriceSqrtX96
             );
 
         ratios.token0RatioD = uint32(FullMath.mulDiv(nominator0X96, DENOMINATOR, denominatorX96));
@@ -78,7 +78,7 @@ contract HStrategyHelper {
             uint256 token0Amount = 0;
             uint256 token1Amount = 0;
             (token0Amount, token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
-                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
                 domainPositionParams.lowerPriceSqrtX96,
                 domainPositionParams.upperPriceSqrtX96,
                 domainPositionParams.liquidity
@@ -118,7 +118,7 @@ contract HStrategyHelper {
         HStrategy.DomainPositionParams memory domainPositionParams
     ) external pure returns (uint256 extraToken0Amount, uint256 extraToken1Amount) {
         (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
-            domainPositionParams.spotPriceSqrtX96,
+            domainPositionParams.intervalPriceSqrtX96,
             domainPositionParams.lowerPriceSqrtX96,
             domainPositionParams.upperPriceSqrtX96,
             domainPositionParams.liquidity
@@ -193,13 +193,13 @@ contract HStrategyHelper {
             // sqrt(upperPrice) * (sqrt(price) - sqrt(lowerPrice))
             uint256 lowerPriceTermX96 = FullMath.mulDiv(
                 domainPositionParams.upperPriceSqrtX96,
-                domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
                 CommonLibrary.Q96
             );
             // sqrt(price) * (sqrt(upperPrice) - sqrt(price))
             uint256 upperPriceTermX96 = FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
-                domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
+                domainPositionParams.upperPriceSqrtX96 - domainPositionParams.intervalPriceSqrtX96,
                 CommonLibrary.Q96
             );
             // x0
@@ -228,7 +228,7 @@ contract HStrategyHelper {
         HStrategy.DomainPositionParams memory params
     ) external returns (HStrategy.TokenAmounts memory amounts) {
         (amounts.uniV3Token0, amounts.uniV3Token1) = LiquidityAmounts.getAmountsForLiquidity(
-            params.spotPriceSqrtX96,
+            params.intervalPriceSqrtX96,
             params.lowerPriceSqrtX96,
             params.upperPriceSqrtX96,
             params.liquidity
@@ -402,7 +402,6 @@ contract HStrategyHelper {
         }
     }
 
-    /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param tick current price tick
     /// @param strategyParams_ the current parameters of the strategy`
     /// @param uniV3Nft the nft of the position from position manager
@@ -426,15 +425,19 @@ contract HStrategyHelper {
             upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
             lower0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
             upper0PriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
-            spotPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
+            intervalPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
             spotPriceX96: 0
         });
-        if (params.spotPriceSqrtX96 < params.lower0PriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.lower0PriceSqrtX96;
-        } else if (params.spotPriceSqrtX96 > params.upper0PriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.upper0PriceSqrtX96;
+        params.spotPriceX96 = FullMath.mulDiv(
+            params.intervalPriceSqrtX96,
+            params.intervalPriceSqrtX96,
+            CommonLibrary.Q96
+        );
+        if (params.intervalPriceSqrtX96 < params.lower0PriceSqrtX96) {
+            params.intervalPriceSqrtX96 = params.lower0PriceSqrtX96;
+        } else if (params.intervalPriceSqrtX96 > params.upper0PriceSqrtX96) {
+            params.intervalPriceSqrtX96 = params.upper0PriceSqrtX96;
         }
-        params.spotPriceX96 = FullMath.mulDiv(params.spotPriceSqrtX96, params.spotPriceSqrtX96, CommonLibrary.Q96);
     }
 
     function checkSpotTickDeviationFromAverage(
