@@ -269,7 +269,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
         require(
             (newStrategyParams.domainLowerTick % tickSpacing == 0) &&
                 (newStrategyParams.domainUpperTick % tickSpacing == 0) &&
-                globalIntervalWidth > newStrategyParams.halfOfShortInterval &&
+                globalIntervalWidth > (newStrategyParams.halfOfShortInterval << 1) &&
                 (globalIntervalWidth % newStrategyParams.halfOfShortInterval == 0),
             ExceptionsLibrary.INVARIANT
         );
