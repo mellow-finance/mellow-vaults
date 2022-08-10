@@ -94,7 +94,7 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
             tx.origin,
             msg.sender,
             vaultTokens,
-            abi.encode(leverageMultiplierD_, isLPVault_, isLongBaseTokenIfFutures_),
+            abi.encode(leverageMultiplierD_, isLongBaseToken_),
             owner_,
             vaddr,
             nft
