@@ -584,7 +584,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
     /// @param moneyVault_ Money vault of the strategy
     /// @param uniV3Vault_ UniswapV3 vault of the strategy
     /// @param tokens_ the addresses of the tokens managed by the strategy
-    /// @return pulledToUniV3Vault the actual amount of tokens pulled into UniV3Vault (if negative, then pulled from UniV3Vault)
+    /// @return pulledToUniV3Vault the actual amount of tokens pulled into UniV3Vault
     function _pullMissingTokens(
         TokenAmounts memory missingTokenAmounts,
         RebalanceTokenAmounts memory restrictions,
@@ -742,7 +742,7 @@ contract HStrategy is ContractMeta, Multicall, DefaultAccessControlLateInit {
 
             emit SwapTokensOnERC20Vault(tx.origin, swapParams);
         } else {
-            require(restrictions.swappedAmounts[tokenInIndex ^ 1] == 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
+            require(restrictions.swappedAmounts[tokenInIndex ^ 1] == 0, ExceptionsLibrary.LIMIT_OVERFLOW);
             require(restrictions.swappedAmounts[tokenInIndex] == 0, ExceptionsLibrary.LIMIT_UNDERFLOW);
             return new int256[](2);
         }
