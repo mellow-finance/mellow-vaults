@@ -44,18 +44,15 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
     "Optimism__PerpVaultGovernance",
     function () {
         before(async () => {
-            const perpVaultAddress = (await getNamedAccounts())
-                .perpVault;
+            const perpVaultAddress = (await getNamedAccounts()).perpVault;
             const clearingHouseAddress = (await getNamedAccounts())
                 .clearingHouse;
             const accountBalanceAddress = (await getNamedAccounts())
                 .accountBalance;
-            const vusdcAddress = (await
-                getNamedAccounts()).vusdcAddress;
-            const usdcAddress = (await
-                getNamedAccounts()).usdc;
-            const uniV3FactoryAddress = (await
-                getNamedAccounts()).uniswapV3Factory;
+            const vusdcAddress = (await getNamedAccounts()).vusdcAddress;
+            const usdcAddress = (await getNamedAccounts()).usdc;
+            const uniV3FactoryAddress = (await getNamedAccounts())
+                .uniswapV3Factory;
             const veth = (await getNamedAccounts()).vethAddress;
 
             this.governanceProtocolParams = {
@@ -65,9 +62,8 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 vusdcAddress: vusdcAddress,
                 usdcAddress: usdcAddress,
                 uniV3FactoryAddress: uniV3FactoryAddress,
-                maxProtocolLeverage: 10
+                maxProtocolLeverage: 10,
             };
-            
 
             this.deploymentFixture = deployments.createFixture(
                 async (_, options?: DeployOptions) => {
@@ -145,7 +141,7 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
             });
 
             describe("contract with real parameters", () => {
-                it ("goes okay", async () => {
+                it("goes okay", async () => {
                     await deployments.fixture();
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
@@ -155,16 +151,15 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
                     ).not.to.be.reverted;
-                })
-            })
+                });
+            });
         });
 
         describe("#parameters checks", () => {
@@ -172,7 +167,8 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 it("reverts when address zero in constructor", async () => {
                     await deployments.fixture();
                     const address = this.governanceProtocolParams.vault;
-                    this.governanceProtocolParams.vault = ethers.constants.AddressZero;
+                    this.governanceProtocolParams.vault =
+                        ethers.constants.AddressZero;
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
                             from: this.deployer.address,
@@ -181,10 +177,9 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
@@ -194,26 +189,43 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
 
                 it("works as expected in parameters change", async () => {
                     const address = this.governanceProtocolParams.vault;
-                    this.governanceProtocolParams.vault = ethers.constants.AddressZero;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    this.governanceProtocolParams.vault =
+                        ethers.constants.AddressZero;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     this.governanceProtocolParams.vault = address;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).not.to.be.reverted;
                 });
 
-                it ("contract exists", async() => {
+                it("contract exists", async () => {
                     const perpInternalVault = await ethers.getContractAt(
                         IPerpInternalVault,
                         this.governanceProtocolParams.vault
                     );
-                    const address = await perpInternalVault.getSettlementToken();
-                    expect(address).to.be.eq(this.governanceProtocolParams.usdcAddress);
+                    const address =
+                        await perpInternalVault.getSettlementToken();
+                    expect(address).to.be.eq(
+                        this.governanceProtocolParams.usdcAddress
+                    );
                 });
             });
             describe("clearingHouse", () => {
                 it("reverts when address zero, works as expected as a parameter", async () => {
                     await deployments.fixture();
                     const address = this.governanceProtocolParams.clearingHouse;
-                    this.governanceProtocolParams.clearingHouse = ethers.constants.AddressZero;
+                    this.governanceProtocolParams.clearingHouse =
+                        ethers.constants.AddressZero;
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
                             from: this.deployer.address,
@@ -222,10 +234,9 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
@@ -234,25 +245,42 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 });
                 it("works as expected in parameters change", async () => {
                     const address = this.governanceProtocolParams.clearingHouse;
-                    this.governanceProtocolParams.clearingHouse = ethers.constants.AddressZero;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    this.governanceProtocolParams.clearingHouse =
+                        ethers.constants.AddressZero;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     this.governanceProtocolParams.clearingHouse = address;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).not.to.be.reverted;
                 });
-                it ("contract exists", async() => {
+                it("contract exists", async () => {
                     const clearingHouse = await ethers.getContractAt(
                         IClearingHouse,
                         this.governanceProtocolParams.clearingHouse
                     );
                     const factory = await clearingHouse.getUniswapV3Factory();
-                    expect(factory).to.be.eq(this.governanceProtocolParams.uniV3FactoryAddress);
+                    expect(factory).to.be.eq(
+                        this.governanceProtocolParams.uniV3FactoryAddress
+                    );
                 });
             });
             describe("accountBalance", () => {
                 it("reverts when address zero, works as expected as a parameter", async () => {
                     await deployments.fixture();
-                    const address = this.governanceProtocolParams.accountBalance;
-                    this.governanceProtocolParams.accountBalance = ethers.constants.AddressZero;
+                    const address =
+                        this.governanceProtocolParams.accountBalance;
+                    this.governanceProtocolParams.accountBalance =
+                        ethers.constants.AddressZero;
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
                             from: this.deployer.address,
@@ -261,10 +289,9 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
@@ -272,20 +299,37 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                     this.governanceProtocolParams.accountBalance = address;
                 });
                 it("works as expected in parameters change", async () => {
-                    const address = this.governanceProtocolParams.accountBalance;
-                    this.governanceProtocolParams.accountBalance = ethers.constants.AddressZero;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    const address =
+                        this.governanceProtocolParams.accountBalance;
+                    this.governanceProtocolParams.accountBalance =
+                        ethers.constants.AddressZero;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     this.governanceProtocolParams.accountBalance = address;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).not.to.be.reverted;
                 });
-                it ("contract exists", async() => {
-                    const {vethAddress} = await getNamedAccounts();
+                it("contract exists", async () => {
+                    const { vethAddress } = await getNamedAccounts();
 
                     const accountBalance = await ethers.getContractAt(
                         IAccountBalance,
                         this.governanceProtocolParams.accountBalance
                     );
-                    const amount = await accountBalance.getTotalPositionSize(this.deployer.address, vethAddress);
+                    const amount = await accountBalance.getTotalPositionSize(
+                        this.deployer.address,
+                        vethAddress
+                    );
                     expect(amount).to.be.eq(0);
                 });
             });
@@ -293,7 +337,8 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 it("reverts when address zero, works as expected as a parameter", async () => {
                     await deployments.fixture();
                     const address = this.governanceProtocolParams.vusdcAddress;
-                    this.governanceProtocolParams.vusdcAddress = ethers.constants.AddressZero;
+                    this.governanceProtocolParams.vusdcAddress =
+                        ethers.constants.AddressZero;
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
                             from: this.deployer.address,
@@ -302,10 +347,9 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
@@ -314,17 +358,31 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 });
                 it("works as expected in parameters change", async () => {
                     const address = this.governanceProtocolParams.vusdcAddress;
-                    this.governanceProtocolParams.vusdcAddress = ethers.constants.AddressZero;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    this.governanceProtocolParams.vusdcAddress =
+                        ethers.constants.AddressZero;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     this.governanceProtocolParams.vusdcAddress = address;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).not.to.be.reverted;
                 });
             });
             describe("USDC", () => {
                 it("reverts when address zero, works as expected as a parameter", async () => {
                     await deployments.fixture();
                     const address = this.governanceProtocolParams.usdcAddress;
-                    this.governanceProtocolParams.usdcAddress = ethers.constants.AddressZero;
+                    this.governanceProtocolParams.usdcAddress =
+                        ethers.constants.AddressZero;
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
                             from: this.deployer.address,
@@ -333,10 +391,9 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
@@ -345,17 +402,32 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 });
                 it("works as expected in parameters change", async () => {
                     const address = this.governanceProtocolParams.usdcAddress;
-                    this.governanceProtocolParams.usdcAddress = ethers.constants.AddressZero;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    this.governanceProtocolParams.usdcAddress =
+                        ethers.constants.AddressZero;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     this.governanceProtocolParams.usdcAddress = address;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).not.to.be.reverted;
                 });
             });
             describe("uniV3Factory", () => {
                 it("reverts when address zero, works as expected as a parameter", async () => {
                     await deployments.fixture();
-                    const address = this.governanceProtocolParams.uniV3FactoryAddress;
-                    this.governanceProtocolParams.uniV3FactoryAddress = ethers.constants.AddressZero;
+                    const address =
+                        this.governanceProtocolParams.uniV3FactoryAddress;
+                    this.governanceProtocolParams.uniV3FactoryAddress =
+                        ethers.constants.AddressZero;
                     await expect(
                         deployments.deploy("PerpVaultGovernance", {
                             from: this.deployer.address,
@@ -364,10 +436,9 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                     protocolGovernance:
                                         this.protocolGovernance.address,
                                     registry: this.vaultRegistry.address,
-                                    singleton:
-                                        this.perpVaultSingleton.address,
+                                    singleton: this.perpVaultSingleton.address,
                                 },
-                                this.governanceProtocolParams
+                                this.governanceProtocolParams,
                             ],
                             autoMine: true,
                         })
@@ -375,24 +446,38 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                     this.governanceProtocolParams.uniV3FactoryAddress = address;
                 });
                 it("works as expected in parameters change", async () => {
-                    const address = this.governanceProtocolParams.uniV3FactoryAddress;
-                    this.governanceProtocolParams.uniV3FactoryAddress = ethers.constants.AddressZero;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
+                    const address =
+                        this.governanceProtocolParams.uniV3FactoryAddress;
+                    this.governanceProtocolParams.uniV3FactoryAddress =
+                        ethers.constants.AddressZero;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).to.be.revertedWith(Exceptions.ADDRESS_ZERO);
                     this.governanceProtocolParams.uniV3FactoryAddress = address;
-                    await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
+                    await expect(
+                        this.subject
+                            .connect(this.admin)
+                            .stageDelayedProtocolParams(
+                                this.governanceProtocolParams
+                            )
+                    ).not.to.be.reverted;
                 });
             });
 
             describe("protocolLeverage", () => {
                 it("okay any value", async () => {
                     await deployments.fixture();
-                    const arr = [0, 1, 5, 10, 100, 10**9];
+                    const arr = [0, 1, 5, 10, 100, 10 ** 9];
 
                     const len = arr.length;
 
                     for (let i = 0; i < len; ++i) {
-
-                        this.governanceProtocolParams.maxProtocolLeverage = arr[i];
+                        this.governanceProtocolParams.maxProtocolLeverage =
+                            arr[i];
 
                         await expect(
                             deployments.deploy("PerpVaultGovernance", {
@@ -405,33 +490,33 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                                         singleton:
                                             this.perpVaultSingleton.address,
                                     },
-                                    this.governanceProtocolParams
+                                    this.governanceProtocolParams,
                                 ],
                                 autoMine: true,
                             })
                         ).not.to.be.reverted;
-
                     }
 
                     this.governanceProtocolParams.maxProtocolLeverage = 10;
-                        
-
                 });
 
                 it("works as expected in parameters change", async () => {
-
-                    const arr = [0, 1, 5, 10, 100, 10**9];
+                    const arr = [0, 1, 5, 10, 100, 10 ** 9];
 
                     const len = arr.length;
                     for (let i = 0; i < len; ++i) {
-
-                        this.governanceProtocolParams.maxProtocolLeverage = arr[i];
-                        await expect (this.subject.connect(this.admin).stageDelayedProtocolParams(this.governanceProtocolParams)).not.to.be.reverted;
-
+                        this.governanceProtocolParams.maxProtocolLeverage =
+                            arr[i];
+                        await expect(
+                            this.subject
+                                .connect(this.admin)
+                                .stageDelayedProtocolParams(
+                                    this.governanceProtocolParams
+                                )
+                        ).not.to.be.reverted;
                     }
 
                     this.governanceProtocolParams.maxProtocolLeverage = 10;
-
                 });
             });
         });
@@ -459,17 +544,33 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
         });
 
         const delayedProtocolParams: Arbitrary<DelayedProtocolParamsStruct> =
-        tuple(address, address, address, address, address, address, integer({ min: 0, max: 10**9 })).map(
-            ([vault, clearingHouse, accountBalance, vusdcAddress, usdcAddress, uniV3FactoryAddress, x]) => ({
-                vault,
-                clearingHouse,
-                accountBalance,
-                vusdcAddress,
-                usdcAddress,
-                uniV3FactoryAddress,
-                maxProtocolLeverage: BigNumber.from(x),
-            })
-        );
+            tuple(
+                address,
+                address,
+                address,
+                address,
+                address,
+                address,
+                integer({ min: 0, max: 10 ** 9 })
+            ).map(
+                ([
+                    vault,
+                    clearingHouse,
+                    accountBalance,
+                    vusdcAddress,
+                    usdcAddress,
+                    uniV3FactoryAddress,
+                    x,
+                ]) => ({
+                    vault,
+                    clearingHouse,
+                    accountBalance,
+                    vusdcAddress,
+                    usdcAddress,
+                    uniV3FactoryAddress,
+                    maxProtocolLeverage: BigNumber.from(x),
+                })
+            );
 
         vaultGovernanceBehavior.call(this, {
             delayedProtocolParams,
@@ -481,7 +582,5 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
             contractName: "PerpVaultGovernance",
             contractVersion: "1.0.0",
         });
-
-
     }
 );

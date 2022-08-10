@@ -87,7 +87,6 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         return bytes32("1.0.0");
     }
 
-
     event StageDelayedProtocolParams(
         address indexed origin,
         address indexed sender,
@@ -97,5 +96,3 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
 
     event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }
-
-

@@ -157,17 +157,16 @@ export function vaultGovernanceBehavior<
                     await defaultCreateVault(deployer, tokenAddresses, owner);
                 } else {
                     if (isPerpVaultGovernance) {
-                        const {vethAddress} = await getNamedAccounts();
+                        const { vethAddress } = await getNamedAccounts();
                         await this.subject
                             .connect(deployer)
                             .createVault(
                                 this.ownerSigner.address,
-                                vethAddress, 
+                                vethAddress,
                                 5,
                                 true
                             );
-                    }
-                    else if (isRootVaultGovernance) {
+                    } else if (isRootVaultGovernance) {
                         subVaultNfts = await setSubVaultNfts(
                             deployer,
                             tokenAddresses
