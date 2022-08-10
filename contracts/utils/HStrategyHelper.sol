@@ -71,7 +71,8 @@ contract HStrategyHelper {
     function calculateMissingTokenAmounts(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
-        HStrategy.DomainPositionParams memory domainPositionParams
+        HStrategy.DomainPositionParams memory domainPositionParams,
+        uint128 liquidity
     ) external view returns (HStrategy.TokenAmounts memory missingTokenAmounts) {
         // for uniV3Vault
         {
@@ -81,7 +82,7 @@ contract HStrategyHelper {
                 domainPositionParams.intervalPriceSqrtX96,
                 domainPositionParams.lowerPriceSqrtX96,
                 domainPositionParams.upperPriceSqrtX96,
-                domainPositionParams.liquidity
+                liquidity
             );
 
             if (token0Amount < expectedTokenAmounts.uniV3Token0) {
