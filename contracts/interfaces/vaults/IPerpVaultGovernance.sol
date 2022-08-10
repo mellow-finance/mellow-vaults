@@ -28,7 +28,7 @@ interface IPerpVaultGovernance is IVaultGovernance {
     /// @notice Stage Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @dev Can only be called after delayedProtocolParamsTimestamp.
     /// @param params New params
-    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external;
+    function stageDelayedProtocolParams(DelayedProtocolParams memory params) external;
 
     /// @notice Commit Delayed Protocol Params, i.e. Params that could be changed by Protocol Governance with Protocol Governance delay.
     function commitDelayedProtocolParams() external;

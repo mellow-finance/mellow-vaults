@@ -46,7 +46,7 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         return abi.decode(_stagedDelayedProtocolParams, (DelayedProtocolParams));
     }
 
-    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+    function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
         require(address(params.vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.clearingHouse) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.accountBalance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
@@ -54,10 +54,16 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         require(params.usdcAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.uniV3FactoryAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         _stageDelayedProtocolParams(abi.encode(params));
+        emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
 
     function commitDelayedProtocolParams() external {
         _commitDelayedProtocolParams();
+        emit CommitDelayedProtocolParams(
+            tx.origin,
+            msg.sender,
+            abi.decode(_delayedProtocolParams, (DelayedProtocolParams))
+        );
     }
 
     function createVault(
@@ -80,4 +86,16 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
     function _contractVersion() internal pure override returns (bytes32) {
         return bytes32("1.0.0");
     }
+
+
+    event StageDelayedProtocolParams(
+        address indexed origin,
+        address indexed sender,
+        DelayedProtocolParams params,
+        uint256 when
+    );
+
+    event CommitDelayedProtocolParams(address indexed origin, address indexed sender, DelayedProtocolParams params);
 }
+
+

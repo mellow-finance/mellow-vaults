@@ -99,6 +99,9 @@ const config: HardhatUserConfig = {
         },
         vethAddress: {
             default: "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB",
+        },
+        admin: {
+            default: "0x9ef21be1c270aa1c3c3d750f458442397fbffcb6",
         }
     },
     solidity: {
