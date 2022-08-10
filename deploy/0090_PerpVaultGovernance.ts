@@ -22,6 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         autoMine: true,
         ...TRANSACTION_GAS_LIMITS
     });
+    /*
     const chainId = await getChainId();
     const hardhatChainId = "31337";
     if (chainId == hardhatChainId) {
@@ -33,6 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             ...TRANSACTION_GAS_LIMITS
         });
     }
+    */
     await deploy("PerpVaultGovernance", {
         from: deployer,
         args: [

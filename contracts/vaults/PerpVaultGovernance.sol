@@ -81,19 +81,13 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         address owner_,
         address baseToken_,
         uint256 leverageMultiplierD_,
-        bool isLPVault_,
-        bool isLongBaseTokenIfFutures_
-    ) external returns (IVault vault, uint256 nft) {
+        bool isLongBaseToken_
+    ) external returns (IPerpFuturesVault vault, uint256 nft) {
         address vaddr;
         (vaddr, nft) = _createVault(owner_);
-        if (isLPVault_) {
-            IPerpLPVault perpVault = IPerpLPVault(vaddr);
-            perpVault.initialize(nft, baseToken_, leverageMultiplierD_);
-        } else {
-            IPerpFuturesVault perpVault = IPerpFuturesVault(vaddr);
-            perpVault.initialize(nft, baseToken_, leverageMultiplierD_, isLongBaseTokenIfFutures_);
-        }
-        vault = IVault(vaddr);
+        IPerpFuturesVault perpVault = IPerpFuturesVault(vaddr);
+        perpVault.initialize(nft, baseToken_, leverageMultiplierD_, isLongBaseToken_);
+        vault = IPerpFuturesVault(vaddr);
         address[] memory vaultTokens = new address[](1);
         vaultTokens[0] = baseToken_;
         emit DeployedVault(

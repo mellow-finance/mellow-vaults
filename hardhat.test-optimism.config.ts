@@ -96,6 +96,9 @@ const config: HardhatUserConfig = {
         },
         vusdcAddress: {
             default: "0xC84Da6c8ec7A57cD10B939E79eaF9d2D17834E04",
+        },
+        vethAddress: {
+            default: "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB",
         }
     },
     solidity: {

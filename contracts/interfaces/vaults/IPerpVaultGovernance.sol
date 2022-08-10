@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "../external/perp/IPerpInternalVault.sol";
 import "../external/perp/IClearingHouse.sol";
 import "../external/perp/IAccountBalance.sol";
-import "./IPerpLPVault.sol";
 import "./IPerpFuturesVault.sol";
 import "./IVaultGovernance.sol";
 
@@ -46,7 +45,12 @@ interface IPerpVaultGovernance is IVaultGovernance {
     function commitDelayedProtocolParams() external;
 
     /// @notice Deploys a new vault.
-    function createVault(address owner_, address baseToken_, uint256 leverageMultiplierD_, bool isLPVault_, bool isLongBaseTokenIfFutures_)
+    /// @param owner_ Owner of the vault NFT
+    /// @param baseToken_ Address of the baseToken (the virtual underlying asset that a user is trading with)
+    /// @param leverageMultiplierD_ The vault capital leverage multiplier (multiplied by DENOMINATOR)
+    /// @param isLongBaseToken_ True if the user`s base token position is a long one, else - false
+    /// @return vault The new vault`s interface, nft The new vault`s nft in VaultRegistry
+    function createVault(address owner_, address baseToken_, uint256 leverageMultiplierD_, bool isLongBaseToken_)
         external
-        returns (IVault vault, uint256 nft);
+        returns (IPerpFuturesVault vault, uint256 nft);
 }
