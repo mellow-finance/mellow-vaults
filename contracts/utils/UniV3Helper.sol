@@ -168,20 +168,20 @@ contract UniV3Helper {
     function getPositionTokenAmountsByCapitalOfToken0(
         uint256 lowerPriceSqrtX96,
         uint256 upperPriceSqrtX96,
-        uint256 spotPriceSqrtX96,
+        uint256 spotPriceForSqrtFormulasX96,
         uint256 spotPriceX96,
         uint256 capital
     ) external pure returns (uint256 token0Amount, uint256 token1Amount) {
         // sqrt(upperPrice) * (sqrt(price) - sqrt(lowerPrice))
         uint256 lowerPriceTermX96 = FullMath.mulDiv(
             upperPriceSqrtX96,
-            spotPriceSqrtX96 - lowerPriceSqrtX96,
+            spotPriceForSqrtFormulasX96 - lowerPriceSqrtX96,
             CommonLibrary.Q96
         );
         // sqrt(price) * (sqrt(upperPrice) - sqrt(price))
         uint256 upperPriceTermX96 = FullMath.mulDiv(
-            spotPriceSqrtX96,
-            upperPriceSqrtX96 - spotPriceSqrtX96,
+            spotPriceForSqrtFormulasX96,
+            upperPriceSqrtX96 - spotPriceForSqrtFormulasX96,
             CommonLibrary.Q96
         );
 
