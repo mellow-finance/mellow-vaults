@@ -22,6 +22,7 @@ export type Context = {
     deployer: SignerWithAddress;
     mockOracle: Contract;
     erc20RootVault: Contract;
+    poolScale: number;
 };
 
 export type StrategyStats = {
@@ -287,7 +288,7 @@ const exchange = async (
         let valWsteth = amountIn;
         // val / price * (smallResult / 10^15)
         let valSteth = valWsteth.mul(priceX96).div(BigNumber.from(2).pow(96)).mul(smallResult).div(BigNumber.from(10).pow(15));
-        let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool);
+        let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool).div(context.poolScale);
         // proportional to the our situation in the pool
         const balance = await stethContract.balanceOf(context.deployer.address);
         if (balance.mul(10).lt(adjustedVal.mul(11))) {
@@ -311,7 +312,7 @@ const exchange = async (
         const fee = await curvePool.fee();
         const feeDenominator = BigNumber.from(10).pow(10);
         // scale expectedOut to the correpsonding pool scale
-        const actualOut = result.mul(wethAmountInPool).div(newPoolEth);
+        const actualOut = result.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale);
         // 
         const swapFees = result.mul(wethAmountInPool).div(newPoolEth).mul(fee).div(feeDenominator.sub(fee));
         const slippageFees = amountIn.mul(priceX96).div(BigNumber.from(2).pow(96)).sub(actualOut).sub(swapFees);
@@ -323,7 +324,7 @@ const exchange = async (
     } else {
         let valWeth = amountIn;
 
-        let adjustedVal = valWeth.mul(newPoolEth).div(wethAmountInPool);
+        let adjustedVal = valWeth.mul(newPoolEth).div(wethAmountInPool).div(context.poolScale);
         // proportional to the our situation in the pool
         const balance = await provider.getBalance(context.deployer.address);
         if (balance.mul(10).lt(adjustedVal.mul(11))) {
@@ -347,7 +348,7 @@ const exchange = async (
         const fee = await curvePool.fee();
         const feeDenominator = BigNumber.from(10).pow(10);
         // scale expectedOut to the correpsonding pool scale
-        const actualOut = result.mul(wethAmountInPool).div(newPoolEth);
+        const actualOut = result.mul(wethAmountInPool).div(newPoolEth).mul(context.poolScale);
         //
         const swapFees = result.mul(wethAmountInPool).div(newPoolEth).mul(fee).div(feeDenominator.sub(fee));
         const slippageFees = amountIn.mul(BigNumber.from(2).pow(96)).div(priceX96).sub(actualOut).sub(swapFees);

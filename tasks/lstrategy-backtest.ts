@@ -56,12 +56,19 @@ task("lstrategy-backtest", "run backtest on univ3 vault")
         undefined,
         types.int
     )
+    .addParam(
+        "poolScale",
+        "The scale factor of the amount of tokens in the pool",
+        undefined,
+        types.int
+    )
     .setAction(
         async (
-            { filename, width, weth, wsteth },
+            { filename, width, weth, wsteth, poolScale },
             hre: HardhatRuntimeEnvironment
         ) => {
-            const context = await setup(hre, width);
+            let context = await setup(hre, width);
+            context.poolScale = poolScale;
             await execute(filename, width, weth, wsteth, hre, context);
         }
     );
@@ -364,7 +371,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         .commitDelayedProtocolParams();
 
     await lstrategy.connect(adminSigned).updateTradingParams({
-        maxSlippageD: BigNumber.from(10).pow(7),
+        maxSlippageD: BigNumber.from(10).pow(9),
         oracleSafetyMask: 0x20,
         orderDeadline: 86400 * 30,
         oracle: oracleDeployParams.address,
@@ -398,6 +405,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
         deployer: deployerSigned,
         mockOracle: mockOracle,
         erc20RootVault: erc20RootVaultContract,
+        poolScale: 0,
     } as Context;
 };
 
@@ -486,6 +494,8 @@ const buildInitialPositions = async (
     weth_amount: number,
     wsteth_amount: number
 ) => {
+    const { ethers, getNamedAccounts } = hre;
+    const { wsteth } = await getNamedAccounts();
     let tick = await getUniV3Tick(hre, context);
     await changePrice(tick, context);
 
@@ -517,10 +527,40 @@ const buildInitialPositions = async (
     });
 
     let erc20 = await context.LStrategy.erc20Vault();
+    while (
+        (await context.weth.balanceOf(context.deployer.address)).lt(
+            BigNumber.from(10)
+                .pow(18)
+                .mul(weth_amount + 10)
+        )
+    ) {
+        const mintNow = BigNumber.from(10).pow(21);
+        await mint(hre, "WETH", context.deployer.address, mintNow);
+    }
     await context.weth.transfer(
         erc20,
         BigNumber.from(10).pow(18).mul(weth_amount)
     );
+    const stethContract = await ethers.getContractAt(
+        ISTETH,
+        "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+    );
+    const wstethContract = await ethers.getContractAt(IWSTETH, wsteth);
+    while (
+        (await context.wsteth.balanceOf(context.deployer.address)).lt(
+            BigNumber.from(10)
+                .pow(18)
+                .mul(wsteth_amount + 10)
+        )
+    ) {
+        const mintNow = BigNumber.from(10).pow(21);
+        await mint(hre, "WETH", context.deployer.address, mintNow);
+        await context.weth.withdraw(mintNow);
+        await stethContract.submit(context.deployer.address, {
+            value: mintNow,
+        });
+        await wstethContract.wrap(mintNow);
+    }
     await context.wsteth.transfer(
         erc20,
         BigNumber.from(10).pow(18).mul(wsteth_amount)
