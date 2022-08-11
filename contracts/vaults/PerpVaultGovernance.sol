@@ -55,7 +55,7 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
     // -------------------  EXTERNAL, MUTATING  -------------------
 
     /// @inheritdoc IPerpVaultGovernance
-    function stageDelayedProtocolParams(DelayedProtocolParams calldata params) external {
+    function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
         require(address(params.vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.clearingHouse) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(address(params.accountBalance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);

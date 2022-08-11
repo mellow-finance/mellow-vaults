@@ -19,7 +19,7 @@ import { delayedProtocolParamsBehavior } from "./vaultGovernanceDelayedProtocolP
 import { InternalParamsStruct } from "../types/IVaultGovernance";
 import { ERC20Token as ERC20, IVault, Vault, VaultGovernance } from "../types";
 import { InternalParamsStructOutput } from "../types/VaultGovernance";
-import { deployments, ethers } from "hardhat";
+import { deployments, ethers, getNamedAccounts } from "hardhat";
 import { delayedStrategyParamsBehavior } from "./vaultGovernanceDelayedStrategyParams";
 import { create } from "domain";
 import { PermissionIdsLibrary } from "../../deploy/0000_utils";
@@ -62,6 +62,7 @@ export function vaultGovernanceBehavior<
         operatorParams,
         defaultCreateVault,
         rootVaultGovernance,
+        perpVaultGovernanceSpecial,
         acceptNullifyStrategyParams,
         acceptNullifyProtocolPerVaultParams,
     }: {
@@ -78,6 +79,7 @@ export function vaultGovernanceBehavior<
             ...args: any[]
         ) => Promise<void>;
         rootVaultGovernance?: boolean;
+        perpVaultGovernanceSpecial?: boolean;
         acceptNullifyStrategyParams?: boolean;
         acceptNullifyProtocolPerVaultParams?: boolean;
     }
@@ -145,6 +147,7 @@ export function vaultGovernanceBehavior<
 
         before(async () => {
             let isRootVaultGovernance = rootVaultGovernance ?? false;
+            let isPerpVaultGovernance = perpVaultGovernanceSpecial ?? false;
             createVault = async (
                 deployer: SignerWithAddress,
                 tokenAddresses: string[],
@@ -153,7 +156,17 @@ export function vaultGovernanceBehavior<
                 if (defaultCreateVault) {
                     await defaultCreateVault(deployer, tokenAddresses, owner);
                 } else {
-                    if (isRootVaultGovernance) {
+                    if (isPerpVaultGovernance) {
+                        const { vethAddress } = await getNamedAccounts();
+                        await this.subject
+                            .connect(deployer)
+                            .createVault(
+                                this.ownerSigner.address,
+                                vethAddress,
+                                5,
+                                true
+                            );
+                    } else if (isRootVaultGovernance) {
                         subVaultNfts = await setSubVaultNfts(
                             deployer,
                             tokenAddresses
