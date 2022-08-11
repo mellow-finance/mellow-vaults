@@ -50,8 +50,12 @@ interface IPerpFuturesVault is IIntegrationVault {
     ) external;
 
     /// @notice Returns how much pure capital is there on your account (nominated in USDC weis)
-    /// @return value The position capital estimated in USDC
+    /// @return value The pure capital estimated in USDC
     function getAccountValue() external view returns (uint256 value);
+
+    /// @notice Returns how much value in the open position is on your account (nominated in USDC weis)
+    /// @return value The position value estimated in USDC
+    function getPositionValue() external view returns (int256 value);
 
     // -------------------  EXTERNAL, MUTATING  -------------------
 

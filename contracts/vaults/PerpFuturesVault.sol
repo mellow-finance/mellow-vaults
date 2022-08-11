@@ -4,12 +4,16 @@ pragma solidity 0.8.9;
 import "../interfaces/external/perp/IPerpInternalVault.sol";
 import "../interfaces/external/perp/IClearingHouse.sol";
 import "../interfaces/external/perp/IBaseToken.sol";
+import "../interfaces/external/perp/IIndexPrice.sol";
+import "../interfaces/external/perp/IClearingHouseConfig.sol";
+import "../interfaces/external/perp/IMarketRegistry.sol";
 import "../interfaces/external/perp/IAccountBalance.sol";
 import "./IntegrationVault.sol";
 import "../interfaces/vaults/IPerpFuturesVault.sol";
 import "../libraries/ExceptionsLibrary.sol";
 import "../libraries/external/FullMath.sol";
 import "../interfaces/vaults/IPerpVaultGovernance.sol";
+import "hardhat/console.sol";
 
 // FUTURE: CHECK SECURITY & SLIPPAGE EVERYWHERE
 // check liquidation scenario
@@ -24,8 +28,10 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     IClearingHouse public clearingHouse;
     /// @inheritdoc IPerpFuturesVault
     IAccountBalance public accountBalance;
+    IMarketRegistry public marketRegistry;
 
     uint256 public constant DENOMINATOR = 10**9;
+    uint256 public constant DECIMALS_DIFFERENCE = 10**12;
     uint256 public constant Q96 = 2**96;
 
     /// @notice leverageMultiplierD The vault capital leverage multiplier (multiplied by DENOMINATOR). Your real capital is C and your virtual capital is C * leverageMultiplier (a user will be trading the virtual asset)
@@ -39,22 +45,28 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        uint256 usdcValue = getAccountValue();
+        uint256 usdValue = getAccountValue();
         minTokenAmounts = new uint256[](1);
         maxTokenAmounts = new uint256[](1);
 
-        minTokenAmounts[0] = usdcValue;
-        maxTokenAmounts[0] = usdcValue;
+        minTokenAmounts[0] = usdValue / DECIMALS_DIFFERENCE;
+        maxTokenAmounts[0] = usdValue / DECIMALS_DIFFERENCE;
     }
 
     /// @inheritdoc IPerpFuturesVault
     function getAccountValue() public view returns (uint256) {
-        int256 usdcValue = clearingHouse.getAccountValue(address(this));
-        if (usdcValue < 0) {
+        int256 usdValue = clearingHouse.getAccountValue(address(this));
+        console.logInt(usdValue);
+        if (usdValue < 0) {
             return 0;
         }
-        return uint256(usdcValue);
+        return uint256(usdValue);
     }
+
+    /// @inheritdoc IPerpFuturesVault
+    function getPositionValue() public view returns (int256) {
+        return accountBalance.getTotalPositionValue(address(this), baseToken) / int256(DECIMALS_DIFFERENCE);
+    }   
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
@@ -83,10 +95,12 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         _initialize(vaultTokens_, nft_);
 
         vault = params.vault;
-        clearingHouse = params.clearingHouse;
-        accountBalance = params.accountBalance;
-        usdc = params.usdcAddress;
+        marketRegistry = params.marketRegistry;
 
+        clearingHouse = IClearingHouse(vault.getClearingHouse());
+        accountBalance = IAccountBalance(vault.getAccountBalance());
+
+        usdc = params.usdcAddress;
         baseToken = baseToken_;
     }
 
@@ -126,8 +140,8 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
     /// @inheritdoc IPerpFuturesVault
     function closePosition(uint256 deadline) external {
-        int256 positionSize = accountBalance.getTakerPositionSize(address(this), baseToken);
-        if (positionSize == 0) {
+        int256 positionValueUSD = accountBalance.getTotalPositionValue(address(this), baseToken);
+        if (positionValueUSD == 0) {
             return;
         }
         clearingHouse.closePosition(
@@ -139,7 +153,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
                 referralCode: 0
             })
         );
-        emit ClosedPosition(tx.origin, msg.sender, positionSize);
+        emit ClosedPosition(tx.origin, msg.sender);
     }
 
     // -------------------  INTERNAL, MUTATING  -------------------
@@ -159,6 +173,8 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         if (usdcAmount == 0) {
             return new uint256[](1);
         }
+
+        console.log(usdcAmount);
 
         IERC20(usdc).safeIncreaseAllowance(address(vault), usdcAmount);
         vault.deposit(usdc, usdcAmount);
@@ -192,13 +208,21 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
             return new uint256[](1);
         }
         uint256 vaultCapital = getAccountValue();
-        require(vaultCapital >= usdcAmount, ExceptionsLibrary.LIMIT_OVERFLOW);
+        
+        uint256 futureCapital = 0;
+        if (usdcAmount * DECIMALS_DIFFERENCE < vaultCapital) {
+            futureCapital = vaultCapital - usdcAmount * DECIMALS_DIFFERENCE;
+        }
 
-        uint256 futureCapital = vaultCapital - usdcAmount;
         uint256 capitalToUse = FullMath.mulDiv(futureCapital, leverageMultiplierD, DENOMINATOR);
 
         Options memory opts = _parseOptions(options);
         _adjustPosition(capitalToUse, opts.deadline);
+
+        uint256 freeCollateral = vault.getFreeCollateral(address(this));
+        if (usdcAmount < freeCollateral) {
+            usdcAmount = freeCollateral;
+        }
 
         vault.withdraw(usdc, usdcAmount);
 
@@ -211,18 +235,18 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     /// @param capitalToUse The new position capital to be used after adjustment (nominated in USDC weis)
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function _adjustPosition(uint256 capitalToUse, uint256 deadline) internal {
-        int256 positionSize = accountBalance.getTakerPositionSize(address(this), baseToken);
+        int256 positionValueUSD = accountBalance.getTotalPositionValue(address(this), baseToken);
         if (isLongBaseToken) {
-            if (int256(capitalToUse) > positionSize) {
-                _makeAdjustment(true, uint256(int256(capitalToUse) - positionSize), deadline);
+            if (int256(capitalToUse) > positionValueUSD) {
+                _makeAdjustment(true, uint256(int256(capitalToUse) - positionValueUSD), deadline);
             } else {
-                _makeAdjustment(false, uint256(positionSize - int256(capitalToUse)), deadline);
+                _makeAdjustment(false, uint256(positionValueUSD - int256(capitalToUse)), deadline);
             }
         } else {
-            if (-int256(capitalToUse) < positionSize) {
-                _makeAdjustment(true, uint256(positionSize + int256(capitalToUse)), deadline);
+            if (-int256(capitalToUse) < positionValueUSD) {
+                _makeAdjustment(true, uint256(positionValueUSD + int256(capitalToUse)), deadline);
             } else {
-                _makeAdjustment(false, uint256(-positionSize - int256(capitalToUse)), deadline);
+                _makeAdjustment(false, uint256(-positionValueUSD - int256(capitalToUse)), deadline);
             }
         }
     }
@@ -237,14 +261,16 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         uint256 amount,
         uint256 deadline
     ) internal {
+        console.log(longBaseTokenInAdjustment);
+        console.log(amount);
         if (amount == 0) {
             return;
         }
-        clearingHouse.openPosition(
+        (uint256 b, uint256 q) = clearingHouse.openPosition(
             IClearingHouse.OpenPositionParams({
                 baseToken: baseToken,
                 isBaseToQuote: !longBaseTokenInAdjustment,
-                isExactInput: true,
+                isExactInput: longBaseTokenInAdjustment,
                 amount: amount,
                 oppositeAmountBound: 0,
                 deadline: deadline,
@@ -252,6 +278,10 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
                 referralCode: 0
             })
         );
+
+        console.log(b);
+        console.log(q);
+
     }
 
     /// @notice A helper function which parses an encoded instance of Options struct or any other byes array
@@ -271,6 +301,22 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         return false;
     }
 
+    function _deltaBetweenSpotAndOracleTvl() internal view returns (int256 delta) {
+        int256 positionSize = accountBalance.getTotalPositionSize(address(this), baseToken);
+
+    }
+
+    function _getOraclePriceX10_18() internal view returns (uint256 priceX10_18) {
+        return
+            IBaseToken(baseToken).isClosed()
+                ? IBaseToken(baseToken).getClosedPrice()
+                : IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(accountBalance.getClearingHouseConfig()).getTwapInterval());
+    }
+
+    function _getSpotPriceX10_18() internal view returns (uint256 priceX10_18) {
+        address pool = marketRegistry.getPool(baseToken);
+    }
+
     // --------------------------  EVENTS  --------------------------
 
     /// @notice Emitted when the vault capital leverage multiplier is updated (multiplied by DENOMINATOR)
@@ -288,8 +334,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     /// @notice Emitted when the current position is closed
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
-    /// @param positionSize The current taker position size from Perp AccountBalance contract
-    event ClosedPosition(address indexed origin, address indexed sender, int256 positionSize);
+    event ClosedPosition(address indexed origin, address indexed sender);
 
     /// @notice Emitted when the current position`s capital is adjusted
     /// @param origin Origin of the transaction (tx.origin)

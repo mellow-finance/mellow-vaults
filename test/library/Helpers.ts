@@ -345,7 +345,7 @@ export const mint = async (
             let data = `0x8da5cb5b`;
             if (token == "OUSDC") {
                 address = usdc;
-                data = '0xae1f6aaf';
+                data = "0xae1f6aaf";
             }
 
             let owner = await ethers.provider.call({

@@ -1,7 +1,7 @@
 import hre from "hardhat";
 import { ethers, getNamedAccounts, deployments } from "hardhat";
 import { BigNumber } from "@ethersproject/bignumber";
-import { mint, sleep } from "../library/Helpers";
+import { encodeToBytes, mint, sleep } from "../library/Helpers";
 import { contract } from "../library/setup";
 import { ERC20RootVault, ERC20Vault, PerpFuturesVault } from "../types";
 import { combineVaults, setupVault } from "../../deploy/0000_utils";
@@ -11,6 +11,7 @@ import { abi as IClearingHouse } from "../helpers/ClearingHouseABI.json";
 import { abi as IAccountBalance } from "../helpers/AccountBalanceABI.json";
 import { pre } from "fast-check";
 import { expect } from "chai";
+import { uint256 } from "../library/property";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -25,7 +26,6 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
     "Optimism__PerpFuturesVault",
     function () {
         before(async () => {
-
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     await deployments.fixture();
@@ -52,12 +52,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     let veth = "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB";
 
                     await setupVault(hre, perpVaultNft, "PerpVaultGovernance", {
-                        createVaultArgs: [
-                            this.deployer.address,
-                            veth,
-                            5,
-                            true,
-                        ],
+                        createVaultArgs: [this.deployer.address, veth, BigNumber.from(10).pow(9).mul(5), true],
                     });
                     await setupVault(
                         hre,
@@ -110,11 +105,9 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         "IERC20",
                         this.usdc.address
                     );
-                    
+
                     for (let address of [
                         this.deployer.address,
-                        this.subject.address,
-                        this.erc20Vault.address,
                     ]) {
                         const prevBalance = await contract.balanceOf(address);
                         await mint(
@@ -140,7 +133,49 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
         });
 
         describe("#tvl", () => {
-            it("returns total value locked", async () => {});
+            /*
+            it("zero tvl when nothing is done", async () => {
+                const tvl = await this.subject.tvl();
+                expect(tvl[0][0]).to.be.eq(BigNumber.from(0));
+            });
+*/
+            it ("tvl equals to pure capital", async () => {
+
+                await mint(
+                    "OUSDC",
+                    this.subject.address,
+                    BigNumber.from(10).pow(6).mul(10)
+                );
+                
+                await this.subject.push(
+                    [this.usdc.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(4),
+                    ],
+                    encodeToBytes(["uint256"], [ethers.constants.MaxUint256])
+                );
+
+                const tvl = await this.subject.tvl();
+                const W = await this.subject.getPositionValue();
+
+                console.log(W);
+                
+                expect(W).to.be.gt(0);
+                expect(tvl[0][0]).to.be.eq(BigNumber.from(10).pow(6).mul(4));
+
+                await this.subject.push(
+                    [this.usdc.address],
+                    [
+                        BigNumber.from(10).pow(6).mul(2),
+                    ],
+                    encodeToBytes(["uint256"], [ethers.constants.MaxUint256])
+                );
+                expect(tvl[0][0]).to.be.eq(BigNumber.from(10).pow(6).mul(6));
+
+            })
+
         });
     }
+
+
 );

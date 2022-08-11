@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         "ProtocolGovernance"
     );
     const vaultRegistry = await get("VaultRegistry");
-    const { deployer, perpVault, accountBalance, clearingHouse, vusdcAddress, usdc, uniswapV3Factory} = await getNamedAccounts();
+    const { deployer, perpVault, marketRegistry, usdc} = await getNamedAccounts();
 
     const { address: singleton } = await deploy("PerpFuturesVault", {
         from: deployer,
@@ -45,11 +45,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             },
             {
                 vault: perpVault,
-                clearingHouse: clearingHouse,
-                accountBalance: accountBalance,
-                vusdcAddress: vusdcAddress,
+                marketRegistry: marketRegistry,
                 usdcAddress: usdc,
-                uniV3FactoryAddress: uniswapV3Factory,
                 maxProtocolLeverage: 10
             },
         ],

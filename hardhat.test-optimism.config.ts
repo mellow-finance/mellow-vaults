@@ -88,14 +88,8 @@ const config: HardhatUserConfig = {
         perpVault: {
             default: "0xAD7b4C162707E0B2b5f6fdDbD3f8538A5fbA0d60",
         },
-        clearingHouse: {
-            default: "0x82ac2CE43e33683c58BE4cDc40975E73aA50f459",
-        },
-        accountBalance: {
-            default: "0xA7f3FC32043757039d5e13d790EE43edBcBa8b7c",
-        },
-        vusdcAddress: {
-            default: "0xC84Da6c8ec7A57cD10B939E79eaF9d2D17834E04",
+        marketRegistry: {
+            default: "0xd5820eE0F55205f6cdE8BB0647072143b3060067",
         },
         vethAddress: {
             default: "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB",

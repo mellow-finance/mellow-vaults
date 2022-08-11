@@ -2,27 +2,19 @@
 pragma solidity 0.8.9;
 
 import "../external/perp/IPerpInternalVault.sol";
-import "../external/perp/IClearingHouse.sol";
-import "../external/perp/IAccountBalance.sol";
+import "../external/perp/IMarketRegistry.sol";
 import "./IPerpFuturesVault.sol";
 import "./IVaultGovernance.sol";
 
 interface IPerpVaultGovernance is IVaultGovernance {
     /// @notice Params that could be changed by Protocol Governance with Protocol Governance delay.
     /// @param vault Perp Protocol internal vault contract (deposits/withdrawals)
-    /// @param clearingHouse Perp Protocol clearing house contract (open/close positions, add/remove liquidity, liquidate positions)
-    /// @param accountBalance Perp Protocol account balance contract (get position total value, add/remove base token)
-    /// @param vusdcAddress Reference to Perp Protocol vUSDC
     /// @param usdcAddress Reference to USDC
-    /// @param uniV3FactoryAddress Reference to the UniswapV3 factory
     /// @param maxProtocolLeverage Max possible vault capital leverage multiplier (currently 10x)
     struct DelayedProtocolParams {
         IPerpInternalVault vault;
-        IClearingHouse clearingHouse;
-        IAccountBalance accountBalance;
-        address vusdcAddress;
+        IMarketRegistry marketRegistry;
         address usdcAddress;
-        address uniV3FactoryAddress;
         uint256 maxProtocolLeverage;
     }
 

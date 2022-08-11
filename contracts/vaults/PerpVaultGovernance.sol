@@ -13,11 +13,8 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
         VaultGovernance(internalParams_)
     {
         require(address(delayedProtocolParams_.vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(address(delayedProtocolParams_.clearingHouse) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(address(delayedProtocolParams_.accountBalance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.vusdcAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(delayedProtocolParams_.marketRegistry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(delayedProtocolParams_.usdcAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(delayedProtocolParams_.uniV3FactoryAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
 
         _delayedProtocolParams = abi.encode(delayedProtocolParams_);
     }
@@ -41,11 +38,8 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
             return
                 DelayedProtocolParams({
                     vault: IPerpInternalVault(address(0)),
-                    clearingHouse: IClearingHouse(address(0)),
-                    accountBalance: IAccountBalance(address(0)),
-                    vusdcAddress: address(0),
+                    marketRegistry: IMarketRegistry(address(0)),
                     usdcAddress: address(0),
-                    uniV3FactoryAddress: address(0),
                     maxProtocolLeverage: 0
                 });
         }
@@ -57,11 +51,9 @@ contract PerpVaultGovernance is ContractMeta, IPerpVaultGovernance, VaultGoverna
     /// @inheritdoc IPerpVaultGovernance
     function stageDelayedProtocolParams(DelayedProtocolParams memory params) external {
         require(address(params.vault) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(address(params.clearingHouse) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(address(params.accountBalance) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.vusdcAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+        require(address(params.marketRegistry) != address(0), ExceptionsLibrary.ADDRESS_ZERO);
         require(params.usdcAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
-        require(params.uniV3FactoryAddress != address(0), ExceptionsLibrary.ADDRESS_ZERO);
+
         _stageDelayedProtocolParams(abi.encode(params));
         emit StageDelayedProtocolParams(tx.origin, msg.sender, params, _delayedProtocolParamsTimestamp);
     }
