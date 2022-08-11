@@ -258,7 +258,7 @@ export const deployVault = async (
     return { nft, address };
 };
 
-export type MintableToken = "USDC" | "WETH" | "WBTC";
+export type MintableToken = "USDC" | "WETH" | "WBTC" | "OUSDC";
 
 export const mint = async (
     token: MintableToken | string,
@@ -276,7 +276,6 @@ export const mint = async (
         case usdc.toLowerCase():
             token = "USDC";
             break;
-
         default:
             break;
     }
@@ -339,16 +338,25 @@ export const mint = async (
             });
             break;
         case "WBTC":
+        case "OUSDC":
             // owner()
+
+            let address = wbtc;
+            let data = `0x8da5cb5b`;
+            if (token == "OUSDC") {
+                address = usdc;
+                data = '0xae1f6aaf';
+            }
+
             let owner = await ethers.provider.call({
-                to: wbtc,
-                data: `0x8da5cb5b`,
+                to: address,
+                data: data,
             });
             owner = `0x${owner.substring(2 + 12 * 2)}`;
             await withSigner(owner, async (s) => {
                 // function mint(address,uint256)
                 const tx = {
-                    to: wbtc,
+                    to: address,
                     from: owner,
                     data: `0x40c10f19${ethers.utils
                         .hexZeroPad(to, 32)

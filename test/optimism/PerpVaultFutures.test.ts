@@ -6,9 +6,11 @@ import { contract } from "../library/setup";
 import { ERC20RootVault, ERC20Vault, PerpFuturesVault } from "../types";
 import { combineVaults, setupVault } from "../../deploy/0000_utils";
 
-import { abi as IPerpInternalVault } from "../../test/helpers/PerpVaultABI.json";
-import { abi as IClearingHouse } from "../../test/helpers/ClearingHouseABI.json";
-import { abi as IAccountBalance } from "../../test/helpers/AccountBalanceABI.json";
+import { abi as IPerpInternalVault } from "../helpers/PerpVaultABI.json";
+import { abi as IClearingHouse } from "../helpers/ClearingHouseABI.json";
+import { abi as IAccountBalance } from "../helpers/AccountBalanceABI.json";
+import { pre } from "fast-check";
+import { expect } from "chai";
 
 type CustomContext = {
     erc20Vault: ERC20Vault;
@@ -23,6 +25,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
     "Optimism__PerpFuturesVault",
     function () {
         before(async () => {
+
             this.deploymentFixture = deployments.createFixture(
                 async (_, __?: DeployOptions) => {
                     await deployments.fixture();
@@ -34,7 +37,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         await sleep(0);
                     };
 
-                    const tokens = [this.weth.address, this.usdc.address]
+                    const tokens = [this.usdc.address]
                         .map((t) => t.toLowerCase())
                         .sort();
 
@@ -52,8 +55,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         createVaultArgs: [
                             this.deployer.address,
                             veth,
-                            10,
-                            false,
+                            5,
                             true,
                         ],
                     });
@@ -103,32 +105,31 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         "ERC20RootVault",
                         erc20RootVault
                     );
-                    /*
-                for (let address of [
-                    this.deployer.address,
-                    this.subject.address,
-                    this.erc20Vault.address,
-                ]) {
-                    await mint(
-                        "USDC",
-                        address,
-                        BigNumber.from(10).pow(18).mul(3000)
+
+                    const contract = await ethers.getContractAt(
+                        "IERC20",
+                        this.usdc.address
                     );
-                    await mint(
-                        "WETH",
-                        address,
-                        BigNumber.from(10).pow(18).mul(3000)
-                    );
-                    await this.weth.approve(
-                        address,
-                        ethers.constants.MaxUint256
-                    );
-                    await this.usdc.approve(
-                        address,
-                        ethers.constants.MaxUint256
-                    );
-                }
-*/
+                    
+                    for (let address of [
+                        this.deployer.address,
+                        this.subject.address,
+                        this.erc20Vault.address,
+                    ]) {
+                        const prevBalance = await contract.balanceOf(address);
+                        await mint(
+                            "OUSDC",
+                            address,
+                            BigNumber.from(10).pow(6).mul(3000)
+                        );
+                        await this.usdc.approve(
+                            address,
+                            ethers.constants.MaxUint256
+                        );
+                        const newBalance = await contract.balanceOf(address);
+                        expect(prevBalance).to.be.lt(newBalance);
+                    }
+
                     return this.subject;
                 }
             );
