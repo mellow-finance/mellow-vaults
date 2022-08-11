@@ -41,6 +41,15 @@ export type StrategyStats = {
     totalToken1: BigNumber;
 };
 
+export type SwapStats = {
+    tokenIn: string;
+    tokenOut: string;
+    amountIn: BigNumber;
+    amountOut: BigNumber;
+    swapFees: BigNumber;
+    slippageFees: BigNumber;
+};
+
 export const preparePush = async ({
     hre,
     context,
@@ -115,20 +124,26 @@ export const swapOnCowswap = async (
     wethContract: any,
     wstethContract: any,
     stethContract: any
-) => {
-
+): Promise<SwapStats> => {
     const { ethers } = hre;
     await context.LStrategy
         .connect(context.admin)
         .postPreOrder(ethers.constants.Zero);
     const preOrder = await context.LStrategy.preOrder();
     if (preOrder.amountIn.eq(0)) {
-        return;
+        return {
+            tokenIn: "weth",
+            tokenOut: "wsteth",
+            amountIn: BigNumber.from(0),
+            amountOut: BigNumber.from(0),
+            swapFees: BigNumber.from(0),
+            slippageFees: BigNumber.from(0),
+        } as SwapStats;
     }
     if (preOrder.tokenIn == context.weth.address) {
-        await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
+        return await swapWethToWsteth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
     } else {
-        await swapWstethToWeth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
+        return await swapWstethToWeth(hre, context, preOrder.amountIn, preOrder.minAmountOut, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract);
     }
 };
 
@@ -273,7 +288,6 @@ const exchange = async (
         // val / price * (smallResult / 10^15)
         let valSteth = valWsteth.mul(priceX96).div(BigNumber.from(2).pow(96)).mul(smallResult).div(BigNumber.from(10).pow(15));
         let adjustedVal = valSteth.mul(newPoolEth).div(wethAmountInPool);
-
         // proportional to the our situation in the pool
         const balance = await stethContract.balanceOf(context.deployer.address);
         if (balance.mul(10).lt(adjustedVal.mul(11))) {
@@ -294,8 +308,18 @@ const exchange = async (
             console.log("Before steth->eth swap");
         }
 
-        // return adjusted
-        return result.mul(wethAmountInPool).div(newPoolEth);
+        const fee = await curvePool.fee();
+        const feeDenominator = BigNumber.from(10).pow(10);
+        // scale expectedOut to the correpsonding pool scale
+        const actualOut = result.mul(wethAmountInPool).div(newPoolEth);
+        // 
+        const swapFees = result.mul(wethAmountInPool).div(newPoolEth).mul(fee).div(feeDenominator.sub(fee));
+        const slippageFees = amountIn.mul(priceX96).div(BigNumber.from(2).pow(96)).sub(actualOut).sub(swapFees);
+        return {
+            expectedOut: actualOut,
+            swapFees: swapFees,
+            slippageFees: slippageFees,
+        };
     } else {
         let valWeth = amountIn;
 
@@ -320,7 +344,18 @@ const exchange = async (
             console.log("After eth->steth swap");
         }
         let result = valSteth.mul(BigNumber.from(10).pow(15)).div(smallResult).mul(BigNumber.from(2).pow(96)).div(priceX96);
-        return result.mul(wethAmountInPool).div(newPoolEth);
+        const fee = await curvePool.fee();
+        const feeDenominator = BigNumber.from(10).pow(10);
+        // scale expectedOut to the correpsonding pool scale
+        const actualOut = result.mul(wethAmountInPool).div(newPoolEth);
+        //
+        const swapFees = result.mul(wethAmountInPool).div(newPoolEth).mul(fee).div(feeDenominator.sub(fee));
+        const slippageFees = amountIn.mul(BigNumber.from(2).pow(96)).div(priceX96).sub(actualOut).sub(swapFees);
+        return {
+            expectedOut: actualOut,
+            swapFees: swapFees,
+            slippageFees: slippageFees,
+        };
     }
 }
 
@@ -335,27 +370,40 @@ const swapWethToWsteth = async (
     wstethContract: any,
     wethContract: any,
     stethContract: any
-) => {
-
-    const { ethers } = hre;
+): Promise<SwapStats> => {
 
     const erc20 = await context.LStrategy.erc20Vault();
     const { deployer, wsteth, weth} = context;
     const balance = await wsteth.balanceOf(deployer.address);
 
-    let expectedOut = await exchange(hre, context, amountIn, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, false);
+    let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, false);
 
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
     }
     if (expectedOut.lt(minAmountOut)) {
         console.log("Expected out less than minAmountOut weth=>wsteth");
-        return;
+        return {
+            tokenIn: "weth",
+            tokenOut: "wsteth",
+            amountIn: BigNumber.from(0),
+            amountOut: BigNumber.from(0),
+            swapFees: BigNumber.from(0),
+            slippageFees: BigNumber.from(0),
+        } as SwapStats;
     }
     await withSigner(hre, erc20, async (signer) => {
         await weth.connect(signer).transfer(deployer.address, amountIn);
     });
     await wsteth.connect(deployer).transfer(erc20, expectedOut);
+    return {
+        tokenIn: "weth",
+        tokenOut: "wsteth",
+        amountIn: amountIn,
+        amountOut: expectedOut,
+        swapFees: swapFees,
+        slippageFees: slippageFees,
+    } as SwapStats;
 };
 
 const swapWstethToWeth = async (
@@ -369,27 +417,39 @@ const swapWstethToWeth = async (
     wstethContract: any,
     wethContract: any,
     stethContract: any
-) => {
-
-    const { ethers } = hre;
+): Promise<SwapStats> => {
 
     const erc20 = await context.LStrategy.erc20Vault();
     const { deployer, wsteth, weth } = context;
     const balance = await weth.balanceOf(deployer.address);
 
-    let expectedOut = await exchange(hre, context, amountIn, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, true);
+    let { expectedOut, swapFees, slippageFees } = await exchange(hre, context, amountIn, wstethAmountInPool, wethAmountInPool, curvePool, wstethContract, wethContract, stethContract, true);
 
     if (expectedOut.gt(balance)) {
         expectedOut = balance;
     }
     if (expectedOut.lt(minAmountOut)) {
         console.log("Expected out less than minAmountOut wsteth=>weth");
-        return;
+        return {
+            tokenIn: "wsteth",
+            tokenOut: "weth",
+            amountIn: BigNumber.from(0),
+            amountOut: BigNumber.from(0),
+            swapFees: BigNumber.from(0),
+            slippageFees: BigNumber.from(0),
+        } as SwapStats;
     }
     await withSigner(hre, erc20, async (signer) => {
         await wsteth.connect(signer).transfer(deployer.address, amountIn);
     });
-    await weth.connect(deployer).transfer(erc20, expectedOut);
+    return {
+        tokenIn: "wsteth",
+        tokenOut: "weth",
+        amountIn: amountIn,
+        amountOut: expectedOut,
+        swapFees: swapFees,
+        slippageFees: slippageFees,
+    } as SwapStats;
 };
 
 export const swapTokens = async (
@@ -546,6 +606,10 @@ export const getStrategyStats = async (hre: HardhatRuntimeEnvironment, context: 
     const [erc20Tvl, ] = await vault.tvl();
     const [minTvlLower, ] = await lowerVault.tvl();
     const [minTvlUpper, ] = await upperVault.tvl();
+
+    const [ lowerFee0, lowerFee1 ] = await lowerVault.callStatic.collectEarnings();
+    const [ upperFee0, upperFee1 ] = await upperVault.callStatic.collectEarnings();
+
     return {
         erc20token0: erc20Tvl[0],
         erc20token1: erc20Tvl[1],
@@ -561,6 +625,12 @@ export const getStrategyStats = async (hre: HardhatRuntimeEnvironment, context: 
         currentTick: tick,
         totalToken0: erc20Tvl[0].add(minTvlLower[0]).add(minTvlUpper[0]),
         totalToken1: erc20Tvl[1].add(minTvlLower[1]).add(minTvlUpper[1]),
+        lowerPositionLiquidity: positionLower.liquidity,
+        upperPositionLiquidity: positionUpper.liquidity,
+        lowerFee0: lowerFee0,
+        lowerFee1: lowerFee1,
+        upperFee0: upperFee0,
+        upperFee1: upperFee1,
     } as StrategyStats;
 };
 

@@ -25,6 +25,7 @@ import {
     getTick,
     getPool,
     swapOnCowswap,
+    SwapStats,
 } from "./helpers/lstrategy";
 import { addSigner, withSigner } from "./helpers/sign";
 import { mint, sleep } from "./helpers/utils";
@@ -380,7 +381,7 @@ const setup = async (hre: HardhatRuntimeEnvironment, width: number) => {
     });
 
     await lstrategy.connect(adminSigned).updateOtherParams({
-        intervalWidthInTicks: 100,
+        intervalWidthInTicks: width,
         minToken0ForOpening: BigNumber.from(10).pow(6),
         minToken1ForOpening: BigNumber.from(10).pow(6),
         secondsBetweenRebalances: BigNumber.from(0),
@@ -640,8 +641,9 @@ const ERC20UniRebalance = async (
     priceX96: BigNumber,
     wstethAmount: BigNumber,
     wethAmount: BigNumber
-) => {
+): Promise<SwapStats[]> => {
     const { ethers, getNamedAccounts } = hre;
+    const totalStats: SwapStats[] = [];
 
     let i = 0;
     while (true) {
@@ -693,7 +695,7 @@ const ERC20UniRebalance = async (
             "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
         );
 
-        await swapOnCowswap(
+        const swapStats = await swapOnCowswap(
             hre,
             context,
             wstethAmount,
@@ -703,6 +705,7 @@ const ERC20UniRebalance = async (
             wstethContract,
             stethContract
         );
+        totalStats.push(swapStats);
 
         i += 1;
         if (i >= 10) {
@@ -713,6 +716,7 @@ const ERC20UniRebalance = async (
         }
     }
 
+    return totalStats;
     //  expect(assureEquality(capitalErc20.mul(19), capitalLower.add(capitalUpper))).to.be.true;
 };
 
@@ -722,10 +726,11 @@ const makeRebalances = async (
     priceX96: BigNumber,
     wstethAmount: BigNumber,
     wethAmount: BigNumber
-) => {
+): Promise<SwapStats[]> => {
     const { ethers, getNamedAccounts } = hre;
 
     let wasRebalance = false;
+    const totalStats: SwapStats[] = [];
 
     let iter = 0;
 
@@ -764,7 +769,7 @@ const makeRebalances = async (
             "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
         );
 
-        await swapOnCowswap(
+        const swapStats = await swapOnCowswap(
             hre,
             context,
             wstethAmount,
@@ -774,6 +779,7 @@ const makeRebalances = async (
             wstethContract,
             stethContract
         );
+        totalStats.push(swapStats);
 
         iter += 1;
         if (iter >= 10) {
@@ -784,14 +790,17 @@ const makeRebalances = async (
         }
     }
 
-    if (wasRebalance)
-        await ERC20UniRebalance(
+    if (wasRebalance) {
+        const tmpSwap = await ERC20UniRebalance(
             hre,
             context,
             priceX96,
             wstethAmount,
             wethAmount
         );
+        totalStats.concat(tmpSwap);
+    }
+    return totalStats;
 };
 
 const reportStats = async (
@@ -848,13 +857,15 @@ const execute = async (
     await grantPermissions(hre, context, upperVault);
     await grantPermissions(hre, context, erc20vault);
 
-    await ERC20UniRebalance(
+    const totalSwaps = await ERC20UniRebalance(
         hre,
         context,
         stringToPriceX96(prices[0]),
         stethAmounts[0],
         wethAmounts[0]
     );
+    fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), { flag: "w" });
+    fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
 
     const keys = [
         "erc20token0",
@@ -871,6 +882,12 @@ const execute = async (
         "currentTick",
         "totalToken0",
         "totalToken1",
+        "lowerPositionLiquidity",
+        "upperPositionLiquidity",
+        "lowerFee0",
+        "lowerFee1",
+        "upperFee0",
+        "upperFee1",
     ];
 
     for (let i = 0; i < keys.length; ++i) {
@@ -886,20 +903,25 @@ const execute = async (
         }
     }
 
-    console.log(process.memoryUsage());
     let prev = Date.now();
     console.log("length: ", prices.length);
     let prev_block = BigNumber.from(0);
-    for (let i = 1; i < prices.length; ++i) {
+    for (let i = 1; i < 1000; ++i) {
         if (blocks[i].sub(prev_block).gte((24 * 60 * 60) / 15)) {
-            await makeRebalances(
+            const totalSwaps = await makeRebalances(
                 hre,
                 context,
                 stringToPriceX96(prices[i]),
                 stethAmounts[i],
                 wethAmounts[i]
             );
+            fs.writeFileSync("swaps.json", JSON.stringify(totalSwaps), {
+                flag: "a+",
+            });
+            fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
             prev_block = blocks[i];
+        } else {
+            fs.writeFileSync("swaps.json", "\n", { flag: "a+" });
         }
         if (i % 500 == 0) {
             let now = Date.now();
