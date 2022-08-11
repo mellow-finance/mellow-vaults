@@ -214,7 +214,8 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
             describe("marketRegistry", () => {
                 it("reverts when address zero, works as expected as a parameter", async () => {
                     await deployments.fixture();
-                    const address = this.governanceProtocolParams.marketRegistry;
+                    const address =
+                        this.governanceProtocolParams.marketRegistry;
                     this.governanceProtocolParams.marketRegistry =
                         ethers.constants.AddressZero;
                     await expect(
@@ -235,7 +236,8 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                     this.governanceProtocolParams.marketRegistry = address;
                 });
                 it("works as expected in parameters change", async () => {
-                    const address = this.governanceProtocolParams.marketRegistry;
+                    const address =
+                        this.governanceProtocolParams.marketRegistry;
                     this.governanceProtocolParams.marketRegistry =
                         ethers.constants.AddressZero;
                     await expect(
@@ -260,7 +262,8 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                         this.governanceProtocolParams.marketRegistry
                     );
                     const factory = await marketRegistry.getUniswapV3Factory();
-                    const wantedAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984";
+                    const wantedAddress =
+                        "0x1F98431c8aD98523631AE4a59f267346ea31F984";
                     expect(factory).to.be.eq(wantedAddress);
                 });
             });
@@ -390,19 +393,12 @@ contract<PerpVaultGovernance, DeployOptions, CustomContext>(
                 address,
                 address,
                 integer({ min: 0, max: 10 ** 9 })
-            ).map(
-                ([
-                    vault,
-                    marketRegistry,
-                    usdcAddress,
-                    x,
-                ]) => ({
-                    vault,
-                    marketRegistry,
-                    usdcAddress,
-                    maxProtocolLeverage: BigNumber.from(x),
-                })
-            );
+            ).map(([vault, marketRegistry, usdcAddress, x]) => ({
+                vault,
+                marketRegistry,
+                usdcAddress,
+                maxProtocolLeverage: BigNumber.from(x),
+            }));
 
         vaultGovernanceBehavior.call(this, {
             delayedProtocolParams,

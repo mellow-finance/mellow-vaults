@@ -66,7 +66,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     /// @inheritdoc IPerpFuturesVault
     function getPositionValue() public view returns (int256) {
         return accountBalance.getTotalPositionValue(address(this), baseToken) / int256(DECIMALS_DIFFERENCE);
-    }   
+    }
 
     /// @inheritdoc IERC165
     function supportsInterface(bytes4 interfaceId) public view override(IERC165, IntegrationVault) returns (bool) {
@@ -208,7 +208,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
             return new uint256[](1);
         }
         uint256 vaultCapital = getAccountValue();
-        
+
         uint256 futureCapital = 0;
         if (usdcAmount * DECIMALS_DIFFERENCE < vaultCapital) {
             futureCapital = vaultCapital - usdcAmount * DECIMALS_DIFFERENCE;
@@ -281,7 +281,6 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
         console.log(b);
         console.log(q);
-
     }
 
     /// @notice A helper function which parses an encoded instance of Options struct or any other byes array
@@ -303,14 +302,15 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
     function _deltaBetweenSpotAndOracleTvl() internal view returns (int256 delta) {
         int256 positionSize = accountBalance.getTotalPositionSize(address(this), baseToken);
-
     }
 
     function _getOraclePriceX10_18() internal view returns (uint256 priceX10_18) {
         return
             IBaseToken(baseToken).isClosed()
                 ? IBaseToken(baseToken).getClosedPrice()
-                : IIndexPrice(baseToken).getIndexPrice(IClearingHouseConfig(accountBalance.getClearingHouseConfig()).getTwapInterval());
+                : IIndexPrice(baseToken).getIndexPrice(
+                    IClearingHouseConfig(accountBalance.getClearingHouseConfig()).getTwapInterval()
+                );
     }
 
     function _getSpotPriceX10_18() internal view returns (uint256 priceX10_18) {

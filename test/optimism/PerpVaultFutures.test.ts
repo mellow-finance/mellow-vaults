@@ -52,7 +52,12 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                     let veth = "0x8C835DFaA34e2AE61775e80EE29E2c724c6AE2BB";
 
                     await setupVault(hre, perpVaultNft, "PerpVaultGovernance", {
-                        createVaultArgs: [this.deployer.address, veth, BigNumber.from(10).pow(9).mul(5), true],
+                        createVaultArgs: [
+                            this.deployer.address,
+                            veth,
+                            BigNumber.from(10).pow(9).mul(5),
+                            true,
+                        ],
                     });
                     await setupVault(
                         hre,
@@ -106,9 +111,7 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                         this.usdc.address
                     );
 
-                    for (let address of [
-                        this.deployer.address,
-                    ]) {
+                    for (let address of [this.deployer.address]) {
                         const prevBalance = await contract.balanceOf(address);
                         await mint(
                             "OUSDC",
@@ -139,19 +142,16 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 expect(tvl[0][0]).to.be.eq(BigNumber.from(0));
             });
 */
-            it ("tvl equals to pure capital", async () => {
-
+            it("tvl equals to pure capital", async () => {
                 await mint(
                     "OUSDC",
                     this.subject.address,
                     BigNumber.from(10).pow(6).mul(10)
                 );
-                
+
                 await this.subject.push(
                     [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(4),
-                    ],
+                    [BigNumber.from(10).pow(6).mul(4)],
                     encodeToBytes(["uint256"], [ethers.constants.MaxUint256])
                 );
 
@@ -159,23 +159,17 @@ contract<PerpFuturesVault, DeployOptions, CustomContext>(
                 const W = await this.subject.getPositionValue();
 
                 console.log(W);
-                
+
                 expect(W).to.be.gt(0);
                 expect(tvl[0][0]).to.be.eq(BigNumber.from(10).pow(6).mul(4));
 
                 await this.subject.push(
                     [this.usdc.address],
-                    [
-                        BigNumber.from(10).pow(6).mul(2),
-                    ],
+                    [BigNumber.from(10).pow(6).mul(2)],
                     encodeToBytes(["uint256"], [ethers.constants.MaxUint256])
                 );
                 expect(tvl[0][0]).to.be.eq(BigNumber.from(10).pow(6).mul(6));
-
-            })
-
+            });
         });
     }
-
-
 );
