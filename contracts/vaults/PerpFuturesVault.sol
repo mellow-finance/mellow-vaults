@@ -277,7 +277,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     /// @param origin Origin of the transaction (tx.origin)
     /// @param sender Sender of the call (msg.sender)
     /// @param newLeverageMultiplierD The new vault capital leverage multiplier (multiplied by DENOMINATOR)
-    /// @param isLongBaseToken Returns true if the user`s base token position is a long one, else - false
+    /// @param isLongBaseToken True if the user`s base token position is a long one, else - false
     event UpdatedLeverage(
         address indexed origin,
         address indexed sender,

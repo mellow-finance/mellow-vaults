@@ -57,16 +57,15 @@ interface IPerpFuturesVault is IIntegrationVault {
 
     /// @notice Updates the vault capital leverage multiplier (multiplied by DENOMINATOR)
     /// @param newLeverageMultiplierD_ The new vault capital leverage multiplier (multiplied by DENOMINATOR)
-    /// @param isLongBaseToken_ Returns true if user`s base token position is long or not
+    /// @param isLongBaseToken_ True if the user`s base token position is a long one, else - false
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function updateLeverage(uint256 newLeverageMultiplierD_, bool isLongBaseToken_, uint256 deadline) external;
 
-    /// @notice Adjusts the current position to the multiplied capital multiplied by the current leverage multiplier. (capital nominated in USDC weis)
+    /// @notice Adjusts the current position to the capital multiplied by the current leverage multiplier. (capital nominated in USDC weis)
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     function adjustPosition(uint256 deadline) external;
 
-    /// @notice Closes a position on the UniswapV3 pool and remove all the provided liquidity
-    /// @dev If a position has not been opened, it reverts
-    /// @param deadline The restriction on when the removeLiquidity transaction should be executed, otherwise, it fails
+    /// @notice Closes the long/short position, taken by a user
+    /// @param deadline The restriction on when the call to the ClearingHouse should be executed, otherwise, it fails
     function closePosition(uint256 deadline) external;
 }
