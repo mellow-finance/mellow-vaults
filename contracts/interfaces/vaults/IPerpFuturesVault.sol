@@ -6,12 +6,14 @@ import "../external/perp/IPerpInternalVault.sol";
 import "../external/perp/IClearingHouse.sol";
 import "../external/perp/IBaseToken.sol";
 import "../external/perp/IAccountBalance.sol";
+import "../external/perp/IMarketRegistry.sol";
 
 interface IPerpFuturesVault is IIntegrationVault {
     /// @notice Options for the operations with the position
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
     struct Options {
         uint256 deadline;
+        uint256 oppositeAmountBound;
     }
 
     // -------------------  EXTERNAL, VIEW  -------------------
@@ -31,6 +33,8 @@ interface IPerpFuturesVault is IIntegrationVault {
     /// @notice Returns the Perp Protocol Account Balance, which records most of the traders` balances (margin ratio, position size, position value)
     /// @return IAccountBalance Perp Protocol Account Balance interface
     function accountBalance() external view returns (IAccountBalance);
+
+    function marketRegistry() external view returns (IMarketRegistry);
 
     /// @notice The address of the USDC used as a collateral
     /// @return address The address of the USDC contract
@@ -63,13 +67,13 @@ interface IPerpFuturesVault is IIntegrationVault {
     /// @param newLeverageMultiplierD_ The new vault capital leverage multiplier (multiplied by DENOMINATOR)
     /// @param isLongBaseToken_ True if the user`s base token position is a long one, else - false
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
-    function updateLeverage(uint256 newLeverageMultiplierD_, bool isLongBaseToken_, uint256 deadline) external;
+    function updateLeverage(uint256 newLeverageMultiplierD_, bool isLongBaseToken_, uint256 deadline, uint256 oppositeAmountBound) external;
 
     /// @notice Adjusts the current position to the capital multiplied by the current leverage multiplier. (capital nominated in USDC weis)
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
-    function adjustPosition(uint256 deadline) external;
+    function adjustPosition(uint256 deadline, uint256 oppositeAmountBound) external;
 
     /// @notice Closes the long/short position, taken by a user
     /// @param deadline The restriction on when the call to the ClearingHouse should be executed, otherwise, it fails
-    function closePosition(uint256 deadline) external;
+    function closePosition(uint256 deadline, uint256 oppositeAmountBound) external;
 }
