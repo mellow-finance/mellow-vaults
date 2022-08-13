@@ -10,6 +10,7 @@ import { toObject } from "./utils";
 import { equals } from "ramda";
 import { mint} from "./utils";
 import { expect } from "chai";
+import { abi as ISTETH } from "../../test/helpers/stethABI.json";
 
 export type Context = {
     protocolGovernance: Contract;
@@ -463,6 +464,26 @@ export const swapTokens = async (
     amountIn: BigNumber
 ) => {
     const { ethers } = hre;
+    let balance: BigNumber = await tokenIn.balanceOf(senderAddress);
+    if (balance.lt(amountIn)) {
+        if (tokenIn.address == context.weth.address) {
+            await mint(hre, "WETH", senderAddress, amountIn.sub(balance));
+        } else {
+            const stethContract = await ethers.getContractAt(
+                ISTETH,
+                "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+            );
+            while (balance.lt(amountIn)) {
+                const toMint = BigNumber.from(10).pow(21).add(BigNumber.from(10).pow(17));
+                await mint(hre, "WETH", senderAddress, amountIn.sub(balance));
+                await context.weth.withdraw(toMint);
+                await stethContract.submit(context.deployer.address, {value: BigNumber.from(10).pow(21)});
+                await context.wsteth.wrap(toMint);
+                await context.wsteth.transfer(senderAddress);
+                balance = await tokenIn.balanceOf(senderAddress);
+            }
+        }
+    }
     await withSigner(hre, senderAddress, async (senderSigner) => {
         await tokenIn
             .connect(senderSigner)
