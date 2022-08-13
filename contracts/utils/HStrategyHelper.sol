@@ -27,21 +27,21 @@ contract HStrategyHelper {
             FullMath.mulDiv(
                 domainPositionParams.domainLowerPriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.spotPriceSqrtX96
+                domainPositionParams.intervalPriceSqrtX96
             ) -
             FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.domainUpperPriceSqrtX96
             );
 
         uint256 nominator0X96 = FullMath.mulDiv(
-            domainPositionParams.spotPriceSqrtX96,
+            domainPositionParams.intervalPriceSqrtX96,
             CommonLibrary.Q96,
             domainPositionParams.upperPriceSqrtX96
         ) -
             FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
                 CommonLibrary.Q96,
                 domainPositionParams.domainUpperPriceSqrtX96
             );
@@ -49,53 +49,18 @@ contract HStrategyHelper {
         uint256 nominator1X96 = FullMath.mulDiv(
             domainPositionParams.lowerPriceSqrtX96,
             CommonLibrary.Q96,
-            domainPositionParams.spotPriceSqrtX96
+            domainPositionParams.intervalPriceSqrtX96
         ) -
             FullMath.mulDiv(
                 domainPositionParams.domainLowerPriceSqrtX96,
                 CommonLibrary.Q96,
-                domainPositionParams.spotPriceSqrtX96
+                domainPositionParams.intervalPriceSqrtX96
             );
 
         ratios.token0RatioD = uint32(FullMath.mulDiv(nominator0X96, DENOMINATOR, denominatorX96));
         ratios.token1RatioD = uint32(FullMath.mulDiv(nominator1X96, DENOMINATOR, denominatorX96));
 
         ratios.uniV3RatioD = DENOMINATOR - ratios.token0RatioD - ratios.token1RatioD;
-    }
-
-    /// @notice calculates the current state of the position and pool with given oracle predictions
-    /// @param tick current price tick
-    /// @param strategyParams_ parameters of the strategy
-    /// @param uniV3Nft the current position nft from position manager
-    /// @param _positionManager uniV3 position manager
-    /// @return domainPositionParams current position and pool state combined with predictions from the oracle
-    function calculateDomainPositionParams(
-        int24 tick,
-        HStrategy.StrategyParams memory strategyParams_,
-        uint256 uniV3Nft,
-        INonfungiblePositionManager _positionManager
-    ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
-        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = _positionManager.positions(uniV3Nft);
-
-        domainPositionParams = HStrategy.DomainPositionParams({
-            nft: uniV3Nft,
-            liquidity: liquidity,
-            lowerTick: lowerTick,
-            upperTick: upperTick,
-            domainLowerTick: strategyParams_.domainLowerTick,
-            domainUpperTick: strategyParams_.domainUpperTick,
-            lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
-            upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
-            domainLowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
-            domainUpperPriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
-            spotPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
-            spotPriceX96: 0
-        });
-        domainPositionParams.spotPriceX96 = FullMath.mulDiv(
-            domainPositionParams.spotPriceSqrtX96,
-            domainPositionParams.spotPriceSqrtX96,
-            CommonLibrary.Q96
-        );
     }
 
     /// @notice calculates amount of missing tokens for uniV3 and money vaults
@@ -106,17 +71,18 @@ contract HStrategyHelper {
     function calculateMissingTokenAmounts(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts,
-        HStrategy.DomainPositionParams memory domainPositionParams
+        HStrategy.DomainPositionParams memory domainPositionParams,
+        uint128 liquidity
     ) external view returns (HStrategy.TokenAmounts memory missingTokenAmounts) {
         // for uniV3Vault
         {
             uint256 token0Amount = 0;
             uint256 token1Amount = 0;
             (token0Amount, token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
-                domainPositionParams.spotPriceSqrtX96,
+                domainPositionParams.intervalPriceSqrtX96,
                 domainPositionParams.lowerPriceSqrtX96,
                 domainPositionParams.upperPriceSqrtX96,
-                domainPositionParams.liquidity
+                liquidity
             );
 
             if (token0Amount < expectedTokenAmounts.uniV3Token0) {
@@ -129,9 +95,9 @@ contract HStrategyHelper {
 
         // for moneyVault
         {
-            (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-            uint256 token0Amount = (minTvl[0] + maxTvl[0]) >> 1;
-            uint256 token1Amount = (minTvl[1] + maxTvl[1]) >> 1;
+            (, uint256[] memory maxTvl) = moneyVault.tvl();
+            uint256 token0Amount = maxTvl[0];
+            uint256 token1Amount = maxTvl[1];
 
             if (token0Amount < expectedTokenAmounts.moneyToken0) {
                 missingTokenAmounts.moneyToken0 = expectedTokenAmounts.moneyToken0 - token0Amount;
@@ -146,50 +112,52 @@ contract HStrategyHelper {
     /// @notice calculates extra tokens on uniV3 vault
     /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
     /// @param domainPositionParams current position and pool state combined with predictions from the oracle
-    /// @return extraToken0Amount amount of token0 needed to be pulled from uniV3
-    /// @return extraToken1Amount amount of token1 needed to be pulled from uniV3
+    /// @return tokenAmounts extra token amounts on UniV3Vault
     function calculateExtraTokenAmountsForUniV3Vault(
         HStrategy.TokenAmounts memory expectedTokenAmounts,
         HStrategy.DomainPositionParams memory domainPositionParams
-    ) external pure returns (uint256 extraToken0Amount, uint256 extraToken1Amount) {
-        (uint256 token0Amount, uint256 token1Amount) = LiquidityAmounts.getAmountsForLiquidity(
-            domainPositionParams.spotPriceSqrtX96,
+    ) external pure returns (uint256[] memory tokenAmounts) {
+        tokenAmounts = new uint256[](2);
+        (tokenAmounts[0], tokenAmounts[1]) = LiquidityAmounts.getAmountsForLiquidity(
+            domainPositionParams.intervalPriceSqrtX96,
             domainPositionParams.lowerPriceSqrtX96,
             domainPositionParams.upperPriceSqrtX96,
             domainPositionParams.liquidity
         );
 
-        if (expectedTokenAmounts.uniV3Token0 < token0Amount) {
-            extraToken0Amount = token0Amount - expectedTokenAmounts.uniV3Token0;
+        if (tokenAmounts[0] > expectedTokenAmounts.uniV3Token0) {
+            tokenAmounts[0] -= expectedTokenAmounts.uniV3Token0;
+        } else {
+            tokenAmounts[0] = 0;
         }
-        if (expectedTokenAmounts.uniV3Token1 < token1Amount) {
-            extraToken1Amount = token1Amount - expectedTokenAmounts.uniV3Token1;
+
+        if (tokenAmounts[1] > expectedTokenAmounts.uniV3Token1) {
+            tokenAmounts[1] -= expectedTokenAmounts.uniV3Token1;
+        } else {
+            tokenAmounts[1] = 0;
         }
     }
 
     /// @notice calculates extra tokens on money vault
     /// @param moneyVault the strategy money vault
     /// @param expectedTokenAmounts the amount of tokens we expect after rebalance
-    /// @return token0Amount amount of token0 needed to be pulled from uniV3
-    /// @return token1Amount amount of token1 needed to be pulled from uniV3
+    /// @return tokenAmounts extra token amounts on MoneyVault
     function calculateExtraTokenAmountsForMoneyVault(
         IIntegrationVault moneyVault,
         HStrategy.TokenAmounts memory expectedTokenAmounts
-    ) external view returns (uint256 token0Amount, uint256 token1Amount) {
-        (uint256[] memory minTvl, uint256[] memory maxTvl) = moneyVault.tvl();
-        token0Amount = (minTvl[0] + maxTvl[0]) >> 1;
-        token1Amount = (minTvl[1] + maxTvl[1]) >> 1;
+    ) external view returns (uint256[] memory tokenAmounts) {
+        (tokenAmounts, ) = moneyVault.tvl();
 
-        if (token0Amount > expectedTokenAmounts.moneyToken0) {
-            token0Amount -= expectedTokenAmounts.moneyToken0;
+        if (tokenAmounts[0] > expectedTokenAmounts.moneyToken0) {
+            tokenAmounts[0] -= expectedTokenAmounts.moneyToken0;
         } else {
-            token0Amount = 0;
+            tokenAmounts[0] = 0;
         }
 
-        if (token1Amount > expectedTokenAmounts.moneyToken1) {
-            token1Amount -= expectedTokenAmounts.moneyToken1;
+        if (tokenAmounts[1] > expectedTokenAmounts.moneyToken1) {
+            tokenAmounts[1] -= expectedTokenAmounts.moneyToken1;
         } else {
-            token1Amount = 0;
+            tokenAmounts[1] = 0;
         }
     }
 
@@ -201,7 +169,8 @@ contract HStrategyHelper {
     function calculateExpectedTokenAmounts(
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.TokenAmountsInToken0 memory expectedTokenAmountsInToken0,
-        HStrategy.DomainPositionParams memory domainPositionParams
+        HStrategy.DomainPositionParams memory domainPositionParams,
+        UniV3Helper uniV3Helper
     ) external pure returns (HStrategy.TokenAmounts memory amounts) {
         amounts.erc20Token0 = FullMath.mulDiv(
             expectedRatios.token0RatioD,
@@ -224,34 +193,14 @@ contract HStrategyHelper {
             domainPositionParams.spotPriceX96,
             CommonLibrary.Q96
         );
-        {
-            uint256 uniCapital1;
-            if (domainPositionParams.spotPriceSqrtX96 != domainPositionParams.upperPriceSqrtX96) {
-                uint256 uniCapitalRatioX96 = FullMath.mulDiv(
-                    FullMath.mulDiv(
-                        domainPositionParams.spotPriceSqrtX96 - domainPositionParams.lowerPriceSqrtX96,
-                        CommonLibrary.Q96,
-                        domainPositionParams.upperPriceSqrtX96 - domainPositionParams.spotPriceSqrtX96
-                    ),
-                    domainPositionParams.upperPriceSqrtX96,
-                    domainPositionParams.spotPriceSqrtX96
-                );
-                uniCapital1 = FullMath.mulDiv(
-                    expectedTokenAmountsInToken0.uniV3TokensAmountInToken0,
-                    uniCapitalRatioX96,
-                    uniCapitalRatioX96 + CommonLibrary.Q96
-                );
-            } else {
-                uniCapital1 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0;
-            }
-            amounts.uniV3Token0 = expectedTokenAmountsInToken0.uniV3TokensAmountInToken0 - uniCapital1;
-            uint256 spotPriceX96 = FullMath.mulDiv(
-                domainPositionParams.spotPriceSqrtX96,
-                domainPositionParams.spotPriceSqrtX96,
-                CommonLibrary.Q96
-            );
-            amounts.uniV3Token1 = FullMath.mulDiv(uniCapital1, spotPriceX96, CommonLibrary.Q96);
-        }
+
+        (amounts.uniV3Token0, amounts.uniV3Token1) = uniV3Helper.getPositionTokenAmountsByCapitalOfToken0(
+            domainPositionParams.lowerPriceSqrtX96,
+            domainPositionParams.upperPriceSqrtX96,
+            domainPositionParams.intervalPriceSqrtX96,
+            domainPositionParams.spotPriceX96,
+            expectedTokenAmountsInToken0.uniV3TokensAmountInToken0
+        );
     }
 
     /// @notice calculates current amounts of tokens
@@ -265,7 +214,7 @@ contract HStrategyHelper {
         HStrategy.DomainPositionParams memory params
     ) external returns (HStrategy.TokenAmounts memory amounts) {
         (amounts.uniV3Token0, amounts.uniV3Token1) = LiquidityAmounts.getAmountsForLiquidity(
-            params.spotPriceSqrtX96,
+            params.intervalPriceSqrtX96,
             params.lowerPriceSqrtX96,
             params.upperPriceSqrtX96,
             params.liquidity
@@ -289,51 +238,45 @@ contract HStrategyHelper {
     /// @notice calculates current capitals on the vaults of the strategy (in token0)
     /// @param params current position and pool state combined with predictions from the oracle
     /// @param currentTokenAmounts amounts of the tokens on the erc20 and money vaults
-    /// @return amounts capitals measured in token0
-    function calculateCurrentTokenAmountsInToken0(
+    /// @return capital total capital measured in token0
+    function calculateCurrentCapitalInToken0(
         HStrategy.DomainPositionParams memory params,
         HStrategy.TokenAmounts memory currentTokenAmounts
-    ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
-        amounts.erc20TokensAmountInToken0 =
+    ) external pure returns (uint256 capital) {
+        capital =
             currentTokenAmounts.erc20Token0 +
-            FullMath.mulDiv(currentTokenAmounts.erc20Token1, CommonLibrary.Q96, params.spotPriceX96);
-        amounts.uniV3TokensAmountInToken0 =
+            FullMath.mulDiv(currentTokenAmounts.erc20Token1, CommonLibrary.Q96, params.spotPriceX96) +
             currentTokenAmounts.uniV3Token0 +
-            FullMath.mulDiv(currentTokenAmounts.uniV3Token1, CommonLibrary.Q96, params.spotPriceX96);
-        amounts.moneyTokensAmountInToken0 =
+            FullMath.mulDiv(currentTokenAmounts.uniV3Token1, CommonLibrary.Q96, params.spotPriceX96) +
             currentTokenAmounts.moneyToken0 +
             FullMath.mulDiv(currentTokenAmounts.moneyToken1, CommonLibrary.Q96, params.spotPriceX96);
-        amounts.totalTokensInToken0 =
-            amounts.erc20TokensAmountInToken0 +
-            amounts.uniV3TokensAmountInToken0 +
-            amounts.moneyTokensAmountInToken0;
     }
 
     /// @notice calculates expected capitals on the vaults after rebalance
-    /// @param currentTokenAmounts current amount of tokens on the vaults
+    /// @param totalCapitalInToken0 total capital in token0
     /// @param expectedRatios ratios of the capitals on the vaults expected after rebalance
     /// @param ratioParams_ ratio of the tokens between erc20 and money vault combined with needed deviations for rebalance to be called
     /// @return amounts capitals expected after rebalance measured in token0
     function calculateExpectedTokenAmountsInToken0(
-        HStrategy.TokenAmountsInToken0 memory currentTokenAmounts,
+        uint256 totalCapitalInToken0,
         HStrategy.ExpectedRatios memory expectedRatios,
         HStrategy.RatioParams memory ratioParams_
     ) external pure returns (HStrategy.TokenAmountsInToken0 memory amounts) {
         amounts.erc20TokensAmountInToken0 = FullMath.mulDiv(
-            currentTokenAmounts.totalTokensInToken0,
+            totalCapitalInToken0,
             ratioParams_.erc20CapitalRatioD,
             DENOMINATOR
         );
         amounts.uniV3TokensAmountInToken0 = FullMath.mulDiv(
-            currentTokenAmounts.totalTokensInToken0 - amounts.erc20TokensAmountInToken0,
+            totalCapitalInToken0 - amounts.erc20TokensAmountInToken0,
             expectedRatios.uniV3RatioD,
             DENOMINATOR
         );
         amounts.moneyTokensAmountInToken0 =
-            currentTokenAmounts.totalTokensInToken0 -
+            totalCapitalInToken0 -
             amounts.erc20TokensAmountInToken0 -
             amounts.uniV3TokensAmountInToken0;
-        amounts.totalTokensInToken0 = currentTokenAmounts.totalTokensInToken0;
+        amounts.totalTokensInToken0 = totalCapitalInToken0;
     }
 
     /// @notice return true if the token swap is needed. It is needed if we cannot mint a new position without it
@@ -388,36 +331,20 @@ contract HStrategyHelper {
         uint256 totalToken1Amount = expectedTokenAmounts.erc20Token1 +
             expectedTokenAmounts.moneyToken1 +
             expectedTokenAmounts.uniV3Token1;
-        {
-            uint256 erc20CapitalDeltaD = 0;
-            if (ratioParams.erc20CapitalRatioD > ratioParams.minCaptialDeviationD) {
-                erc20CapitalDeltaD = ratioParams.erc20CapitalRatioD - ratioParams.minCaptialDeviationD;
-            }
-            uint256 minToken0Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken0Amount, DENOMINATOR);
-            uint256 minToken1Amount = FullMath.mulDiv(erc20CapitalDeltaD, totalToken1Amount, DENOMINATOR);
-            uint256 maxToken0Amount = FullMath.mulDiv(
-                ratioParams.erc20CapitalRatioD + ratioParams.minCaptialDeviationD,
-                totalToken0Amount,
-                DENOMINATOR
-            );
-            uint256 maxToken1Amount = FullMath.mulDiv(
-                ratioParams.erc20CapitalRatioD + ratioParams.minCaptialDeviationD,
-                totalToken1Amount,
-                DENOMINATOR
-            );
 
+        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken0Amount, DENOMINATOR);
+        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCapitalDeviationD, totalToken1Amount, DENOMINATOR);
+
+        {
             if (
-                currentTokenAmounts.erc20Token0 < minToken0Amount ||
-                currentTokenAmounts.erc20Token0 > maxToken0Amount ||
-                currentTokenAmounts.erc20Token1 < minToken1Amount ||
-                currentTokenAmounts.erc20Token1 > maxToken1Amount
+                currentTokenAmounts.erc20Token0 + minToken0Deviation < expectedTokenAmounts.erc20Token0 ||
+                currentTokenAmounts.erc20Token0 > expectedTokenAmounts.erc20Token0 + minToken0Deviation ||
+                currentTokenAmounts.erc20Token1 + minToken1Deviation < expectedTokenAmounts.erc20Token1 ||
+                currentTokenAmounts.erc20Token1 > expectedTokenAmounts.erc20Token1 + minToken1Deviation
             ) {
                 return true;
             }
         }
-
-        uint256 minToken0Deviation = FullMath.mulDiv(ratioParams.minCaptialDeviationD, totalToken0Amount, DENOMINATOR);
-        uint256 minToken1Deviation = FullMath.mulDiv(ratioParams.minCaptialDeviationD, totalToken1Amount, DENOMINATOR);
 
         {
             if (
@@ -442,40 +369,42 @@ contract HStrategyHelper {
         }
     }
 
-    function movePricesInDomainPosition(HStrategy.DomainPositionParams memory params)
-        external
-        pure
-        returns (HStrategy.DomainPositionParams memory)
-    {
-        if (params.spotPriceSqrtX96 < params.domainLowerPriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.domainLowerPriceSqrtX96;
-        } else if (params.spotPriceSqrtX96 > params.domainUpperPriceSqrtX96) {
-            params.spotPriceSqrtX96 = params.domainUpperPriceSqrtX96;
-        }
-        params.spotPriceX96 = FullMath.mulDiv(params.spotPriceSqrtX96, params.spotPriceSqrtX96, CommonLibrary.Q96);
-        return params;
-    }
-
-    /// @notice returns true if the rebalance between assets on different vaults is needed
     /// @param tick current price tick
-    /// @param hStrategyHelper_ the helper of the strategy
     /// @param strategyParams_ the current parameters of the strategy`
     /// @param uniV3Nft the nft of the position from position manager
     /// @param positionManager_ the position manager for uniV3
     function calculateAndCheckDomainPositionParams(
         int24 tick,
-        HStrategyHelper hStrategyHelper_,
         HStrategy.StrategyParams memory strategyParams_,
         uint256 uniV3Nft,
         INonfungiblePositionManager positionManager_
-    ) external view returns (HStrategy.DomainPositionParams memory domainPositionParams) {
-        domainPositionParams = hStrategyHelper_.calculateDomainPositionParams(
-            tick,
-            strategyParams_,
-            uniV3Nft,
-            positionManager_
+    ) external view returns (HStrategy.DomainPositionParams memory params) {
+        (, , , , , int24 lowerTick, int24 upperTick, uint128 liquidity, , , , ) = positionManager_.positions(uniV3Nft);
+
+        params = HStrategy.DomainPositionParams({
+            nft: uniV3Nft,
+            liquidity: liquidity,
+            lowerTick: lowerTick,
+            upperTick: upperTick,
+            domainLowerTick: strategyParams_.domainLowerTick,
+            domainUpperTick: strategyParams_.domainUpperTick,
+            lowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(lowerTick),
+            upperPriceSqrtX96: TickMath.getSqrtRatioAtTick(upperTick),
+            domainLowerPriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainLowerTick),
+            domainUpperPriceSqrtX96: TickMath.getSqrtRatioAtTick(strategyParams_.domainUpperTick),
+            intervalPriceSqrtX96: TickMath.getSqrtRatioAtTick(tick),
+            spotPriceX96: 0
+        });
+        params.spotPriceX96 = FullMath.mulDiv(
+            params.intervalPriceSqrtX96,
+            params.intervalPriceSqrtX96,
+            CommonLibrary.Q96
         );
-        domainPositionParams = hStrategyHelper_.movePricesInDomainPosition(domainPositionParams);
+        if (params.intervalPriceSqrtX96 < params.lowerPriceSqrtX96) {
+            params.intervalPriceSqrtX96 = params.lowerPriceSqrtX96;
+        } else if (params.intervalPriceSqrtX96 > params.upperPriceSqrtX96) {
+            params.intervalPriceSqrtX96 = params.upperPriceSqrtX96;
+        }
     }
 
     function checkSpotTickDeviationFromAverage(

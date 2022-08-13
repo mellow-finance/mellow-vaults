@@ -136,7 +136,6 @@ const setupStrategy = async (
 
     const oracleParams = {
         averagePriceTimeSpan: 150,
-        averagePriceTimeSpanForRebalanceChecks: 150,
         maxTickDeviation: 100,
     };
     txs.push(
@@ -151,7 +150,7 @@ const setupStrategy = async (
 
     const ratioParams = {
         erc20CapitalRatioD: BigNumber.from(10).pow(7).mul(5), // 5%
-        minErc20CaptialDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
+        minCapitalDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
         minRebalanceDeviationD: BigNumber.from(10).pow(7).mul(1), // 1%
     };
     txs.push(
