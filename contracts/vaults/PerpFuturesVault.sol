@@ -46,7 +46,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
     /// @inheritdoc IVault
     function tvl() public view returns (uint256[] memory minTokenAmounts, uint256[] memory maxTokenAmounts) {
-        uint256 usdValue = getAccountValue();
+        uint256 usdValue = _getAccountValue();
         int256 deltaBetweenSpotAndOracleTvls = _deltaBetweenSpotAndOracleTvl();
 
         minTokenAmounts = new uint256[](1);
@@ -55,29 +55,20 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         if (deltaBetweenSpotAndOracleTvls > 0) {
             minTokenAmounts[0] = usdValue;
             maxTokenAmounts[0] = usdValue + uint256(deltaBetweenSpotAndOracleTvls);
-        }
-
-        else {
-            minTokenAmounts[0] = usdValue - uint256(-deltaBetweenSpotAndOracleTvls);
+        } else {
+            if (uint256(-deltaBetweenSpotAndOracleTvls) <= usdValue) {
+                minTokenAmounts[0] = usdValue - uint256(-deltaBetweenSpotAndOracleTvls);
+            }
             maxTokenAmounts[0] = usdValue;
         }
-        
+
         minTokenAmounts[0] = minTokenAmounts[0] / DECIMALS_DIFFERENCE;
         maxTokenAmounts[0] = maxTokenAmounts[0] / DECIMALS_DIFFERENCE;
     }
 
     /// @inheritdoc IPerpFuturesVault
-    function getAccountValue() public view returns (uint256) {
-        int256 usdValue = clearingHouse.getAccountValue(address(this));
-        if (usdValue < 0) {
-            return 0;
-        }
-        return uint256(usdValue);
-    }
-
-    /// @inheritdoc IPerpFuturesVault
-    function getPositionValue() public view returns (int256) {
-        return accountBalance.getTotalPositionValue(address(this), baseToken) / int256(DECIMALS_DIFFERENCE);
+    function getPositionSize() public view returns (int256) {
+        return accountBalance.getTotalPositionSize(address(this), baseToken);
     }
 
     /// @inheritdoc IERC165
@@ -133,7 +124,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         leverageMultiplierD = newLeverageMultiplierD_;
         isLongBaseToken = isLongBaseToken_;
 
-        uint256 vaultCapital = getAccountValue();
+        uint256 vaultCapital = _getAccountValue();
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, deadline, oppositeAmountBound);
@@ -144,7 +135,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     function adjustPosition(uint256 deadline, uint256 oppositeAmountBound) external {
         require(_isApprovedOrOwner(msg.sender));
 
-        uint256 vaultCapital = getAccountValue();
+        uint256 vaultCapital = _getAccountValue();
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, deadline, oppositeAmountBound);
@@ -153,6 +144,8 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
     /// @inheritdoc IPerpFuturesVault
     function closePosition(uint256 deadline, uint256 oppositeAmountBound) external {
+        require(_isApprovedOrOwner(msg.sender));
+
         int256 positionValueUSD = accountBalance.getTotalPositionValue(address(this), baseToken);
         if (positionValueUSD == 0) {
             return;
@@ -196,7 +189,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
         Options memory opts = _parseOptions(options);
 
-        uint256 vaultCapital = getAccountValue();
+        uint256 vaultCapital = _getAccountValue();
         uint256 capitalToUse = FullMath.mulDiv(vaultCapital, leverageMultiplierD, DENOMINATOR);
 
         _adjustPosition(capitalToUse, opts.deadline, opts.oppositeAmountBound);
@@ -218,7 +211,7 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         if (usdcAmount == 0) {
             return new uint256[](1);
         }
-        uint256 vaultCapital = getAccountValue();
+        uint256 vaultCapital = _getAccountValue();
 
         uint256 futureCapital = 0;
         if (usdcAmount * DECIMALS_DIFFERENCE < vaultCapital) {
@@ -245,7 +238,11 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
     /// @notice Adjusts the current position to the capitalToUse by making comparison with the takerPositionSize
     /// @param capitalToUse The new position capital to be used after adjustment (nominated in USDC weis)
     /// @param deadline The restriction on when the transaction should be executed, otherwise, it fails
-    function _adjustPosition(uint256 capitalToUse, uint256 deadline, uint256 oppositeAmountBound) internal {
+    function _adjustPosition(
+        uint256 capitalToUse,
+        uint256 deadline,
+        uint256 oppositeAmountBound
+    ) internal {
         int256 positionValueUSD = accountBalance.getTotalPositionValue(address(this), baseToken);
         if (isLongBaseToken) {
             if (int256(capitalToUse) > positionValueUSD) {
@@ -255,9 +252,9 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
             }
         } else {
             if (-int256(capitalToUse) < positionValueUSD) {
-                _makeAdjustment(true, uint256(positionValueUSD + int256(capitalToUse)), deadline, oppositeAmountBound);
+                _makeAdjustment(false, uint256(positionValueUSD + int256(capitalToUse)), deadline, oppositeAmountBound);
             } else {
-                _makeAdjustment(false, uint256(-positionValueUSD - int256(capitalToUse)), deadline, oppositeAmountBound);
+                _makeAdjustment(true, uint256(-positionValueUSD - int256(capitalToUse)), deadline, oppositeAmountBound);
             }
         }
     }
@@ -316,15 +313,24 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
 
         if (oraclePriceX10_18 < spotPriceX10_18) {
             if (positionSize > 0) {
-                return int256(FullMath.mulDiv(uint256(positionSize), spotPriceX10_18 - oraclePriceX10_18, CommonLibrary.D18));
+                return
+                    int256(
+                        FullMath.mulDiv(uint256(positionSize), spotPriceX10_18 - oraclePriceX10_18, CommonLibrary.D18)
+                    );
             }
-            return -int256(FullMath.mulDiv(uint256(-positionSize), spotPriceX10_18 - oraclePriceX10_18, CommonLibrary.D18));
-        }
-        else {
+            return
+                -int256(
+                    FullMath.mulDiv(uint256(-positionSize), spotPriceX10_18 - oraclePriceX10_18, CommonLibrary.D18)
+                );
+        } else {
             if (positionSize > 0) {
-                return -int256(FullMath.mulDiv(uint256(positionSize), oraclePriceX10_18 - spotPriceX10_18, CommonLibrary.D18));
+                return
+                    -int256(
+                        FullMath.mulDiv(uint256(positionSize), oraclePriceX10_18 - spotPriceX10_18, CommonLibrary.D18)
+                    );
             }
-            return int256(FullMath.mulDiv(uint256(-positionSize), oraclePriceX10_18 - spotPriceX10_18, CommonLibrary.D18));
+            return
+                int256(FullMath.mulDiv(uint256(-positionSize), oraclePriceX10_18 - spotPriceX10_18, CommonLibrary.D18));
         }
     }
 
@@ -342,6 +348,14 @@ contract PerpFuturesVault is IPerpFuturesVault, IntegrationVault {
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint256 priceX96 = FullMath.mulDiv(sqrtPriceX96, sqrtPriceX96, CommonLibrary.Q96);
         return FullMath.mulDiv(priceX96, CommonLibrary.D18, CommonLibrary.Q96);
+    }
+
+    function _getAccountValue() public view returns (uint256) {
+        int256 usdValue = clearingHouse.getAccountValue(address(this));
+        if (usdValue < 0) {
+            return 0;
+        }
+        return uint256(usdValue);
     }
 
     // --------------------------  EVENTS  --------------------------
